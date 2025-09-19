@@ -39,7 +39,7 @@ export class DbSeedDataGeneratorConsole extends CommandRunner {
         if (classCount <= 0) {
             throw new Error('The value for classesPerSchool provided muss be greater than 0');
         }
-        if (classCount % 3 != 0) {
+        if (classCount % 3 !== 0) {
             throw new Error('The value for classesPerSchool provided muss be divisible by 3');
         }
     }

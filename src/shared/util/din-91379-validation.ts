@@ -194,7 +194,7 @@ export function toDIN91379SearchForm(input: string): string {
     return searchForm;
 }
 
-export function IsDIN91379A(validationOptions?: ValidationOptions | undefined): PropertyDecorator {
+export function IsDIN91379A(validationOptions?: ValidationOptions): PropertyDecorator {
     return applyDecorators(
         Transform(({ value }: TransformFnParams) => (typeof value === 'string' ? value.normalize('NFC') : undefined)),
         IsString(validationOptions),
@@ -202,7 +202,7 @@ export function IsDIN91379A(validationOptions?: ValidationOptions | undefined): 
     );
 }
 
-export function IsDIN91379AEXT(validationOptions?: ValidationOptions | undefined): PropertyDecorator {
+export function IsDIN91379AEXT(validationOptions?: ValidationOptions): PropertyDecorator {
     return applyDecorators(
         Transform(({ value }: TransformFnParams) => (typeof value === 'string' ? value.normalize('NFC') : undefined)),
         IsString(validationOptions),

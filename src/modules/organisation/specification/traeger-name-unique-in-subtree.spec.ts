@@ -102,7 +102,9 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
                         typ: OrganisationsTyp.TRAEGER,
                         zugehoerigZu: label === 'direct' ? parent.id : faker.string.uuid(),
                     });
-                    if (label === 'indirect') orgaRepoMock.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
+                    if (label === 'indirect') {
+                        orgaRepoMock.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
+                    }
                 });
 
                 it.each([

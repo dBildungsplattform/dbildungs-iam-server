@@ -148,7 +148,9 @@ export class Rolle<WasPersisted extends boolean> {
     }
 
     public async canBeAssignedToOrga(orgaId: OrganisationID): Promise<boolean> {
-        if (orgaId === this.administeredBySchulstrukturknoten) return true;
+        if (orgaId === this.administeredBySchulstrukturknoten) {
+            return true;
+        }
         return this.organisationRepo.isOrgaAParentOfOrgaB(this.administeredBySchulstrukturknoten, orgaId);
     }
 

@@ -12,7 +12,7 @@ import { Person } from '../../person/domain/person.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ChangeUserAction } from '../actions/user/change-user.action.js';
-import { generateOxUserChangedEvent, OxUserChangedEventCreator } from './ox-event.service.js';
+import { generateOxUserChangedEvent, OxEventService, OxUserChangedEventCreator } from './ox-event.service.js';
 import { OxService } from './ox.service.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { OXGroupID, OXUserID } from '../../../shared/types/ox-ids.types.js';
@@ -32,7 +32,6 @@ import { Injectable } from '@nestjs/common';
 import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/group/add-member-to-group.action.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
-import { OxEventService } from './ox-event.service.js';
 
 @Injectable()
 export class OxSyncEventHandler {
@@ -179,7 +178,9 @@ export class OxSyncEventHandler {
 
         const mostRecentRequestedOrEnabledEA: Option<EmailAddress<true>> =
             await this.oxEventService.getMostRecentEnabledOrRequestedEmailAddress(personId);
-        if (!mostRecentRequestedOrEnabledEA) return; //logging is done in getMostRecentRequestedEmailAddress
+        if (!mostRecentRequestedOrEnabledEA) {
+            return;
+        } //logging is done in getMostRecentRequestedEmailAddress
         const currentEmailAddressString: string = mostRecentRequestedOrEnabledEA.address;
 
         const disabledEmailAddresses: EmailAddress<true>[] = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(

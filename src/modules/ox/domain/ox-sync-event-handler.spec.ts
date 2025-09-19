@@ -627,7 +627,9 @@ describe('OxSyncEventHandler', () => {
             // set kennung for an organisation undefined to force 'Required kennung is missing on organisation'
             assert(kontexte[0]);
             const orgaWithoutKennung: Organisation<true> | undefined = orgaMap.get(kontexte[0].organisationId);
-            if (!orgaWithoutKennung) throw Error();
+            if (!orgaWithoutKennung) {
+                throw Error();
+            }
             orgaWithoutKennung.kennung = undefined;
             mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
 

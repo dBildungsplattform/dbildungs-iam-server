@@ -10,7 +10,6 @@ import { EmailAppConfig } from './email-app.config.js';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseFileToJSON(path: string): any {
     const file: string = readFileSync(path, { encoding: 'utf8' });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
     return JSON.parse(file);
 }
 
@@ -21,17 +20,15 @@ export function loadConfigFiles(): JsonConfig {
     const json: any = parseFileToJSON('./config/config.json');
     let secrets: unknown;
     if (fs.existsSync(secretFilePath)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
         secrets = parseFileToJSON(secretFilePath);
     } else {
         secrets = null;
     }
     // Environmental override
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const env: any = EnvConfig();
     let merged: unknown;
     if (secrets != null) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
         merged = merge(json, secrets, env);
     } else {
         merged = merge(json, env);
@@ -61,17 +58,15 @@ export function loadEmailAppConfigFiles(): EmailAppConfig {
     const json: any = parseFileToJSON('./config/email-config.json');
     let secrets: unknown;
     if (fs.existsSync(secretFilePath)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
         secrets = parseFileToJSON(secretFilePath);
     } else {
         secrets = null;
     }
     // Environmental override
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const env: any = getEmailConfig();
     let merged: unknown;
     if (secrets != null) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
         merged = merge(json, secrets, env);
     } else {
         merged = merge(json, env);

@@ -61,7 +61,9 @@ export class ServiceProviderService {
         const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(uniqueRollenIds);
         const serviceProviderIds: Set<ServiceProviderID> = new Set();
         for (const rolle of rollen.values()) {
-            for (const id of rolle.serviceProviderIds) serviceProviderIds.add(id);
+            for (const id of rolle.serviceProviderIds) {
+                serviceProviderIds.add(id);
+            }
         }
 
         if (this.isFeatureRolleErweiternEnabled) {
@@ -90,8 +92,9 @@ export class ServiceProviderService {
         const vidisAngebote: VidisAngebot[] = await this.vidisService.getActivatedAngeboteByRegion(vidisRegionName);
 
         const allMappingsBeenDeleted: boolean = await this.organisationServiceProviderRepo.deleteAll();
-        if (allMappingsBeenDeleted)
+        if (allMappingsBeenDeleted) {
             this.logger.info('All mappings between Organisation and ServiceProvider were deleted.');
+        }
 
         await Promise.allSettled(
             vidisAngebote.map(async (angebot: VidisAngebot) => {
@@ -188,10 +191,14 @@ export class ServiceProviderService {
         const logoBuffer: Buffer = Buffer.from(base64EncodedLogo, 'base64');
 
         const first8Bytes: Buffer = logoBuffer.subarray(0, 8);
-        if (first8Bytes.equals(MEDIA_SIGNATURES.PNG)) return 'image/png';
+        if (first8Bytes.equals(MEDIA_SIGNATURES.PNG)) {
+            return 'image/png';
+        }
 
         const first3Bytes: Buffer = logoBuffer.subarray(0, 3);
-        if (first3Bytes.equals(MEDIA_SIGNATURES.JPG)) return 'image/jpeg';
+        if (first3Bytes.equals(MEDIA_SIGNATURES.JPG)) {
+            return 'image/jpeg';
+        }
 
         return 'image/svg+xml';
     }

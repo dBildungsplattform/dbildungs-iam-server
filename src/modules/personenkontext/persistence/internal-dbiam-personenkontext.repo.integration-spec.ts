@@ -157,7 +157,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
                 personId: person.id,
@@ -176,7 +178,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
                 personId: person.id,
@@ -197,7 +201,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             const existingPersonenkontext: Personenkontext<true> = await sut.save(
                 createPersonenkontext(false, {
@@ -220,7 +226,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
                 personId: person.id,
@@ -241,7 +249,9 @@ describe('dbiam Personenkontext Repo', () => {
                 const organisation: Organisation<true> = await organisationRepository.save(
                     DoFactory.createOrganisation(false),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
                     personId: person.id,
@@ -262,7 +272,9 @@ describe('dbiam Personenkontext Repo', () => {
                 const organisation: Organisation<true> = await organisationRepository.save(
                     DoFactory.createOrganisation(false),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const personenKontext: Personenkontext<true> = await sut.save(
                     createPersonenkontext(false, {

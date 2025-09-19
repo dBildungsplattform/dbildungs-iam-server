@@ -147,7 +147,9 @@ describe('DbiamPersonenUebersicht', () => {
                 const res: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
                     await sut.createZuordnungenForKontexte(personenkontexte, rolleMap, orgaMap, undefined);
 
-                if (res instanceof EntityNotFoundError) throw res;
+                if (res instanceof EntityNotFoundError) {
+                    throw res;
+                }
                 const [responses, lastModified]: [DBiamPersonenzuordnungResponse[], Date?] = res;
 
                 expect(responses).toBeDefined();
@@ -162,7 +164,9 @@ describe('DbiamPersonenUebersicht', () => {
 
                 const res: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
                     await sut.createZuordnungenForKontexte(personenkontexte, rolleMap, orgaMap, undefined);
-                if (res instanceof EntityNotFoundError) throw res;
+                if (res instanceof EntityNotFoundError) {
+                    throw res;
+                }
                 const [responses, lastModified]: [DBiamPersonenzuordnungResponse[], Date?] = res;
 
                 expect(responses).toBeDefined();

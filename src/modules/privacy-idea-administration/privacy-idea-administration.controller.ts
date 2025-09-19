@@ -244,7 +244,9 @@ export class PrivacyIdeaAdministrationController {
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
     ): Promise<TokenRequiredResponse> {
-        if (personId !== permissions.personFields.id) await this.getReferrerIfAllowedOrSelf(personId, permissions);
+        if (personId !== permissions.personFields.id) {
+            await this.getReferrerIfAllowedOrSelf(personId, permissions);
+        }
 
         const requires2fa: boolean = await this.privacyIdeaAdministrationService.requires2fa(personId);
         return new TokenRequiredResponse(requires2fa);

@@ -1220,7 +1220,9 @@ describe('OrganisationRepository', () => {
                 undefined,
                 OrganisationsTyp.SCHULE,
             );
-            if (orga instanceof DomainError) throw orga;
+            if (orga instanceof DomainError) {
+                throw orga;
+            }
 
             const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
             await em.persistAndFlush(mappedOrga);
@@ -1232,7 +1234,9 @@ describe('OrganisationRepository', () => {
                 personPermissions,
                 mappedOrga.id,
             );
-            if (result instanceof DomainError) throw Error();
+            if (result instanceof DomainError) {
+                throw Error();
+            }
 
             expect(result.itslearningEnabled).toBeTruthy();
         });

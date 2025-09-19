@@ -36,8 +36,9 @@ describe('Redis health indicator', () => {
 
         redisClient.connect.mockImplementation(() => {
             const result: Promise<RedisClientType> = new Promise<RedisClientType>(
-                (resolve: (value: PromiseLike<RedisClientType> | RedisClientType) => void) =>
-                    clientEventEmitter.on('ready', resolve),
+                (resolve: (value: PromiseLike<RedisClientType> | RedisClientType) => void) => {
+                    clientEventEmitter.on('ready', resolve);
+                },
             );
             clientEventEmitter.emit('ready');
             return result;
@@ -54,8 +55,9 @@ describe('Redis health indicator', () => {
 
         redisClient.connect.mockImplementation(() => {
             const result: Promise<RedisClientType> = new Promise<RedisClientType>(
-                (resolve: (value: PromiseLike<RedisClientType> | RedisClientType) => void) =>
-                    clientEventEmitter.on('error', resolve),
+                (resolve: (value: PromiseLike<RedisClientType> | RedisClientType) => void) => {
+                    clientEventEmitter.on('error', resolve);
+                },
             );
             clientEventEmitter.emit('error', error);
             return result;

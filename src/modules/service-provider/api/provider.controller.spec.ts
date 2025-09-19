@@ -123,8 +123,11 @@ describe('Provider Controller Test', () => {
                     await providerController.getAvailableServiceProviders(personPermissions);
                 expect(spResponse).toBeDefined();
                 expect(spResponse).toBeInstanceOf(Array);
-                if (hasFoundServiceProviders) expect(spResponse).toHaveLength(1);
-                else expect(spResponse).toHaveLength(0);
+                if (hasFoundServiceProviders) {
+                    expect(spResponse).toHaveLength(1);
+                } else {
+                    expect(spResponse).toHaveLength(0);
+                }
                 expect(serviceProviderServiceMock.getServiceProvidersByOrganisationenAndRollen).toHaveBeenCalledWith([
                     { organisationId: pk.organisationId, rolleId: pk.rolleId },
                 ]);

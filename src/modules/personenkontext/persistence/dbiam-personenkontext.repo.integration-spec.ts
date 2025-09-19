@@ -184,7 +184,9 @@ describe('dbiam Personenkontext Repo', () => {
             throw rolle;
         }
         const result: Rolle<true> | DomainError = await rolleRepo.save(rolle);
-        if (result instanceof DomainError) throw Error();
+        if (result instanceof DomainError) {
+            throw Error();
+        }
 
         return result;
     }
@@ -214,7 +216,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             const personenkontext: Personenkontext<true> = await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
@@ -248,8 +252,12 @@ describe('dbiam Personenkontext Repo', () => {
             const organisationB: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolleA instanceof DomainError) throw Error();
-            if (rolleB instanceof DomainError) throw Error();
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+            if (rolleB instanceof DomainError) {
+                throw Error();
+            }
 
             await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
@@ -305,8 +313,12 @@ describe('dbiam Personenkontext Repo', () => {
                 const organisation: Organisation<true> = await organisationRepository.save(
                     DoFactory.createOrganisation(false),
                 );
-                if (rolleA instanceof DomainError) throw Error();
-                if (rolleB instanceof DomainError) throw Error();
+                if (rolleA instanceof DomainError) {
+                    throw Error();
+                }
+                if (rolleB instanceof DomainError) {
+                    throw Error();
+                }
 
                 const personenkontextA: Personenkontext<true> = await personenkontextRepoInternal.save(
                     createPersonenkontext(false, {
@@ -357,7 +369,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await Promise.all([
                 personenkontextRepoInternal.save(
@@ -390,7 +404,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await Promise.all([
                 personenkontextRepoInternal.save(
@@ -425,7 +441,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await Promise.all([
                 personenkontextRepoInternal.save(
@@ -460,7 +478,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
@@ -487,7 +507,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false, { itslearningEnabled: true }),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
@@ -525,8 +547,12 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false, { itslearningEnabled: true }),
             );
-            if (rolleA instanceof DomainError) throw Error();
-            if (rolleB instanceof DomainError) throw Error();
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+            if (rolleB instanceof DomainError) {
+                throw Error();
+            }
 
             await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
@@ -559,7 +585,9 @@ describe('dbiam Personenkontext Repo', () => {
                     DoFactory.createOrganisation(false),
                 );
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 await personenkontextRepoInternal.save(
                     createPersonenkontext(false, {
@@ -583,7 +611,9 @@ describe('dbiam Personenkontext Repo', () => {
                 const personUUID: string = faker.string.uuid();
                 const organisationUUID: string = faker.string.uuid();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const personenkontext: Option<Personenkontext<true>> = await sut.find(
                     personUUID,
@@ -666,7 +696,9 @@ describe('dbiam Personenkontext Repo', () => {
         it('should return true if there is any personenkontext for an organisation', async () => {
             const person: Person<true> = await createPerson();
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
@@ -691,7 +723,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
@@ -743,7 +777,9 @@ describe('dbiam Personenkontext Repo', () => {
             );
 
             const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
-            if (rolle1Result instanceof DomainError) throw Error();
+            if (rolle1Result instanceof DomainError) {
+                throw Error();
+            }
 
             //Kontexte with exceeding Befristung
             const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
@@ -805,7 +841,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {

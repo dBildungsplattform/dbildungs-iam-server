@@ -16,10 +16,16 @@ export class TraegerNameUniqueInSubtree<Persisted extends boolean> extends Compo
     }
 
     public override async isSatisfiedBy(t: Organisation<Persisted>): Promise<boolean> {
-        if (t.typ !== OrganisationsTyp.TRAEGER) return true;
-        if (!t.name) return false;
+        if (t.typ !== OrganisationsTyp.TRAEGER) {
+            return true;
+        }
+        if (!t.name) {
+            return false;
+        }
         this.cachedRootChildren = await this.organisationRepository.findRootDirectChildren();
-        if (await this.isDuplicateOfRootNodes(t)) return false;
+        if (await this.isDuplicateOfRootNodes(t)) {
+            return false;
+        }
         return this.hasUniqueNameInSubtree(t);
     }
 
@@ -27,10 +33,16 @@ export class TraegerNameUniqueInSubtree<Persisted extends boolean> extends Compo
         const rootOrganisation: Option<Organisation<true>> = await this.organisationRepository.findById(
             this.organisationRepository.ROOT_ORGANISATION_ID,
         );
-        if (rootOrganisation && rootOrganisation.name === t.name) return true;
+        if (rootOrganisation && rootOrganisation.name === t.name) {
+            return true;
+        }
         const [oeffentlich, ersatz]: RootChildren = this.cachedRootChildren;
-        if (oeffentlich && oeffentlich.name === t.name) return true;
-        if (ersatz && ersatz.name === t.name) return true;
+        if (oeffentlich && oeffentlich.name === t.name) {
+            return true;
+        }
+        if (ersatz && ersatz.name === t.name) {
+            return true;
+        }
         return false;
     }
 
@@ -41,15 +53,21 @@ export class TraegerNameUniqueInSubtree<Persisted extends boolean> extends Compo
         });
         const [traegersWithSameName, count]: Counted<Organisation<true>> =
             await this.organisationRepository.findBy(scope);
-        if (count === 0) return true;
+        if (count === 0) {
+            return true;
+        }
 
         const siblings: Array<Organisation<true>> = traegersWithSameName.filter(
             (sibling: Organisation<true>) => sibling.id !== t.id,
         );
-        if (siblings.length === 0) return true;
+        if (siblings.length === 0) {
+            return true;
+        }
 
         const subtreeRoot: Organisation<true> | undefined = await this.findSubtreeRoot(t);
-        if (!subtreeRoot) return true;
+        if (!subtreeRoot) {
+            return true;
+        }
 
         const duplicateNameOnSameSubtree: Array<boolean> = await Promise.all(
             siblings.map((sibling: Organisation<true>) =>
@@ -62,15 +80,23 @@ export class TraegerNameUniqueInSubtree<Persisted extends boolean> extends Compo
 
     private async findSubtreeRoot(t: Organisation<Persisted>): Promise<Organisation<true> | undefined> {
         const [oeffentlich, ersatz]: RootChildren = this.cachedRootChildren;
-        if (!t.zugehoerigZu) return;
+        if (!t.zugehoerigZu) {
+            return;
+        }
         // test for direct children first, maybe we can return early
-        if (oeffentlich && t.zugehoerigZu === oeffentlich.id) return oeffentlich;
-        if (ersatz && t.zugehoerigZu === ersatz.id) return ersatz;
-
-        if (oeffentlich && (await this.organisationRepository.isOrgaAParentOfOrgaB(oeffentlich.id, t.zugehoerigZu)))
+        if (oeffentlich && t.zugehoerigZu === oeffentlich.id) {
             return oeffentlich;
-        if (ersatz && (await this.organisationRepository.isOrgaAParentOfOrgaB(ersatz.id, t.zugehoerigZu)))
+        }
+        if (ersatz && t.zugehoerigZu === ersatz.id) {
             return ersatz;
+        }
+
+        if (oeffentlich && (await this.organisationRepository.isOrgaAParentOfOrgaB(oeffentlich.id, t.zugehoerigZu))) {
+            return oeffentlich;
+        }
+        if (ersatz && (await this.organisationRepository.isOrgaAParentOfOrgaB(ersatz.id, t.zugehoerigZu))) {
+            return ersatz;
+        }
         return undefined;
     }
 }

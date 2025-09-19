@@ -1,5 +1,4 @@
-import { envToOptionalBoolean, envToOptionalInteger, envToStringArray } from './utils.js';
-import { mapStringsToRollenArt } from './utils.js';
+import { envToOptionalBoolean, envToOptionalInteger, envToStringArray, mapStringsToRollenArt } from './utils.js';
 import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 
 const TEST_KEY: string = 'CONFIG_UTIL_TEST_KEY';

@@ -352,7 +352,9 @@ describe('ServiceProviderService', () => {
                 mockExistingVidisServiceProviderContainedInVidisAngebote,
             );
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
-            if (mockExistingSchulen[0]) organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            if (mockExistingSchulen[0]) {
+                organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            }
             organisationServiceProviderRepo.save.mockResolvedValue();
 
             await service.updateServiceProvidersForVidis();
@@ -374,7 +376,9 @@ describe('ServiceProviderService', () => {
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
-            if (mockExistingSchulen[0]) organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            if (mockExistingSchulen[0]) {
+                organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            }
             organisationServiceProviderRepo.save.mockResolvedValue();
 
             await service.updateServiceProvidersForVidis();
@@ -396,7 +400,9 @@ describe('ServiceProviderService', () => {
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
-            if (mockExistingSchulen[0]) organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            if (mockExistingSchulen[0]) {
+                organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            }
             organisationServiceProviderRepo.save.mockResolvedValue();
             serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
             serviceProviderRepo.deleteById.mockResolvedValue(true);

@@ -48,7 +48,7 @@ export class PersonScope extends ScopeBase<PersonEntity> {
         return [entities, count];
     }
 
-    public findByPersonenKontext(organisationen?: string[] | undefined, rollen?: string[] | undefined): this {
+    public findByPersonenKontext(organisationen?: string[], rollen?: string[]): this {
         const filters: QBFilterQuery<PersonEntity> = {
             personenKontexte: {
                 ...(organisationen ? { organisationId: { $in: organisationen } } : {}),
