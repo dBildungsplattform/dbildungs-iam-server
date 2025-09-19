@@ -57,6 +57,17 @@ export class RollenerweiterungRepo {
         return count > 0;
     }
 
+    public async create(rollenerweiterung: Rollenerweiterung<false>): Promise<Rollenerweiterung<true>> {
+        const rollenerweiterungEntity: RollenerweiterungEntity = this.em.create(
+            RollenerweiterungEntity,
+            this.mapAggregateToEntityData(rollenerweiterung),
+        );
+
+        await this.em.persistAndFlush(rollenerweiterungEntity);
+
+        return this.mapEntityToAggregate(rollenerweiterungEntity);
+    }
+
     public async createAuthorized(
         rollenerweiterung: Rollenerweiterung<false>,
         permissions: PersonPermissions,
