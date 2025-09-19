@@ -999,9 +999,7 @@ export class PersonRepository {
 
         //Update personalnummer
         if (personalnummer) {
-            // Check if person already has this personalnummer - no need to update
-            if (personFound.personalnummer === personalnummer) {
-            }
+
             if (!NameValidator.isNameValid(personalnummer)) {
                 return new PersonalNummerForPersonWithTrailingSpaceError();
             }
