@@ -61,6 +61,7 @@ import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group
 import { EmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/email-address-generated-after-ldap-sync-failed.event.js';
 import { KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/kafka-email-address-generated-after-ldap-sync-failed.event.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
+import { OxSyncEventHandler } from './ox-sync-event-handler.js';
 
 @Injectable()
 export class OxEventHandler {
@@ -70,6 +71,7 @@ export class OxEventHandler {
         protected readonly logger: ClassLogger,
         protected readonly oxService: OxService,
         protected readonly oxEventService: OxEventService,
+        protected readonly oxSyncEventHandler: OxSyncEventHandler,
         protected readonly emailRepo: EmailRepo,
         protected readonly personRepository: PersonRepository,
         protected readonly eventService: EventRoutingLegacyKafkaService,
@@ -153,6 +155,7 @@ export class OxEventHandler {
         this.logger.info(
             `Received EmailAddressAlreadyExistsEvent, personId:${event.personId}, orgaKennung:${event.orgaKennung}`,
         );
+
         // Check if the functionality is enabled
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
@@ -163,55 +166,22 @@ export class OxEventHandler {
         if (!person) {
             return this.logger.error(`Person not found for personId:${event.personId}`);
         }
+
         // If the person doesn't have an OX user ID, log an error and stop the process
         if (!person.oxUserId) {
-            return this.logger.error(
-                `Person with personId:${event.personId} does not have an oxUserId. Cannot add to group.`,
-            );
+            return this.logger.error(`Person with personId:${event.personId} does not have a ox_id. Cannot sync.`);
         }
 
-        // Fetch or create the relevant OX group based on orgaKennung (group identifier)
-        const oxGroupIdResult: Result<OXGroupID> = await this.oxEventService.getExistingOxGroupByNameOrCreateOxGroup(
-            OxEventService.LEHRER_OX_GROUP_NAME_PREFIX + event.orgaKennung,
-            OxEventService.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + event.orgaKennung,
-        );
-        if (!oxGroupIdResult.ok) {
-            return this.logger.error(
-                `Get or create OX group failed, personId:${event.personId}, oxUserId:${person.oxUserId}, orgaKennung:${event.orgaKennung}`,
-            );
+        // If the person doesn't have a username, log an error and stop the process
+        if (!person.referrer) {
+            return this.logger.error(`Person with personId:${event.personId} does not have a username. Cannot sync.`);
         }
 
-        // Add the user to the OX group
-        const addUserToGroupResult: Result<AddMemberToGroupResponse> = await this.addOxUserToOxGroup(
-            oxGroupIdResult.value,
-            person.oxUserId,
-            {
-                personId: event.personId,
-                username: undefined,
-            },
-        );
-        if (!addUserToGroupResult.ok) {
-            return this.logger.error(
-                `Failed to add user to group, personId:${event.personId}, oxUserId:${person.oxUserId}, oxGroupId:${oxGroupIdResult.value}`,
-            );
-        }
+        // This also publishes an OxUserChangedEvent
+        await this.oxSyncEventHandler.sync(event.personId, person.referrer);
 
-        // Log the successful addition of the user to the group
-        this.logger.info(
-            `Successfully added user to group, personId:${event.personId}, oxUserId:${person.oxUserId}, oxGroupId:${oxGroupIdResult.value}`,
-        );
-
-        // Should always be true
-        if (person.referrer && person.email) {
-            // Publish an OxUserChangedEvent after successful addition to the group
-            this.oxEventService.publishOxUserChangedEvent(
-                event.personId,
-                person.referrer,
-                person.oxUserId,
-                person.referrer,
-                person.email,
-            );
-        }
+        // Log the successful sync of the user
+        this.logger.info(`Successfully synced user, personId:${event.personId}, oxUserId:${person.oxUserId}`);
     }
 
     @KafkaEventHandler(KafkaEmailAddressDisabledEvent)

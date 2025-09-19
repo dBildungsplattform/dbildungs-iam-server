@@ -38,12 +38,14 @@ import { OxNoSuchUserError } from '../error/ox-no-such-user.error.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 import { EmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/email-address-generated-after-ldap-sync-failed.event.js';
 import { OxEventService } from './ox-event.service.js';
+import { OxSyncEventHandler } from './ox-sync-event-handler.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
 
     let sut: OxEventHandler;
     let oxServiceMock: DeepMocked<OxService>;
+    let oxSyncHandlerMock: DeepMocked<OxSyncEventHandler>;
     let loggerMock: DeepMocked<ClassLogger>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let emailRepoMock: DeepMocked<EmailRepo>;
@@ -80,6 +82,10 @@ describe('OxEventHandler', () => {
                     useValue: createMock<OxService>(),
                 },
                 {
+                    provide: OxSyncEventHandler,
+                    useValue: createMock<OxSyncEventHandler>(),
+                },
+                {
                     provide: EventRoutingLegacyKafkaService,
                     useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
@@ -88,6 +94,7 @@ describe('OxEventHandler', () => {
 
         sut = module.get(OxEventHandler);
         oxServiceMock = module.get(OxService);
+        oxSyncHandlerMock = module.get(OxSyncEventHandler);
         loggerMock = module.get(ClassLogger);
 
         personRepositoryMock = module.get(PersonRepository);
@@ -1331,7 +1338,20 @@ describe('OxEventHandler', () => {
                 await sut.handleEmailAddressAlreadyExistsEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Person with personId:${event.personId} does not have an oxUserId. Cannot add to group.`,
+                    `Person with personId:${event.personId} does not have a ox_id. Cannot sync.`,
+                );
+            });
+        });
+
+        describe('when person has no referrer', () => {
+            it('should log error if referrer is missing', async () => {
+                person.referrer = undefined;
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                await sut.handleEmailAddressAlreadyExistsEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Person with personId:${event.personId} does not have a username. Cannot sync.`,
                 );
             });
         });
@@ -1340,92 +1360,12 @@ describe('OxEventHandler', () => {
             it('should successfully process event and publish OxUserChangedEvent', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
 
-                //mock list-oxGroups-request, no result -> mocks no group found
-                const fakeOXGroupId: string = faker.string.uuid();
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        groups: [],
-                    },
-                });
-                //mock create-oxGroup-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        id: fakeOXGroupId,
-                    },
-                });
-                //mock add-member-to-oxGroup-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        status: {
-                            code: 'success',
-                        },
-                        data: undefined,
-                    },
-                });
-
                 await sut.handleEmailAddressAlreadyExistsEvent(event);
 
                 expect(loggerMock.info).toHaveBeenLastCalledWith(
-                    `Successfully added user to group, personId:${event.personId}, oxUserId:${person.oxUserId}, oxGroupId:${fakeOXGroupId}`,
+                    `Successfully synced user, personId:${event.personId}, oxUserId:${person.oxUserId}`,
                 );
-                expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('failure scenarios', () => {
-            it('should log error if group creation/retrieval fails', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(person);
-
-                // Mock group creation/retrieval failure
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: false,
-                    error: new OxError(),
-                });
-
-                await sut.handleEmailAddressAlreadyExistsEvent(event);
-
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining(
-                        `Get or create OX group failed, personId:${event.personId}, oxUserId:${person.oxUserId}, orgaKennung:${event.orgaKennung}`,
-                    ),
-                );
-            });
-
-            it('should log error if adding user to group fails', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(person);
-
-                const fakeOXGroupId: string = faker.string.uuid();
-
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        groups: [],
-                    },
-                });
-                // Mock group creation/retrieval success
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        id: fakeOXGroupId,
-                    },
-                });
-
-                // Mock add user to group failure
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: false,
-                    error: new OxError(),
-                });
-
-                await sut.handleEmailAddressAlreadyExistsEvent(event);
-
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining(
-                        `Failed to add user to group, personId:${event.personId}, oxUserId:${person.oxUserId}, oxGroupId:${fakeOXGroupId}`,
-                    ),
-                );
+                expect(oxSyncHandlerMock.sync).toHaveBeenCalledWith(event.personId, person.referrer);
             });
         });
     });

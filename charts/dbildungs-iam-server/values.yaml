@@ -118,7 +118,7 @@ backend:
     enabled: true
     initialDelaySeconds: 10
     periodSeconds: 10
-    failureThreshold: 5
+    failureThreshold: 10
     httpGet:
       scheme: 'HTTP'
       port: 8080
@@ -168,7 +168,7 @@ backend:
   serviceMonitor:
     enabled: true
     path: '/metrics'
-    interval: 30m
+    interval: 1m
     endpoints:
       - port: 'web'
   extraEnvVars: []

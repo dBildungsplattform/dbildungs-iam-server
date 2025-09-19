@@ -34,7 +34,6 @@ describe('AddMemberToGroupAction', () => {
                     status: {
                         code: 'success',
                     },
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     data: body,
                 },
             });

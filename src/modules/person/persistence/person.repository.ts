@@ -62,6 +62,7 @@ import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js'
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -959,7 +960,7 @@ export class PersonRepository {
         personalnummer: string | undefined,
         lastModified: Date,
         revision: string,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Person<true> | DomainError> {
         const personFound: Option<Person<true>> = await this.findById(personId);
         if (!personFound) {

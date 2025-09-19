@@ -215,9 +215,11 @@ export class LdapClientService {
         personId: PersonID,
         username: PersonReferrer,
         newEmailAddress: string,
+        alternativeEmailAddress?: string,
     ): Promise<Result<PersonID>> {
         return this.executeWithRetry(
-            () => this.changeEmailAddressByPersonIdInternal(personId, username, newEmailAddress),
+            () =>
+                this.changeEmailAddressByPersonIdInternal(personId, username, newEmailAddress, alternativeEmailAddress),
             this.getNrOfRetries(),
         );
     }
@@ -1007,6 +1009,7 @@ export class LdapClientService {
         personId: PersonID,
         username: PersonReferrer,
         newEmailAddress: string,
+        alternativEmailAddress?: string,
     ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
         return this.mutex.runExclusive(async () => {
@@ -1048,17 +1051,6 @@ export class LdapClientService {
                     error: new LdapSearchError(LdapEntityType.LEHRER),
                 };
             }
-            // result can be a simple string or a string-array
-            let currentEmailAddressString: string | undefined;
-            const currentLDAPEmailAddressString: unknown =
-                searchResult.searchEntries[0][LdapClientService.MAIL_PRIMARY_ADDRESS];
-            if (typeof currentLDAPEmailAddressString === 'string') {
-                currentEmailAddressString = currentLDAPEmailAddressString;
-            }
-            if (Array.isArray(currentLDAPEmailAddressString) && typeof currentLDAPEmailAddressString[0] === 'string') {
-                currentEmailAddressString = currentLDAPEmailAddressString[0];
-            }
-            const currentEmailAddress: string = currentEmailAddressString ?? newEmailAddress;
 
             try {
                 await client.modify(searchResult.searchEntries[0].dn, [
@@ -1075,7 +1067,7 @@ export class LdapClientService {
                         operation: 'replace',
                         modification: new Attribute({
                             type: LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
-                            values: [currentEmailAddress],
+                            values: [alternativEmailAddress ?? ''],
                         }),
                     }),
                 ]);
@@ -1083,8 +1075,8 @@ export class LdapClientService {
                     `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, username:${username}`,
                 );
                 this.eventService.publish(
-                    new LdapPersonEntryChangedEvent(personId, username, newEmailAddress, currentEmailAddress),
-                    new KafkaLdapPersonEntryChangedEvent(personId, username, newEmailAddress, currentEmailAddress),
+                    new LdapPersonEntryChangedEvent(personId, username, newEmailAddress, alternativEmailAddress),
+                    new KafkaLdapPersonEntryChangedEvent(personId, username, newEmailAddress, alternativEmailAddress),
                 );
 
                 return { ok: true, value: personId };

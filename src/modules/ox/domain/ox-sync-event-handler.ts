@@ -99,7 +99,7 @@ export class OxSyncEventHandler {
         };
     }
 
-    private async sync(personId: PersonID, username: PersonReferrer): Promise<void> {
+    public async sync(personId: PersonID, username: PersonReferrer): Promise<void> {
         await this.changeOxUser(personId, username, generateOxUserChangedEvent);
         await this.changeUsersGroups(personId, username);
     }

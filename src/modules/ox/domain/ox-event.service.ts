@@ -401,35 +401,6 @@ export class OxEventService {
         }
     }
 
-    public publishOxUserChangedEvent(
-        personId: PersonID,
-        username: PersonReferrer,
-        oxUserId: OXUserID,
-        oxUserName: OXUserName,
-        emailAddress: string,
-    ): void {
-        this.eventService.publish(
-            new OxUserChangedEvent(
-                personId,
-                username,
-                oxUserId,
-                oxUserName,
-                this.contextID,
-                this.contextName,
-                emailAddress,
-            ),
-            new KafkaOxUserChangedEvent(
-                personId,
-                username,
-                oxUserId,
-                oxUserName,
-                this.contextID,
-                this.contextName,
-                emailAddress,
-            ),
-        );
-    }
-
     public publishOxEmailAddressDeletedEvent(
         personId: PersonID | undefined,
         username: PersonReferrer | undefined,
