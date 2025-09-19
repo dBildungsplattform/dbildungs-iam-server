@@ -926,10 +926,19 @@ export class PersonRepository {
         }
     }
 
-    public async isPersonalnummerAlreadayAssigned(personalnummer: string): Promise<boolean> {
-        const person: Option<Loaded<PersonEntity, never, '*', never>> = await this.em.findOne(PersonEntity, {
-            personalnummer: personalnummer,
-        });
+    private async isPersonalnummerAlreadyAssigned(personalnummer: string, excludePersonId?: string): Promise<boolean> {
+        let person: Option<Loaded<PersonEntity, never, '*', never>>;
+
+        if (excludePersonId) {
+            person = await this.em.findOne(PersonEntity, {
+                personalnummer: personalnummer,
+                id: { $ne: excludePersonId },
+            });
+        } else {
+            person = await this.em.findOne(PersonEntity, {
+                personalnummer: personalnummer,
+            });
+        }
 
         return !!person;
     }
@@ -990,10 +999,13 @@ export class PersonRepository {
 
         //Update personalnummer
         if (personalnummer) {
+            // Check if person already has this personalnummer - no need to update
+            if (personFound.personalnummer === personalnummer) {
+            }
             if (!NameValidator.isNameValid(personalnummer)) {
                 return new PersonalNummerForPersonWithTrailingSpaceError();
             }
-            if (await this.isPersonalnummerAlreadayAssigned(personalnummer)) {
+            if (await this.isPersonalnummerAlreadyAssigned(personalnummer, personId)) {
                 return new DuplicatePersonalnummerError(`Personalnummer ${personalnummer} already exists.`);
             }
             newPersonalnummer = personalnummer;
