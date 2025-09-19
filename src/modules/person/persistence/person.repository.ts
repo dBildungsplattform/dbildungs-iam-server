@@ -926,19 +926,11 @@ export class PersonRepository {
         }
     }
 
-    private async isPersonalnummerAlreadyAssigned(personalnummer: string, excludePersonId?: string): Promise<boolean> {
-        let person: Option<Loaded<PersonEntity, never, '*', never>>;
-
-        if (excludePersonId) {
-            person = await this.em.findOne(PersonEntity, {
-                personalnummer: personalnummer,
-                id: { $ne: excludePersonId },
-            });
-        } else {
-            person = await this.em.findOne(PersonEntity, {
-                personalnummer: personalnummer,
-            });
-        }
+    private async isPersonalnummerAlreadyAssigned(personalnummer: string, excludePersonId: string): Promise<boolean> {
+        const person: Option<Loaded<PersonEntity>> = await this.em.findOne(PersonEntity, {
+            personalnummer: personalnummer,
+            id: { $ne: excludePersonId },
+        });
 
         return !!person;
     }
