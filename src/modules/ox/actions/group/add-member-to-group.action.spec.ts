@@ -27,7 +27,7 @@ describe('AddMemberToGroupAction', () => {
                 password: '',
             });
 
-            const body: AddMemberToGroupResponseBody = {};
+            const body: unknown = {};
             expect(action.parseBody(body)).toEqual({
                 ok: true,
                 value: {

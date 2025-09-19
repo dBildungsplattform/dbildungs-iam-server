@@ -14,9 +14,8 @@ jest.mock('../authentication/services/oidc-client.service.js', () => {
         tryGetClient: function (): Promise<BaseClient> {
             if (error === undefined) {
                 return Promise.resolve(createMock<BaseClient>());
-            } else if (typeof error === 'string') {
-                return Promise.reject(new Error(error));
             } else {
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                 return Promise.reject(error);
             }
         },
@@ -68,7 +67,9 @@ describe('Keycloak health indicator', () => {
             .then((r: HealthIndicatorResult) => r['Keycloak']);
         expect(checkResult).toBeDefined();
         expect(checkResult?.status).toBe('down');
-        expect(checkResult?.['message']).toBe('Keycloak does not seem to be up: something horrible happened');
+        expect(checkResult?.['message']).toBe(
+            'Keycloak does not seem to be up and there is no error message available',
+        );
         error = undefined;
     });
 });
