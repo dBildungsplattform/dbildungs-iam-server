@@ -41,7 +41,8 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
             const isAccessTokenActive: boolean = (await this.client.introspect(accessToken)).active;
             if (!isAccessTokenActive) {
                 // Do we have a refresh token and somewhere to store the result of the refresh?
-                const isRefreshTokenActive: boolean = refreshToken != undefined && (await this.client.introspect(refreshToken)).active;
+                const isRefreshTokenActive: boolean =
+                    refreshToken != undefined && (await this.client.introspect(refreshToken)).active;
                 if (refreshToken && isRefreshTokenActive && req.passportUser) {
                     try {
                         const tokens: TokenSet = await this.client.refresh(refreshToken);
@@ -63,7 +64,9 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                     if (!refreshToken) logoutReason = 'refreshToken is undefined';
                     if (!logoutReason && !isRefreshTokenActive) logoutReason = 'refresh token is inactive';
                     if (!logoutReason && !req.passportUser) logoutReason = 'passportUser is undefined';
-                    this.logger.info(`Attempting to logout user ${req.passportUser?.userinfo.sub} because ${logoutReason}`);
+                    this.logger.info(
+                        `Attempting to logout user ${req.passportUser?.userinfo.sub} because ${logoutReason}`,
+                    );
                     req.logout((err: unknown) => {
                         this.logger.logUnknownAsError('Logout Failed', err, false);
                         this.logger.error(`Logout of user ${req.passportUser?.userinfo.sub} failed`);
