@@ -38,9 +38,11 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
         }
 
         if (accessToken) {
-            if (!(await this.client.introspect(accessToken)).active)
-                if (refreshToken && (await this.client.introspect(refreshToken)).active && req.passportUser) {
-                    // Do we have a refresh token and somewhere to store the result of the refresh?
+            const isAccessTokenActive: boolean = (await this.client.introspect(accessToken)).active;
+            if (!isAccessTokenActive) {
+                // Do we have a refresh token and somewhere to store the result of the refresh?
+                const isRefreshTokenActive: boolean = refreshToken != undefined && (await this.client.introspect(refreshToken)).active;
+                if (refreshToken && isRefreshTokenActive && req.passportUser) {
                     try {
                         const tokens: TokenSet = await this.client.refresh(refreshToken);
                         if (tokens) {
@@ -57,10 +59,17 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                         }
                     }
                 } else {
+                    let logoutReason: string = '';
+                    if (!refreshToken) logoutReason = 'refreshToken is undefined';
+                    if (!logoutReason && !isRefreshTokenActive) logoutReason = 'refresh token is inactive';
+                    if (!logoutReason && !req.passportUser) logoutReason = 'passportUser is undefined';
+                    this.logger.info(`Attempting to logout user ${req.passportUser?.userinfo.sub} because ${logoutReason}`);
                     req.logout((err: unknown) => {
                         this.logger.logUnknownAsError('Logout Failed', err, false);
+                        this.logger.error(`Logout of user ${req.passportUser?.userinfo.sub} failed`);
                     });
                 }
+            }
         }
         next();
     }
