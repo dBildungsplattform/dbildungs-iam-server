@@ -999,7 +999,6 @@ export class PersonRepository {
 
         //Update personalnummer
         if (personalnummer) {
-
             if (!NameValidator.isNameValid(personalnummer)) {
                 return new PersonalNummerForPersonWithTrailingSpaceError();
             }
