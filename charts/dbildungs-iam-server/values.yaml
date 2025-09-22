@@ -258,7 +258,6 @@ redis:
   host: dbildungs-iam-redis-master.spsh.svc.cluster.local
 
 kafka:
-  kafka_broker: ""
   enabled: true
   sslEnabled: true
   sslCaPath: /tls/ca.pem

@@ -57,7 +57,6 @@ data:
   KAFKA_SSL_CERT_PATH: '{{ .Values.kafka.sslCertPath }}'
   KAFKA_SSL_KEY_PATH: '{{ .Values.kafka.sslKeyPath }}'
   KAFKA_TOPIC_PREFIX: '{{ .Release.Namespace }}-'
-  KAFKA_BROKER: '{{ .Values.kafka.kafka_broker }}'
   KAFKA_GROUP_ID: '{{ .Release.Namespace }}-group'
   KAFKA_SESSION_TIMEOUT: '{{ .Values.kafka.sessionTimeout }}'
   KAFKA_HEARTBEAT_INTERVAL: '{{ .Values.kafka.heartbeatInterval }}'
