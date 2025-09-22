@@ -166,8 +166,8 @@ backend:
       http: 80
   serviceMonitor:
     enabled: true
-    path: "/metrics"
-    interval: 30m
+    path: '/metrics'
+    interval: 1m
     endpoints:
       - port: "web"
   volumeMounts:
