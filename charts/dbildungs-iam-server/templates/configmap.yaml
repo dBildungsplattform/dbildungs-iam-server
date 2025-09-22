@@ -51,6 +51,7 @@ data:
   IMPORT_CSV_FILE_MAX_SIZE_IN_MB: '{{ .Values.import.csvFileMaxSizeInMB }}'
   IMPORT_CSV_MAX_NUMBER_OF_USERS: '{{ .Values.import.csvMaxNumberOfUsers }}'
   FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: '{{ .Values.featureFlags.befristungBearbeiten }}'
+  KAFKA_BROKER: '{{ .Values.kafka.kafka_broker }}'
   KAFKA_ENABLED: '{{ .Values.kafka.enabled }}'
   KAFKA_SSL_ENABLED: '{{ .Values.kafka.sslEnabled }}'
   KAFKA_SSL_CA_PATH: '{{ .Values.kafka.sslCaPath }}'
