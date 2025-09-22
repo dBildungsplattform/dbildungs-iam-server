@@ -14,24 +14,24 @@ export function mapAggregateToData(emailAddress: EmailAddress<boolean>): Require
         address: emailAddress.address,
         priority: emailAddress.priority,
         status: emailAddress.status,
-        markedForCron: emailAddress.markedForCron,
         spshPersonId: emailAddress.spshPersonId,
         oxUserId: oxUserIdStr,
+        markedForCron: emailAddress.markedForCron,
     };
 }
 
 function mapEntityToAggregate(entity: EmailAddressEntity): EmailAddress<boolean> {
-    return new EmailAddress(
-        entity.id,
-        entity.createdAt,
-        entity.updatedAt,
-        entity.address,
-        entity.priority,
-        entity.status,
-        entity.markedForCron,
-        entity.spshPersonId,
-        entity.oxUserId,
-    );
+    return EmailAddress.construct({
+        id: entity.id,
+        createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt,
+        address: entity.address,
+        priority: entity.priority,
+        status: entity.status,
+        spshPersonId: entity.spshPersonId,
+        oxUserId: entity.oxUserId,
+        markedForCron: entity.markedForCron,
+});
 }
 
 @Injectable()
@@ -49,6 +49,16 @@ export class EmailAddressRepo {
         );
 
         return !!emailAddressEntity;
+    }
+
+    public async findBySpshPersonIdSortedByPriorityAsc(spshPersonId: string): Promise<EmailAddress<true>[]> {
+        const emailAddressEntities: Option<EmailAddressEntity[]> = await this.em.find(
+            EmailAddressEntity,
+            { spshPersonId: { $eq: spshPersonId } },
+            { orderBy: { priority: 'asc' } },
+        );
+
+        return emailAddressEntities.map(mapEntityToAggregate);
     }
 
     public async save(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {

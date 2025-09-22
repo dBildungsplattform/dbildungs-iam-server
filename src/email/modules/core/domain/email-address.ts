@@ -8,53 +8,53 @@ export class EmailAddress<WasPersisted extends boolean> {
         public address: string,
         public priority: number,
         public status: EmailAddressStatus,
-        public markedForCron?: Date,
         public spshPersonId?: string,
         public oxUserId?: string,
+        public markedForCron?: Date,
     ) {}
 
-    public static construct(
-        id: string,
-        createdAt: Date,
-        updatedAt: Date,
-        address: string,
-        priority: number,
-        status: EmailAddressStatus,
-        markedForCron?: Date,
-        spshPersonId?: string,
-        oxUserId?: string,
-    ): EmailAddress<true> {
+    public static construct(params: {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        address: string;
+        priority: number;
+        status: EmailAddressStatus;
+        spshPersonId?: string;
+        oxUserId?: string;
+        markedForCron?: Date;
+    }): EmailAddress<true> {
         return new EmailAddress(
-            id,
-            createdAt,
-            updatedAt,
-            address,
-            priority,
-            status,
-            markedForCron,
-            spshPersonId,
-            oxUserId,
+            params.id,
+            params.createdAt,
+            params.updatedAt,
+            params.address,
+            params.priority,
+            params.status,
+            params.spshPersonId,
+            params.oxUserId,
+            params.markedForCron,
         );
     }
 
-    public static createNew(
-        address: string,
-        priority: number,
-        status: EmailAddressStatus,
-        markedForCron?: Date,
-        spshPersonId?: string,
-        oxUserId?: string,
-    ): EmailAddress<false> {
+    public static createNew(params: {
+        address: string;
+        priority: number;
+        status: EmailAddressStatus;
+        spshPersonId?: string;
+        oxUserId?: string;
+        markedForCron?: Date;
+    }): EmailAddress<false> {
         return new EmailAddress(
             undefined,
             undefined,
             undefined,
-            address,
-            priority,
-            status,
-            markedForCron,
-            spshPersonId,
-            oxUserId,
+            params.address,
+            params.priority,
+            params.status,
+            params.spshPersonId,
+            params.oxUserId,
+            params.markedForCron,
         );
     }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiInternalServerErrorResponse,
@@ -9,24 +9,24 @@ import {
 } from '@nestjs/swagger';
 
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
-import { ClassLogger } from '../../../../../core/logging/class-logger.js';
+import { SetEmailAddressForSpshPersonParams } from '../dtos/params/set-email-addess-for-spsh-person.params.js';
+import { SetEmailAddressForSpshPersonService } from '../../domain/set-email-address-for-spsh-person.service.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
 @Controller({ path: 'write' })
 export class EmailWriteController {
-    public constructor(private readonly logger: ClassLogger) {}
+    public constructor(private readonly setEmailAddressForSpshPersonService: SetEmailAddressForSpshPersonService) {}
 
-    @Get(':personId')
-    @ApiOperation({ description: 'Get email-addresses by personId.' })
+    @Post('set-email-for-person')
+    @ApiOperation({ description: 'Set email-address for a person.' })
     @ApiOkResponse({
-        description: 'The email-addresses for corresponding person were successfully returned.',
+        description: 'The email-address for the corresponding person was successfully set.',
         type: [EmailAddressResponse],
     })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting email-addresses by personId.' })
-    public async setEmailForPerson(
-    ): Promise<void> {
-       return;
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while setting email-address for person.' })
+    public async setEmailForPerson(@Body() params: SetEmailAddressForSpshPersonParams): Promise<void> {
+        return this.setEmailAddressForSpshPersonService.setEmailAddressForSpshPerson(params);
     }
 }

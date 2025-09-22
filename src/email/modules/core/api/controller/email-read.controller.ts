@@ -34,17 +34,17 @@ export class EmailReadController {
     ): Promise<EmailAddressResponse[]> {
         //currently just a dummy
         this.logger.info(`PersonId:${findEmailAddressByPersonIdParams.spshPersonId}`);
-        const emailAddress: EmailAddress<true> = EmailAddress.construct(
-            '0',
-            new Date(),
-            new Date(),
-            'test@schule-sh.de',
-            0,
-            EmailAddressStatus.ACTIVE,
-            undefined,
-            undefined,
-            undefined,
-        );
+        const emailAddress: EmailAddress<true> = EmailAddress.construct({
+            id: '0',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            address: 'test@schule-sh.de',
+            priority: 0,
+            status: EmailAddressStatus.ACTIVE,
+            spshPersonId: undefined,
+            oxUserId: undefined,
+            markedForCron: undefined,
+    });
 
         const response: EmailAddressResponse = new EmailAddressResponse(emailAddress);
         return [response];
