@@ -10,7 +10,9 @@ export class ServiceProviderVerfuegbarFuerRollenerweiterung extends CompositeSpe
 
     public async isSatisfiedBy(rollenerweiterung: Rollenerweiterung<boolean>): Promise<boolean> {
         const serviceProvider: Option<ServiceProvider<true>> = await rollenerweiterung.getServiceProvider();
-        if (!serviceProvider) return false;
+        if (!serviceProvider) {
+            return false;
+        }
         return serviceProvider.merkmale.includes(ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG);
     }
 }

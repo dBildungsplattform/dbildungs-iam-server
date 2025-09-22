@@ -311,8 +311,11 @@ describe('RollenerweiterungRepo', () => {
             );
             rollen = (await Promise.all(makeN(() => rolleRepo.save(DoFactory.createRolle(false)), 3))).filter(
                 (rolle: Rolle<true> | DomainError): rolle is Rolle<true> => {
-                    if (rolle instanceof Rolle) return true;
-                    else throw rolle;
+                    if (rolle instanceof Rolle) {
+                        return true;
+                    } else {
+                        throw rolle;
+                    }
                 },
             );
             serviceProviders = await Promise.all(
@@ -344,7 +347,9 @@ describe('RollenerweiterungRepo', () => {
                 ),
             );
             for (const result of results) {
-                if (!result.ok) throw result.error;
+                if (!result.ok) {
+                    throw result.error;
+                }
             }
         });
 

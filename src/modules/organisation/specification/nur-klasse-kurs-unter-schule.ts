@@ -23,16 +23,24 @@ export class NurKlasseKursUnterSchule extends CompositeSpecification<Organisatio
     }
 
     private async validateAdministriertVon(t: Organisation<true>): Promise<boolean> {
-        if (!t.administriertVon) return true;
+        if (!t.administriertVon) {
+            return true;
+        }
         const parent: Option<Organisation<true>> = await this.organisationRepo.findById(t.administriertVon);
-        if (!parent) return true;
+        if (!parent) {
+            return true;
+        }
         return !(parent.typ === OrganisationsTyp.SCHULE);
     }
 
     private async validateZugehoerigZu(t: Organisation<true>): Promise<boolean> {
-        if (!t.zugehoerigZu) return true;
+        if (!t.zugehoerigZu) {
+            return true;
+        }
         const parent: Option<Organisation<true>> = await this.organisationRepo.findById(t.zugehoerigZu);
-        if (!parent) return true;
+        if (!parent) {
+            return true;
+        }
         return !(parent.typ === OrganisationsTyp.SCHULE);
     }
 }

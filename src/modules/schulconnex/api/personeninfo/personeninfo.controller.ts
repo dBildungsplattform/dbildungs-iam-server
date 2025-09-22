@@ -1,4 +1,4 @@
-import { Controller, Get, UseFilters } from '@nestjs/common';
+import { Controller, Headers, Get, UseFilters } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiOAuth2,
@@ -8,7 +8,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Headers } from '@nestjs/common';
 import { Permissions } from '../../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';

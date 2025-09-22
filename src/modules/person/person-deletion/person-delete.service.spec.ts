@@ -79,6 +79,7 @@ describe('PersonDeleteService', () => {
             it('should log error', async () => {
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
                     createMock<Personenkontext<true>>({
+                        id: 'dummy-id',
                         // eslint-disable-next-line @typescript-eslint/require-await
                         async getRolle(): Promise<Option<Rolle<true>>> {
                             return undefined;
@@ -94,7 +95,7 @@ describe('PersonDeleteService', () => {
                 expect(res.ok).toBeFalsy();
                 expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
                     'Error while loading Kontexts of person to delete',
-                    undefined,
+                    new Error(`Rolle not found for Personenkontext dummy-id`),
                 );
             });
         });
@@ -103,9 +104,8 @@ describe('PersonDeleteService', () => {
             it('should log error', async () => {
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
                     createMock<Personenkontext<true>>({
-                        // eslint-disable-next-line @typescript-eslint/require-await
                         async getRolle(): Promise<Option<Rolle<true>>> {
-                            return Promise.reject('reason');
+                            return Promise.reject(new Error('reason'));
                         },
                     }),
                 ]);
@@ -118,7 +118,7 @@ describe('PersonDeleteService', () => {
                 expect(res.ok).toBeFalsy();
                 expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
                     'Error while loading Kontexts of person to delete',
-                    'reason',
+                    new Error('reason'),
                 );
             });
         });

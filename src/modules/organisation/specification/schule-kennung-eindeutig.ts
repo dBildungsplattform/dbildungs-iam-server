@@ -11,7 +11,9 @@ export class SchuleKennungEindeutig extends CompositeSpecification<Organisation<
     }
 
     public async isSatisfiedBy(organisation: Organisation<boolean>): Promise<boolean> {
-        if (organisation.typ !== OrganisationsTyp.SCHULE) return true;
+        if (organisation.typ !== OrganisationsTyp.SCHULE) {
+            return true;
+        }
         return this.validateSchuleKennungIsUnique(organisation);
     }
 

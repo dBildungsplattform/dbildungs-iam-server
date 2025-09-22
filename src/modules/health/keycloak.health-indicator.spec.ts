@@ -15,6 +15,7 @@ jest.mock('../authentication/services/oidc-client.service.js', () => {
             if (error === undefined) {
                 return Promise.resolve(createMock<BaseClient>());
             } else {
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                 return Promise.reject(error);
             }
         },

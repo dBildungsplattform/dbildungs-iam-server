@@ -44,8 +44,9 @@ describe('DbInitConsole', () => {
 
         describe('when database is not available', () => {
             beforeAll(async () => {
-                if (await orm.getSchemaGenerator().ensureDatabase())
+                if (await orm.getSchemaGenerator().ensureDatabase()) {
                     await orm.getSchemaGenerator().dropDatabase(configService.getOrThrow<DbConfig>('DB').DB_NAME);
+                }
             });
 
             it('should create and initialize database with schema', async () => {

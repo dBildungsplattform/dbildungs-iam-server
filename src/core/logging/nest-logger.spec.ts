@@ -28,7 +28,7 @@ describe('The nest Logger', () => {
             expect(
                 moduleLogger
                     .getLogger()
-                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] == 'log'),
+                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] === 'log'),
             );
         });
 
@@ -41,7 +41,7 @@ describe('The nest Logger', () => {
             expect(
                 moduleLogger
                     .getLogger()
-                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] == 'debug'),
+                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] === 'debug'),
             );
         });
 
@@ -54,7 +54,7 @@ describe('The nest Logger', () => {
             expect(
                 moduleLogger
                     .getLogger()
-                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] == 'error'),
+                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] === 'error'),
             );
         });
 
@@ -67,7 +67,7 @@ describe('The nest Logger', () => {
             expect(
                 moduleLogger
                     .getLogger()
-                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] == 'warn'),
+                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] === 'warn'),
             );
         });
 
@@ -80,7 +80,7 @@ describe('The nest Logger', () => {
             expect(
                 moduleLogger
                     .getLogger()
-                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[1] == 'verbose'),
+                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[1] === 'verbose'),
             );
         });
     });

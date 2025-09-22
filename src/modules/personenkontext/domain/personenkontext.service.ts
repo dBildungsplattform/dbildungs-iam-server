@@ -19,7 +19,7 @@ export class PersonenkontextService {
 
     public async findAllPersonenkontexte(
         personenkontext: PersonenkontextQueryParams,
-        organisationIDs?: OrganisationID[] | undefined,
+        organisationIDs?: OrganisationID[],
         offset?: number,
         limit?: number,
     ): Promise<Paged<Personenkontext<true>>> {

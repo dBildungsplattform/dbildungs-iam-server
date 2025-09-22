@@ -123,7 +123,7 @@ describe(`VidisService`, () => {
 
         it(`should throw an error if getActivatedAngeboteByRegion throws a non-Error object`, async () => {
             httpServiceMock.get.mockImplementation(() => {
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                // eslint-disable-next-line @typescript-eslint/only-throw-error
                 throw 'This is a non-Error throw';
             });
 

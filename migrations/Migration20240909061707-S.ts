@@ -1,9 +1,8 @@
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20240909061707 extends Migration {
-
     public up(): void {
-        this.addSql('create type "email_address_status_enum" as enum (\'ENABLED\', \'DISABLED\', \'REQUESTED\');');
+        this.addSql("create type \"email_address_status_enum\" as enum ('ENABLED', 'DISABLED', 'REQUESTED');");
 
         this.addSql('alter table "email_address" add column "status" "email_address_status_enum" null;');
 
@@ -14,7 +13,6 @@ export class Migration20240909061707 extends Migration {
     }
 
     public override down(): void {
-
         this.addSql('alter table "email_address" add column "enabled" boolean not null;');
 
         this.addSql("UPDATE email_address SET enabled = true WHERE status = 'ENABLED';");
@@ -25,5 +23,4 @@ export class Migration20240909061707 extends Migration {
 
         this.addSql('drop type "email_address_status_enum";');
     }
-
 }

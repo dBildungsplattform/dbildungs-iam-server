@@ -46,7 +46,9 @@ export class UserLockRepository {
     public async findByPersonIds(personIds: PersonID[]): Promise<Map<PersonID, UserLock[]>> {
         const result: Map<PersonID, UserLock[]> = new Map<PersonID, UserLock[]>();
 
-        if (personIds.length === 0) return result;
+        if (personIds.length === 0) {
+            return result;
+        }
 
         const userLockEntities: UserLockEntity[] = await this.em.find(UserLockEntity, {
             person: { $in: personIds },

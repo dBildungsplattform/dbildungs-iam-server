@@ -145,9 +145,11 @@ describe('UsernameGeneratorService', () => {
 
     it('should increment the counter when a username would exist more than twice', async () => {
         kcUserService.findOne.mockImplementation((userFilter: FindUserFilter) => {
-            if (userFilter.username == 'mmeyer' || userFilter.username == 'mmeyer1') {
+            if (userFilter.username === 'mmeyer' || userFilter.username === 'mmeyer1') {
                 return Promise.resolve({ ok: true, value: createMock<User<true>>() });
-            } else return Promise.resolve({ ok: false, error: new EntityNotFoundError('Not found') });
+            } else {
+                return Promise.resolve({ ok: false, error: new EntityNotFoundError('Not found') });
+            }
         });
         const generatedUsername: Result<string, DomainError> = await service.generateUsername('Max', 'Meyer');
         expect(loggerMock.info).toHaveBeenLastCalledWith(`Next Available Username Is:mmeyer2`);

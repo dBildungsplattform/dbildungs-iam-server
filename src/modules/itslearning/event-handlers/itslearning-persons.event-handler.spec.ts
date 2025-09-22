@@ -23,7 +23,7 @@ import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
 import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { ItsLearningPersonsEventHandler } from './itslearning-persons.event-handler.js';
 
-function makeKontextEventData(props?: Partial<PersonenkontextUpdatedData> | undefined): PersonenkontextUpdatedData {
+function makeKontextEventData(props?: Partial<PersonenkontextUpdatedData>): PersonenkontextUpdatedData {
     return {
         id: props?.id ?? faker.string.uuid(),
         orgaId: props?.orgaId ?? faker.string.uuid(),
@@ -307,7 +307,6 @@ describe('ItsLearning Persons Event Handler', () => {
 
         describe('when person is invalid', () => {
             it('should log error, if person has no referrer', async () => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { username, ...personWithoutReferrer }: PersonenkontextUpdatedPersonData = person;
                 const eventID: string = faker.string.uuid();
 

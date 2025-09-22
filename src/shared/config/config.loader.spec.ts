@@ -315,7 +315,7 @@ describe('configloader', () => {
                 const existsSyncSpy: jest.SpyInstance = jest
                     .spyOn(fs, 'existsSync')
                     .mockImplementation((name: PathLike): boolean => {
-                        if (name == './config/secrets.json') {
+                        if (name === './config/secrets.json') {
                             return false;
                         }
                         fail(`Unknown file ${name.toString()}`);
@@ -415,7 +415,7 @@ describe('configloader', () => {
                 const existsSyncSpy: jest.SpyInstance = jest
                     .spyOn(fs, 'existsSync')
                     .mockImplementation((name: PathLike): boolean => {
-                        if (name == './config/email-secrets.json') {
+                        if (name === './config/email-secrets.json') {
                             return false;
                         }
                         fail(`Unknown file ${name.toString()}`);
