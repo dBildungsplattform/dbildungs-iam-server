@@ -106,4 +106,9 @@
     secretKeyRef:
         name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
         key: import-passphrase-secret
+- name: KAFKA_BROKER
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.kafka.existingSecret "" }}
+        key: kafka_broker
 {{- end}}

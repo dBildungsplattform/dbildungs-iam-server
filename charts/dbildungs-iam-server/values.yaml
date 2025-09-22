@@ -272,6 +272,7 @@ kafka:
     repository: docker.io/bitnami/kafka
     tag: "3.9.0"
     pullPolicy: Always
+  existingSecret: dbildungs-iam-kafka-tls
 
 autoscaling:
   enabled: false
