@@ -60,7 +60,7 @@ export class SetEmailAddressForSpshPersonService {
         const createdEmail: EmailAddress<false> = EmailAddress.createNew({
             address: generationResult.value,
             priority: 0,
-            status: EmailAddressStatus.ACTIVE,
+            status: EmailAddressStatus.PENDING,
             spshPersonId: spshPersonId,
             oxUserId: undefined,
             markedForCron: undefined,

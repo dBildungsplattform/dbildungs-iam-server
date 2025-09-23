@@ -2,11 +2,7 @@ import { DateTimeType, Entity, Enum, Index, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../../persistence/timestamped.entity.js';
 
 export enum EmailAddressStatus {
-    REQUESTED = 'REQUESTED',
-    ACTIVE = 'ACTIVE',
-    DEACTIVE = 'DEACTIVE',
-    UNASSIGNED = 'UNASSIGNED',
-    FAILED = 'FAILED',
+    PENDING = 'PENDING',
 }
 
 @Entity({ schema: 'email', tableName: 'address' })
