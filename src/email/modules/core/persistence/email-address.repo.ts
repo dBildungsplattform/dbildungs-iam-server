@@ -1,12 +1,12 @@
 import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
-import { EmailAddressEntity } from './email-address.entity.js';
+import { MailAddressEntity } from './email-address.entity.js';
 import { EmailAddress } from '../domain/email-address.js';
 import { DomainError } from '../../../../shared/error/index.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 
-export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddressEntity> {
+export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<MailAddressEntity> {
     const oxUserIdStr: string | undefined = emailAddress.oxUserId ? emailAddress.oxUserId + '' : undefined;
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
@@ -20,7 +20,7 @@ export function mapAggregateToData(emailAddress: EmailAddress<boolean>): Require
     };
 }
 
-function mapEntityToAggregate(entity: EmailAddressEntity): EmailAddress<boolean> {
+function mapEntityToAggregate(entity: MailAddressEntity): EmailAddress<boolean> {
     return EmailAddress.construct({
         id: entity.id,
         createdAt: entity.createdAt,
@@ -42,8 +42,8 @@ export class EmailAddressRepo {
     ) {}
 
     public async existsEmailAddress(address: string): Promise<boolean> {
-        const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
-            EmailAddressEntity,
+        const emailAddressEntity: Option<MailAddressEntity> = await this.em.findOne(
+            MailAddressEntity,
             { address: address },
             {},
         );
@@ -52,8 +52,8 @@ export class EmailAddressRepo {
     }
 
     public async findBySpshPersonIdSortedByPriorityAsc(spshPersonId: string): Promise<EmailAddress<true>[]> {
-        const emailAddressEntities: Option<EmailAddressEntity[]> = await this.em.find(
-            EmailAddressEntity,
+        const emailAddressEntities: Option<MailAddressEntity[]> = await this.em.find(
+            MailAddressEntity,
             { spshPersonId: { $eq: spshPersonId } },
             { orderBy: { priority: 'asc' } },
         );
@@ -70,8 +70,8 @@ export class EmailAddressRepo {
     }
 
     private async create(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {
-        const emailAddressEntity: EmailAddressEntity = this.em.create(
-            EmailAddressEntity,
+        const emailAddressEntity: MailAddressEntity = this.em.create(
+            MailAddressEntity,
             mapAggregateToData(emailAddress),
         );
         await this.em.persistAndFlush(emailAddressEntity);
@@ -80,7 +80,7 @@ export class EmailAddressRepo {
     }
 
     private async update(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {
-        const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(EmailAddressEntity, {
+        const emailAddressEntity: Option<MailAddressEntity> = await this.em.findOne(MailAddressEntity, {
             id: emailAddress.id,
         });
 

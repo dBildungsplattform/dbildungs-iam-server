@@ -6,7 +6,7 @@ export enum EmailAddressStatus {
 }
 
 @Entity({ schema: 'email', tableName: 'address' })
-export class EmailAddressEntity extends TimestampedEntity {
+export class MailAddressEntity extends TimestampedEntity { //Cannot be Named EmailAddressEntity for now due to ERROR [ExceptionHandler] Duplicate entity names are not allowed: EmailAddressEntity
     @Property({ nullable: false, unique: true })
     public address!: string;
 

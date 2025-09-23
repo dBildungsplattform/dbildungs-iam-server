@@ -40,7 +40,7 @@ export class EmailReadController {
             updatedAt: new Date(),
             address: 'test@schule-sh.de',
             priority: 0,
-            status: EmailAddressStatus.ACTIVE,
+            status: EmailAddressStatus.PENDING,
             spshPersonId: undefined,
             oxUserId: undefined,
             markedForCron: undefined,
