@@ -1,4 +1,4 @@
-import { HeadersObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
+import { HeadersObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface.js';
 
 export enum PagingHeaders {
     OFFSET = 'X-Paging-Offset',

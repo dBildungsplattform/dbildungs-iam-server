@@ -1,8 +1,8 @@
 import { Injectable, StreamableFile } from '@nestjs/common';
-import { StreamableFileOptions } from '@nestjs/common/file-stream/interfaces';
 import { Readable } from 'stream';
 
 import { ClassLogger } from '../../core/logging/class-logger.js';
+import { StreamableFileOptions } from '@nestjs/common/file-stream/interfaces/streamable-options.interface.js';
 
 @Injectable()
 export class StreamableFileFactory {
