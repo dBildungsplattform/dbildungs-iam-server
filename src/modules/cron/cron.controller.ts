@@ -469,7 +469,11 @@ export class CronController {
                     ),
                 );
             }
-            await this.emailAddressDeletionService.deleteEmailAddresses(permissions);
+
+            const { processed, total }: { processed: number, total: number} = await this.emailAddressDeletionService.deleteEmailAddresses(permissions, this.config.EMAIL_ADDRESSES_DELETE_LIMIT);
+            this.logger.info(
+                `Es wurden ${processed}/${total} Email-Adressen zur Löschung markiert. Zur vollständigen Bereinigung sind ${Math.ceil(total / this.config.EMAIL_ADDRESSES_DELETE_LIMIT)} Durchläufe notwendig.`,
+            );
 
             return;
         } catch (error) {

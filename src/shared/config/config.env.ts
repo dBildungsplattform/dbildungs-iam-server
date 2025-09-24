@@ -150,5 +150,6 @@ export default (): Config => ({
     },
     CRON: {
         PERSON_WITHOUT_ORG_LIMIT: envToOptionalInteger('CRON_PERSON_WITHOUT_ORG_LIMIT'),
+        EMAIL_ADDRESSES_DELETE_LIMIT: envToOptionalInteger('CRON_EMAIL_ADDRESSES_DELETE_LIMIT')
     },
 });

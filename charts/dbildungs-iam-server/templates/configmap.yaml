@@ -63,4 +63,5 @@ data:
   KAFKA_HEARTBEAT_INTERVAL: '{{ .Values.kafka.heartbeatInterval }}'
   REDIS_HOST: '{{ .Values.redis.host }}'
   CRON_PERSON_WITHOUT_ORG_LIMIT: '{{ .Values.cron.personWithoutOrgLimit }}'
+  CRON_EMAIL_ADDRESSES_DELETE_LIMIT: '{{ .Values.cron.emailAddressesDeleteLimit }}'
   FEATURE_FLAG_ROLLE_ERWEITERN: '{{ .Values.featureFlags.rolleErweitern }}'

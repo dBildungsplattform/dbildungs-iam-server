@@ -13,6 +13,8 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import assert from 'assert';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 
+const EMAIL_ADDRESSES_DELETE_LIMIT = 10;
+
 describe('EmailAddressDeletionService', () => {
     let module: TestingModule;
     let sut: EmailAddressDeletionService;
@@ -155,11 +157,11 @@ describe('EmailAddressDeletionService', () => {
                     undefined,
                 );
                 emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline.mockResolvedValueOnce(
-                    emailAddresses.concat([emailAddressWithUnknownPersonId]),
+                    [emailAddresses.concat([emailAddressWithUnknownPersonId]), emailAddresses.length + 1],
                 );
                 personRepositoryMock.findByIds.mockResolvedValueOnce(persons);
 
-                await sut.deleteEmailAddresses(permissionsMock);
+                await sut.deleteEmailAddresses(permissionsMock, EMAIL_ADDRESSES_DELETE_LIMIT);
 
                 expect(emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.findByIds).toHaveBeenCalledTimes(1);
@@ -174,12 +176,12 @@ describe('EmailAddressDeletionService', () => {
                 const [persons, emailAddresses]: [Person<true>[], EmailAddress<true>[]] =
                     createPersonsAndEmailAddresses();
                 const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
-                emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline.mockResolvedValueOnce(emailAddresses);
+                emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline.mockResolvedValueOnce([emailAddresses, emailAddresses.length] );
                 const removed: Person<true> | undefined = persons.pop();
                 assert(removed);
                 personRepositoryMock.findByIds.mockResolvedValueOnce(persons);
 
-                await sut.deleteEmailAddresses(permissionsMock);
+                await sut.deleteEmailAddresses(permissionsMock, EMAIL_ADDRESSES_DELETE_LIMIT);
 
                 expect(emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.findByIds).toHaveBeenCalledTimes(1);
@@ -201,11 +203,11 @@ describe('EmailAddressDeletionService', () => {
                     persons[0],
                 );
                 emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline.mockResolvedValueOnce(
-                    emailAddresses.concat([emailAddressWithoutOxUserId]),
+                    [emailAddresses.concat([emailAddressWithoutOxUserId]), emailAddresses.length + 1],
                 );
                 personRepositoryMock.findByIds.mockResolvedValueOnce(persons);
 
-                await sut.deleteEmailAddresses(permissionsMock);
+                await sut.deleteEmailAddresses(permissionsMock, EMAIL_ADDRESSES_DELETE_LIMIT);
 
                 expect(emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.findByIds).toHaveBeenCalledTimes(1);
