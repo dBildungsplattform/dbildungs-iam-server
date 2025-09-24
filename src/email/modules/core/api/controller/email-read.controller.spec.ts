@@ -12,7 +12,7 @@ import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-
 import { faker } from '@faker-js/faker';
 import assert from 'assert';
 
-describe('Rolle API with mocked ServiceProviderRepo', () => {
+describe('Email Read Controller', () => {
     let emailReadController: EmailReadController;
 
     beforeAll(async () => {
@@ -35,7 +35,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
     });
 
     describe('/GET EmailAddresses for personId, findEmailAddressesByPersonId', () => {
-        it('should throw an HTTP exception when rolleFactory.createNew returns DomainError', async () => {
+        it('should return dummy response', async () => {
             const params: FindEmailAddressBySpshPersonIdParams = {
                 spshPersonId: faker.string.uuid(),
             };
