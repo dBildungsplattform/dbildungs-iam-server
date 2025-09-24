@@ -283,7 +283,7 @@ describe('ClassLogger', () => {
                 expect(loggerMock.log).toHaveBeenCalledWith(
                     'error',
                     createTestMessage(
-                        errorMessage + ' - ' + `${entityNotFoundError.message}`,
+                        errorMessage + ' - ' + `${entityNotFoundError.name}: ${entityNotFoundError.message}`,
                         entityNotFoundError.stack,
                     ),
                 );

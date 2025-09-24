@@ -6,6 +6,10 @@ metadata:
   namespace: {{ template "common.names.namespace" . }}
   labels: {{- include "common.labels" . | nindent 4 }}
 data:
-  KAFKA_URL: "{{ $.Values.kafka.url }}"
   KAFKA_TOPIC_PREFIX: '{{ .Release.Namespace }}-'
   KAFKA_TOPIC_PARTITIONS: '{{ .Values.kafka.topicPartitions }}'
+  KAFKA_TOPIC_REPLICATIONS: '{{ .Values.kafka.topicReplications }}'
+  KAFKA_SSL_ENABLED: '{{ .Values.kafka.sslEnabled }}'
+  KAFKA_SSL_CA_PATH: '{{ .Values.kafka.sslCaPath }}'
+  KAFKA_SSL_CERT_PATH: '{{ .Values.kafka.sslCertPath }}'
+  KAFKA_SSL_KEY_PATH: '{{ .Values.kafka.sslKeyPath }}'
