@@ -122,7 +122,7 @@ export class ClassLogger extends Logger {
      */
     public logUnknownAsError(message: string, error: unknown, warnWhenErrorIsUndefined: boolean = true): void {
         if (this.instanceOfError(error, warnWhenErrorIsUndefined)) {
-            this.error(message + ' - ' + error.message, error.stack);
+            this.error(message + ` - ${error.name}: ${error.message}`, error.stack);
         } else {
             this.error(message + ' - ' + inspect(error, false, 2, false), undefined);
         }
