@@ -22,13 +22,16 @@ export class EmailAddressDeletionService {
         private readonly eventService: EventRoutingLegacyKafkaService,
     ) {}
 
-/**
- *
- * @param permissions
- * @param limit
- * @returns { processed: number; total: number } - processed: number of email addresses processed in this run, total: total number of email addresses that are marked for deletion or exceeded the deadline
- */
-    public async deleteEmailAddresses(permissions: PersonPermissions, limit: number): Promise<{ processed: number; total: number }> {
+    /**
+     *
+     * @param permissions
+     * @param limit
+     * @returns { processed: number; total: number } - processed: number of email addresses processed in this run, total: total number of email addresses that are marked for deletion or exceeded the deadline
+     */
+    public async deleteEmailAddresses(
+        permissions: PersonPermissions,
+        limit: number,
+    ): Promise<{ processed: number; total: number }> {
         const [nonPrimaryEmailAddresses, total]: [EmailAddress<true>[], number] =
             await this.emailRepo.getByDeletedStatusOrUpdatedAtExceedsDeadline(limit);
         const affectedPersonIds: (PersonID | undefined)[] = nonPrimaryEmailAddresses.map(

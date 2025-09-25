@@ -611,7 +611,8 @@ describe('EmailRepo', () => {
                     today,
                 );
 
-                const [deleteList, total]: Counted<EmailAddress<true>> = await sut.getByDeletedStatusOrUpdatedAtExceedsDeadline(10);
+                const [deleteList, total]: Counted<EmailAddress<true>> =
+                    await sut.getByDeletedStatusOrUpdatedAtExceedsDeadline(10);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Fetching EmailAddresses For Deletion, deadlineInDays:${100}`,
@@ -669,7 +670,8 @@ describe('EmailRepo', () => {
         describe('when emailInstanceConfig does NOT provide NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS', () => {
             it('should use NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS_DEFAULT of 180 days', async () => {
                 instanceConfig.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS = undefined;
-                const [deleteList, ]: Counted<EmailAddress<true>> = await sut.getByDeletedStatusOrUpdatedAtExceedsDeadline(10);
+                const [deleteList]: Counted<EmailAddress<true>> =
+                    await sut.getByDeletedStatusOrUpdatedAtExceedsDeadline(10);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Fetching EmailAddresses For Deletion, deadlineInDays:${180}`,
