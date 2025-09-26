@@ -274,7 +274,7 @@ export class PersonRepository {
         const entities: PersonEntity[] = await this.em.find(PersonEntity, {
             emailAddresses: {
                 address: email,
-                status: EmailAddressStatus.ENABLED,
+                status: { $in: [EmailAddressStatus.ENABLED, EmailAddressStatus.DISABLED] },
             },
         });
 
