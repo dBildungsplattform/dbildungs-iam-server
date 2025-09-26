@@ -1465,31 +1465,31 @@ describe('PersonRepository Integration', () => {
     });
 
     describe('findByPrimaryEmailAddress', () => {
-        it.each([
-            [EmailAddressStatus.ENABLED],
-            [EmailAddressStatus.DISABLED]
-        ])('should return persons with matching email addresses in status %s', async (status: EmailAddressStatus) => {
-            const person1: Person<true> = DoFactory.createPerson(true);
-            const personEntity: PersonEntity = new PersonEntity();
-            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
-            person1.id = personEntity.id;
-            const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-            emailAddressEntity.address = 'test@example.com';
-            emailAddressEntity.status = status;
-            emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
-            const differentEmailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-            differentEmailAddressEntity.address = 'test-other@example.com';
-            differentEmailAddressEntity.status = status;
-            differentEmailAddressEntity.personId = ref(PersonEntity, personEntity.id);
-            await em.persistAndFlush([emailAddressEntity, differentEmailAddressEntity]);
-            personEntity.emailAddresses.add(emailAddressEntity, differentEmailAddressEntity);
-            await em.persistAndFlush(personEntity);
+        it.each([[EmailAddressStatus.ENABLED], [EmailAddressStatus.DISABLED]])(
+            'should return persons with matching email addresses in status %s',
+            async (status: EmailAddressStatus) => {
+                const person1: Person<true> = DoFactory.createPerson(true);
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
+                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+                emailAddressEntity.address = 'test@example.com';
+                emailAddressEntity.status = status;
+                emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+                const differentEmailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+                differentEmailAddressEntity.address = 'test-other@example.com';
+                differentEmailAddressEntity.status = status;
+                differentEmailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+                await em.persistAndFlush([emailAddressEntity, differentEmailAddressEntity]);
+                personEntity.emailAddresses.add(emailAddressEntity, differentEmailAddressEntity);
+                await em.persistAndFlush(personEntity);
 
-            const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
+                const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
 
-            expect(result).toHaveLength(1);
-            expect(result[0]?.id).toBe(person1.id);
-        });
+                expect(result).toHaveLength(1);
+                expect(result[0]?.id).toBe(person1.id);
+            },
+        );
 
         it('should return empty list if no enabled/disabled email found', async () => {
             const person1: Person<true> = DoFactory.createPerson(true);
@@ -1503,12 +1503,12 @@ describe('PersonRepository Integration', () => {
                 EmailAddressStatus.FAILED,
                 EmailAddressStatus.REQUESTED,
             ].map((status: EmailAddressStatus) => {
-             const emailAddressEntity: EmailAddressEntity =   new EmailAddressEntity();
-            emailAddressEntity.address = `test-${status}@example.com`;
-            emailAddressEntity.status = status;
-            emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
-            return emailAddressEntity;
-            })
+                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+                emailAddressEntity.address = `test-${status}@example.com`;
+                emailAddressEntity.status = status;
+                emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+                return emailAddressEntity;
+            });
             await em.persistAndFlush(emailAddressEntities);
             personEntity.emailAddresses.add(emailAddressEntities);
             await em.persistAndFlush(personEntity);
