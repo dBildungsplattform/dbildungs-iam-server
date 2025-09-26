@@ -13,7 +13,6 @@ export class SetEmailAddressForSpshPersonParams {
     public readonly spshPersonId!: string;
 
     @IsString()
-    @IsUUID()
     @IsNotEmpty()
     @ApiProperty({
         description: 'The first name of the person in spsh.',
@@ -32,6 +31,7 @@ export class SetEmailAddressForSpshPersonParams {
     public readonly lastName!: string;
 
     @IsString()
+    @IsUUID()
     @IsNotEmpty()
     @ApiProperty({
         description: 'The domain Id from the email domain entity to be used.',

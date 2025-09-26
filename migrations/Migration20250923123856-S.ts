@@ -13,29 +13,9 @@ export class Migration20250923123856 extends Migration {
         );
         this.addSql('alter table "email"."address" add constraint "address_address_unique" unique ("address");');
         this.addSql('create index "email_address_spsh_person_id_index" on "email"."address" ("spsh_person_id");');
-
-        this.addSql(`
-        ALTER TABLE email.address
-        ADD CONSTRAINT email_address_markedforcron_check
-        CHECK (
-            (priority = 0 AND status = 'ACTIVE' AND marked_for_cron IS NULL)
-            OR
-            (status = 'REQUESTED' AND marked_for_cron IS NULL)
-            OR
-            (
-                NOT (
-                    (priority = 0 AND status = 'ACTIVE')
-                    OR
-                    (status = 'REQUESTED')
-                )
-                AND marked_for_cron IS NOT NULL
-            )
-        );
-        `);
     }
 
     public override async down(): Promise<void> {
-        this.addSql('ALTER TABLE "email"."address" DROP CONSTRAINT IF EXISTS email_address_markedforcron_check;');
         this.addSql('drop table if exists "email"."domain" cascade;');
 
         this.addSql('drop table if exists "email"."address" cascade;');

@@ -13,6 +13,7 @@ import { EmailAddressResponse } from '../dtos/response/email-address.response.js
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { EmailAddress } from '../../domain/email-address.js';
 import { EmailAddressStatus } from '../../persistence/email-address.entity.js';
+import { Public } from '../../decorator/public.decorator.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
@@ -22,6 +23,7 @@ export class EmailReadController {
     public constructor(private readonly logger: ClassLogger) {}
 
     @Get(':personId')
+    @Public()
     @ApiOperation({ description: 'Get email-addresses by personId.' })
     @ApiOkResponse({
         description: 'The email-addresses for corresponding person were successfully returned.',

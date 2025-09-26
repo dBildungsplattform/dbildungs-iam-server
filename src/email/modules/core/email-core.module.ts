@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
 import { LoggerModule } from '../../../core/logging/logger.module.js';
-import { HttpModule } from '@nestjs/axios';
 import { SetEmailAddressForSpshPersonService } from './domain/set-email-address-for-spsh-person.service.js';
 import { EmailAddressRepo } from './persistence/email-address.repo.js';
 import { EmailDomainRepo } from './persistence/email-domain.repo.js';
+import { EmailReadController } from './api/controller/email-read.controller.js';
+import { EmailWriteController } from './api/controller/email-write.controller.js';
 
 @Module({
-    imports: [HttpModule, LoggerModule.register(EmailCoreModule.name)],
+    imports: [LoggerModule.register(EmailCoreModule.name)],
     providers: [SetEmailAddressForSpshPersonService, EmailAddressRepo, EmailDomainRepo],
     exports: [],
+    controllers: [EmailReadController, EmailWriteController],
 })
 export class EmailCoreModule {}
