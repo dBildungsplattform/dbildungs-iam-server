@@ -1465,21 +1465,24 @@ describe('PersonRepository Integration', () => {
     });
 
     describe('findByPrimaryEmailAddress', () => {
-        it('should return persons with matching email address', async () => {
+        it.each([
+            [EmailAddressStatus.ENABLED],
+            [EmailAddressStatus.DISABLED]
+        ])('should return persons with matching email addresses in status %s', async (status: EmailAddressStatus) => {
             const person1: Person<true> = DoFactory.createPerson(true);
             const personEntity: PersonEntity = new PersonEntity();
             await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
             person1.id = personEntity.id;
             const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
             emailAddressEntity.address = 'test@example.com';
-            emailAddressEntity.status = EmailAddressStatus.ENABLED;
+            emailAddressEntity.status = status;
             emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
-            const disabledEmailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-            disabledEmailAddressEntity.address = 'test-disabled@example.com';
-            disabledEmailAddressEntity.status = EmailAddressStatus.DISABLED;
-            disabledEmailAddressEntity.personId = ref(PersonEntity, personEntity.id);
-            await em.persistAndFlush([emailAddressEntity, disabledEmailAddressEntity]);
-            personEntity.emailAddresses.add(emailAddressEntity, disabledEmailAddressEntity);
+            const differentEmailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+            differentEmailAddressEntity.address = 'test-other@example.com';
+            differentEmailAddressEntity.status = status;
+            differentEmailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+            await em.persistAndFlush([emailAddressEntity, differentEmailAddressEntity]);
+            personEntity.emailAddresses.add(emailAddressEntity, differentEmailAddressEntity);
             await em.persistAndFlush(personEntity);
 
             const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
@@ -1488,17 +1491,26 @@ describe('PersonRepository Integration', () => {
             expect(result[0]?.id).toBe(person1.id);
         });
 
-        it('should return empty list if no enabled email found', async () => {
+        it('should return empty list if no enabled/disabled email found', async () => {
             const person1: Person<true> = DoFactory.createPerson(true);
             const personEntity: PersonEntity = new PersonEntity();
             await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
             person1.id = personEntity.id;
-            const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-            emailAddressEntity.address = 'test@example.com';
-            emailAddressEntity.status = EmailAddressStatus.DISABLED;
+            const emailAddressEntities: EmailAddressEntity[] = [
+                EmailAddressStatus.DELETED,
+                EmailAddressStatus.DELETED_LDAP,
+                EmailAddressStatus.DELETED_OX,
+                EmailAddressStatus.FAILED,
+                EmailAddressStatus.REQUESTED,
+            ].map((status: EmailAddressStatus) => {
+             const emailAddressEntity: EmailAddressEntity =   new EmailAddressEntity();
+            emailAddressEntity.address = `test-${status}@example.com`;
+            emailAddressEntity.status = status;
             emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
-            await em.persistAndFlush(emailAddressEntity);
-            personEntity.emailAddresses.add(emailAddressEntity);
+            return emailAddressEntity;
+            })
+            await em.persistAndFlush(emailAddressEntities);
+            personEntity.emailAddresses.add(emailAddressEntities);
             await em.persistAndFlush(personEntity);
 
             const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
