@@ -97,6 +97,7 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                     USER_PASSWORD_DEFAULT: 'password',
+                    EMAIL_ADDRESS_DELETED_EVENT_DELAY: 0,
                 },
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
@@ -134,6 +135,7 @@ describe('configloader', () => {
                 },
                 CRON: {
                     PERSON_WITHOUT_ORG_LIMIT: 30,
+                    EMAIL_ADDRESSES_DELETE_LIMIT: 10,
                 },
             };
 
@@ -271,6 +273,7 @@ describe('configloader', () => {
                     USERNAME: 'username',
                     PASSWORD: 'password',
                     USER_PASSWORD_DEFAULT: 'password',
+                    EMAIL_ADDRESS_DELETED_EVENT_DELAY: 0,
                 },
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
@@ -308,6 +311,7 @@ describe('configloader', () => {
                 },
                 CRON: {
                     PERSON_WITHOUT_ORG_LIMIT: 30,
+                    EMAIL_ADDRESSES_DELETE_LIMIT: 10,
                 },
             };
 
