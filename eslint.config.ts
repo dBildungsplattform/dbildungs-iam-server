@@ -2,7 +2,7 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import tseslint from 'typescript-eslint';
 import importPlugin from 'eslint-plugin-import';
 import jest from "eslint-plugin-jest";
-import { Linter } from "eslint";
+import { ESLint, Linter } from "eslint";
 import prettier from 'eslint-plugin-prettier';
 
 const rules: Partial<Linter.RulesRecord> = {
@@ -63,6 +63,16 @@ const rules: Partial<Linter.RulesRecord> = {
     ],
 };
 
+const plugins: Record<string, ESLint.Plugin> = { tseslint: tseslint, import: importPlugin, prettier: prettier };
+const languageOptions: Linter.LanguageOptions = {
+    parser: tseslint.parser,
+    parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: "module",
+        project: ['./tsconfig.json'],
+    },
+};
+
 export default defineConfig(
     globalIgnores(['eslint.config.ts', 'eslint.config copy.ts', '.eslintrc.cjs', '.prettierrc.cjs', 'dist/*', 'node_modules/*', 'coverage/*']),
     {
@@ -70,15 +80,8 @@ export default defineConfig(
         extends: [
             tseslint.configs.recommendedTypeChecked,
         ],
-        plugins: { tseslint: tseslint, import: importPlugin, prettier: prettier },
-        languageOptions: {
-            parser: tseslint.parser,
-            parserOptions: {
-                ecmaVersion: 2020,
-                sourceType: "module",
-                project: ['./tsconfig.json'],
-            },
-        },
+        plugins: plugins,
+        languageOptions: languageOptions,
         files: ['**/*.ts'],
         ignores: ['**/*spec.ts', 'test-migrations/**/*.ts', 'migrations/**/*.ts'],
         rules: rules,
@@ -88,15 +91,8 @@ export default defineConfig(
         extends: [
             tseslint.configs.recommendedTypeChecked,
         ],
-        plugins: { tseslint: tseslint, import: importPlugin, prettier: prettier, jest: jest },
-        languageOptions: {
-            parser: tseslint.parser,
-            parserOptions: {
-                ecmaVersion: 2020,
-                sourceType: "module",
-                project: ['./tsconfig.json'],
-            },
-        },
+        plugins: { ...plugins, jest: jest },
+        languageOptions: languageOptions,
         files: ['**/*spec.ts'],
         rules: {
             ...rules,
@@ -109,15 +105,8 @@ export default defineConfig(
         extends: [
             tseslint.configs.recommendedTypeChecked,
         ],
-        plugins: { tseslint: tseslint, import: importPlugin, prettier: prettier },
-        languageOptions: {
-            parser: tseslint.parser,
-            parserOptions: {
-                ecmaVersion: 2020,
-                sourceType: "module",
-                project: ['./tsconfig.json'],
-            },
-        },
+        plugins: plugins,
+        languageOptions: languageOptions,
         files: ['test-migrations/**/*.ts', 'migrations/**/*.ts' ],
         rules: {
             ...rules,
