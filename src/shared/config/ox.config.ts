@@ -26,4 +26,9 @@ export class OxConfig {
 
     @IsString()
     public readonly USER_PASSWORD_DEFAULT!: string;
+
+    @Min(0)
+    @IsInt()
+    @IsOptional()
+    public readonly EMAIL_ADDRESS_DELETED_EVENT_DELAY?: number;
 }

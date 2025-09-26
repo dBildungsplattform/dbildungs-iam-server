@@ -100,6 +100,7 @@ describe('OxEventHandler', () => {
         personRepositoryMock = module.get(PersonRepository);
         emailRepoMock = module.get(EmailRepo);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
+        jest.useFakeTimers();
     });
 
     function getRequestedEmailAddresses(address?: string): EmailAddress<true>[] {
@@ -1618,6 +1619,7 @@ describe('OxEventHandler', () => {
                     value: undefined,
                 });
                 await sut.handleEmailAddressMarkedForDeletionEvent(event);
+                await jest.runAllTimersAsync();
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Found Current aliases:${JSON.stringify(aliases)}, personId:${event.personId}, username:${event.username}`,
