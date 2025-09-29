@@ -140,11 +140,11 @@ spec:
           configMap:
             name: {{ template "common.names.name" $ }}-kafka-init-configmap
             defaultMode: 0555
+        {{- end }}
         - name: dbildungs-iam-kafka-tls
           secret:
             secretName: dbildungs-iam-kafka-tls
             defaultMode: 420
-        {{- end }}
         - name: migration-volume
           configMap:
             name: {{ template "common.names.name" . }}-backend-migration
