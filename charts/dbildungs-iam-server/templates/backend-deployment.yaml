@@ -119,6 +119,11 @@ spec:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
           volumeMounts:
+            {{- if .Values.kafka.enabled }}
+            - name: dbildungs-iam-kafka-tls
+              mountPath: /tls
+              readOnly: true
+            {{- end }}
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
             {{- with .Values.backend.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
