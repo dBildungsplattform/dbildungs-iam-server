@@ -93,7 +93,7 @@ echo "Creating all topics..."
 
 # Run the topic-creation for every line in the file
 <"$1" xargs -I % \
-    kafka-topics.sh \
+    /opt/kafka/bin/kafka-topics.sh \
     --bootstrap-server "${KAFKA_BROKER}" \
     --create \
     --if-not-exists \
@@ -106,4 +106,4 @@ echo "Created all topics!"
 
 # Output all topics and metadata
 echo "Running kafka-topics.sh --describe"
-kafka-topics.sh --bootstrap-server "${KAFKA_BROKER}" ${CONFIG_FLAG} --describe
+/opt/kafka/bin/kafka-topics.sh --bootstrap-server "${KAFKA_BROKER}" ${CONFIG_FLAG} --describe

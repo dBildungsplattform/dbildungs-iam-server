@@ -270,7 +270,7 @@ kafka:
   topicPartitions: 3
   topicReplications: 3
   initImage:
-    repository: docker.io/bitnami/kafka
+    repository: docker.io/apache/kafka
     tag: "3.9.0"
     pullPolicy: Always
   existingSecret: dbildungs-iam-kafka-tls
