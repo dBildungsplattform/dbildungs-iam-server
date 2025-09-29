@@ -94,4 +94,86 @@ describe('EmailRepo', () => {
             expect(result).toBe(false);
         });
     });
+
+    describe('findBySpshPersonIdSortedByPriorityAsc', () => {
+        const spshPersonId: string = faker.string.uuid();
+        const otherSpshPersonId: string = faker.string.uuid();
+
+        beforeEach(async () => {
+            await createAndSaveMail(undefined, 2, undefined, spshPersonId);
+            await createAndSaveMail(undefined, 0, undefined, spshPersonId);
+            await createAndSaveMail(undefined, 1, undefined, spshPersonId);
+            await createAndSaveMail(undefined, 1, undefined, otherSpshPersonId);
+        });
+
+        it('should return all email addresses for the given spshPersonId', async () => {
+            const result: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(spshPersonId);
+            expect(result).toHaveLength(3);
+            const allSpshPersonIds: (string | undefined)[] = result.map((e) => e.spshPersonId);
+            expect(allSpshPersonIds.every((id: string | undefined) => id === spshPersonId)).toBe(true);
+        });
+
+        it('should return email addresses sorted by priority ascending', async () => {
+            const result: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(spshPersonId);
+            const priorities: number[] = result.map((e: EmailAddress<true>) => e.priority);
+            expect(priorities).toEqual([0, 1, 2]);
+        });
+
+        it('should return an empty array if no email addresses exist for the given spshPersonId', async () => {
+            const unknownId: string = faker.string.uuid();
+            const result: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(unknownId);
+            expect(result).toEqual([]);
+        });
+    });
+
+    describe('save', () => {
+        it('should create a new email address if id is not set', async () => {
+            const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
+                address: faker.internet.email(),
+                priority: 5,
+                status: EmailAddressStatus.PENDING,
+                spshPersonId: faker.string.uuid(),
+            });
+            const result: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
+            expect(result).toBeDefined();
+            expect(result).not.toBeInstanceOf(DomainError);
+            expect((result as EmailAddress<true>).id).toBeDefined();
+            expect((result as EmailAddress<true>).address).toBe(mailToCreate.address);
+        });
+
+        it('should update an existing email address if id is set', async () => {
+            const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
+                address: faker.internet.email(),
+                priority: 1,
+                status: EmailAddressStatus.PENDING,
+                spshPersonId: faker.string.uuid(),
+            });
+            const created: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
+            if (created instanceof DomainError) throw created;
+
+            const updatedMail: EmailAddress<true> = EmailAddress.construct({
+                ...created,
+                priority: 99,
+            });
+            const updated: EmailAddress<true> | DomainError = await sut.save(updatedMail);
+            expect(updated).toBeDefined();
+            expect(updated).not.toBeInstanceOf(DomainError);
+            expect((updated as EmailAddress<true>).priority).toBe(99);
+        });
+
+        it('should return EmailAddressNotFoundError if updating non-existing id', async () => {
+            const mailToUpdate: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                address: faker.internet.email(),
+                priority: 1,
+                status: EmailAddressStatus.PENDING,
+                spshPersonId: faker.string.uuid(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            });
+            const result: EmailAddress<true> | DomainError = await sut.save(mailToUpdate);
+            expect(result).toBeInstanceOf(DomainError);
+            expect(result.constructor.name).toBe('EmailAddressNotFoundError');
+        });
+    });
 });

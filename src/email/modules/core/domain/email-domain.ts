@@ -6,11 +6,16 @@ export class EmailDomain<WasPersisted extends boolean> {
         public domain: string,
     ) {}
 
-    public static construct(id: string, createdAt: Date, updatedAt: Date, domain: string): EmailDomain<true> {
-        return new EmailDomain(id, createdAt, updatedAt, domain);
+    public static construct(params: {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        domain: string;
+    }): EmailDomain<true> {
+        return new EmailDomain(params.id, params.createdAt, params.updatedAt, params.domain);
     }
 
-    public static createNew(domain: string): EmailDomain<false> {
-        return new EmailDomain(undefined, undefined, undefined, domain);
+    public static createNew(params: { domain: string }): EmailDomain<false> {
+        return new EmailDomain(undefined, undefined, undefined, params.domain);
     }
 }

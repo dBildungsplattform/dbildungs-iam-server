@@ -7,6 +7,7 @@ import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailDomainRepo } from '../persistence/email-domain.repo.js';
 import { EmailDomain } from './email-domain.js';
 import { EmailAddressStatus } from '../persistence/email-address.entity.js';
+import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 
 @Injectable()
 export class SetEmailAddressForSpshPersonService {
@@ -27,14 +28,11 @@ export class SetEmailAddressForSpshPersonService {
 
         if (!emailDomain) {
             this.logger.error(`EmailDomain with id ${params.emailDomainId} not found`);
-            throw new Error(`EmailDomain with id ${params.emailDomainId} not found`);
+            throw new EmailDomainNotFoundError(`EmailDomain with id ${params.emailDomainId} not found`);
         }
         if (existingAddresses.length > 0) {
-            this.logger.warning(
-                `Person with id ${params.spshPersonId} already has email addresses assigned. Not implemented yet`,
-            );
-            throw new Error(
-                `Person with id ${params.spshPersonId} already has email addresses assigned. Not implemented yet`,
+            this.logger.crit(
+                `Person with id ${params.spshPersonId} already has email addresses assigned. Not implemented yet [WIP]`,
             );
         }
         await this.createFirstEmailForSpshPerson(params.firstName, params.lastName, params.spshPersonId, emailDomain);
