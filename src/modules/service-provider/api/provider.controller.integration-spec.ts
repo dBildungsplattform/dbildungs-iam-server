@@ -60,24 +60,6 @@ describe('ServiceProvider API', () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
 
-    describe('/GET all service provider', () => {
-        it('should return all service provider', async () => {
-            await Promise.all([
-                serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
-                serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
-                serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
-            ]);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .get('/provider/all')
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Array);
-            expect(response.body).toHaveLength(3);
-        });
-    });
-
     describe('/GET logo', () => {
         describe('when the service provider exists and has a logo', () => {
             it('should return the image file', async () => {

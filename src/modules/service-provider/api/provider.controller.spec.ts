@@ -1,4 +1,3 @@
-//import { MikroORM } from '@mikro-orm/core';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
@@ -24,7 +23,7 @@ import { ServiceProviderResponse } from './service-provider.response.js';
 describe('Provider Controller Test', () => {
     let app: INestApplication;
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
-    let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
+    // let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let providerController: ProviderController;
 
     beforeAll(async () => {
@@ -53,7 +52,7 @@ describe('Provider Controller Test', () => {
             .compile();
 
         serviceProviderServiceMock = module.get<DeepMocked<ServiceProviderService>>(ServiceProviderService);
-        serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
+        // serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         providerController = module.get(ProviderController);
 
         app = module.createNestApplication();
@@ -62,33 +61,6 @@ describe('Provider Controller Test', () => {
 
     afterAll(async () => {
         await app.close();
-    });
-
-    describe('getAllServiceProviders', () => {
-        describe('when service providers were found', () => {
-            it('should return all service provider', async () => {
-                const spId: string = faker.string.uuid();
-                const sp: ServiceProvider<true> = DoFactory.createServiceProvider(true, { id: spId });
-
-                serviceProviderRepoMock.find.mockResolvedValueOnce([sp]);
-
-                const spResponse: ServiceProviderResponse[] = await providerController.getAllServiceProviders();
-                expect(spResponse).toBeDefined();
-                expect(spResponse).toBeInstanceOf(Array);
-                expect(spResponse).toHaveLength(1);
-            });
-        });
-
-        describe('when no service providers were found', () => {
-            it('should return empty list as response', async () => {
-                serviceProviderRepoMock.find.mockResolvedValueOnce([]);
-
-                const spResponse: ServiceProviderResponse[] = await providerController.getAllServiceProviders();
-                expect(spResponse).toBeDefined();
-                expect(spResponse).toBeInstanceOf(Array);
-                expect(spResponse).toHaveLength(0);
-            });
-        });
     });
 
     describe('getAvailableServiceProviders', () => {
