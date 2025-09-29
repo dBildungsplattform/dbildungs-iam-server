@@ -239,6 +239,20 @@
             "keycloakRole": "VIDIS-Dienste-user",
             "requires2fa": false,
             "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
+        },
+        {
+            "id": 17,
+            "name": "Firmenfitness Angebot",
+            "target": "URL",
+            "url": "https://signup.hansefit.de/staatskanzlei-des-landes-schleswig-holstein/landing",
+            "kategorie": "HINWEISE",
+            "logoMimeType": "image/png",
+            "logoBase64": "iVBORw0KGgoAAAANSUhEUgAAADYAAAA2CAYAAACMRWrdAAAB+0lEQVR42u2aMVLDMBBF/1qB2jfAN4jpGFLEB4AiJ4CcAG4AnARu4CLQp2GGGYo4Nwg3MB2EWKKhALTKxLYSazKrckez1vPXX2k9JgwmBns4IuzpEDABEzABEzABEzABEzABc42e/5T0gOrrzgqr3gxA/C9aolod23PVLUAXYYFpPcfLaPEnluUxviwoACisuQAwmByFtxUVFVbsAyk71+i5I0saHlhvZYORcoCRrVaWx8yW7RysxHRU2k+J+q3V7Ris4MMmaa1up2D1PFOw6pIaBgjGeOb0KXV4puRPCx2HB8Z5RlVJTXWz8MA4z1TGVeqnDnV3fPOg6Bq6ener5aiI6PUBbYdXsLft4XKBpRqvXwddbXLO0cYfTJ/PqdGrG0xm7EJ852u4FYsWuyLdQb6GYMa8NVqCyzO+8zVXzDR7w66K6D1f0+JB0RCDx/v1HjwbMxUxAxFXEW2wkzyBOrhZ3zmY1C8YkAGmvgfJcUfkKuKBSqHNZVgdtMszhr0jlngdFay64X0aYDyT5TGIktbqdgoWRdPWzaUxSXhgn6uydXPJq9spGO8ZciiwxebSN1g9z2yxufQLVq+55C/K5NdfnsAYz5zkiaO53ElFrNe2uPuD8gfk12F72IfW3OSFNbfGxbbesuQ/DwETMAETMAETMAETMAETsP0Y3+4DrvXdc+pAAAAAAElFTkSuQmCC",
+            "providedOnSchulstrukturknoten": 1,
+            "keycloakGroup": "Firmenfitness Angebot-service",
+            "keycloakRole": "Firmenfitness Angebot-user",
+            "requires2fa": false,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         }
     ]
 }
