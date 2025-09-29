@@ -688,7 +688,7 @@ describe('CronController', () => {
         describe(`when is authorized user`, () => {
             it(`should delete non-enabled EmailAddresses which exceed deadline`, async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-                emailAddressDeletionServiceMock.deleteEmailAddresses.mockResolvedValue();
+                emailAddressDeletionServiceMock.deleteEmailAddresses.mockResolvedValue({ processed: 0, total: 0 });
 
                 await cronController.emailAddressesDelete(permissionsMock);
 

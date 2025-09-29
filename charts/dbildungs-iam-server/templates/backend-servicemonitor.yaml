@@ -19,5 +19,6 @@ spec:
     - port: {{ (index .Values.backend.serviceMonitor.endpoints 0).port }}
       path: {{ .Values.backend.serviceMonitor.path }}
       interval: {{ .Values.backend.serviceMonitor.interval }}
+  fallbackScrapeProtocol: PrometheusText1.0.0
 {{ end }}
 

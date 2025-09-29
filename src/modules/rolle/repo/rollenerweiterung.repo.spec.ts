@@ -121,6 +121,36 @@ describe('RollenerweiterungRepo', () => {
         });
     });
 
+    describe('create', () => {
+        let organisation: Organisation<true>;
+        let rolle: Rolle<true>;
+        let serviceProvider: ServiceProvider<true>;
+
+        beforeEach(async () => {
+            organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const rolleOrError: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleOrError instanceof DomainError) {
+                throw new Error('Failed to create Rolle');
+            }
+            rolle = rolleOrError;
+            serviceProvider = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false, {
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+            );
+        });
+
+        it('should create rollenerweiterung', async () => {
+            const rollenerweiterung: Rollenerweiterung<false> = factory.createNew(
+                organisation.id,
+                rolle.id,
+                serviceProvider.id,
+            );
+            const createResult: Rollenerweiterung<true> = await sut.create(rollenerweiterung);
+            expect(createResult).toBeInstanceOf(Rollenerweiterung);
+        });
+    });
+
     describe('createAuthorized', () => {
         type TestCase = 'root' | 'schuladmin';
         let organisation: Organisation<true>;

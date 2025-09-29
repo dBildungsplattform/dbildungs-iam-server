@@ -107,6 +107,7 @@ export default (): Config => ({
         CONTEXT_NAME: process.env['OX_CONTEXT_NAME'],
         NUMBER_OF_RETRIES: envToOptionalInteger('OX_NUMBER_OF_RETRIES'),
         USER_PASSWORD_DEFAULT: process.env['OX_USER_PASSWORD_DEFAULT'],
+        EMAIL_ADDRESS_DELETED_EVENT_DELAY: envToOptionalInteger('OX_EMAIL_ADDRESS_DELETED_EVENT_DELAY'),
     },
     SYSTEM: {
         RENAME_WAITING_TIME_IN_SECONDS: envToOptionalInteger('SYSTEM_RENAME_WAITING_TIME_IN_SECONDS'),
@@ -139,14 +140,16 @@ export default (): Config => ({
         SESSION_TIMEOUT: envToOptionalInteger('KAFKA_SESSION_TIMEOUT'),
         HEARTBEAT_INTERVAL: envToOptionalInteger('KAFKA_HEARTBEAT_INTERVAL'),
         ENABLED: envToOptionalBoolean('KAFKA_ENABLED'),
-        SASL_ENABLED: envToOptionalBoolean('KAFKA_SASL_ENABLED'),
-        USERNAME: process.env['KAFKA_USERNAME'],
-        PASSWORD: process.env['KAFKA_PASSWORD'],
+        SSL_ENABLED: envToOptionalBoolean('KAFKA_SSL_ENABLED'),
+        SSL_CA_PATH: process.env['KAFKA_SSL_CA_PATH'],
+        SSL_CERT_PATH: process.env['KAFKA_SSL_CERT_PATH'],
+        SSL_KEY_PATH: process.env['KAFKA_SSL_KEY_PATH'],
     },
     PORTAL: {
         LIMITED_ROLLENART_ALLOWLIST: envToStringArray('PORTAL_LIMITED_ROLLENART_ALLOWLIST'),
     },
     CRON: {
         PERSON_WITHOUT_ORG_LIMIT: envToOptionalInteger('CRON_PERSON_WITHOUT_ORG_LIMIT'),
+        EMAIL_ADDRESSES_DELETE_LIMIT: envToOptionalInteger('CRON_EMAIL_ADDRESSES_DELETE_LIMIT'),
     },
 });

@@ -215,6 +215,8 @@ export class OxEventService {
 
     public readonly userPasswordDefault: string;
 
+    public readonly emailAddressDeletedEventDelay: number;
+
     public constructor(
         protected readonly logger: ClassLogger,
         protected readonly oxService: OxService,
@@ -230,6 +232,7 @@ export class OxEventService {
         this.contextID = oxConfig.CONTEXT_ID;
         this.contextName = oxConfig.CONTEXT_NAME;
         this.userPasswordDefault = oxConfig.USER_PASSWORD_DEFAULT;
+        this.emailAddressDeletedEventDelay = oxConfig.EMAIL_ADDRESS_DELETED_EVENT_DELAY ?? 0;
     }
 
     public async getMostRecentEnabledOrRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {
@@ -400,59 +403,32 @@ export class OxEventService {
         }
     }
 
-    public publishOxUserChangedEvent(
-        personId: PersonID,
-        username: PersonReferrer,
-        oxUserId: OXUserID,
-        oxUserName: OXUserName,
-        emailAddress: string,
-    ): void {
-        this.eventService.publish(
-            new OxUserChangedEvent(
-                personId,
-                username,
-                oxUserId,
-                oxUserName,
-                this.contextID,
-                this.contextName,
-                emailAddress,
-            ),
-            new KafkaOxUserChangedEvent(
-                personId,
-                username,
-                oxUserId,
-                oxUserName,
-                this.contextID,
-                this.contextName,
-                emailAddress,
-            ),
-        );
-    }
-
     public publishOxEmailAddressDeletedEvent(
         personId: PersonID | undefined,
         username: PersonReferrer | undefined,
         oxUserId: OXUserID,
         emailAddress: string,
     ): void {
-        this.eventService.publish(
-            new OxEmailAddressDeletedEvent(
-                personId,
-                oxUserId,
-                username,
-                emailAddress,
-                this.contextID,
-                this.contextName,
-            ),
-            new KafkaOxEmailAddressDeletedEvent(
-                personId,
-                oxUserId,
-                username,
-                emailAddress,
-                this.contextID,
-                this.contextName,
-            ),
-        );
+        setTimeout(() => {
+            this.eventService.publish(
+                new OxEmailAddressDeletedEvent(
+                    personId,
+                    oxUserId,
+                    username,
+                    emailAddress,
+                    this.contextID,
+                    this.contextName,
+                ),
+                new KafkaOxEmailAddressDeletedEvent(
+                    personId,
+                    oxUserId,
+                    username,
+                    emailAddress,
+                    this.contextID,
+                    this.contextName,
+                ),
+            );
+        }, this.emailAddressDeletedEventDelay);
     }
 
     public publishOxUserChangedEvent2(

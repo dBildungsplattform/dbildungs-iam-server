@@ -220,7 +220,7 @@ services:
         condition: service_healthy
     command: /init/scripts/create_topics.sh /init-data/kafka-topics.txt
     environment:
-      - KAFKA_URL=kafka:9092
+      - KAFKA_BROKER=kafka:9092
       - KAFKA_TOPIC_PREFIX=local.
       - KAFKA_TOPIC_PARTITIONS=1
       - KAFKA_REPLICATION_FACTOR=1

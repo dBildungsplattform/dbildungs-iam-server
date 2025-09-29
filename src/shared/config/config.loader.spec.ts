@@ -97,6 +97,7 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                     USER_PASSWORD_DEFAULT: 'password',
+                    EMAIL_ADDRESS_DELETED_EVENT_DELAY: 0,
                 },
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
@@ -124,13 +125,17 @@ describe('configloader', () => {
                     SESSION_TIMEOUT: 300000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
-                    SASL_ENABLED: true,
+                    SSL_ENABLED: true,
+                    SSL_CA_PATH: '/tls/ca.pem',
+                    SSL_CERT_PATH: '/tls/client-cert.pem',
+                    SSL_KEY_PATH: '/tls/client-key.pem',
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
                 },
                 CRON: {
                     PERSON_WITHOUT_ORG_LIMIT: 30,
+                    EMAIL_ADDRESSES_DELETE_LIMIT: 10,
                 },
             };
 
@@ -149,10 +154,6 @@ describe('configloader', () => {
                     PASSWORD: 'password',
                 },
                 OX: {
-                    PASSWORD: 'password',
-                },
-                KAFKA: {
-                    USERNAME: 'username',
                     PASSWORD: 'password',
                 },
             };
@@ -272,6 +273,7 @@ describe('configloader', () => {
                     USERNAME: 'username',
                     PASSWORD: 'password',
                     USER_PASSWORD_DEFAULT: 'password',
+                    EMAIL_ADDRESS_DELETED_EVENT_DELAY: 0,
                 },
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
@@ -291,7 +293,7 @@ describe('configloader', () => {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
                 KAFKA: {
-                    BROKER: 'localhost:9094',
+                    BROKER: 'localhost',
                     TOPIC_PREFIX: 'local.',
                     USER_TOPIC: 'spsh-user-topic',
                     USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
@@ -299,15 +301,17 @@ describe('configloader', () => {
                     SESSION_TIMEOUT: 300000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
-                    SASL_ENABLED: true,
-                    USERNAME: 'username',
-                    PASSWORD: 'password',
+                    SSL_ENABLED: false,
+                    SSL_CA_PATH: undefined,
+                    SSL_CERT_PATH: undefined,
+                    SSL_KEY_PATH: undefined,
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
                 },
                 CRON: {
                     PERSON_WITHOUT_ORG_LIMIT: 30,
+                    EMAIL_ADDRESSES_DELETE_LIMIT: 10,
                 },
             };
 
