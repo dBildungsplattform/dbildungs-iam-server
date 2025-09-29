@@ -191,7 +191,7 @@ services:
         type: bind
 
   kafka:
-    image: bitnami/kafka:3.9.0
+    image: apache/kafka:3.9.0
     profiles:
       - third-party
     ports:
@@ -212,7 +212,7 @@ services:
       - kafka:/bitnami/kafka
 
   kafka-init:
-    image: bitnami/kafka:3.9.0
+    image: apache/kafka:3.9.0
     profiles:
       - third-party
     depends_on:
