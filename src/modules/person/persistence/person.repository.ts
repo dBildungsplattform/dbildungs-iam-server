@@ -270,7 +270,7 @@ export class PersonRepository {
             .setScopeWhereOperator(ScopeOperator.AND);
     }
 
-    public async findByEmailAddress(email: string): Promise<Person<true>[]> {
+    public async findByPrimaryEmailAddress(email: string): Promise<Person<true>[]> {
         const entities: PersonEntity[] = await this.em.find(PersonEntity, {
             emailAddresses: {
                 address: email,
@@ -278,7 +278,14 @@ export class PersonRepository {
             },
         });
 
-        return entities.map(mapEntityToAggregate);
+        const entitiesWithMatchingPrimaryAddress: PersonEntity[] = entities.filter((entity: PersonEntity) => {
+            const enabledPrimary: EmailAddressEntity | undefined = entity.emailAddresses.find((emailAddress) => emailAddress.status === EmailAddressStatus.ENABLED && emailAddress.address === email);
+            if (enabledPrimary) return true;
+            if (entity.emailAddresses.filter((emailAddress) => emailAddress.status === EmailAddressStatus.DISABLED)[0]?.address === email) return true;
+            return false;
+        });
+
+        return entitiesWithMatchingPrimaryAddress.map(mapEntityToAggregate);
     }
 
     public async findByPersonalnummer(personalnummer: string): Promise<Person<true>[]> {

@@ -1484,7 +1484,7 @@ describe('PersonRepository Integration', () => {
                 personEntity.emailAddresses.add(emailAddressEntity, differentEmailAddressEntity);
                 await em.persistAndFlush(personEntity);
 
-                const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
+                const result: Person<true>[] = await sut.findByPrimaryEmailAddress('test@example.com');
 
                 expect(result).toHaveLength(1);
                 expect(result[0]?.id).toBe(person1.id);
@@ -1513,13 +1513,13 @@ describe('PersonRepository Integration', () => {
             personEntity.emailAddresses.add(emailAddressEntities);
             await em.persistAndFlush(personEntity);
 
-            const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
+            const result: Person<true>[] = await sut.findByPrimaryEmailAddress('test@example.com');
 
             expect(result).toHaveLength(0);
         });
 
         it('should return empty list if no matching email found', async () => {
-            const result: Person<true>[] = await sut.findByEmailAddress('nonexistent@example.com');
+            const result: Person<true>[] = await sut.findByPrimaryEmailAddress('nonexistent@example.com');
             expect(result).toHaveLength(0);
         });
     });
