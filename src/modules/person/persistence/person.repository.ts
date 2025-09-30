@@ -278,11 +278,18 @@ export class PersonRepository {
             },
         });
 
+        // emailAddresses are sorted by updatedAt and the first enabled/disabled address is assumed to be the primary address
         const entitiesWithMatchingPrimaryAddress: PersonEntity[] = entities.filter((entity: PersonEntity) => {
-            const enabledPrimary: EmailAddressEntity | undefined = entity.emailAddresses.find((emailAddress) => emailAddress.status === EmailAddressStatus.ENABLED && emailAddress.address === email);
-            if (enabledPrimary) return true;
-            if (entity.emailAddresses.filter((emailAddress) => emailAddress.status === EmailAddressStatus.DISABLED)[0]?.address === email) return true;
-            return false;
+            // enabled emailAddress has priority, so we return if there is one
+            const enabledPrimary: EmailAddressEntity | undefined = entity.emailAddresses.find(
+                (emailAddress: EmailAddressEntity) => emailAddress.status === EmailAddressStatus.ENABLED,
+            );
+            if (enabledPrimary) return enabledPrimary.address === email;
+
+            const disabledPrimary: EmailAddressEntity | undefined = entity.emailAddresses.find(
+                (emailAddress: EmailAddressEntity) => emailAddress.status === EmailAddressStatus.DISABLED,
+            );
+            return disabledPrimary?.address === email;
         });
 
         return entitiesWithMatchingPrimaryAddress.map(mapEntityToAggregate);
