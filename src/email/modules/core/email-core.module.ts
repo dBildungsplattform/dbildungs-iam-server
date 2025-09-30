@@ -5,10 +5,11 @@ import { EmailAddressRepo } from './persistence/email-address.repo.js';
 import { EmailDomainRepo } from './persistence/email-domain.repo.js';
 import { EmailReadController } from './api/controller/email-read.controller.js';
 import { EmailWriteController } from './api/controller/email-write.controller.js';
+import { EmailAddressStatusRepo } from './persistence/email-address-status.repo.js';
 
 @Module({
     imports: [LoggerModule.register(EmailCoreModule.name)],
-    providers: [SetEmailAddressForSpshPersonService, EmailAddressRepo, EmailDomainRepo],
+    providers: [SetEmailAddressForSpshPersonService, EmailAddressRepo, EmailDomainRepo, EmailAddressStatusRepo],
     exports: [],
     controllers: [EmailReadController, EmailWriteController],
 })

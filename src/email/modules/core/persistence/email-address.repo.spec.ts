@@ -9,13 +9,13 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     MapperTestModule,
 } from '../../../../../test/utils/index.js';
-import { EmailAddressStatus } from './email-address.entity.js';
 import { EmailAddress } from '../domain/email-address.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { SetEmailAddressForSpshPersonService } from '../domain/set-email-address-for-spsh-person.service.js';
 import { EmailDomainRepo } from './email-domain.repo.js';
 import { EmailCoreModule } from '../email-core.module.js';
+import { EmailAddressStatusRepo } from './email-address-status.repo.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -30,7 +30,13 @@ describe('EmailRepo', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 EmailCoreModule,
             ],
-            providers: [SetEmailAddressForSpshPersonService, EmailAddressRepo, EmailDomainRepo, ClassLogger],
+            providers: [
+                SetEmailAddressForSpshPersonService,
+                EmailAddressRepo,
+                EmailDomainRepo,
+                EmailAddressStatusRepo,
+                ClassLogger,
+            ],
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
@@ -57,7 +63,6 @@ describe('EmailRepo', () => {
     async function createAndSaveMail(
         address?: string,
         priority?: number,
-        status?: EmailAddressStatus,
         spshPersonId?: string,
         oxUserId?: string,
         markedForCron?: Date,
@@ -65,7 +70,6 @@ describe('EmailRepo', () => {
         const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
             address: address ?? faker.internet.email(),
             priority: priority ?? 1,
-            status: status ?? EmailAddressStatus.PENDING,
             spshPersonId: spshPersonId ?? undefined,
             oxUserId: oxUserId ?? undefined,
             markedForCron: markedForCron ?? undefined,
@@ -100,10 +104,10 @@ describe('EmailRepo', () => {
         const otherSpshPersonId: string = faker.string.uuid();
 
         beforeEach(async () => {
-            await createAndSaveMail(undefined, 2, undefined, spshPersonId);
-            await createAndSaveMail(undefined, 0, undefined, spshPersonId);
-            await createAndSaveMail(undefined, 1, undefined, spshPersonId);
-            await createAndSaveMail(undefined, 1, undefined, otherSpshPersonId);
+            await createAndSaveMail(undefined, 2, spshPersonId);
+            await createAndSaveMail(undefined, 0, spshPersonId);
+            await createAndSaveMail(undefined, 1, spshPersonId);
+            await createAndSaveMail(undefined, 1, otherSpshPersonId);
         });
 
         it('should return all email addresses for the given spshPersonId', async () => {
@@ -131,7 +135,6 @@ describe('EmailRepo', () => {
             const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
                 address: faker.internet.email(),
                 priority: 5,
-                status: EmailAddressStatus.PENDING,
                 spshPersonId: faker.string.uuid(),
             });
             const result: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
@@ -145,7 +148,6 @@ describe('EmailRepo', () => {
             const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
                 address: faker.internet.email(),
                 priority: 1,
-                status: EmailAddressStatus.PENDING,
                 spshPersonId: faker.string.uuid(),
             });
             const created: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
@@ -166,7 +168,6 @@ describe('EmailRepo', () => {
                 id: faker.string.uuid(),
                 address: faker.internet.email(),
                 priority: 1,
-                status: EmailAddressStatus.PENDING,
                 spshPersonId: faker.string.uuid(),
                 createdAt: new Date(),
                 updatedAt: new Date(),

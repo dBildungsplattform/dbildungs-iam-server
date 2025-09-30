@@ -1,6 +1,5 @@
 import { faker } from '@faker-js/faker';
 import { EmailAddress } from './email-address.js';
-import { EmailAddressStatus } from '../persistence/email-address.entity.js';
 
 describe('EmailAddress', () => {
     describe('createNew', () => {
@@ -8,7 +7,6 @@ describe('EmailAddress', () => {
             const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
                 address: faker.internet.email(),
                 priority: 1,
-                status: EmailAddressStatus.PENDING,
                 spshPersonId: undefined,
                 oxUserId: undefined,
                 markedForCron: undefined,
@@ -32,7 +30,6 @@ describe('EmailAddress', () => {
                 updatedAt: updatedAt,
                 address: faker.internet.email(),
                 priority: 1,
-                status: EmailAddressStatus.PENDING,
                 spshPersonId: undefined,
                 oxUserId: undefined,
                 markedForCron: undefined,

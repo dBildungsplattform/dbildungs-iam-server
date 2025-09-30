@@ -1,4 +1,3 @@
-
 import { InvalidAttributeLengthError } from '../../../../shared/error/invalid-attribute-length.error.js';
 import { InvalidCharacterSetError } from '../../../../shared/error/invalid-character-set.error.js';
 import { InvalidNameError } from '../../../../shared/error/invalid-name.error.js';

@@ -1,5 +1,3 @@
-import { EmailAddressStatus } from '../persistence/email-address.entity.js';
-
 export class EmailAddress<WasPersisted extends boolean> {
     public constructor(
         public id: Persisted<string, WasPersisted>,
@@ -7,7 +5,6 @@ export class EmailAddress<WasPersisted extends boolean> {
         public readonly updatedAt: Persisted<Date, WasPersisted>,
         public address: string,
         public priority: number,
-        public status: EmailAddressStatus,
         public spshPersonId?: string,
         public oxUserId?: string,
         public markedForCron?: Date,
@@ -19,7 +16,6 @@ export class EmailAddress<WasPersisted extends boolean> {
         updatedAt: Date;
         address: string;
         priority: number;
-        status: EmailAddressStatus;
         spshPersonId?: string;
         oxUserId?: string;
         markedForCron?: Date;
@@ -30,7 +26,6 @@ export class EmailAddress<WasPersisted extends boolean> {
             params.updatedAt,
             params.address,
             params.priority,
-            params.status,
             params.spshPersonId,
             params.oxUserId,
             params.markedForCron,
@@ -40,7 +35,6 @@ export class EmailAddress<WasPersisted extends boolean> {
     public static createNew(params: {
         address: string;
         priority: number;
-        status: EmailAddressStatus;
         spshPersonId?: string;
         oxUserId?: string;
         markedForCron?: Date;
@@ -51,7 +45,6 @@ export class EmailAddress<WasPersisted extends boolean> {
             undefined,
             params.address,
             params.priority,
-            params.status,
             params.spshPersonId,
             params.oxUserId,
             params.markedForCron,

@@ -15,6 +15,7 @@ import { SetEmailAddressForSpshPersonService } from '../domain/set-email-address
 import { EmailDomainRepo } from './email-domain.repo.js';
 import { EmailCoreModule } from '../email-core.module.js';
 import { EmailDomain } from '../domain/email-domain.js';
+import { EmailAddressStatusRepo } from './email-address-status.repo.js';
 
 describe('EmailDomainRepo', () => {
     let module: TestingModule;
@@ -29,7 +30,13 @@ describe('EmailDomainRepo', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 EmailCoreModule,
             ],
-            providers: [SetEmailAddressForSpshPersonService, EmailAddressRepo, EmailDomainRepo, ClassLogger],
+            providers: [
+                SetEmailAddressForSpshPersonService,
+                EmailAddressRepo,
+                EmailDomainRepo,
+                EmailAddressStatusRepo,
+                ClassLogger,
+            ],
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())

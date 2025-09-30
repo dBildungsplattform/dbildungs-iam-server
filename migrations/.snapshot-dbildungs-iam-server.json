@@ -95,7 +95,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -372,7 +376,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -671,7 +679,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -962,7 +974,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -1245,7 +1261,689 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
+          ]
+        },
+        "meldung_status_enum": {
+          "name": "meldung_status_enum",
+          "schema": "public",
+          "items": [
+            "VEROEFFENTLICHT",
+            "NICHT_VEROEFFENTLICHT"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED",
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
+          ]
+        },
+        "external_id_enum": {
+          "name": "external_id_enum",
+          "schema": "public",
+          "items": [
+            "LDAP"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "import_status_enum": {
+          "name": "import_status_enum",
+          "schema": "public",
+          "items": [
+            "CANCELLED",
+            "COMPLETED",
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
+          ]
+        },
+        "import_data_item_status_enum": {
+          "name": "import_data_item_status_enum",
+          "schema": "public",
+          "items": [
+            "FAILED",
+            "SUCCESS",
             "PENDING"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN",
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN",
+            "BULK_VERWALTEN",
+            "SCHULPORTAL_VERWALTEN",
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "EMAIL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
+          ]
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "address": {
+          "name": "address",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "priority": {
+          "name": "priority",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "ox_user_id": {
+          "name": "ox_user_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
+        },
+        "spsh_person_id": {
+          "name": "spsh_person_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
+        },
+        "marked_for_cron": {
+          "name": "marked_for_cron",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 6,
+          "mappedType": "datetime"
+        }
+      },
+      "name": "address",
+      "schema": "email",
+      "indexes": [
+        {
+          "columnNames": [
+            "address"
+          ],
+          "composite": false,
+          "keyName": "address_address_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "spsh_person_id"
+          ],
+          "composite": false,
+          "keyName": "email_address_spsh_person_id_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "address_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {},
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "email.email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "email",
+          "items": [
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
+          ]
+        },
+        "meldung_status_enum": {
+          "name": "meldung_status_enum",
+          "schema": "public",
+          "items": [
+            "VEROEFFENTLICHT",
+            "NICHT_VEROEFFENTLICHT"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED",
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
+          ]
+        },
+        "external_id_enum": {
+          "name": "external_id_enum",
+          "schema": "public",
+          "items": [
+            "LDAP"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "import_status_enum": {
+          "name": "import_status_enum",
+          "schema": "public",
+          "items": [
+            "CANCELLED",
+            "COMPLETED",
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
+          ]
+        },
+        "import_data_item_status_enum": {
+          "name": "import_data_item_status_enum",
+          "schema": "public",
+          "items": [
+            "FAILED",
+            "SUCCESS",
+            "PENDING"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN",
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN",
+            "BULK_VERWALTEN",
+            "SCHULPORTAL_VERWALTEN",
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "EMAIL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
+          ]
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "email_address_id": {
+          "name": "email_address_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "status": {
+          "name": "status",
+          "type": "email_address_status_enum",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "nativeEnumName": "email_address_status_enum",
+          "enumItems": [
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
+          ],
+          "mappedType": "enum"
+        }
+      },
+      "name": "address_status",
+      "schema": "email",
+      "indexes": [
+        {
+          "keyName": "email_address_id",
+          "columnNames": [
+            "email_address_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "type": "hash"
+        },
+        {
+          "keyName": "address_status_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "address_status_email_address_id_foreign": {
+          "constraintName": "address_status_email_address_id_foreign",
+          "columnNames": [
+            "email_address_id"
+          ],
+          "localTableName": "email.address_status",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "email.address",
+          "updateRule": "cascade"
+        }
+      },
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "email.email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "email",
+          "items": [
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -1531,363 +2229,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
-          ]
-        },
-        "meldung_status_enum": {
-          "name": "meldung_status_enum",
-          "schema": "public",
-          "items": [
-            "VEROEFFENTLICHT",
-            "NICHT_VEROEFFENTLICHT"
-          ]
-        },
-        "organisations_typ_enum": {
-          "name": "organisations_typ_enum",
-          "schema": "public",
-          "items": [
-            "ROOT",
-            "LAND",
-            "TRAEGER",
-            "SCHULE",
-            "KLASSE",
-            "ANBIETER",
-            "SONSTIGE ORGANISATION / EINRICHTUNG",
-            "UNBESTAETIGT"
-          ]
-        },
-        "traegerschaft_enum": {
-          "name": "traegerschaft_enum",
-          "schema": "public",
-          "items": [
-            "01",
-            "02",
-            "03",
-            "04",
-            "05",
-            "06"
-          ]
-        },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ]
-        },
-        "email_address_status_enum": {
-          "name": "email_address_status_enum",
-          "schema": "public",
-          "items": [
-            "ENABLED",
-            "DISABLED",
-            "REQUESTED",
-            "FAILED",
-            "DELETED_LDAP",
-            "DELETED_OX",
-            "DELETED"
-          ]
-        },
-        "external_id_enum": {
-          "name": "external_id_enum",
-          "schema": "public",
-          "items": [
-            "LDAP"
-          ]
-        },
-        "rollen_art_enum": {
-          "name": "rollen_art_enum",
-          "schema": "public",
-          "items": [
-            "LERN",
-            "LEHR",
-            "EXTERN",
-            "ORGADMIN",
-            "LEIT",
-            "SYSADMIN"
-          ]
-        },
-        "personenstatus_enum": {
-          "name": "personenstatus_enum",
-          "schema": "public",
-          "items": [
-            "AKTIV"
-          ]
-        },
-        "jahrgangsstufe_enum": {
-          "name": "jahrgangsstufe_enum",
-          "schema": "public",
-          "items": [
-            "01",
-            "02",
-            "03",
-            "04",
-            "05",
-            "06",
-            "07",
-            "08",
-            "09",
-            "10"
-          ]
-        },
-        "import_status_enum": {
-          "name": "import_status_enum",
-          "schema": "public",
-          "items": [
-            "CANCELLED",
-            "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
-          ]
-        },
-        "import_data_item_status_enum": {
-          "name": "import_data_item_status_enum",
-          "schema": "public",
-          "items": [
-            "FAILED",
-            "SUCCESS",
-            "PENDING"
-          ]
-        },
-        "rollen_merkmal_enum": {
-          "name": "rollen_merkmal_enum",
-          "schema": "public",
-          "items": [
-            "BEFRISTUNG_PFLICHT",
-            "KOPERS_PFLICHT"
-          ]
-        },
-        "rollen_system_recht_enum": {
-          "name": "rollen_system_recht_enum",
-          "schema": "public",
-          "items": [
-            "ROLLEN_VERWALTEN",
-            "PERSONEN_SOFORT_LOESCHEN",
-            "PERSONEN_VERWALTEN",
-            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
-            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
-            "SCHULEN_VERWALTEN",
-            "KLASSEN_VERWALTEN",
-            "SCHULTRAEGER_VERWALTEN",
-            "PERSON_SYNCHRONISIEREN",
-            "CRON_DURCHFUEHREN",
-            "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN",
-            "PERSONEN_LESEN",
-            "BULK_VERWALTEN",
-            "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
-          ]
-        },
-        "service_provider_target_enum": {
-          "name": "service_provider_target_enum",
-          "schema": "public",
-          "items": [
-            "URL",
-            "EMAIL",
-            "SCHULPORTAL_ADMINISTRATION"
-          ]
-        },
-        "service_provider_kategorie_enum": {
-          "name": "service_provider_kategorie_enum",
-          "schema": "public",
-          "items": [
-            "EMAIL",
-            "UNTERRICHT",
-            "VERWALTUNG",
-            "HINWEISE",
-            "ANGEBOTE"
-          ]
-        },
-        "service_provider_system_enum": {
-          "name": "service_provider_system_enum",
-          "schema": "public",
-          "items": [
-            "NONE",
-            "EMAIL",
-            "ITSLEARNING"
-          ]
-        },
-        "service_provider_merkmal_enum": {
-          "name": "service_provider_merkmal_enum",
-          "schema": "public",
-          "items": [
-            "NACHTRAEGLICH_ZUWEISBAR",
-            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
-          ]
-        }
-      }
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "uuid"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamptz",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 6,
-          "mappedType": "datetime"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamptz",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 6,
-          "mappedType": "datetime"
-        },
-        "address": {
-          "name": "address",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "string"
-        },
-        "priority": {
-          "name": "priority",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "integer"
-        },
-        "status": {
-          "name": "status",
-          "type": "email_address_status_enum",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "nativeEnumName": "email_address_status_enum",
-          "enumItems": [
-            "PENDING"
-          ],
-          "mappedType": "enum"
-        },
-        "ox_user_id": {
-          "name": "ox_user_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "string"
-        },
-        "spsh_person_id": {
-          "name": "spsh_person_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "string"
-        },
-        "marked_for_cron": {
-          "name": "marked_for_cron",
-          "type": "timestamptz",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "length": 6,
-          "mappedType": "datetime"
-        }
-      },
-      "name": "address",
-      "schema": "email",
-      "indexes": [
-        {
-          "columnNames": [
-            "address"
-          ],
-          "composite": false,
-          "keyName": "address_address_unique",
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "columnNames": [
-            "spsh_person_id"
-          ],
-          "composite": false,
-          "keyName": "email_address_spsh_person_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "keyName": "address_pkey",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "constraint": true,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {},
-      "nativeEnums": {
-        "db_seed_status_enum": {
-          "name": "db_seed_status_enum",
-          "schema": "public",
-          "items": [
-            "STARTED",
-            "DONE",
-            "FAILED"
-          ]
-        },
-        "referenced_entity_type_enum": {
-          "name": "referenced_entity_type_enum",
-          "schema": "public",
-          "items": [
-            "PERSON",
-            "ORGANISATION",
-            "ROLLE",
-            "SERVICE_PROVIDER"
-          ]
-        },
-        "email.email_address_status_enum": {
-          "name": "email_address_status_enum",
-          "schema": "email",
-          "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -2199,7 +2545,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -2626,7 +2976,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -2930,7 +3284,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -3530,7 +3888,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -3888,7 +4250,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -4182,7 +4548,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -4515,7 +4885,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -4995,7 +5369,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -5395,7 +5773,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -5774,7 +6156,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -6069,7 +6455,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -6379,7 +6769,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -6752,7 +7146,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -7157,7 +7555,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -7449,7 +7851,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -7835,7 +8241,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -8127,7 +8537,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -8422,7 +8836,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -8761,7 +9179,11 @@
           "name": "email_address_status_enum",
           "schema": "email",
           "items": [
-            "PENDING"
+            "PENDING",
+            "ACTIVE",
+            "DEACTIVE",
+            "SUSPENDED",
+            "TO_BE_DELETED"
           ]
         },
         "meldung_status_enum": {
@@ -8991,7 +9413,11 @@
       "name": "email_address_status_enum",
       "schema": "email",
       "items": [
-        "PENDING"
+        "PENDING",
+        "ACTIVE",
+        "DEACTIVE",
+        "SUSPENDED",
+        "TO_BE_DELETED"
       ]
     },
     "meldung_status_enum": {

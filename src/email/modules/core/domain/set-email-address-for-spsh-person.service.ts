@@ -6,8 +6,11 @@ import { EmailAddress } from './email-address.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailDomainRepo } from '../persistence/email-domain.repo.js';
 import { EmailDomain } from './email-domain.js';
-import { EmailAddressStatus } from '../persistence/email-address.entity.js';
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
+import { EmailAddressStatus } from './email-address-status.js';
+import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
+import { EmailAddressStatusRepo } from '../persistence/email-address-status.repo.js';
+import { DomainError } from '../../../../shared/error/domain.error.js';
 
 @Injectable()
 export class SetEmailAddressForSpshPersonService {
@@ -16,6 +19,7 @@ export class SetEmailAddressForSpshPersonService {
     public constructor(
         private readonly emailAddressRepo: EmailAddressRepo,
         private readonly emailDomainRepo: EmailDomainRepo,
+        private readonly emailAddressStatusRepo: EmailAddressStatusRepo,
         private readonly logger: ClassLogger,
     ) {
         this.emailAddressGenerator = new EmailAddressGenerator(emailAddressRepo);
@@ -55,16 +59,29 @@ export class SetEmailAddressForSpshPersonService {
             throw generationResult.error;
         }
 
-        const createdEmail: EmailAddress<false> = EmailAddress.createNew({
+        const emailAddressToCreate: EmailAddress<false> = EmailAddress.createNew({
             address: generationResult.value,
             priority: 0,
-            status: EmailAddressStatus.PENDING,
             spshPersonId: spshPersonId,
             oxUserId: undefined,
             markedForCron: undefined,
         });
 
-        await this.emailAddressRepo.save(createdEmail);
-        this.logger.info(`Created email address ${createdEmail.address} for person ${spshPersonId}`);
+        const createdEmailAddress: EmailAddress<true> | DomainError =
+            await this.emailAddressRepo.save(emailAddressToCreate);
+
+        if (createdEmailAddress instanceof DomainError) {
+            this.logger.error(`Failed to create email address: ${createdEmailAddress.message}`);
+            throw createdEmailAddress;
+        }
+
+        const createdEmailStatus: EmailAddressStatus<false> = EmailAddressStatus.createNew({
+            emailAddressId: createdEmailAddress.id,
+            status: EmailAddressStatusEnum.PENDING,
+        });
+
+        await this.emailAddressStatusRepo.create(createdEmailStatus);
+
+        this.logger.info(`Created email address ${createdEmailAddress.address} for person ${spshPersonId}`);
     }
 }

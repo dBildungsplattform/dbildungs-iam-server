@@ -12,8 +12,9 @@ import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { EmailAddress } from '../../domain/email-address.js';
-import { EmailAddressStatus } from '../../persistence/email-address.entity.js';
 import { Public } from '../../decorator/public.decorator.js';
+import { EmailAddressStatus } from '../../domain/email-address-status.js';
+import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
@@ -42,13 +43,20 @@ export class EmailReadController {
             updatedAt: new Date(),
             address: 'test@schule-sh.de',
             priority: 0,
-            status: EmailAddressStatus.PENDING,
             spshPersonId: undefined,
             oxUserId: undefined,
             markedForCron: undefined,
-    });
+        });
 
-        const response: EmailAddressResponse = new EmailAddressResponse(emailAddress);
+        const emailStatus: EmailAddressStatus<true> = EmailAddressStatus.construct({
+            id: '0',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            emailAddressId: emailAddress.id,
+            status: EmailAddressStatusEnum.PENDING,
+        });
+
+        const response: EmailAddressResponse = new EmailAddressResponse(emailAddress, emailStatus);
         return [response];
     }
 }

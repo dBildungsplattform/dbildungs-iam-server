@@ -5,10 +5,12 @@ import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
 import { EmailDomainRepo } from '../persistence/email-domain.repo.js';
 import { EmailAddress } from './email-address.js';
-import { EmailAddressStatus } from '../persistence/email-address.entity.js';
 import { EmailDomain } from './email-domain.js';
 import { faker } from '@faker-js/faker';
 import { EmailAddressGenerator } from './email-address-generator.js';
+import { EmailAddressStatusRepo } from '../persistence/email-address-status.repo.js';
+import { EmailAddressStatus } from './email-address-status.js';
+import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
 
 describe('SetEmailAddressForSpshPersonService', () => {
     let module: TestingModule;
@@ -16,6 +18,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
     let loggerMock: DeepMocked<ClassLogger>;
     let emailAddressRepoMock: DeepMocked<EmailAddressRepo>;
     let emailDomainRepoMock: DeepMocked<EmailDomainRepo>;
+    let emailAddressStatusRepoMock: DeepMocked<EmailAddressStatusRepo>;
     let emailAddressGeneratorMock: DeepMocked<EmailAddressGenerator>;
 
     beforeAll(async () => {
@@ -29,6 +32,10 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 {
                     provide: EmailAddressRepo,
                     useValue: createMock<EmailAddressRepo>(),
+                },
+                {
+                    provide: EmailAddressStatusRepo,
+                    useValue: createMock<EmailAddressStatusRepo>(),
                 },
                 {
                     provide: EmailDomainRepo,
@@ -46,6 +53,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
         emailAddressRepoMock = module.get(EmailAddressRepo);
         emailDomainRepoMock = module.get(EmailDomainRepo);
         emailAddressGeneratorMock = module.get(EmailAddressGenerator);
+        emailAddressStatusRepoMock = module.get(EmailAddressStatusRepo);
     });
 
     afterAll(async () => {
@@ -77,8 +85,16 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 updatedAt: new Date(),
                 address: 'max.mustermann@example.com',
                 priority: 0,
-                status: EmailAddressStatus.PENDING,
                 spshPersonId: faker.string.uuid(),
+            }),
+        );
+        emailAddressStatusRepoMock.create.mockResolvedValue(
+            EmailAddressStatus.construct({
+                id: faker.string.uuid(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                emailAddressId: faker.string.uuid(),
+                status: EmailAddressStatusEnum.PENDING,
             }),
         );
         emailAddressRepoMock.existsEmailAddress.mockResolvedValue(false);
@@ -90,7 +106,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
             emailDomainId: faker.string.uuid(),
         });
 
-        expect(emailAddressRepoMock.save).toHaveBeenCalled();
+        expect(emailAddressRepoMock.save).toHaveBeenCalledTimes(1);
+        expect(emailAddressStatusRepoMock.create).toHaveBeenCalledTimes(1);
         expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Created email address'));
     });
 });
