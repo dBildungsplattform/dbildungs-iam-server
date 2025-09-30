@@ -72,13 +72,29 @@ else
     CONFIG_FLAG="--command-config ${KAFKA_JAAS_FILE}"
 fi
 
-echo "Deleting topics..."
 
-# Run the topic-deletion for every line in the file
-/opt/kafka/bin/kafka-topics.sh \
-    --bootstrap-server "${KAFKA_BROKER}" \
-    --delete \
-    --topic "${KAFKA_TOPIC_PREFIX}.*" \
-    ${CONFIG_FLAG}
+echo "Checking topics with prefix '${TOPIC_PREFIX}'..."
+for topic in $TOPICS; do
+  ns=$(echo "$topic" | cut -d'-' -f1)
 
-echo "Deleted all topics with prefix!"
+  # Only handle namespaces starting with spsh or dbp
+  case "$ns" in
+    spsh*|dbp*)
+      if ! echo "$EXISTING_NAMESPACES" | grep -qw "$ns"; then
+        echo "Namespace '$ns' not found. Deleting topic '$topic'"
+        /opt/kafka/bin/kafka-topics.sh \
+          --bootstrap-server "${KAFKA_BROKER}" \
+          --delete \
+          --topic "$topic" \
+          ${CONFIG_FLAG}
+      else
+        echo "Namespace '$ns' exists. Keeping topic '$topic'."
+      fi
+      ;;
+    *)
+      echo "Skipping topic '$topic' (namespace '$ns' does not match spsh*/dbp*)."
+      ;;
+  esac
+done
+
+echo "Cleanup finished."
