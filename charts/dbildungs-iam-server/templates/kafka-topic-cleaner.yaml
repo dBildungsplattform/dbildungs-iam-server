@@ -1,4 +1,4 @@
-{{- if .Values.kafka.kafka-topic-cleaner-enabled }}
+{{- if .Values.kafka.enabletopicCleaner }}
 {{- $job_name := "cron-topic-cleaner" }}
 {{- $job_options := index .Values.kafka.jobs $job_name }}
 apiVersion: batch/v1
@@ -68,5 +68,4 @@ spec:
               secret:
                 secretName: dbildungs-iam-kafka-tls
                 defaultMode: 0420
----
 {{- end }}

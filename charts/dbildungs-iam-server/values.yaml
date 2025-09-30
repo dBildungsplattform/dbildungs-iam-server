@@ -274,7 +274,7 @@ kafka:
     tag: "3.9.0"
     pullPolicy: Always
   existingSecret: dbildungs-iam-kafka-tls
-  kafka-topic-cleaner-enabled: true
+  enabletopicCleaner: true
   jobs:
     cron-topic-cleaner:
       schedule: "0 2 * * *"
