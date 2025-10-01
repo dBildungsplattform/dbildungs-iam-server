@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { AddMemberToGroupAction, AddMemberToGroupResponseBody } from './add-member-to-group.action.js';
+import { AddMemberToGroupAction } from './add-member-to-group.action.js';
 
 describe('AddMemberToGroupAction', () => {
     describe('buildRequest', () => {
@@ -27,7 +27,7 @@ describe('AddMemberToGroupAction', () => {
                 password: '',
             });
 
-            const body: AddMemberToGroupResponseBody = {};
+            const body: unknown = {};
             expect(action.parseBody(body)).toEqual({
                 ok: true,
                 value: {

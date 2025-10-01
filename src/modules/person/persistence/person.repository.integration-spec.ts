@@ -276,7 +276,9 @@ describe('PersonRepository Integration', () => {
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
             );
-            if (rolle instanceof DomainError) throw rolle;
+            if (rolle instanceof DomainError) {
+                throw rolle;
+            }
             await dbiamPersonenkontextRepoInternal.save(
                 DoFactory.createPersonenkontext(false, {
                     organisationId: orga.id,
@@ -316,8 +318,12 @@ describe('PersonRepository Integration', () => {
             const rolleB: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
             );
-            if (rolleA instanceof DomainError) throw rolleA;
-            if (rolleB instanceof DomainError) throw rolleB;
+            if (rolleA instanceof DomainError) {
+                throw rolleA;
+            }
+            if (rolleB instanceof DomainError) {
+                throw rolleB;
+            }
             await dbiamPersonenkontextRepoInternal.save(
                 DoFactory.createPersonenkontext(false, {
                     organisationId: orgaA.id,
@@ -351,7 +357,9 @@ describe('PersonRepository Integration', () => {
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
             );
-            if (rolle instanceof DomainError) throw rolle;
+            if (rolle instanceof DomainError) {
+                throw rolle;
+            }
             await dbiamPersonenkontextRepoInternal.save(
                 DoFactory.createPersonenkontext(false, {
                     organisationId: orga.id,
@@ -2467,14 +2475,18 @@ describe('PersonRepository Integration', () => {
                 );
 
                 let result: Person<true> | DomainError = await sut.save(updatedPerson);
-                if (result instanceof DomainError) throw result;
+                if (result instanceof DomainError) {
+                    throw result;
+                }
 
                 expect(result.externalIds.LDAP).toEqual(updatedPerson.externalIds.LDAP);
 
                 updatedPerson.externalIds.LDAP = undefined;
 
                 result = await sut.save(updatedPerson);
-                if (result instanceof DomainError) throw result;
+                if (result instanceof DomainError) {
+                    throw result;
+                }
 
                 expect(result.externalIds.LDAP).toBeUndefined();
             });
@@ -2774,7 +2786,9 @@ describe('PersonRepository Integration', () => {
                 return;
             }
             const savedRolle: Rolle<true> | DomainError = await rolleRepo.save(rolle);
-            if (savedRolle instanceof DomainError) throw Error();
+            if (savedRolle instanceof DomainError) {
+                throw Error();
+            }
 
             const savedOrganisation: OrganisationEntity = await createAndPersistOrganisation(
                 em,
@@ -3106,8 +3120,12 @@ describe('PersonRepository Integration', () => {
 
             const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
             const rolle2Result: Rolle<true> | DomainError = await rolleRepo.save(rolle2);
-            if (rolle1Result instanceof DomainError) throw Error();
-            if (rolle2Result instanceof DomainError) throw Error();
+            if (rolle1Result instanceof DomainError) {
+                throw Error();
+            }
+            if (rolle2Result instanceof DomainError) {
+                throw Error();
+            }
 
             // personenKontext where createdAt exceeds the time-limit
             jest.useFakeTimers({ now: daysAgo });
@@ -3188,7 +3206,9 @@ describe('PersonRepository Integration', () => {
                     merkmale: [RollenMerkmal.KOPERS_PFLICHT],
                 });
                 const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
-                if (rolle1Result instanceof DomainError) throw Error();
+                if (rolle1Result instanceof DomainError) {
+                    throw Error();
+                }
 
                 const organisation1: Organisation<true> = await organisationRepository.save(
                     DoFactory.createOrganisation(false),
@@ -3229,7 +3249,9 @@ describe('PersonRepository Integration', () => {
                     merkmale: [RollenMerkmal.KOPERS_PFLICHT],
                 });
                 const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
-                if (rolle1Result instanceof DomainError) throw Error();
+                if (rolle1Result instanceof DomainError) {
+                    throw Error();
+                }
 
                 const organisation1: Organisation<true> = await organisationRepository.save(
                     DoFactory.createOrganisation(false),

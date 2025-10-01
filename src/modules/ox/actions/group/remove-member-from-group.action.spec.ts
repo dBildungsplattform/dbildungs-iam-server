@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { RemoveMemberFromGroupAction, RemoveMemberFromGroupResponseBody } from './remove-member-from-group.action.js';
+import { RemoveMemberFromGroupAction } from './remove-member-from-group.action.js';
 
 describe('RemoveMemberFromGroupAction', () => {
     describe('buildRequest', () => {
@@ -26,7 +26,7 @@ describe('RemoveMemberFromGroupAction', () => {
                 password: '',
             });
 
-            const body: RemoveMemberFromGroupResponseBody = {};
+            const body: unknown = {};
             expect(action.parseBody(body)).toEqual({
                 ok: true,
                 value: {

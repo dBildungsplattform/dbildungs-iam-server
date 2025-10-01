@@ -5,14 +5,10 @@ import { GroupMemberParams } from './ox-group.types.js';
 
 export type AddMemberToGroupResponse = {
     status: OXRequestStatus;
-    data: AddMemberToGroupResponseBody;
+    data: unknown;
 };
 
-export type AddMemberToGroupResponseBody = {
-    // body is empty
-};
-
-export class AddMemberToGroupAction extends OxBaseAction<AddMemberToGroupResponseBody, AddMemberToGroupResponse> {
+export class AddMemberToGroupAction extends OxBaseAction<unknown, AddMemberToGroupResponse> {
     public override action: string = 'http://soap.admin.openexchange.com/addMember';
 
     public override soapServiceName: string = 'OXGroupService';
@@ -49,7 +45,7 @@ export class AddMemberToGroupAction extends OxBaseAction<AddMemberToGroupRespons
         };
     }
 
-    public override parseBody(body: AddMemberToGroupResponseBody): Result<AddMemberToGroupResponse, DomainError> {
+    public override parseBody(body: unknown): Result<AddMemberToGroupResponse, DomainError> {
         return {
             ok: true,
             value: {

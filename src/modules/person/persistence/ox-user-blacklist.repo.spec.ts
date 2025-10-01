@@ -87,7 +87,9 @@ describe('OxUserBlacklistRepo', () => {
 
                 const findResult: Option<OxUserBlacklistEntry<true>> = await sut.findByEmail(fakeEmail);
 
-                if (!findResult) throw Error();
+                if (!findResult) {
+                    throw Error();
+                }
                 expect(findResult.email).toStrictEqual(fakeEmail);
             });
         });
@@ -109,7 +111,9 @@ describe('OxUserBlacklistRepo', () => {
 
                 const findResult: Option<OxUserBlacklistEntry<true>> = await sut.findByOxUsername(fakeUsername);
 
-                if (!findResult) throw Error();
+                if (!findResult) {
+                    throw Error();
+                }
                 expect(findResult.username).toStrictEqual(fakeUsername);
             });
         });
@@ -146,7 +150,9 @@ describe('OxUserBlacklistRepo', () => {
                 );
 
                 const result: OxUserBlacklistEntry<true> | DomainError = await sut.save(updatedEntry);
-                if (result instanceof DomainError) throw Error();
+                if (result instanceof DomainError) {
+                    throw Error();
+                }
 
                 const foundOxUserBlacklistEntity: Option<OxUserBlacklistEntity> = await em.findOne(
                     OxUserBlacklistEntity,
@@ -154,7 +160,9 @@ describe('OxUserBlacklistRepo', () => {
                         id: existingEntity.id,
                     },
                 );
-                if (!foundOxUserBlacklistEntity) throw Error();
+                if (!foundOxUserBlacklistEntity) {
+                    throw Error();
+                }
 
                 expect(foundOxUserBlacklistEntity.id).toStrictEqual(existingEntity.id);
                 expect(foundOxUserBlacklistEntity.email).toStrictEqual(updatedEmail);
@@ -179,7 +187,9 @@ describe('OxUserBlacklistRepo', () => {
                 );
 
                 const result: OxUserBlacklistEntry<true> | DomainError = await sut.save(updatedEntry);
-                if (result instanceof OxUserBlacklistEntry) throw Error();
+                if (result instanceof OxUserBlacklistEntry) {
+                    throw Error();
+                }
 
                 expect(result).toStrictEqual(new EntityNotFoundError('OxUserBlacklistEntity'));
             });
@@ -197,7 +207,9 @@ describe('OxUserBlacklistRepo', () => {
                 );
 
                 const result: OxUserBlacklistEntry<true> | DomainError = await sut.save(newEntry);
-                if (result instanceof DomainError) throw Error();
+                if (result instanceof DomainError) {
+                    throw Error();
+                }
 
                 const foundOxUserBlacklistEntity: Option<OxUserBlacklistEntity> = await em.findOne(
                     OxUserBlacklistEntity,
@@ -205,7 +217,9 @@ describe('OxUserBlacklistRepo', () => {
                         email: newEmail,
                     },
                 );
-                if (!foundOxUserBlacklistEntity) throw Error();
+                if (!foundOxUserBlacklistEntity) {
+                    throw Error();
+                }
 
                 expect(foundOxUserBlacklistEntity.email).toStrictEqual(newEmail);
                 expect(foundOxUserBlacklistEntity.name).toStrictEqual(newName);

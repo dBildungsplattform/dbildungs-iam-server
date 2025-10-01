@@ -611,7 +611,9 @@ describe('LdapSyncEventHandler', () => {
                 // set kennung for an organisation undefined to force 'Required kennung is missing on organisation'
                 assert(kontexte[0]);
                 const orgaWithoutKennung: Organisation<true> | undefined = orgaMap.get(kontexte[0].organisationId);
-                if (!orgaWithoutKennung) throw Error();
+                if (!orgaWithoutKennung) {
+                    throw Error();
+                }
                 orgaWithoutKennung.kennung = undefined;
                 mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
                 organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
@@ -662,7 +664,9 @@ describe('LdapSyncEventHandler', () => {
                 // set kennung for an organisation undefined to force 'Required kennung is missing on organisation'
                 assert(kontexte[0]);
                 const orgaWithoutKennung: Organisation<true> | undefined = orgaMap.get(kontexte[0].organisationId);
-                if (!orgaWithoutKennung) throw Error();
+                if (!orgaWithoutKennung) {
+                    throw Error();
+                }
                 orgaWithoutKennung.kennung = undefined;
                 mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
                 organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(undefined);

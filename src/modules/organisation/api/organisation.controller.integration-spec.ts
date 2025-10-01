@@ -215,7 +215,9 @@ describe('Organisation API', () => {
                         rollenart: RollenArt.LERN,
                     }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 await dBiamPersonenkontextRepoInternal.save(
                     createPersonenkontext(false, {

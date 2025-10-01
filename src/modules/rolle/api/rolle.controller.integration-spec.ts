@@ -348,7 +348,9 @@ describe('Rolle API', () => {
                     name: rolleName,
                 }),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             const params: CreateRolleBodyParams = {
                 name: rolleName,
@@ -412,7 +414,9 @@ describe('Rolle API', () => {
         it('should return rollen with the given queried name', async () => {
             const testRolle: { name: string; administeredBySchulstrukturknoten: string } | DomainError =
                 await rolleRepo.save(DoFactory.createRolle(false));
-            if (testRolle instanceof DomainError) throw Error();
+            if (testRolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
@@ -504,7 +508,9 @@ describe('Rolle API', () => {
                     rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: false })),
                 ])
             ).map((r: Rolle<true> | DomainError) => {
-                if (r instanceof DomainError) throw Error();
+                if (r instanceof DomainError) {
+                    throw Error();
+                }
                 return r.administeredBySchulstrukturknoten;
             });
 
@@ -525,7 +531,9 @@ describe('Rolle API', () => {
     describe('/GET rolle by id', () => {
         it('should return rolle', async () => {
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
@@ -547,7 +555,9 @@ describe('Rolle API', () => {
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
@@ -581,7 +591,9 @@ describe('Rolle API', () => {
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { istTechnisch: true }),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
@@ -601,7 +613,9 @@ describe('Rolle API', () => {
         describe('when rolle exists and systemrecht is matching enum', () => {
             it('should return 200', async () => {
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const params: AddSystemrechtBodyParams = {
                     systemRecht: RollenSystemRechtEnum.ROLLEN_VERWALTEN,
@@ -639,7 +653,9 @@ describe('Rolle API', () => {
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .get(`/rolle/${rolle.id}/serviceProviders`)
@@ -668,7 +684,9 @@ describe('Rolle API', () => {
                     DoFactory.createServiceProvider(false),
                 );
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const params: RolleServiceProviderBodyParams = {
                     serviceProviderIds: [serviceProvider.id],
@@ -690,7 +708,9 @@ describe('Rolle API', () => {
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const params: RolleServiceProviderBodyParams = {
                     serviceProviderIds: [serviceProvider.id],
@@ -722,7 +742,9 @@ describe('Rolle API', () => {
         describe('when serviceProvider does not exist', () => {
             it('should return 404', async () => {
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const params: RolleServiceProviderBodyParams = {
                     serviceProviderIds: [faker.string.uuid()],
@@ -746,7 +768,9 @@ describe('Rolle API', () => {
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const params: RolleServiceProviderBodyParams = {
                     serviceProviderIds: [serviceProvider.id],
@@ -778,7 +802,9 @@ describe('Rolle API', () => {
         describe('when serviceProvider does not exist', () => {
             it('should return 500', async () => {
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
                 const nonExistingServiceProviderId: string = faker.string.uuid();
 
                 const params: RolleServiceProviderBodyParams = {
@@ -828,7 +854,9 @@ describe('Rolle API', () => {
                     rollenart: RollenArt.LEHR,
                 }),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [organisation.id] });
 
@@ -908,7 +936,9 @@ describe('Rolle API', () => {
                 }),
             );
 
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
@@ -957,7 +987,9 @@ describe('Rolle API', () => {
                 }),
             );
 
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisation.id] });
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
@@ -1022,7 +1054,9 @@ describe('Rolle API', () => {
                         merkmale: [],
                     }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 await dBiamPersonenkontextRepoInternal.save(
                     DoFactory.createPersonenkontext(false, {
@@ -1077,7 +1111,9 @@ describe('Rolle API', () => {
                     rollenart: RollenArt.LEHR,
                 }),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
                 DoFactory.createServiceProvider(false),
@@ -1163,7 +1199,9 @@ describe('Rolle API', () => {
                         rollenart: RollenArt.LEHR,
                     }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 await dBiamPersonenkontextRepoInternal.save(
                     DoFactory.createPersonenkontext(false, {
@@ -1212,7 +1250,9 @@ describe('Rolle API', () => {
                         rollenart: RollenArt.LEHR,
                     }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                     all: false,
@@ -1256,7 +1296,9 @@ describe('Rolle API', () => {
                         istTechnisch: true,
                     }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                     all: false,
@@ -1306,7 +1348,9 @@ describe('Rolle API', () => {
                         istTechnisch: false,
                     }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                     all: false,
