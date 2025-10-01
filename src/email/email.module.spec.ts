@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock } from '@golevelup/ts-jest';
 import { RedisClientType } from 'redis';
-import { ConfigTestModule, LoggingTestModule } from '../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../test/utils/index.js';
 import { EmailModule } from './email.module.js';
 
 jest.mock('redis', () => ({
@@ -13,7 +13,7 @@ describe('EmailModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [EmailModule, ConfigTestModule, LoggingTestModule],
+            imports: [EmailModule, ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot()],
         }).compile();
     });
 
