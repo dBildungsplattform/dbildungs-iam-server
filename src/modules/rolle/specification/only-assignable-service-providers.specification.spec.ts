@@ -28,10 +28,7 @@ function getAssignableServiceProviders(n: number): ServiceProvider<true>[] {
     });
 }
 
-function buildRolleWithServiceProviders(
-    sps: ServiceProvider<true>[],
-    baseRolle?: Partial<Rolle<true>> | undefined,
-): Rolle<true> {
+function buildRolleWithServiceProviders(sps: ServiceProvider<true>[], baseRolle?: Partial<Rolle<true>>): Rolle<true> {
     return DoFactory.createRolle(true, {
         ...baseRolle,
         serviceProviderIds: sps.map((sp: ServiceProvider<true>) => sp.id),

@@ -51,13 +51,13 @@ describe('The Permissions-Decorator', () => {
         const context: ExecutionContext = createMock();
         context.switchToHttp().getRequest<DeepMocked<express.Request>>().passportUser = {} as PassportUser;
 
-        await expect(factory(null, context)).rejects.toBeUndefined();
+        await expect(factory(null, context)).rejects.toThrow('No personPermissions function found on PassportUser');
     });
 
     it('should reject if there is no passport user', async () => {
         const context: ExecutionContext = createMock();
         context.switchToHttp().getRequest<DeepMocked<express.Request>>().passportUser = undefined;
 
-        await expect(factory(null, context)).rejects.toBeUndefined();
+        await expect(factory(null, context)).rejects.toThrow('No PassportUser found on request');
     });
 });

@@ -83,19 +83,19 @@ export class PersonenkontexteUpdate {
         );
     }
 
-    /* eslint-disable no-await-in-loop */
     private async getSentPersonenkontexte(): Promise<Personenkontext<boolean>[] | PersonenkontexteUpdateError> {
         const personenKontexte: Personenkontext<boolean>[] = [];
         for (const pkBodyParam of this.dBiamPersonenkontextBodyParams) {
-            if (pkBodyParam.personId != this.personId) {
+            if (pkBodyParam.personId !== this.personId) {
                 return new UpdatePersonIdMismatchError();
             }
+            // eslint-disable-next-line no-await-in-loop
             const pk: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.find(
                 pkBodyParam.personId,
                 pkBodyParam.organisationId,
                 pkBodyParam.rolleId,
             );
-            if (!pk || pk.befristung?.getTime() != pkBodyParam.befristung?.getTime()) {
+            if (!pk || pk.befristung?.getTime() !== pkBodyParam.befristung?.getTime()) {
                 const newPK: Personenkontext<false> = this.personenkontextFactory.createNew(
                     pkBodyParam.personId,
                     pkBodyParam.organisationId,
@@ -117,7 +117,6 @@ export class PersonenkontexteUpdate {
         return personenKontexte;
     }
 
-    /* eslint-disable no-await-in-loop */
     private async validate(existingPKs: Personenkontext<true>[]): Promise<Option<PersonenkontexteUpdateError>> {
         const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
 
@@ -223,20 +222,19 @@ export class PersonenkontexteUpdate {
             if (
                 !sentPKs.some(
                     (pk: Personenkontext<true>) =>
-                        pk.personId == existingPK.personId &&
-                        pk.organisationId == existingPK.organisationId &&
-                        pk.rolleId == existingPK.rolleId &&
-                        pk.befristung?.getTime() == existingPK.befristung?.getTime(),
+                        pk.personId === existingPK.personId &&
+                        pk.organisationId === existingPK.organisationId &&
+                        pk.rolleId === existingPK.rolleId &&
+                        pk.befristung?.getTime() === existingPK.befristung?.getTime(),
                 )
             ) {
                 try {
-                    /* eslint-disable no-await-in-loop */
-                    await this.dBiamPersonenkontextRepoInternal.delete(existingPK).then(() => {});
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.dBiamPersonenkontextRepoInternal.delete(existingPK);
                     deletedPKs.push(existingPK);
                     this.logger.info(
                         `Schulzuordnung (Organisation:${existingPK.organisationId}, Rolle:${existingPK.rolleId}) für Benutzer mit BenutzerId: {${existingPK.personId}}.'}`,
                     );
-                    /* eslint-disable no-await-in-loop */
                 } catch (err) {
                     this.logger.error(`Personenkontext with ID ${existingPK.id} could not be deleted!`, err);
                 }
@@ -246,7 +244,6 @@ export class PersonenkontexteUpdate {
         return deletedPKs;
     }
 
-    /* eslint-disable no-await-in-loop */
     private async add(
         existingPKs: Personenkontext<true>[],
         sentPKs: Personenkontext<boolean>[],
@@ -257,13 +254,14 @@ export class PersonenkontexteUpdate {
             if (
                 !existingPKs.some(
                     (existingPK: Personenkontext<true>) =>
-                        existingPK.personId == sentPK.personId &&
-                        existingPK.organisationId == sentPK.organisationId &&
-                        existingPK.rolleId == sentPK.rolleId &&
-                        existingPK.befristung?.getTime() == sentPK.befristung?.getTime(),
+                        existingPK.personId === sentPK.personId &&
+                        existingPK.organisationId === sentPK.organisationId &&
+                        existingPK.rolleId === sentPK.rolleId &&
+                        existingPK.befristung?.getTime() === sentPK.befristung?.getTime(),
                 )
             ) {
                 try {
+                    // eslint-disable-next-line no-await-in-loop
                     const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepoInternal.save(sentPK);
                     createdPKs.push(savedPK);
                     this.logger.info(
@@ -277,7 +275,6 @@ export class PersonenkontexteUpdate {
                 }
             }
         }
-        /* eslint-disable no-await-in-loop */
 
         return createdPKs;
     }
@@ -387,7 +384,7 @@ export class PersonenkontexteUpdate {
         );
 
         // Set value with current date in database, when person has no Personenkontext anymore
-        if (existingPKsAfterUpdate.length == 0) {
+        if (existingPKsAfterUpdate.length === 0) {
             const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
             if (person) {
                 person.orgUnassignmentDate = new Date();

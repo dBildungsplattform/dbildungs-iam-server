@@ -136,7 +136,7 @@ export class EmailAddressDeletionService {
         }
         const allEmailAddressesForPerson: EmailAddress<true>[] =
             await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
-        if (allEmailAddressesForPerson.length == 0) {
+        if (allEmailAddressesForPerson.length === 0) {
             this.logger.info(
                 `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, username:${person.referrer}`,
             );
