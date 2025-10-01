@@ -70,7 +70,7 @@
         "jwks-rsa": "^3.2.0",
         "ldapts": "^7.3.3",
         "lodash-es": "^4.17.21",
-        "nest-commander": "^3.17.0",
+        "nest-commander": "^3.20.0",
         "nest-keycloak-connect": "^1.10.1",
         "openid-client": "^5.7.1",
         "papaparse": "^5.5.2",
