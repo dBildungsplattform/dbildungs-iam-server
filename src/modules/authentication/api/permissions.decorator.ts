@@ -30,13 +30,13 @@ export const Permissions: (
         const passportUser: PassportUser | undefined = request.passportUser;
 
         if (!passportUser) {
-            return Promise.reject();
+            return Promise.reject(new Error('No PassportUser found on request'));
         } else {
             if (!passportUser.personPermissions || typeof passportUser.personPermissions !== 'function') {
                 logger.error(
                     `PassportUser does not have personPermissions function. passportUser: ${inspect(passportUser)}`,
                 );
-                return Promise.reject();
+                return Promise.reject(new Error('No personPermissions function found on PassportUser'));
             }
             return passportUser.personPermissions();
         }

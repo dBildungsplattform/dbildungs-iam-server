@@ -11,7 +11,9 @@ import { KafkaEvent } from '../../../shared/events/kafka-event.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 
 function flushPromises(): Promise<void> {
-    return new Promise((resolve: (value: void | PromiseLike<void>) => void) => setImmediate(resolve));
+    return new Promise((resolve: (value: void | PromiseLike<void>) => void) => {
+        setImmediate(resolve);
+    });
 }
 
 describe('EventRoutingLegacyKafkaService', () => {
@@ -46,7 +48,9 @@ describe('EventRoutingLegacyKafkaService', () => {
 
     afterEach(async () => {
         jest.resetAllMocks();
-        if (module) await module.close();
+        if (module) {
+            await module.close();
+        }
     });
 
     it('should be defined', async () => {

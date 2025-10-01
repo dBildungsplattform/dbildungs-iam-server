@@ -9,7 +9,9 @@ export class TraegerUnterRootChild<Persisted extends boolean> extends CompositeS
     }
 
     public override async isSatisfiedBy(t: Organisation<Persisted>): Promise<boolean> {
-        if (t.typ !== OrganisationsTyp.TRAEGER) return true;
+        if (t.typ !== OrganisationsTyp.TRAEGER) {
+            return true;
+        }
         const isRootChild: boolean = await this.isRootChild(t);
         return isRootChild;
     }

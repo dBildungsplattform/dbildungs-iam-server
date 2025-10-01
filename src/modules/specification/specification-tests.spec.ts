@@ -19,13 +19,13 @@ type TestOrganisation = {
 
 class IstSchule extends CompositeSpecification<TestOrganisation> {
     public async isSatisfiedBy(t: TestOrganisation): Promise<boolean> {
-        return Promise.resolve(t.typ == OrganisationsTyp.SCHULE);
+        return Promise.resolve(t.typ === OrganisationsTyp.SCHULE);
     }
 }
 
 class IstTraeger extends CompositeSpecification<TestOrganisation> {
     public async isSatisfiedBy(t: TestOrganisation): Promise<boolean> {
-        return Promise.resolve(t.typ == OrganisationsTyp.SONSTIGE);
+        return Promise.resolve(t.typ === OrganisationsTyp.SONSTIGE);
     }
 }
 

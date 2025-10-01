@@ -2,6 +2,7 @@ import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
 import { Injectable } from '@nestjs/common';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
+import util from 'util';
 import { EmailAddressResponse } from '../api/email-address.response.js';
 import { HttpService } from '@nestjs/axios';
 
@@ -32,8 +33,8 @@ export class EmailHealthIndicator extends HealthIndicator {
                 this.httpService.get('http://localhost:9090/read', {}),
             );
             return response.data;
-        } catch (error) {
-            throw new Error('Failed retrieving email address');
+        } catch (error: unknown) {
+            throw new Error(`Failed retrieving email address ${util.inspect(error)}`);
         }
     }
 }

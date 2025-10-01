@@ -2,7 +2,6 @@ import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20241219124504 extends Migration {
     public async up(): Promise<void> {
-
         this.addSql('alter table "importvorgang" rename column "import_by_person_id" to "person_id";');
 
         this.addSql(
@@ -17,7 +16,6 @@ export class Migration20241219124504 extends Migration {
     }
 
     public override async down(): Promise<void> {
-
         this.addSql('alter table "importvorgang" drop constraint "importvorgang_person_id_foreign";');
         this.addSql('alter table "importvorgang" drop constraint "importvorgang_rolle_id_foreign";');
         this.addSql('alter table "importvorgang" drop constraint "importvorgang_organisation_id_foreign";');

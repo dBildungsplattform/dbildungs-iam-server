@@ -152,7 +152,9 @@ describe('Import API', () => {
             const filePath: string = path.resolve('./', `test/imports/valid_test_import_SuS.csv`);
 
             const fileExists: boolean = fs.existsSync(filePath);
-            if (!fileExists) throw new Error('file does not exist');
+            if (!fileExists) {
+                throw new Error('file does not exist');
+            }
 
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
@@ -182,7 +184,9 @@ describe('Import API', () => {
                     administeredBySchulstrukturknoten: schule.id,
                 }),
             );
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
@@ -205,7 +209,9 @@ describe('Import API', () => {
             const filePath: string = path.resolve('./', `test/imports/valid_with_empty_values_test_import_SuS.csv`);
 
             const fileExists: boolean = fs.existsSync(filePath);
-            if (!fileExists) throw new Error('file does not exist');
+            if (!fileExists) {
+                throw new Error('file does not exist');
+            }
 
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
@@ -227,7 +233,9 @@ describe('Import API', () => {
                     administeredBySchulstrukturknoten: schule.id,
                 }),
             );
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
@@ -269,7 +277,9 @@ describe('Import API', () => {
             const filePath: string = path.resolve('./', `test/imports/valid_test_import_SuS.csv`);
 
             const fileExists: boolean = fs.existsSync(filePath);
-            if (!fileExists) throw new Error('file does not exist');
+            if (!fileExists) {
+                throw new Error('file does not exist');
+            }
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
@@ -291,7 +301,9 @@ describe('Import API', () => {
             const filePath: string = path.resolve('./', `test/imports/invalid_test_import_SuS.csv`);
 
             const fileExists: boolean = fs.existsSync(filePath);
-            if (!fileExists) throw new Error('file does not exist');
+            if (!fileExists) {
+                throw new Error('file does not exist');
+            }
 
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
@@ -304,7 +316,9 @@ describe('Import API', () => {
                     administeredBySchulstrukturknoten: schule.id,
                 }),
             );
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
@@ -324,7 +338,9 @@ describe('Import API', () => {
             const filePath: string = path.resolve('./', `test/imports/empty_test_import_SuS.csv`);
 
             const fileExists: boolean = fs.existsSync(filePath);
-            if (!fileExists) throw new Error('file does not exist');
+            if (!fileExists) {
+                throw new Error('file does not exist');
+            }
 
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
@@ -337,7 +353,9 @@ describe('Import API', () => {
                     administeredBySchulstrukturknoten: schule.id,
                 }),
             );
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
@@ -357,7 +375,9 @@ describe('Import API', () => {
             const filePath: string = path.resolve('./', `test/imports/invalid_filetype_test_import.txt`);
 
             const fileExists: boolean = fs.existsSync(filePath);
-            if (!fileExists) throw new Error('file does not exist');
+            if (!fileExists) {
+                throw new Error('file does not exist');
+            }
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
@@ -373,7 +393,9 @@ describe('Import API', () => {
             const filePath: string = path.resolve('./', `test/imports/invalid_klasse_header_import_SuS.csv`);
 
             const fileExists: boolean = fs.existsSync(filePath);
-            if (!fileExists) throw new Error('file does not exist');
+            if (!fileExists) {
+                throw new Error('file does not exist');
+            }
 
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
@@ -386,7 +408,9 @@ describe('Import API', () => {
                     administeredBySchulstrukturknoten: schule.id,
                 }),
             );
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
@@ -406,7 +430,9 @@ describe('Import API', () => {
             const filePath: string = path.resolve('./', `test/imports/invalid_filetype_excel.xlsx`);
 
             const fileExists: boolean = fs.existsSync(filePath);
-            if (!fileExists) throw new Error('file does not exist');
+            if (!fileExists) {
+                throw new Error('file does not exist');
+            }
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
@@ -425,7 +451,9 @@ describe('Import API', () => {
             const filePath: string = path.resolve('./', `test/imports/valid_test_import_SuS_type_MsExcel.csv`);
 
             const fileExists: boolean = fs.existsSync(filePath);
-            if (!fileExists) throw new Error('file does not exist');
+            if (!fileExists) {
+                throw new Error('file does not exist');
+            }
 
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
@@ -448,7 +476,9 @@ describe('Import API', () => {
                 }),
             );
 
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
@@ -471,7 +501,9 @@ describe('Import API', () => {
             const filePath: string = path.resolve('./', `test/imports/valid_test_import_SuS.csv`);
 
             const fileExists: boolean = fs.existsSync(filePath);
-            if (!fileExists) throw new Error('file does not exist');
+            if (!fileExists) {
+                throw new Error('file does not exist');
+            }
 
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
@@ -494,7 +526,9 @@ describe('Import API', () => {
                     merkmale: [],
                 }),
             );
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
 
             personPermissionsMock.personFields.username = undefined;
 
@@ -546,7 +580,9 @@ describe('Import API', () => {
                     merkmale: [],
                 }),
             );
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
 
             const person: PersonEntity = em.create(PersonEntity, mapAggregateToData(DoFactory.createPerson(false)));
             await em.persistAndFlush(person);
@@ -597,7 +633,9 @@ describe('Import API', () => {
                     merkmale: [],
                 }),
             );
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
                 DoFactory.createImportVorgang(false, {
                     organisationId: undefined,
@@ -640,7 +678,9 @@ describe('Import API', () => {
                     merkmale: [],
                 }),
             );
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
 
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
                 DoFactory.createImportVorgang(false, {
@@ -737,7 +777,9 @@ describe('Import API', () => {
                     merkmale: [],
                 }),
             );
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
 
             rolleId = sus.id;
 
@@ -890,7 +932,9 @@ describe('Import API', () => {
                     merkmale: [],
                 }),
             );
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
 
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
                 DoFactory.createImportVorgang(false, {
@@ -963,7 +1007,9 @@ describe('Import API', () => {
                     merkmale: [],
                 }),
             );
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
 
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
                 DoFactory.createImportVorgang(false, {
@@ -1053,7 +1099,9 @@ describe('Import API', () => {
                     merkmale: [],
                 }),
             );
-            if (sus instanceof DomainError) throw sus;
+            if (sus instanceof DomainError) {
+                throw sus;
+            }
 
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
                 DoFactory.createImportVorgang(false, {
