@@ -195,7 +195,9 @@ describe('PersonScope', () => {
                 const person1: PersonEntity = createPersonEntity();
                 const person2: PersonEntity = createPersonEntity();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
                 organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
 
                 await em.persistAndFlush([person1, person2]);
@@ -221,7 +223,9 @@ describe('PersonScope', () => {
                 const person1: PersonEntity = createPersonEntity();
                 const person2: PersonEntity = createPersonEntity();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
                 organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
                 rolleID = rolle.id;
                 await em.persistAndFlush([person1, person2]);
@@ -245,7 +249,9 @@ describe('PersonScope', () => {
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
                 organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
 
                 await em.persistAndFlush([person1]);
@@ -270,7 +276,9 @@ describe('PersonScope', () => {
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
                 organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
 
                 rolleID = rolle.id;

@@ -229,9 +229,12 @@ export class OrganisationRepository {
     }
 
     private getDomainRecursive(organisationsSortedByDepthAsc: Organisation<true>[]): Option<string> {
-        if (!organisationsSortedByDepthAsc || organisationsSortedByDepthAsc.length == 0) return undefined;
-        if (organisationsSortedByDepthAsc[0] && organisationsSortedByDepthAsc[0].emailDomain)
+        if (!organisationsSortedByDepthAsc || organisationsSortedByDepthAsc.length === 0) {
+            return undefined;
+        }
+        if (organisationsSortedByDepthAsc[0] && organisationsSortedByDepthAsc[0].emailDomain) {
             return organisationsSortedByDepthAsc[0].emailDomain;
+        }
 
         return this.getDomainRecursive(organisationsSortedByDepthAsc.slice(1));
     }

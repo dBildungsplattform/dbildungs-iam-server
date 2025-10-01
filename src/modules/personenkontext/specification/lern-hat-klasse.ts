@@ -18,7 +18,9 @@ export class LernHatKlasse extends CompositeSpecification<Array<Personenkontext<
 
     public async isSatisfiedBy(pks: Array<Personenkontext<boolean>>): Promise<boolean> {
         const hasLernRolle: boolean = await this.hasLernRolle(pks);
-        if (!hasLernRolle) return true; // spec does not apply, no LERN rolle
+        if (!hasLernRolle) {
+            return true;
+        } // spec does not apply, no LERN rolle
 
         const hasAtLeastOneKlasse: boolean = await this.hasAtLeastOneKlasse(pks);
         return hasAtLeastOneKlasse;
@@ -39,7 +41,9 @@ export class LernHatKlasse extends CompositeSpecification<Array<Personenkontext<
         );
         // we must have at least one PK at a KLASSE
         for (const organisation of organisationen.values()) {
-            if (organisation.typ === OrganisationsTyp.KLASSE) return true;
+            if (organisation.typ === OrganisationsTyp.KLASSE) {
+                return true;
+            }
         }
         return false;
     }

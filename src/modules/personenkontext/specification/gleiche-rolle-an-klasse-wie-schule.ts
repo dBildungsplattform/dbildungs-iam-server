@@ -21,23 +21,34 @@ export class GleicheRolleAnKlasseWieSchule extends CompositeSpecification<Person
         super();
     }
 
-    // eslint-disable-next-line @typescript-eslint/require-await
     public async isSatisfiedBy(p: Personenkontext<boolean>): Promise<boolean> {
         const organisation: Option<Organisation<true>> = await this.organisationRepo.findById(p.organisationId);
-        if (!organisation) return false;
-        if (organisation.typ !== OrganisationsTyp.KLASSE) return true;
-        if (!organisation.administriertVon) return false; // Klasse always has to be administered by Schule
+        if (!organisation) {
+            return false;
+        }
+        if (organisation.typ !== OrganisationsTyp.KLASSE) {
+            return true;
+        }
+        if (!organisation.administriertVon) {
+            return false;
+        } // Klasse always has to be administered by Schule
 
         const schule: Option<Organisation<true>> = await this.organisationRepo.findById(organisation.administriertVon);
-        if (!schule) return false;
+        if (!schule) {
+            return false;
+        }
 
         const personenKontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(p.personId);
         const matchingKontext: Personenkontext<true> | undefined = personenKontexte.find(
             (pk: Personenkontext<true>) => pk.organisationId === schule.id,
         );
-        if (!matchingKontext) return false;
+        if (!matchingKontext) {
+            return false;
+        }
         const rolleAnSchule: Option<Rolle<true>> = await this.rolleRepo.findById(matchingKontext.rolleId);
-        if (!rolleAnSchule) return false;
+        if (!rolleAnSchule) {
+            return false;
+        }
 
         return rolleAnSchule.id === p.rolleId;
     }

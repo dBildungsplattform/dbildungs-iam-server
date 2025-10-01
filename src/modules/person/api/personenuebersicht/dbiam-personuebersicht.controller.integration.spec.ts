@@ -229,7 +229,9 @@ describe('Personenuebersicht API', () => {
                         return;
                     }
                     const savedRolle1: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
-                    if (savedRolle1 instanceof DomainError) throw Error();
+                    if (savedRolle1 instanceof DomainError) {
+                        throw Error();
+                    }
 
                     const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
                         faker.string.alpha(5),
@@ -246,7 +248,9 @@ describe('Personenuebersicht API', () => {
                         return;
                     }
                     const savedRolle2: Rolle<true> | DomainError = await rolleRepo.save(rolle2);
-                    if (savedRolle2 instanceof DomainError) throw Error();
+                    if (savedRolle2 instanceof DomainError) {
+                        throw Error();
+                    }
 
                     const savedOrganisation1: OrganisationEntity = await createAndPersistOrganisation(
                         em,
@@ -414,7 +418,9 @@ describe('Personenuebersicht API', () => {
                 return;
             }
             const savedRolle1: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
-            if (savedRolle1 instanceof DomainError) throw Error();
+            if (savedRolle1 instanceof DomainError) {
+                throw Error();
+            }
 
             const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
                 faker.string.alpha(5),
@@ -431,7 +437,9 @@ describe('Personenuebersicht API', () => {
                 return;
             }
             const savedRolle2: Rolle<true> | DomainError = await rolleRepo.save(rolle2);
-            if (savedRolle2 instanceof DomainError) throw Error();
+            if (savedRolle2 instanceof DomainError) {
+                throw Error();
+            }
 
             savedOrganisation1 = await createAndPersistRootOrganisation(em, organisationRepository);
             savedOrganisation2 = await createAndPersistOrganisation(

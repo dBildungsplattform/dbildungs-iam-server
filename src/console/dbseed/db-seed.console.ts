@@ -68,7 +68,7 @@ export class DbSeedConsole extends CommandRunner {
 
         for (const subDir of subDirs) {
             const entityFileNames: string[] = this.dbSeedService.getEntityFileNames(directory, subDir);
-            if (entityFileNames.length == 0) {
+            if (entityFileNames.length === 0) {
                 this.logger.error(`No seeding data in the directory ${directory}!`);
                 throw new Error('No seeding data in the directory');
             }

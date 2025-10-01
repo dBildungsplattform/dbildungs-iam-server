@@ -281,7 +281,9 @@ describe('PersonController', () => {
                     personPermissionsMock,
                 );
 
-                if (!personResponse.person.email) throw Error();
+                if (!personResponse.person.email) {
+                    throw Error();
+                }
                 expect(personResponse.person.email.status).toStrictEqual(EmailAddressStatus.ENABLED);
                 expect(personResponse.person.email.address).toStrictEqual(fakeEmailAddress);
             });

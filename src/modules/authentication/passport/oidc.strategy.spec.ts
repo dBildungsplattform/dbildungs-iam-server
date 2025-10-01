@@ -114,7 +114,7 @@ describe('OpenIdConnectStrategy', () => {
             const request: Request = createMock<Request>();
             const user: AuthorizationParameters & PassportUser = await sut.validate(request, new TokenSet());
 
-            await expect(user.personPermissions()).rejects.toBeUndefined();
+            await expect(user.personPermissions()).rejects.toThrow('Permissions not loaded');
         });
 
         it('should throw KeycloakUserNotFoundError if keycloak-user does not exist', async () => {

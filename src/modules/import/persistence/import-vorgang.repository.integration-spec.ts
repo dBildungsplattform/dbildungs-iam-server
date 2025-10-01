@@ -138,7 +138,9 @@ describe('ImportVorgangRepository', () => {
                 rollenart: RollenArt.LERN,
             }),
         );
-        if (rolle instanceof DomainError) throw Error();
+        if (rolle instanceof DomainError) {
+            throw Error();
+        }
         return rolle;
     }
 

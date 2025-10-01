@@ -39,12 +39,15 @@ export class ImportPasswordEncryptor {
     public async decryptPassword(encryptedPasswordData: string, importvorgangId: string): Promise<string> {
         const [encryptedPassword, iv]: string[] = encryptedPasswordData.split('|');
 
-        if (!iv) throw new ImportDomainError('iv for decryption not found', importvorgangId);
+        if (!iv) {
+            throw new ImportDomainError('iv for decryption not found', importvorgangId);
+        }
         const key: Buffer = await this.generateKey();
         const decipher: Cipher = createDecipheriv(this.ALGORITHM, key, Buffer.from(iv, this.OUTPUT_ENCODING));
 
-        if (!encryptedPassword)
+        if (!encryptedPassword) {
             throw new ImportDomainError('encryptedPassword for decryption not found', importvorgangId);
+        }
         const password: string =
             decipher.update(encryptedPassword, this.OUTPUT_ENCODING, this.INPUT_ENCODING) +
             decipher.final(this.INPUT_ENCODING);
