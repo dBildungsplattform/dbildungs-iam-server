@@ -1473,49 +1473,89 @@ describe('PersonRepository Integration', () => {
     });
 
     describe('findByPrimaryEmailAddress', () => {
-        it('should return persons with matching email address', async () => {
-            const person1: Person<true> = DoFactory.createPerson(true);
-            const personEntity: PersonEntity = new PersonEntity();
-            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
-            person1.id = personEntity.id;
-            const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-            emailAddressEntity.address = 'test@example.com';
-            emailAddressEntity.status = EmailAddressStatus.ENABLED;
-            emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
-            const disabledEmailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-            disabledEmailAddressEntity.address = 'test-disabled@example.com';
-            disabledEmailAddressEntity.status = EmailAddressStatus.DISABLED;
-            disabledEmailAddressEntity.personId = ref(PersonEntity, personEntity.id);
-            await em.persistAndFlush([emailAddressEntity, disabledEmailAddressEntity]);
-            personEntity.emailAddresses.add(emailAddressEntity, disabledEmailAddressEntity);
+        let person: Person<true>;
+        let personEntity: PersonEntity;
+        beforeEach(async () => {
+            person = DoFactory.createPerson(true);
+            personEntity = new PersonEntity();
+            personEntity = personEntity.assign(mapAggregateToData(person));
             await em.persistAndFlush(personEntity);
-
-            const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
-
-            expect(result).toHaveLength(1);
-            expect(result[0]?.id).toBe(person1.id);
+            person.id = personEntity.id;
         });
 
-        it('should return empty list if no enabled email found', async () => {
-            const person1: Person<true> = DoFactory.createPerson(true);
-            const personEntity: PersonEntity = new PersonEntity();
-            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
-            person1.id = personEntity.id;
-            const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-            emailAddressEntity.address = 'test@example.com';
-            emailAddressEntity.status = EmailAddressStatus.DISABLED;
-            emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
-            await em.persistAndFlush(emailAddressEntity);
-            personEntity.emailAddresses.add(emailAddressEntity);
+        it.each([[EmailAddressStatus.ENABLED], [EmailAddressStatus.DISABLED]])(
+            'should return persons with matching email addresses in status %s',
+            async (status: EmailAddressStatus) => {
+                const emailAddressEntities: EmailAddressEntity[] = ['test@example.com', 'test-other@example.com'].map(
+                    (email: string) => {
+                        const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+                        emailAddressEntity.address = email;
+                        emailAddressEntity.status = status;
+                        emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+                        return emailAddressEntity;
+                    },
+                );
+                await em.persistAndFlush(emailAddressEntities);
+                personEntity.emailAddresses.add(emailAddressEntities);
+                await em.persistAndFlush(personEntity);
+
+                const result: Person<true>[] = await sut.findByPrimaryEmailAddress('test@example.com');
+
+                expect(result).toHaveLength(1);
+                expect(result[0]?.id).toBe(person.id);
+            },
+        );
+
+        it('should not return person with different primary email address', async () => {
+            const emailAddressEntities: EmailAddressEntity[] = [
+                EmailAddressStatus.DISABLED,
+                EmailAddressStatus.ENABLED,
+            ].map((status: EmailAddressStatus) => {
+                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+                emailAddressEntity.address = faker.internet.email();
+                emailAddressEntity.status = status;
+                emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+                return emailAddressEntity;
+            });
+            await em.persistAndFlush(emailAddressEntities);
+            personEntity.emailAddresses.add(emailAddressEntities);
             await em.persistAndFlush(personEntity);
 
-            const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
+            const email: string = emailAddressEntities.find(
+                (e: EmailAddressEntity) => e.status === EmailAddressStatus.DISABLED,
+            )!.address;
+            expect(email).toBeDefined();
+
+            const result: Person<true>[] = await sut.findByPrimaryEmailAddress(email);
+
+            expect(result).toHaveLength(0);
+        });
+
+        it('should return empty list if no enabled/disabled email found', async () => {
+            const emailAddressEntities: EmailAddressEntity[] = [
+                EmailAddressStatus.DELETED,
+                EmailAddressStatus.DELETED_LDAP,
+                EmailAddressStatus.DELETED_OX,
+                EmailAddressStatus.FAILED,
+                EmailAddressStatus.REQUESTED,
+            ].map((status: EmailAddressStatus) => {
+                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+                emailAddressEntity.address = `test-${status}@example.com`;
+                emailAddressEntity.status = status;
+                emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+                return emailAddressEntity;
+            });
+            await em.persistAndFlush(emailAddressEntities);
+            personEntity.emailAddresses.add(emailAddressEntities);
+            await em.persistAndFlush(personEntity);
+
+            const result: Person<true>[] = await sut.findByPrimaryEmailAddress('test@example.com');
 
             expect(result).toHaveLength(0);
         });
 
         it('should return empty list if no matching email found', async () => {
-            const result: Person<true>[] = await sut.findByEmailAddress('nonexistent@example.com');
+            const result: Person<true>[] = await sut.findByPrimaryEmailAddress('nonexistent@example.com');
             expect(result).toHaveLength(0);
         });
     });
