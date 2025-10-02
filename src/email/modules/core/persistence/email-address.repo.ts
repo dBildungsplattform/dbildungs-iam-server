@@ -7,14 +7,13 @@ import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 
 export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddrEntity> {
-    const oxUserIdStr: string | undefined = emailAddress.oxUserId ? emailAddress.oxUserId + '' : undefined;
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: emailAddress.id,
         address: emailAddress.address,
         priority: emailAddress.priority,
         spshPersonId: emailAddress.spshPersonId,
-        oxUserId: oxUserIdStr,
+        oxUserId: emailAddress.oxUserId,
         markedForCron: emailAddress.markedForCron,
     };
 }

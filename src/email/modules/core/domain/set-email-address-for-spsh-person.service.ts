@@ -38,6 +38,7 @@ export class SetEmailAddressForSpshPersonService {
             this.logger.crit(
                 `Person with id ${params.spshPersonId} already has email addresses assigned. Not implemented yet [WIP]`,
             );
+            return;
         }
         await this.createFirstEmailForSpshPerson(params.firstName, params.lastName, params.spshPersonId, emailDomain);
     }

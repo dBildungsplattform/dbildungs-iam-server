@@ -11,6 +11,8 @@ import { EmailAddressGenerator } from './email-address-generator.js';
 import { EmailAddressStatusRepo } from '../persistence/email-address-status.repo.js';
 import { EmailAddressStatus } from './email-address-status.js';
 import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
+import { SetEmailAddressForSpshPersonParams } from '../api/dtos/params/set-email-addess-for-spsh-person.params.js';
+import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 
 describe('SetEmailAddressForSpshPersonService', () => {
     let module: TestingModule;
@@ -109,5 +111,82 @@ describe('SetEmailAddressForSpshPersonService', () => {
         expect(emailAddressRepoMock.save).toHaveBeenCalledTimes(1);
         expect(emailAddressStatusRepoMock.create).toHaveBeenCalledTimes(1);
         expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Created email address'));
+    });
+
+    it('should throw EmailDomainNotFoundError if email domain does not exist', async () => {
+        emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([]);
+        emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce({
+            ok: true,
+            value: 'max.mustermann@example.com',
+        });
+        emailDomainRepoMock.findById.mockResolvedValue(undefined);
+
+        const params: SetEmailAddressForSpshPersonParams = {
+            firstName: 'Max',
+            lastName: 'Mustermann',
+            spshPersonId: faker.string.uuid(),
+            emailDomainId: 'missing-domain-id',
+        };
+
+        await expect(sut.setEmailAddressForSpshPerson(params)).rejects.toThrow(
+            new EmailDomainNotFoundError(`EmailDomain with id ${params.emailDomainId} not found`),
+        );
+        expect(loggerMock.error).toHaveBeenCalledWith('EmailDomain with id missing-domain-id not found');
+    });
+
+    it('should log and not create email address if person already has addresses', async () => {
+        emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([
+            EmailAddress.construct({
+                id: 'id',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                address: 'max.mustermann@example.com',
+                priority: 0,
+                spshPersonId: faker.string.uuid(),
+            }),
+        ]);
+        emailDomainRepoMock.findById.mockResolvedValue(
+            EmailDomain.construct({
+                id: faker.string.uuid(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                domain: 'example.com',
+            }),
+        );
+
+        await sut.setEmailAddressForSpshPerson({
+            firstName: 'Max',
+            lastName: 'Mustermann',
+            spshPersonId: faker.string.uuid(),
+            emailDomainId: faker.string.uuid(),
+        });
+        expect(emailAddressRepoMock.save).not.toHaveBeenCalled();
+        expect(loggerMock.crit).toHaveBeenCalled();
+    });
+
+    it('should throw if emailAddressGenerator.generateAvailableAddress returns error', async () => {
+        emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([]);
+        emailDomainRepoMock.findById.mockResolvedValue(
+            EmailDomain.construct({
+                id: faker.string.uuid(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                domain: 'example.com',
+            }),
+        );
+        emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValue({
+            ok: false,
+            error: new Error(''),
+        });
+
+        const params: SetEmailAddressForSpshPersonParams = {
+            firstName: 'Max',
+            lastName: 'Mustermann',
+            spshPersonId: faker.string.uuid(),
+            emailDomainId: faker.string.uuid(),
+        };
+
+        await expect(sut.setEmailAddressForSpshPerson(params)).rejects.toThrow();
+        expect(emailAddressStatusRepoMock.create).not.toHaveBeenCalled();
     });
 });
