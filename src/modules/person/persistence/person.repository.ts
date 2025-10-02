@@ -296,7 +296,9 @@ export class PersonRepository {
             const enabledPrimary: EmailAddressEntity | undefined = entity.emailAddresses.find(
                 (emailAddress: EmailAddressEntity) => emailAddress.status === EmailAddressStatus.ENABLED,
             );
-            if (enabledPrimary) return enabledPrimary.address === email;
+            if (enabledPrimary) {
+                return enabledPrimary.address === email;
+            }
 
             const disabledPrimary: EmailAddressEntity | undefined = entity.emailAddresses.find(
                 (emailAddress: EmailAddressEntity) => emailAddress.status === EmailAddressStatus.DISABLED,
