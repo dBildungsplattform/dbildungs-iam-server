@@ -10,19 +10,27 @@ export class KlassenNameAnSchuleEindeutig extends CompositeSpecification<Organis
     }
 
     public async isSatisfiedBy(t: Organisation<boolean>): Promise<boolean> {
-        if (t.typ !== OrganisationsTyp.KLASSE) return true;
+        if (t.typ !== OrganisationsTyp.KLASSE) {
+            return true;
+        }
         return this.validateClassNameIsUniqueOnSchool(t);
     }
 
     private async validateClassNameIsUniqueOnSchool(t: Organisation<boolean>): Promise<boolean> {
-        if (!t.administriertVon) return false;
+        if (!t.administriertVon) {
+            return false;
+        }
         const parent: Option<Organisation<true>> = await this.organisationRepo.findById(t.administriertVon);
-        if (!parent) return false;
+        if (!parent) {
+            return false;
+        }
         //check that parent is of type SCHULE is done in a different specification
         const otherChildOrgas: Organisation<true>[] = await this.organisationRepo.findChildOrgasForIds([parent.id]);
         for (const otherChildOrga of otherChildOrgas) {
             if (otherChildOrga.typ === OrganisationsTyp.KLASSE) {
-                if (otherChildOrga.name === t.name) return false; //not satisfied if another Klasse already has same name
+                if (otherChildOrga.name === t.name) {
+                    return false;
+                } //not satisfied if another Klasse already has same name
             }
         }
         return true;

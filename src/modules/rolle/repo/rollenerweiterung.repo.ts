@@ -76,10 +76,14 @@ export class RollenerweiterungRepo {
             permissions,
             rollenerweiterung.organisationId,
         );
-        if (permissionError) return { ok: false, error: permissionError };
+        if (permissionError) {
+            return { ok: false, error: permissionError };
+        }
 
         const referenceError: Option<EntityNotFoundError> = await rollenerweiterung.checkReferences();
-        if (referenceError) return { ok: false, error: referenceError };
+        if (referenceError) {
+            return { ok: false, error: referenceError };
+        }
 
         const noRedundantRollenerweiterung: NoRedundantRollenerweiterung = new NoRedundantRollenerweiterung();
         if (!(await noRedundantRollenerweiterung.isSatisfiedBy(rollenerweiterung))) {
@@ -89,7 +93,9 @@ export class RollenerweiterungRepo {
         const serviceProviderVerfuegbarFuerRollenerweiterung: ServiceProviderVerfuegbarFuerRollenerweiterung =
             new ServiceProviderVerfuegbarFuerRollenerweiterung();
         const result: boolean = await serviceProviderVerfuegbarFuerRollenerweiterung.isSatisfiedBy(rollenerweiterung);
-        if (!result) return { ok: false, error: new ServiceProviderNichtVerfuegbarFuerRollenerweiterungError() };
+        if (!result) {
+            return { ok: false, error: new ServiceProviderNichtVerfuegbarFuerRollenerweiterungError() };
+        }
 
         const rollenerweiterungEntity: RollenerweiterungEntity = this.em.create(
             RollenerweiterungEntity,
@@ -120,7 +126,9 @@ export class RollenerweiterungRepo {
     public async findManyByOrganisationAndRolle(
         query: Array<Pick<Rollenerweiterung<boolean>, 'organisationId' | 'rolleId'>>,
     ): Promise<Rollenerweiterung<true>[]> {
-        if (query.length === 0) return [];
+        if (query.length === 0) {
+            return [];
+        }
         const rollenerweiterungen: Loaded<RollenerweiterungEntity>[] = await this.em.find(RollenerweiterungEntity, {
             $or: query,
         });

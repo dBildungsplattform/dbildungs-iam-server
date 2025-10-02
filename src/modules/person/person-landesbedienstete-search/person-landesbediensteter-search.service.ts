@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable } from '@nestjs/common';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { PersonLandesbediensteterSearchResponse } from '../api/person-landesbediensteter-search.response.js';
@@ -49,7 +48,7 @@ export class PersonLandesbediensteterSearchService {
         if (personalnummer) {
             persons = await this.personRepository.findByPersonalnummer(personalnummer.trim());
         } else if (primaryEmailAddress) {
-            persons = await this.personRepository.findByEmailAddress(primaryEmailAddress.trim());
+            persons = await this.personRepository.findByPrimaryEmailAddress(primaryEmailAddress.trim());
         } else if (username) {
             persons = await this.personRepository.findByUsername(username.trim());
         } else if (vorname && familienname) {
@@ -66,7 +65,9 @@ export class PersonLandesbediensteterSearchService {
         const person: Person<true> = persons.at(0)!;
 
         const searchableResult: Result<void, DomainError> = await this.personIsSearchable(person);
-        if (!searchableResult.ok) throw searchableResult.error;
+        if (!searchableResult.ok) {
+            throw searchableResult.error;
+        }
 
         const [email, kontexteWithOrgaAndRolle]: [Option<PersonEmailResponse>, Array<KontextWithOrgaAndRolle>] =
             await Promise.all([

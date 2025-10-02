@@ -14,7 +14,9 @@ class TestEvent extends BaseEvent {
 }
 
 function flushPromises(): Promise<void> {
-    return new Promise((resolve: (value: void | PromiseLike<void>) => void) => setImmediate(resolve));
+    return new Promise((resolve: (value: void | PromiseLike<void>) => void) => {
+        setImmediate(resolve);
+    });
 }
 
 describe('EventService', () => {
