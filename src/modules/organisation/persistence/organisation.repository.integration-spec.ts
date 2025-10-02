@@ -25,7 +25,6 @@ import { Organisation } from '../domain/organisation.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
 import { TraegerUnterRootChildError } from '../specification/error/traeger-unter-root-child.error.js';
-import { OrganisationPersistenceMapperProfile } from './organisation-persistence.mapper.profile.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { mapOrgaAggregateToData, mapOrgaEntityToAggregate, OrganisationRepository } from './organisation.repository.js';
 import { OrganisationScope } from './organisation.scope.js';
@@ -43,7 +42,6 @@ describe('OrganisationRepository', () => {
         module = await Test.createTestingModule({
             imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
-                OrganisationPersistenceMapperProfile,
                 OrganisationRepository,
                 {
                     provide: EventRoutingLegacyKafkaService,

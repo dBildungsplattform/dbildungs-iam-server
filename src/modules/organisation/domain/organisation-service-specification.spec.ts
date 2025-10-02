@@ -5,7 +5,6 @@ import { DatabaseTestModule } from '../../../../test/utils/database-test.module.
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MikroORM } from '@mikro-orm/core';
 import { LoggingTestModule, PersonPermissionsMock } from '../../../../test/utils/index.js';
-import { OrganisationPersistenceMapperProfile } from '../persistence/organisation-persistence.mapper.profile.js';
 import { ZyklusInOrganisationenError } from '../specification/error/zyklus-in-organisationen.error.js';
 import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
 import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
@@ -46,7 +45,7 @@ describe('OrganisationServiceSpecificationTest', () => {
                 EventModule,
                 LoggingTestModule,
             ],
-            providers: [OrganisationService, OrganisationRepository, OrganisationPersistenceMapperProfile],
+            providers: [OrganisationService, OrganisationRepository],
         }).compile();
         organisationService = module.get(OrganisationService);
         organisationRepository = module.get(OrganisationRepository);
