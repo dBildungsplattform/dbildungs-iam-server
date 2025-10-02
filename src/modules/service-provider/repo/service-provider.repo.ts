@@ -1,4 +1,4 @@
-import { EntityData, EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { EntityData, EntityManager, FilterQuery, Loaded, NoInfer, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
@@ -11,6 +11,8 @@ import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -160,6 +162,28 @@ export class ServiceProviderRepo {
         });
 
         return serviceProviderMap;
+    }
+
+    public async findAuthorized(permissions: PersonPermissions, limit?: number, offset?: number): Promise<ServiceProvider<true>[]> {
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN],
+            true,
+        );
+
+        const where: FilterQuery<NoInfer<ServiceProviderEntity>> = permittedOrgas.all ? {} : {
+                providedOnSchulstrukturknoten: { $in: permittedOrgas.orgaIds },
+        };
+
+        const serviceProviderEntities: ServiceProviderEntity[] = await this.em.find(
+            ServiceProviderEntity,
+            where,
+            {
+                offset,
+                limit,
+                populate: ['merkmale'],
+            },
+        );
+        return serviceProviderEntities.map(mapEntityToAggregate);
     }
 
     public async save(serviceProvider: ServiceProvider<boolean>): Promise<ServiceProvider<true>> {

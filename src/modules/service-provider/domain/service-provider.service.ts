@@ -11,13 +11,14 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { RollenerweiterungRepo, RollenerweiterungWithName } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 import { VidisService } from '../../vidis/vidis.service.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -77,6 +78,23 @@ export class ServiceProviderService {
         );
 
         return Array.from(serviceProviders.values());
+    }
+
+    public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(serviceProviders: ServiceProvider<true>[]): Promise<{ serviceProvider: ServiceProvider<true>, organisation: Organisation<true>, rollen: Rolle<true>[], rollenerweiterungen: Rollenerweiterung<true>[] }[]> {
+        const rollen: Map<ServiceProviderID, Rolle<true>[]> = await this.rolleRepo.findByServiceProviderIds(serviceProviders.map(sp => sp.id));
+        const rollenerweiterungen: Map<ServiceProviderID, Rollenerweiterung<true>[]> = await this.rollenerweiterungRepo.findByServiceProviderIds(serviceProviders.map(sp => sp.id));
+        const organisationen: Map<ServiceProviderID, Organisation<true>> = await this.organisationRepo.findByIds(serviceProviders.map(sp => sp.providedOnSchulstrukturknoten));
+
+        return serviceProviders.map((serviceProvider: ServiceProvider<true>) => ({
+            serviceProvider,
+            organisation: organisationen.get(serviceProvider.providedOnSchulstrukturknoten)!,
+            rollen: rollen.get(serviceProvider.id) ?? [],
+            rollenerweiterungen: rollenerweiterungen.get(serviceProvider.id) ?? [],
+        }));
+    }
+
+    public async getRollenerweiterungenForDisplay(rollenerweiterungen: Rollenerweiterung<true>[]): Promise<RollenerweiterungWithName[]> {
+
     }
 
     public async updateServiceProvidersForVidis(): Promise<void> {
