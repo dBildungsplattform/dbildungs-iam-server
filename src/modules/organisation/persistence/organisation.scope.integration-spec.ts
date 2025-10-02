@@ -5,6 +5,8 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
+    EventSystemTestModule,
+    LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { OrganisationScope } from './organisation.scope.js';
 import { OrganisationEntity } from './organisation.entity.js';
@@ -23,7 +25,13 @@ describe('OrganisationScope', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
+            imports: [
+                ConfigTestModule,
+                LoggingTestModule,
+                EventSystemTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+            ],
+            providers: [OrganisationRepository],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
@@ -82,7 +90,7 @@ describe('OrganisationScope', () => {
                     DoFactory.createOrganisation(false, { typ: OrganisationsTyp.UNBEST }),
                 ].map((o: Organisation<false>) => organisationRepo.save(o));
 
-                await em.persistAndFlush(organisations);
+                await Promise.all(organisations);
             });
 
             it('should return found organizations', async () => {
@@ -106,7 +114,7 @@ describe('OrganisationScope', () => {
                     DoFactory.createOrganisation(false, { name: '9b' }),
                 ].map((o: Organisation<false>) => organisationRepo.save(o));
 
-                await em.persistAndFlush(organisations);
+                await Promise.all(organisations);
             });
 
             it('should return found organizationen', async () => {
