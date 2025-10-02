@@ -1,13 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    DoFactory,
-    LoggingTestModule,
-    MapperTestModule,
-} from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -76,7 +70,7 @@ describe('Schulconnex Repo', () => {
         module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
-                MapperTestModule,
+
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 RolleModule,
                 OrganisationModule,

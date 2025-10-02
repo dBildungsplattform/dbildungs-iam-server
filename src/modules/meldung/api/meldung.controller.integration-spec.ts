@@ -2,7 +2,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
-import { DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
 import { MikroORM } from '@mikro-orm/core';
 import { MeldungController } from './meldung.controller.js';
 import { MeldungRepo } from '../persistence/meldung.repo.js';
@@ -26,7 +26,7 @@ describe('Meldung Controller', () => {
             imports: [
                 ConfigTestModule,
                 LoggingTestModule,
-                MapperTestModule,
+
                 MeldungModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],

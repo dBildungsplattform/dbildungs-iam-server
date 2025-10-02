@@ -10,7 +10,6 @@ import {
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationEntity } from '../persistence/organisation.entity.js';
@@ -76,7 +75,6 @@ describe('Organisation API', () => {
                 OrganisationApiModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
             ],
             providers: [
                 {

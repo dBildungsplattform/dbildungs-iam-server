@@ -5,7 +5,6 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { MikroORM } from '@mikro-orm/core';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
@@ -47,7 +46,7 @@ describe('OrganisationSpecificationTests', () => {
                 LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
+
                 EventModule,
                 LoggingTestModule,
             ],

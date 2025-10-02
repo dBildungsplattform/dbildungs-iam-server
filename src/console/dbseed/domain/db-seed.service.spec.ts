@@ -1,12 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DbSeedService } from './db-seed.service.js';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    DoFactory,
-    LoggingTestModule,
-    MapperTestModule,
-} from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import fs from 'fs';
 import { DataProviderFile } from '../file/data-provider-file.js';
 import { PersonFactory } from '../../../modules/person/domain/person.factory.js';
@@ -48,12 +42,7 @@ describe('DbSeedService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                LoggingTestModule,
-                ConfigTestModule,
-                MapperTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
-            ],
+            imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [
                 DbSeedService,
                 RolleFactory,

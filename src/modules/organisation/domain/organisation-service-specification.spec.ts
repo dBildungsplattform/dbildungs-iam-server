@@ -4,7 +4,7 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MikroORM } from '@mikro-orm/core';
-import { LoggingTestModule, MapperTestModule, PersonPermissionsMock } from '../../../../test/utils/index.js';
+import { LoggingTestModule, PersonPermissionsMock } from '../../../../test/utils/index.js';
 import { OrganisationPersistenceMapperProfile } from '../persistence/organisation-persistence.mapper.profile.js';
 import { ZyklusInOrganisationenError } from '../specification/error/zyklus-in-organisationen.error.js';
 import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
@@ -42,7 +42,7 @@ describe('OrganisationServiceSpecificationTest', () => {
                 LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
+
                 EventModule,
                 LoggingTestModule,
             ],

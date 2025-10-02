@@ -1,5 +1,3 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
@@ -49,10 +47,6 @@ describe('PersonenkontextCreationService', () => {
             providers: [
                 PersonenkontextCreationService,
                 PersonenkontextWorkflowFactory,
-                {
-                    provide: getMapperToken(),
-                    useValue: createMock<Mapper>(),
-                },
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
