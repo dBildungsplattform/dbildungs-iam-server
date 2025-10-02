@@ -3,7 +3,6 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
@@ -53,7 +52,7 @@ describe('EmailAddressDeletionHandler', () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
-                MapperTestModule,
+
                 EmailAddressDeletionModule,
                 EventModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),

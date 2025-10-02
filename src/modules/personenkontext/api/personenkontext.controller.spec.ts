@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { HttpException, NotImplementedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { DoFactory } from '../../../../test/utils/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { Personenstatus, SichtfreigabeType } from '../domain/personenkontext.enums.js';
@@ -40,7 +40,7 @@ describe('PersonenkontextController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [MapperTestModule],
+            imports: [],
             providers: [
                 PersonenkontextController,
                 {

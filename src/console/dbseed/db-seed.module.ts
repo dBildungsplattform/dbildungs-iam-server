@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { DbSeedService } from './domain/db-seed.service.js';
-import { DbSeedMapper } from './db-seed-mapper.js';
 import { DbSeedConsole } from './db-seed.console.js';
 import { PersonModule } from '../../modules/person/person.module.js';
 import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
@@ -29,13 +28,12 @@ import { EntityAggregateMapper } from '../../modules/person/mapper/entity-aggreg
     ],
     providers: [
         DbSeedService,
-        DbSeedMapper,
         DbSeedConsole,
         DBiamPersonenkontextRepo,
         DbSeedRepo,
         DbSeedReferenceRepo,
         EntityAggregateMapper,
     ],
-    exports: [DbSeedService, DbSeedMapper, DbSeedConsole, DbSeedRepo],
+    exports: [DbSeedService, DbSeedConsole, DbSeedRepo],
 })
 export class DbSeedModule {}

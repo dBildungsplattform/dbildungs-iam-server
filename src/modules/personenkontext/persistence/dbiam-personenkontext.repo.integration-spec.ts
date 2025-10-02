@@ -2,13 +2,7 @@ import { faker } from '@faker-js/faker';
 import { createMock } from '@golevelup/ts-jest';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    DoFactory,
-    LoggingTestModule,
-    MapperTestModule,
-} from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import {
     createAndPersistOrganisation,
     createAndPersistRootOrganisation,
@@ -91,7 +85,7 @@ describe('dbiam Personenkontext Repo', () => {
         module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
-                MapperTestModule,
+
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 RolleModule,
                 OrganisationModule,

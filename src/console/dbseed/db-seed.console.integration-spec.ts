@@ -5,7 +5,6 @@ import {
     DatabaseTestModule,
     KeycloakConfigTestModule,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../test/utils/index.js';
 import { DbSeedService } from './domain/db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
@@ -38,7 +37,6 @@ describe('DbSeedConsoleIntegration', () => {
                 ConfigTestModule,
                 OrganisationModule,
                 KeycloakAdministrationModule,
-                MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
                 PersonModule,

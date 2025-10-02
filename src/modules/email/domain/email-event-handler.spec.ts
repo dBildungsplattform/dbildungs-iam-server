@@ -7,7 +7,6 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { EventModule } from '../../../core/eventbus/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
@@ -74,7 +73,7 @@ describe('EmailEventHandler', () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
-                MapperTestModule,
+
                 EmailModule,
                 EventModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),

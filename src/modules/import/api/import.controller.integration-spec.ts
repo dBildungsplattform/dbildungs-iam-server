@@ -11,7 +11,6 @@ import {
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
@@ -60,12 +59,7 @@ describe('Import API', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [
-                ImportApiModule,
-                ConfigTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
-            ],
+            imports: [ImportApiModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 {
                     provide: APP_PIPE,

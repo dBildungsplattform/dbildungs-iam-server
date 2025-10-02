@@ -9,7 +9,6 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { createAndPersistOrganisation } from '../../../../test/utils/organisation-test-helper.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
@@ -97,12 +96,7 @@ describe('PersonRepository Integration', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                LoggingTestModule,
-                ConfigTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
-            ],
+            imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 PersonRepository,
                 OrganisationRepository,

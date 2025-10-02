@@ -9,7 +9,6 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -39,12 +38,7 @@ describe('RolleRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                ConfigTestModule,
-                LoggingTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
-            ],
+            imports: [ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 RolleRepo,
                 RolleFactory,

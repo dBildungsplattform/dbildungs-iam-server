@@ -1,12 +1,8 @@
-import { classes } from '@automapper/classes';
-import { CamelCaseNamingConvention } from '@automapper/core';
-import { AutomapperModule } from '@automapper/nestjs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DbConfig, FrontendConfig, loadConfigFiles, RedisConfig, ServerConfig } from '../shared/config/index.js';
-import { mappingErrorHandler } from '../shared/error/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
@@ -51,11 +47,6 @@ import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js'
         ConfigModule.forRoot({
             isGlobal: true,
             load: [loadConfigFiles],
-        }),
-        AutomapperModule.forRoot({
-            strategyInitializer: classes(),
-            namingConventions: new CamelCaseNamingConvention(),
-            errorHandler: mappingErrorHandler,
         }),
         MikroOrmModule.forRootAsync({
             useFactory: (config: ConfigService<ServerConfig, true>) => {

@@ -4,7 +4,6 @@ import { DomainError, InvalidCharacterSetError } from '../../../shared/error/ind
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
 import { VornameForPersonWithTrailingSpaceError } from './vorname-with-trailing-space.error.js';
 import { FamiliennameForPersonWithTrailingSpaceError } from './familienname-with-trailing-space.error.js';
@@ -16,7 +15,7 @@ describe('Person', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, MapperTestModule],
+            imports: [ConfigTestModule],
             providers: [
                 {
                     provide: UsernameGeneratorService,

@@ -39,7 +39,6 @@ import { AuthenticationExceptionFilter } from '../../authentication/api/authenti
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -211,7 +210,7 @@ export class RolleController {
         @Body() params: CreateRolleBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<RolleResponse> {
-        const orgResult: Result<OrganisationDo<true>, DomainError> = await this.orgService.findOrganisationById(
+        const orgResult: Result<Organisation<true>, DomainError> = await this.orgService.findOrganisationById(
             params.administeredBySchulstrukturknoten,
         );
         if (!orgResult.ok) {

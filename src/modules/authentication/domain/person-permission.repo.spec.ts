@@ -5,7 +5,6 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Person } from '../../person/domain/person.js';
@@ -24,7 +23,7 @@ describe('PersonPermissionRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, MapperTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [
                 PersonPermissionsRepo,
                 {

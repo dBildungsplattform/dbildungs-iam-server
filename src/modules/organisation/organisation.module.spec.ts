@@ -1,8 +1,7 @@
 import { TestingModule, Test } from '@nestjs/testing';
 import { OrganisationModule } from './organisation.module.js';
-import { OrganisationPersistenceMapperProfile } from './persistence/organisation-persistence.mapper.profile.js';
 import { OrganisationService } from './domain/organisation.service.js';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
 import { OrganisationRepository } from './persistence/organisation.repository.js';
 
 describe('OrganisationModule', () => {
@@ -10,7 +9,7 @@ describe('OrganisationModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, OrganisationModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), OrganisationModule],
         }).compile();
     });
 
@@ -23,12 +22,6 @@ describe('OrganisationModule', () => {
     });
 
     describe('when module is initialized', () => {
-        it('should resolve OrganisationProfile', () => {
-            expect(module.get(OrganisationPersistenceMapperProfile)).toBeInstanceOf(
-                OrganisationPersistenceMapperProfile,
-            );
-        });
-
         it('should resolve OrganisationRepository', () => {
             expect(module.get(OrganisationRepository)).toBeInstanceOf(OrganisationRepository);
         });

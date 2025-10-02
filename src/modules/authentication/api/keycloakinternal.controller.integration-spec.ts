@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
-import { DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { DatabaseTestModule } from '../../../../test/utils/index.js';
 import { PersonModule } from '../../person/person.module.js';
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { MikroORM } from '@mikro-orm/core';
@@ -31,7 +31,7 @@ describe('KeycloakInternalController', () => {
             imports: [
                 ConfigTestModule,
                 LoggingTestModule,
-                MapperTestModule,
+
                 ServiceProviderModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,

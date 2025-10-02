@@ -10,7 +10,6 @@ import {
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -35,7 +34,6 @@ describe('PersonAdministrationController Integration Test', () => {
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
-                MapperTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonenKontextApiModule,

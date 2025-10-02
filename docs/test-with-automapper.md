@@ -37,7 +37,7 @@ the mapping-error occurred.
         imports: [
             ConfigTestModule,
             DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-            MapperTestModule,
+
             PersonenKontextModule,
         ],
         providers: [

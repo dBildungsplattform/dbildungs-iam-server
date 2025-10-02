@@ -7,7 +7,6 @@ import {
     DatabaseTestModule,
     DoFactory,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonEntity } from './person.entity.js';
@@ -57,7 +56,7 @@ describe('PersonScope', () => {
                 LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
+
                 PersonenKontextModule,
                 LoggingTestModule,
             ],

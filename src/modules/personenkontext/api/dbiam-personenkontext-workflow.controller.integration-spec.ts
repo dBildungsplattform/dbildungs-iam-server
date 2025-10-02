@@ -11,7 +11,6 @@ import {
     DoFactory,
     KeycloakConfigTestModule,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -61,7 +60,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
-                MapperTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonenKontextApiModule,

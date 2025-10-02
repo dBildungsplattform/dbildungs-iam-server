@@ -5,7 +5,6 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import {
     compareEmailAddressesByUpdatedAt,
@@ -60,12 +59,7 @@ describe('EmailRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                ConfigTestModule,
-                MapperTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                EmailModule,
-            ],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailModule],
             providers: [],
         })
             .overrideProvider(ClassLogger)

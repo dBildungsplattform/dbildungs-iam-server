@@ -6,7 +6,6 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import {
     ImportQueryOptions,
@@ -52,7 +51,7 @@ describe('ImportVorgangRepository', () => {
             imports: [
                 RolleModule,
                 OrganisationModule,
-                MapperTestModule,
+
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],

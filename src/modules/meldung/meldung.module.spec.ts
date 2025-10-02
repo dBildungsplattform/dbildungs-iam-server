@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MeldungRepo } from './persistence/meldung.repo.js';
 import { MeldungModule } from './meldung.module.js';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
 
 describe('MeldungModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, MapperTestModule, DatabaseTestModule.forRoot(), MeldungModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MeldungModule],
         }).compile();
     });
 

@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule } from '../../../../test/utils/index.js';
 import { SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
 import { PersonFrontendController } from './person.frontend.controller.js';
 import { PersonenQueryParams } from './personen-query.param.js';
@@ -20,7 +20,7 @@ describe('PersonFrontendController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [MapperTestModule, ConfigTestModule],
+            imports: [ConfigTestModule],
             providers: [
                 PersonFrontendController,
                 {

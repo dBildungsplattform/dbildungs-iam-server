@@ -1,4 +1,3 @@
-import { Mapper } from '@automapper/core';
 import { MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
@@ -6,31 +5,38 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
-    MapperTestModule,
+    EventSystemTestModule,
+    LoggingTestModule,
 } from '../../../../test/utils/index.js';
-import { OrganisationPersistenceMapperProfile } from './organisation-persistence.mapper.profile.js';
-import { getMapperToken } from '@automapper/nestjs';
 import { OrganisationScope } from './organisation.scope.js';
 import { OrganisationEntity } from './organisation.entity.js';
-import { OrganisationDo } from '../domain/organisation.do.js';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { OrganisationRepository } from './organisation.repository.js';
+import { Organisation } from '../domain/organisation.js';
 
 describe('OrganisationScope', () => {
     let module: TestingModule;
     let orm: MikroORM;
     let em: EntityManager;
-    let mapper: Mapper;
+
+    let organisationRepo: OrganisationRepository;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [OrganisationPersistenceMapperProfile],
+            imports: [
+                ConfigTestModule,
+                LoggingTestModule,
+                EventSystemTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+            ],
+            providers: [OrganisationRepository],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        mapper = module.get(getMapperToken());
+
+        organisationRepo = module.get(OrganisationRepository);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -47,15 +53,13 @@ describe('OrganisationScope', () => {
     describe('findBy', () => {
         describe('when filtering for organizations', () => {
             beforeEach(async () => {
-                const organisations: OrganisationEntity[] = Array.from({ length: 100 }, (_v: unknown, i: number) =>
-                    mapper.map(
-                        DoFactory.createOrganisation(false, { name: `Organization #${i}` }),
-                        OrganisationDo,
-                        OrganisationEntity,
-                    ),
+                const organisations: Promise<Organisation<true>>[] = Array.from(
+                    { length: 100 },
+                    (_v: unknown, i: number) =>
+                        organisationRepo.save(DoFactory.createOrganisation(false, { name: `Organization #${i}` })),
                 );
 
-                await em.persistAndFlush(organisations);
+                await Promise.all(organisations);
             });
 
             it('should return found organizations', async () => {
@@ -75,22 +79,18 @@ describe('OrganisationScope', () => {
     describe('excludeTyp', () => {
         describe('when excluding organisation types', () => {
             beforeEach(async () => {
-                const organisations: OrganisationEntity[] = mapper.mapArray(
-                    [
-                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.ROOT }),
-                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.LAND }),
-                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.TRAEGER }),
-                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
-                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.KLASSE }),
-                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.ANBIETER }),
-                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SONSTIGE }),
-                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.UNBEST }),
-                    ],
-                    OrganisationDo,
-                    OrganisationEntity,
-                );
+                const organisations: Promise<Organisation<true>>[] = [
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.ROOT }),
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.LAND }),
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.TRAEGER }),
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.KLASSE }),
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.ANBIETER }),
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SONSTIGE }),
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.UNBEST }),
+                ].map((o: Organisation<false>) => organisationRepo.save(o));
 
-                await em.persistAndFlush(organisations);
+                await Promise.all(organisations);
             });
 
             it('should return found organizations', async () => {
@@ -108,17 +108,13 @@ describe('OrganisationScope', () => {
     describe('findBySearchString', () => {
         describe('when filtering for organizations by name', () => {
             beforeEach(async () => {
-                const organisations: OrganisationEntity[] = mapper.mapArray(
-                    [
-                        DoFactory.createOrganisation(false, { name: '9a' }),
-                        DoFactory.createOrganisation(false, { name: '9' }),
-                        DoFactory.createOrganisation(false, { name: '9b' }),
-                    ],
-                    OrganisationDo,
-                    OrganisationEntity,
-                );
+                const organisations: Promise<Organisation<true>>[] = [
+                    DoFactory.createOrganisation(false, { name: '9a' }),
+                    DoFactory.createOrganisation(false, { name: '9' }),
+                    DoFactory.createOrganisation(false, { name: '9b' }),
+                ].map((o: Organisation<false>) => organisationRepo.save(o));
 
-                await em.persistAndFlush(organisations);
+                await Promise.all(organisations);
             });
 
             it('should return found organizationen', async () => {
@@ -136,21 +132,22 @@ describe('OrganisationScope', () => {
 
     describe('filterByIds', () => {
         describe('when filtering organizations by specific IDs', () => {
-            let organisations: OrganisationEntity[] = [];
+            let organisations: Organisation<true>[] = [];
 
             beforeEach(async () => {
                 // Create and persist 10 organizations with different names
-                organisations = Array.from({ length: 10 }, (_v: unknown, i: number) =>
-                    mapper.map(
-                        DoFactory.createOrganisation(false, {
-                            name: `Organization #${i}`,
-                            typ: OrganisationsTyp.SCHULE,
-                        }),
-                        OrganisationDo,
-                        OrganisationEntity,
-                    ),
+                const organisationPromises: Promise<Organisation<true>>[] = Array.from(
+                    { length: 100 },
+                    (_v: unknown, i: number) =>
+                        organisationRepo.save(
+                            DoFactory.createOrganisation(false, {
+                                name: `Organization #${i}`,
+                                typ: OrganisationsTyp.SCHULE,
+                            }),
+                        ),
                 );
-                await em.persistAndFlush(organisations);
+
+                organisations = await Promise.all(organisationPromises);
             });
 
             it('should return only the organizations with the specified IDs', async () => {

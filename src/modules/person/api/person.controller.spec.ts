@@ -3,7 +3,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { HttpException, NotImplementedException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { DoFactory } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
 import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
@@ -69,7 +69,7 @@ describe('PersonController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [MapperTestModule],
+            imports: [],
             providers: [
                 PersonController,
                 PersonFactory,

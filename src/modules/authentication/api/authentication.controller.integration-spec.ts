@@ -8,7 +8,7 @@ import { Client, EndSessionParameters, IssuerMetadata } from 'openid-client';
 
 import { MikroORM } from '@mikro-orm/core';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { DatabaseTestModule } from '../../../../test/utils/index.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
 import { KeycloakConfig } from '../../../shared/config/keycloak.config.js';
@@ -46,7 +46,7 @@ describe('AuthenticationController', () => {
             imports: [
                 ConfigTestModule,
                 LoggingTestModule,
-                MapperTestModule,
+
                 ServiceProviderModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,
