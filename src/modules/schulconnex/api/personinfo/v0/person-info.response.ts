@@ -1,8 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import { ApiProperty } from '@nestjs/swagger';
-import { Vertrauensstufe, VertrauensstufeTypName } from '../../../../person/domain/person.enums.js';
 import { PersonNameResponse } from '../../../../person/api/person-name.response.js';
-import { PersonBirthResponse } from '../../../../person/api/person-birth.response.js';
 import { PersonEmailResponse } from '../../../../person/api/person-email-response.js';
 import { Person } from '../../../../person/domain/person.js';
 import { PersonenInfoKontextResponse } from './person-info-kontext.response.js';
@@ -23,20 +21,8 @@ export class PersonNestedInPersonInfoResponse {
     @ApiProperty({ type: PersonNameResponse })
     public readonly name: PersonNameResponse;
 
-    @ApiProperty({ type: PersonBirthResponse, nullable: true })
-    public readonly geburt?: PersonBirthResponse;
-
     @ApiProperty({ nullable: true })
     public readonly stammorganisation?: string;
-
-    @ApiProperty({ nullable: true })
-    public readonly geschlecht?: string;
-
-    @ApiProperty({ nullable: true })
-    public readonly lokalisierung?: string;
-
-    @ApiProperty({ enum: Vertrauensstufe, enumName: VertrauensstufeTypName, nullable: true })
-    public readonly vertrauensstufe?: Vertrauensstufe;
 
     @ApiProperty()
     public readonly revision: string;
@@ -53,11 +39,7 @@ export class PersonNestedInPersonInfoResponse {
         revision: string,
         mandant: string,
         referrer?: string,
-        geburt?: PersonBirthResponse,
         stammorganisation?: string,
-        geschlecht?: string,
-        lokalisierung?: string,
-        vertrauensstufe?: Vertrauensstufe,
         personalnummer?: string,
         dienststellen?: string[],
     ) {
@@ -65,11 +47,7 @@ export class PersonNestedInPersonInfoResponse {
         this.referrer = referrer;
         this.mandant = mandant;
         this.name = new PersonNameResponse(name);
-        this.geburt = new PersonBirthResponse(geburt);
         this.stammorganisation = stammorganisation;
-        this.geschlecht = geschlecht;
-        this.lokalisierung = lokalisierung;
-        this.vertrauensstufe = vertrauensstufe;
         this.revision = revision;
         this.personalnummer = personalnummer;
         this.dienststellen = dienststellen;
@@ -79,28 +57,13 @@ export class PersonNestedInPersonInfoResponse {
         return new PersonNestedInPersonInfoResponse(
             person.id,
             {
-                titel: person.nameTitel,
-                anrede: person.nameAnrede,
                 vorname: person.vorname,
                 familiennamen: person.familienname,
-                initialenfamilienname: person.initialenFamilienname,
-                initialenvorname: person.initialenVorname,
-                rufname: person.rufname,
-                namenspraefix: person.namePraefix,
-                namenssuffix: person.nameSuffix,
-                sortierindex: person.nameSortierindex,
             } satisfies PersonNameResponse,
             person.revision,
             person.mandant,
             person.referrer,
-            {
-                datum: person.geburtsdatum,
-                geburtsort: person.geburtsort,
-            } satisfies PersonBirthResponse,
             person.stammorganisation,
-            person.geschlecht,
-            person.lokalisierung,
-            person.vertrauensstufe,
             person.personalnummer,
             dienststellen,
         );

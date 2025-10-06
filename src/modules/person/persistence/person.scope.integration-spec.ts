@@ -113,32 +113,6 @@ describe('PersonScope', () => {
             });
         });
 
-        describe('when filtering by birthday', () => {
-            const birthday: Date = faker.date.past();
-
-            beforeEach(async () => {
-                const persons: PersonEntity[] = Array.from({ length: 20 }, () =>
-                    em.create(
-                        PersonEntity,
-                        mapAggregateToData(DoFactory.createPerson(false, { geburtsdatum: birthday })),
-                    ),
-                );
-
-                await em.persistAndFlush(persons);
-            });
-
-            it('should return found persons', async () => {
-                const scope: PersonScope = new PersonScope()
-                    .findBy({ geburtsdatum: birthday })
-                    .sortBy('vorname', ScopeOrder.ASC)
-                    .paged(10, 10);
-                const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
-
-                expect(total).toBe(20);
-                expect(persons).toHaveLength(10);
-            });
-        });
-
         describe('when filtering by suchFilter', () => {
             const suchFilter: string = 'Max';
 

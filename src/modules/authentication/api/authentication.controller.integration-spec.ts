@@ -241,7 +241,6 @@ describe('AuthenticationController', () => {
             const permissions: PersonPermissions = createMock<PersonPermissions>({
                 get personFields(): Person<true> {
                     return createMock<Person<true>>({
-                        geburtsdatum: createMock(),
                         updatedAt: new Date(Date.now()),
                     });
                 },
@@ -269,7 +268,6 @@ describe('AuthenticationController', () => {
             const result: UserinfoResponse = await authController.info(permissions, requestMock);
 
             expect(result).toBeInstanceOf(UserinfoResponse);
-            expect(result.birthdate!).toBe(permissions.personFields.geburtsdatum?.toISOString());
         });
     });
 

@@ -20,7 +20,6 @@ import { Personenkontext } from '../../../personenkontext/domain/personenkontext
 import { PersonenkontextResponse } from '../../../personenkontext/api/response/personenkontext.response.js';
 import { Organisation } from '../../../organisation/domain/organisation.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
-import { PersonBirthResponse } from '../../../person/api/person-birth.response.js';
 import { PersonNameResponse } from '../../../person/api/person-name.response.js';
 import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
 import { PersonInfoPersonResponseV1 } from './v1/person-info-person.response.v1.js';
@@ -105,24 +104,8 @@ describe('PersonInfoController', () => {
                 name: {
                     familiennamen: person.familienname,
                     vorname: person.vorname,
-                    anrede: person.nameAnrede,
-                    initialenfamilienname: person.initialenFamilienname,
-                    initialenvorname: person.initialenVorname,
-                    rufname: person.rufname,
-                    titel: person.nameTitel,
-                    namenspraefix: person.namePraefix,
-                    namenssuffix: person.nameSuffix,
-                    sortierindex: person.nameSortierindex,
                 } satisfies PersonNameResponse,
-                geburt: {
-                    datum: person.geburtsdatum,
-                    geburtsort: person.geburtsort,
-                } satisfies PersonBirthResponse,
                 stammorganisation: person.stammorganisation,
-                geschlecht: person.geschlecht,
-                lokalisierung: person.lokalisierung,
-                vertrauensstufe: person.vertrauensstufe,
-                personalnummer: person.personalnummer,
                 revision: person.revision,
                 dienststellen: [],
             };

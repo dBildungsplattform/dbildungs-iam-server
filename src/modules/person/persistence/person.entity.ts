@@ -1,19 +1,7 @@
 import { AutoMap } from '@automapper/classes';
-import {
-    ArrayType,
-    Collection,
-    DateTimeType,
-    Entity,
-    Enum,
-    Index,
-    ManyToOne,
-    OneToMany,
-    Property,
-    QueryOrder,
-} from '@mikro-orm/core';
+import { Collection, DateTimeType, Entity, Index, ManyToOne, OneToMany, Property, QueryOrder } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
-import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { UserLockEntity } from '../../keycloak-administration/entity/user-lock.entity.js';
@@ -69,62 +57,6 @@ export class PersonEntity extends TimestampedEntity {
     })
     @Property()
     public vorname!: string;
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public initialenFamilienname?: string;
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public initialenVorname?: string;
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public rufname?: string;
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public nameTitel?: string;
-
-    @AutoMap(() => [String])
-    @Property({ nullable: true, type: ArrayType })
-    public nameAnrede?: string[];
-
-    @AutoMap(() => [String])
-    @Property({ nullable: true, type: ArrayType })
-    public namePraefix?: string[];
-
-    @AutoMap(() => [String])
-    @Property({ nullable: true, type: ArrayType })
-    public nameSuffix?: string[];
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public nameSortierindex?: string;
-
-    @AutoMap()
-    @Property({ nullable: true, type: DateTimeType })
-    public geburtsdatum?: Date;
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public geburtsort?: string;
-
-    @AutoMap(() => String)
-    @Enum({ items: () => Geschlecht, nullable: true, nativeEnumName: 'geschlecht_enum' })
-    public geschlecht?: Geschlecht;
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public lokalisierung?: string;
-
-    @AutoMap(() => String)
-    @Enum({ items: () => Vertrauensstufe, nullable: true, nativeEnumName: 'vertrauensstufe_enum' })
-    public vertrauensstufe?: Vertrauensstufe;
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public auskunftssperre?: boolean;
 
     @ManyToOne({ nullable: true })
     public dataProvider?: DataProviderEntity;

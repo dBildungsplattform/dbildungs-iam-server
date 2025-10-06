@@ -124,26 +124,6 @@
             "06"
           ]
         },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ]
-        },
         "email_address_status_enum": {
           "name": "email_address_status_enum",
           "schema": "public",
@@ -392,26 +372,6 @@
             "04",
             "05",
             "06"
-          ]
-        },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
           ]
         },
         "email_address_status_enum": {
@@ -686,26 +646,6 @@
             "06"
           ]
         },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ]
-        },
         "email_address_status_enum": {
           "name": "email_address_status_enum",
           "schema": "public",
@@ -970,26 +910,6 @@
             "06"
           ]
         },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ]
-        },
         "email_address_status_enum": {
           "name": "email_address_status_enum",
           "schema": "public",
@@ -1244,26 +1164,6 @@
             "04",
             "05",
             "06"
-          ]
-        },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
           ]
         },
         "email_address_status_enum": {
@@ -1549,26 +1449,6 @@
             "04",
             "05",
             "06"
-          ]
-        },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
           ]
         },
         "email_address_status_enum": {
@@ -1971,26 +1851,6 @@
             "06"
           ]
         },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ]
-        },
         "email_address_status_enum": {
           "name": "email_address_status_enum",
           "schema": "public",
@@ -2268,26 +2128,6 @@
             "06"
           ]
         },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ]
-        },
         "email_address_status_enum": {
           "name": "email_address_status_enum",
           "schema": "public",
@@ -2521,147 +2361,6 @@
           "nullable": false,
           "mappedType": "string"
         },
-        "initialen_familienname": {
-          "name": "initialen_familienname",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "string"
-        },
-        "initialen_vorname": {
-          "name": "initialen_vorname",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "string"
-        },
-        "rufname": {
-          "name": "rufname",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "string"
-        },
-        "name_titel": {
-          "name": "name_titel",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "string"
-        },
-        "name_anrede": {
-          "name": "name_anrede",
-          "type": "text[]",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "array"
-        },
-        "name_praefix": {
-          "name": "name_praefix",
-          "type": "text[]",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "array"
-        },
-        "name_suffix": {
-          "name": "name_suffix",
-          "type": "text[]",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "array"
-        },
-        "name_sortierindex": {
-          "name": "name_sortierindex",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "string"
-        },
-        "geburtsdatum": {
-          "name": "geburtsdatum",
-          "type": "timestamptz",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "length": 6,
-          "mappedType": "datetime"
-        },
-        "geburtsort": {
-          "name": "geburtsort",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "string"
-        },
-        "geschlecht": {
-          "name": "geschlecht",
-          "type": "geschlecht_enum",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "nativeEnumName": "geschlecht_enum",
-          "enumItems": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ],
-          "mappedType": "enum"
-        },
-        "lokalisierung": {
-          "name": "lokalisierung",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "string"
-        },
-        "vertrauensstufe": {
-          "name": "vertrauensstufe",
-          "type": "vertrauensstufe_enum",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "nativeEnumName": "vertrauensstufe_enum",
-          "enumItems": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ],
-          "mappedType": "enum"
-        },
-        "auskunftssperre": {
-          "name": "auskunftssperre",
-          "type": "boolean",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "boolean"
-        },
         "data_provider_id": {
           "name": "data_provider_id",
           "type": "uuid",
@@ -2859,26 +2558,6 @@
             "04",
             "05",
             "06"
-          ]
-        },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
           ]
         },
         "email_address_status_enum": {
@@ -3212,26 +2891,6 @@
             "06"
           ]
         },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ]
-        },
         "email_address_status_enum": {
           "name": "email_address_status_enum",
           "schema": "public",
@@ -3497,26 +3156,6 @@
             "04",
             "05",
             "06"
-          ]
-        },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
           ]
         },
         "email_address_status_enum": {
@@ -3823,26 +3462,6 @@
             "04",
             "05",
             "06"
-          ]
-        },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
           ]
         },
         "email_address_status_enum": {
@@ -4298,26 +3917,6 @@
             "06"
           ]
         },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ]
-        },
         "email_address_status_enum": {
           "name": "email_address_status_enum",
           "schema": "public",
@@ -4691,26 +4290,6 @@
             "06"
           ]
         },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ]
-        },
         "email_address_status_enum": {
           "name": "email_address_status_enum",
           "schema": "public",
@@ -5063,26 +4642,6 @@
             "06"
           ]
         },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ]
-        },
         "email_address_status_enum": {
           "name": "email_address_status_enum",
           "schema": "public",
@@ -5349,26 +4908,6 @@
             "04",
             "05",
             "06"
-          ]
-        },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
           ]
         },
         "email_address_status_enum": {
@@ -5652,26 +5191,6 @@
             "04",
             "05",
             "06"
-          ]
-        },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
           ]
         },
         "email_address_status_enum": {
@@ -6018,26 +5537,6 @@
             "04",
             "05",
             "06"
-          ]
-        },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
           ]
         },
         "email_address_status_enum": {
@@ -6418,26 +5917,6 @@
             "06"
           ]
         },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ]
-        },
         "email_address_status_enum": {
           "name": "email_address_status_enum",
           "schema": "public",
@@ -6703,26 +6182,6 @@
             "06"
           ]
         },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ]
-        },
         "email_address_status_enum": {
           "name": "email_address_status_enum",
           "schema": "public",
@@ -6865,7 +6324,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -7079,26 +6539,6 @@
             "04",
             "05",
             "06"
-          ]
-        },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
           ]
         },
         "email_address_status_enum": {
@@ -7364,26 +6804,6 @@
             "04",
             "05",
             "06"
-          ]
-        },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
           ]
         },
         "email_address_status_enum": {
@@ -7652,26 +7072,6 @@
             "04",
             "05",
             "06"
-          ]
-        },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
           ]
         },
         "email_address_status_enum": {
@@ -7986,26 +7386,6 @@
             "06"
           ]
         },
-        "geschlecht_enum": {
-          "name": "geschlecht_enum",
-          "schema": "public",
-          "items": [
-            "m",
-            "w",
-            "d",
-            "x"
-          ]
-        },
-        "vertrauensstufe_enum": {
-          "name": "vertrauensstufe_enum",
-          "schema": "public",
-          "items": [
-            "KEIN",
-            "UNBE",
-            "TEIL",
-            "VOLL"
-          ]
-        },
         "email_address_status_enum": {
           "name": "email_address_status_enum",
           "schema": "public",
@@ -8207,26 +7587,6 @@
         "04",
         "05",
         "06"
-      ]
-    },
-    "geschlecht_enum": {
-      "name": "geschlecht_enum",
-      "schema": "public",
-      "items": [
-        "m",
-        "w",
-        "d",
-        "x"
-      ]
-    },
-    "vertrauensstufe_enum": {
-      "name": "vertrauensstufe_enum",
-      "schema": "public",
-      "items": [
-        "KEIN",
-        "UNBE",
-        "TEIL",
-        "VOLL"
       ]
     },
     "email_address_status_enum": {

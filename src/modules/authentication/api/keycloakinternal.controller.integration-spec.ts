@@ -79,7 +79,6 @@ describe('KeycloakInternalController', () => {
                 keycloakSub,
                 faker.string.uuid(),
             );
-            person.geburtsdatum = faker.date.past();
 
             const pkExternalData: ExternalPkData[] = [
                 {
