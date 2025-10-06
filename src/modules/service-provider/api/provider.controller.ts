@@ -13,22 +13,25 @@ import {
 } from '@nestjs/swagger';
 
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { ServiceProvider } from '../domain/service-provider.js';
-import { ServiceProviderService } from '../domain/service-provider.service.js';
+import {
+    ManageableServiceProviderWithLinkedObjects,
+    RollenerweiterungForManageableServiceProvider,
+    ServiceProviderService,
+} from '../domain/service-provider.service.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
+import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
+import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
-import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
@@ -115,15 +118,25 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Query() params: ManageableServiceProvidersParams,
     ): Promise<ManageableServiceProviderListEntryResponse[]> {
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.findAuthorized(permissions, params.limit, params.offset);
-        const serviceProvidersWithRollenAndErweiterungen = await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(serviceProviders);
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.findAuthorized(
+            permissions,
+            params.limit,
+            params.offset,
+        );
+        const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithLinkedObjects[] =
+            await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
+                serviceProviders,
+            );
 
-        return serviceProvidersWithRollenAndErweiterungen.map(spWithData => new ManageableServiceProviderListEntryResponse(
-            spWithData.serviceProvider,
-            spWithData.organisation,
-            spWithData.rollen,
-            spWithData.rollenerweiterungen
-        ));
+        return serviceProvidersWithRollenAndErweiterungen.map(
+            (spWithData: ManageableServiceProviderWithLinkedObjects) =>
+                new ManageableServiceProviderListEntryResponse(
+                    spWithData.serviceProvider,
+                    spWithData.organisation,
+                    spWithData.rollen,
+                    spWithData.rollenerweiterungen,
+                ),
+        );
     }
 
     @Get('manageable/:angebotId')
@@ -138,8 +151,9 @@ export class ProviderController {
     public async getManageableServiceProviderById(
         @Permissions() permissions: PersonPermissions,
         @Param() params: AngebotByIdParams,
-    ): Promise<ServiceProviderResponse> {
-        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
+    ): Promise<ManageableServiceProviderResponse> {
+        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findAuthorizedById(
+            permissions,
             params.angebotId,
         );
         if (!serviceProvider) {
@@ -150,18 +164,30 @@ export class ProviderController {
             );
         }
 
-        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.ANGEBOTE_VERWALTEN],
-            true,
-        );
-        if (!(permittedOrgas.all || permittedOrgas.orgaIds.includes(serviceProvider.providedOnSchulstrukturknoten)))
+        const serviceProviderWithOrganisationRollenAndErweiterungen: Option<ManageableServiceProviderWithLinkedObjects> =
+            (
+                await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders([
+                    serviceProvider,
+                ])
+            )[0];
+        if (!serviceProviderWithOrganisationRollenAndErweiterungen) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError(`Missing ${RollenSystemRecht.ANGEBOTE_VERWALTEN.name} permission.`),
+                    new EntityNotFoundError('ServiceProvider', params.angebotId),
                 ),
             );
+        }
 
+        const rollenerweiterungenWithNames: RollenerweiterungForManageableServiceProvider[] =
+            await this.serviceProviderService.getRollenerweiterungenForDisplay(
+                serviceProviderWithOrganisationRollenAndErweiterungen.rollenerweiterungen,
+            );
 
-        return new ServiceProviderResponse(serviceProvider);
+        return new ManageableServiceProviderResponse(
+            serviceProviderWithOrganisationRollenAndErweiterungen.serviceProvider,
+            serviceProviderWithOrganisationRollenAndErweiterungen.organisation,
+            serviceProviderWithOrganisationRollenAndErweiterungen.rollen,
+            rollenerweiterungenWithNames,
+        );
     }
 }

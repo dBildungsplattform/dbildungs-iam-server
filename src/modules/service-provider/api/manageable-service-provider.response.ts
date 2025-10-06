@@ -2,16 +2,17 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderKategorieTypName,
     ServiceProviderMerkmal,
-    ServiceProviderMerkmalTypName
+    ServiceProviderMerkmalTypName,
 } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
+import { RollenerweiterungForManageableServiceProvider } from '../domain/service-provider.service.js';
+import { RollenerweiterungForDisplayResponse } from './rollenerweiterung-for-display.response.js';
 
-export class ManageableServiceProviderListEntryResponse {
+export class ManageableServiceProviderResponse {
     @ApiProperty()
     public id: string;
 
@@ -19,7 +20,7 @@ export class ManageableServiceProviderListEntryResponse {
     public name: string;
 
     @ApiProperty()
-    public administrationsebene: { id: string, name: string };
+    public administrationsebene: { id: string; name: string };
 
     @ApiProperty({ enum: ServiceProviderKategorie, enumName: ServiceProviderKategorieTypName })
     public kategorie: ServiceProviderKategorie;
@@ -30,20 +31,25 @@ export class ManageableServiceProviderListEntryResponse {
     @ApiProperty({ enum: ServiceProviderMerkmal, enumName: ServiceProviderMerkmalTypName, isArray: true })
     public merkmale: ServiceProviderMerkmal[];
 
-    @ApiProperty()
-    public rollenerweiterungen: {id: string, name: string}[];
+    @ApiProperty({ type: [RollenerweiterungForDisplayResponse], isArray: true })
+    public rollenerweiterungen: RollenerweiterungForDisplayResponse[];
 
     @ApiProperty()
-    public rollen: {id: string, name: string}[];
+    public rollen: { id: string; name: string }[];
 
-    public constructor(serviceProvider: ServiceProvider<true>, organisation: Organisation<true>, rollen: Rolle<true>[], rollenerweiterungen: Rollenerweiterung<true>[]) {
+    public constructor(
+        serviceProvider: ServiceProvider<true>,
+        organisation: Organisation<true>,
+        rollen: Rolle<true>[],
+        rollenerweiterungen: RollenerweiterungForManageableServiceProvider[],
+    ) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;
-        this.administrationsebene = { id: organisation.id, name: organisation.name ?? ''};
+        this.administrationsebene = { id: organisation.id, name: organisation.name ?? '' };
         this.kategorie = serviceProvider.kategorie;
         this.requires2fa = serviceProvider.requires2fa;
         this.merkmale = serviceProvider.merkmale;
-        this.rollenerweiterungen = rollenerweiterungen.map(r => ({ id: r.id, name: r.name }));
-        this.rollen = rollen.map(r => ({ id: r.id, name: r.name }));
+        this.rollenerweiterungen = rollenerweiterungen;
+        this.rollen = rollen.map((r: Rolle<true>) => ({ id: r.id, name: r.name }));
     }
 }

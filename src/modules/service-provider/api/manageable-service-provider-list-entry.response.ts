@@ -7,7 +7,7 @@ import {
     ServiceProviderKategorie,
     ServiceProviderKategorieTypName,
     ServiceProviderMerkmal,
-    ServiceProviderMerkmalTypName
+    ServiceProviderMerkmalTypName,
 } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 
@@ -19,7 +19,7 @@ export class ManageableServiceProviderListEntryResponse {
     public name: string;
 
     @ApiProperty()
-    public administrationsebene: { id: string, name: string };
+    public administrationsebene: { id: string; name: string };
 
     @ApiProperty({ enum: ServiceProviderKategorie, enumName: ServiceProviderKategorieTypName })
     public kategorie: ServiceProviderKategorie;
@@ -34,16 +34,21 @@ export class ManageableServiceProviderListEntryResponse {
     public hasRollenerweiterung: boolean;
 
     @ApiProperty()
-    public rollen: {id: string, name: string}[];
+    public rollen: { id: string; name: string }[];
 
-    public constructor(serviceProvider: ServiceProvider<true>, organisation: Organisation<true>, rollen: Rolle<true>[], rollenerweiterungen: Rollenerweiterung<true>[]) {
+    public constructor(
+        serviceProvider: ServiceProvider<true>,
+        organisation: Organisation<true>,
+        rollen: Rolle<true>[],
+        rollenerweiterungen: Rollenerweiterung<true>[],
+    ) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;
-        this.administrationsebene = { id: organisation.id, name: organisation.name ?? ''};
+        this.administrationsebene = { id: organisation.id, name: organisation.name ?? '' };
         this.kategorie = serviceProvider.kategorie;
         this.requires2fa = serviceProvider.requires2fa;
         this.merkmale = serviceProvider.merkmale;
         this.hasRollenerweiterung = rollenerweiterungen.length > 0;
-        this.rollen = rollen.map(r => ({ id: r.id, name: r.name }));
+        this.rollen = rollen.map((r: Rolle<true>) => ({ id: r.id, name: r.name }));
     }
 }

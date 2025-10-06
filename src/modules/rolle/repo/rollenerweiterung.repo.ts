@@ -135,11 +135,25 @@ export class RollenerweiterungRepo {
         return rollenerweiterungen.map((entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity));
     }
 
-    public async findByServiceProviderIds(serviceProviderIds: ServiceProviderID[]): Promise<Map<ServiceProviderID, Rollenerweiterung<true>[]>> {
-        const rollenerweiterungEntities: Loaded<RollenerweiterungEntity>[] = await this.em.find(RollenerweiterungEntity, {
-            serviceProviderId: { $in: serviceProviderIds },
-        });
-        const rollenerweiterungen: Rollenerweiterung<true>[] = rollenerweiterungEntities.map((entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity));
-        return new Map(serviceProviderIds.map((id: ServiceProviderID) => [id, rollenerweiterungen.filter((rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.serviceProviderId === id)]));
+    public async findByServiceProviderIds(
+        serviceProviderIds: ServiceProviderID[],
+    ): Promise<Map<ServiceProviderID, Rollenerweiterung<true>[]>> {
+        const rollenerweiterungEntities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
+            RollenerweiterungEntity,
+            {
+                serviceProviderId: { $in: serviceProviderIds },
+            },
+        );
+        const rollenerweiterungen: Rollenerweiterung<true>[] = rollenerweiterungEntities.map(
+            (entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity),
+        );
+        return new Map(
+            serviceProviderIds.map((id: ServiceProviderID) => [
+                id,
+                rollenerweiterungen.filter(
+                    (rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.serviceProviderId === id,
+                ),
+            ]),
+        );
     }
 }

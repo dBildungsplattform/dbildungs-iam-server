@@ -1,25 +1,47 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { uniq } from 'lodash-es';
+
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { FeatureFlagConfig } from '../../../shared/config/featureflag.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { VidisConfig } from '../../../shared/config/vidis.config.js';
-import { RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { RollenerweiterungRepo, RollenerweiterungWithName } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 import { VidisService } from '../../vidis/vidis.service.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
+export type ManageableServiceProviderWithLinkedObjects = {
+    serviceProvider: ServiceProvider<true>;
+    organisation: Organisation<true>;
+    rollen: Rolle<true>[];
+    rollenerweiterungen: Rollenerweiterung<true>[];
+};
+
+export type RollenerweiterungForManageableServiceProvider = {
+    organisation: {
+        id: OrganisationID;
+        name: string;
+        kennung?: string;
+    };
+    rolle: {
+        id: RolleID;
+        name: string;
+    };
+    serviceProvider: {
+        id: ServiceProviderID;
+        name: string;
+    };
+};
 @Injectable()
 export class ServiceProviderService {
     private readonly vidisConfig: VidisConfig;
@@ -82,10 +104,17 @@ export class ServiceProviderService {
         return Array.from(serviceProviders.values());
     }
 
-    public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(serviceProviders: ServiceProvider<true>[]): Promise<{ serviceProvider: ServiceProvider<true>, organisation: Organisation<true>, rollen: Rolle<true>[], rollenerweiterungen: Rollenerweiterung<true>[] }[]> {
-        const rollen: Map<ServiceProviderID, Rolle<true>[]> = await this.rolleRepo.findByServiceProviderIds(serviceProviders.map(sp => sp.id));
-        const rollenerweiterungen: Map<ServiceProviderID, Rollenerweiterung<true>[]> = await this.rollenerweiterungRepo.findByServiceProviderIds(serviceProviders.map(sp => sp.id));
-        const organisationen: Map<ServiceProviderID, Organisation<true>> = await this.organisationRepo.findByIds(serviceProviders.map(sp => sp.providedOnSchulstrukturknoten));
+    public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(
+        serviceProviders: ServiceProvider<true>[],
+    ): Promise<ManageableServiceProviderWithLinkedObjects[]> {
+        const serviceProvidersIds: ServiceProviderID[] = serviceProviders.map((sp: ServiceProvider<true>) => sp.id);
+        const rollen: Map<ServiceProviderID, Rolle<true>[]> =
+            await this.rolleRepo.findByServiceProviderIds(serviceProvidersIds);
+        const rollenerweiterungen: Map<ServiceProviderID, Rollenerweiterung<true>[]> =
+            await this.rollenerweiterungRepo.findByServiceProviderIds(serviceProvidersIds);
+        const organisationen: Map<ServiceProviderID, Organisation<true>> = await this.organisationRepo.findByIds(
+            serviceProviders.map((sp: ServiceProvider<true>) => sp.providedOnSchulstrukturknoten),
+        );
 
         return serviceProviders.map((serviceProvider: ServiceProvider<true>) => ({
             serviceProvider,
@@ -95,8 +124,36 @@ export class ServiceProviderService {
         }));
     }
 
-    public async getRollenerweiterungenForDisplay(rollenerweiterungen: Rollenerweiterung<true>[]): Promise<RollenerweiterungWithName[]> {
+    public async getRollenerweiterungenForDisplay(
+        rollenerweiterungen: Rollenerweiterung<true>[],
+    ): Promise<RollenerweiterungForManageableServiceProvider[]> {
+        const organisationen: Map<OrganisationID, Organisation<true>> = await this.organisationRepo.findByIds(
+            rollenerweiterungen.map((rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.organisationId),
+        );
+        const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(
+            rollenerweiterungen.map((rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.rolleId),
+        );
+        const serviceProvider: Map<ServiceProviderID, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
+            rollenerweiterungen.map(
+                (rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.serviceProviderId,
+            ),
+        );
 
+        return rollenerweiterungen.map((rollenerweiterung: Rollenerweiterung<true>) => ({
+            organisation: {
+                id: rollenerweiterung.organisationId,
+                name: organisationen.get(rollenerweiterung.organisationId)?.name ?? '',
+                kennung: organisationen.get(rollenerweiterung.organisationId)?.kennung,
+            },
+            rolle: {
+                id: rollenerweiterung.rolleId,
+                name: rollen.get(rollenerweiterung.rolleId)?.name ?? '',
+            },
+            serviceProvider: {
+                id: rollenerweiterung.serviceProviderId,
+                name: serviceProvider.get(rollenerweiterung.serviceProviderId)?.name ?? '',
+            },
+        }));
     }
 
     public async updateServiceProvidersForVidis(): Promise<void> {
