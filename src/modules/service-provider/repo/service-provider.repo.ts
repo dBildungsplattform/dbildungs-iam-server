@@ -184,6 +184,9 @@ export class ServiceProviderRepo {
                 populate: ['merkmale'],
                 limit,
                 offset,
+                orderBy: {
+                    kategorie: 'ASC', // kategorie defines a custom order
+                },
             },
         );
 
