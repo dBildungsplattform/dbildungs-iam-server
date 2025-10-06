@@ -62,7 +62,7 @@ spec:
           volumes:
             - name:  kafka-delete-volume
               configMap:
-                name: {{ template "common.names.name" $ }}-kafka-delete-configmap
+                name: {{ template "common.names.name" $ }}-kafka-delete-topic-configmap
                 defaultMode: 0555
             - name: dbildungs-iam-kafka-tls
               secret:
