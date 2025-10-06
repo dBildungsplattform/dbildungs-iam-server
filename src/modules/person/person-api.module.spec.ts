@@ -12,7 +12,6 @@ describe('PersonApiModule', () => {
             imports: [
                 ConfigTestModule,
                 DatabaseTestModule.forRoot(),
-
                 PersonApiModule,
                 KeycloakConfigTestModule.forRoot(),
             ],

@@ -31,7 +31,6 @@ describe('KeycloakInternalController', () => {
             imports: [
                 ConfigTestModule,
                 LoggingTestModule,
-
                 ServiceProviderModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,

@@ -52,7 +52,6 @@ describe('EmailAddressDeletionHandler', () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
-
                 EmailAddressDeletionModule,
                 EventModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),

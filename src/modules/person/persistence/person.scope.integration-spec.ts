@@ -56,7 +56,6 @@ describe('PersonScope', () => {
                 LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-
                 PersonenKontextModule,
                 LoggingTestModule,
             ],

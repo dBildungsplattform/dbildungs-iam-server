@@ -46,7 +46,6 @@ describe('AuthenticationController', () => {
             imports: [
                 ConfigTestModule,
                 LoggingTestModule,
-
                 ServiceProviderModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,

@@ -73,7 +73,6 @@ describe('EmailEventHandler', () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
-
                 EmailModule,
                 EventModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),

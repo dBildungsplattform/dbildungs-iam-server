@@ -14,7 +14,6 @@ describe('KeycloakAdministrationModule', () => {
         module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
-
                 KeycloakAdministrationModule,
                 DatabaseTestModule.forRoot(),
                 KeycloakConfigTestModule.forRoot(),

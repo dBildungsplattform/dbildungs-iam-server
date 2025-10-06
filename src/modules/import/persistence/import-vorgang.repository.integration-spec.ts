@@ -51,7 +51,6 @@ describe('ImportVorgangRepository', () => {
             imports: [
                 RolleModule,
                 OrganisationModule,
-
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],
@@ -87,7 +86,6 @@ describe('ImportVorgangRepository', () => {
                     provide: UserLockRepository,
                     useValue: createMock<UserLockRepository>(),
                 },
-
                 {
                     provide: OxUserBlacklistRepo,
                     useValue: createMock<OxUserBlacklistRepo>(),

@@ -45,7 +45,6 @@ describe('OrganisationSpecificationTests', () => {
                 LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-
                 EventModule,
                 LoggingTestModule,
             ],

@@ -38,7 +38,6 @@ describe('DbSeedServiceIntegration', () => {
                 ConfigTestModule,
                 OrganisationModule,
                 KeycloakAdministrationModule,
-
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
                 PersonenKontextModule,

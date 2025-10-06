@@ -83,7 +83,6 @@ describe('Personenuebersicht API Mocked', () => {
                 PersonApiModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
-
                 LoggingTestModule,
             ],
             providers: [ServiceProviderRepo, RolleFactory, OrganisationRepository],

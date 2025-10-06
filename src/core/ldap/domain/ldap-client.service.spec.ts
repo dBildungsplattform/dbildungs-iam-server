@@ -144,7 +144,6 @@ describe('LDAP Client Service', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LdapModule,
-
                 LdapConfigModule,
             ],
             providers: [

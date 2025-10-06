@@ -69,7 +69,6 @@ describe('PersonenkontextSpecifications Integration', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 KeycloakAdministrationModule,
-
                 LoggingTestModule,
             ],
             providers: [

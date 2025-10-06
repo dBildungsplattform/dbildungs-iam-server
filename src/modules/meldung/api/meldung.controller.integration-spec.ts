@@ -26,7 +26,6 @@ describe('Meldung Controller', () => {
             imports: [
                 ConfigTestModule,
                 LoggingTestModule,
-
                 MeldungModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],

@@ -70,7 +70,6 @@ describe('Schulconnex Repo', () => {
         module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
-
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 RolleModule,
                 OrganisationModule,

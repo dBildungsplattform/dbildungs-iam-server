@@ -15,7 +15,6 @@ describe('AuthenticationApiModule', () => {
         module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
-
                 AuthenticationApiModule,
                 DatabaseTestModule.forRoot(),
                 PersonModule,
