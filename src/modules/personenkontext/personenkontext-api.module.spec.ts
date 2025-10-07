@@ -1,10 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    MapperTestModule,
-    KeycloakConfigTestModule,
-} from '../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, KeycloakConfigTestModule } from '../../../test/utils/index.js';
 import { PersonenKontextApiModule } from './personenkontext-api.module.js';
 import { PersonenkontextController } from './api/personenkontext.controller.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
@@ -30,7 +25,6 @@ describe('PersonenKontextApiModule', () => {
             imports: [
                 ConfigTestModule,
                 DatabaseTestModule.forRoot(),
-                MapperTestModule,
                 PersonenKontextApiModule,
                 KeycloakConfigTestModule.forRoot(),
             ],

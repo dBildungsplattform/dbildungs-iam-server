@@ -4,7 +4,6 @@ import {
     DatabaseTestModule,
     KeycloakConfigTestModule,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
@@ -70,7 +69,6 @@ describe('PersonenkontextSpecifications Integration', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 KeycloakAdministrationModule,
-                MapperTestModule,
                 LoggingTestModule,
             ],
             providers: [

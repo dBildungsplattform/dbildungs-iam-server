@@ -12,7 +12,6 @@ import { App } from 'supertest/types.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
@@ -45,7 +44,6 @@ describe('ServiceProvider API', () => {
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
-                MapperTestModule,
                 ServiceProviderApiModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),

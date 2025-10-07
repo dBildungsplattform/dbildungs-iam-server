@@ -8,7 +8,7 @@ import {
 } from '@s3pweb/keycloak-admin-client-cjs';
 
 import { faker } from '@faker-js/faker';
-import { ConfigTestModule, DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { PersonService } from '../../person/domain/person.service.js';
@@ -35,7 +35,7 @@ describe('KeycloakUserService', () => {
         kcGroupsMock = createMock<KeycloakAdminClient['groups']>();
 
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, MapperTestModule, LoggingTestModule],
+            imports: [ConfigTestModule, LoggingTestModule],
             providers: [
                 KeycloakUserService,
                 {

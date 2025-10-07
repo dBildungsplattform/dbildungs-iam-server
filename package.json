@@ -36,9 +36,6 @@
         "debug:kc-db-microservice": "nest start kc-db-microservice --debug --watch"
     },
     "dependencies": {
-        "@automapper/classes": "^8.8.1",
-        "@automapper/core": "^8.8.1",
-        "@automapper/nestjs": "^8.8.1",
         "@confluentinc/kafka-javascript": "^1.4.1",
         "@faker-js/faker": "^8.4.1",
         "@golevelup/nestjs-discovery": "^4.0.3",

@@ -1,9 +1,7 @@
-import { AutoMap } from '@automapper/classes';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, Min } from 'class-validator';
 
 export abstract class PagedQueryParams {
-    @AutoMap()
     @IsOptional()
     @Min(0)
     @ApiPropertyOptional({
@@ -12,7 +10,6 @@ export abstract class PagedQueryParams {
     })
     public readonly offset?: number;
 
-    @AutoMap()
     @IsOptional()
     @Min(1)
     @ApiPropertyOptional({
