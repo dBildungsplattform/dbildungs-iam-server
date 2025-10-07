@@ -53,7 +53,9 @@ export class ManageableServiceProviderResponse {
         this.kategorie = serviceProvider.kategorie;
         this.requires2fa = serviceProvider.requires2fa;
         this.merkmale = serviceProvider.merkmale;
-        this.rollenerweiterungen = rollenerweiterungen;
+        this.rollenerweiterungen = rollenerweiterungen.map(
+            (re: RollenerweiterungForManageableServiceProvider) => new RollenerweiterungForDisplayResponse(re),
+        );
         this.rollen = rollen.map((r: Rolle<true>) => ({ id: r.id, name: r.name }));
     }
 }
