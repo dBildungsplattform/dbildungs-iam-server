@@ -20,7 +20,7 @@ export class ManageableServiceProviderResponse {
     public name: string;
 
     @ApiProperty()
-    public administrationsebene: { id: string; name: string };
+    public administrationsebene: { id: string; name: string; kennung?: string };
 
     @ApiProperty({ enum: ServiceProviderKategorie, enumName: ServiceProviderKategorieTypName })
     public kategorie: ServiceProviderKategorie;
@@ -45,7 +45,11 @@ export class ManageableServiceProviderResponse {
     ) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;
-        this.administrationsebene = { id: organisation.id, name: organisation.name ?? '' };
+        this.administrationsebene = {
+            id: organisation.id,
+            name: organisation.name ?? '',
+            kennung: organisation.kennung,
+        };
         this.kategorie = serviceProvider.kategorie;
         this.requires2fa = serviceProvider.requires2fa;
         this.merkmale = serviceProvider.merkmale;
