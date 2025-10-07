@@ -30,12 +30,15 @@ import { ManageableServiceProviderListEntryResponse } from './manageable-service
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { faker } from '@faker-js/faker';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let serviceProviderRepo: ServiceProviderRepo;
     let rolleRepo: RolleRepo;
+    let rollenerweiterungRepo: RollenerweiterungRepo;
     let organisationRepo: OrganisationRepository;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
 
@@ -80,6 +83,7 @@ describe('ServiceProvider API', () => {
         orm = module.get(MikroORM);
         serviceProviderRepo = module.get(ServiceProviderRepo);
         rolleRepo = module.get(RolleRepo);
+        rollenerweiterungRepo = module.get(RollenerweiterungRepo);
         organisationRepo = module.get(OrganisationRepository);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
@@ -221,6 +225,8 @@ describe('ServiceProvider API', () => {
         let organisation: Organisation<true>;
         let serviceProvider: ServiceProvider<true>;
         let rolle: Rolle<true>;
+        let rolleWithErweiterung: Rolle<true>;
+        let rollenerweiterung: Rollenerweiterung<true>;
 
         beforeEach(async () => {
             organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
@@ -236,6 +242,21 @@ describe('ServiceProvider API', () => {
             if (rolle instanceof DomainError) {
                 throw rolle;
             }
+            rolleWithErweiterung = (await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                }),
+            )) as Rolle<true>;
+            if (rolleWithErweiterung instanceof DomainError) {
+                throw rolleWithErweiterung;
+            }
+            rollenerweiterung = await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    organisationId: organisation.id,
+                    rolleId: rolleWithErweiterung.id,
+                    serviceProviderId: serviceProvider.id,
+                }),
+            );
         });
 
         it('should return manageable service provider', async () => {
@@ -257,7 +278,17 @@ describe('ServiceProvider API', () => {
                 kategorie: serviceProvider.kategorie,
                 requires2fa: serviceProvider.requires2fa,
                 merkmale: serviceProvider.merkmale,
-                rollenerweiterungen: [],
+                rollenerweiterungen: [
+                    {
+                        organisation: {
+                            id: rollenerweiterung.organisationId,
+                            name: organisation.name!,
+                            kennung: organisation.kennung!,
+                        },
+                        rolle: { id: rollenerweiterung.rolleId, name: rolleWithErweiterung.name },
+                        serviceProvider: { id: rollenerweiterung.serviceProviderId, name: serviceProvider.name },
+                    },
+                ],
                 rollen: [
                     {
                         id: rolle.id,
