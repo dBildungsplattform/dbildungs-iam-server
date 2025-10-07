@@ -182,19 +182,11 @@ export class ProviderController {
             );
         }
 
-        const serviceProviderWithOrganisationRollenAndErweiterungen: Option<ManageableServiceProviderWithLinkedObjects> =
-            (
-                await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders([
-                    serviceProvider,
-                ])
-            )[0];
-        if (!serviceProviderWithOrganisationRollenAndErweiterungen) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('ServiceProvider', params.angebotId),
-                ),
-            );
-        }
+        const serviceProviderWithOrganisationRollenAndErweiterungen: ManageableServiceProviderWithLinkedObjects = (
+            await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders([
+                serviceProvider,
+            ])
+        )[0]!;
 
         const rollenerweiterungenWithNames: RollenerweiterungForManageableServiceProvider[] =
             await this.serviceProviderService.getRollenerweiterungenForDisplay(

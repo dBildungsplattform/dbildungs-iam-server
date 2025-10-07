@@ -1,10 +1,10 @@
-//import { MikroORM } from '@mikro-orm/core';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Client } from 'openid-client';
+
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
