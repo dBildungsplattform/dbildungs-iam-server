@@ -286,6 +286,7 @@ describe('ServiceProviderService', () => {
             },
         );
     });
+
     describe('getServiceProvidersByOrganisationenAndRollen', () => {
         describe.each([[true], [false]])('when rollen have rollenerweiterungen', (haveRollenerweiterungen: boolean) => {
             const organisations: Array<Organisation<true>> = [
@@ -346,20 +347,27 @@ describe('ServiceProviderService', () => {
     });
 
     describe('getOrganisationRollenAndRollenerweiterungenForServiceProviders', () => {
+        let serviceProvider: ServiceProvider<true>;
+        let organisation: Organisation<true>;
+        let rolle: Rolle<true>;
+        let rollenerweiterung: Rollenerweiterung<true>;
+
+        beforeEach(() => {
+            serviceProvider = DoFactory.createServiceProvider(true);
+            organisation = DoFactory.createOrganisation(true, {
+                id: serviceProvider.providedOnSchulstrukturknoten,
+            });
+            rolle = DoFactory.createRolle(true, { serviceProviderIds: [serviceProvider.id] });
+            rollenerweiterung = DoFactory.createRollenerweiterung(true, {
+                serviceProviderId: serviceProvider.id,
+            });
+        });
+
         afterEach(() => {
             jest.restoreAllMocks();
         });
 
         it('should return referenced objects for serviceProviders', async () => {
-            const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
-                id: serviceProvider.providedOnSchulstrukturknoten,
-            });
-            const rolle: Rolle<true> = DoFactory.createRolle(true, { serviceProviderIds: [serviceProvider.id] });
-            const rollenerweiterung: Rollenerweiterung<true> = DoFactory.createRollenerweiterung(true, {
-                serviceProviderId: serviceProvider.id,
-            });
-
             rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProvider.id, [rolle]]]));
             rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
                 new Map([[serviceProvider.id, [rollenerweiterung]]]),
@@ -376,6 +384,25 @@ describe('ServiceProviderService', () => {
             expect(result[0]!.organisation).toBe(organisation);
             expect(result[0]!.rollen).toContain(rolle);
             expect(result[0]!.rollenerweiterungen).toContain(rollenerweiterung);
+        });
+
+        it('should return empty arrays for serviceProviders without rollen or rollenerweiterungen', async () => {
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map());
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map());
+            organisationRepo.findByIds.mockResolvedValue(
+                new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
+            );
+
+            const result: ManageableServiceProviderWithLinkedObjects[] =
+                await service.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]!.serviceProvider).toBe(serviceProvider);
+            expect(result[0]!.organisation).toBe(organisation);
+            expect(result[0]!.rollen).toBeInstanceOf(Array);
+            expect(result[0]!.rollen).toHaveLength(0);
+            expect(result[0]!.rollenerweiterungen).toBeInstanceOf(Array);
+            expect(result[0]!.rollenerweiterungen).toHaveLength(0);
         });
     });
 
