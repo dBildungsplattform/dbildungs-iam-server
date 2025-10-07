@@ -1,10 +1,6 @@
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    LoggingTestModule,
-    MapperTestModule,
-} from '../../../../test/utils/index.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { EmailReadController } from './email-read.controller.js';
 import { EmailAddressResponse } from './email-address.response.js';
@@ -17,7 +13,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [MapperTestModule, LoggingTestModule],
+            imports: [LoggingTestModule],
             providers: [
                 {
                     provide: APP_PIPE,

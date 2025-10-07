@@ -13,7 +13,6 @@ import {
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
@@ -69,12 +68,7 @@ describe('Rolle API', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [
-                RolleApiModule,
-                ConfigTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
-            ],
+            imports: [RolleApiModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 {
                     provide: APP_PIPE,

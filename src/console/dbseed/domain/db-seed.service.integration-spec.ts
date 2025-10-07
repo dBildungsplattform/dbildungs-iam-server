@@ -5,7 +5,6 @@ import {
     DatabaseTestModule,
     KeycloakConfigTestModule,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { DbSeedService } from './db-seed.service.js';
 import { UsernameGeneratorService } from '../../../modules/person/domain/username-generator.service.js';
@@ -39,7 +38,6 @@ describe('DbSeedServiceIntegration', () => {
                 ConfigTestModule,
                 OrganisationModule,
                 KeycloakAdministrationModule,
-                MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
                 PersonenKontextModule,

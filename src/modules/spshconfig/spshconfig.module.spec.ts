@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
 import { SpshConfigModule } from './spshconfig.module.js';
 
 describe('SpshConfigModule', () => {
@@ -7,7 +7,7 @@ describe('SpshConfigModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, SpshConfigModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), SpshConfigModule],
         }).compile();
     });
 

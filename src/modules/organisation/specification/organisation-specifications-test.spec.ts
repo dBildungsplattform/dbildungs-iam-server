@@ -5,11 +5,9 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { MikroORM } from '@mikro-orm/core';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
-import { OrganisationPersistenceMapperProfile } from '../persistence/organisation-persistence.mapper.profile.js';
 import { NurKlasseKursUnterSchule } from './nur-klasse-kurs-unter-schule.js';
 import { SchuleUnterTraeger } from './schule-unter-traeger.js';
 import { ZyklusInOrganisationen } from './zyklus-in-organisationen.js';
@@ -47,11 +45,10 @@ describe('OrganisationSpecificationTests', () => {
                 LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
                 EventModule,
                 LoggingTestModule,
             ],
-            providers: [OrganisationPersistenceMapperProfile, OrganisationRepository],
+            providers: [OrganisationRepository],
         }).compile();
         repo = module.get(OrganisationRepository);
         orm = module.get(MikroORM);

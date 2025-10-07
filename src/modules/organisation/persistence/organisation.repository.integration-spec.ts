@@ -9,7 +9,6 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { DataConfig } from '../../../shared/config/index.js';
@@ -26,7 +25,6 @@ import { Organisation } from '../domain/organisation.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
 import { TraegerUnterRootChildError } from '../specification/error/traeger-unter-root-child.error.js';
-import { OrganisationPersistenceMapperProfile } from './organisation-persistence.mapper.profile.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { mapOrgaAggregateToData, mapOrgaEntityToAggregate, OrganisationRepository } from './organisation.repository.js';
 import { OrganisationScope } from './organisation.scope.js';
@@ -42,14 +40,8 @@ describe('OrganisationRepository', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                LoggingTestModule,
-                ConfigTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
-            ],
+            imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
-                OrganisationPersistenceMapperProfile,
                 OrganisationRepository,
                 {
                     provide: EventRoutingLegacyKafkaService,

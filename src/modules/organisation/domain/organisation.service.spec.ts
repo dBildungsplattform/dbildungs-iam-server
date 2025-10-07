@@ -1,8 +1,5 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { Dictionary } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
@@ -39,7 +36,6 @@ describe('OrganisationService', () => {
     let module: TestingModule;
     let organisationService: OrganisationService;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
-    let mapperMock: DeepMocked<Mapper>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -50,15 +46,10 @@ describe('OrganisationService', () => {
                     provide: OrganisationRepository,
                     useValue: createMock<OrganisationRepository>(),
                 },
-                {
-                    provide: getMapperToken(),
-                    useValue: createMock<Mapper>(),
-                },
             ],
         }).compile();
         organisationService = module.get(OrganisationService);
         organisationRepositoryMock = module.get(OrganisationRepository);
-        mapperMock = module.get(getMapperToken());
     });
 
     afterAll(async () => {
@@ -86,7 +77,6 @@ describe('OrganisationService', () => {
         it('should create an organisation', async () => {
             const organisation: Organisation<false> = DoFactory.createOrganisation(false);
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 organisation,
                 permissionsMock,
@@ -104,7 +94,6 @@ describe('OrganisationService', () => {
             schule.typ = OrganisationsTyp.SCHULE;
             organisationRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
             organisationRepositoryMock.save.mockResolvedValue(schule as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(schule as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 schule,
@@ -130,7 +119,6 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
             organisationRepositoryMock.save.mockResolvedValue(klasse as unknown as Organisation<true>);
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
-            mapperMock.map.mockReturnValue(klasse as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 klasse,
@@ -153,7 +141,6 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.exists.mockResolvedValue(true);
             organisationRepositoryMock.exists.mockResolvedValue(true);
             organisationRepositoryMock.save.mockResolvedValue(klasse as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(klasse as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 klasse,
@@ -207,7 +194,6 @@ describe('OrganisationService', () => {
                 kennung: undefined,
             });
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 organisation,
@@ -230,7 +216,6 @@ describe('OrganisationService', () => {
                 name: undefined,
             });
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 organisation,
@@ -250,7 +235,6 @@ describe('OrganisationService', () => {
                 name: 'Klasse123',
             });
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 organisation,
@@ -286,7 +270,6 @@ describe('OrganisationService', () => {
             ];
             organisationRepositoryMock.findBy.mockResolvedValueOnce(counted);
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 organisation,
@@ -502,7 +485,6 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
             organisationRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
             organisationRepositoryMock.save.mockResolvedValue(schule as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(schule as unknown as Dictionary<unknown>);
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
 
@@ -532,7 +514,6 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.findChildOrgasForIds.mockResolvedValueOnce([]);
             organisationRepositoryMock.save.mockResolvedValue(klasse as unknown as Organisation<true>);
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
-            mapperMock.map.mockReturnValue(klasse as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
                 klasse,
@@ -553,7 +534,6 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.findById.mockResolvedValueOnce(klasse);
             organisationRepositoryMock.save.mockResolvedValue(klasse as unknown as Organisation<true>);
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
-            mapperMock.map.mockReturnValue(klasse as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
                 klasse,
@@ -656,7 +636,6 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.findById.mockResolvedValue(organisation as unknown as Organisation<true>);
             organisationRepositoryMock.findBy.mockResolvedValueOnce(counted);
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
                 organisation,
