@@ -1,0 +1,15 @@
+{
+    "entityName": "EmailDomain",
+    "entities": [
+        {
+            "id":1,
+            "overrideId": "d8f679f4-ea5c-4143-9233-01b96fe73196",
+            "domain": "schule-sh.de"
+        },
+        {
+            "id":2,
+            "overrideId": "451a3df9-b92d-4ed3-8e39-917cc15aeb47",
+            "domain": "ersatzschule-sh.de"
+        }
+    ]
+}

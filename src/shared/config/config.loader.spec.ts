@@ -380,6 +380,13 @@ describe('configloader', () => {
                 LOGGING: {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
+                DB: {
+                    CLIENT_URL: 'postgres://localhost:5432',
+                    USERNAME: 'admin',
+                    DB_NAME: 'test-db',
+                    USE_SSL: false,
+                    SECRET: 'gehaim',
+                },
             };
 
             const secrets: DeepPartial<EmailAppConfig> = {};
@@ -412,6 +419,13 @@ describe('configloader', () => {
                 },
                 LOGGING: {
                     DEFAULT_LOG_LEVEL: 'debug',
+                },
+                DB: {
+                    CLIENT_URL: 'postgres://localhost:5432',
+                    USERNAME: 'admin',
+                    DB_NAME: 'test-db',
+                    USE_SSL: false,
+                    SECRET: 'gehaim',
                 },
             };
 
