@@ -7,7 +7,6 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     LdapTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { LdapConfigModule } from '../ldap-config.module.js';
@@ -145,7 +144,6 @@ describe('LDAP Client Service', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LdapModule,
-                MapperTestModule,
                 LdapConfigModule,
             ],
             providers: [

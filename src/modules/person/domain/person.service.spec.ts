@@ -1,5 +1,3 @@
-import { Dictionary, Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
@@ -13,7 +11,6 @@ describe('PersonService', () => {
     let module: TestingModule;
     let sut: PersonService;
     let personRepoMock: DeepMocked<PersonRepository>;
-    let mapperMock: DeepMocked<Mapper>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -23,15 +20,10 @@ describe('PersonService', () => {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
                 },
-                {
-                    provide: getMapperToken(),
-                    useValue: createMock<Mapper>(),
-                },
             ],
         }).compile();
         sut = module.get(PersonService);
         personRepoMock = module.get(PersonRepository);
-        mapperMock = module.get(getMapperToken());
     });
 
     afterAll(async () => {
@@ -51,7 +43,6 @@ describe('PersonService', () => {
             it('should get a person', async () => {
                 const person: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValue(person);
-                mapperMock.map.mockReturnValue(person as unknown as Dictionary<unknown>);
                 const result: Result<Person<true>> | Error = await sut.findPersonById(person.id);
                 expect(result).toEqual<Result<Person<true>>>({
                     ok: true,
@@ -64,7 +55,6 @@ describe('PersonService', () => {
             it('should get a EntityNotFoundError error ', async () => {
                 const person: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValue(null);
-                mapperMock.map.mockReturnValue(person as unknown as Dictionary<unknown>);
                 const result: Result<Person<true>> | Error = await sut.findPersonById(person.id);
                 expect(result).toEqual<Result<Person<true>>>({
                     ok: false,
@@ -81,7 +71,6 @@ describe('PersonService', () => {
             const persons: Counted<Person<true>> = [[firstPerson, secondPerson], 2];
 
             personRepoMock.findBy.mockResolvedValue(persons);
-            mapperMock.map.mockReturnValue(persons as unknown as Dictionary<unknown>);
 
             const personDoWithQueryParam: Person<false> = DoFactory.createPerson(false);
             const result: Paged<Person<true>> = await sut.findAllPersons(personDoWithQueryParam, 0, 10);
@@ -93,7 +82,6 @@ describe('PersonService', () => {
             const person: Person<false> = DoFactory.createPerson(false);
 
             personRepoMock.findBy.mockResolvedValue([[], 0]);
-            mapperMock.map.mockReturnValue(person as unknown as Dictionary<unknown>);
 
             const result: Paged<Person<true>> = await sut.findAllPersons(person);
 

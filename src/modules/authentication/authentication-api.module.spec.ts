@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Issuer } from 'openid-client';
 
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
 import { AuthenticationController } from './api/authentication.controller.js';
 import { OIDC_CLIENT } from './services/oidc-client.service.js';
 import { AuthenticationApiModule } from './authentication-api.module.js';
@@ -15,7 +15,6 @@ describe('AuthenticationApiModule', () => {
         module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
-                MapperTestModule,
                 AuthenticationApiModule,
                 DatabaseTestModule.forRoot(),
                 PersonModule,

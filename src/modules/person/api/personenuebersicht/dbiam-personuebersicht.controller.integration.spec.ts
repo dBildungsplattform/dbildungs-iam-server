@@ -9,7 +9,6 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../../shared/validation/global-validation.pipe.js';
 import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
@@ -73,7 +72,6 @@ describe('Personenuebersicht API', () => {
                 PersonApiModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
                 LoggingTestModule,
             ],
             providers: [

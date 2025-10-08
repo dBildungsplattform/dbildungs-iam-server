@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
@@ -32,7 +32,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [MapperTestModule, LoggingTestModule],
+            imports: [LoggingTestModule],
             providers: [
                 DbiamPersonenkontextWorkflowController,
                 {
