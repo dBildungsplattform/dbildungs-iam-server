@@ -35,6 +35,9 @@ import { ServiceProviderFile } from '../file/service-provider-file.js';
 import { ReferencedEntityType } from '../repo/db-seed-reference.entity.js';
 import { DbSeedReferenceRepo } from '../repo/db-seed-reference.repo.js';
 import { DbSeedReference } from './db-seed-reference.js';
+import { EmailDomainFile } from '../file/email-domain-file.js';
+import { EmailDomain } from '../../../email/modules/core/domain/email-domain.js';
+import { EmailDomainRepo } from '../../../email/modules/core/persistence/email-domain.repo.js';
 
 @Injectable()
 export class DbSeedService {
@@ -50,6 +53,7 @@ export class DbSeedService {
         private readonly rolleFactory: RolleFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderFactory: ServiceProviderFactory,
+        private readonly emailDomainRepo: EmailDomainRepo,
         private readonly kcUserService: KeycloakUserService,
         private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
         private readonly dbSeedReferenceRepo: DbSeedReferenceRepo,
@@ -230,6 +234,33 @@ export class DbSeedService {
             }
         }
         this.logger.info(`Insert ${files.length} entities of type ServiceProvider`);
+    }
+
+    public async seedEmailDomain(fileContentAsStr: string): Promise<void> {
+        const emailDomainFile: EntityFile<EmailDomainFile> = JSON.parse(
+            fileContentAsStr,
+        ) as EntityFile<EmailDomainFile>;
+        const files: EmailDomainFile[] = plainToInstance(EmailDomainFile, emailDomainFile.entities);
+        for (const file of files) {
+            const emailDomain: EmailDomain<false> = EmailDomain.createNew({
+                domain: file.domain,
+            });
+            emailDomain.id = file.overrideId;
+
+            const persistedEmailDomain: EmailDomain<true> = await this.emailDomainRepo.create(emailDomain);
+            if (persistedEmailDomain && file.id != null) {
+                const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
+                    ReferencedEntityType.EMAIL_DOMAIN,
+                    file.id,
+                    persistedEmailDomain.id,
+                );
+                await this.dbSeedReferenceRepo.create(dbSeedReference);
+            } else {
+                this.logger.error('EmailDomain without ID thus not referenceable:');
+                this.logger.error(JSON.stringify(persistedEmailDomain));
+            }
+        }
+        this.logger.info(`Insert ${files.length} entities of type EmailDomain`);
     }
 
     public async seedPerson(fileContentAsStr: string): Promise<void> {

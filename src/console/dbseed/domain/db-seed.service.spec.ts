@@ -27,6 +27,9 @@ import { NameForOrganisationWithTrailingSpaceError } from '../../../modules/orga
 import { NameForRolleWithTrailingSpaceError } from '../../../modules/rolle/domain/name-with-trailing-space.error.js';
 import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
 import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
+import { EmailDomainRepo } from '../../../email/modules/core/persistence/email-domain.repo.js';
+import { EmailDomain } from '../../../email/modules/core/domain/email-domain.js';
+import { DbSeedReference } from './db-seed-reference.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -35,6 +38,7 @@ describe('DbSeedService', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let personRepoMock: DeepMocked<PersonRepository>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
+    let emailDomainRepoMock: DeepMocked<EmailDomainRepo>;
     let personenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
     let dbSeedReferenceRepoMock: DeepMocked<DbSeedReferenceRepo>;
     let kcUserService: DeepMocked<KeycloakUserService>;
@@ -65,6 +69,10 @@ describe('DbSeedService', () => {
                     useValue: createMock<PersonRepository>(),
                 },
                 {
+                    provide: EmailDomainRepo,
+                    useValue: createMock<EmailDomainRepo>(),
+                },
+                {
                     provide: DBiamPersonenkontextRepoInternal,
                     useValue: createMock<DBiamPersonenkontextRepoInternal>(),
                 },
@@ -88,6 +96,10 @@ describe('DbSeedService', () => {
                     provide: KeycloakGroupRoleService,
                     useValue: createMock<KeycloakGroupRoleService>(),
                 },
+                {
+                    provide: EmailDomainRepo,
+                    useValue: createMock<EmailDomainRepo>(),
+                },
             ],
         }).compile();
         dbSeedService = module.get(DbSeedService);
@@ -99,6 +111,7 @@ describe('DbSeedService', () => {
         dbSeedReferenceRepoMock = module.get(DbSeedReferenceRepo);
         kcUserService = module.get(KeycloakUserService);
         personFactory = module.get(PersonFactory);
+        emailDomainRepoMock = module.get(EmailDomainRepo);
     });
 
     afterAll(async () => {
@@ -416,6 +429,38 @@ describe('DbSeedService', () => {
         });
     });
 
+    describe('seedEmailDomain', () => {
+        it('should not throw an error', async () => {
+            const fileContentAsStr: string = fs.readFileSync(
+                `./seeding/seeding-integration-test/emailDomain/01_email-domain.json`,
+                'utf-8',
+            );
+            emailDomainRepoMock.create.mockResolvedValue(
+                createMock<EmailDomain<true>>({ id: faker.string.uuid(), domain: 'test1.com' }),
+            );
+            dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid());
+            dbSeedReferenceRepoMock.create.mockResolvedValue(createMock<DbSeedReference>());
+
+            await expect(dbSeedService.seedEmailDomain(fileContentAsStr)).resolves.not.toThrow();
+            expect(emailDomainRepoMock.create).toHaveBeenCalledTimes(2);
+            expect(dbSeedReferenceRepoMock.create).toHaveBeenCalledTimes(2);
+        });
+
+        it('should skip reference if persistedEmailDomain is undefined', async () => {
+            const fileContentAsStr: string = fs.readFileSync(
+                `./seeding/seeding-integration-test/emailDomain/01_email-domain.json`,
+                'utf-8',
+            );
+            emailDomainRepoMock.create.mockResolvedValueOnce(undefined as unknown as EmailDomain<true>);
+            emailDomainRepoMock.create.mockResolvedValueOnce(
+                createMock<EmailDomain<true>>({ id: faker.string.uuid(), domain: 'test2.com' }),
+            );
+
+            await dbSeedService.seedEmailDomain(fileContentAsStr);
+            expect(dbSeedReferenceRepoMock.create).toHaveBeenCalledTimes(1);
+        });
+    });
+
     describe('seedPerson', () => {
         describe('person already exists in keycloak', () => {
             it('should delete the person and then create it again', async () => {
@@ -697,7 +742,7 @@ describe('DbSeedService', () => {
                     'seeding-integration-test/all',
                     '01',
                 );
-                expect(entityFileNames).toHaveLength(7);
+                expect(entityFileNames).toHaveLength(8);
             });
         });
     });

@@ -1,8 +1,15 @@
 {
     "HOST": {
-        "PORT": 9090
+        "PORT": 9091
     },
     "LOGGING": {
         "DEFAULT_LOG_LEVEL": "info"
+    },
+    "DB": {
+        "CLIENT_URL": "postgres://localhost:5432",
+        "DB_NAME": "dbildungs-iam-server",
+        "USERNAME": "admin",
+        "SECRET": "password",
+        "USE_SSL": false
     }
 }
