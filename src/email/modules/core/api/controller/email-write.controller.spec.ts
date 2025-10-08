@@ -1,9 +1,6 @@
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    LoggingTestModule,
-} from '../../../../../../test/utils/index.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../../../shared/validation/global-validation.pipe.js';
 import { faker } from '@faker-js/faker';
 import { EmailWriteController } from './email-write.controller.js';
