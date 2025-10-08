@@ -53,14 +53,14 @@ export class EmailAddressGenerator {
 
         // Check resulting cleaned names
         if (cleanedFirstname.length === 0 || cleanedLastname.length === 0) {
-            return { ok: false, error: new InvalidNameError('Could not generate valid username') };
+            return { ok: false, error: new InvalidNameError('Could not generate valid email') };
         }
 
         const calculatedAddress: string = cleanedFirstname + '.' + cleanedLastname;
 
         // Check resulting address
         if (calculatedAddress.length > 64) {
-            return { ok: false, error: new InvalidNameError('Could not generate valid username') };
+            return { ok: false, error: new InvalidNameError('Could not generate valid email') };
         }
 
         return {

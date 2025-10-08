@@ -19,10 +19,10 @@ export class EmailAddressResponse {
     @ApiProperty()
     public status: EmailAddressStatusEnum;
 
-    @ApiProperty()
+    @ApiProperty({ required: false })
     public spshPersonId?: string;
 
-    @ApiProperty()
+    @ApiProperty({ required: false })
     public oxUserId?: string;
 
     public constructor(emailAddress: EmailAddress<true>, latestStatus: EmailAddressStatus<true>) {
