@@ -1,13 +1,4 @@
-import {
-    Collection,
-    DateTimeType,
-    Entity,
-    Index,
-    ManyToOne,
-    OneToMany,
-    Property,
-    QueryOrder,
-} from '@mikro-orm/core';
+import { Collection, DateTimeType, Entity, Index, ManyToOne, OneToMany, Property, QueryOrder } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
