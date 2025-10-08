@@ -211,37 +211,40 @@ describe('ServiceProviderRepo', () => {
                 const permissions: PersonPermissions = createMock<PersonPermissions>({
                     getOrgIdsWithSystemrecht: jest.fn().mockReturnValue(permittedOrgas),
                 });
-                const serviceProviderResult: ServiceProvider<true>[] = await sut.findAuthorized(permissions, 5, 0);
+                const [serviceProviderResult, count]: Counted<ServiceProvider<true>> = await sut.findAuthorized(
+                    permissions,
+                    5,
+                    0,
+                );
 
                 if (permittedOrgas.all) {
                     expect(serviceProviderResult).toHaveLength(serviceProviders.length);
+                    expect(count).toEqual(serviceProviders.length);
                 } else {
                     expect(serviceProviderResult).toHaveLength(1);
                     expect(serviceProviderResult[0]!.id).toEqual(serviceProviders[0]!.id);
+                    expect(count).toEqual(1);
                 }
             });
         });
 
         it('should respect the limit and offset', async () => {
-            await Promise.all(Array.from({ length: 10 }, () => sut.save(DoFactory.createServiceProvider(false))));
+            const total: number = 10;
+            await Promise.all(Array.from({ length: total }, () => sut.save(DoFactory.createServiceProvider(false))));
             const permittedOrgas: PermittedOrgas = { all: true };
             const permissions: PersonPermissions = createMock<PersonPermissions>({
                 getOrgIdsWithSystemrecht: jest.fn().mockReturnValue(permittedOrgas),
             });
             const limit: number = 5;
-            const serviceProviderWithoutOffsetResult: ServiceProvider<true>[] = await sut.findAuthorized(
-                permissions,
-                limit,
-                0,
-            );
+            const [serviceProviderWithoutOffsetResult, countWithoutOffset]: Counted<ServiceProvider<true>> =
+                await sut.findAuthorized(permissions, limit, 0);
             expect(serviceProviderWithoutOffsetResult).toHaveLength(limit);
+            expect(countWithoutOffset).toEqual(total);
 
-            const serviceProviderWithOffsetResult: ServiceProvider<true>[] = await sut.findAuthorized(
-                permissions,
-                limit,
-                5,
-            );
+            const [serviceProviderWithOffsetResult, countWithOffset]: Counted<ServiceProvider<true>> =
+                await sut.findAuthorized(permissions, limit, 5);
             expect(serviceProviderWithOffsetResult).toHaveLength(limit);
+            expect(countWithOffset).toEqual(total);
 
             for (let index: number = 0; index < limit; index++) {
                 expect(serviceProviderWithOffsetResult[index]!.id).not.toEqual(
@@ -268,7 +271,7 @@ describe('ServiceProviderRepo', () => {
             const permissions: PersonPermissions = createMock<PersonPermissions>({
                 getOrgIdsWithSystemrecht: jest.fn().mockReturnValue(permittedOrgas),
             });
-            const serviceProviderResult: ServiceProvider<true>[] = await sut.findAuthorized(permissions, 5, 0);
+            const [serviceProviderResult]: Counted<ServiceProvider<true>> = await sut.findAuthorized(permissions, 5, 0);
             [
                 ServiceProviderKategorie.EMAIL,
                 ServiceProviderKategorie.UNTERRICHT,

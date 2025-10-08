@@ -15,6 +15,7 @@ import {
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { ApiOkResponsePaginated, RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
@@ -125,9 +126,9 @@ export class ProviderController {
 
     @Get('manageable')
     @ApiOperation({ description: 'Get service-providers the logged-in user is allowed to manage.' })
-    @ApiOkResponse({
-        description: 'The service-providers were successfully returned.',
-        type: [ManageableServiceProviderListEntryResponse],
+    @ApiOkResponsePaginated(ManageableServiceProviderListEntryResponse, {
+        description:
+            'The service providers were successfully returned. WARNING: This endpoint returns all service providers as default when no paging parameters were set.',
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
@@ -135,8 +136,8 @@ export class ProviderController {
     public async getManageableServiceProviders(
         @Permissions() permissions: PersonPermissions,
         @Query() params: ManageableServiceProvidersParams,
-    ): Promise<ManageableServiceProviderListEntryResponse[]> {
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.findAuthorized(
+    ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
+        const [serviceProviders, total]: Counted<ServiceProvider<true>> = await this.serviceProviderRepo.findAuthorized(
             permissions,
             params.limit,
             params.offset,
@@ -146,15 +147,20 @@ export class ProviderController {
                 serviceProviders,
             );
 
-        return serviceProvidersWithRollenAndErweiterungen.map(
-            (spWithData: ManageableServiceProviderWithReferencedObjects) =>
-                new ManageableServiceProviderListEntryResponse(
-                    spWithData.serviceProvider,
-                    spWithData.organisation,
-                    spWithData.rollen,
-                    spWithData.rollenerweiterungen,
-                ),
-        );
+        return new RawPagedResponse({
+            offset: params.offset ?? 0,
+            limit: params.limit ?? total,
+            total,
+            items: serviceProvidersWithRollenAndErweiterungen.map(
+                (spWithData: ManageableServiceProviderWithReferencedObjects) =>
+                    new ManageableServiceProviderListEntryResponse(
+                        spWithData.serviceProvider,
+                        spWithData.organisation,
+                        spWithData.rollen,
+                        spWithData.rollenerweiterungen,
+                    ),
+            ),
+        });
     }
 
     @Get('manageable/:angebotId')

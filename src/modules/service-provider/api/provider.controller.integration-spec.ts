@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { DatabaseTestModule } from '../../../../test/utils/database-test.module.
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
@@ -21,16 +23,15 @@ import { PassportUser } from '../../authentication/types/user.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
-import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
-import { faker } from '@faker-js/faker';
-import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -186,14 +187,17 @@ describe('ServiceProvider API', () => {
                 .query(params)
                 .send();
 
-            const body: ManageableServiceProviderListEntryResponse[] =
-                response.body as ManageableServiceProviderListEntryResponse[];
+            const body: RawPagedResponse<ManageableServiceProviderListEntryResponse> =
+                response.body as RawPagedResponse<ManageableServiceProviderListEntryResponse>;
             expect(response.status).toBe(200);
-            expect(body).toBeInstanceOf(Array);
-            expect(body.length).toBeGreaterThanOrEqual(2);
+            expect(body.items).toBeInstanceOf(Array);
+            expect(body.items.length).toBeGreaterThanOrEqual(2);
+            expect(body.limit).toBe(params.limit);
+            expect(body.offset).toBe(params.offset);
+            expect(body.total).toBe(2);
 
             [serviceProvider1, serviceProvider2].forEach((sp: ServiceProvider<true>) => {
-                const entry: ManageableServiceProviderListEntryResponse | undefined = body.find(
+                const entry: ManageableServiceProviderListEntryResponse | undefined = body.items.find(
                     (e: ManageableServiceProviderListEntryResponse) => e.id === sp.id,
                 );
 

@@ -168,12 +168,12 @@ export class ServiceProviderRepo {
         permissions: PersonPermissions,
         limit?: number,
         offset?: number,
-    ): Promise<ServiceProvider<true>[]> {
+    ): Promise<Counted<ServiceProvider<true>>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ANGEBOTE_VERWALTEN],
             true,
         );
-        const entities: ServiceProviderEntity[] = await this.em.find(
+        const [entities, count]: Counted<ServiceProviderEntity> = await this.em.findAndCount(
             ServiceProviderEntity,
             permittedOrgas.all
                 ? {}
@@ -190,7 +190,7 @@ export class ServiceProviderRepo {
             },
         );
 
-        return entities.map(mapEntityToAggregate);
+        return [entities.map(mapEntityToAggregate), count];
     }
 
     public async findAuthorizedById(
