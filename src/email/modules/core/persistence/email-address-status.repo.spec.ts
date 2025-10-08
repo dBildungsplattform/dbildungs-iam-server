@@ -9,7 +9,6 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    MapperTestModule,
 } from '../../../../../test/utils/index.js';
 import { EmailCoreModule } from '../email-core.module.js';
 import { EmailAddressRepo } from './email-address.repo.js';
@@ -25,12 +24,7 @@ describe('EmailAddressStatusRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                ConfigTestModule,
-                MapperTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                EmailCoreModule,
-            ],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailCoreModule],
             providers: [EmailAddressStatusRepo, EmailAddressRepo, ClassLogger],
         })
             .overrideProvider(ClassLogger)

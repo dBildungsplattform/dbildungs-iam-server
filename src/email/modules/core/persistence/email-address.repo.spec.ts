@@ -7,7 +7,6 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    MapperTestModule,
 } from '../../../../../test/utils/index.js';
 import { EmailAddress } from '../domain/email-address.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
@@ -25,12 +24,7 @@ describe('EmailRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                ConfigTestModule,
-                MapperTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                EmailCoreModule,
-            ],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailCoreModule],
             providers: [
                 SetEmailAddressForSpshPersonService,
                 EmailAddressRepo,

@@ -3,7 +3,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../../../shared/validation/global-validation.pipe.js';
 import { faker } from '@faker-js/faker';
@@ -18,7 +17,7 @@ describe('Email Write Controller', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [MapperTestModule, LoggingTestModule],
+            imports: [LoggingTestModule],
             providers: [
                 {
                     provide: APP_PIPE,

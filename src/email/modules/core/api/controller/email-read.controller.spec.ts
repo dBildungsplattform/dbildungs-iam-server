@@ -16,7 +16,7 @@ describe('Email Read Controller', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [MapperTestModule, LoggingTestModule],
+            imports: [LoggingTestModule],
             providers: [
                 {
                     provide: APP_PIPE,
