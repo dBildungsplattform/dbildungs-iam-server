@@ -1,7 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20251008142649 extends Migration {
-
   async up(): Promise<void> {
     this.addSql('alter table "schulstrukturknoten" drop constraint "schulstrukturknoten_administrative_parent_id_foreign";');
 
@@ -19,7 +18,7 @@ export class Migration20251008142649 extends Migration {
     this.addSql('drop type "vertrauensstufe_enum";');
   }
 
-  async down(): Promise<void> {
+  public override async down(): Promise<void> {
     this.addSql('create type "geschlecht_enum" as enum (\'m\', \'w\', \'d\', \'x\');');
     this.addSql('create type "vertrauensstufe_enum" as enum (\'KEIN\', \'UNBE\', \'TEIL\', \'VOLL\');');
     this.addSql('create table "benachrichtigung" ("id" uuid not null, "created_at" timestamptz not null, "updated_at" timestamptz not null, "source" uuid not null, "target" uuid not null, constraint "benachrichtigung_pkey" primary key ("id"));');
