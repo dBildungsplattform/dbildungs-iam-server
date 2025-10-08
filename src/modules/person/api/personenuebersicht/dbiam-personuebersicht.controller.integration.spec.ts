@@ -185,7 +185,7 @@ describe('Personenuebersicht API', () => {
                     expect(responseBody?.personId).toEqual(savedPerson.id);
                     expect(responseBody?.vorname).toEqual(savedPerson.vorname);
                     expect(responseBody?.nachname).toEqual(savedPerson.familienname);
-                    expect(responseBody?.benutzername).toEqual(savedPerson.referrer);
+                    expect(responseBody?.benutzername).toEqual(savedPerson.username);
                     expect(responseBody?.lastModifiedZuordnungen).toBeUndefined();
                     expect(responseBody?.zuordnungen).toEqual([]);
                 });
@@ -285,7 +285,7 @@ describe('Personenuebersicht API', () => {
                     expect(responseBody?.personId).toEqual(savedPerson.id);
                     expect(responseBody?.vorname).toEqual(savedPerson.vorname);
                     expect(responseBody?.nachname).toEqual(savedPerson.familienname);
-                    expect(responseBody?.benutzername).toEqual(savedPerson.referrer);
+                    expect(responseBody?.benutzername).toEqual(savedPerson.username);
                     expect(responseBody?.lastModifiedZuordnungen).not.toBeNull();
                     expect(responseBody?.zuordnungen.length).toEqual(3);
                     expect(
@@ -488,7 +488,7 @@ describe('Personenuebersicht API', () => {
             expect(item1?.personId).toEqual(savedPerson1.id);
             expect(item1?.vorname).toEqual(savedPerson1.vorname);
             expect(item1?.nachname).toEqual(savedPerson1.familienname);
-            expect(item1?.benutzername).toEqual(savedPerson1.referrer);
+            expect(item1?.benutzername).toEqual(savedPerson1.username);
             expect(item1?.lastModifiedZuordnungen).not.toBeNull();
             expect(item1?.zuordnungen.length).toEqual(3);
         });
@@ -522,7 +522,7 @@ describe('Personenuebersicht API', () => {
             expect(item1?.personId).toEqual(savedPerson1.id);
             expect(item1?.vorname).toEqual(savedPerson1.vorname);
             expect(item1?.nachname).toEqual(savedPerson1.familienname);
-            expect(item1?.benutzername).toEqual(savedPerson1.referrer);
+            expect(item1?.benutzername).toEqual(savedPerson1.username);
             expect(item1?.lastModifiedZuordnungen).not.toBeNull();
             expect(item1?.zuordnungen.length).toEqual(3);
         });

@@ -13,7 +13,7 @@ export class PersonNestedInPersonInfoResponse {
     public readonly id: string;
 
     @ApiProperty({ nullable: true })
-    public readonly referrer?: string;
+    public readonly username?: string;
 
     @ApiProperty()
     public readonly mandant: string;
@@ -38,13 +38,13 @@ export class PersonNestedInPersonInfoResponse {
         name: PersonNameResponse,
         revision: string,
         mandant: string,
-        referrer?: string,
+        username?: string,
         stammorganisation?: string,
         personalnummer?: string,
         dienststellen?: string[],
     ) {
         this.id = id;
-        this.referrer = referrer;
+        this.username = username;
         this.mandant = mandant;
         this.name = new PersonNameResponse(name);
         this.stammorganisation = stammorganisation;
@@ -62,7 +62,7 @@ export class PersonNestedInPersonInfoResponse {
             } satisfies PersonNameResponse,
             person.revision,
             person.mandant,
-            person.referrer,
+            person.username,
             person.stammorganisation,
             person.personalnummer,
             dienststellen,
@@ -120,7 +120,7 @@ export class PersonInfoResponse {
         const kontexte: PersonenInfoKontextResponse[] = kontexteWithOrgaAndRolle.map((k: KontextWithOrgaAndRolle) => {
             return new PersonenInfoKontextResponse({
                 id: k.personenkontext.id,
-                referrer: person.referrer,
+                username: person.username,
                 mandant: person.mandant,
                 organisation: PersonenInfoKontextOrganisationResponse.new({
                     id: k.organisation.id,

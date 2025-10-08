@@ -13,7 +13,7 @@ export class PersonenInfoKontextResponse {
     public id!: string;
 
     @ApiProperty({ nullable: true })
-    public referrer?: string;
+    public username?: string;
 
     @ApiProperty()
     public mandant!: string;
@@ -44,7 +44,7 @@ export class PersonenInfoKontextResponse {
 
     public constructor(props: Readonly<PersonenInfoKontextResponse>) {
         this.id = props.id;
-        this.referrer = props.referrer;
+        this.username = props.username;
         this.mandant = props.mandant!;
         this.organisation = props.organisation;
         this.personenstatus = props.personenstatus;

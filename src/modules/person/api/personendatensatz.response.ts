@@ -25,7 +25,7 @@ export class PersonendatensatzResponse {
 
         const personResponse: PersonResponse = {
             id: person.id,
-            referrer: person.referrer,
+            username: person.username,
             mandant: person.mandant,
             name: personResponseName,
             stammorganisation: person.stammorganisation,

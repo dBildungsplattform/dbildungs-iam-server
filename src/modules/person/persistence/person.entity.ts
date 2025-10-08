@@ -1,13 +1,4 @@
-import {
-    Collection,
-    DateTimeType,
-    Entity,
-    Index,
-    ManyToOne,
-    OneToMany,
-    Property,
-    QueryOrder,
-} from '@mikro-orm/core';
+import { Collection, DateTimeType, Entity, Index, ManyToOne, OneToMany, Property, QueryOrder } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
@@ -37,7 +28,7 @@ export class PersonEntity extends TimestampedEntity {
         expression: 'create index "person_referrer_trgm_index" on "person" using gin ("referrer" gin_trgm_ops);',
     })
     @Property({ nullable: true })
-    public referrer?: string;
+    public username?: string;
 
     @Property()
     public mandant!: string;

@@ -7,14 +7,14 @@ describe('PersonenkontextQueryParams', () => {
     const referenceParams: PersonenkontextQueryParams = {
         sichtfreigabe: SichtfreigabeType.JA,
         personenstatus: Personenstatus.AKTIV,
-        referrer: 'referrer',
+        username: 'username',
     };
 
     it('should convert a plain object to a class of PersonenkontextQueryParams', () => {
         const incomingParams: object = {
             sichtfreigabe: SichtfreigabeType.JA,
             personenstatus: Personenstatus.AKTIV,
-            referrer: 'referrer',
+            username: 'username',
         };
         const mappedParams: PersonenkontextQueryParams = plainToInstance(
             PersonenkontextQueryParams,

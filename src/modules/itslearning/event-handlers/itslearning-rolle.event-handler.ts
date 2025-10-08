@@ -90,7 +90,7 @@ export class ItsLearningRolleEventHandler {
 
             for (const [reason, person] of failedPersons) {
                 this.logger.error(
-                    `[EventID: ${event.eventID}] Creation of person ${person.referrer} failed with the following reason: ${reason}`,
+                    `[EventID: ${event.eventID}] Creation of person ${person.username} failed with the following reason: ${reason}`,
                 );
             }
 
@@ -132,7 +132,7 @@ export class ItsLearningRolleEventHandler {
 
             for (const [reason, person] of failedPersons) {
                 this.logger.error(
-                    `[EventID: ${event.eventID}] Deletion of person ${person.referrer} failed with the following reason: ${reason}`,
+                    `[EventID: ${event.eventID}] Deletion of person ${person.username} failed with the following reason: ${reason}`,
                 );
             }
         }
@@ -189,7 +189,7 @@ export class ItsLearningRolleEventHandler {
                 id: p.id,
                 firstName: p.vorname,
                 lastName: p.familienname,
-                username: p.referrer!,
+                username: p.username!,
                 email: p.email,
                 institutionRoleType: institutionRole,
             }));

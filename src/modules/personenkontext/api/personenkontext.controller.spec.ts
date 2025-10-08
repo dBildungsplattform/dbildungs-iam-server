@@ -219,7 +219,7 @@ describe('PersonenkontextController', () => {
         describe('when finding personenkontexte', () => {
             it('should return personenkontext for one allowed organisation', async () => {
                 const queryParams: PersonenkontextQueryParams = {
-                    referrer: 'referrer',
+                    username: 'username',
                     sichtfreigabe: SichtfreigabeType.JA,
                     personenstatus: Personenstatus.AKTIV,
                     offset: 0,
@@ -263,7 +263,7 @@ describe('PersonenkontextController', () => {
 
             it('should return personenkontext for root admins', async () => {
                 const queryParams: PersonenkontextQueryParams = {
-                    referrer: 'referrer',
+                    username: 'username',
                     sichtfreigabe: SichtfreigabeType.JA,
                     personenstatus: Personenstatus.AKTIV,
                     offset: 0,

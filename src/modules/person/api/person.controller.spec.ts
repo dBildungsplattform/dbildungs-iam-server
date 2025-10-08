@@ -164,7 +164,6 @@ describe('PersonController', () => {
             '1',
             username,
             faker.lorem.word(),
-            username, // referrer
             undefined, // stammorganisation
             undefined, // personalnummer
             undefined, // orgUnassignmentDate
@@ -327,16 +326,16 @@ describe('PersonController', () => {
 
     describe('findPersons', () => {
         const options: {
-            referrer: string;
+            username: string;
             lastName: string;
             firstName: string;
         } = {
-            referrer: faker.string.alpha(),
+            username: faker.string.alpha(),
             lastName: faker.person.lastName(),
             firstName: faker.person.firstName(),
         };
         const queryParams: PersonenQueryParams = {
-            referrer: options.referrer,
+            username: options.username,
             familienname: options.lastName,
             vorname: options.firstName,
             sichtfreigabe: SichtfreigabeType.NEIN,
@@ -425,7 +424,7 @@ describe('PersonController', () => {
                     personId: faker.string.uuid(),
                 };
                 const queryParams: PersonenkontextQueryParams = {
-                    referrer: 'referrer',
+                    username: 'username',
                     sichtfreigabe: SichtfreigabeType.NEIN,
                     personenstatus: Personenstatus.AKTIV,
                 };
@@ -460,7 +459,7 @@ describe('PersonController', () => {
                     personId: faker.string.uuid(),
                 };
                 const queryParams: PersonenkontextQueryParams = {
-                    referrer: 'referrer',
+                    username: 'username',
                     sichtfreigabe: SichtfreigabeType.NEIN,
                     personenstatus: Personenstatus.AKTIV,
                 };
@@ -576,7 +575,7 @@ describe('PersonController', () => {
         };
         const body: UpdatePersonBodyParams = {
             stammorganisation: faker.string.uuid(),
-            referrer: 'referrer',
+            username: 'username',
             name: {
                 vorname: 'john',
                 familienname: 'doe',
@@ -659,7 +658,7 @@ describe('PersonController', () => {
             const person: Person<true> = getPerson();
             const bodyParams: UpdatePersonBodyParams = {
                 stammorganisation: faker.string.uuid(),
-                referrer: 'referrer',
+                username: 'username',
                 name: {
                     vorname: ' john',
                     familienname: 'doe',
@@ -967,7 +966,7 @@ describe('PersonController', () => {
             });
         });
 
-        describe('when person does NOT have a defined referrer', () => {
+        describe('when person does NOT have a defined username', () => {
             const params: PersonByIdParams = {
                 personId: faker.string.uuid(),
             };
@@ -977,7 +976,7 @@ describe('PersonController', () => {
                 personRepositoryMock.findBy.mockResolvedValue([[], 0]);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
-                    value: createMock<Person<true>>({ referrer: undefined }),
+                    value: createMock<Person<true>>({ username: undefined }),
                 });
 
                 await expect(
@@ -1055,7 +1054,7 @@ describe('PersonController', () => {
         describe('when person does NOT have a defined username', () => {
             const person: Person<true> = getPerson();
             person.username = undefined;
-            person.referrer = undefined;
+            person.username = undefined;
             const permissions: PersonPermissions = new PersonPermissions(
                 createMock<DBiamPersonenkontextRepo>(),
                 createMock<OrganisationRepository>(),

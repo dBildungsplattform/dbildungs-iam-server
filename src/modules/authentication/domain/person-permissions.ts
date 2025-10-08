@@ -42,7 +42,7 @@ export class PersonPermissions implements IPersonPermissions {
             keycloakUserId: person.keycloakUserId,
             vorname: person.vorname,
             familienname: person.familienname,
-            username: person.username ?? person.referrer,
+            username: person.username ?? person.username,
             updatedAt: person.updatedAt,
         };
     }

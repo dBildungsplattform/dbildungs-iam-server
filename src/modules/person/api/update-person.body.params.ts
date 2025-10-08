@@ -7,7 +7,7 @@ export class UpdatePersonBodyParams {
     @IsOptional()
     @IsString()
     @ApiProperty({ required: false })
-    public readonly referrer?: string;
+    public readonly username?: string;
 
     @IsOptional()
     @IsString()

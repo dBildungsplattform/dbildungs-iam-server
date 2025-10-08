@@ -17,7 +17,7 @@ import { Person } from '../../../modules/person/domain/person.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClient } from './ldap-client.js';
 import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
-import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
 import { ClassLogger } from '../../logging/class-logger.js';
@@ -220,8 +220,8 @@ describe('LDAP Client Service', () => {
         expect(em).toBeDefined();
     });
     describe('updateMemberDnInGroups', () => {
-        const fakeOldUsername: PersonReferrer = 'old-user';
-        const fakeNewUsername: PersonReferrer = 'new-user';
+        const fakeOldUsername: PersonUsername = 'old-user';
+        const fakeNewUsername: PersonUsername = 'new-user';
         const fakeOldUID: string = `uid=${fakeOldUsername},ou=users,${mockLdapInstanceConfig.BASE_DN}`;
         const fakeNewUID: string = `uid=${fakeNewUsername},ou=users,${mockLdapInstanceConfig.BASE_DN}`;
         const fakeGroupDn: string = 'cn=lehrer-group,' + mockLdapInstanceConfig.BASE_DN;
@@ -542,7 +542,7 @@ describe('LDAP Client Service', () => {
     });
 
     describe('addPersonToGroup', () => {
-        const fakeUsername: PersonReferrer = 'test-user';
+        const fakeUsername: PersonUsername = 'test-user';
         const fakeSchuleDstNr: string = '123';
         const fakeLehrerUid: string = `uid=${fakeUsername},ou=oeffentlicheSchulen,${mockLdapInstanceConfig.BASE_DN}`;
         const fakeGroupId: string = `lehrer-${fakeSchuleDstNr}`;
@@ -770,7 +770,7 @@ describe('LDAP Client Service', () => {
 
     describe('removeMailAlternativeAddress', () => {
         const personId: PersonID = faker.string.uuid();
-        const username: PersonReferrer = faker.internet.userName();
+        const username: PersonUsername = faker.internet.userName();
 
         describe('when emailAddress CANNOT be splitted at @', () => {
             it('should return error', async () => {
@@ -1330,7 +1330,7 @@ describe('LDAP Client Service', () => {
             });
 
             it('should log an error and return the failed result if addPersonToGroup fails', async () => {
-                const username: PersonReferrer = 'test-user';
+                const username: PersonUsername = 'test-user';
                 const schulId: string = '123';
                 const expectedGroupId: string = `lehrer-${schulId}`;
                 const errorMessage: string = `LDAP: Failed to add lehrer ${username} to group ${expectedGroupId}`;
@@ -1496,12 +1496,12 @@ describe('LDAP Client Service', () => {
                 });
 
                 const result: Result<PersonID | null> = await ldapClientService.deleteLehrerByUsername(
-                    person.referrer!,
+                    person.username!,
                 );
 
                 expect(result.ok).toBeTruthy();
                 if (result.ok) {
-                    expect(result.value).toBe(person.referrer);
+                    expect(result.value).toBe(person.username);
                 }
             });
 
@@ -1518,7 +1518,7 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
                 const result: Result<PersonID | null> = await ldapClientService.deleteLehrerByUsername(
-                    person.referrer!,
+                    person.username!,
                     true,
                 );
 
@@ -1538,7 +1538,7 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
                 const result: Result<PersonID | null> = await ldapClientService.deleteLehrerByUsername(
-                    person.referrer!,
+                    person.username!,
                 );
 
                 expect(result.ok).toBeTruthy();
@@ -1555,7 +1555,7 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
                 const result: Result<PersonID | null> = await ldapClientService.deleteLehrerByUsername(
-                    person.referrer!,
+                    person.username!,
                 );
 
                 expect(result.ok).toBeFalsy();
@@ -1570,7 +1570,7 @@ describe('LDAP Client Service', () => {
                     clientMock.bind.mockRejectedValueOnce(new Error());
                     return clientMock;
                 });
-                const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
+                const result: Result<PersonUsername> = await ldapClientService.modifyPersonAttributes(
                     faker.internet.userName(),
                 );
 
@@ -1590,7 +1590,7 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
 
-                const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
+                const result: Result<PersonUsername> = await ldapClientService.modifyPersonAttributes(
                     faker.internet.userName(),
                 );
 
@@ -1621,11 +1621,11 @@ describe('LDAP Client Service', () => {
             });
             describe('when modifying', () => {
                 it('Should Update LDAP When called with Attributes', async () => {
-                    const oldUsername: PersonReferrer = faker.internet.userName();
+                    const oldUsername: PersonUsername = faker.internet.userName();
                     const newGivenName: string = faker.person.firstName();
                     const newSn: string = faker.person.lastName();
                     const newUid: string = faker.string.alphanumeric(6);
-                    const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
+                    const result: Result<PersonUsername> = await ldapClientService.modifyPersonAttributes(
                         oldUsername,
                         newGivenName,
                         newSn,
@@ -1663,7 +1663,7 @@ describe('LDAP Client Service', () => {
                 });
 
                 it('Should Do nothing when called with No Attributes', async () => {
-                    const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
+                    const result: Result<PersonUsername> = await ldapClientService.modifyPersonAttributes(
                         faker.internet.userName(),
                     );
                     expect(result.ok).toBeTruthy();
@@ -1672,7 +1672,7 @@ describe('LDAP Client Service', () => {
                 });
 
                 it('should return error if updateMemberDnInGroups fails', async () => {
-                    const oldUsername: PersonReferrer = faker.internet.userName();
+                    const oldUsername: PersonUsername = faker.internet.userName();
                     const newUid: string = faker.string.alphanumeric(6);
 
                     jest.spyOn(ldapClientService, 'updateMemberDnInGroups').mockResolvedValue({
@@ -1680,7 +1680,7 @@ describe('LDAP Client Service', () => {
                         error: new Error('Failed to update groups'),
                     });
 
-                    const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
+                    const result: Result<PersonUsername> = await ldapClientService.modifyPersonAttributes(
                         oldUsername,
                         undefined,
                         undefined,
@@ -1698,7 +1698,7 @@ describe('LDAP Client Service', () => {
     });
 
     describe('getPersonAttributes', () => {
-        const username: PersonReferrer = faker.internet.userName();
+        const username: PersonUsername = faker.internet.userName();
         const personId: PersonID = faker.string.uuid();
         const dn: string = 'dn';
         const oeffentlicheSchulenDoamin: string = 'schule-sh.de';
@@ -2097,7 +2097,7 @@ describe('LDAP Client Service', () => {
     });
 
     describe('setMailAlternativeAddress', () => {
-        const username: PersonReferrer = faker.internet.userName();
+        const username: PersonUsername = faker.internet.userName();
         const personId: PersonID = faker.string.uuid();
         const dn: string = 'dn';
         const newMailAlternativeAddress: string = 'newMailAlternativeAddress@schule-sh.de';
@@ -2224,7 +2224,7 @@ describe('LDAP Client Service', () => {
     });
 
     describe('getGroupsForPerson', () => {
-        const username: PersonReferrer = faker.internet.userName();
+        const username: PersonUsername = faker.internet.userName();
         const personId: PersonID = faker.string.uuid();
         const dn: string = 'dn';
         const givenName: string = faker.person.firstName();
@@ -2364,7 +2364,7 @@ describe('LDAP Client Service', () => {
     });
 
     describe('changeEmailAddressByPersonId', () => {
-        const fakeUsername: PersonReferrer = faker.internet.userName();
+        const fakeUsername: PersonUsername = faker.internet.userName();
         const fakePersonID: PersonID = faker.string.uuid();
         const fakeDN: string = faker.string.alpha();
         const newEmailAddress: string = 'new-address@schule-sh.de';
@@ -3016,7 +3016,7 @@ describe('LDAP Client Service', () => {
 
     describe('changeUserPasswordByPersonId', () => {
         let fakePersonID: string;
-        let fakeUsername: PersonReferrer;
+        let fakeUsername: PersonUsername;
         let fakeDN: string;
 
         describe('when bind returns error', () => {
@@ -3140,7 +3140,7 @@ describe('LDAP Client Service', () => {
     describe('createNewLehrerUidFromOldUid', () => {
         it('should replace the old uid with the new username and join the DN parts with commas', () => {
             const oldUid: string = 'uid=oldUser,ou=users,dc=example,dc=com';
-            const newUsername: PersonReferrer = 'newUser';
+            const newUsername: PersonUsername = 'newUser';
             const result: string = ldapClientService.createNewLehrerUidFromOldUid(oldUid, newUsername);
 
             expect(result).toBe('uid=newUser,ou=users,dc=example,dc=com');
@@ -3148,7 +3148,7 @@ describe('LDAP Client Service', () => {
 
         it('should handle a DN with only a uid component', () => {
             const oldUid: string = 'uid=oldUser';
-            const newUsername: PersonReferrer = 'newUser';
+            const newUsername: PersonUsername = 'newUser';
             const result: string = ldapClientService.createNewLehrerUidFromOldUid(oldUid, newUsername);
 
             expect(result).toBe('uid=newUser');
@@ -3156,7 +3156,7 @@ describe('LDAP Client Service', () => {
 
         it('should handle an empty DN string', () => {
             const oldUid: string = '';
-            const newUsername: PersonReferrer = 'newUser';
+            const newUsername: PersonUsername = 'newUser';
             const result: string = ldapClientService.createNewLehrerUidFromOldUid(oldUid, newUsername);
 
             expect(result).toBe('uid=newUser');
