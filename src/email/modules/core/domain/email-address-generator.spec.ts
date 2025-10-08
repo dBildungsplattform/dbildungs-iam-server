@@ -129,7 +129,7 @@ describe('EmailAddressGenerator', () => {
                     ),
                 ).resolves.toStrictEqual({
                     ok: false,
-                    error: new InvalidNameError('Could not generate valid username'),
+                    error: new InvalidNameError('Could not generate valid email'),
                 });
             });
         });
@@ -227,14 +227,14 @@ describe('EmailAddressGenerator', () => {
 
                 await expect(sut.generateAvailableAddress('‡‡', 'Mustermann', 'schule-sh.de')).resolves.toStrictEqual({
                     ok: false,
-                    error: new InvalidNameError('Could not generate valid username'),
+                    error: new InvalidNameError('Could not generate valid email'),
                 });
 
                 emailRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
 
                 await expect(sut.generateAvailableAddress('Alex', '‡‡', 'schule-sh.de')).resolves.toStrictEqual({
                     ok: false,
-                    error: new InvalidNameError('Could not generate valid username'),
+                    error: new InvalidNameError('Could not generate valid email'),
                 });
             });
         });
