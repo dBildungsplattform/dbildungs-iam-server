@@ -127,7 +127,7 @@ export class ProviderController {
     @ApiOperation({ description: 'Get service-providers the logged-in user is allowed to manage.' })
     @ApiOkResponse({
         description: 'The service-providers were successfully returned.',
-        type: [Array<ServiceProviderResponse>],
+        type: [ManageableServiceProviderListEntryResponse],
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
@@ -158,14 +158,14 @@ export class ProviderController {
     }
 
     @Get('manageable/:angebotId')
-    @ApiOperation({ description: 'Get service-providers the logged-in user is allowed to manage.' })
+    @ApiOperation({ description: 'Get service-provider the logged-in user is allowed to manage.' })
     @ApiOkResponse({
-        description: 'The service-providers were successfully returned.',
-        type: [ServiceProviderResponse],
+        description: 'The service-provider was successfully returned.',
+        type: ManageableServiceProviderResponse,
     })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get available service provider.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-provider.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting service-provider.' })
     public async getManageableServiceProviderById(
         @Permissions() permissions: PersonPermissions,
         @Param() params: AngebotByIdParams,
