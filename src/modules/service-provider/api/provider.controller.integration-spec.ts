@@ -284,7 +284,6 @@ describe('ServiceProvider API', () => {
                             kennung: organisation.kennung!,
                         },
                         rolle: { id: rollenerweiterung.rolleId, name: rolleWithErweiterung.name },
-                        serviceProvider: { id: rollenerweiterung.serviceProviderId, name: serviceProvider.name },
                     },
                 ],
                 rollen: [
@@ -293,7 +292,7 @@ describe('ServiceProvider API', () => {
                         name: rolle.name,
                     },
                 ],
-            });
+            } as ManageableServiceProviderResponse);
         });
 
         it('should return 404 if service provider is not found', async () => {
