@@ -9,8 +9,10 @@ import {
     ServiceProviderMerkmalTypName,
 } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
-import { RollenerweiterungForManageableServiceProvider } from '../domain/service-provider.service.js';
-import { RollenerweiterungForDisplayResponse } from './rollenerweiterung-for-display.response.js';
+import { RollenerweiterungForManageableServiceProvider } from '../domain/types.js';
+import { RollenerweiterungForServiceProviderResponse } from './rollenerweiterung-for-service-provider.response.js';
+import { OrganisationRefResponse } from './organisation-ref.response.js';
+import { RolleRefResponse } from './rolle-ref.response.js';
 
 export class ManageableServiceProviderResponse {
     @ApiProperty()
@@ -19,8 +21,8 @@ export class ManageableServiceProviderResponse {
     @ApiProperty()
     public name: string;
 
-    @ApiProperty()
-    public administrationsebene: { id: string; name: string; kennung?: string };
+    @ApiProperty({ type: OrganisationRefResponse })
+    public administrationsebene: OrganisationRefResponse;
 
     @ApiProperty({ enum: ServiceProviderKategorie, enumName: ServiceProviderKategorieTypName })
     public kategorie: ServiceProviderKategorie;
@@ -31,11 +33,11 @@ export class ManageableServiceProviderResponse {
     @ApiProperty({ enum: ServiceProviderMerkmal, enumName: ServiceProviderMerkmalTypName, isArray: true })
     public merkmale: ServiceProviderMerkmal[];
 
-    @ApiProperty({ type: [RollenerweiterungForDisplayResponse], isArray: true })
-    public rollenerweiterungen: RollenerweiterungForDisplayResponse[];
+    @ApiProperty({ type: RollenerweiterungForServiceProviderResponse, isArray: true })
+    public rollenerweiterungen: RollenerweiterungForServiceProviderResponse[];
 
-    @ApiProperty()
-    public rollen: { id: string; name: string }[];
+    @ApiProperty({ type: RolleRefResponse, isArray: true })
+    public rollen: RolleRefResponse[];
 
     public constructor(
         serviceProvider: ServiceProvider<true>,
@@ -54,7 +56,7 @@ export class ManageableServiceProviderResponse {
         this.requires2fa = serviceProvider.requires2fa;
         this.merkmale = serviceProvider.merkmale;
         this.rollenerweiterungen = rollenerweiterungen.map(
-            (re: RollenerweiterungForManageableServiceProvider) => new RollenerweiterungForDisplayResponse(re),
+            (re: RollenerweiterungForManageableServiceProvider) => new RollenerweiterungForServiceProviderResponse(re),
         );
         this.rollen = rollen.map((r: Rolle<true>) => ({ id: r.id, name: r.name }));
     }

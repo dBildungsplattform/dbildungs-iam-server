@@ -10,6 +10,8 @@ import {
     ServiceProviderMerkmalTypName,
 } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
+import { OrganisationRefResponse } from './organisation-ref.response.js';
+import { RolleRefResponse } from './rolle-ref.response.js';
 
 export class ManageableServiceProviderListEntryResponse {
     @ApiProperty()
@@ -18,8 +20,8 @@ export class ManageableServiceProviderListEntryResponse {
     @ApiProperty()
     public name: string;
 
-    @ApiProperty()
-    public administrationsebene: { id: string; name: string; kennung?: string };
+    @ApiProperty({ type: OrganisationRefResponse })
+    public administrationsebene: OrganisationRefResponse;
 
     @ApiProperty({ enum: ServiceProviderKategorie, enumName: ServiceProviderKategorieTypName })
     public kategorie: ServiceProviderKategorie;
@@ -33,8 +35,8 @@ export class ManageableServiceProviderListEntryResponse {
     @ApiProperty()
     public hasRollenerweiterung: boolean;
 
-    @ApiProperty()
-    public rollen: { id: string; name: string }[];
+    @ApiProperty({ type: RolleRefResponse, isArray: true })
+    public rollen: RolleRefResponse[];
 
     public constructor(
         serviceProvider: ServiceProvider<true>,

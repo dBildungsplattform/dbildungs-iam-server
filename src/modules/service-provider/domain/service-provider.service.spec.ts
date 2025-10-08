@@ -9,6 +9,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
@@ -17,12 +18,11 @@ import { OrganisationServiceProviderRepo } from '../repo/organisation-service-pr
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
+import { ServiceProviderService } from './service-provider.service.js';
 import {
-    ManageableServiceProviderWithLinkedObjects,
+    ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
-    ServiceProviderService,
-} from './service-provider.service.js';
-import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
+} from './types.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -376,7 +376,7 @@ describe('ServiceProviderService', () => {
                 new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
             );
 
-            const result: ManageableServiceProviderWithLinkedObjects[] =
+            const result: ManageableServiceProviderWithReferencedObjects[] =
                 await service.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider]);
 
             expect(result).toHaveLength(1);
@@ -393,7 +393,7 @@ describe('ServiceProviderService', () => {
                 new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
             );
 
-            const result: ManageableServiceProviderWithLinkedObjects[] =
+            const result: ManageableServiceProviderWithReferencedObjects[] =
                 await service.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider]);
 
             expect(result).toHaveLength(1);
@@ -406,7 +406,7 @@ describe('ServiceProviderService', () => {
         });
     });
 
-    describe('getRollenerweiterungenForDisplay', () => {
+    describe('getRollenerweiterungenForManageableServiceProvider', () => {
         afterEach(() => {
             jest.restoreAllMocks();
         });
@@ -417,16 +417,12 @@ describe('ServiceProviderService', () => {
                 id: rollenerweiterung.organisationId,
             });
             const rolle: Rolle<true> = DoFactory.createRolle(true, { id: rollenerweiterung.rolleId });
-            const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
-                id: rollenerweiterung.serviceProviderId,
-            });
 
             organisationRepo.findByIds.mockResolvedValue(new Map([[organisation.id, organisation]]));
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolle.id, rolle]]));
-            serviceProviderRepo.findByIds.mockResolvedValue(new Map([[serviceProvider.id, serviceProvider]]));
 
             const result: RollenerweiterungForManageableServiceProvider[] =
-                await service.getRollenerweiterungenForDisplay([rollenerweiterung]);
+                await service.getRollenerweiterungenForManageableServiceProvider([rollenerweiterung]);
 
             expect(result).toHaveLength(1);
             expect(result[0]!.organisation.id).toBe(organisation.id);
@@ -434,38 +430,6 @@ describe('ServiceProviderService', () => {
             expect(result[0]!.organisation.kennung).toBe(organisation.kennung);
             expect(result[0]!.rolle.id).toBe(rolle.id);
             expect(result[0]!.rolle.name).toBe(rolle.name);
-            expect(result[0]!.serviceProvider.id).toBe(serviceProvider.id);
-            expect(result[0]!.serviceProvider.name).toBe(serviceProvider.name);
-        });
-
-        it('should provide defaults if names are unavailable', async () => {
-            const rollenerweiterung: Rollenerweiterung<true> = DoFactory.createRollenerweiterung(true);
-            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
-                id: rollenerweiterung.organisationId,
-                name: undefined,
-                kennung: undefined,
-            });
-            const rolle: Rolle<true> = DoFactory.createRolle(true, { id: rollenerweiterung.rolleId, name: undefined });
-            const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
-                id: rollenerweiterung.serviceProviderId,
-                name: undefined,
-            });
-
-            organisationRepo.findByIds.mockResolvedValue(new Map([[organisation.id, organisation]]));
-            rolleRepo.findByIds.mockResolvedValue(new Map([[rolle.id, rolle]]));
-            serviceProviderRepo.findByIds.mockResolvedValue(new Map([[serviceProvider.id, serviceProvider]]));
-
-            const result: RollenerweiterungForManageableServiceProvider[] =
-                await service.getRollenerweiterungenForDisplay([rollenerweiterung]);
-
-            expect(result).toHaveLength(1);
-            expect(result[0]!.organisation.id).toBe(organisation.id);
-            expect(result[0]!.organisation.name).toBe('');
-            expect(result[0]!.organisation.kennung).toBeUndefined();
-            expect(result[0]!.rolle.id).toBe(rolle.id);
-            expect(result[0]!.rolle.name).toBe('');
-            expect(result[0]!.serviceProvider.id).toBe(serviceProvider.id);
-            expect(result[0]!.serviceProvider.name).toBe('');
         });
     });
 

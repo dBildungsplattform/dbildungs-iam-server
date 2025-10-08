@@ -21,11 +21,11 @@ import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { ServiceProvider } from '../domain/service-provider.js';
+import { ServiceProviderService } from '../domain/service-provider.service.js';
 import {
-    ManageableServiceProviderWithLinkedObjects,
+    ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
-    ServiceProviderService,
-} from '../domain/service-provider.service.js';
+} from '../domain/types.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
@@ -141,13 +141,13 @@ export class ProviderController {
             params.limit,
             params.offset,
         );
-        const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithLinkedObjects[] =
+        const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects[] =
             await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
                 serviceProviders,
             );
 
         return serviceProvidersWithRollenAndErweiterungen.map(
-            (spWithData: ManageableServiceProviderWithLinkedObjects) =>
+            (spWithData: ManageableServiceProviderWithReferencedObjects) =>
                 new ManageableServiceProviderListEntryResponse(
                     spWithData.serviceProvider,
                     spWithData.organisation,
@@ -182,14 +182,14 @@ export class ProviderController {
             );
         }
 
-        const serviceProviderWithOrganisationRollenAndErweiterungen: ManageableServiceProviderWithLinkedObjects = (
+        const serviceProviderWithOrganisationRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects = (
             await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders([
                 serviceProvider,
             ])
         )[0]!;
 
         const rollenerweiterungenWithNames: RollenerweiterungForManageableServiceProvider[] =
-            await this.serviceProviderService.getRollenerweiterungenForDisplay(
+            await this.serviceProviderService.getRollenerweiterungenForManageableServiceProvider(
                 serviceProviderWithOrganisationRollenAndErweiterungen.rollenerweiterungen,
             );
 

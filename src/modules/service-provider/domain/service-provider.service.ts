@@ -19,29 +19,11 @@ import { OrganisationServiceProviderRepo } from '../repo/organisation-service-pr
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
+import {
+    ManageableServiceProviderWithReferencedObjects,
+    RollenerweiterungForManageableServiceProvider,
+} from './types.js';
 
-export type ManageableServiceProviderWithLinkedObjects = {
-    serviceProvider: ServiceProvider<true>;
-    organisation: Organisation<true>;
-    rollen: Rolle<true>[];
-    rollenerweiterungen: Rollenerweiterung<true>[];
-};
-
-export type RollenerweiterungForManageableServiceProvider = {
-    organisation: {
-        id: OrganisationID;
-        name: string;
-        kennung?: string;
-    };
-    rolle: {
-        id: RolleID;
-        name: string;
-    };
-    serviceProvider: {
-        id: ServiceProviderID;
-        name: string;
-    };
-};
 @Injectable()
 export class ServiceProviderService {
     private readonly vidisConfig: VidisConfig;
@@ -106,7 +88,7 @@ export class ServiceProviderService {
 
     public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(
         serviceProviders: ServiceProvider<true>[],
-    ): Promise<ManageableServiceProviderWithLinkedObjects[]> {
+    ): Promise<ManageableServiceProviderWithReferencedObjects[]> {
         const serviceProvidersIds: ServiceProviderID[] = serviceProviders.map((sp: ServiceProvider<true>) => sp.id);
         const rollen: Map<ServiceProviderID, Rolle<true>[]> =
             await this.rolleRepo.findByServiceProviderIds(serviceProvidersIds);
@@ -124,7 +106,7 @@ export class ServiceProviderService {
         }));
     }
 
-    public async getRollenerweiterungenForDisplay(
+    public async getRollenerweiterungenForManageableServiceProvider(
         rollenerweiterungen: Rollenerweiterung<true>[],
     ): Promise<RollenerweiterungForManageableServiceProvider[]> {
         const organisationen: Map<OrganisationID, Organisation<true>> = await this.organisationRepo.findByIds(
@@ -133,26 +115,10 @@ export class ServiceProviderService {
         const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(
             rollenerweiterungen.map((rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.rolleId),
         );
-        const serviceProvider: Map<ServiceProviderID, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
-            rollenerweiterungen.map(
-                (rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.serviceProviderId,
-            ),
-        );
 
         return rollenerweiterungen.map((rollenerweiterung: Rollenerweiterung<true>) => ({
-            organisation: {
-                id: rollenerweiterung.organisationId,
-                name: organisationen.get(rollenerweiterung.organisationId)?.name ?? '',
-                kennung: organisationen.get(rollenerweiterung.organisationId)?.kennung,
-            },
-            rolle: {
-                id: rollenerweiterung.rolleId,
-                name: rollen.get(rollenerweiterung.rolleId)?.name ?? '',
-            },
-            serviceProvider: {
-                id: rollenerweiterung.serviceProviderId,
-                name: serviceProvider.get(rollenerweiterung.serviceProviderId)?.name ?? '',
-            },
+            organisation: organisationen.get(rollenerweiterung.organisationId)!,
+            rolle: rollen.get(rollenerweiterung.rolleId)!,
         }));
     }
 

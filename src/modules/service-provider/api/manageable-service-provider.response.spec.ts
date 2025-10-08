@@ -2,7 +2,7 @@ import { DoFactory } from '../../../../test/utils/index.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { ServiceProvider } from '../domain/service-provider';
-import { RollenerweiterungForManageableServiceProvider } from '../domain/service-provider.service.js';
+import { RollenerweiterungForManageableServiceProvider } from '../domain/types.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 
 describe('ManageableServiceProviderResponse', () => {
