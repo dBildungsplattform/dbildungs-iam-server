@@ -99,20 +99,6 @@ describe('Person', () => {
                 undefined,
                 undefined,
                 undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
                 input,
             );
 
@@ -373,20 +359,6 @@ describe('Person', () => {
                     undefined,
                     undefined,
                     undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
                     '',
                     true,
                 );
@@ -395,20 +367,6 @@ describe('Person', () => {
 
                 result = person.update(
                     '6',
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
                     undefined,
                     undefined,
                     undefined,
@@ -496,20 +454,6 @@ describe('Person', () => {
                     undefined, // vorname
                     undefined, // referrer
                     undefined, // stammorganisation
-                    undefined, // initialenFamilienname
-                    undefined, // initialenVorname
-                    undefined, // rufname
-                    undefined, // nameTitel
-                    undefined, // nameAnrede
-                    undefined, // namePraefix
-                    undefined, // nameSuffix
-                    undefined, // nameSortierindex
-                    undefined, // geburtsdatum
-                    undefined, // geburtsort
-                    undefined, // geschlecht
-                    undefined, // lokalisierung
-                    undefined, // vertrauensstufe
-                    undefined, // auskunftssperre
                     ' 12345678', // personalnummer with whitespace
                 );
                 expect(result).toBeInstanceOf(PersonalNummerForPersonWithTrailingSpaceError);
@@ -533,20 +477,6 @@ describe('Person', () => {
                     undefined, // vorname
                     undefined, // referrer
                     undefined, // stammorganisation
-                    undefined, // initialenFamilienname
-                    undefined, // initialenVorname
-                    undefined, // rufname
-                    undefined, // nameTitel
-                    undefined, // nameAnrede
-                    undefined, // namePraefix
-                    undefined, // nameSuffix
-                    undefined, // nameSortierindex
-                    undefined, // geburtsdatum
-                    undefined, // geburtsort
-                    undefined, // geschlecht
-                    undefined, // lokalisierung
-                    undefined, // vertrauensstufe
-                    undefined, // auskunftssperre
                     '12345678 ', // personalnummer with whitespace
                 );
                 expect(result).toBeInstanceOf(PersonalNummerForPersonWithTrailingSpaceError);

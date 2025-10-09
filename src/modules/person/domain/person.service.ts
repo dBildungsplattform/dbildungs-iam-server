@@ -26,7 +26,6 @@ export class PersonService {
             .findBy({
                 vorname: person.vorname,
                 familienname: person.familienname,
-                geburtsdatum: person.geburtsdatum,
             })
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(offset, limit);

@@ -363,20 +363,6 @@ export class PersonController {
             body.name.vorname,
             body.referrer,
             body.stammorganisation,
-            body.name.initialenfamilienname,
-            body.name.initialenvorname,
-            body.name.rufname,
-            body.name.titel,
-            body.name.anrede,
-            body.name.namenspraefix,
-            body.name.namenssuffix,
-            body.name.sortierindex,
-            body.geburt?.datum,
-            body.geburt?.geburtsort,
-            body.geschlecht,
-            body.lokalisierung,
-            body.vertrauensstufe,
-            body.auskunftssperre,
         );
         if (updateResult instanceof DomainError) {
             if (updateResult instanceof PersonDomainError) {

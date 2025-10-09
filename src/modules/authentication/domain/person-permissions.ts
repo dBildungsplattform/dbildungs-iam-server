@@ -13,15 +13,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
 export type PersonFields = Pick<
     Person<true>,
-    | 'id'
-    | 'keycloakUserId'
-    | 'vorname'
-    | 'familienname'
-    | 'rufname'
-    | 'username'
-    | 'geschlecht'
-    | 'geburtsdatum'
-    | 'updatedAt'
+    'id' | 'keycloakUserId' | 'vorname' | 'familienname' | 'username' | 'updatedAt'
 >;
 type PersonKontextFields = Pick<Personenkontext<true>, 'rolleId' | 'organisationId'>;
 type RolleFields = Pick<Rolle<true>, 'systemrechte' | 'serviceProviderIds'>;
@@ -50,10 +42,7 @@ export class PersonPermissions implements IPersonPermissions {
             keycloakUserId: person.keycloakUserId,
             vorname: person.vorname,
             familienname: person.familienname,
-            rufname: person.rufname,
             username: person.username ?? person.referrer,
-            geschlecht: person.geschlecht,
-            geburtsdatum: person.geburtsdatum,
             updatedAt: person.updatedAt,
         };
     }

@@ -69,7 +69,6 @@ describe('UserExternaldataWorkflow', () => {
                 keycloakSub,
                 faker.string.uuid(),
             );
-            person.geburtsdatum = faker.date.past();
 
             personRepositoryMock.findById.mockResolvedValue(person);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock<ExternalPkData[]>());

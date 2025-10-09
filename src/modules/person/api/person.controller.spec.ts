@@ -166,20 +166,6 @@ describe('PersonController', () => {
             faker.lorem.word(),
             username, // referrer
             undefined, // stammorganisation
-            undefined, // initialenFamilienname
-            undefined, // initialenVorname
-            undefined, // rufname
-            undefined, // nameTitel
-            undefined, // nameAnrede
-            undefined, // namePraefix
-            undefined, // nameSuffix
-            undefined, // nameSortierindex
-            undefined, // geburtsdatum
-            undefined, // geburtsort
-            undefined, // geschlecht
-            undefined, // lokalisierung
-            undefined, // vertrauensstufe
-            undefined, // auskunftssperre
             undefined, // personalnummer
             undefined, // orgUnassignmentDate
             [
@@ -595,8 +581,6 @@ describe('PersonController', () => {
                 vorname: 'john',
                 familienname: 'doe',
             },
-            geburt: {},
-            lokalisierung: 'de-DE',
             revision: '1',
         };
         personPermissionsMock = createMock<PersonPermissions>();
@@ -680,8 +664,6 @@ describe('PersonController', () => {
                     vorname: ' john',
                     familienname: 'doe',
                 },
-                geburt: {},
-                lokalisierung: 'de-DE',
                 revision: '1',
             };
 

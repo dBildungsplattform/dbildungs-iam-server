@@ -17,14 +17,6 @@
             "stammorganisation": null,
             "vorname": "Susi",
             "familienname": "Superadmin",
-            "geburt": {
-                "datum": null,
-                "geburtsort": "Dimension C-137"
-            },
-            "geschlecht": "w",
-            "loaklisierung": null,
-            "vertrauensstufe": null,
-            "auskunftssperre": null,
             "personalnummer": "0056357"
         },
         {
@@ -77,14 +69,6 @@
             "stammorganisation": null,
             "vorname": "Anton",
             "familienname": "AutoTester",
-            "geburt": {
-                "datum": null,
-                "geburtsort": "Hamburg"
-            },
-            "geschlecht": "m",
-            "loaklisierung": null,
-            "vertrauensstufe": null,
-            "auskunftssperre": null,
             "personalnummer": "2036354"
         },
         {
