@@ -7,5 +7,11 @@
     },
     "DB": {
         "USE_SSL": true
+    },
+    "LDAP": {
+        "URL": "ldap://spsh-xxx.svc.cluster.local",
+        "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
+        "ADMIN_PASSWORD": "password",
+        "BASE_DN": "dc=schule-sh,dc=de"
     }
 }

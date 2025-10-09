@@ -6,7 +6,7 @@ import { EmailDomainRepo } from './persistence/email-domain.repo.js';
 import { EmailReadController } from './api/controller/email-read.controller.js';
 import { EmailWriteController } from './api/controller/email-write.controller.js';
 import { EmailAddressStatusRepo } from './persistence/email-address-status.repo.js';
-import { EmailAddressGenerator } from './domain/email-address-generator.js';
+import { EmailAddressGenerator } from './domain/services/email-address-generator.js';
 
 @Module({
     imports: [LoggerModule.register(EmailCoreModule.name)],

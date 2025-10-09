@@ -13,9 +13,9 @@ import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { SetEmailAddressForSpshPersonService } from '../domain/set-email-address-for-spsh-person.service.js';
 import { EmailDomainRepo } from './email-domain.repo.js';
 import { EmailCoreModule } from '../email-core.module.js';
-import { EmailDomain } from '../domain/email-domain.js';
+import { EmailDomain } from '../domain/aggregates/email-domain.js';
 import { EmailAddressStatusRepo } from './email-address-status.repo.js';
-import { EmailAddressGenerator } from '../domain/email-address-generator.js';
+import { EmailAddressGenerator } from '../domain/services/email-address-generator.js';
 
 describe('EmailDomainRepo', () => {
     let module: TestingModule;

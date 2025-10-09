@@ -1,4 +1,4 @@
-import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
+import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
 
 export class EmailAddressStatus<WasPersisted extends boolean> {
     public constructor(
