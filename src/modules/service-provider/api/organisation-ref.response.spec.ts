@@ -1,4 +1,3 @@
-
 import { DoFactory } from '../../../../test/utils';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRefResponse } from './organisation-ref.response.js';
