@@ -36,7 +36,7 @@ import { EmailAppConfig } from '../shared/config/email-app.config.js';
         }),
         LoggerModule.register(EmailModule.name),
         EmailHealthModule,
-        EmailCoreModule,
+        EmailCoreModule
     ],
 })
 export class EmailModule {}

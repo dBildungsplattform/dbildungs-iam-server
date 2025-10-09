@@ -4,8 +4,8 @@ import { LoggerModule } from '../../../core/logging/logger.module.js';
 import { OxService } from './domain/ox-service.js';
 
 @Module({
-    imports: [LoggerModule.register(OxModule.name), HttpModule],
+    imports: [LoggerModule.register(EmailOxModule.name), HttpModule],
     providers: [OxService],
     exports: [OxService],
 })
-export class OxModule {}
+export class EmailOxModule {}

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SetEmailAddressForSpshPersonService } from './set-email-address-for-spsh-person.service.js';
+import { SetEmailAddressForSpshPersonService } from './services/set-email-address-for-spsh-person.service.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
