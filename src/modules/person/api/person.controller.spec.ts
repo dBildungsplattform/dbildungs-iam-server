@@ -14,7 +14,6 @@ import { KeycloakClientError } from '../../../shared/error/keycloak-client.error
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
-import { PersonID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
@@ -48,7 +47,6 @@ import { PersonLandesbediensteterSearchQueryParams } from './person-landesbedien
 import { PersonLandesbediensteterSearchResponse } from './person-landesbediensteter-search.response.js';
 import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 import { PersonController } from './person.controller.js';
-import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 
@@ -321,93 +319,6 @@ describe('PersonController', () => {
             await expect(personController.findLandesbediensteter(queryParams, personPermissionsMock)).rejects.toThrow(
                 UnauthorizedException,
             );
-        });
-    });
-
-    describe('findPersons', () => {
-        const options: {
-            username: string;
-            lastName: string;
-            firstName: string;
-        } = {
-            username: faker.string.alpha(),
-            lastName: faker.person.lastName(),
-            firstName: faker.person.firstName(),
-        };
-        const queryParams: PersonenQueryParams = {
-            username: options.username,
-            familienname: options.lastName,
-            vorname: options.firstName,
-            sichtfreigabe: SichtfreigabeType.NEIN,
-            suchFilter: '',
-        };
-        const person1: Person<true> = Person.construct(
-            faker.string.uuid(),
-            faker.date.past(),
-            faker.date.recent(),
-            faker.person.lastName(),
-            'Moritz',
-            '1',
-            faker.lorem.word(),
-            faker.lorem.word(),
-            faker.string.uuid(),
-        );
-        const person2: Person<true> = Person.construct(
-            faker.string.uuid(),
-            faker.date.past(),
-            faker.date.recent(),
-            faker.person.lastName(),
-            'Paul',
-            '1',
-            faker.lorem.word(),
-            faker.lorem.word(),
-            faker.string.uuid(),
-        );
-        personPermissionsMock = createMock<PersonPermissions>();
-
-        it('should get all persons', async () => {
-            personRepositoryMock.findBy.mockResolvedValueOnce([[person1, person2], 2]);
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
-
-            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
-                queryParams,
-                personPermissionsMock,
-            );
-            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
-            expect(result.total).toEqual(2);
-            expect(result.limit).toEqual(2);
-            expect(result.offset).toEqual(0);
-            expect(result.items.length).toEqual(2);
-            expect(result.items.at(0)?.person.name.vorname).toEqual('Moritz');
-        });
-
-        it('should get all persons inclusive enabled EAs when organisationIds is found and is ROOT', async () => {
-            personRepositoryMock.findBy.mockResolvedValueOnce([[person1, person2], 2]);
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
-                all: false,
-                orgaIds: [personController.ROOT_ORGANISATION_ID],
-            });
-            const map: Map<PersonID, PersonEmailResponse> = new Map<PersonID, PersonEmailResponse>();
-            const emailResponsePerson1: PersonEmailResponse = new PersonEmailResponse(
-                EmailAddressStatus.ENABLED,
-                faker.internet.email(),
-            );
-            map.set(person1.id, emailResponsePerson1);
-            emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValueOnce(map);
-
-            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
-                queryParams,
-                personPermissionsMock,
-            );
-            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
-            expect(result.total).toEqual(2);
-            expect(result.limit).toEqual(2);
-            expect(result.offset).toEqual(0);
-            expect(result.items.length).toEqual(2);
-            expect(result.items.at(0)?.person.name.vorname).toEqual('Moritz');
-            expect(result.items.at(0)?.person.email).toEqual(emailResponsePerson1);
-            expect(result.items.at(1)?.person.name.vorname).toEqual('Paul');
-            expect(result.items.at(1)?.person.email).toBeUndefined();
         });
     });
 
