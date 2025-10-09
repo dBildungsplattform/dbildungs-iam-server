@@ -25,7 +25,7 @@ export class PersonEntity extends TimestampedEntity {
 
     @Index({
         name: 'person_referrer_trgm_index',
-        expression: 'create index "person_referrer_trgm_index" on "person" using gin ("referrer" gin_trgm_ops);',
+        expression: 'create index "person_referrer_trgm_index" on "person" using gin ("username" gin_trgm_ops);',
     })
     @Property({ nullable: true })
     public username?: string;
