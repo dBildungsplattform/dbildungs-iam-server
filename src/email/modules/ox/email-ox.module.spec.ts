@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule } from '../../../../test/utils';
 import { EmailOxModule } from './email-ox.module';
-import { OxService } from './domain/ox-service';
+import { OxSendService } from './domain/ox-send-service';
 
 describe('OxModule', () => {
     let module: TestingModule;
@@ -22,7 +22,7 @@ describe('OxModule', () => {
 
     describe('when module is initialized', () => {
         it('should resolve OxService', () => {
-            expect(module.get(OxService)).toBeInstanceOf(OxService);
+            expect(module.get(OxSendService)).toBeInstanceOf(OxSendService);
         });
     });
 });
