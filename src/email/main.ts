@@ -24,18 +24,13 @@ async function bootstrap(): Promise<void> {
         .setTitle('Email')
         .setDescription('The Email API description')
         .setVersion('1.0')
-        .addBearerAuth({
-            type: 'http',
-            scheme: 'bearer',
-            bearerFormat: 'API Token',
-        })
         .build();
 
     app.useLogger(app.get(NestLogger));
     app.useGlobalInterceptors(new GlobalPagingHeadersInterceptor());
     app.useGlobalPipes(new GlobalValidationPipe());
     app.setGlobalPrefix('api', {
-        exclude: ['health', 'metrics', 'keycloakinternal/externaldata'],
+        exclude: ['health', 'metrics'],
     });
 
     console.log('Envi: ' + process.env['DEPLOY_STAGE']);
