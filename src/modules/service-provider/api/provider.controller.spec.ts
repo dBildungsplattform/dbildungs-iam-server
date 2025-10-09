@@ -19,12 +19,17 @@ import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { ProviderController } from './provider.controller.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
+import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
+import { ManageableServiceProviderWithReferencedObjects } from '../domain/types.js';
+import { RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
+import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let providerController: ProviderController;
+    let personPermissionsMock: DeepMocked<PersonPermissions>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -53,6 +58,7 @@ describe('Provider Controller Test', () => {
         serviceProviderServiceMock = module.get<DeepMocked<ServiceProviderService>>(ServiceProviderService);
         serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         providerController = module.get(ProviderController);
+        personPermissionsMock = createMock<PersonPermissions>();
 
         app = module.createNestApplication();
         await app.init();
@@ -131,5 +137,44 @@ describe('Provider Controller Test', () => {
                 ]);
             });
         });
+    });
+
+    describe('getManageableServiceProviders', () => {
+        it.each([
+            { limit: 2, offset: 1 },
+            { limit: undefined, offset: undefined },
+        ])(
+            'should return paged manageable service providers with correct offset and limit for %s',
+            async (params: ManageableServiceProvidersParams) => {
+                const total: number = 10;
+                const serviceProviders: Array<ServiceProvider<true>> = [
+                    DoFactory.createServiceProvider(true),
+                    DoFactory.createServiceProvider(true),
+                ];
+
+                const manageableObjects: ManageableServiceProviderWithReferencedObjects[] = serviceProviders.map(
+                    (serviceProvider: ServiceProvider<true>) => ({
+                        serviceProvider: serviceProvider,
+                        organisation: DoFactory.createOrganisation(true),
+                        rollen: [DoFactory.createRolle(true)],
+                        rollenerweiterungen: [DoFactory.createRollenerweiterung(true)],
+                    }),
+                );
+
+                serviceProviderRepoMock.findAuthorized.mockResolvedValueOnce([serviceProviders, total]);
+                serviceProviderServiceMock.getOrganisationRollenAndRollenerweiterungenForServiceProviders.mockResolvedValueOnce(
+                    manageableObjects,
+                );
+
+                const result: RawPagedResponse<ManageableServiceProviderListEntryResponse> =
+                    await providerController.getManageableServiceProviders(personPermissionsMock, params);
+
+                expect(result).toBeDefined();
+                expect(result.offset).toBe(params.offset ?? 0);
+                expect(result.limit).toBe(params.limit ?? total);
+                expect(result.items).toHaveLength(2);
+                expect(result.items[0]).toBeInstanceOf(ManageableServiceProviderListEntryResponse);
+            },
+        );
     });
 });
