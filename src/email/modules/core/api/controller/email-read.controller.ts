@@ -11,9 +11,9 @@ import {
 import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
-import { EmailAddress } from '../../domain/aggregates/email-address.js';
+import { EmailAddress } from '../../domain/email-address.js';
 import { Public } from '../../decorator/public.decorator.js';
-import { EmailAddressStatus } from '../../domain/aggregates/email-address-status.js';
+import { EmailAddressStatus } from '../../domain/email-address-status.js';
 import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
 
 @ApiTags('email')

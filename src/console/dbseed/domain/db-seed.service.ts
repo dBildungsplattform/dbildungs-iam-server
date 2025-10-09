@@ -36,7 +36,7 @@ import { ReferencedEntityType } from '../repo/db-seed-reference.entity.js';
 import { DbSeedReferenceRepo } from '../repo/db-seed-reference.repo.js';
 import { DbSeedReference } from './db-seed-reference.js';
 import { EmailDomainFile } from '../file/email-domain-file.js';
-import { EmailDomain } from '../../../email/modules/core/domain/aggregates/email-domain.js';
+import { EmailDomain } from '../../../email/modules/core/domain/email-domain.js';
 import { EmailDomainRepo } from '../../../email/modules/core/persistence/email-domain.repo.js';
 
 @Injectable()

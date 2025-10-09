@@ -1,7 +1,7 @@
 import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EmailDomainEntity } from './email-domain.entity.js';
-import { EmailDomain } from '../domain/aggregates/email-domain.js';
+import { EmailDomain } from '../domain/email-domain.js';
 import { DomainError } from '../../../../shared/error/index.js';
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';

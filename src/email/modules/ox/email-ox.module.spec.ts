@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule } from '../../../../test/utils';
-import { OxModule } from './ox.module';
+import { EmailOxModule } from './email-ox.module';
 import { OxService } from './domain/ox-service';
 
 describe('OxModule', () => {
@@ -8,7 +8,7 @@ describe('OxModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, OxModule, DatabaseTestModule.forRoot()],
+            imports: [ConfigTestModule, EmailOxModule, DatabaseTestModule.forRoot()],
         }).compile();
     });
 

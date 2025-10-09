@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { InvalidAttributeLengthError } from '../../../../../shared/error/invalid-attribute-length.error.js';
-import { InvalidCharacterSetError } from '../../../../../shared/error/invalid-character-set.error.js';
-import { InvalidNameError } from '../../../../../shared/error/invalid-name.error.js';
-import { isDIN91379A, toDIN91379SearchForm } from '../../../../../shared/util/din-91379-validation.js';
-import { EmailAddressGenerationAttemptsExceededError } from '../../error/email-address-generation-attempts-exceeds.error.js';
-import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
+import { InvalidAttributeLengthError } from '../../../../shared/error/invalid-attribute-length.error.js';
+import { InvalidCharacterSetError } from '../../../../shared/error/invalid-character-set.error.js';
+import { InvalidNameError } from '../../../../shared/error/invalid-name.error.js';
+import { isDIN91379A, toDIN91379SearchForm } from '../../../../shared/util/din-91379-validation.js';
+import { EmailAddressGenerationAttemptsExceededError } from '../error/email-address-generation-attempts-exceeds.error.js';
+import { EmailAddressRepo } from '../persistence/email-address.repo.js';
 
 @Injectable()
 export class EmailAddressGenerator {
