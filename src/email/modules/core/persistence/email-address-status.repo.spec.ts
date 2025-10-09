@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MikroORM } from '@mikro-orm/core';
 import { EmailAddressStatusRepo } from './email-address-status.repo.js';
-import { EmailAddressStatus } from '../domain/email-address-status.js';
+import { EmailAddressStatus } from '../domain/aggregates/email-address-status.js';
 import { EmailAddressStatusEnum } from './email-address-status.entity.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import {
@@ -12,7 +12,7 @@ import {
 } from '../../../../../test/utils/index.js';
 import { EmailCoreModule } from '../email-core.module.js';
 import { EmailAddressRepo } from './email-address.repo.js';
-import { EmailAddress } from '../domain/email-address.js';
+import { EmailAddress } from '../domain/aggregates/email-address.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { createMock } from '@golevelup/ts-jest';
 

@@ -5,14 +5,13 @@ import { AxiosResponse } from 'axios';
 import { createHash, Hash } from 'crypto';
 import { XMLBuilder, XMLParser } from 'fast-xml-parser';
 import { lastValueFrom } from 'rxjs';
-
-import { OxConfig } from '../../../shared/config/ox.config.js';
+import { OxError } from '../../../../shared/error/ox.error.js';
+import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
+import { OxConfig } from '../../../../shared/config/ox.config.js';
+import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { isOxErrorResponse, OxBaseAction } from '../actions/ox-base-action.js';
-import { OxError } from '../../../shared/error/ox.error.js';
-import { ServerConfig } from '../../../shared/config/server.config.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { OxErrorMapper } from '../../../email/modules/ox/domain/ox-error.mapper.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DomainError } from '../../../../shared/error/index.js';
+import { OxErrorMapper } from './ox-error.mapper.js';
 import { OxNonRetryableError } from '../error/ox-non-retryable.error.js';
 
 export type OxErrorType = {
@@ -105,7 +104,7 @@ export class OxService {
     public constructor(
         private readonly httpService: HttpService,
         private readonly logger: ClassLogger,
-        configService: ConfigService<ServerConfig>,
+        configService: ConfigService<EmailAppConfig>,
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
 
@@ -159,8 +158,6 @@ export class OxService {
                     ok: false,
                     error: mappedOxError,
                 };
-            } else {
-                this.logger.logUnknownAsError('Unknown error occurred during OX request', err);
             }
             return {
                 ok: false,

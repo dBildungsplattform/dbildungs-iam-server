@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { faker } from '@faker-js/faker';
-import { EmailAddressRepo } from '../persistence/email-address.repo.js';
+import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { EmailAddressGenerator } from './email-address-generator.js';
 import {
     InvalidAttributeLengthError,
     InvalidCharacterSetError,
     InvalidNameError,
-} from '../../../../shared/error/index.js';
-import { EmailAddressGenerationAttemptsExceededError } from '../error/email-address-generation-attempts-exceeds.error.js';
+} from '../../../../../shared/error/index.js';
+import { EmailAddressGenerationAttemptsExceededError } from '../../error/email-address-generation-attempts-exceeds.error.js';
 
 describe('EmailAddressGenerator', () => {
     let module: TestingModule;

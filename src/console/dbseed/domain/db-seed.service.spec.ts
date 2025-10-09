@@ -28,7 +28,7 @@ import { NameForRolleWithTrailingSpaceError } from '../../../modules/rolle/domai
 import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
 import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { EmailDomainRepo } from '../../../email/modules/core/persistence/email-domain.repo.js';
-import { EmailDomain } from '../../../email/modules/core/domain/email-domain.js';
+import { EmailDomain } from '../../../email/modules/core/domain/aggregates/email-domain.js';
 import { DbSeedReference } from './db-seed-reference.js';
 
 describe('DbSeedService', () => {

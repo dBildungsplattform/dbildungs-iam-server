@@ -2,7 +2,7 @@ import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../../shared/error/index.js';
 import { EmailAddressStatusEntity } from './email-address-status.entity.js';
-import { EmailAddressStatus } from '../domain/email-address-status.js';
+import { EmailAddressStatus } from '../domain/aggregates/email-address-status.js';
 
 export function mapAggregateToData(
     emailAddressStatus: EmailAddressStatus<boolean>,
