@@ -3,7 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosResponse } from 'axios';
 import { of, throwError } from 'rxjs';
-import { OxErrorType, OxService } from './ox-service';
+import { OxErrorType, OxSendService } from './ox-send-service';
 import { ClassLogger } from '../../../../core/logging/class-logger';
 import { ConfigTestModule } from '../../../../../test/utils';
 import { ConfigService } from '@nestjs/config';
@@ -21,16 +21,16 @@ describe('OxServiceConstructor', () => {
             getOrThrow: () => ({}), // Empty OX config
         });
 
-        const sut: OxService = new OxService(createMock(), createMock(), configServiceMock);
+        const sut: OxSendService = new OxSendService(createMock(), createMock(), configServiceMock);
 
         expect(configServiceMock.getOrThrow).toHaveBeenCalledTimes(1);
         expect((sut as unknown as { max_retries: number }).max_retries).toBe(3);
     });
 });
 
-describe('OxService', () => {
+describe('OxSendService', () => {
     let module: TestingModule;
-    let sut: OxService;
+    let sut: OxSendService;
 
     let httpServiceMock: DeepMocked<HttpService>;
     let loggerMock: DeepMocked<ClassLogger>;
@@ -39,7 +39,7 @@ describe('OxService', () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule],
             providers: [
-                OxService,
+                OxSendService,
                 {
                     provide: HttpService,
                     useValue: createMock<HttpService>(),
@@ -51,7 +51,7 @@ describe('OxService', () => {
             ],
         }).compile();
 
-        sut = module.get(OxService);
+        sut = module.get(OxSendService);
         httpServiceMock = module.get(HttpService);
         loggerMock = module.get(ClassLogger);
     });
