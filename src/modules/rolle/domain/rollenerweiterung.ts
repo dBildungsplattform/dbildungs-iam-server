@@ -92,6 +92,10 @@ export class Rollenerweiterung<WasPersisted extends boolean> {
         return undefined;
     }
 
+    public async getOrganisation(): Promise<Option<Organisation<true>>> {
+        return this.organisationRepo.findById(this.organisationId);
+    }
+
     public async getRolle(): Promise<Option<Rolle<true>>> {
         return this.rolleRepo.findById(this.rolleId);
     }

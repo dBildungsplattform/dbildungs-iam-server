@@ -1,16 +1,18 @@
-import { EntityData, EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { EntityData, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
-import { ServiceProvider } from '../domain/service-provider.js';
-import { ServiceProviderEntity } from './service-provider.entity.js';
-
 import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
+import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
+import { ServiceProviderEntity } from './service-provider.entity.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -160,6 +162,58 @@ export class ServiceProviderRepo {
         });
 
         return serviceProviderMap;
+    }
+
+    public async findAuthorized(
+        permissions: PersonPermissions,
+        limit?: number,
+        offset?: number,
+    ): Promise<Counted<ServiceProvider<true>>> {
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN],
+            true,
+        );
+        const [entities, count]: Counted<ServiceProviderEntity> = await this.em.findAndCount(
+            ServiceProviderEntity,
+            permittedOrgas.all
+                ? {}
+                : {
+                      providedOnSchulstrukturknoten: { $in: permittedOrgas.orgaIds },
+                  },
+            {
+                populate: ['merkmale'],
+                limit,
+                offset,
+                orderBy: {
+                    kategorie: 'ASC', // kategorie defines a custom order
+                },
+            },
+        );
+
+        return [entities.map(mapEntityToAggregate), count];
+    }
+
+    public async findAuthorizedById(
+        permissions: PersonPermissions,
+        id: string,
+    ): Promise<Option<ServiceProvider<true>>> {
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN],
+            true,
+        );
+        const entity: Option<ServiceProviderEntity> = await this.em.findOne(
+            ServiceProviderEntity,
+            permittedOrgas.all
+                ? { id }
+                : {
+                      id,
+                      providedOnSchulstrukturknoten: { $in: permittedOrgas.orgaIds },
+                  },
+            {
+                populate: ['merkmale'],
+            },
+        );
+        return entity ? mapEntityToAggregate(entity) : entity;
     }
 
     public async save(serviceProvider: ServiceProvider<boolean>): Promise<ServiceProvider<true>> {

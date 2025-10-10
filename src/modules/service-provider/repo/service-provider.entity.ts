@@ -22,7 +22,17 @@ export class ServiceProviderEntity extends TimestampedEntity {
     @Property({ columnType: 'uuid' })
     public providedOnSchulstrukturknoten!: string;
 
-    @Enum({ items: () => ServiceProviderKategorie, nativeEnumName: 'service_provider_kategorie_enum' })
+    @Enum({
+        items: () => ServiceProviderKategorie,
+        nativeEnumName: 'service_provider_kategorie_enum',
+        customOrder: [
+            ServiceProviderKategorie.EMAIL,
+            ServiceProviderKategorie.UNTERRICHT,
+            ServiceProviderKategorie.VERWALTUNG,
+            ServiceProviderKategorie.HINWEISE,
+            ServiceProviderKategorie.ANGEBOTE,
+        ],
+    })
     public kategorie!: ServiceProviderKategorie;
 
     @Property({ type: BlobType, nullable: true })

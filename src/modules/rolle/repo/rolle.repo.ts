@@ -11,7 +11,7 @@ import { Injectable } from '@nestjs/common';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
-import { OrganisationID, RolleID } from '../../../shared/types/index.js';
+import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
@@ -299,6 +299,39 @@ export class RolleRepo {
         }
 
         return [rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory)), total];
+    }
+
+    public async findByServiceProviderIds(
+        serviceProviderIds: string[],
+    ): Promise<Map<ServiceProviderID, Rolle<true>[]>> {
+        const rollen: Rolle<true>[] = (
+            await this.em.find(
+                RolleEntity,
+                {
+                    serviceProvider: {
+                        serviceProvider: {
+                            id: { $in: serviceProviderIds },
+                        },
+                    },
+                },
+                {
+                    populate: [
+                        'merkmale',
+                        'systemrechte',
+                        'serviceProvider.serviceProvider',
+                        'serviceProvider.serviceProvider.merkmale',
+                    ] as const,
+                    exclude: ['serviceProvider.serviceProvider.logo'] as const,
+                },
+            )
+        ).map((rolleEntity: RolleEntity) => mapRolleEntityToAggregate(rolleEntity, this.rolleFactory));
+
+        return new Map(
+            serviceProviderIds.map((spId: ServiceProviderID) => [
+                spId,
+                rollen.filter((rolle: Rolle<true>) => rolle.serviceProviderIds.includes(spId)),
+            ]),
+        );
     }
 
     public async exists(id: RolleID): Promise<boolean> {

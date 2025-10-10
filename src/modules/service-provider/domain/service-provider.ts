@@ -6,7 +6,7 @@ import {
 } from './service-provider.enum.js';
 
 export class ServiceProvider<WasPersisted extends boolean> {
-    private constructor(
+    protected constructor(
         public id: Persisted<string, WasPersisted>,
         public createdAt: Persisted<Date, WasPersisted>,
         public updatedAt: Persisted<Date, WasPersisted>,

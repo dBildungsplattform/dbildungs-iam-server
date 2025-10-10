@@ -16,6 +16,7 @@ export enum RollenSystemRechtEnum {
     SCHULPORTAL_VERWALTEN = 'SCHULPORTAL_VERWALTEN',
     HINWEISE_BEARBEITEN = 'HINWEISE_BEARBEITEN',
     ROLLEN_ERWEITERN = 'ROLLEN_ERWEITERN',
+    ANGEBOTE_VERWALTEN = 'ANGEBOTE_VERWALTEN',
 }
 
 export class RollenSystemRecht {
@@ -120,6 +121,11 @@ export class RollenSystemRecht {
         RollenSystemRechtEnum.ROLLEN_ERWEITERN,
     );
 
+    public static readonly ANGEBOTE_VERWALTEN: RollenSystemRecht = new RollenSystemRecht(
+        false,
+        RollenSystemRechtEnum.ANGEBOTE_VERWALTEN,
+    );
+
     public static readonly ALL: RollenSystemRecht[] = [
         RollenSystemRecht.ROLLEN_VERWALTEN,
         RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN,
@@ -138,6 +144,7 @@ export class RollenSystemRecht {
         RollenSystemRecht.SCHULPORTAL_VERWALTEN,
         RollenSystemRecht.HINWEISE_BEARBEITEN,
         RollenSystemRecht.ROLLEN_ERWEITERN,
+        RollenSystemRecht.ANGEBOTE_VERWALTEN,
     ];
 
     public static getByName(name: RollenSystemRechtEnum): RollenSystemRecht {
@@ -176,6 +183,8 @@ export class RollenSystemRecht {
                 return RollenSystemRecht.HINWEISE_BEARBEITEN;
             case RollenSystemRechtEnum.ROLLEN_ERWEITERN:
                 return RollenSystemRecht.ROLLEN_ERWEITERN;
+            case RollenSystemRechtEnum.ANGEBOTE_VERWALTEN:
+                return RollenSystemRecht.ANGEBOTE_VERWALTEN;
         }
     }
 }

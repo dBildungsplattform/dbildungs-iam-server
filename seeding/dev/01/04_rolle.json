@@ -20,7 +20,9 @@
                 "BULK_VERWALTEN",
                 "SCHULPORTAL_VERWALTEN",
                 "HINWEISE_BEARBEITEN",
-                "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN"
+                "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+                "ROLLEN_ERWEITERN",
+                "ANGEBOTE_VERWALTEN"
             ],
             "serviceProviderIds": [5, 8, 9, 10, 11]
         },
