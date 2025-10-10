@@ -185,9 +185,9 @@ describe('LDAP Client Service', () => {
             faker.person.lastName(),
             faker.person.firstName(),
             '1',
+            faker.internet.userName(),
             faker.lorem.word(),
             undefined,
-            faker.internet.userName(),
         );
 
         //currently only used to wait for the LDAP container, because setupDatabase() is blocking

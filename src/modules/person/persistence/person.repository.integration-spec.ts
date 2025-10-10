@@ -1182,9 +1182,9 @@ describe('PersonRepository Integration', () => {
                     lastname,
                     firstname,
                     '1',
-                    faker.lorem.word(),
-                    faker.lorem.word(),
                     'newtestusername',
+                    faker.lorem.word(),
+                    faker.lorem.word(),
                 );
                 usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'newtestusername' });
                 jest.spyOn(sut, 'getUsername').mockReturnValueOnce(undefined);
@@ -2423,9 +2423,9 @@ describe('PersonRepository Integration', () => {
                     faker.person.lastName(),
                     faker.person.firstName(),
                     existingPerson.mandant,
-                    existingPerson.stammorganisation,
-                    existingPerson.keycloakUserId,
                     existingPerson.username,
+                    existingPerson.keycloakUserId,
+                    existingPerson.stammorganisation,
                     undefined,
                     undefined,
                     undefined,
