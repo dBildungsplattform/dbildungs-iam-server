@@ -90,4 +90,23 @@ describe('Rollenerweiterung Aggregate', () => {
             await expect(rollenerweiterung.checkReferences()).resolves.toBeInstanceOf(EntityNotFoundError);
         });
     });
+
+    describe('getOrganisation', () => {
+        it('should return organisation, if exists', async () => {
+            const rollenerweiterung: Rollenerweiterung<true> = rollenerweiterungFactory.construct(
+                faker.string.uuid(),
+                faker.date.anytime(),
+                faker.date.anytime(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+            );
+            organisationRepo.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { id: rollenerweiterung.organisationId }),
+            );
+            await expect(rollenerweiterung.getOrganisation()).resolves.toEqual(
+                expect.objectContaining({ id: rollenerweiterung.organisationId }),
+            );
+        });
+    });
 });

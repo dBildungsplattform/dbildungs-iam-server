@@ -9,6 +9,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
@@ -18,6 +19,10 @@ import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import { ServiceProviderService } from './service-provider.service.js';
+import {
+    ManageableServiceProviderWithReferencedObjects,
+    RollenerweiterungForManageableServiceProvider,
+} from './types.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -281,6 +286,7 @@ describe('ServiceProviderService', () => {
             },
         );
     });
+
     describe('getServiceProvidersByOrganisationenAndRollen', () => {
         describe.each([[true], [false]])('when rollen have rollenerweiterungen', (haveRollenerweiterungen: boolean) => {
             const organisations: Array<Organisation<true>> = [
@@ -337,6 +343,93 @@ describe('ServiceProviderService', () => {
                     haveRollenerweiterungen ? organisations.length + serviceProviders.length : serviceProviders.length,
                 );
             });
+        });
+    });
+
+    describe('getOrganisationRollenAndRollenerweiterungenForServiceProviders', () => {
+        let serviceProvider: ServiceProvider<true>;
+        let organisation: Organisation<true>;
+        let rolle: Rolle<true>;
+        let rollenerweiterung: Rollenerweiterung<true>;
+
+        beforeEach(() => {
+            serviceProvider = DoFactory.createServiceProvider(true);
+            organisation = DoFactory.createOrganisation(true, {
+                id: serviceProvider.providedOnSchulstrukturknoten,
+            });
+            rolle = DoFactory.createRolle(true, { serviceProviderIds: [serviceProvider.id] });
+            rollenerweiterung = DoFactory.createRollenerweiterung(true, {
+                serviceProviderId: serviceProvider.id,
+            });
+        });
+
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('should return referenced objects for serviceProviders', async () => {
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProvider.id, [rolle]]]));
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
+                new Map([[serviceProvider.id, [rollenerweiterung]]]),
+            );
+            organisationRepo.findByIds.mockResolvedValue(
+                new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
+            );
+
+            const result: ManageableServiceProviderWithReferencedObjects[] =
+                await service.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]!.serviceProvider).toBe(serviceProvider);
+            expect(result[0]!.organisation).toBe(organisation);
+            expect(result[0]!.rollen).toContain(rolle);
+            expect(result[0]!.rollenerweiterungen).toContain(rollenerweiterung);
+        });
+
+        it('should return empty arrays for serviceProviders without rollen or rollenerweiterungen', async () => {
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map());
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map());
+            organisationRepo.findByIds.mockResolvedValue(
+                new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
+            );
+
+            const result: ManageableServiceProviderWithReferencedObjects[] =
+                await service.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]!.serviceProvider).toBe(serviceProvider);
+            expect(result[0]!.organisation).toBe(organisation);
+            expect(result[0]!.rollen).toBeInstanceOf(Array);
+            expect(result[0]!.rollen).toHaveLength(0);
+            expect(result[0]!.rollenerweiterungen).toBeInstanceOf(Array);
+            expect(result[0]!.rollenerweiterungen).toHaveLength(0);
+        });
+    });
+
+    describe('getRollenerweiterungenForManageableServiceProvider', () => {
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('should return rollenerweiterungen for display', async () => {
+            const rollenerweiterung: Rollenerweiterung<true> = DoFactory.createRollenerweiterung(true);
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                id: rollenerweiterung.organisationId,
+            });
+            const rolle: Rolle<true> = DoFactory.createRolle(true, { id: rollenerweiterung.rolleId });
+
+            organisationRepo.findByIds.mockResolvedValue(new Map([[organisation.id, organisation]]));
+            rolleRepo.findByIds.mockResolvedValue(new Map([[rolle.id, rolle]]));
+
+            const result: RollenerweiterungForManageableServiceProvider[] =
+                await service.getRollenerweiterungenForManageableServiceProvider([rollenerweiterung]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]!.organisation.id).toBe(organisation.id);
+            expect(result[0]!.organisation.name).toBe(organisation.name);
+            expect(result[0]!.organisation.kennung).toBe(organisation.kennung);
+            expect(result[0]!.rolle.id).toBe(rolle.id);
+            expect(result[0]!.rolle.name).toBe(rolle.name);
         });
     });
 

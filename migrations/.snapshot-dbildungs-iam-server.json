@@ -225,7 +225,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -501,7 +502,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -770,7 +772,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1098,7 +1101,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1410,7 +1414,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1681,7 +1686,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1978,7 +1984,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -2390,7 +2397,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -2679,7 +2687,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3123,7 +3132,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3466,7 +3476,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3745,7 +3756,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4063,7 +4075,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4528,7 +4541,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4913,7 +4927,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5277,7 +5292,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5557,7 +5573,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5635,7 +5652,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ],
           "mappedType": "enum"
         }
@@ -5852,7 +5870,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -6242,7 +6261,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -6519,7 +6539,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -6890,7 +6911,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -7167,7 +7189,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -7447,7 +7470,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -7771,7 +7795,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "ROLLEN_ERWEITERN"
+            "ROLLEN_ERWEITERN",
+            "ANGEBOTE_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -7986,7 +8011,8 @@
         "BULK_VERWALTEN",
         "SCHULPORTAL_VERWALTEN",
         "HINWEISE_BEARBEITEN",
-        "ROLLEN_ERWEITERN"
+        "ROLLEN_ERWEITERN",
+        "ANGEBOTE_VERWALTEN"
       ]
     },
     "service_provider_target_enum": {
