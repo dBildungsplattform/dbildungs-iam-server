@@ -34,9 +34,9 @@ describe('PrivacyIdeaAdministrationController', () => {
             faker.person.lastName(),
             faker.person.firstName(),
             '1',
-            faker.lorem.word(),
-            faker.lorem.word(),
             emptyUsername ? undefined : faker.string.uuid(),
+            faker.lorem.word(),
+            faker.lorem.word(),
         );
     }
 

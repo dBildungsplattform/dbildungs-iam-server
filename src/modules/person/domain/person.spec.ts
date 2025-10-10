@@ -98,7 +98,6 @@ describe('Person', () => {
                 undefined,
                 undefined,
                 undefined,
-                undefined,
                 input,
             );
 
