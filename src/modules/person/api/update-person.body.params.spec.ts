@@ -5,7 +5,7 @@ import { UpdatePersonBodyParams } from './update-person.body.params.js';
 
 describe('UpdatePersonBodyParams', () => {
     const referenceParams: UpdatePersonBodyParams = {
-        referrer: faker.string.uuid(),
+        username: faker.string.uuid(),
         name: {
             vorname: faker.person.firstName(),
             familienname: faker.person.lastName(),
@@ -15,7 +15,7 @@ describe('UpdatePersonBodyParams', () => {
 
     it('should convert a plain object to a class of UpdatePersonBodyParams', () => {
         const incomingParams: object = {
-            referrer: referenceParams.referrer,
+            username: referenceParams.username,
             name: {
                 vorname: referenceParams.name.vorname,
                 familienname: referenceParams.name.familienname,

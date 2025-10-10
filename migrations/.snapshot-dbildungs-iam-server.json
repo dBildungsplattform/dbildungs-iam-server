@@ -2770,8 +2770,8 @@
           "nullable": false,
           "mappedType": "string"
         },
-        "referrer": {
-          "name": "referrer",
+        "username": {
+          "name": "username",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -2881,7 +2881,7 @@
         {
           "keyName": "person_referrer_trgm_index",
           "columnNames": [
-            "referrer"
+            "username"
           ],
           "composite": false,
           "constraint": false,
@@ -4176,8 +4176,8 @@
           "nullable": false,
           "mappedType": "uuid"
         },
-        "referrer": {
-          "name": "referrer",
+        "username": {
+          "name": "username",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,

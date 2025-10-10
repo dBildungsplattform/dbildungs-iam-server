@@ -19,7 +19,7 @@ import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-o
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
-import { PersonenkontextID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/index.js';
+import { PersonenkontextID, PersonID, PersonUsername, RolleID } from '../../../shared/types/index.js';
 import { OXContextID, OXContextName, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -166,8 +166,8 @@ describe('EmailEventHandler', () => {
 
     describe('test private methods: createOrEnableEmail, createNewEmail, changeEmail, createNewDisabledEmail, getPersonUsernameOrError', () => {
         let fakePersonId: PersonID;
-        let fakeUsername: PersonReferrer;
-        let fakeOldUsername: PersonReferrer;
+        let fakeUsername: PersonUsername;
+        let fakeOldUsername: PersonUsername;
         let fakeRolleId: RolleID;
         let fakeOrgaId: string;
         let fakeEmailAddress: string;
@@ -319,7 +319,7 @@ describe('EmailEventHandler', () => {
                     organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>());
                     //mock person without username is found
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: fakePersonId, referrer: undefined }),
+                        createMock<Person<true>>({ id: fakePersonId, username: undefined }),
                     );
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(personRenamedEvent);
 
@@ -360,7 +360,7 @@ describe('EmailEventHandler', () => {
 
                     //mock person with username is found in getPersonUsernameOrError
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: fakePersonId, referrer: fakeUsername }),
+                        createMock<Person<true>>({ id: fakePersonId, username: fakeUsername }),
                     );
 
                     const fakeErrorMessage: string = 'Lise Meitner kann nichts dafuer';
@@ -395,7 +395,7 @@ describe('EmailEventHandler', () => {
 
                     //mock person with username is found in getPersonUsernameOrError
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: fakePersonId, referrer: fakeUsername }),
+                        createMock<Person<true>>({ id: fakePersonId, username: fakeUsername }),
                     );
 
                     const factoryResult: Result<EmailAddress<false>> = {
@@ -637,7 +637,7 @@ describe('EmailEventHandler', () => {
 
     describe('handleLdapSyncFailedEvent', () => {
         let fakePersonId: PersonID;
-        let fakeUsername: PersonReferrer;
+        let fakeUsername: PersonUsername;
         let fakeRolleId: RolleID;
         let fakeEmailAddress: string;
         let event: LdapSyncFailedEvent;
@@ -687,7 +687,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ referrer: fakeUsername }),
+                    createMock<Person<true>>({ username: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -741,7 +741,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ referrer: fakeUsername }),
+                    createMock<Person<true>>({ username: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -794,7 +794,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ referrer: fakeUsername }),
+                    createMock<Person<true>>({ username: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -828,7 +828,7 @@ describe('EmailEventHandler', () => {
 
     describe('handlePersonenkontextUpdatedEvent', () => {
         let fakePersonId: PersonID;
-        let fakeUsername: PersonReferrer;
+        let fakeUsername: PersonUsername;
         let fakeRolleId: RolleID;
         let fakePKId: PersonenkontextID;
         let fakeEmailAddressString: string;
@@ -884,7 +884,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ referrer: fakeUsername }),
+                    createMock<Person<true>>({ username: fakeUsername }),
                 );
 
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
@@ -913,7 +913,7 @@ describe('EmailEventHandler', () => {
                 ]);
 
                 //mock person with username is found
-                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>({ referrer: undefined }));
+                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>({ username: undefined }));
 
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
 
@@ -932,7 +932,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
+                    createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -964,7 +964,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
+                    createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -995,7 +995,7 @@ describe('EmailEventHandler', () => {
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]); //no existing email is found
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValue(
-                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
+                    createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
                 );
 
                 const persistenceResult: EmailAddress<true> = getEmail();
@@ -1031,7 +1031,7 @@ describe('EmailEventHandler', () => {
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]); //no existing email is found
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValue(
-                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
+                    createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -1068,14 +1068,14 @@ describe('EmailEventHandler', () => {
                 it('should log matching info', async () => {
                     //mock getting username (used for logging)
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ referrer: fakeUsername }),
+                        createMock<Person<true>>({ username: fakeUsername }),
                     );
                     mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
 
                     emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]); //no existing email is found
                     //mock person with username is found
                     personRepositoryMock.findById.mockResolvedValue(
-                        createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
+                        createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
                     );
 
                     // eslint-disable-next-line @typescript-eslint/require-await
@@ -1102,13 +1102,13 @@ describe('EmailEventHandler', () => {
             it('should log matching info', async () => {
                 //mock getting username (used for logging)
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ referrer: fakeUsername }),
+                    createMock<Person<true>>({ username: fakeUsername }),
                 );
                 mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]); //no existing email is found
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValue(
-                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
+                    createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
                 );
 
                 emailRepoMock.save.mockResolvedValueOnce(new EmailAddressNotFoundError(fakeEmailAddressString)); //mock: error during saving the entity
@@ -1140,7 +1140,7 @@ describe('EmailEventHandler', () => {
 
                         // Mock person with username is found
                         personRepositoryMock.findById.mockResolvedValueOnce(
-                            createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
+                            createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
                         );
 
                         // Create multiple disabled emails
@@ -1199,7 +1199,7 @@ describe('EmailEventHandler', () => {
             it('should log matching info', async () => {
                 //mock getting username (used for logging)
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ referrer: fakeUsername }),
+                    createMock<Person<true>>({ username: fakeUsername }),
                 );
                 mockRepositoryFindMethods(personenkontexte, rolleMap, new Map<string, ServiceProvider<true>>());
 
@@ -1226,12 +1226,12 @@ describe('EmailEventHandler', () => {
                 it('should log matching info', async () => {
                     //mock getting username (used for logging)
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ referrer: fakeUsername }),
+                        createMock<Person<true>>({ username: fakeUsername }),
                     );
                     mockRepositoryFindMethods(personenkontexte, rolleMap, new Map<string, ServiceProvider<true>>());
 
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ referrer: fakeUsername }),
+                        createMock<Person<true>>({ username: fakeUsername }),
                     );
 
                     const emailAddress: EmailAddress<true> = EmailAddress.construct(
@@ -1296,7 +1296,7 @@ describe('EmailEventHandler', () => {
             it('should log matching error', async () => {
                 mockRepositoryFindMethods(personenkontexte, rolleMap, new Map<string, ServiceProvider<true>>());
 
-                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>({ referrer: undefined }));
+                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>({ username: undefined }));
 
                 const emailAddress: EmailAddress<true> = EmailAddress.construct(
                     faker.string.uuid(),
@@ -1351,7 +1351,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: faker.internet.userName() }),
+                    createMock<Person<true>>({ id: faker.string.uuid(), username: faker.internet.userName() }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -1380,8 +1380,8 @@ describe('EmailEventHandler', () => {
 
     describe('handleLdapPersonEntryRenamedEvent', () => {
         let fakePersonId: PersonID;
-        let fakeUsername: PersonReferrer;
-        let fakeOldUsername: PersonReferrer;
+        let fakeUsername: PersonUsername;
+        let fakeOldUsername: PersonUsername;
         let fakeRolleId: RolleID;
         let fakeEmailAddress: string;
         let fakeNewEmailAddress: string;
@@ -1438,7 +1438,7 @@ describe('EmailEventHandler', () => {
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(emailAddress);
                     //mock person with username is found
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: faker.string.uuid(), referrer: faker.internet.userName() }),
+                        createMock<Person<true>>({ id: faker.string.uuid(), username: faker.internet.userName() }),
                     );
 
                     emailRepoMock.save.mockResolvedValueOnce(emailAddress);
@@ -1466,7 +1466,7 @@ describe('EmailEventHandler', () => {
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(emailAddress);
                     //mock person with username is found
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
+                        createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
                     );
 
                     emailRepoMock.save.mockResolvedValueOnce(emailAddress);
@@ -1500,7 +1500,7 @@ describe('EmailEventHandler', () => {
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(emailAddress);
                     //mock person with username is found
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
+                        createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
                     );
 
                     emailRepoMock.save.mockResolvedValueOnce(emailAddress);
@@ -1620,7 +1620,7 @@ describe('EmailEventHandler', () => {
                             emailRepoMock.save.mockResolvedValue(getEmail(fakeNewEmailAddress));
                             //mock person with username is found in getPersonUsernameOrError
                             personRepositoryMock.findById.mockResolvedValueOnce(
-                                createMock<Person<true>>({ id: fakePersonId, referrer: fakeUsername }),
+                                createMock<Person<true>>({ id: fakePersonId, username: fakeUsername }),
                             );
 
                             await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
@@ -1666,7 +1666,7 @@ describe('EmailEventHandler', () => {
 
     describe('handlePersonDeletedEvent', () => {
         let personId: string;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let emailAddress: string;
         let event: PersonDeletedEvent;
 

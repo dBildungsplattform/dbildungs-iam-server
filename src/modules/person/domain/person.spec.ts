@@ -98,7 +98,6 @@ describe('Person', () => {
                 undefined,
                 undefined,
                 undefined,
-                undefined,
                 input,
             );
 
@@ -332,7 +331,7 @@ describe('Person', () => {
                 expect(result).not.toBeInstanceOf(DomainError);
                 expect(person.vorname).toEqual('Max');
                 expect(person.familienname).toEqual('Mustermann');
-                expect(person.referrer).toEqual('abc');
+                expect(person.username).toEqual('abc');
                 expect(person.istTechnisch).toEqual(initialIstTechnisch);
             });
         });
@@ -452,7 +451,7 @@ describe('Person', () => {
                     '5',
                     undefined, // familienname
                     undefined, // vorname
-                    undefined, // referrer
+                    undefined, // username
                     undefined, // stammorganisation
                     ' 12345678', // personalnummer with whitespace
                 );
@@ -475,7 +474,7 @@ describe('Person', () => {
                     '5',
                     undefined, // familienname
                     undefined, // vorname
-                    undefined, // referrer
+                    undefined, // username
                     undefined, // stammorganisation
                     '12345678 ', // personalnummer with whitespace
                 );

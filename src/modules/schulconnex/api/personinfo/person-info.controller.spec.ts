@@ -99,7 +99,7 @@ describe('PersonInfoController', () => {
             expectedBaseNestedPersonInfo = {
                 id: person.id,
                 mandant: person.mandant,
-                referrer: person.referrer,
+                username: person.username,
                 name: {
                     familiennamen: person.familienname,
                     vorname: person.vorname,

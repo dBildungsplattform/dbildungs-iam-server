@@ -8,7 +8,7 @@ describe('PersonenQueryParam', () => {
     const referenceParams: PersonenQueryParams = {
         sichtfreigabe: SichtfreigabeType.JA,
         familienname: faker.person.lastName(),
-        referrer: 'referrer',
+        username: 'username',
         vorname: faker.person.firstName(),
         suchFilter: '',
     };
@@ -17,7 +17,7 @@ describe('PersonenQueryParam', () => {
         const incomingParams: object = {
             sichtfreigabe: referenceParams.sichtfreigabe,
             familienname: referenceParams.familienname,
-            referrer: referenceParams.referrer,
+            username: referenceParams.username,
             vorname: referenceParams.vorname,
             suchFilter: referenceParams.suchFilter,
         };

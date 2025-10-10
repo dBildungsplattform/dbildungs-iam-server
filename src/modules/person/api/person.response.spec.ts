@@ -11,7 +11,7 @@ describe('PersonResponseDDD', () => {
             familienname: faker.person.lastName(),
         },
         mandant: faker.string.uuid(),
-        referrer: faker.string.uuid(),
+        username: faker.string.uuid(),
         revision: '1',
         lastModified: faker.date.past(),
         userLock: [
@@ -37,7 +37,7 @@ describe('PersonResponseDDD', () => {
             id: personResponse.id,
             name: personResponse.name,
             mandant: personResponse.mandant,
-            referrer: personResponse.referrer,
+            username: personResponse.username,
             revision: personResponse.revision,
             lastModified: personResponse.lastModified,
             userLock: personResponse.userLock,

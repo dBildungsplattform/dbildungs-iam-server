@@ -3,7 +3,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { EmailAddressID, OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
+import { EmailAddressID, OrganisationKennung, PersonID, PersonUsername } from '../../../shared/types/index.js';
 import { OxEventHandler } from './ox-event-handler.js';
 import { OxService } from './ox.service.js';
 import { CreateUserAction } from '../actions/user/create-user.action.js';
@@ -190,10 +190,10 @@ describe('OxEventHandler', () => {
      * @param oxUserId
      * @param email
      */
-    function getPerson(id?: PersonID, username?: PersonReferrer, oxUserId?: OXUserID, email?: string): Person<true> {
+    function getPerson(id?: PersonID, username?: PersonUsername, oxUserId?: OXUserID, email?: string): Person<true> {
         return createMock<Person<true>>({
             id: id ?? faker.string.uuid(),
-            referrer: username ?? faker.internet.userName(),
+            username: username ?? faker.internet.userName(),
             oxUserId: oxUserId ?? faker.string.numeric(),
             email: email ?? faker.internet.email(),
         });
@@ -275,7 +275,7 @@ describe('OxEventHandler', () => {
                 true,
                 fakeDstNr,
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: faker.internet.userName() });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
         });
 
         describe('when creating group fails', () => {
@@ -332,7 +332,7 @@ describe('OxEventHandler', () => {
                 true,
                 fakeDstNr,
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: faker.internet.userName() });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
         });
 
         describe('when existing group is found', () => {
@@ -519,7 +519,7 @@ describe('OxEventHandler', () => {
 
     describe('addOxUserToOxGroup', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let fakeDstNr: string;
         let event: EmailAddressGeneratedEvent;
@@ -542,7 +542,7 @@ describe('OxEventHandler', () => {
                 true,
                 fakeDstNr,
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: faker.internet.userName() });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
         });
 
         describe('when adding user as member to group fails because member is already in group', () => {
@@ -636,7 +636,7 @@ describe('OxEventHandler', () => {
 
     describe('handleEmailAddressGeneratedEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let event: EmailAddressGeneratedEvent;
         let person: Person<true>;
@@ -657,7 +657,7 @@ describe('OxEventHandler', () => {
                 true,
                 faker.string.numeric(),
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: username });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: username });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -707,7 +707,7 @@ describe('OxEventHandler', () => {
         });
 
         it('should log error when person has no username set', async () => {
-            person.referrer = undefined;
+            person.username = undefined;
             personRepositoryMock.findById.mockResolvedValueOnce(person);
 
             await sut.handleEmailAddressGeneratedEvent(event);
@@ -926,7 +926,7 @@ describe('OxEventHandler', () => {
 
     describe('handleEmailAddressGeneratedAfterLdapSyncFailedEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let event: EmailAddressGeneratedAfterLdapSyncFailedEvent;
         let person: Person<true>;
@@ -947,7 +947,7 @@ describe('OxEventHandler', () => {
                 true,
                 faker.string.numeric(),
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: username });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: username });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -1015,7 +1015,7 @@ describe('OxEventHandler', () => {
 
     describe('handleEmailAddressChangedEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let event: EmailAddressChangedEvent;
         let person: Person<true>;
@@ -1047,7 +1047,7 @@ describe('OxEventHandler', () => {
                 faker.internet.email(),
                 faker.string.numeric(),
             );
-            person = createMock<Person<true>>({ email: email, referrer: username, oxUserId: oxUserId });
+            person = createMock<Person<true>>({ email: email, username: username, oxUserId: oxUserId });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -1068,7 +1068,7 @@ describe('OxEventHandler', () => {
         });
 
         it('should log error when person has no username set', async () => {
-            person.referrer = undefined;
+            person.username = undefined;
             personRepositoryMock.findById.mockResolvedValueOnce(person);
 
             await sut.handleEmailAddressChangedEvent(event);
@@ -1115,7 +1115,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Cannot get data for oxUsername:${person.referrer} from OX, Aborting Email-Address Change, personId:${personId}, username:${username}`,
+                `Cannot get data for oxUsername:${person.username} from OX, Aborting Email-Address Change, personId:${personId}, username:${username}`,
             );
         });
 
@@ -1213,7 +1213,7 @@ describe('OxEventHandler', () => {
         let personId: PersonID;
         let event: DisabledEmailAddressGeneratedEvent;
         let person: Person<true>;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let emailId: string;
         let email: string;
@@ -1239,7 +1239,7 @@ describe('OxEventHandler', () => {
             contextId = '10';
             contextName = 'testContext';
             event = new DisabledEmailAddressGeneratedEvent(personId, username, email, emailId, domain);
-            person = createMock<Person<true>>({ email: email, referrer: username, oxUserId: oxUserId });
+            person = createMock<Person<true>>({ email: email, username: username, oxUserId: oxUserId });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -1309,7 +1309,7 @@ describe('OxEventHandler', () => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
             event = new EmailAddressAlreadyExistsEvent(personId, faker.string.uuid());
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: faker.internet.userName() });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
         });
 
         describe('when handler is disabled', () => {
@@ -1344,9 +1344,9 @@ describe('OxEventHandler', () => {
             });
         });
 
-        describe('when person has no referrer', () => {
-            it('should log error if referrer is missing', async () => {
-                person.referrer = undefined;
+        describe('when person has no username', () => {
+            it('should log error if username is missing', async () => {
+                person.username = undefined;
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
 
                 await sut.handleEmailAddressAlreadyExistsEvent(event);
@@ -1366,14 +1366,14 @@ describe('OxEventHandler', () => {
                 expect(loggerMock.info).toHaveBeenLastCalledWith(
                     `Successfully synced user, personId:${event.personId}, oxUserId:${person.oxUserId}`,
                 );
-                expect(oxSyncHandlerMock.sync).toHaveBeenCalledWith(event.personId, person.referrer);
+                expect(oxSyncHandlerMock.sync).toHaveBeenCalledWith(event.personId, person.username);
             });
         });
     });
 
     describe('handlePersonDeletedEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let event: PersonDeletedEvent;
 
@@ -1532,7 +1532,7 @@ describe('OxEventHandler', () => {
         const contextName: OXContextName = 'testContext';
 
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let oxUserId: OXUserID;
         let emailAddressId: EmailAddressID;
         let status: EmailAddressStatus;
@@ -1676,7 +1676,7 @@ describe('OxEventHandler', () => {
 
     describe('handleEmailAddressesPurgedEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let oxUserId: OXUserID;
         let event: EmailAddressesPurgedEvent;
@@ -1801,7 +1801,7 @@ describe('OxEventHandler', () => {
             person = createMock<Person<true>>({
                 id: personId,
                 email: faker.internet.email(),
-                referrer: username,
+                username: username,
                 oxUserId: oxUserId,
             });
         });
@@ -1896,7 +1896,7 @@ describe('OxEventHandler', () => {
 
     describe('handlePersonenkontextUpdatedEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let oxUserId: OXUserID;
         let oxGroupId: OXGroupID;
@@ -1934,7 +1934,7 @@ describe('OxEventHandler', () => {
             it('should log error about that', async () => {
                 person = createMock<Person<true>>({
                     email: faker.internet.email(),
-                    referrer: username,
+                    username: username,
                     oxUserId: undefined,
                 });
                 personRepositoryMock.findById.mockResolvedValue(person);
@@ -1984,7 +1984,7 @@ describe('OxEventHandler', () => {
 
     describe('handlePersonDeletedAfterDeadlineExceededEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let oxUserId: OXUserID;
         let event: PersonDeletedAfterDeadlineExceededEvent;
         let person: Person<true>;

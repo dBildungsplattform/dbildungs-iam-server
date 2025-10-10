@@ -6,7 +6,7 @@ import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 import { KafkaLdapSyncCompletedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-completed.event.js';
 import { LdapSyncCompletedEvent } from '../../../shared/events/ldap/ldap-sync-completed.event.js';
-import { OrganisationID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID, PersonUsername, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonEmailIdentifier, PersonIdentifier } from '../../../core/logging/person-identifier.js';
 import { Person } from '../../person/domain/person.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
@@ -67,7 +67,7 @@ export class OxSyncEventHandler {
         await this.sync(event.personId, event.username);
     }
 
-    private async getPerson(personId: PersonID, username: PersonReferrer): Promise<PersonEmailIdentifier | undefined> {
+    private async getPerson(personId: PersonID, username: PersonUsername): Promise<PersonEmailIdentifier | undefined> {
         const personIdentifier: PersonIdentifier = {
             personId: personId,
             username: username,
@@ -78,7 +78,7 @@ export class OxSyncEventHandler {
             this.logger.errorPersonalized(`Person not found`, personIdentifier);
             return undefined;
         }
-        if (!person.referrer) {
+        if (!person.username) {
             this.logger.errorPersonalized(
                 `Person has no username: Cannot Change Email-Address In OX`,
                 personIdentifier,
@@ -94,19 +94,19 @@ export class OxSyncEventHandler {
             personId: personId,
             username: username,
             oxUserId: person.oxUserId,
-            oxUserName: person.referrer,
+            oxUserName: person.username,
             person: person,
         };
     }
 
-    public async sync(personId: PersonID, username: PersonReferrer): Promise<void> {
+    public async sync(personId: PersonID, username: PersonUsername): Promise<void> {
         await this.changeOxUser(personId, username, generateOxUserChangedEvent);
         await this.changeUsersGroups(personId, username);
     }
 
     private async getOrganisationKennungen(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
     ): Promise<string[] | OxSyncError> {
         // Get all PKs
         const kontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(personId);
@@ -164,7 +164,7 @@ export class OxSyncEventHandler {
 
     private async changeOxUser(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         eventCreator: OxUserChangedEventCreator,
     ): Promise<void> {
         const personIdentifier: PersonIdentifier = {
@@ -200,7 +200,7 @@ export class OxSyncEventHandler {
             aliases,
             personEmailIdentifier.person.vorname,
             personEmailIdentifier.person.familienname,
-            personEmailIdentifier.person.referrer, //IS EXPLICITLY NOT SET to vorname+familienname
+            personEmailIdentifier.person.username, //IS EXPLICITLY NOT SET to vorname+familienname
             currentEmailAddressString,
             currentEmailAddressString,
         );
@@ -267,7 +267,7 @@ export class OxSyncEventHandler {
         );
     }
 
-    private async changeUsersGroups(personId: PersonID, username: PersonReferrer): Promise<void> {
+    private async changeUsersGroups(personId: PersonID, username: PersonUsername): Promise<void> {
         const personIdentifier: PersonIdentifier = {
             personId: personId,
             username: username,

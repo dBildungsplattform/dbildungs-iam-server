@@ -14,7 +14,6 @@ export type PersonCreationParams = {
     id?: number;
     familienname: string;
     vorname: string;
-    referrer?: string;
     stammorganisation?: string;
     username?: string;
     password?: string;
@@ -45,7 +44,6 @@ export class Person<WasPersisted extends boolean> {
         public revision: string,
         public username: string | undefined,
         public keycloakUserId: string | undefined,
-        public referrer: string | undefined,
         public stammorganisation: string | undefined,
         public personalnummer: string | undefined,
         public userLock: UserLock[],
@@ -76,7 +74,6 @@ export class Person<WasPersisted extends boolean> {
         revision: string,
         username?: string,
         keycloakUserId?: string,
-        referrer?: string,
         stammorganisation?: string,
         personalnummer?: string,
         orgUnassignmentDate?: Date,
@@ -96,7 +93,6 @@ export class Person<WasPersisted extends boolean> {
             revision,
             username,
             keycloakUserId,
-            referrer,
             stammorganisation,
             personalnummer,
             userLock,
@@ -132,7 +128,6 @@ export class Person<WasPersisted extends boolean> {
             '1',
             undefined, //username
             undefined, //keycloakUserId
-            creationParams.referrer,
             creationParams.stammorganisation,
             creationParams.personalnummer,
             creationParams.userLock ?? [],
@@ -171,7 +166,7 @@ export class Person<WasPersisted extends boolean> {
         revision: string,
         familienname?: string,
         vorname?: string,
-        referrer?: string,
+        username?: string,
         stammorganisation?: string,
         personalnummer?: string,
         userLock?: UserLock[],
@@ -201,7 +196,7 @@ export class Person<WasPersisted extends boolean> {
 
         this.familienname = familienname ?? this.familienname;
         this.vorname = vorname ?? this.vorname;
-        this.referrer = referrer;
+        this.username = username ?? this.username;
         this.stammorganisation = stammorganisation;
         this.revision = newRevision;
         this.personalnummer = personalnummer ?? this.personalnummer;

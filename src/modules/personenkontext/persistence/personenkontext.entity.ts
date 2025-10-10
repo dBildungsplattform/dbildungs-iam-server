@@ -41,7 +41,7 @@ export class PersonenkontextEntity extends TimestampedEntity {
     public rolleId!: Ref<RolleEntity>;
 
     @Property({ nullable: true })
-    public referrer?: string;
+    public username?: string;
 
     // TODO EW-636: mandant is related to organizations so it is not set for now. When implemented should be set to nullable: false
 

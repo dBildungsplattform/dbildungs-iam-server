@@ -6,7 +6,7 @@ import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import { OrganisationID, PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
@@ -111,7 +111,7 @@ export class LdapEventHandler {
         this.logger.info(
             `Received PersonRenamedEvent, personId:${event.personId}, username:${event.username}, oldUsername:${event.oldUsername}`,
         );
-        const modifyResult: Result<PersonReferrer> = await this.ldapClientService.modifyPersonAttributes(
+        const modifyResult: Result<PersonUsername> = await this.ldapClientService.modifyPersonAttributes(
             event.oldUsername,
             event.vorname,
             event.familienname,

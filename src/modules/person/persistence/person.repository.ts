@@ -34,7 +34,7 @@ import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonUsername, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
 import { mapDefinedObjectProperties } from '../../../shared/util/object-utils.js';
@@ -148,7 +148,7 @@ export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<
 
     return {
         keycloakUserId: person.keycloakUserId!,
-        referrer: person.referrer,
+        username: person.username,
         mandant: person.mandant,
         stammorganisation: person.stammorganisation,
         familienname: person.familienname,
@@ -179,9 +179,8 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.familienname,
         entity.vorname,
         entity.revision,
-        undefined,
+        entity.username,
         entity.keycloakUserId,
-        entity.referrer,
         entity.stammorganisation,
         entity.personalnummer,
         entity.orgUnassignmentDate,
@@ -287,7 +286,7 @@ export class PersonRepository {
     }
 
     public async findByUsername(username: string): Promise<Person<true>[]> {
-        const entities: PersonEntity[] = await this.em.find(PersonEntity, { referrer: username });
+        const entities: PersonEntity[] = await this.em.find(PersonEntity, { username: username });
         return entities.map(mapEntityToAggregate);
     }
 
@@ -508,7 +507,7 @@ export class PersonRepository {
         const person: Person<true> = deletePermissionResult.value;
 
         this.logger.info(
-            `Person wird gelöscht ${person?.referrer} - (${person?.id}) - ${person.createdAt?.toISOString()} - (${person.externalIds.LDAP ?? 'kein LDAP'})`,
+            `Person wird gelöscht ${person?.username} - (${person?.id}) - ${person.createdAt?.toISOString()} - (${person.externalIds.LDAP ?? 'kein LDAP'})`,
         );
 
         // Check if the person has a keycloakUserId
@@ -526,10 +525,10 @@ export class PersonRepository {
 
         this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
-        if (person.referrer !== undefined) {
+        if (person.username !== undefined) {
             this.eventRoutingLegacyKafkaService.publish(
-                new PersonDeletedEvent(personId, person.referrer, person.email),
-                new KafkaPersonDeletedEvent(personId, person.referrer, person.email),
+                new PersonDeletedEvent(personId, person.username, person.email),
+                new KafkaPersonDeletedEvent(personId, person.username, person.email),
             );
         }
 
@@ -550,7 +549,7 @@ export class PersonRepository {
         const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
             {
                 id: personId,
-                username: person.referrer,
+                username: person.username,
                 familienname: person.familienname,
                 vorname: person.vorname,
                 email: person.email,
@@ -562,7 +561,7 @@ export class PersonRepository {
         const kafkaPersonenkontextUpdatedEvent: KafkaPersonenkontextUpdatedEvent = new KafkaPersonenkontextUpdatedEvent(
             {
                 id: personId,
-                username: person.referrer,
+                username: person.username,
                 familienname: person.familienname,
                 vorname: person.vorname,
                 email: person.email,
@@ -604,7 +603,7 @@ export class PersonRepository {
         const person: Person<true> = dpResult.value;
 
         this.logger.info(
-            `Person wird gelöscht ${person?.referrer} - (${person?.id}) - ${person.createdAt?.toISOString()} - (${person.externalIds.LDAP ?? 'kein LDAP'})`,
+            `Person wird gelöscht ${person?.username} - (${person?.id}) - ${person.createdAt?.toISOString()} - (${person.externalIds.LDAP ?? 'kein LDAP'})`,
         );
 
         // Check if the person has a keycloakUserId
@@ -622,7 +621,7 @@ export class PersonRepository {
 
         this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
-        if (!person.referrer) {
+        if (!person.username) {
             this.logger.error(
                 `Failure during creation of PersonDeletedAfterDeadlineExceededEvent, username UNDEFINED, personId:${personId}`,
             );
@@ -632,10 +631,10 @@ export class PersonRepository {
                 `Failure during creation of PersonDeletedAfterDeadlineExceededEvent, oxUserId UNDEFINED, personId:${personId}`,
             );
         }
-        if (person.referrer && person.oxUserId) {
+        if (person.username && person.oxUserId) {
             this.eventRoutingLegacyKafkaService.publish(
-                new PersonDeletedAfterDeadlineExceededEvent(personId, person.referrer, person.oxUserId),
-                new KafkaPersonDeletedAfterDeadlineExceededEvent(personId, person.referrer, person.oxUserId),
+                new PersonDeletedAfterDeadlineExceededEvent(personId, person.username, person.oxUserId),
+                new KafkaPersonDeletedAfterDeadlineExceededEvent(personId, person.username, person.oxUserId),
             );
         }
 
@@ -732,12 +731,12 @@ export class PersonRepository {
         }
     }
 
-    public getReferrer(personEntity: Loaded<PersonEntity>): PersonReferrer | undefined {
-        return personEntity.referrer;
+    public getUsername(personEntity: Loaded<PersonEntity>): PersonUsername | undefined {
+        return personEntity.username;
     }
 
     public async update(person: Person<true>): Promise<Person<true> | DomainError> {
-        let oldReferrer: PersonReferrer | undefined = '';
+        let oldUsername: PersonUsername | undefined = '';
         const personEntity: Loaded<PersonEntity> = await this.em.findOneOrFail(PersonEntity, person.id);
         const isPersonRenamedEventNecessary: boolean = this.hasChangedNames(personEntity, person);
 
@@ -762,10 +761,10 @@ export class PersonRepository {
             }
         }
 
-        //save old referrer for person-renamed-event before updating the person
+        //save old username for person-renamed-event before updating the person
         if (isPersonRenamedEventNecessary) {
-            oldReferrer = this.getReferrer(personEntity);
-            if (!oldReferrer) {
+            oldUsername = this.getUsername(personEntity);
+            if (!oldUsername) {
                 const result: Result<string, DomainError> = await this.usernameGenerator.generateUsername(
                     person.vorname,
                     person.familienname,
@@ -773,7 +772,7 @@ export class PersonRepository {
                 if (!result.ok) {
                     return result.error;
                 }
-                oldReferrer = result.value;
+                oldUsername = result.value;
             }
         }
 
@@ -782,10 +781,10 @@ export class PersonRepository {
 
         if (isPersonRenamedEventNecessary) {
             this.eventRoutingLegacyKafkaService.publish(
-                PersonRenamedEvent.fromPerson(person, oldReferrer, personEntity.vorname, personEntity.familienname),
+                PersonRenamedEvent.fromPerson(person, oldUsername, personEntity.vorname, personEntity.familienname),
                 KafkaPersonRenamedEvent.fromPerson(
                     person,
-                    oldReferrer,
+                    oldUsername,
                     personEntity.vorname,
                     personEntity.familienname,
                 ),
@@ -822,7 +821,6 @@ export class PersonRepository {
             return new EntityCouldNotBeCreated('Person');
         }
 
-        person.referrer = person.username;
         const userDo: User<false> = User.createNew(person.username, undefined, {
             ID_NEXTCLOUD: [person.id],
             ID_ITSLEARNING: [person.id],
@@ -863,7 +861,6 @@ export class PersonRepository {
         if (person.keycloakUserId || !person.username) {
             return new EntityCouldNotBeCreated('Person');
         }
-        person.referrer = person.username;
         const userDo: User<false> = User.createNew(person.username, undefined, {
             ID_ITSLEARNING: [person.id],
         });
@@ -893,9 +890,9 @@ export class PersonRepository {
     }
 
     private readonly SORT_CRITERIA: Partial<Record<SortFieldPerson, SortFieldPerson[]>> = {
-        [SortFieldPerson.VORNAME]: [SortFieldPerson.FAMILIENNAME, SortFieldPerson.REFERRER],
-        [SortFieldPerson.FAMILIENNAME]: [SortFieldPerson.VORNAME, SortFieldPerson.REFERRER],
-        [SortFieldPerson.PERSONALNUMMER]: [SortFieldPerson.REFERRER],
+        [SortFieldPerson.VORNAME]: [SortFieldPerson.FAMILIENNAME, SortFieldPerson.USERNAME],
+        [SortFieldPerson.FAMILIENNAME]: [SortFieldPerson.VORNAME, SortFieldPerson.USERNAME],
+        [SortFieldPerson.PERSONALNUMMER]: [SortFieldPerson.USERNAME],
     };
 
     public createPersonScope(queryParams: PersonenQueryParams, permittedOrgas: PermittedOrgas): PersonScope {
@@ -925,7 +922,7 @@ export class PersonRepository {
     }
 
     private addSortCriteria(scope: PersonScope, criteria: SortFieldPerson, order: ScopeOrder = ScopeOrder.ASC): void {
-        if (criteria === SortFieldPerson.REFERRER) {
+        if (criteria === SortFieldPerson.USERNAME) {
             scope.sortBy(criteria, order);
         } else {
             scope.sortBy(raw(`lower(${criteria})`), order);
@@ -992,7 +989,7 @@ export class PersonRepository {
         let newPersonalnummer: string | undefined = undefined;
         let newVorname: string | undefined = undefined;
         let newFamilienname: string | undefined = undefined;
-        const oldUsername: string = personFound.referrer!;
+        const oldUsername: string = personFound.username!;
         let username: string = oldUsername;
 
         //Update personalnummer
@@ -1026,12 +1023,12 @@ export class PersonRepository {
                             [lockResult.error.details],
                         );
                         this.logger.error(
-                            `Die Sperre aufgrund von fehlender KoPers.-Nr. für Benutzer ${personFound.referrer} (BenutzerId: ${personFound.id}) konnte durch Nachtragen der KoPers.-Nr. nicht aufgehoben werden. Fehler: ${keyCloakUpdateError.message}`,
+                            `Die Sperre aufgrund von fehlender KoPers.-Nr. für Benutzer ${personFound.username} (BenutzerId: ${personFound.id}) konnte durch Nachtragen der KoPers.-Nr. nicht aufgehoben werden. Fehler: ${keyCloakUpdateError.message}`,
                         );
                         throw keyCloakUpdateError;
                     }
                     this.logger.info(
-                        `Die Sperre aufgrund von fehlender KoPers.-Nr. für Benutzer ${personFound.referrer} (BenutzerId: ${personFound.id}) wurde durch Nachtragen der KoPers.-Nr. aufgehoben.`,
+                        `Die Sperre aufgrund von fehlender KoPers.-Nr. für Benutzer ${personFound.username} (BenutzerId: ${personFound.id}) wurde durch Nachtragen der KoPers.-Nr. aufgehoben.`,
                     );
                 }
             }

@@ -4,8 +4,8 @@ import { Flavor } from './flavor.types.js';
 declare const personSymbol: unique symbol;
 export type PersonID = Flavor<string, typeof personSymbol>;
 
-declare const personReferrerSymbol: unique symbol;
-export type PersonReferrer = Flavor<string, typeof personReferrerSymbol>;
+declare const personUsernameSymbol: unique symbol;
+export type PersonUsername = Flavor<string, typeof personUsernameSymbol>;
 
 declare const organisationSymbol: unique symbol;
 export type OrganisationID = Flavor<string, typeof organisationSymbol>;

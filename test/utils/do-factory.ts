@@ -111,7 +111,7 @@ export class DoFactory {
             rolleId: faker.string.uuid(),
             jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
             personenstatus: Personenstatus.AKTIV,
-            referrer: 'referrer',
+            username: 'username',
             sichtfreigabe: SichtfreigabeType.JA,
             loeschungZeitpunkt: faker.date.anytime(),
             befristung: faker.date.anytime(),

@@ -88,7 +88,7 @@ describe('PersonenkontextScope', () => {
 
             it('should return found personenkontexte', async () => {
                 const scope: PersonenkontextScope = new PersonenkontextScope()
-                    .findBy({ referrer: 'referrer' })
+                    .findBy({ username: 'username' })
                     .sortBy('id', ScopeOrder.ASC)
                     .paged(10, 10);
                 const [personenkontext, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(em);

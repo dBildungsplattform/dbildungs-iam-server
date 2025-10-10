@@ -9,7 +9,7 @@ import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../.
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { faker } from '@faker-js/faker';
-import { OrganisationID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID, PersonUsername, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { Person } from '../../person/domain/person.js';
 import { OxSyncEventHandler } from './ox-sync-event-handler.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -253,7 +253,7 @@ describe('OxSyncEventHandler', () => {
 
     describe('changeOxUser', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let oxUserId: OXUserID;
         let personIdentifier: PersonIdentifier;
         let event: LdapSyncCompletedEvent;
@@ -272,7 +272,7 @@ describe('OxSyncEventHandler', () => {
             event = new LdapSyncCompletedEvent(personId, username);
             person = createMock<Person<true>>({
                 email: faker.internet.email(),
-                referrer: faker.internet.userName(),
+                username: faker.internet.userName(),
                 oxUserId: oxUserId,
             });
             address = faker.internet.email();
@@ -301,7 +301,7 @@ describe('OxSyncEventHandler', () => {
 
         describe('when persons username is NOT defined', () => {
             it('should log error and return without proceeding', async () => {
-                person = createMock<Person<true>>({ referrer: undefined });
+                person = createMock<Person<true>>({ username: undefined });
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
 
                 await sut.ldapSyncCompletedEventHandler(event);
@@ -538,7 +538,7 @@ describe('OxSyncEventHandler', () => {
 
     describe('getOrganisationKennungen', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let oxUserId: OXUserID;
         let event: LdapSyncCompletedEvent;
         let person: Person<true>;
@@ -552,7 +552,7 @@ describe('OxSyncEventHandler', () => {
             event = new LdapSyncCompletedEvent(personId, username);
             person = createMock<Person<true>>({
                 email: faker.internet.email(),
-                referrer: faker.internet.userName(),
+                username: faker.internet.userName(),
                 oxUserId: oxUserId,
             });
             address = faker.internet.email();

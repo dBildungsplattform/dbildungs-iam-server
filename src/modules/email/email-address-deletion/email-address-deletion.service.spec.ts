@@ -107,7 +107,7 @@ describe('EmailAddressDeletionService', () => {
         for (let i: number = 0; i < size; i++) {
             const person: Person<true> = createMock<Person<true>>({
                 id: faker.string.uuid(),
-                referrer: faker.internet.userName(),
+                username: faker.internet.userName(),
                 vorname: faker.person.firstName(),
                 familienname: faker.person.lastName(),
             });
@@ -278,7 +278,7 @@ describe('EmailAddressDeletionService', () => {
                 await sut.checkRemainingEmailAddressesByPersonId(personId, oxUserId);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, username:${persons[0].referrer}`,
+                    `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, username:${persons[0].username}`,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
@@ -294,7 +294,7 @@ describe('EmailAddressDeletionService', () => {
                 await sut.checkRemainingEmailAddressesByPersonId(personId, oxUserId);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, username:${persons[0].referrer}`,
+                    `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, username:${persons[0].username}`,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
             });

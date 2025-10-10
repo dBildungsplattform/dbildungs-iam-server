@@ -6,7 +6,7 @@ describe('KafkaLdapSyncFailedEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {
         const person: Person<true> = DoFactory.createPerson(true);
 
-        const event: KafkaLdapSyncFailedEvent = new KafkaLdapSyncFailedEvent(person.id, person.referrer!);
+        const event: KafkaLdapSyncFailedEvent = new KafkaLdapSyncFailedEvent(person.id, person.username!);
 
         expect(event).toBeInstanceOf(KafkaLdapSyncFailedEvent);
         expect(event.kafkaKey).toBe(person.id);

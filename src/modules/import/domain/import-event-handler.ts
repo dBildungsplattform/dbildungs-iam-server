@@ -159,7 +159,7 @@ export class ImportEventHandler {
                 return;
             }
 
-            importDataItem.username = savedPersonWithPersonenkontext.person.referrer;
+            importDataItem.username = savedPersonWithPersonenkontext.person.username;
             importDataItem.password = await this.importPasswordEncryptor.encryptPassword(
                 savedPersonWithPersonenkontext.person.newPassword,
             );
@@ -167,7 +167,7 @@ export class ImportEventHandler {
             await this.importDataRepository.save(importDataItem);
 
             this.logger.info(
-                `Created user ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}).`,
+                `Created user ${savedPersonWithPersonenkontext.person.username} (${savedPersonWithPersonenkontext.person.id}).`,
             );
         } catch (error) {
             this.logger.logUnknownAsError(

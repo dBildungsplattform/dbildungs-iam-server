@@ -6,7 +6,7 @@ export class PersonResponseAutomapper {
     public id!: string;
 
     @ApiProperty()
-    public referrer?: string;
+    public username?: string;
 
     @ApiProperty()
     public mandant: string = '';
@@ -28,7 +28,7 @@ export class PersonResponseAutomapper {
 
     public constructor(props: Partial<PersonResponseAutomapper>) {
         this.id = props.id!;
-        this.referrer = props.referrer;
+        this.username = props.username;
         this.mandant = props.mandant!;
         this.name = props.name!;
         this.stammorganisation = props.stammorganisation;

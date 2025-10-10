@@ -1,12 +1,12 @@
 import { faker } from '@faker-js/faker';
 
-import { EmailAddressID, PersonID, PersonReferrer } from '../../types/aggregate-ids.types.js';
+import { EmailAddressID, PersonID, PersonUsername } from '../../types/aggregate-ids.types.js';
 import { KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent } from './kafka-email-address-generated-after-ldap-sync-failed.event.js';
 
 describe('KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {
         const personId: PersonID = faker.string.uuid();
-        const username: PersonReferrer = 'test-username';
+        const username: PersonUsername = 'test-username';
         const emailAddressId: EmailAddressID = faker.string.uuid();
         const enabled: boolean = true;
         const emailAddress: string = faker.internet.userName();

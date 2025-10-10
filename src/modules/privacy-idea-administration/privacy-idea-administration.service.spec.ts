@@ -28,7 +28,7 @@ import { DeleteUserError } from './api/error/delete-user.error.js';
 import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
 import { TokenStateError } from './api/error/token-state.error.js';
 import { PIUnavailableError } from './api/error/pi-unavailable.error.js';
-import { PersonReferrer } from '../../shared/types/aggregate-ids.types.js';
+import { PersonUsername } from '../../shared/types/aggregate-ids.types.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -932,7 +932,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
     });
 
     describe('deleteUser', () => {
-        const referrer: PersonReferrer = faker.string.alpha();
+        const username: PersonUsername = faker.string.alpha();
         let mockJWTToken: string;
         beforeEach(() => {
             mockJWTToken = faker.string.alpha();
@@ -947,7 +947,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValue(mockTokenResponse());
             httpServiceMock.delete.mockReturnValue(mockEmptyPostResponse());
 
-            await expect(service.deleteUserWrapper(referrer)).resolves.toEqual({ ok: true, value: undefined });
+            await expect(service.deleteUserWrapper(username)).resolves.toEqual({ ok: true, value: undefined });
             expect(httpServiceMock.delete).toHaveBeenCalledTimes(1);
         });
 
@@ -956,7 +956,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValue(mockTokenResponse());
             httpServiceMock.delete.mockImplementationOnce(mockErrorResponse);
 
-            await expect(service.deleteUserWrapper(referrer)).resolves.toEqual({
+            await expect(service.deleteUserWrapper(username)).resolves.toEqual({
                 ok: false,
                 error: new DeleteUserError(),
             });
@@ -967,7 +967,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValue(mockTokenResponse());
             httpServiceMock.delete.mockImplementationOnce(mockNonErrorThrow);
 
-            await expect(service.deleteUserWrapper(referrer)).resolves.toEqual({
+            await expect(service.deleteUserWrapper(username)).resolves.toEqual({
                 ok: false,
                 error: new DeleteUserError(),
             });

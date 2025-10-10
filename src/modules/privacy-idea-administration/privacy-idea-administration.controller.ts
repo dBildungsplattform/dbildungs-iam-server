@@ -41,7 +41,7 @@ import { TokenInitBodyParams } from './token-init.body.params.js';
 import { TokenStateResponse } from './token-state.response.js';
 import { TokenVerifyBodyParams } from './token-verify.params.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
-import { PersonReferrer } from '../../shared/types/aggregate-ids.types.js';
+import { PersonUsername } from '../../shared/types/aggregate-ids.types.js';
 import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
 
 @UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
@@ -70,15 +70,15 @@ export class PrivacyIdeaAdministrationController {
     ): Promise<string> {
         const selfService: boolean = params.personId === permissions.personFields.id;
         try {
-            const referrer: string = await this.getReferrerIfAllowedOrSelf(params.personId, permissions);
+            const username: string = await this.getUsernameIfAllowedOrSelf(params.personId, permissions);
             const result: string = await this.privacyIdeaAdministrationService.initializeSoftwareToken(
-                referrer,
+                username,
                 selfService,
             );
 
             if (!selfService) {
                 this.logger.info(
-                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat für Benutzer ${referrer} (BenutzerId: ${params.personId}) den 2FA Token zurückgesetzt. Seriennummer: <Token ID> (Seriennummer nur falls HW Token!)`,
+                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat für Benutzer ${username} (BenutzerId: ${params.personId}) den 2FA Token zurückgesetzt. Seriennummer: <Token ID> (Seriennummer nur falls HW Token!)`,
                 );
             }
             return result;
@@ -104,9 +104,9 @@ export class PrivacyIdeaAdministrationController {
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
     ): Promise<TokenStateResponse> {
-        const referrer: PersonReferrer = await this.getReferrerIfAllowedOrSelf(personId, permissions);
+        const username: PersonUsername = await this.getUsernameIfAllowedOrSelf(personId, permissions);
         const piToken: PrivacyIdeaToken | undefined =
-            await this.privacyIdeaAdministrationService.getTwoAuthState(referrer);
+            await this.privacyIdeaAdministrationService.getTwoAuthState(username);
         return new TokenStateResponse(piToken);
     }
 
@@ -123,11 +123,11 @@ export class PrivacyIdeaAdministrationController {
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
     ): Promise<boolean> {
-        const referrer: PersonReferrer = await this.getReferrerIfAllowed(personId, permissions);
+        const username: PersonUsername = await this.getUsernameIfAllowed(personId, permissions);
         try {
-            const response: ResetTokenResponse = await this.privacyIdeaAdministrationService.resetToken(referrer);
+            const response: ResetTokenResponse = await this.privacyIdeaAdministrationService.resetToken(username);
             this.logger.info(
-                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat für Benutzer ${referrer} (BenutzerId: ${personId}) den 2FA Token zurückgesetzt.`,
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat für Benutzer ${username} (BenutzerId: ${personId}) den 2FA Token zurückgesetzt.`,
             );
             return response.result.status;
         } catch (error) {
@@ -139,7 +139,7 @@ export class PrivacyIdeaAdministrationController {
             }
             const schulConnexError: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityCouldNotBeUpdated(referrer, 'Token could not be unassigned.'),
+                    new EntityCouldNotBeUpdated(username, 'Token could not be unassigned.'),
                 ),
             );
             this.logger.error(
@@ -164,15 +164,15 @@ export class PrivacyIdeaAdministrationController {
         @Body() params: AssignHardwareTokenBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<AssignHardwareTokenResponse | undefined> {
-        const referrer: PersonReferrer = await this.getReferrerIfAllowed(params.userId, permissions);
+        const username: PersonUsername = await this.getUsernameIfAllowed(params.userId, permissions);
         try {
             const result: AssignTokenResponse = await this.privacyIdeaAdministrationService.assignHardwareToken(
                 params.serial,
                 params.otp,
-                referrer,
+                username,
             );
             this.logger.info(
-                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat Benutzer ${referrer} (BenutzerId: ${params.userId}) ein Hardware-Token zugewiesen. Seriennummer: ${params.serial}`,
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat Benutzer ${username} (BenutzerId: ${params.userId}) ein Hardware-Token zugewiesen. Seriennummer: ${params.serial}`,
             );
             return new AssignHardwareTokenResponse(
                 result.id,
@@ -186,7 +186,7 @@ export class PrivacyIdeaAdministrationController {
         } catch (error) {
             if (error instanceof TokenError) {
                 this.logger.error(
-                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht Benutzer ${referrer} (BenutzerId: ${params.userId}) einen Hardware-Token zuzuweisen. Fehler: ${error.message}`,
+                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht Benutzer ${username} (BenutzerId: ${params.userId}) einen Hardware-Token zuzuweisen. Fehler: ${error.message}`,
                 );
                 throw error;
             }
@@ -196,7 +196,7 @@ export class PrivacyIdeaAdministrationController {
                 ),
             );
             this.logger.error(
-                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht Benutzer ${referrer} (BenutzerId: ${params.userId}) einen Hardware-Token zuzuweisen. Fehler: ${schulConnexError.message}`,
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht Benutzer ${username} (BenutzerId: ${params.userId}) einen Hardware-Token zuzuweisen. Fehler: ${schulConnexError.message}`,
             );
             throw schulConnexError;
         }
@@ -214,15 +214,15 @@ export class PrivacyIdeaAdministrationController {
         @Body() params: TokenVerifyBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        const referrer: PersonReferrer = await this.getReferrerIfAllowedOrSelf(params.personId, permissions);
+        const username: PersonUsername = await this.getUsernameIfAllowedOrSelf(params.personId, permissions);
         try {
-            await this.privacyIdeaAdministrationService.verifyTokenEnrollment(referrer, params.otp);
+            await this.privacyIdeaAdministrationService.verifyTokenEnrollment(username, params.otp);
             this.logger.info(
-                `Benutzer ${referrer} (BenutzerId: ${params.personId}) hat sich einen Software-Token für 2FA eingerichtet.`,
+                `Benutzer ${username} (BenutzerId: ${params.personId}) hat sich einen Software-Token für 2FA eingerichtet.`,
             );
         } catch (error) {
             this.logger.error(
-                `Benutzer ${referrer} (BenutzerId: ${params.personId}) hat versucht eine 2FA einzurichten.`,
+                `Benutzer ${username} (BenutzerId: ${params.personId}) hat versucht eine 2FA einzurichten.`,
                 error,
             );
             throw error;
@@ -245,14 +245,14 @@ export class PrivacyIdeaAdministrationController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<TokenRequiredResponse> {
         if (personId !== permissions.personFields.id) {
-            await this.getReferrerIfAllowedOrSelf(personId, permissions);
+            await this.getUsernameIfAllowedOrSelf(personId, permissions);
         }
 
         const requires2fa: boolean = await this.privacyIdeaAdministrationService.requires2fa(personId);
         return new TokenRequiredResponse(requires2fa);
     }
 
-    private async getReferrerIfAllowed(personId: string, permissions: PersonPermissions): Promise<string> {
+    private async getUsernameIfAllowed(personId: string, permissions: PersonPermissions): Promise<string> {
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             personId,
             permissions,
@@ -260,24 +260,24 @@ export class PrivacyIdeaAdministrationController {
         if (!personResult.ok) {
             throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
         }
-        if (personResult.value.referrer === undefined) {
+        if (personResult.value.username === undefined) {
             throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
         }
-        return personResult.value.referrer;
+        return personResult.value.username;
     }
 
-    private async getReferrerIfAllowedOrSelf(
+    private async getUsernameIfAllowedOrSelf(
         personId: string,
         permissions: PersonPermissions,
-    ): Promise<PersonReferrer> {
+    ): Promise<PersonUsername> {
         if (personId === permissions.personFields.id) {
             const person: Option<Person<true>> = await this.personRepository.findById(personId);
-            if (!person?.referrer) {
+            if (!person?.username) {
                 throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
             }
-            return person.referrer;
+            return person.username;
         } else {
-            return this.getReferrerIfAllowed(personId, permissions);
+            return this.getUsernameIfAllowed(personId, permissions);
         }
     }
 }

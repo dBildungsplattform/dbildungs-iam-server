@@ -85,7 +85,7 @@ export class EmailAddressDeletionService {
                 processed++;
                 continue;
             }
-            const username: string | undefined = personMap.get(ea.personId)?.referrer;
+            const username: string | undefined = personMap.get(ea.personId)?.username;
             if (!username) {
                 this.logger.error(
                     `Could NOT get username when generating EmailAddressDeletedEvent, personId:${ea.personId}`,
@@ -138,15 +138,15 @@ export class EmailAddressDeletionService {
             await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
         if (allEmailAddressesForPerson.length === 0) {
             this.logger.info(
-                `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, username:${person.referrer}`,
+                `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, username:${person.username}`,
             );
             return this.eventService.publish(
-                new EmailAddressesPurgedEvent(personId, person.referrer, oxUserId),
-                new KafkaEmailAddressesPurgedEvent(personId, person.referrer, oxUserId),
+                new EmailAddressesPurgedEvent(personId, person.username, oxUserId),
+                new KafkaEmailAddressesPurgedEvent(personId, person.username, oxUserId),
             );
         }
         this.logger.info(
-            `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, username:${person.referrer}`,
+            `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, username:${person.username}`,
         );
     }
 }

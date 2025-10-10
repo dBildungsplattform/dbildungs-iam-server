@@ -1,4 +1,4 @@
-import { EmailAddressID, PersonID, PersonReferrer } from '../../types/aggregate-ids.types.js';
+import { EmailAddressID, PersonID, PersonUsername } from '../../types/aggregate-ids.types.js';
 import { BaseEvent } from '../base-event.js';
 
 /**
@@ -10,7 +10,7 @@ import { BaseEvent } from '../base-event.js';
 export class DisabledEmailAddressGeneratedEvent extends BaseEvent {
     public constructor(
         public readonly personId: PersonID,
-        public readonly username: PersonReferrer,
+        public readonly username: PersonUsername,
         public readonly emailAddressId: EmailAddressID,
         public readonly address: string,
         public readonly domain: string,

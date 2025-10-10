@@ -76,7 +76,7 @@ export class ItsLearningSyncEventHandler {
         }
 
         // Check if person has a username
-        if (!person.referrer) {
+        if (!person.username) {
             return this.logger.error(`[EventID: ${event.eventID}] Person with ID ${event.personId} has no username!`);
         }
 
@@ -140,7 +140,7 @@ export class ItsLearningSyncEventHandler {
                     id: person.id,
                     firstName: person.vorname,
                     lastName: person.familienname,
-                    username: person.referrer,
+                    username: person.username,
                     institutionRoleType: rollenartToIMSESInstitutionRole(targetRole),
                     email: person.email,
                 },

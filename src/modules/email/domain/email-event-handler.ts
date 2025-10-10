@@ -33,7 +33,7 @@ import {
     OrganisationID,
     OrganisationKennung,
     PersonID,
-    PersonReferrer,
+    PersonUsername,
 } from '../../../shared/types/index.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -63,7 +63,7 @@ import { OxSyncUserCreatedEvent } from '../../../shared/events/ox/ox-sync-user-c
 
 export type EmailAddressGeneratedCreator = (
     personId: PersonID,
-    username: PersonReferrer,
+    username: PersonUsername,
     emailAddressId: EmailAddressID,
     address: string,
     enabled: boolean,
@@ -73,7 +73,7 @@ export type EmailAddressGeneratedCreator = (
 
 export const generateEmailAddressGeneratedEvent: EmailAddressGeneratedCreator = (
     personId: PersonID,
-    username: PersonReferrer,
+    username: PersonUsername,
     emailAddressId: EmailAddressID,
     address: string,
     enabled: boolean,
@@ -104,7 +104,7 @@ export const generateEmailAddressGeneratedEvent: EmailAddressGeneratedCreator = 
 
 export const generateEmailAddressGeneratedAfterLdapSyncFailedEvent: EmailAddressGeneratedCreator = (
     personId: PersonID,
-    username: PersonReferrer,
+    username: PersonUsername,
     emailAddressId: EmailAddressID,
     address: string,
     enabled: boolean,
@@ -388,16 +388,16 @@ export class EmailEventHandler {
 
         const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByRolle(event.id);
 
-        //const personIdReferrerSet: Set<[PersonID, PersonReferrer]> = new Set<[PersonID, PersonReferrer]>();
+        //const personIdUsernameSet: Set<[PersonID, PersonUsername]> = new Set<[PersonID, PersonUsername]>();
 
-        const personIdUsernameMap: Map<PersonID, PersonReferrer | undefined> = new Map<
+        const personIdUsernameMap: Map<PersonID, PersonUsername | undefined> = new Map<
             PersonID,
-            PersonReferrer | undefined
+            PersonUsername | undefined
         >();
         const personIdsSet: Set<PersonID> = new Set<PersonID>();
         personenkontexte.forEach((pk: Personenkontext<true>) => {
             personIdsSet.add(pk.personId);
-            personIdUsernameMap.set(pk.personId, pk.referrer);
+            personIdUsernameMap.set(pk.personId, pk.username);
         });
         const distinctPersonIds: PersonID[] = Array.from(personIdsSet.values());
 
@@ -440,7 +440,7 @@ export class EmailEventHandler {
         }
     }
 
-    private async getPersonUsernameOrError(personId: PersonID): Promise<Result<PersonReferrer>> {
+    private async getPersonUsernameOrError(personId: PersonID): Promise<Result<PersonUsername>> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
 
         if (!person) {
@@ -450,7 +450,7 @@ export class EmailEventHandler {
                 error: new EntityNotFoundError('Person', personId),
             };
         }
-        if (!person.referrer) {
+        if (!person.username) {
             this.logger.error(`Username Could Not Be Found For personId:${personId}`);
             return {
                 ok: false,
@@ -458,15 +458,15 @@ export class EmailEventHandler {
             };
         }
 
-        this.logger.info(`Found username:${person.referrer} for personId:${personId}`);
+        this.logger.info(`Found username:${person.username} for personId:${personId}`);
 
         return {
             ok: true,
-            value: person.referrer,
+            value: person.username,
         };
     }
 
-    private async handlePersonDueToLdapSyncFailed(personId: PersonID, username: PersonReferrer): Promise<void> {
+    private async handlePersonDueToLdapSyncFailed(personId: PersonID, username: PersonUsername): Promise<void> {
         // Map to store combinations of rolleId and organisationId as the key
         const rolleIdPKMap: Map<string, Personenkontext<true>> = new Map<string, Personenkontext<true>>();
 
@@ -509,7 +509,7 @@ export class EmailEventHandler {
 
     private async handlePersonWithEmailSPReferenceAfterLdapSyncFailed(
         personId: PersonID,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
         personenkontexte: Personenkontext<true>[],
         rollenIdWithSPReference: string,
         rolleIdPKMap: Map<string, Personenkontext<true>>,
@@ -547,7 +547,7 @@ export class EmailEventHandler {
 
     private async handlePerson(
         personId: PersonID,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
         removedKontexte?: PersonenkontextEventKontextData[],
     ): Promise<void> {
         // Map to store combinations of rolleId and organisationId as the key
@@ -597,7 +597,7 @@ export class EmailEventHandler {
 
     private async handlePersonWithEmailSPReference(
         personId: PersonID,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
         personenkontexte: Personenkontext<true>[],
         rollenIdWithSPReference: string,
         rolleIdPKMap: Map<string, Personenkontext<true>>,
@@ -640,7 +640,7 @@ export class EmailEventHandler {
 
     private async handlePersonWithoutEmailSPReference(
         personId: PersonID,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
     ): Promise<void> {
         if (!this.OX_ENABLED) {
             return this.logger.info(
@@ -679,14 +679,14 @@ export class EmailEventHandler {
 
             if (anyEmailWasDisabled) {
                 const person: Option<Person<true>> = await this.personRepository.findById(personId);
-                if (!person || !person.referrer) {
+                if (!person || !person.username) {
                     this.logger.error(
                         `Could not publish EmailAddressDisabledEvent, personId:${personId} has no username`,
                     );
                 } else {
                     this.eventService.publish(
-                        new EmailAddressDisabledEvent(personId, person.referrer),
-                        new KafkaEmailAddressDisabledEvent(personId, person.referrer),
+                        new EmailAddressDisabledEvent(personId, person.username),
+                        new KafkaEmailAddressDisabledEvent(personId, person.username),
                     );
                 }
             }
@@ -798,7 +798,7 @@ export class EmailEventHandler {
 
     private async createAndPersistFailedEmailAddress(
         personId: PersonID,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
     ): Promise<void> {
         const personIdAndTimestamp: string = personId + '-' + Date.now();
         const failedEmailAddress: EmailAddress<false> = EmailAddress.createNew(

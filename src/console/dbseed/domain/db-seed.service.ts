@@ -270,9 +270,8 @@ export class DbSeedService {
             const creationParams: PersonCreationParams = {
                 familienname: file.familienname,
                 vorname: file.vorname,
-                referrer: file.referrer,
-                stammorganisation: file.stammorganisation,
                 username: file.username,
+                stammorganisation: file.stammorganisation,
                 password: file.password,
                 personalnummer: file.personalnummer,
                 istTechnisch: file.istTechnisch,

@@ -1,5 +1,5 @@
 import { BaseEvent } from './base-event.js';
-import { PersonID, PersonReferrer } from '../types/index.js';
+import { PersonID, PersonUsername } from '../types/index.js';
 
 import type { Person } from '../../modules/person/domain/person.js';
 
@@ -8,17 +8,17 @@ export class PersonRenamedEvent extends BaseEvent {
         public readonly personId: PersonID,
         public readonly vorname: string,
         public readonly familienname: string,
-        public readonly username: PersonReferrer | undefined,
+        public readonly username: PersonUsername | undefined,
         public readonly oldVorname: string,
         public readonly oldFamilienname: string,
-        public readonly oldUsername: PersonReferrer,
+        public readonly oldUsername: PersonUsername,
     ) {
         super();
     }
 
     public static fromPerson(
         person: Person<true>,
-        oldUsername: PersonReferrer,
+        oldUsername: PersonUsername,
         oldVorname: string,
         oldFamilienname: string,
     ): PersonRenamedEvent {
@@ -26,7 +26,7 @@ export class PersonRenamedEvent extends BaseEvent {
             person.id,
             person.vorname,
             person.familienname,
-            person.referrer,
+            person.username,
             oldVorname,
             oldFamilienname,
             oldUsername,
