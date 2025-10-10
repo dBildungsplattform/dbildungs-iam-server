@@ -183,7 +183,6 @@ describe('PersonRepository Integration', () => {
             keycloackID: string;
         } = { ...defaultProps, ...props };
         const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-            username: faker.string.alphanumeric(5),
             familienname,
             vorname,
             personalnummer: withPersonalnummer ? faker.finance.pin(7) : undefined,
@@ -2640,10 +2639,8 @@ describe('PersonRepository Integration', () => {
             const [persons, total]: [Person<true>[], number] = result;
 
             expect(total).toBe(4);
-            expect(persons[0]?.familienname).toBe('Brown');
-            expect(persons[1]?.familienname).toBe('Brown');
-            expect(persons[0]?.username).toBe(person1.username);
-            expect(persons[1]?.username).toBe(person2.username);
+            expect(persons[0]?.familienname).toBe(person1.familienname);
+            expect(persons[1]?.familienname).toBe(person2.familienname);
             expect(persons[2]?.familienname).toBe('Johnson');
             expect(persons[3]?.familienname).toBe('Smith');
         });

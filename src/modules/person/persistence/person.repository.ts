@@ -821,7 +821,6 @@ export class PersonRepository {
             return new EntityCouldNotBeCreated('Person');
         }
 
-        person.username = person.username;
         const userDo: User<false> = User.createNew(person.username, undefined, {
             ID_NEXTCLOUD: [person.id],
             ID_ITSLEARNING: [person.id],
