@@ -30,6 +30,8 @@ import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-p
 import { LernHatKlasse } from '../specification/lern-hat-klasse.js';
 import { LernHatKeineKlasseError } from '../specification/error/lern-hat-keine-klasse.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { CheckDuplicateKlassenkontextSpecification } from '../specification/check-duplicate-klassenkontext.js';
+import { DuplicateKlassenkontextError } from './error/update-invalid-duplicate-klassenkontext-for-same-rolle.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -279,6 +281,21 @@ export class PersonenkontexteUpdate {
         return createdPKs;
     }
 
+    private async checkDuplicateKlassenkontext(
+        sentPKs: Personenkontext<boolean>[],
+    ): Promise<Option<PersonenkontexteUpdateError>> {
+        const isSatisfied: boolean = await new CheckDuplicateKlassenkontextSpecification(
+            this.organisationRepo,
+            this.rolleRepo,
+        ).checkDuplicateKlassenkontext(sentPKs);
+
+        if (!isSatisfied) {
+            return new DuplicateKlassenkontextError();
+        }
+
+        return undefined;
+    }
+
     private async checkRollenartSpecification(
         sentPKs: Personenkontext<boolean>[],
     ): Promise<Option<PersonenkontexteUpdateError>> {
@@ -340,6 +357,12 @@ export class PersonenkontexteUpdate {
             await this.checkLernHatKlasseSpecification(sentPKs);
         if (validationForLernHatKlasseError) {
             return validationForLernHatKlasseError;
+        }
+
+        const validationForDuplicateKlassenkontext: Option<PersonenkontexteUpdateError> =
+            await this.checkDuplicateKlassenkontext(sentPKs);
+        if (validationForDuplicateKlassenkontext) {
+            return validationForDuplicateKlassenkontext;
         }
 
         const validationForBefristung: Option<PersonenkontexteUpdateError> =
