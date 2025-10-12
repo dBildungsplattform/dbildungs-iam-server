@@ -370,6 +370,7 @@ export class PersonenkontexteUpdate {
         if (validationForBefristung) {
             return validationForBefristung;
         }
+
         const validationError: Option<PersonenkontexteUpdateError> = await this.validate(existingPKs);
         if (validationError) {
             return validationError;
