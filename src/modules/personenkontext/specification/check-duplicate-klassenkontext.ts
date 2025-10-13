@@ -38,12 +38,7 @@ export class CheckDuplicateKlassenkontextSpecification {
 
             // Only check for Klasse organisations with LERN rolle
             if (organisation.typ === OrganisationsTyp.KLASSE && rolle.rollenart === RollenArt.LERN) {
-                const administriertVon: string | undefined = organisation.administriertVon;
-
-                // Skip if administriertVon is not set
-                if (!administriertVon) {
-                    continue;
-                }
+                const administriertVon: string = organisation.administriertVon!;
 
                 // Create a key for the administering organisation
                 if (!klassenkontextCombinations.has(administriertVon)) {
