@@ -52,6 +52,8 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             'group.id': this.kafkaConfig.GROUP_ID,
             'session.timeout.ms': this.kafkaConfig.SESSION_TIMEOUT,
             'heartbeat.interval.ms': this.kafkaConfig.HEARTBEAT_INTERVAL,
+            'connections.max.idle.ms': 30000,
+            'max.poll.interval.ms': 30000,
             'allow.auto.create.topics': false,
             'enable.auto.commit': true,
         });
