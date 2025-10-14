@@ -5,9 +5,9 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
+import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { RollenerweiterungEntity } from '../entity/rollenerweiterung.entity.js';
 import { NoRedundantRollenerweiterungError } from '../specification/error/no-redundant-rollenerweiterung.error.js';
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
@@ -133,5 +133,27 @@ export class RollenerweiterungRepo {
             $or: query,
         });
         return rollenerweiterungen.map((entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity));
+    }
+
+    public async findByServiceProviderIds(
+        serviceProviderIds: ServiceProviderID[],
+    ): Promise<Map<ServiceProviderID, Rollenerweiterung<true>[]>> {
+        const rollenerweiterungEntities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
+            RollenerweiterungEntity,
+            {
+                serviceProviderId: { $in: serviceProviderIds },
+            },
+        );
+        const rollenerweiterungen: Rollenerweiterung<true>[] = rollenerweiterungEntities.map(
+            (entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity),
+        );
+        return new Map(
+            serviceProviderIds.map((id: ServiceProviderID) => [
+                id,
+                rollenerweiterungen.filter(
+                    (rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.serviceProviderId === id,
+                ),
+            ]),
+        );
     }
 }
