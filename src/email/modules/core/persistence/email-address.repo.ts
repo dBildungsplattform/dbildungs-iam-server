@@ -66,7 +66,7 @@ export class EmailAddressRepo {
         }
     }
 
-    private async create(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {
+    private async create(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true>> {
         const emailAddressEntity: EmailAddrEntity = this.em.create(EmailAddrEntity, mapAggregateToData(emailAddress));
         await this.em.persistAndFlush(emailAddressEntity);
 

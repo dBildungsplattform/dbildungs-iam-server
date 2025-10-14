@@ -1,6 +1,6 @@
-import { OxError } from '../../../../shared/error/ox.error';
+import { OxNonRetryableError } from './ox-non-retryable.error';
 
-export class OxGroupNotFoundError extends OxError {
+export class OxGroupNotFoundError extends OxNonRetryableError {
     public constructor(message: string, details?: unknown[] | Record<string, unknown>) {
         super(message, 'OX_GROUP_NOT_FOUND_ERROR', details);
     }
