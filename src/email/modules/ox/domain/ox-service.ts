@@ -297,22 +297,22 @@ export class OxService {
         return existsAction;
     }
 
-    public createCreateUserAction(
-        displayName: string,
-        username: string,
-        firstname: string,
-        lastname: string,
-        primaryEmail: string,
-    ): CreateUserAction {
+    public createCreateUserAction(methodParams: {
+        displayName: string;
+        username: string;
+        firstname: string;
+        lastname: string;
+        primaryEmail: string;
+    }): CreateUserAction {
         const params: CreateUserParams = {
             contextId: this.contextID,
-            displayName: displayName,
-            email1: primaryEmail,
-            username: username,
-            firstname: firstname,
+            displayName: methodParams.displayName,
+            email1: methodParams.primaryEmail,
+            username: methodParams.username,
+            firstname: methodParams.firstname,
             mailEnabled: true,
-            lastname: lastname,
-            primaryEmail: primaryEmail,
+            lastname: methodParams.lastname,
+            primaryEmail: methodParams.primaryEmail,
             userPassword: this.userPasswordDefault,
             login: this.authUser,
             password: this.authPassword,

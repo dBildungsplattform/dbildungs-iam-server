@@ -7,6 +7,7 @@ export class EmailAddress<WasPersisted extends boolean> {
         public priority: number,
         public spshPersonId?: string,
         public oxUserId?: string,
+        public ldapEntryUUID?: string,
         public markedForCron?: Date,
     ) {}
 
@@ -18,6 +19,7 @@ export class EmailAddress<WasPersisted extends boolean> {
         priority: number;
         spshPersonId?: string;
         oxUserId?: string;
+        ldapEntryUUID?: string;
         markedForCron?: Date;
     }): EmailAddress<true> {
         return new EmailAddress(
@@ -28,6 +30,7 @@ export class EmailAddress<WasPersisted extends boolean> {
             params.priority,
             params.spshPersonId,
             params.oxUserId,
+            params.ldapEntryUUID,
             params.markedForCron,
         );
     }
@@ -37,6 +40,7 @@ export class EmailAddress<WasPersisted extends boolean> {
         priority: number;
         spshPersonId?: string;
         oxUserId?: string;
+        ldapEntryUUID?: string;
         markedForCron?: Date;
     }): EmailAddress<false> {
         return new EmailAddress(
@@ -47,6 +51,7 @@ export class EmailAddress<WasPersisted extends boolean> {
             params.priority,
             params.spshPersonId,
             params.oxUserId,
+            params.ldapEntryUUID,
             params.markedForCron,
         );
     }

@@ -15,6 +15,15 @@ export class SetEmailAddressForSpshPersonParams {
     @IsString()
     @IsNotEmpty()
     @ApiProperty({
+        description: 'The username of the person.',
+        required: true,
+        nullable: false,
+    })
+    public readonly spshUsername!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({
         description: 'The first name of the person in spsh.',
         required: true,
         nullable: false,
@@ -39,4 +48,12 @@ export class SetEmailAddressForSpshPersonParams {
         nullable: false,
     })
     public readonly emailDomainId!: string;
+
+    @IsNotEmpty()
+    @ApiProperty({
+        description: 'The domain Id from the email domain entity to be used.',
+        required: true,
+        nullable: false,
+    })
+    public readonly allSchoolDnr!: string[];
 }

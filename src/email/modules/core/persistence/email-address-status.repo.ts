@@ -1,6 +1,5 @@
 import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
-import { DomainError } from '../../../../shared/error/index.js';
 import { EmailAddressStatusEntity } from './email-address-status.entity.js';
 import { EmailAddressStatus } from '../domain/email-address-status.js';
 
@@ -24,9 +23,7 @@ export class EmailAddressStatusRepo {
     public constructor(private readonly em: EntityManager) {}
 
     //No Save since entries should not be updated (Only created)
-    public async create(
-        emailAddressStatus: EmailAddressStatus<boolean>,
-    ): Promise<EmailAddressStatus<true> | DomainError> {
+    public async create(emailAddressStatus: EmailAddressStatus<boolean>): Promise<EmailAddressStatus<true>> {
         const emailAddressStatusEntity: EmailAddressStatusEntity = this.em.create(
             EmailAddressStatusEntity,
             mapAggregateToData(emailAddressStatus),
