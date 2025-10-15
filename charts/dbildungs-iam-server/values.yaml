@@ -321,7 +321,12 @@ cronjobs:
       endpoint: "/api/cron/unlock"
       httpMethod: "PUT"
       script: "cron_trigger.sh"
-#    cron-trigger-5:
+    cron-trigger-5:
+      schedule: "0 0 31 2 *" #Should never run automatically because 31 Feb never exists
+      endpoint: '/api/cron/email-addresses-delete'
+      httpMethod: 'DELETE'
+      script: 'cron_trigger.sh'
+#    cron-trigger-6:
 #      schedule: 30 0 * * *
 #      endpoint: '/api/cron/vidis-angebote'
 #      httpMethod: 'PUT'
