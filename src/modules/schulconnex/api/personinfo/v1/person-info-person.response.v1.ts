@@ -17,6 +17,7 @@ export class PersonInfoPersonResponseV1 {
         return new PersonInfoPersonResponseV1({
             vorname: person.vorname,
             familiennamen: person.familienname,
+            familienname: person.familienname,
         } satisfies PersonInfoPersonNameResponseV1);
     }
 }

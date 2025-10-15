@@ -59,6 +59,7 @@ export class PersonNestedInPersonInfoResponse {
             {
                 vorname: person.vorname,
                 familiennamen: person.familienname,
+                familienname: person.familienname,
             } satisfies PersonNameResponse,
             person.revision,
             person.mandant,
