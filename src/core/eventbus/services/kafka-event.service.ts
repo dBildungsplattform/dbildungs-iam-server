@@ -52,10 +52,8 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             'group.id': this.kafkaConfig.GROUP_ID,
             'session.timeout.ms': this.kafkaConfig.SESSION_TIMEOUT,
             'heartbeat.interval.ms': this.kafkaConfig.HEARTBEAT_INTERVAL,
-            'connections.max.idle.ms': 30000,
-            'max.poll.interval.ms': 30000,
-            'allow.auto.create.topics': false,
-            'enable.auto.commit': true,
+            // The server is very strict about open connections and will disconnect the producers after 5000ms of inactivity
+            'log.connection.close': false,
         });
         this.producer = this.kafka.producer({
             'allow.auto.create.topics': false,
