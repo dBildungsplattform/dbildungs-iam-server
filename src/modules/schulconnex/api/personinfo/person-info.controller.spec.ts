@@ -102,6 +102,7 @@ describe('PersonInfoController', () => {
                 referrer: person.referrer,
                 name: {
                     familiennamen: person.familienname,
+                    familienname: person.familienname,
                     vorname: person.vorname,
                 },
                 stammorganisation: person.stammorganisation,
@@ -316,6 +317,7 @@ describe('PersonInfoController', () => {
                 expect(result.pid).toEqual(person?.id);
                 expect(result.person.name.vorname).toEqual(person?.vorname);
                 expect(result.person.name.familiennamen).toEqual(person?.familienname);
+                expect(result.person.name.familienname).toEqual(person?.familienname);
                 expect(result.personenkontexte.length).toEqual(1);
                 expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orgaLand?.id);
@@ -366,6 +368,7 @@ describe('PersonInfoController', () => {
                 expect(result.pid).toEqual(person?.id);
                 expect(result.person.name.vorname).toEqual(person?.vorname);
                 expect(result.person.name.familiennamen).toEqual(person?.familienname);
+                expect(result.person.name.familienname).toEqual(person?.familienname);
                 expect(result.personenkontexte.length).toEqual(1);
                 expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
@@ -417,6 +420,7 @@ describe('PersonInfoController', () => {
                 expect(result.pid).toEqual(person?.id);
                 expect(result.person.name.vorname).toEqual(person?.vorname);
                 expect(result.person.name.familiennamen).toEqual(person?.familienname);
+                expect(result.person.name.familienname).toEqual(person?.familienname);
                 expect(result.personenkontexte.length).toEqual(1);
                 expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
@@ -504,6 +508,7 @@ describe('PersonInfoController', () => {
                 expect(result.pid).toEqual(person?.id);
                 expect(result.person.name.vorname).toEqual(person?.vorname);
                 expect(result.person.name.familiennamen).toEqual(person?.familienname);
+                expect(result.person.name.familienname).toEqual(person?.familienname);
                 expect(result.personenkontexte.length).toEqual(1);
                 expect(result.personenkontexte.at(0)?.id).toEqual(kontextSchule.id);
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
