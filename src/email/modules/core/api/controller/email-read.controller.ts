@@ -13,15 +13,15 @@ import { EmailAddressResponse } from '../dtos/response/email-address.response.js
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { EmailAddress } from '../../domain/email-address.js';
 import { Public } from '../../decorator/public.decorator.js';
-import { EmailAddressStatus } from '../../domain/email-address-status.js';
-import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
+import { GetEmailAddressForSpshPersonService } from '../../domain/get-email-address-for-spsh-person.service.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
 @Controller({ path: 'read' })
 export class EmailReadController {
-    public constructor(private readonly logger: ClassLogger) {}
+    public constructor(private readonly logger: ClassLogger,
+        private readonly getEmailAddressForSpshPersonService: GetEmailAddressForSpshPersonService) {}
 
     @Get(':personId')
     @Public()
@@ -35,28 +35,17 @@ export class EmailReadController {
     public async findEmailAddressesByPersonId(
         @Param() findEmailAddressByPersonIdParams: FindEmailAddressBySpshPersonIdParams,
     ): Promise<EmailAddressResponse[]> {
-        //currently just a dummy
         this.logger.info(`PersonId:${findEmailAddressByPersonIdParams.spshPersonId}`);
-        const emailAddress: EmailAddress<true> = EmailAddress.construct({
-            id: '0',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            address: 'test@schule-sh.de',
-            priority: 0,
-            spshPersonId: undefined,
-            oxUserId: undefined,
-            markedForCron: undefined,
-        });
 
-        const emailStatus: EmailAddressStatus<true> = EmailAddressStatus.construct({
-            id: '0',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            emailAddressId: emailAddress.id,
-            status: EmailAddressStatusEnum.PENDING,
-        });
+        const emailAddresses: EmailAddress<true>[] = await this.getEmailAddressForSpshPersonService
+            .getEmailAddressWithStatusForSpshPerson(findEmailAddressByPersonIdParams);
 
-        const response: EmailAddressResponse = new EmailAddressResponse(emailAddress, emailStatus);
-        return [response];
+        if (emailAddresses.length === 0) {
+            return [];
+        }
+
+        return emailAddresses
+            .filter(emailAddress => emailAddress.status !== undefined)
+            .map(emailAddress => new EmailAddressResponse(emailAddress));
     }
 }

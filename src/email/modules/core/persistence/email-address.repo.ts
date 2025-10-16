@@ -5,6 +5,7 @@ import { EmailAddress } from '../domain/email-address.js';
 import { DomainError } from '../../../../shared/error/index.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
+import { mapEntityToAggregate as mapStatusEntityToAggregate } from './email-address-status.repo.js';
 
 export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddrEntity> {
     return {
@@ -19,6 +20,9 @@ export function mapAggregateToData(emailAddress: EmailAddress<boolean>): Require
 }
 
 function mapEntityToAggregate(entity: EmailAddrEntity): EmailAddress<boolean> {
+    const statuses = entity.statuses?.map(mapStatusEntityToAggregate) ?? [];
+    const latestStatus = statuses.length > 0 ? statuses[0] : undefined;
+
     return EmailAddress.construct({
         id: entity.id,
         createdAt: entity.createdAt,
@@ -28,6 +32,7 @@ function mapEntityToAggregate(entity: EmailAddrEntity): EmailAddress<boolean> {
         spshPersonId: entity.spshPersonId,
         oxUserId: entity.oxUserId,
         markedForCron: entity.markedForCron,
+        status: latestStatus,
     });
 }
 
@@ -55,6 +60,18 @@ export class EmailAddressRepo {
             { orderBy: { priority: 'asc' } },
         );
 
+        return emailAddressEntities.map(mapEntityToAggregate);
+    }
+
+    public async findAllEmailAddressesWithStatusesBySpshPersonId(spshPersonId: string): Promise<EmailAddress<true>[]> {
+        const emailAddressEntities: EmailAddrEntity[] = await this.em.find(
+            EmailAddrEntity,
+            { spshPersonId: { $eq: spshPersonId } },
+            {
+                populate: ['statuses'],
+                orderBy: { id: 'asc' },
+            }
+        );
         return emailAddressEntities.map(mapEntityToAggregate);
     }
 

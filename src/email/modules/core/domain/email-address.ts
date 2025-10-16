@@ -1,3 +1,5 @@
+import { EmailAddressStatus } from "./email-address-status";
+
 export class EmailAddress<WasPersisted extends boolean> {
     public constructor(
         public id: Persisted<string, WasPersisted>,
@@ -8,6 +10,7 @@ export class EmailAddress<WasPersisted extends boolean> {
         public spshPersonId?: string,
         public oxUserId?: string,
         public markedForCron?: Date,
+        public status?: EmailAddressStatus<WasPersisted>,
     ) {}
 
     public static construct(params: {
@@ -19,6 +22,7 @@ export class EmailAddress<WasPersisted extends boolean> {
         spshPersonId?: string;
         oxUserId?: string;
         markedForCron?: Date;
+        status?: EmailAddressStatus<true>;
     }): EmailAddress<true> {
         return new EmailAddress(
             params.id,
@@ -29,6 +33,7 @@ export class EmailAddress<WasPersisted extends boolean> {
             params.spshPersonId,
             params.oxUserId,
             params.markedForCron,
+            params.status,
         );
     }
 
@@ -38,6 +43,7 @@ export class EmailAddress<WasPersisted extends boolean> {
         spshPersonId?: string;
         oxUserId?: string;
         markedForCron?: Date;
+        status?: EmailAddressStatus<false>;
     }): EmailAddress<false> {
         return new EmailAddress(
             undefined,
@@ -48,6 +54,7 @@ export class EmailAddress<WasPersisted extends boolean> {
             params.spshPersonId,
             params.oxUserId,
             params.markedForCron,
+            params.status,
         );
     }
 }
