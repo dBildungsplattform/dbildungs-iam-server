@@ -14,7 +14,8 @@ import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persiste
 import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
 import { LdapModule } from '../../core/ldap/ldap.module.js';
 import { EntityAggregateMapper } from '../../modules/person/mapper/entity-aggregate.mapper.js';
-
+import { EmailCoreModule } from '../../email/modules/core/email-core.module.js';
+import { EmailDomainRepo } from '../../email/modules/core/persistence/email-domain.repo.js';
 @Module({
     imports: [
         LdapModule,
@@ -24,12 +25,14 @@ import { EntityAggregateMapper } from '../../modules/person/mapper/entity-aggreg
         RolleModule,
         ServiceProviderModule,
         KeycloakAdministrationModule,
+        EmailCoreModule,
         LoggerModule.register(DbSeedModule.name),
     ],
     providers: [
         DbSeedService,
         DbSeedConsole,
         DBiamPersonenkontextRepo,
+        EmailDomainRepo,
         DbSeedRepo,
         DbSeedReferenceRepo,
         EntityAggregateMapper,

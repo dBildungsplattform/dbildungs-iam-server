@@ -28,9 +28,6 @@ export class UserinfoResponse {
     public middle_name?: string;
 
     @ApiProperty({ nullable: true })
-    public nickname?: string;
-
-    @ApiProperty({ nullable: true })
     public preferred_username?: string;
 
     @ApiProperty({ nullable: true })
@@ -47,12 +44,6 @@ export class UserinfoResponse {
 
     @ApiProperty({ nullable: true })
     public email_verified?: boolean;
-
-    @ApiProperty({ nullable: true })
-    public gender?: string;
-
-    @ApiProperty({ nullable: true })
-    public birthdate?: string;
 
     @ApiProperty({ nullable: true })
     public zoneinfo?: string;
@@ -90,10 +81,7 @@ export class UserinfoResponse {
         this.name = `${info.personFields.vorname} ${info.personFields.familienname}`;
         this.given_name = info.personFields.vorname;
         this.family_name = info.personFields.familienname;
-        this.nickname = info.personFields.rufname;
         this.preferred_username = info.personFields.username;
-        this.gender = info.personFields.geschlecht;
-        this.birthdate = info.personFields.geburtsdatum?.toISOString();
         this.updated_at = info.personFields.updatedAt.toISOString();
         this.personenkontexte = personenkontexte;
         this.password_updated_at = extension?.password_updated_at?.toISOString();

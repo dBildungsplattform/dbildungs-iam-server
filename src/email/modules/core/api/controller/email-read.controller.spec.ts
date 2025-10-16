@@ -1,14 +1,14 @@
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../../test/utils/index.js';
-import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../../../../test/utils/index.js';
+import { GlobalValidationPipe } from '../../../../../shared/validation/global-validation.pipe.js';
 import { EmailReadController } from './email-read.controller.js';
-import { EmailAddressResponse } from './email-address.response.js';
-import { FindEmailAddressByPersonIdParams } from './find-email-address-by-person-id.params.js';
+import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
+import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
 import { faker } from '@faker-js/faker';
 import assert from 'assert';
 
-describe('Rolle API with mocked ServiceProviderRepo', () => {
+describe('Email Read Controller', () => {
     let emailReadController: EmailReadController;
 
     beforeAll(async () => {
@@ -31,9 +31,9 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
     });
 
     describe('/GET EmailAddresses for personId, findEmailAddressesByPersonId', () => {
-        it('should throw an HTTP exception when rolleFactory.createNew returns DomainError', async () => {
-            const params: FindEmailAddressByPersonIdParams = {
-                personId: faker.string.uuid(),
+        it('should return dummy response', async () => {
+            const params: FindEmailAddressBySpshPersonIdParams = {
+                spshPersonId: faker.string.uuid(),
             };
             const response: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonId(params);
             assert(response[0]);
