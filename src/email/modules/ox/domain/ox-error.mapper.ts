@@ -1,12 +1,12 @@
 
-import { OxError } from '../../../../shared/error/ox.error';
-import { OxErrorResponse } from '../actions/ox-base-action';
-import { OxDisplaynameAlreadyUsedError } from '../error/ox-displayname-already-used.error';
-import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error';
-import { OxNoSuchUserError } from '../error/ox-no-such-user.error';
-import { OxPrimaryMailAlreadyExistsError } from '../error/ox-primary-mail-already-exists.error';
-import { OxPrimaryMailNotEqualEmail1Error } from '../error/ox-primary-mail-not-equal-email1.error';
-import { OxUsernameAlreadyExistsError } from '../error/ox-username-already-exists.error';
+import { OxError } from '../../../../shared/error/ox.error.js';
+import { OxErrorResponse } from '../actions/ox-base-action.js';
+import { OxDisplaynameAlreadyUsedError } from '../error/ox-displayname-already-used.error.js';
+import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
+import { OxNoSuchUserError } from '../error/ox-no-such-user.error.js';
+import { OxPrimaryMailAlreadyExistsError } from '../error/ox-primary-mail-already-exists.error.js';
+import { OxPrimaryMailNotEqualEmail1Error } from '../error/ox-primary-mail-not-equal-email1.error.js';
+import { OxUsernameAlreadyExistsError } from '../error/ox-username-already-exists.error.js';
 
 export class OxErrorMapper {
     private static readonly USERNAME_ALREADY_EXISTS_REGEX: RegExp =

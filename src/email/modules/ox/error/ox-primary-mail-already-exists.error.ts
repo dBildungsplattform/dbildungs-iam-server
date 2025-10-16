@@ -1,4 +1,4 @@
-import { OxNonRetryableError } from './ox-non-retryable.error';
+import { OxNonRetryableError } from './ox-non-retryable.error.js';
 
 export class OxPrimaryMailAlreadyExistsError extends OxNonRetryableError {
     public constructor(message: string, details?: unknown[] | Record<string, unknown>) {

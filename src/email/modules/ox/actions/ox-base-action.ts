@@ -1,5 +1,5 @@
 import { XMLBuilder, XMLParser } from 'fast-xml-parser';
-import { OxError } from '../../../../shared/error/ox.error';
+import { OxError } from '../../../../shared/error/ox.error.js';
 import { DomainError } from '../../../../shared/error';
 
 export type OXRequestStatus =
