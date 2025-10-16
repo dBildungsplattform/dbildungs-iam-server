@@ -1,5 +1,6 @@
-import { DomainError } from '../../../../shared/error/domain.error.js';
+import { DomainError } from '../../../../../shared/error/index.js';
 import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
+
 import { AuthParams, OxBaseAction } from '../ox-base-action.js';
 import { OXUser } from './ox-user.types.js';
 
