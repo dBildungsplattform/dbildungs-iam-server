@@ -32,7 +32,6 @@ import { LandesbediensteterExceptionFilter } from './landesbediensteter-exceptio
 import { PersonenkontexteUpdateExceptionFilter } from '../../personenkontext/api/personenkontexte-update-exception-filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
-@UseFilters()
 @ApiTags('landesbediensteter')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
