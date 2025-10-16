@@ -48,12 +48,4 @@ export class SetEmailAddressForSpshPersonParams {
         nullable: false,
     })
     public readonly emailDomainId!: string;
-
-    @IsNotEmpty()
-    @ApiProperty({
-        description: 'The domain Id from the email domain entity to be used.',
-        required: true,
-        nullable: false,
-    })
-    public readonly allSchoolDnr!: string[];
 }
