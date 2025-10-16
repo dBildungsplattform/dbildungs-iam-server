@@ -43,7 +43,7 @@ export class UserExeternalDataResponse {
         externalPkData: RequiredExternalPkData[],
         contextID: string,
     ): UserExeternalDataResponse {
-        const ox: UserExeternalDataResponseOx = new UserExeternalDataResponseOx(person.referrer!, contextID);
+        const ox: UserExeternalDataResponseOx = new UserExeternalDataResponseOx(person.username!, contextID);
         const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(person.id);
         const vidis: UserExeternalDataResponseVidis = new UserExeternalDataResponseVidis(
             person.id,

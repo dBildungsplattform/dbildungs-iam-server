@@ -9,8 +9,6 @@ export class PersonFile {
 
     public keycloakUserId!: string;
 
-    public referrer?: string;
-
     public mandant!: string;
 
     public stammorganisation?: string;

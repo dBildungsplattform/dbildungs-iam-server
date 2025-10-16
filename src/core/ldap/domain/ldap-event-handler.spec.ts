@@ -22,7 +22,7 @@ import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persi
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
@@ -170,7 +170,7 @@ describe('LdapEventHandler', () => {
     describe('handlePersonRenamedEvent', () => {
         describe('when calling LdapClientService.modifyPersonAttributes is successful', () => {
             it('should NOT log errors', async () => {
-                const modifyResult: Result<PersonReferrer> = {
+                const modifyResult: Result<PersonUsername> = {
                     ok: true,
                     value: faker.internet.userName(),
                 };
@@ -834,7 +834,7 @@ describe('LdapEventHandler', () => {
 
     describe('handleEmailAddressMarkedForDeletionEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let address: string;
 
         beforeEach(() => {
@@ -912,7 +912,7 @@ describe('LdapEventHandler', () => {
 
     describe('handleEmailAddressesPurgedEvent', () => {
         const personId: PersonID = faker.string.uuid();
-        const username: PersonReferrer = faker.internet.userName();
+        const username: PersonUsername = faker.internet.userName();
 
         it('should log error when username is UNDEFINED in event', async () => {
             const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
@@ -932,7 +932,7 @@ describe('LdapEventHandler', () => {
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
         });
 
-        it('should call LdapClientService deleteLehrerByReferrer', async () => {
+        it('should call LdapClientService deleteLehrerByUsername', async () => {
             const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
                 personId,
                 username,
@@ -960,7 +960,7 @@ describe('LdapEventHandler', () => {
             );
         });
 
-        it('should call LdapClientService deleteLehrerByReferrer and log error if result is NOT ok', async () => {
+        it('should call LdapClientService deleteLehrerByUsername and log error if result is NOT ok', async () => {
             const error: LdapSearchError = new LdapSearchError(LdapEntityType.LEHRER);
             const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
                 personId,

@@ -47,16 +47,16 @@ describe('PersonFrontendController', () => {
 
     describe('findPersons', () => {
         const options: {
-            referrer: string;
+            username: string;
             lastName: string;
             firstName: string;
         } = {
-            referrer: faker.string.alpha(),
+            username: faker.string.alpha(),
             lastName: faker.person.lastName(),
             firstName: faker.person.firstName(),
         };
         const queryParams: PersonenQueryParams = {
-            referrer: options.referrer,
+            username: options.username,
             familienname: options.lastName,
             vorname: options.firstName,
             sichtfreigabe: SichtfreigabeType.NEIN,

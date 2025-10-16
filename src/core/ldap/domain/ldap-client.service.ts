@@ -7,7 +7,7 @@ import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
 import { Mutex } from 'async-mutex';
 import { LdapSearchError } from '../error/ldap-search.error.js';
-import { OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationKennung, PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
 import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapPersonEntryChangedEvent } from '../../../shared/events/ldap/ldap-person-entry-changed.event.js';
 import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
@@ -114,16 +114,16 @@ export class LdapClientService {
         );
     }
 
-    public async isLehrerExisting(username: PersonReferrer, domain: string): Promise<Result<boolean>> {
+    public async isLehrerExisting(username: PersonUsername, domain: string): Promise<Result<boolean>> {
         return this.executeWithRetry(() => this.isLehrerExistingInternal(username, domain), this.getNrOfRetries());
     }
 
     public async modifyPersonAttributes(
-        oldUsername: PersonReferrer,
+        oldUsername: PersonUsername,
         newGivenName?: string,
         newSn?: string,
-        newUsername?: PersonReferrer,
-    ): Promise<Result<PersonReferrer>> {
+        newUsername?: PersonUsername,
+    ): Promise<Result<PersonUsername>> {
         return this.executeWithRetry(
             () => this.modifyPersonAttributesInternal(oldUsername, newGivenName, newSn, newUsername),
             this.getNrOfRetries(),
@@ -132,7 +132,7 @@ export class LdapClientService {
 
     public async getPersonAttributes(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         domain: string,
     ): Promise<Result<LdapPersonAttributes>> {
         return this.executeWithRetry(
@@ -143,7 +143,7 @@ export class LdapClientService {
 
     public async setMailAlternativeAddress(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         newMailAlternativeAddress: string,
     ): Promise<Result<PersonID>> {
         return this.executeWithRetry(
@@ -152,13 +152,13 @@ export class LdapClientService {
         );
     }
 
-    public async getGroupsForPerson(personId: PersonID, username: PersonReferrer): Promise<Result<string[]>> {
+    public async getGroupsForPerson(personId: PersonID, username: PersonUsername): Promise<Result<string[]>> {
         return this.executeWithRetry(() => this.getGroupsForPersonInternal(personId, username), this.getNrOfRetries());
     }
 
     public async updateMemberDnInGroups(
-        oldUsername: PersonReferrer,
-        newUsername: PersonReferrer,
+        oldUsername: PersonUsername,
+        newUsername: PersonUsername,
         oldUid: string,
         client: Client,
     ): Promise<Result<string>> {
@@ -169,7 +169,7 @@ export class LdapClientService {
     }
 
     public async deleteLehrerByUsername(
-        username: PersonReferrer,
+        username: PersonUsername,
         failIfUserNotFound: boolean = false,
     ): Promise<Result<string | null>> {
         return this.executeWithRetry(
@@ -202,7 +202,7 @@ export class LdapClientService {
 
     public async removeMailAlternativeAddress(
         personId: PersonID | undefined,
-        username: PersonReferrer,
+        username: PersonUsername,
         address: string,
     ): Promise<Result<boolean>> {
         return this.executeWithRetry(
@@ -213,7 +213,7 @@ export class LdapClientService {
 
     public async changeEmailAddressByPersonId(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         newEmailAddress: string,
         alternativeEmailAddress?: string,
     ): Promise<Result<PersonID>> {
@@ -225,7 +225,7 @@ export class LdapClientService {
     }
 
     public async removePersonFromGroup(
-        username: PersonReferrer,
+        username: PersonUsername,
         orgaKennung: OrganisationKennung,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
@@ -236,7 +236,7 @@ export class LdapClientService {
     }
 
     public async removePersonFromGroupByUsernameAndKennung(
-        username: PersonReferrer,
+        username: PersonUsername,
         orgaKennung: OrganisationKennung,
         domain: string,
     ): Promise<Result<boolean>> {
@@ -250,7 +250,7 @@ export class LdapClientService {
         return this.removePersonFromGroup(username, orgaKennung, lehrerUid);
     }
 
-    public async changeUserPasswordByPersonId(personId: PersonID, username: PersonReferrer): Promise<Result<PersonID>> {
+    public async changeUserPasswordByPersonId(personId: PersonID, username: PersonUsername): Promise<Result<PersonID>> {
         return this.executeWithRetry(
             () => this.changeUserPasswordByPersonIdInternal(personId, username),
             this.getNrOfRetries(),
@@ -259,7 +259,7 @@ export class LdapClientService {
 
     //** BELOW ONLY PUBLIC HELPER FUNCTIONS THAT NOT OPERATE ON LDAP - MUST NOT USE THE 'executeWithRetry'/
 
-    public createNewLehrerUidFromOldUid(oldUid: string, newUsername: PersonReferrer): string {
+    public createNewLehrerUidFromOldUid(oldUid: string, newUsername: PersonUsername): string {
         const splitted: string[] = oldUid.split(',');
         splitted[0] = `uid=${newUsername}`;
         return splitted.join(',');
@@ -319,7 +319,7 @@ export class LdapClientService {
         };
     }
 
-    private getLehrerUid(username: PersonReferrer, rootName: string): string {
+    private getLehrerUid(username: PersonUsername, rootName: string): string {
         return `uid=${username},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
     }
 
@@ -337,7 +337,7 @@ export class LdapClientService {
         schulId: string,
         mail?: string, //Wird hier erstmal seperat mit reingegeben bis die Umstellung auf primary/alternative erfolgt
     ): Promise<Result<PersonData>> {
-        const username: PersonReferrer | undefined = person.username;
+        const username: PersonUsername | undefined = person.username;
         if (!username) {
             return {
                 ok: false,
@@ -410,7 +410,7 @@ export class LdapClientService {
         });
     }
 
-    private async isLehrerExistingInternal(username: PersonReferrer, domain: string): Promise<Result<boolean>> {
+    private async isLehrerExistingInternal(username: PersonUsername, domain: string): Promise<Result<boolean>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
         if (!rootName.ok) {
             return rootName;
@@ -438,11 +438,11 @@ export class LdapClientService {
     }
 
     private async modifyPersonAttributesInternal(
-        oldUsername: PersonReferrer,
+        oldUsername: PersonUsername,
         newGivenName?: string,
         newSn?: string,
-        newUsername?: PersonReferrer,
-    ): Promise<Result<PersonReferrer>> {
+        newUsername?: PersonUsername,
+    ): Promise<Result<PersonUsername>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: modifyPersonAttributes');
             const client: Client = this.ldapClient.getClient();
@@ -546,7 +546,7 @@ export class LdapClientService {
      */
     private async getPersonAttributesInternal(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         emailDomain: string,
     ): Promise<Result<LdapPersonAttributes>> {
         return this.mutex.runExclusive(async () => {
@@ -655,7 +655,7 @@ export class LdapClientService {
     private getAttributeAsStringOrError(
         entry: Entry,
         attributeName: string,
-        username: PersonReferrer,
+        username: PersonUsername,
         personId: PersonID | undefined,
     ): Result<string> {
         const attributeValue: unknown = entry[attributeName];
@@ -678,7 +678,7 @@ export class LdapClientService {
      * Returns the DN of the created PersonEntry or an Error.
      * For fetching the EntryUUID of an Entry use getEntryUUID.
      */
-    private async createEmptyPersonEntry(username: PersonReferrer, domain: string): Promise<Result<string>> {
+    private async createEmptyPersonEntry(username: PersonUsername, domain: string): Promise<Result<string>> {
         this.logger.info('LDAP: createEmptyPersonEntry');
         const client: Client = this.ldapClient.getClient();
         const bindResult: Result<boolean> = await this.bind();
@@ -718,7 +718,7 @@ export class LdapClientService {
         }
     }
 
-    private async getEntryUUID(client: Client, personId: PersonID, username: PersonReferrer): Promise<Result<string>> {
+    private async getEntryUUID(client: Client, personId: PersonID, username: PersonUsername): Promise<Result<string>> {
         const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
             scope: 'sub',
             filter: `(uid=${username})`,
@@ -744,7 +744,7 @@ export class LdapClientService {
 
     private async setMailAlternativeAddressInternal(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         newMailAlternativeAddress: string,
     ): Promise<Result<PersonID>> {
         return this.mutex.runExclusive(async () => {
@@ -792,7 +792,7 @@ export class LdapClientService {
         });
     }
 
-    private async getGroupsForPersonInternal(personId: PersonID, username: PersonReferrer): Promise<Result<string[]>> {
+    private async getGroupsForPersonInternal(personId: PersonID, username: PersonUsername): Promise<Result<string[]>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: getGroupsForPerson');
             const client: Client = this.ldapClient.getClient();
@@ -843,8 +843,8 @@ export class LdapClientService {
     }
 
     private async updateMemberDnInGroupsInternal(
-        oldUsername: PersonReferrer,
-        newUsername: PersonReferrer,
+        oldUsername: PersonUsername,
+        newUsername: PersonUsername,
         oldUid: string,
         client: Client,
     ): Promise<Result<string>> {
@@ -919,7 +919,7 @@ export class LdapClientService {
     }
 
     private async deleteLehrerByUsernameInternal(
-        username: PersonReferrer,
+        username: PersonUsername,
         failIfUserNotFound: boolean,
     ): Promise<Result<string | null>> {
         return this.mutex.runExclusive(async () => {
@@ -1007,7 +1007,7 @@ export class LdapClientService {
 
     private async changeEmailAddressByPersonIdInternal(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         newEmailAddress: string,
         alternativEmailAddress?: string,
     ): Promise<Result<PersonID>> {
@@ -1093,7 +1093,7 @@ export class LdapClientService {
 
     private async removeMailAlternativeAddressInternal(
         personId: PersonID | undefined,
-        username: PersonReferrer,
+        username: PersonUsername,
         address: string,
     ): Promise<Result<boolean>> {
         return this.mutex.runExclusive(async () => {
@@ -1268,7 +1268,7 @@ export class LdapClientService {
     }
 
     private async removePersonFromGroupInternal(
-        username: PersonReferrer,
+        username: PersonUsername,
         orgaKennung: OrganisationKennung,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
@@ -1349,7 +1349,7 @@ export class LdapClientService {
 
     private async changeUserPasswordByPersonIdInternal(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
     ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
         const userPassword: string = generatePassword();

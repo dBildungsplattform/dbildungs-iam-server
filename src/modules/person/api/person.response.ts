@@ -8,7 +8,7 @@ export class PersonResponse {
     public id!: string;
 
     @ApiProperty({ nullable: true })
-    public referrer?: string;
+    public username?: string;
 
     @ApiProperty()
     public mandant: string = '';

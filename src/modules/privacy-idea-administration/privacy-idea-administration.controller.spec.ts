@@ -26,7 +26,7 @@ describe('PrivacyIdeaAdministrationController', () => {
     let personRepository: DeepMocked<PersonRepository>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
 
-    function getPerson(emptyReferrer: boolean = false): Person<true> {
+    function getPerson(emptyUsername: boolean = false): Person<true> {
         return Person.construct(
             faker.string.uuid(),
             faker.date.past(),
@@ -34,9 +34,9 @@ describe('PrivacyIdeaAdministrationController', () => {
             faker.person.lastName(),
             faker.person.firstName(),
             '1',
+            emptyUsername ? undefined : faker.string.uuid(),
             faker.lorem.word(),
             faker.lorem.word(),
-            emptyReferrer ? undefined : faker.string.uuid(),
         );
     }
 
@@ -187,7 +187,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
 
-        it('should return user not found if referrer is undefined', async () => {
+        it('should return user not found if username is undefined', async () => {
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: getPerson(true),
@@ -198,7 +198,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
 
-        it('should return user not found if referrer is undefined', async () => {
+        it('should return user not found if username is undefined', async () => {
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: getPerson(true),
@@ -209,7 +209,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
 
-        it('should return user not found if referrer is undefined self service', async () => {
+        it('should return user not found if username is undefined self service', async () => {
             personRepository.findById.mockResolvedValueOnce(getPerson(true));
             personPermissionsMock.personFields.id = 'user1';
 
@@ -218,7 +218,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
 
-        it('should return valid response if referrer is valid self service', async () => {
+        it('should return valid response if username is valid self service', async () => {
             personRepository.findById.mockResolvedValueOnce(getPerson(false));
             personPermissionsMock.personFields.id = 'user1';
 
@@ -243,7 +243,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             const response: boolean = await sut.resetToken(personId, personPermissionsMock);
 
             expect(response).toEqual(mockResetTokenResponse.result.status);
-            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.referrer);
+            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.username);
         });
 
         it('should return bad request if username is not given or not found', async () => {
@@ -283,7 +283,7 @@ describe('PrivacyIdeaAdministrationController', () => {
 
             await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(tokenError);
 
-            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.referrer);
+            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.username);
         });
 
         it('should map other errors to SchulConnexError', async () => {
@@ -303,7 +303,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ),
             );
 
-            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.referrer);
+            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.username);
         });
     });
 
@@ -354,7 +354,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
 
-        it('should return user not found if referrer is undefined', async () => {
+        it('should return user not found if username is undefined', async () => {
             const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
@@ -442,7 +442,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
 
-        it('should return user not found if referrer is undefined', async () => {
+        it('should return user not found if username is undefined', async () => {
             personPermissionsMock = createMock<PersonPermissions>();
 
             jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({

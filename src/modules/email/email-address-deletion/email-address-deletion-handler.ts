@@ -6,7 +6,7 @@ import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox/ox-email-a
 import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/ldap-email-address-deleted.event.js';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
 import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/email-address-deleted-in-database.event.js';
 import { EmailAddressDeletionService } from './email-address-deletion.service.js';
 
@@ -78,7 +78,7 @@ export class EmailAddressDeletionHandler {
     private async processNewStatus(
         newStatus: EmailAddressStatus,
         emailAddress: EmailAddress<true>,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
     ): Promise<void> {
         this.logger.info(
             `New EmailAddressStatus is:${newStatus}, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
@@ -92,7 +92,7 @@ export class EmailAddressDeletionHandler {
 
     private async deleteEmailAddressInDatabase(
         emailAddress: EmailAddress<true>,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
     ): Promise<void> {
         const deletionError: Option<DomainError> = await this.emailRepo.deleteById(emailAddress.id);
         if (deletionError) {
@@ -108,7 +108,7 @@ export class EmailAddressDeletionHandler {
 
     private async saveChangedStatus(
         emailAddress: EmailAddress<true>,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
     ): Promise<void> {
         const result: EmailAddress<true> | DomainError = await this.emailRepo.save(emailAddress);
         if (result instanceof DomainError) {

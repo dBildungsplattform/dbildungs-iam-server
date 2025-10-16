@@ -35,7 +35,7 @@ export class DBiamPersonenuebersichtResponse {
         this.personId = person.id;
         this.vorname = person.vorname;
         this.nachname = person.familienname;
-        this.benutzername = person.referrer!;
+        this.benutzername = person.username!;
         this.lastModifiedZuordnungen = lastModifiedZuordnungen;
         this.zuordnungen = personenzuordnungen;
     }

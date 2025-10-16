@@ -166,11 +166,11 @@ describe('PersonRepository Integration', () => {
     type SavedPersonProps = { keycloackID: string };
     async function savePerson(
         withPersonalnummer: boolean = false,
-        props: Partial<SavedPersonProps & { vorname?: string; familienname?: string; referrer?: string }> = {},
+        props: Partial<SavedPersonProps & { vorname?: string; familienname?: string; username?: string }> = {},
     ): Promise<Person<true>> {
         usernameGeneratorService.generateUsername.mockResolvedValueOnce({
             ok: true,
-            value: props.referrer ?? 'testusername',
+            value: props.username ?? 'testusername',
         });
         const defaultProps: SavedPersonProps = {
             keycloackID: faker.string.uuid(),
@@ -183,7 +183,6 @@ describe('PersonRepository Integration', () => {
             keycloackID: string;
         } = { ...defaultProps, ...props };
         const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-            referrer: faker.string.alphanumeric(5),
             familienname,
             vorname,
             personalnummer: withPersonalnummer ? faker.finance.pin(7) : undefined,
@@ -1077,8 +1076,8 @@ describe('PersonRepository Integration', () => {
                 await expect(sut.update(person)).rejects.toBeDefined();
             });
         });
-        describe('when referrer is defined', () => {
-            it('should use the existing referrer if the person has not been renamed', async () => {
+        describe('when username is defined', () => {
+            it('should use the existing username if the person has not been renamed', async () => {
                 const existingPerson: Person<true> = await savePerson();
                 kcUserServiceMock.setPassword.mockResolvedValueOnce({
                     ok: true,
@@ -1088,11 +1087,11 @@ describe('PersonRepository Integration', () => {
 
                 expect(result).toBeInstanceOf(Person);
                 if (result instanceof Person) {
-                    expect(result.referrer).toEqual(existingPerson.referrer);
+                    expect(result.username).toEqual(existingPerson.username);
                 }
             });
         });
-        describe('when referrer is undefined', () => {
+        describe('when username is undefined', () => {
             beforeEach(() => {
                 jest.restoreAllMocks();
             });
@@ -1140,14 +1139,14 @@ describe('PersonRepository Integration', () => {
                     ok: false,
                     error: new InvalidCharacterSetError('name.vorname', 'DIN-91379A'),
                 });
-                jest.spyOn(sut, 'getReferrer').mockReturnValueOnce(undefined);
+                jest.spyOn(sut, 'getUsername').mockReturnValueOnce(undefined);
 
                 const result: Person<true> | DomainError = await sut.update(personConstructed);
                 expect(result).toBeInstanceOf(DomainError);
                 expect(usernameGeneratorService.generateUsername).toHaveBeenCalledWith(firstname, lastname);
             });
 
-            it('should generate a new referrer if the person has been renamed', async () => {
+            it('should generate a new username if the person has been renamed', async () => {
                 usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
                 const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
                     familienname: 'lastname',
@@ -1182,16 +1181,16 @@ describe('PersonRepository Integration', () => {
                     lastname,
                     firstname,
                     '1',
-                    faker.lorem.word(),
-                    faker.lorem.word(),
                     'newtestusername',
+                    faker.lorem.word(),
+                    faker.lorem.word(),
                 );
                 usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'newtestusername' });
-                jest.spyOn(sut, 'getReferrer').mockReturnValueOnce(undefined);
+                jest.spyOn(sut, 'getUsername').mockReturnValueOnce(undefined);
                 const result: Person<true> | DomainError = await sut.update(personConstructed);
                 expect(result).toBeInstanceOf(Person);
                 if (result instanceof Person) {
-                    expect(result.referrer).toEqual('newtestusername');
+                    expect(result.username).toEqual('newtestusername');
                 }
                 expect(usernameGeneratorService.generateUsername).toHaveBeenCalledWith(firstname, lastname);
             });
@@ -1387,7 +1386,7 @@ describe('PersonRepository Integration', () => {
 
             const expectedProperties: string[] = [
                 'keycloakUserId',
-                'referrer',
+                'username',
                 'mandant',
                 'stammorganisation',
                 'familienname',
@@ -1560,10 +1559,10 @@ describe('PersonRepository Integration', () => {
     });
 
     describe('findByUsername', () => {
-        it('should return persons with matching username (referrer)', async () => {
+        it('should return persons with matching username (username)', async () => {
             const username: string = faker.internet.userName();
             const person1: Person<true> = DoFactory.createPerson(true);
-            person1.referrer = username;
+            person1.username = username;
             const personEntity: PersonEntity = new PersonEntity();
             await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
             person1.id = personEntity.id;
@@ -1573,8 +1572,8 @@ describe('PersonRepository Integration', () => {
             expect(result).toHaveLength(1);
         });
 
-        it('should return empty list if no match for username (referrer)', async () => {
-            const result: Person<true>[] = await sut.findByUsername('not-existent-referrer');
+        it('should return empty list if no match for username (username)', async () => {
+            const result: Person<true>[] = await sut.findByUsername('not-existent-username');
             expect(result).toHaveLength(0);
         });
     });
@@ -2206,10 +2205,10 @@ describe('PersonRepository Integration', () => {
                 expect(result.ok).toBeTruthy();
             });
 
-            it('should delete the person as admin of organisation and publish events when referrer and oxUserId are defined', async () => {
+            it('should delete the person as admin of organisation and publish events when username and oxUserId are defined', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 const personEntity: PersonEntity = new PersonEntity();
-                person1.referrer = faker.internet.userName();
+                person1.username = faker.internet.userName();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
 
@@ -2279,12 +2278,12 @@ describe('PersonRepository Integration', () => {
                 expect(eventServiceMock.publish).toHaveBeenCalledWith(
                     expect.objectContaining({
                         personId: person1.id,
-                        username: person1.referrer,
+                        username: person1.username,
                         oxUserId: oxUserId,
                     }),
                     expect.objectContaining({
                         personId: person1.id,
-                        username: person1.referrer,
+                        username: person1.username,
                         oxUserId: oxUserId,
                     }),
                 );
@@ -2401,7 +2400,7 @@ describe('PersonRepository Integration', () => {
                     existingPerson.mandant,
                     existingPerson.stammorganisation,
                     existingPerson.keycloakUserId,
-                    existingPerson.referrer,
+                    existingPerson.username,
                 );
 
                 const result: Person<true> | DomainError = await sut.save(updatedPerson);
@@ -2423,10 +2422,9 @@ describe('PersonRepository Integration', () => {
                     faker.person.lastName(),
                     faker.person.firstName(),
                     existingPerson.mandant,
-                    existingPerson.stammorganisation,
+                    existingPerson.username,
                     existingPerson.keycloakUserId,
-                    existingPerson.referrer,
-                    undefined,
+                    existingPerson.stammorganisation,
                     undefined,
                     undefined,
                     undefined,
@@ -2641,10 +2639,8 @@ describe('PersonRepository Integration', () => {
             const [persons, total]: [Person<true>[], number] = result;
 
             expect(total).toBe(4);
-            expect(persons[0]?.familienname).toBe('Brown');
-            expect(persons[1]?.familienname).toBe('Brown');
-            expect(persons[0]?.referrer).toBe(person1.referrer);
-            expect(persons[1]?.referrer).toBe(person2.referrer);
+            expect(persons[0]?.familienname).toBe(person1.familienname);
+            expect(persons[1]?.familienname).toBe(person2.familienname);
             expect(persons[2]?.familienname).toBe('Johnson');
             expect(persons[3]?.familienname).toBe('Smith');
         });
@@ -2674,18 +2670,18 @@ describe('PersonRepository Integration', () => {
 
             expect(persons[0]?.vorname).toBe('Anna');
             expect(persons[1]?.vorname).toBe('Anna');
-            expect(persons[0]?.referrer).toBe(person1.referrer);
-            expect(persons[1]?.referrer).toBe(person2.referrer);
+            expect(persons[0]?.username).toBe(person1.username);
+            expect(persons[1]?.username).toBe(person2.username);
             expect(persons[2]?.vorname).toBe('Bob');
             expect(persons[3]?.vorname).toBe('Charlie');
         });
 
-        it.each([SortFieldPerson.PERSONALNUMMER, SortFieldPerson.REFERRER])(
+        it.each([SortFieldPerson.PERSONALNUMMER, SortFieldPerson.USERNAME])(
             'should apply sort criteria correctly for %s',
             async (sortField: SortFieldPerson) => {
-                await savePerson(false, { vorname: 'Charlie', familienname: 'Smith', referrer: 'csmith' });
-                await savePerson(false, { vorname: 'Bob', familienname: 'Smith', referrer: 'bsmith' });
-                await savePerson(false, { vorname: 'Anna', familienname: 'Smith', referrer: 'asmith' });
+                await savePerson(false, { vorname: 'Charlie', familienname: 'Smith', username: 'csmith' });
+                await savePerson(false, { vorname: 'Bob', familienname: 'Smith', username: 'bsmith' });
+                await savePerson(false, { vorname: 'Anna', familienname: 'Smith', username: 'asmith' });
 
                 const permittedOrgas: PermittedOrgas = { all: true };
 
@@ -2704,9 +2700,9 @@ describe('PersonRepository Integration', () => {
 
                 expect(total).toBe(3);
 
-                expect(persons[0]?.referrer).toBe('asmith');
-                expect(persons[1]?.referrer).toBe('bsmith');
-                expect(persons[2]?.referrer).toBe('csmith');
+                expect(persons[0]?.username).toBe('asmith');
+                expect(persons[1]?.username).toBe('bsmith');
+                expect(persons[2]?.username).toBe('csmith');
             },
         );
     });
@@ -2812,7 +2808,7 @@ describe('PersonRepository Integration', () => {
             expect(person.id).toBe(result.id);
             expect(result.familienname).toEqual(newFamilienname);
             expect(result.vorname).toEqual(newVorname);
-            expect(result.referrer).toEqual('testusername1');
+            expect(result.username).toEqual('testusername1');
 
             expect(person.personalnummer).not.toEqual(newPersonalnummer);
             expect(result.personalnummer).toEqual(newPersonalnummer);

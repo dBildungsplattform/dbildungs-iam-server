@@ -23,7 +23,7 @@ export class PersonenkontextQueryParams extends PagedQueryParams {
         required: false,
         nullable: true,
     })
-    public readonly referrer?: string;
+    public readonly username?: string;
 
     @IsOptional()
     @IsEnum(Personenstatus)

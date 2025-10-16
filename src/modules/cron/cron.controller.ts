@@ -108,11 +108,11 @@ export class CronController {
                         );
                     if (updateResult.ok) {
                         this.logger.info(
-                            `System hat Benutzer ${person?.referrer} (${person?.id}) gesperrt, da nach Ablauf der Frist keine KoPers.-Nr. eingetragen war.`,
+                            `System hat Benutzer ${person?.username} (${person?.id}) gesperrt, da nach Ablauf der Frist keine KoPers.-Nr. eingetragen war.`,
                         );
                     } else {
                         this.logger.error(
-                            `System konnte Benutzer ${person?.referrer} (${person?.id}) nach Ablauf der Frist ohne KoPers.-Nr. nicht sperren. Fehler: ${updateResult.error.message}`,
+                            `System konnte Benutzer ${person?.username} (${person?.id}) nach Ablauf der Frist ohne KoPers.-Nr. nicht sperren. Fehler: ${updateResult.error.message}`,
                         );
                     }
                     return updateResult;
@@ -203,11 +203,11 @@ export class CronController {
                                     .commit(personId, new Date(), count, personenKontexteToKeep, permissions);
                             if (result instanceof PersonenkontexteUpdateError) {
                                 this.logger.error(
-                                    `System konnte die befristete(n) Schulzuordnung(en) des Benutzers ${person?.referrer} (${person?.id}) nicht aufheben. Abgelaufende Schulzuordnung(en): [${pkToDeleteMessage}]. Fehler: ${result.message}`,
+                                    `System konnte die befristete(n) Schulzuordnung(en) des Benutzers ${person?.username} (${person?.id}) nicht aufheben. Abgelaufende Schulzuordnung(en): [${pkToDeleteMessage}]. Fehler: ${result.message}`,
                                 );
                             } else {
                                 this.logger.info(
-                                    `System hat die befristete(n) Schulzuordnung(en) des Benutzers ${person?.referrer} (${person?.id}) aufgehoben. Abgelaufende Schulzuordnung(en): [${pkToDeleteMessage}].`,
+                                    `System hat die befristete(n) Schulzuordnung(en) des Benutzers ${person?.username} (${person?.id}) aufgehoben. Abgelaufende Schulzuordnung(en): [${pkToDeleteMessage}].`,
                                 );
                             }
                             return result;
@@ -304,11 +304,11 @@ export class CronController {
                         await this.personDeleteService.deletePersonAfterDeadlineExceeded(id, permissions);
                     if (deleteResult.ok) {
                         this.logger.info(
-                            `System hat ${person?.referrer} (${person?.id}) nach 84 Tagen ohne Schulzuordnung gelöscht.`,
+                            `System hat ${person?.username} (${person?.id}) nach 84 Tagen ohne Schulzuordnung gelöscht.`,
                         );
                     } else {
                         this.logger.error(
-                            `System konnte Benutzer ${person?.referrer} (${person?.id}) nach 84 Tagen ohne Schulzuordnung nicht löschen. Fehler: ${deleteResult.error.message}`,
+                            `System konnte Benutzer ${person?.username} (${person?.id}) nach 84 Tagen ohne Schulzuordnung nicht löschen. Fehler: ${deleteResult.error.message}`,
                         );
                     }
                     return deleteResult;
@@ -382,11 +382,11 @@ export class CronController {
                         );
                     if (updateResult.ok) {
                         this.logger.info(
-                            `System hat die befristete Sperre von Benutzer ${person.value.referrer} (${person.value.id}) aufgehoben.`,
+                            `System hat die befristete Sperre von Benutzer ${person.value.username} (${person.value.id}) aufgehoben.`,
                         );
                     } else {
                         this.logger.error(
-                            `System konnte befristete Sperre von Benutzer ${person.value.referrer} (${person.value.id}) nicht aufheben. Fehler: ${updateResult.error.message}`,
+                            `System konnte befristete Sperre von Benutzer ${person.value.username} (${person.value.id}) nicht aufheben. Fehler: ${updateResult.error.message}`,
                         );
                     }
                     return updateResult;

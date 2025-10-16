@@ -7,7 +7,7 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { OxService } from './ox.service.js';
 import { CreateUserAction, CreateUserResponse } from '../actions/user/create-user.action.js';
-import { OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
+import { OrganisationKennung, PersonID, PersonUsername } from '../../../shared/types/index.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
@@ -173,12 +173,12 @@ export class OxEventHandler {
         }
 
         // If the person doesn't have a username, log an error and stop the process
-        if (!person.referrer) {
+        if (!person.username) {
             return this.logger.error(`Person with personId:${event.personId} does not have a username. Cannot sync.`);
         }
 
         // This also publishes an OxUserChangedEvent
-        await this.oxSyncEventHandler.sync(event.personId, person.referrer);
+        await this.oxSyncEventHandler.sync(event.personId, person.username);
 
         // Log the successful sync of the user
         this.logger.info(`Successfully synced user, personId:${event.personId}, oxUserId:${person.oxUserId}`);
@@ -245,7 +245,7 @@ export class OxEventHandler {
             //Logging is done in removeOxUserFromOxGroup
             await this.oxEventService.removeOxUserFromOxGroup(oxGroupId, person.oxUserId, {
                 personId: person.id,
-                username: person.referrer,
+                username: person.username,
             });
         }
     }
@@ -268,7 +268,7 @@ export class OxEventHandler {
 
     public async handlePersonHasNotAnyPKWithRollenartLehr(
         personId: PersonID,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
         oxUserId: OXUserID,
     ): Promise<void> {
         //change oxUserName to avoid conflicts for future OX-createUser-requests
@@ -485,7 +485,7 @@ export class OxEventHandler {
 
     private async createOxUser(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         orgaKennung: OrganisationKennung,
         oxUserCreatedEventCreator: OxUserCreatedEventCreator,
     ): Promise<void> {
@@ -498,7 +498,7 @@ export class OxEventHandler {
         if (!person) {
             return this.logger.errorPersonalized(`Person not found`, personIdentifier);
         }
-        if (!person.referrer) {
+        if (!person.username) {
             return this.logger.errorPersonalized(
                 `Person has no username: cannot create OXEmailAddress`,
                 personIdentifier,
@@ -512,7 +512,7 @@ export class OxEventHandler {
         }
         const requestedEmailAddressString: string = mostRecentRequestedEmailAddress.address;
 
-        const existsAction: ExistsUserAction = this.oxEventService.createExistsUserAction(person.referrer);
+        const existsAction: ExistsUserAction = this.oxEventService.createExistsUserAction(person.username);
         const existsResult: Result<ExistsUserResponse, DomainError> = await this.oxService.send(existsAction);
 
         if (existsResult.ok && existsResult.value.exists) {
@@ -522,8 +522,8 @@ export class OxEventHandler {
         }
 
         const action: CreateUserAction = this.oxEventService.createCreateUserAction(
-            person.referrer,
-            person.referrer,
+            person.username,
+            person.username,
             person.vorname,
             person.familienname,
             requestedEmailAddressString,
@@ -601,7 +601,7 @@ export class OxEventHandler {
         this.oxEventService.publishOxUserChangedEvent2(
             oxUserCreatedEventCreator,
             personId,
-            person.referrer,
+            person.username,
             createUserResult.value.id,
             createUserResult.value.username,
             createUserResult.value.primaryEmail,
@@ -610,7 +610,7 @@ export class OxEventHandler {
 
     private async changeOxUser(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         eventCreator: OxUserChangedEventCreator,
     ): Promise<void> {
         const personIdentifier: PersonIdentifier = {
@@ -622,7 +622,7 @@ export class OxEventHandler {
         if (!person) {
             return this.logger.errorPersonalized(`Person not found`, personIdentifier);
         }
-        if (!person.referrer) {
+        if (!person.username) {
             return this.logger.errorPersonalized(
                 `Person has no username: Cannot Change Email-Address In OX`,
                 personIdentifier,
@@ -646,7 +646,7 @@ export class OxEventHandler {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
             return this.logger.error(
-                `Cannot get data for oxUsername:${person.referrer} from OX, Aborting Email-Address Change, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
+                `Cannot get data for oxUsername:${person.username} from OX, Aborting Email-Address Change, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
             );
         }
         const newAliasesArray: string[] = getDataResult.value.aliases;
@@ -661,11 +661,11 @@ export class OxEventHandler {
 
         const action: ChangeUserAction = this.oxEventService.createChangeUserAction(
             person.oxUserId,
-            person.referrer,
+            person.username,
             newAliasesArray,
             person.vorname,
             person.familienname,
-            person.referrer, //IS EXPLICITLY NOT SET to vorname+familienname
+            person.username, //IS EXPLICITLY NOT SET to vorname+familienname
             requestedEmailAddressString,
             requestedEmailAddressString,
         );
@@ -682,16 +682,16 @@ export class OxEventHandler {
         }
 
         this.logger.infoPersonalized(
-            `Changed primary email-address in OX for user, oxUserId:${person.oxUserId}, oxUsername:${person.referrer}, new email-address:${requestedEmailAddressString}`,
+            `Changed primary email-address in OX for user, oxUserId:${person.oxUserId}, oxUsername:${person.username}, new email-address:${requestedEmailAddressString}`,
             personIdentifier,
         );
 
         this.oxEventService.publishOxUserChangedEvent2(
             eventCreator,
             personId,
-            person.referrer,
+            person.username,
             person.oxUserId,
-            person.referrer, //strictEquals the new OxUsername
+            person.username, //strictEquals the new OxUsername
             requestedEmailAddressString,
         );
     }

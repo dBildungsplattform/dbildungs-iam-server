@@ -263,14 +263,14 @@ export class DbiamPersonenkontextWorkflowController {
         }
 
         this.logger.info(
-            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat neuen Benutzer ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
+            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat neuen Benutzer ${savedPersonWithPersonenkontext.person.username} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
         );
         await Promise.all(
             savedPersonWithPersonenkontext.personenkontexte.map(async (personenKontext: Personenkontext<true>) => {
                 const rolle: Option<Rolle<true>> = await personenKontext.getRolle();
                 const organisation: Option<Organisation<true>> = await personenKontext.getOrganisation();
                 this.logger.info(
-                    `Benutzer ${savedPersonWithPersonenkontext.person.referrer} angelegt mit Rolle: ${rolle?.name} (${rolle?.id}), und Organisation: ${organisation?.name} (${organisation?.id}).`,
+                    `Benutzer ${savedPersonWithPersonenkontext.person.username} angelegt mit Rolle: ${rolle?.name} (${rolle?.id}), und Organisation: ${organisation?.name} (${organisation?.id}).`,
                 );
             }),
         );

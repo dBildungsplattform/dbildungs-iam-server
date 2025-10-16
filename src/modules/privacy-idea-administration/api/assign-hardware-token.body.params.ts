@@ -15,7 +15,7 @@ export class AssignHardwareTokenBodyParams {
     @IsNotEmpty()
     @IsString()
     @ApiProperty({ required: true })
-    public referrer!: string;
+    public username!: string;
 
     @IsNotEmpty()
     @IsString()
