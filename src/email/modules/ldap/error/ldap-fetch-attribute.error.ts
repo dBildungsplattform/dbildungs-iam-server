@@ -1,4 +1,4 @@
-import { DomainError } from '../../../../shared/error';
+import { DomainError } from '../../../../shared/error/domain.error.js';
 import { PersonID, PersonReferrer } from '../../../../shared/types';
 
 export class LdapFetchAttributeError extends DomainError {

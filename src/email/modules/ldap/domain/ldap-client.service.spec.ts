@@ -10,7 +10,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { LdapConfigModule } from '../ldap-config.module.js';
-import { LdapModule } from '../ldap.module.js';
+import { EmailLdapModule } from '../email-ldap.module.js';
 import { faker } from '@faker-js/faker';
 import { LdapClientService, LdapPersonAttributes, PersonData } from './ldap-client.service.js';
 import { Person } from '../../../modules/person/domain/person.js';
@@ -143,7 +143,7 @@ describe('LDAP Client Service', () => {
             imports: [
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                LdapModule,
+                EmailLdapModule,
                 LdapConfigModule,
             ],
             providers: [

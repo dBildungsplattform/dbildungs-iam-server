@@ -10,7 +10,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { LdapConfigModule } from '../ldap-config.module.js';
-import { LdapModule } from '../ldap.module.js';
+import { EmailLdapModule } from '../email-ldap.module.js';
 import { LdapClient } from './ldap-client.js';
 import { Client } from 'ldapts';
 
@@ -22,7 +22,7 @@ describe('LDAP Client', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), LdapModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailLdapModule],
             providers: [
                 {
                     provide: APP_PIPE,

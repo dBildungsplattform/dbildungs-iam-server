@@ -1,4 +1,4 @@
-import { DomainError } from '../../../../shared/error';
+import { DomainError } from '../../../../shared/error/domain.error.js';
 
 export class LdapGroupKennungExtractionError extends DomainError {
     public constructor(description: string, details?: unknown[] | Record<string, unknown>) {
