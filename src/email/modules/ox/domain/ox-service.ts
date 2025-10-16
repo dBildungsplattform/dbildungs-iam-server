@@ -2,7 +2,6 @@ import { ConfigService } from '@nestjs/config';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
 import { OXContextID, OXContextName, OXGroupID, OXGroupName, OXUserID } from '../../../../shared/types/ox-ids.types.js';
-import { EmailAddressRepo } from '../../core/persistence/email-address.repo.js';
 import { AddMemberToGroupAction } from '../actions/group/add-member-to-group.action.js';
 import {
     ListGroupsForUserAction,
@@ -58,7 +57,6 @@ export class OxService {
     public constructor(
         protected readonly logger: ClassLogger,
         protected readonly oxSendService: OxSendService,
-        protected readonly emailAddressRepo: EmailAddressRepo,
         protected configService: ConfigService<EmailAppConfig>,
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');

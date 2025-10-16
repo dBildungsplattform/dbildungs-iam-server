@@ -5,8 +5,8 @@ import { LdapClient } from './domain/ldap-client.js';
 import { LoggerModule } from '../../../core/logging/logger.module.js';
 
 @Module({
-    imports: [LoggerModule.register(LdapModule.name), LdapConfigModule],
+    imports: [LoggerModule.register(EmailLdapModule.name), LdapConfigModule],
     providers: [LdapClientService, LdapClient],
     exports: [LdapClientService, LdapClient],
 })
-export class LdapModule {}
+export class EmailLdapModule {}
