@@ -111,6 +111,9 @@ export class SetEmailAddressForSpshPersonService {
                 lastName,
                 createdEmailAddress,
             );
+            this.logger.info(
+                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully created OX user with  oxUserId ${oxUserId}`,
+            );
         } catch (error) {
             if (error instanceof OxPrimaryMailAlreadyExistsError) {
                 this.logger.info(
@@ -136,16 +139,15 @@ export class SetEmailAddressForSpshPersonService {
                 );
             }
         }
-        this.logger.info(
-            `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully created OX user with  oxUserId ${oxUserId}`,
-        );
 
         //CONNECT OXUSERID IN DB
         if (!oxUserId) {
-            EmailAddressStatus.createNew({
-                emailAddressId: createdEmailAddress.id,
-                status: EmailAddressStatusEnum.FAILED,
-            });
+            await this.emailAddressStatusRepo.create(
+                EmailAddressStatus.createNew({
+                    emailAddressId: createdEmailAddress.id,
+                    status: EmailAddressStatusEnum.FAILED,
+                }),
+            );
             this.logger.error(
                 `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to connect Ox user in Db because oxUserId is undefined`,
             );
@@ -176,10 +178,12 @@ export class SetEmailAddressForSpshPersonService {
             createdEmailAddress.address,
         );
         if (createdLdapPerson instanceof Error) {
-            EmailAddressStatus.createNew({
-                emailAddressId: createdEmailAddress.id,
-                status: EmailAddressStatusEnum.FAILED,
-            });
+            await this.emailAddressStatusRepo.create(
+                EmailAddressStatus.createNew({
+                    emailAddressId: createdEmailAddress.id,
+                    status: EmailAddressStatusEnum.FAILED,
+                }),
+            );
             this.logger.error(
                 `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to create LDAP person: ${createdLdapPerson.message}`,
             );
@@ -190,10 +194,12 @@ export class SetEmailAddressForSpshPersonService {
         //CONNECT LDAPENTRYUUID IN DB
         const entryUUID: Result<string, Error> = await this.ldapClientService.getEntryUUIDByUsername(spshUsername);
         if (!entryUUID.ok) {
-            EmailAddressStatus.createNew({
-                emailAddressId: createdEmailAddress.id,
-                status: EmailAddressStatusEnum.FAILED,
-            });
+            await this.emailAddressStatusRepo.create(
+                EmailAddressStatus.createNew({
+                    emailAddressId: createdEmailAddress.id,
+                    status: EmailAddressStatusEnum.FAILED,
+                }),
+            );
             this.logger.error(
                 `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to fetch LDAP entryUUID for created person: ${entryUUID.error.message}`,
             );
@@ -204,10 +210,12 @@ export class SetEmailAddressForSpshPersonService {
         const saveResultAfterLdapConnection: EmailAddress<true> | DomainError =
             await this.emailAddressRepo.save(emailAddressToCreate);
         if (saveResultAfterLdapConnection instanceof DomainError) {
-            EmailAddressStatus.createNew({
-                emailAddressId: createdEmailAddress.id,
-                status: EmailAddressStatusEnum.FAILED,
-            });
+            await this.emailAddressStatusRepo.create(
+                EmailAddressStatus.createNew({
+                    emailAddressId: createdEmailAddress.id,
+                    status: EmailAddressStatusEnum.FAILED,
+                }),
+            );
             this.logger.error(
                 `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to save email address after trying to connect ldapEntryUUID ${entryUUID.value}`,
             );

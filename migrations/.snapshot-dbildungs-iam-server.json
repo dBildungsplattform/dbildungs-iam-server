@@ -82,7 +82,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -359,7 +361,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -629,7 +633,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -873,6 +879,15 @@
           "nullable": true,
           "mappedType": "string"
         },
+        "ldap_entry_uuid": {
+          "name": "ldap_entry_uuid",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
+        },
         "spsh_person_id": {
           "name": "spsh_person_id",
           "type": "varchar(255)",
@@ -958,7 +973,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -1197,7 +1214,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ],
           "mappedType": "enum"
         }
@@ -1271,7 +1290,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -1543,7 +1564,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -1841,7 +1864,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -2254,7 +2279,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -2544,7 +2571,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -2989,7 +3018,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -3333,7 +3364,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -3613,7 +3646,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -3932,7 +3967,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -4398,7 +4435,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -4784,7 +4823,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -5149,7 +5190,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -5430,7 +5473,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -5727,7 +5772,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -6118,7 +6165,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -6396,7 +6445,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -6768,7 +6819,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -7046,7 +7099,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -7327,7 +7382,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -7652,7 +7709,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -7868,7 +7927,9 @@
         "ACTIVE",
         "DEACTIVE",
         "SUSPENDED",
-        "TO_BE_DELETED"
+        "FAILED",
+        "TO_BE_DELETED",
+        "EXISTS_ONLY_IN_OX"
       ]
     },
     "meldung_status_enum": {
