@@ -321,7 +321,12 @@ cronjobs:
       endpoint: "/api/cron/unlock"
       httpMethod: "PUT"
       script: "cron_trigger.sh"
-#    cron-trigger-5:
+    cron-trigger-5:
+      schedule: "0 0 30 9 *" #Should never run automatically status: 15.10.2025. --> Setting to 30.09 so we have 1 Year to manually enable it fo the first time and define running interval
+      endpoint: '/api/cron/email-addresses-delete'
+      httpMethod: 'DELETE'
+      script: 'cron_trigger.sh'
+#    cron-trigger-6:
 #      schedule: 30 0 * * *
 #      endpoint: '/api/cron/vidis-angebote'
 #      httpMethod: 'PUT'
