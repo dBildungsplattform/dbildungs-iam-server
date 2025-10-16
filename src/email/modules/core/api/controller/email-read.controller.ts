@@ -11,9 +11,9 @@ import {
 import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
-import { EmailAddress } from '../../domain/email-address.js';
 import { Public } from '../../decorator/public.decorator.js';
 import { GetEmailAddressForSpshPersonService } from '../../domain/get-email-address-for-spsh-person.service.js';
+import { AddressWithStatusesDto } from '../dtos/address-with-statuses/address-with-statuses.dto.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
@@ -23,7 +23,7 @@ export class EmailReadController {
     public constructor(private readonly logger: ClassLogger,
         private readonly getEmailAddressForSpshPersonService: GetEmailAddressForSpshPersonService) {}
 
-    @Get(':personId')
+    @Get(':spshPersonId')
     @Public()
     @ApiOperation({ description: 'Get email-addresses by personId.' })
     @ApiOkResponse({
@@ -37,15 +37,15 @@ export class EmailReadController {
     ): Promise<EmailAddressResponse[]> {
         this.logger.info(`PersonId:${findEmailAddressByPersonIdParams.spshPersonId}`);
 
-        const emailAddresses: EmailAddress<true>[] = await this.getEmailAddressForSpshPersonService
+        const addresses: AddressWithStatusesDto[] = await this.getEmailAddressForSpshPersonService
             .getEmailAddressWithStatusForSpshPerson(findEmailAddressByPersonIdParams);
 
-        if (emailAddresses.length === 0) {
+        if (addresses.length === 0) {
             return [];
         }
 
-        return emailAddresses
-            .filter(emailAddress => emailAddress.status !== undefined)
-            .map(emailAddress => new EmailAddressResponse(emailAddress));
+        return addresses
+            .filter(address => address.statuses.length > 0 && address.statuses[0] !== undefined)
+            .map(address => new EmailAddressResponse(address.emailAddress, address.statuses[0]!));
     }
 }

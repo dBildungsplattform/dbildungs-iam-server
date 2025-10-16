@@ -6,6 +6,7 @@ import { DomainError } from '../../../../shared/error/index.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { mapEntityToAggregate as mapStatusEntityToAggregate } from './email-address-status.repo.js';
+import { AddressWithStatusesDto } from '../api/dtos/address-with-statuses/address-with-statuses.dto.js';
 
 export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddrEntity> {
     return {
@@ -20,9 +21,6 @@ export function mapAggregateToData(emailAddress: EmailAddress<boolean>): Require
 }
 
 function mapEntityToAggregate(entity: EmailAddrEntity): EmailAddress<boolean> {
-    const statuses = entity.statuses?.map(mapStatusEntityToAggregate) ?? [];
-    const latestStatus = statuses.length > 0 ? statuses[0] : undefined;
-
     return EmailAddress.construct({
         id: entity.id,
         createdAt: entity.createdAt,
@@ -32,7 +30,6 @@ function mapEntityToAggregate(entity: EmailAddrEntity): EmailAddress<boolean> {
         spshPersonId: entity.spshPersonId,
         oxUserId: entity.oxUserId,
         markedForCron: entity.markedForCron,
-        status: latestStatus,
     });
 }
 
@@ -63,7 +60,7 @@ export class EmailAddressRepo {
         return emailAddressEntities.map(mapEntityToAggregate);
     }
 
-    public async findAllEmailAddressesWithStatusesBySpshPersonId(spshPersonId: string): Promise<EmailAddress<true>[]> {
+    public async findAllEmailAddressesWithStatusesBySpshPersonId(spshPersonId: string): Promise<AddressWithStatusesDto[]> {
         const emailAddressEntities: EmailAddrEntity[] = await this.em.find(
             EmailAddrEntity,
             { spshPersonId: { $eq: spshPersonId } },
@@ -72,7 +69,10 @@ export class EmailAddressRepo {
                 orderBy: { id: 'asc' },
             }
         );
-        return emailAddressEntities.map(mapEntityToAggregate);
+        return emailAddressEntities.map(entity => new AddressWithStatusesDto(
+            mapEntityToAggregate(entity),
+            entity.statuses.getItems().map(mapStatusEntityToAggregate),
+        ));
     }
 
     public async save(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {
