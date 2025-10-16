@@ -6,7 +6,7 @@ describe('KafkaEmailAddressDisabledEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {
         const person: Person<true> = DoFactory.createPerson(true);
 
-        const event: KafkaEmailAddressDisabledEvent = new KafkaEmailAddressDisabledEvent(person.id, person.referrer!);
+        const event: KafkaEmailAddressDisabledEvent = new KafkaEmailAddressDisabledEvent(person.id, person.username!);
 
         expect(event).toBeInstanceOf(KafkaEmailAddressDisabledEvent);
         expect(event.kafkaKey).toBe(person.id);

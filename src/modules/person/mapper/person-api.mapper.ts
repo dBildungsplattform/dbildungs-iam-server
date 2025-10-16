@@ -12,7 +12,7 @@ export class PersonApiMapper {
         const rolle: Option<Rolle<true>> = await props.getRolle();
         const response: PersonenkontextResponse = new PersonenkontextResponse({
             id: props.id,
-            referrer: props.referrer,
+            username: props.username,
             mandant: props.mandant!,
             organisation: CreatedPersonenkontextOrganisation.new({ id: props.organisationId }),
             rollenart: rolle?.rollenart,

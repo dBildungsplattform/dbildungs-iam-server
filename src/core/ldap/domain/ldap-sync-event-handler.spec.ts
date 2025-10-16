@@ -14,7 +14,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClientService, LdapPersonAttributes } from './ldap-client.service.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { OrganisationID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID, PersonUsername, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
@@ -55,7 +55,7 @@ describe('LdapSyncEventHandler', () => {
     let loggerMock: DeepMocked<ClassLogger>;
 
     let personId: PersonID;
-    let username: PersonReferrer;
+    let username: PersonUsername;
     let event: PersonExternalSystemsSyncEvent;
     let vorname: string;
     let familienname: string;
@@ -254,7 +254,7 @@ describe('LdapSyncEventHandler', () => {
         familienname = faker.person.lastName();
         person = createMock<Person<true>>({
             id: personId,
-            referrer: username,
+            username: username,
             vorname: vorname,
             familienname: familienname,
         });
@@ -340,7 +340,7 @@ describe('LdapSyncEventHandler', () => {
             personId = faker.string.uuid();
             username = faker.internet.userName();
             event = new PersonExternalSystemsSyncEvent(personId);
-            person = createMock<Person<true>>({ referrer: username });
+            person = createMock<Person<true>>({ username: username });
             email = faker.internet.email();
             enabledEmailAddress = createMock<EmailAddress<true>>({
                 get address(): string {
@@ -368,7 +368,7 @@ describe('LdapSyncEventHandler', () => {
 
         describe('when person has NO username', () => {
             it('should log error and return without proceeding', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>({ referrer: undefined }));
+                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>({ username: undefined }));
 
                 await sut.personExternalSystemSyncEventHandler(event);
 
@@ -720,7 +720,7 @@ describe('LdapSyncEventHandler', () => {
                     `Mismatch for surName, person:${person.familienname}, LDAP:${surName}, personId:${personId}, username:${username}`,
                 );
                 expect(loggerMock.warning).toHaveBeenCalledWith(
-                    `Mismatch for cn, person:${person.referrer}, LDAP:${cn}, personId:${personId}, username:${username}`,
+                    `Mismatch for cn, person:${person.username}, LDAP:${cn}, personId:${personId}, username:${username}`,
                 );
             });
         });

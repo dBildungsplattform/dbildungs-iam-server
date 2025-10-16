@@ -3,7 +3,7 @@
     "entities": [
         {
             "id": 2,
-            "referrer": null,
+            "username": null,
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
             "stammorganisation": null,
             "vorname": "Max",
@@ -13,7 +13,7 @@
         {
             "id": 3,
             "overrideId": "8b60298f-8d9e-4764-a48f-ad8e17275e5e",
-            "referrer": null,
+            "username": null,
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
             "stammorganisation": null,
             "vorname": "Max",
