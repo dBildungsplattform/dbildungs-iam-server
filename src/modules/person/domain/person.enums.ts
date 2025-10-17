@@ -7,7 +7,7 @@ export enum SortFieldPerson {
     FAMILIENNAME = 'familienname',
     VORNAME = 'vorname',
     PERSONALNUMMER = 'personalnummer',
-    REFERRER = 'referrer',
+    USERNAME = 'username',
 }
 
 export enum PersonLockOccasion {

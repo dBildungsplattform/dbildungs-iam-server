@@ -7,7 +7,7 @@ import { Person } from '../../../modules/person/domain/person.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { EmailRepo } from '../../../modules/email/persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
-import { OrganisationID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID, PersonUsername, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
 import { uniq } from 'lodash-es';
@@ -107,10 +107,10 @@ export class LdapSyncEventHandler {
         }
 
         // Check if person has a username
-        if (!person.referrer) {
+        if (!person.username) {
             return this.logger.error(`Person with personId:${personId} has no username!`);
         }
-        const username: PersonReferrer = person.referrer;
+        const username: PersonUsername = person.username;
         const personInfo: PersonIdentifier = {
             personId: personId,
             username: username,
@@ -130,8 +130,8 @@ export class LdapSyncEventHandler {
             if (failedEmailAddresses && failedEmailAddresses[0]) {
                 if (!failedEmailAddresses[0].oxUserID) {
                     this.eventService.publish(
-                        new LdapSyncFailedEvent(personId, person.referrer),
-                        new KafkaLdapSyncFailedEvent(personId, person.referrer),
+                        new LdapSyncFailedEvent(personId, person.username),
+                        new KafkaLdapSyncFailedEvent(personId, person.username),
                     );
                     return this.logger.infoPersonalized(
                         `Published LdapSyncFailed-event for FAILED EmailAddress, ABORTING LDAP-Sync, address:${failedEmailAddresses[0].address}`,
@@ -217,13 +217,13 @@ export class LdapSyncEventHandler {
             schulenDstNrList.push(schule.kennung);
         }
         this.logger.info(
-            `Found orgaKennungen:${JSON.stringify(schulenDstNrList)}, for personId:${personId}, username:${person.referrer}`,
+            `Found orgaKennungen:${JSON.stringify(schulenDstNrList)}, for personId:${personId}, username:${person.username}`,
         );
 
         // Get current attributes for person from LDAP
         const personAttributes: Result<LdapPersonAttributes> = await this.ldapClientService.getPersonAttributes(
             personId,
-            person.referrer,
+            person.username,
             emailDomain,
         );
         if (!personAttributes.ok) {
@@ -240,21 +240,21 @@ export class LdapSyncEventHandler {
 
         const givenName: string = person.vorname;
         const surName: string = person.familienname;
-        const cn: string = person.referrer;
+        const cn: string = person.username;
         const mailPrimaryAddress: string = enabledEmailAddress.address;
         const mailAlternativeAddresses: string[] = disabledEmailAddressesSorted.map(
             (ea: EmailAddress<true>) => ea.address,
         );
 
         // Get current groups for person from LDAP
-        const groups: Result<string[]> = await this.ldapClientService.getGroupsForPerson(personId, person.referrer);
+        const groups: Result<string[]> = await this.ldapClientService.getGroupsForPerson(personId, person.username);
         if (!groups.ok) {
             return this.logger.error(
                 `Error while fetching groups for personId:${personId} in LDAP, msg:${groups.error.message}`,
             );
         }
         this.logger.info(
-            `Found groups in LDAP:${JSON.stringify(groups.value)}, for personId:${personId}, username:${person.referrer}`,
+            `Found groups in LDAP:${JSON.stringify(groups.value)}, for personId:${personId}, username:${person.username}`,
         );
 
         const groupsToAdd: string[] = this.createGroupAdditionList(schulenDstNrList, groups.value);
@@ -262,7 +262,7 @@ export class LdapSyncEventHandler {
 
         const syncData: LdapSyncData = {
             personId: person.id,
-            username: person.referrer,
+            username: person.username,
             givenName: givenName,
             surName: surName,
             cn: cn,
@@ -274,8 +274,8 @@ export class LdapSyncEventHandler {
 
         await this.syncDataToLdap(syncData, personAttributes.value);
         this.eventService.publish(
-            new LdapSyncCompletedEvent(personId, person.referrer),
-            new KafkaLdapSyncCompletedEvent(personId, person.referrer),
+            new LdapSyncCompletedEvent(personId, person.username),
+            new KafkaLdapSyncCompletedEvent(personId, person.username),
         );
     }
 
@@ -438,7 +438,7 @@ export class LdapSyncEventHandler {
 
     private async createDisabledEmailAddress(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         address: string,
     ): Promise<void> {
         const email: EmailAddress<false> = EmailAddress.createNew(

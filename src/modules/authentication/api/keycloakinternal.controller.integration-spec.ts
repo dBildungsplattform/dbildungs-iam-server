@@ -102,7 +102,7 @@ describe('KeycloakInternalController', () => {
                 sub: keycloakSub,
             });
             expect(result).toBeInstanceOf(UserExeternalDataResponse);
-            expect(result.ox.id).toContain(`${person.referrer}@`);
+            expect(result.ox.id).toContain(`${person.username}@`);
             expect(result.itslearning.personId).toEqual(person.id);
             expect(result.vidis.personId).toEqual(person.id);
             expect(result.vidis.vorname).toEqual(person.vorname);

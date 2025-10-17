@@ -28,7 +28,7 @@ export class PersonenkontextService {
             .byOrganisations(organisationIDs)
             .findBy({
                 personId: personenkontext.personId,
-                referrer: personenkontext.referrer,
+                username: personenkontext.username,
                 personenstatus: personenkontext.personenstatus,
                 sichtfreigabe: personenkontext.sichtfreigabe,
             })

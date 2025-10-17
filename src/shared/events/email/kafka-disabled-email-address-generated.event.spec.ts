@@ -9,7 +9,7 @@ describe('KafkaDisabledEmailAddressGeneratedEvent', () => {
 
         const event: KafkaDisabledEmailAddressGeneratedEvent = new KafkaDisabledEmailAddressGeneratedEvent(
             person.id,
-            person.referrer!,
+            person.username!,
             faker.string.uuid(),
             faker.internet.email(),
             faker.internet.domainName(),

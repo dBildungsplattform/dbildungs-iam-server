@@ -1,5 +1,5 @@
 import { Person } from '../../modules/person/domain/person.js';
-import { PersonReferrer } from '../types/aggregate-ids.types.js';
+import { PersonUsername } from '../types/aggregate-ids.types.js';
 import { KafkaEvent } from './kafka-event.js';
 import { PersonRenamedEvent } from './person-renamed-event.js';
 
@@ -10,7 +10,7 @@ export class KafkaPersonRenamedEvent extends PersonRenamedEvent implements Kafka
 
     public static override fromPerson(
         person: Person<true>,
-        oldUsername: PersonReferrer,
+        oldUsername: PersonUsername,
         oldVorname: string,
         oldFamilienname: string,
     ): KafkaPersonRenamedEvent {
@@ -18,7 +18,7 @@ export class KafkaPersonRenamedEvent extends PersonRenamedEvent implements Kafka
             person.id,
             person.vorname,
             person.familienname,
-            person.referrer,
+            person.username,
             oldVorname,
             oldFamilienname,
             oldUsername,

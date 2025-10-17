@@ -9,7 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
-import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
@@ -55,7 +55,7 @@ import {
 
 export type OxUserCreatedEventCreator = (
     personId: PersonID,
-    username: PersonReferrer,
+    username: PersonUsername,
     oxUserId: OXUserID,
     oxUserName: OXUserName,
     oxContextId: OXContextID,
@@ -65,7 +65,7 @@ export type OxUserCreatedEventCreator = (
 
 export const generateOxUserCreatedEvent: OxUserCreatedEventCreator = (
     personId: PersonID,
-    username: PersonReferrer,
+    username: PersonUsername,
     oxUserId: OXUserID,
     oxUserName: OXUserName,
     oxContextId: OXContextID,
@@ -96,7 +96,7 @@ export const generateOxUserCreatedEvent: OxUserCreatedEventCreator = (
 
 export const generateOxSyncUserCreatedEvent: OxUserCreatedEventCreator = (
     personId: PersonID,
-    username: PersonReferrer,
+    username: PersonUsername,
     oxUserId: OXUserID,
     oxUserName: OXUserName,
     oxContextId: OXContextID,
@@ -127,7 +127,7 @@ export const generateOxSyncUserCreatedEvent: OxUserCreatedEventCreator = (
 
 export type OxUserChangedEventCreator = (
     personId: PersonID,
-    username: PersonReferrer,
+    username: PersonUsername,
     oxUserId: OXUserID,
     oxUserName: OXUserName,
     oxContextId: OXContextID,
@@ -137,7 +137,7 @@ export type OxUserChangedEventCreator = (
 
 export const generateOxUserChangedEvent: OxUserChangedEventCreator = (
     personId: PersonID,
-    username: PersonReferrer,
+    username: PersonUsername,
     oxUserId: OXUserID,
     oxUserName: OXUserName,
     oxContextId: OXContextID,
@@ -168,7 +168,7 @@ export const generateOxUserChangedEvent: OxUserChangedEventCreator = (
 
 export const generateDisabledOxUserChangedEvent: OxUserChangedEventCreator = (
     personId: PersonID,
-    username: PersonReferrer,
+    username: PersonUsername,
     oxUserId: OXUserID,
     oxUserName: OXUserName,
     oxContextId: OXContextID,
@@ -406,7 +406,7 @@ export class OxEventService {
 
     public publishOxEmailAddressDeletedEvent(
         personId: PersonID | undefined,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
         oxUserId: OXUserID,
         emailAddress: string,
     ): void {
@@ -435,7 +435,7 @@ export class OxEventService {
     public publishOxUserChangedEvent2(
         oxUserCreatedEventCreator: OxUserCreatedEventCreator,
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         oxUserId: OXUserID,
         oxUserName: OXUserName,
         emailAddress: string,
@@ -522,7 +522,7 @@ export class OxEventService {
         return action;
     }
 
-    public createExistsUserAction(username: PersonReferrer): ExistsUserAction {
+    public createExistsUserAction(username: PersonUsername): ExistsUserAction {
         const existsParams: UserNameParams = {
             contextId: this.contextID,
             userName: username,
