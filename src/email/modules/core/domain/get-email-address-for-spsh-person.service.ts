@@ -11,14 +11,14 @@ export class GetEmailAddressForSpshPersonService {
         private readonly logger: ClassLogger,
     ) {}
 
-    public async getEmailAddressWithStatusForSpshPerson(params: FindEmailAddressBySpshPersonIdParams): Promise<AddressWithStatusesDto[]> {
+    public async getEmailAddressWithStatusForSpshPerson(
+        params: FindEmailAddressBySpshPersonIdParams,
+    ): Promise<AddressWithStatusesDto[]> {
         const addressesWithStatuses: AddressWithStatusesDto[] =
-                    await this.emailAddressRepo.findAllEmailAddressesWithStatusesBySpshPersonId(params.spshPersonId);
+            await this.emailAddressRepo.findAllEmailAddressesWithStatusesBySpshPersonId(params.spshPersonId);
 
         if (addressesWithStatuses.length > 0) {
-            this.logger.info(
-                `Person with id ${params.spshPersonId} has email addresses assigned.`,
-            );
+            this.logger.info(`Person with id ${params.spshPersonId} has email addresses assigned.`);
             return addressesWithStatuses;
         }
         return [];

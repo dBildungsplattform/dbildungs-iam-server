@@ -20,8 +20,10 @@ import { AddressWithStatusesDto } from '../dtos/address-with-statuses/address-wi
 @ApiOAuth2(['openid'])
 @Controller({ path: 'read' })
 export class EmailReadController {
-    public constructor(private readonly logger: ClassLogger,
-        private readonly getEmailAddressForSpshPersonService: GetEmailAddressForSpshPersonService) {}
+    public constructor(
+        private readonly logger: ClassLogger,
+        private readonly getEmailAddressForSpshPersonService: GetEmailAddressForSpshPersonService,
+    ) {}
 
     @Get(':spshPersonId')
     @Public()
@@ -31,21 +33,27 @@ export class EmailReadController {
         type: [EmailAddressResponse],
     })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting email-addresses by personId.' })
-    // eslint-disable-next-line @typescript-eslint/require-await
     public async findEmailAddressesByPersonId(
         @Param() findEmailAddressByPersonIdParams: FindEmailAddressBySpshPersonIdParams,
     ): Promise<EmailAddressResponse[]> {
         this.logger.info(`PersonId:${findEmailAddressByPersonIdParams.spshPersonId}`);
 
-        const addresses: AddressWithStatusesDto[] = await this.getEmailAddressForSpshPersonService
-            .getEmailAddressWithStatusForSpshPerson(findEmailAddressByPersonIdParams);
+        const addresses: AddressWithStatusesDto[] =
+            await this.getEmailAddressForSpshPersonService.getEmailAddressWithStatusForSpshPerson(
+                findEmailAddressByPersonIdParams,
+            );
 
         if (addresses.length === 0) {
             return [];
         }
 
         return addresses
-            .filter(address => address.statuses.length > 0 && address.statuses[0] !== undefined)
-            .map(address => new EmailAddressResponse(address.emailAddress, address.statuses[0]!));
+            .filter(
+                (address: AddressWithStatusesDto) => address.statuses.length > 0 && address.statuses[0] !== undefined,
+            )
+            .map(
+                (address: AddressWithStatusesDto) =>
+                    new EmailAddressResponse(address.emailAddress, address.statuses[0]!),
+            );
     }
 }

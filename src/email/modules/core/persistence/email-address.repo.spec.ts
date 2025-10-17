@@ -16,6 +16,9 @@ import { EmailDomainRepo } from './email-domain.repo.js';
 import { EmailCoreModule } from '../email-core.module.js';
 import { EmailAddressStatusRepo } from './email-address-status.repo.js';
 import { EmailAddressGenerator } from '../domain/email-address-generator.js';
+import { EmailAddressStatusEnum } from './email-address-status.entity.js';
+import { AddressWithStatusesDto } from '../api/dtos/address-with-statuses/address-with-statuses.dto.js';
+import { EmailAddressStatus } from '../domain/email-address-status.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -123,6 +126,42 @@ describe('EmailRepo', () => {
             const unknownId: string = faker.string.uuid();
             const result: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(unknownId);
             expect(result).toEqual([]);
+        });
+    });
+
+    describe('findAllEmailAddressesWithStatusesBySpshPersonId', () => {
+        const spshPersonId: string = faker.string.uuid();
+
+        it('should return email addresses with their statuses for a given spshPersonId', async () => {
+            const mail1: EmailAddress<true> = await createAndSaveMail(undefined, 1, spshPersonId);
+            const mail2: EmailAddress<true> = await createAndSaveMail(undefined, 2, spshPersonId);
+
+            await module.get(EmailAddressStatusRepo).create({
+                id: undefined,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                emailAddressId: mail1.id,
+                status: EmailAddressStatusEnum.ACTIVE,
+            });
+            await module.get(EmailAddressStatusRepo).create({
+                id: undefined,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                emailAddressId: mail2.id,
+                status: EmailAddressStatusEnum.PENDING,
+            });
+
+            const result: AddressWithStatusesDto[] =
+                await sut.findAllEmailAddressesWithStatusesBySpshPersonId(spshPersonId);
+            expect(result).toHaveLength(2);
+
+            const addresses: string[] = result.map((dto: AddressWithStatusesDto) => dto.emailAddress.address);
+            expect(addresses).toContain(mail1.address);
+            expect(addresses).toContain(mail2.address);
+
+            const statuses: EmailAddressStatusEnum[] = result.flatMap((dto: AddressWithStatusesDto) => dto.statuses.map((s: EmailAddressStatus<true>) => s.status));
+            expect(statuses).toContain(EmailAddressStatusEnum.ACTIVE);
+            expect(statuses).toContain(EmailAddressStatusEnum.PENDING);
         });
     });
 

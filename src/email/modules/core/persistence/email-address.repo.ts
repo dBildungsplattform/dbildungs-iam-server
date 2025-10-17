@@ -60,19 +60,24 @@ export class EmailAddressRepo {
         return emailAddressEntities.map(mapEntityToAggregate);
     }
 
-    public async findAllEmailAddressesWithStatusesBySpshPersonId(spshPersonId: string): Promise<AddressWithStatusesDto[]> {
+    public async findAllEmailAddressesWithStatusesBySpshPersonId(
+        spshPersonId: string,
+    ): Promise<AddressWithStatusesDto[]> {
         const emailAddressEntities: EmailAddrEntity[] = await this.em.find(
             EmailAddrEntity,
             { spshPersonId: { $eq: spshPersonId } },
             {
                 populate: ['statuses'],
                 orderBy: { id: 'asc' },
-            }
+            },
         );
-        return emailAddressEntities.map(entity => new AddressWithStatusesDto(
-            mapEntityToAggregate(entity),
-            entity.statuses.getItems().map(mapStatusEntityToAggregate),
-        ));
+        return emailAddressEntities.map(
+            (entity: EmailAddrEntity) =>
+                new AddressWithStatusesDto(
+                    mapEntityToAggregate(entity),
+                    entity.statuses.getItems().map(mapStatusEntityToAggregate),
+                ),
+        );
     }
 
     public async save(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {

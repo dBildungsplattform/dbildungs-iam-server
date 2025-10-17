@@ -23,6 +23,6 @@ export class EmailAddrEntity extends TimestampedEntity {
     @Property({ nullable: true, type: DateTimeType })
     public markedForCron?: Date;
 
-    @OneToMany(() => EmailAddressStatusEntity, status => status.emailAddress)
-    public statuses = new Collection<EmailAddressStatusEntity>(this);
+    @OneToMany(() => EmailAddressStatusEntity, (status: EmailAddressStatusEntity) => status.emailAddress)
+    public statuses: Collection<EmailAddressStatusEntity, object> = new Collection<EmailAddressStatusEntity>(this);
 }

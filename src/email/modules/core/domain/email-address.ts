@@ -1,4 +1,3 @@
-
 export class EmailAddress<WasPersisted extends boolean> {
     public constructor(
         public id: Persisted<string, WasPersisted>,
