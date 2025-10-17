@@ -53,7 +53,7 @@ export class EmailReadController {
             )
             .map(
                 (address: AddressWithStatusesDto) =>
-                    new EmailAddressResponse(address.emailAddress, address.statuses[0]!),
+                    new EmailAddressResponse(address.emailAddress, address.statuses[address.statuses.length - 1]!),
             );
     }
 }

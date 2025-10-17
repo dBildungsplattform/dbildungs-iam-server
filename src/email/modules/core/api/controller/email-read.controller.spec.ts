@@ -96,14 +96,14 @@ describe('EmailReadController', () => {
                         createdAt: new Date(),
                         updatedAt: new Date(),
                         emailAddressId: faker.string.uuid(),
-                        status: EmailAddressStatusEnum.SUSPENDED,
+                        status: EmailAddressStatusEnum.PENDING,
                     },
                     {
                         id: faker.string.uuid(),
                         createdAt: new Date(),
                         updatedAt: new Date(),
                         emailAddressId: faker.string.uuid(),
-                        status: EmailAddressStatusEnum.PENDING,
+                        status: EmailAddressStatusEnum.SUSPENDED,
                     },
                 ],
             } as AddressWithStatusesDto;
