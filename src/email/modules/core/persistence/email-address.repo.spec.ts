@@ -159,7 +159,9 @@ describe('EmailRepo', () => {
             expect(addresses).toContain(mail1.address);
             expect(addresses).toContain(mail2.address);
 
-            const statuses: EmailAddressStatusEnum[] = result.flatMap((dto: AddressWithStatusesDto) => dto.statuses.map((s: EmailAddressStatus<true>) => s.status));
+            const statuses: EmailAddressStatusEnum[] = result.flatMap((dto: AddressWithStatusesDto) =>
+                dto.statuses.map((s: EmailAddressStatus<true>) => s.status),
+            );
             expect(statuses).toContain(EmailAddressStatusEnum.ACTIVE);
             expect(statuses).toContain(EmailAddressStatusEnum.PENDING);
         });
