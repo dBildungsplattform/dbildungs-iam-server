@@ -11,19 +11,21 @@ import {
 import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
-import { EmailAddress } from '../../domain/email-address.js';
 import { Public } from '../../decorator/public.decorator.js';
-import { EmailAddressStatus } from '../../domain/email-address-status.js';
-import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
+import { GetEmailAddressForSpshPersonService } from '../../domain/get-email-address-for-spsh-person.service.js';
+import { AddressWithStatusesDto } from '../dtos/address-with-statuses/address-with-statuses.dto.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
 @Controller({ path: 'read' })
 export class EmailReadController {
-    public constructor(private readonly logger: ClassLogger) {}
+    public constructor(
+        private readonly logger: ClassLogger,
+        private readonly getEmailAddressForSpshPersonService: GetEmailAddressForSpshPersonService,
+    ) {}
 
-    @Get(':personId')
+    @Get(':spshPersonId')
     @Public()
     @ApiOperation({ description: 'Get email-addresses by personId.' })
     @ApiOkResponse({
@@ -31,32 +33,27 @@ export class EmailReadController {
         type: [EmailAddressResponse],
     })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting email-addresses by personId.' })
-    // eslint-disable-next-line @typescript-eslint/require-await
     public async findEmailAddressesByPersonId(
         @Param() findEmailAddressByPersonIdParams: FindEmailAddressBySpshPersonIdParams,
     ): Promise<EmailAddressResponse[]> {
-        //currently just a dummy
         this.logger.info(`PersonId:${findEmailAddressByPersonIdParams.spshPersonId}`);
-        const emailAddress: EmailAddress<true> = EmailAddress.construct({
-            id: '0',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            address: 'test@schule-sh.de',
-            priority: 0,
-            spshPersonId: undefined,
-            oxUserId: undefined,
-            markedForCron: undefined,
-        });
 
-        const emailStatus: EmailAddressStatus<true> = EmailAddressStatus.construct({
-            id: '0',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            emailAddressId: emailAddress.id,
-            status: EmailAddressStatusEnum.PENDING,
-        });
+        const addresses: AddressWithStatusesDto[] =
+            await this.getEmailAddressForSpshPersonService.getEmailAddressWithStatusForSpshPerson(
+                findEmailAddressByPersonIdParams,
+            );
 
-        const response: EmailAddressResponse = new EmailAddressResponse(emailAddress, emailStatus);
-        return [response];
+        if (addresses.length === 0) {
+            return [];
+        }
+
+        return addresses
+            .filter(
+                (address: AddressWithStatusesDto) => address.statuses.length > 0 && address.statuses[0] !== undefined,
+            )
+            .map(
+                (address: AddressWithStatusesDto) =>
+                    new EmailAddressResponse(address.emailAddress, address.statuses[address.statuses.length - 1]!),
+            );
     }
 }
