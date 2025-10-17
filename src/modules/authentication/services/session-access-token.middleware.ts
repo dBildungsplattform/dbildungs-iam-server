@@ -64,8 +64,10 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                         `Attempting to logout user ${req.passportUser?.userinfo.sub}. refreshToken:${!!refreshToken}, isRefreshTokenActive:${isRefreshTokenActive}, passportUser:${!!req.passportUser}`,
                     );
                     req.logout((err: unknown) => {
-                        this.logger.logUnknownAsError('Logout Failed', err, false);
-                        this.logger.error(`Logout of user ${req.passportUser?.userinfo.sub} failed`);
+                        if (err) {
+                            this.logger.logUnknownAsError('Logout Failed', err, false);
+                            this.logger.error(`Logout of user ${req.passportUser?.userinfo.sub} failed`);
+                        }
                     });
                 }
             }
