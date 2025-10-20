@@ -3,7 +3,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GetEmailAddressForSpshPersonService } from '../../domain/get-email-address-for-spsh-person.service.js';
 import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
-import { AddressWithStatusesDto } from '../dtos/address-with-statuses/address-with-statuses.dto.js';
+import { AddressWithStatusesDescDto } from '../dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
 import { EmailReadController } from './email-read.controller.js';
 import { APP_PIPE } from '@nestjs/core';
@@ -43,7 +43,7 @@ describe('EmailReadController', () => {
         it('should return EmailAddressResponse[] for person with addresses and statuses', async () => {
             const spshPersonId: string = faker.string.uuid();
             const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
-            const addressWithStatuses: AddressWithStatusesDto = {
+            const addressWithStatuses: AddressWithStatusesDescDto = {
                 emailAddress: {
                     id: faker.string.uuid(),
                     address: 'test@example.com',
@@ -63,7 +63,7 @@ describe('EmailReadController', () => {
                         status: EmailAddressStatusEnum.ACTIVE,
                     },
                 ],
-            } as AddressWithStatusesDto;
+            } as AddressWithStatusesDescDto;
             getEmailAddressForSpshPersonServiceMock.getEmailAddressWithStatusForSpshPerson.mockResolvedValue([
                 addressWithStatuses,
             ]);
@@ -76,10 +76,13 @@ describe('EmailReadController', () => {
             expect(result[0]!.status).toBe(EmailAddressStatusEnum.ACTIVE);
         });
 
-        it('should return EmailAddressResponse[] using the first status if multiple statuses exist', async () => {
+        // Maybe this test is now useless when we already test the right order in repo
+        it('should return EmailAddressResponse[] using the latest status if multiple statuses exist', async () => {
             const spshPersonId: string = faker.string.uuid();
             const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
-            const addressWithStatuses: AddressWithStatusesDto = {
+            const now: Date = new Date();
+            const earlier: Date = new Date(now.getTime() - 10000);
+            const addressWithStatuses: AddressWithStatusesDescDto = {
                 emailAddress: {
                     id: faker.string.uuid(),
                     address: 'multi-status@example.com',
@@ -87,26 +90,26 @@ describe('EmailReadController', () => {
                     spshPersonId,
                     oxUserId: undefined,
                     markedForCron: undefined,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
+                    createdAt: earlier,
+                    updatedAt: earlier,
                 },
                 statuses: [
                     {
                         id: faker.string.uuid(),
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
+                        createdAt: now,
+                        updatedAt: now,
                         emailAddressId: faker.string.uuid(),
                         status: EmailAddressStatusEnum.PENDING,
                     },
                     {
                         id: faker.string.uuid(),
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
+                        createdAt: earlier,
+                        updatedAt: earlier,
                         emailAddressId: faker.string.uuid(),
                         status: EmailAddressStatusEnum.SUSPENDED,
                     },
                 ],
-            } as AddressWithStatusesDto;
+            } as AddressWithStatusesDescDto;
             getEmailAddressForSpshPersonServiceMock.getEmailAddressWithStatusForSpshPerson.mockResolvedValue([
                 addressWithStatuses,
             ]);
@@ -116,7 +119,7 @@ describe('EmailReadController', () => {
             expect(result[0]).toBeInstanceOf(EmailAddressResponse);
             expect(result[0]).toBeDefined();
             expect(result[0]!.address).toBe('multi-status@example.com');
-            expect(result[0]!.status).toBe(EmailAddressStatusEnum.SUSPENDED);
+            expect(result[0]!.status).toBe(EmailAddressStatusEnum.PENDING);
         });
 
         it('should return empty array if no addresses found', async () => {
@@ -132,7 +135,7 @@ describe('EmailReadController', () => {
         it('should filter out addresses with no statuses', async () => {
             const spshPersonId: string = faker.string.uuid();
             const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
-            const addressWithNoStatus: AddressWithStatusesDto = {
+            const addressWithNoStatus: AddressWithStatusesDescDto = {
                 emailAddress: {
                     id: faker.string.uuid(),
                     address: 'no-status@example.com',
@@ -144,7 +147,7 @@ describe('EmailReadController', () => {
                     updatedAt: new Date(),
                 },
                 statuses: [],
-            } as AddressWithStatusesDto;
+            } as AddressWithStatusesDescDto;
             getEmailAddressForSpshPersonServiceMock.getEmailAddressWithStatusForSpshPerson.mockResolvedValue([
                 addressWithNoStatus,
             ]);

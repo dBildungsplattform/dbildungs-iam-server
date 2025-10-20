@@ -1,7 +1,7 @@
 import { EmailAddress } from '../../../domain/email-address.js';
 import { EmailAddressStatus } from '../../../domain/email-address-status.js';
 
-export class AddressWithStatusesDto {
+export class AddressWithStatusesDescDto {
     public emailAddress: EmailAddress<true>;
     public statuses: EmailAddressStatus<true>[];
 

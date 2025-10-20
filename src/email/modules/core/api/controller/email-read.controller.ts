@@ -13,7 +13,7 @@ import { EmailAddressResponse } from '../dtos/response/email-address.response.js
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { Public } from '../../decorator/public.decorator.js';
 import { GetEmailAddressForSpshPersonService } from '../../domain/get-email-address-for-spsh-person.service.js';
-import { AddressWithStatusesDto } from '../dtos/address-with-statuses/address-with-statuses.dto.js';
+import { AddressWithStatusesDescDto } from '../dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
@@ -38,7 +38,7 @@ export class EmailReadController {
     ): Promise<EmailAddressResponse[]> {
         this.logger.info(`PersonId:${findEmailAddressByPersonIdParams.spshPersonId}`);
 
-        const addresses: AddressWithStatusesDto[] =
+        const addresses: AddressWithStatusesDescDto[] =
             await this.getEmailAddressForSpshPersonService.getEmailAddressWithStatusForSpshPerson(
                 findEmailAddressByPersonIdParams,
             );
@@ -49,11 +49,12 @@ export class EmailReadController {
 
         return addresses
             .filter(
-                (address: AddressWithStatusesDto) => address.statuses.length > 0 && address.statuses[0] !== undefined,
+                (address: AddressWithStatusesDescDto) =>
+                    address.statuses.length > 0 && address.statuses[0] !== undefined,
             )
             .map(
-                (address: AddressWithStatusesDto) =>
-                    new EmailAddressResponse(address.emailAddress, address.statuses[address.statuses.length - 1]!),
+                (address: AddressWithStatusesDescDto) =>
+                    new EmailAddressResponse(address.emailAddress, address.statuses[0]!),
             );
     }
 }

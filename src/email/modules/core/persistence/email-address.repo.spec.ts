@@ -17,8 +17,7 @@ import { EmailCoreModule } from '../email-core.module.js';
 import { EmailAddressStatusRepo } from './email-address-status.repo.js';
 import { EmailAddressGenerator } from '../domain/email-address-generator.js';
 import { EmailAddressStatusEnum } from './email-address-status.entity.js';
-import { AddressWithStatusesDto } from '../api/dtos/address-with-statuses/address-with-statuses.dto.js';
-import { EmailAddressStatus } from '../domain/email-address-status.js';
+import { AddressWithStatusesDescDto } from '../api/dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -129,41 +128,66 @@ describe('EmailRepo', () => {
         });
     });
 
-    describe('findAllEmailAddressesWithStatusesBySpshPersonId', () => {
+    describe('findAllEmailAddressesWithStatusesDescBySpshPersonId', () => {
         const spshPersonId: string = faker.string.uuid();
 
         it('should return email addresses with their statuses for a given spshPersonId', async () => {
             const mail1: EmailAddress<true> = await createAndSaveMail(undefined, 1, spshPersonId);
             const mail2: EmailAddress<true> = await createAndSaveMail(undefined, 2, spshPersonId);
+            const now: Date = new Date();
+            const earlier: Date = new Date(now.getTime() - 10000);
 
             await module.get(EmailAddressStatusRepo).create({
                 id: undefined,
-                createdAt: new Date(),
-                updatedAt: new Date(),
+                createdAt: earlier,
+                updatedAt: earlier,
+                emailAddressId: mail1.id,
+                status: EmailAddressStatusEnum.PENDING,
+            });
+            await module.get(EmailAddressStatusRepo).create({
+                id: undefined,
+                createdAt: now,
+                updatedAt: now,
                 emailAddressId: mail1.id,
                 status: EmailAddressStatusEnum.ACTIVE,
             });
             await module.get(EmailAddressStatusRepo).create({
                 id: undefined,
-                createdAt: new Date(),
-                updatedAt: new Date(),
+                createdAt: now,
+                updatedAt: now,
                 emailAddressId: mail2.id,
                 status: EmailAddressStatusEnum.PENDING,
             });
 
-            const result: AddressWithStatusesDto[] =
-                await sut.findAllEmailAddressesWithStatusesBySpshPersonId(spshPersonId);
+            const result: AddressWithStatusesDescDto[] =
+                await sut.findAllEmailAddressesWithStatusesDescBySpshPersonId(spshPersonId);
             expect(result).toHaveLength(2);
 
-            const addresses: string[] = result.map((dto: AddressWithStatusesDto) => dto.emailAddress.address);
+            const addresses: string[] = result.map((dto: AddressWithStatusesDescDto) => dto.emailAddress.address);
             expect(addresses).toContain(mail1.address);
             expect(addresses).toContain(mail2.address);
 
-            const statuses: EmailAddressStatusEnum[] = result.flatMap((dto: AddressWithStatusesDto) =>
-                dto.statuses.map((s: EmailAddressStatus<true>) => s.status),
+            const mail1Dto: AddressWithStatusesDescDto | undefined = result.find(
+                (dto: AddressWithStatusesDescDto) => dto.emailAddress.id === mail1.id,
             );
-            expect(statuses).toContain(EmailAddressStatusEnum.ACTIVE);
-            expect(statuses).toContain(EmailAddressStatusEnum.PENDING);
+            expect(mail1Dto).toBeDefined();
+            expect(mail1Dto!.statuses).toHaveLength(2);
+            expect(mail1Dto!.statuses[0]!.status).toBe(EmailAddressStatusEnum.ACTIVE);
+            expect(mail1Dto!.statuses[1]!.status).toBe(EmailAddressStatusEnum.PENDING);
+
+            const mail2Dto: AddressWithStatusesDescDto | undefined = result.find(
+                (dto: AddressWithStatusesDescDto) => dto.emailAddress.id === mail2.id,
+            );
+            expect(mail2Dto).toBeDefined();
+            expect(mail2Dto!.statuses).toHaveLength(1);
+            expect(mail2Dto!.statuses[0]!.status).toBe(EmailAddressStatusEnum.PENDING);
+        });
+
+        it('should return an empty array if no email addresses exist for the given spshPersonId', async () => {
+            const unknownId: string = faker.string.uuid();
+            const result: AddressWithStatusesDescDto[] =
+                await sut.findAllEmailAddressesWithStatusesDescBySpshPersonId(unknownId);
+            expect(result).toEqual([]);
         });
     });
 

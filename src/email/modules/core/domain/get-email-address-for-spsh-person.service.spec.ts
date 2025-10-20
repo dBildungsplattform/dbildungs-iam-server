@@ -1,30 +1,25 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GetEmailAddressForSpshPersonService } from './get-email-address-for-spsh-person.service.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
-import { AddressWithStatusesDto } from '../api/dtos/address-with-statuses/address-with-statuses.dto.js';
+import { AddressWithStatusesDescDto } from '../api/dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 import { faker } from '@faker-js/faker';
 import { FindEmailAddressBySpshPersonIdParams } from '../api/dtos/params/find-email-address-by-spsh-person-id.params.js';
 
 describe('GetEmailAddressForSpshPersonService', () => {
     let module: TestingModule;
     let sut: GetEmailAddressForSpshPersonService;
-    let loggerMock: DeepMocked<ClassLogger>;
     let emailAddressRepoMock: DeepMocked<EmailAddressRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            providers: [GetEmailAddressForSpshPersonService, ClassLogger, EmailAddressRepo],
+            providers: [GetEmailAddressForSpshPersonService, EmailAddressRepo],
         })
-            .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
             .overrideProvider(EmailAddressRepo)
             .useValue(createMock<EmailAddressRepo>())
             .compile();
 
         sut = module.get(GetEmailAddressForSpshPersonService);
-        loggerMock = module.get(ClassLogger);
         emailAddressRepoMock = module.get(EmailAddressRepo);
     });
 
@@ -36,10 +31,10 @@ describe('GetEmailAddressForSpshPersonService', () => {
         jest.resetAllMocks();
     });
 
-    it('should return addresses with statuses and log if addresses exist', async () => {
+    it('should return addresses with statuses if addresses exist', async () => {
         const spshPersonId: string = faker.string.uuid();
         const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
-        const addressWithStatuses: AddressWithStatusesDto = {
+        const addressWithStatuses: AddressWithStatusesDescDto = {
             emailAddress: {
                 id: faker.string.uuid(),
                 address: 'test@example.com',
@@ -51,23 +46,21 @@ describe('GetEmailAddressForSpshPersonService', () => {
                 updatedAt: new Date(),
             },
             statuses: [],
-        } as AddressWithStatusesDto;
-        emailAddressRepoMock.findAllEmailAddressesWithStatusesBySpshPersonId.mockResolvedValue([addressWithStatuses]);
+        } as AddressWithStatusesDescDto;
+        emailAddressRepoMock.findAllEmailAddressesWithStatusesDescBySpshPersonId.mockResolvedValue([
+            addressWithStatuses,
+        ]);
 
-        const result: AddressWithStatusesDto[] = await sut.getEmailAddressWithStatusForSpshPerson(params);
+        const result: AddressWithStatusesDescDto[] = await sut.getEmailAddressWithStatusForSpshPerson(params);
         expect(result).toHaveLength(1);
-        expect(loggerMock.info).toHaveBeenCalledWith(
-            expect.stringContaining(`Person with id ${spshPersonId} has email addresses assigned.`),
-        );
     });
 
-    it('should return empty array and not log if no addresses exist', async () => {
+    it('should return empty array if no addresses exist', async () => {
         const spshPersonId: string = faker.string.uuid();
         const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
-        emailAddressRepoMock.findAllEmailAddressesWithStatusesBySpshPersonId.mockResolvedValue([]);
+        emailAddressRepoMock.findAllEmailAddressesWithStatusesDescBySpshPersonId.mockResolvedValue([]);
 
-        const result: AddressWithStatusesDto[] = await sut.getEmailAddressWithStatusForSpshPerson(params);
+        const result: AddressWithStatusesDescDto[] = await sut.getEmailAddressWithStatusForSpshPerson(params);
         expect(result).toEqual([]);
-        expect(loggerMock.info).not.toHaveBeenCalled();
     });
 });
