@@ -253,9 +253,18 @@ jobs:
     - scheduled_trivy_scan
     runs-on: 'ubuntu-latest'
     steps:
-    - name: Send Notification to Rocket Chat
-      uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
-      with:
-        type: failure
-        job_name: 'Daily nightly image check failed - CVEs found so check'
-        url: ${{ secrets.RC_WEBHOOK_SPSH_DEVELOPER_CHANNEL }}
+      - name: Check if today is Monday
+        run: |
+          if [ "$(date +%u)" -eq 1 ]; then
+            echo "It's Monday, sending notification..."
+          else
+            echo "Not Monday, skipping notification."
+            exit 78
+          fi
+      - name: Send Notification to Rocket Chat
+        uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
+        with:
+          type: failure
+          job_name: 'Daily nightly image check failed - CVEs found so check'
+          message: 'This notification is sent only on Mondays. The check may have been failing for several days.'
+          url: ${{ secrets.RC_WEBHOOK_SPSH_DEVELOPER_CHANNEL }}
