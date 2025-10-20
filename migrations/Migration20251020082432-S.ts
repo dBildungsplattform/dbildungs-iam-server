@@ -1,8 +1,8 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20251016132038 extends Migration {
+export class Migration20251020082432 extends Migration {
     async up(): Promise<void> {
-        this.addSql('alter table "email"."address" add column "ldap_entry_uuid" varchar(255) null;');
+        this.addSql('alter table "email"."address" add column "ldap_uid" varchar(255) null;');
 
         this.addSql('alter type "email"."email_address_status_enum" add value if not exists \'FAILED\';');
 
@@ -10,6 +10,6 @@ export class Migration20251016132038 extends Migration {
     }
 
     override async down(): Promise<void> {
-        this.addSql('alter table "email"."address" drop column "ldap_entry_uuid";');
+        this.addSql('alter table "email"."address" drop column "ldap_uid";');
     }
 }

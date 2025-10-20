@@ -156,7 +156,7 @@ export class SetEmailAddressForSpshPersonService {
         createdEmailAddress.oxUserId = oxUserId;
 
         const saveResultAfterOxConnection: EmailAddress<true> | DomainError =
-            await this.emailAddressRepo.save(emailAddressToCreate);
+            await this.emailAddressRepo.save(createdEmailAddress);
         if (saveResultAfterOxConnection instanceof DomainError) {
             this.logger.error(
                 `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to save email address after trying to connect oxUserId ${oxUserId}`,
@@ -172,7 +172,7 @@ export class SetEmailAddressForSpshPersonService {
             {
                 firstName: firstName,
                 lastName: lastName,
-                username: spshUsername,
+                uid: spshPersonId,
             },
             emailDomain.domain,
             createdEmailAddress.address,
@@ -191,24 +191,12 @@ export class SetEmailAddressForSpshPersonService {
         }
         this.logger.info(`CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully created LDAP person`);
 
-        //CONNECT LDAPENTRYUUID IN DB
-        const entryUUID: Result<string, Error> = await this.ldapClientService.getEntryUUIDByUsername(spshUsername);
-        if (!entryUUID.ok) {
-            await this.emailAddressStatusRepo.create(
-                EmailAddressStatus.createNew({
-                    emailAddressId: createdEmailAddress.id,
-                    status: EmailAddressStatusEnum.FAILED,
-                }),
-            );
-            this.logger.error(
-                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to fetch LDAP entryUUID for created person: ${entryUUID.error.message}`,
-            );
-            return;
-        }
-        createdEmailAddress.ldapEntryUUID = entryUUID.value;
+        //Even we know the ldapUid already in the beginning (since it is spshpersonId for new users) we set it after creating the LDAP person to be sure that field can only be set if also user in ldap exist.
+        const ldapUid: string = spshPersonId;
+        saveResultAfterOxConnection.ldapUid = ldapUid;
 
         const saveResultAfterLdapConnection: EmailAddress<true> | DomainError =
-            await this.emailAddressRepo.save(emailAddressToCreate);
+            await this.emailAddressRepo.save(saveResultAfterOxConnection);
         if (saveResultAfterLdapConnection instanceof DomainError) {
             await this.emailAddressStatusRepo.create(
                 EmailAddressStatus.createNew({
@@ -217,12 +205,12 @@ export class SetEmailAddressForSpshPersonService {
                 }),
             );
             this.logger.error(
-                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to save email address after trying to connect ldapEntryUUID ${entryUUID.value}`,
+                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to save email address after trying to connect ldapUid ${ldapUid}`,
             );
             return;
         }
         this.logger.info(
-            `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully connected ldapEntryUUID ${entryUUID.value}`,
+            `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully connected ldapUid ${ldapUid}`,
         );
 
         //ACTIVATE IN DB

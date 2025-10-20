@@ -22,7 +22,7 @@ export type LdapPersonAttributes = {
 export type PersonData = {
     firstName: string;
     lastName: string;
-    username: string;
+    uid: string;
 };
 
 @Injectable()
@@ -82,37 +82,6 @@ export class LdapClientService {
     public async createPerson(person: PersonData, domain: string, mail: string): Promise<Result<PersonData>> {
         return this.executeWithRetry(() => this.createPersonInternal(person, domain, mail), this.getNrOfRetries());
     }
-
-    public async getEntryUUIDByUsername(username: PersonReferrer): Promise<Result<string>> {
-        this.logger.info('LDAP: getEntryUUID');
-        const client: Client = this.ldapClient.getClient();
-        const bindResult: Result<boolean> = await this.bind();
-        if (!bindResult.ok) {
-            return bindResult;
-        }
-        const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
-            scope: 'sub',
-            filter: `(uid=${username})`,
-            attributes: [LdapClientService.ENTRY_UUID],
-            returnAttributeValues: true,
-        });
-
-        const entryUUID: unknown = searchResult.searchEntries[0]?.[LdapClientService.ENTRY_UUID];
-
-        if (typeof entryUUID !== 'string') {
-            this.logger.error(`Could not get EntryUUID for username:${username}`);
-            return {
-                ok: false,
-                error: new LdapCreateLehrerError(),
-            };
-        }
-
-        return {
-            ok: true,
-            value: entryUUID,
-        };
-    }
-
     //** BELOW ONLY PRIVATE HELPER FUNCTIONS THAT NOT OPERATE ON LDAP - MUST NOT USE THE 'executeWithRetry'/
 
     private getNrOfRetries(): number {
@@ -180,7 +149,7 @@ export class LdapClientService {
     }
 
     private async createPersonInternal(person: PersonData, domain: string, mail: string): Promise<Result<PersonData>> {
-        const username: PersonReferrer | undefined = person.username;
+        const username: PersonReferrer | undefined = person.uid;
         if (!username) {
             return {
                 ok: false,
@@ -204,7 +173,7 @@ export class LdapClientService {
             const searchResultLehrer: SearchResult = await client.search(
                 `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
-                    filter: `(uid=${person.username})`,
+                    filter: `(uid=${person.uid})`,
                 },
             );
             if (searchResultLehrer.searchEntries.length > 0) {

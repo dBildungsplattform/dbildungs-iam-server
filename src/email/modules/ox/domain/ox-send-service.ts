@@ -140,6 +140,7 @@ export class OxSendService {
             return action.parseResponse(response.data);
         } catch (err: unknown) {
             if (isOxErrorType(err)) {
+                this.logger.error(err.message);
                 const oxResponse: unknown = this.xmlParser.parse(err.response.data);
 
                 if (!isOxErrorResponse(oxResponse)) {

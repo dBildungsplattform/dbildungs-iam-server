@@ -13,6 +13,7 @@ export function mapAggregateToData(emailAddress: EmailAddress<boolean>): Require
         address: emailAddress.address,
         priority: emailAddress.priority,
         spshPersonId: emailAddress.spshPersonId,
+        ldapUid: emailAddress.ldapUid,
         oxUserId: emailAddress.oxUserId,
         markedForCron: emailAddress.markedForCron,
     };
@@ -27,6 +28,7 @@ function mapEntityToAggregate(entity: EmailAddrEntity): EmailAddress<boolean> {
         priority: entity.priority,
         spshPersonId: entity.spshPersonId,
         oxUserId: entity.oxUserId,
+        ldapUid: entity.ldapUid,
         markedForCron: entity.markedForCron,
     });
 }

@@ -14,7 +14,7 @@ export class EmailAddrEntity extends TimestampedEntity {
     public oxUserId?: string;
 
     @Property({ nullable: true })
-    public ldapEntryUUID?: string; //If address is removed from LDAP because priority gets higher then 1, this field must be set to null
+    public ldapUid?: string; //username for all existing and personId for all new
 
     @Property({ nullable: true })
     @Index({

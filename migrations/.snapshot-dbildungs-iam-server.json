@@ -879,8 +879,8 @@
           "nullable": true,
           "mappedType": "string"
         },
-        "ldap_entry_uuid": {
-          "name": "ldap_entry_uuid",
+        "ldap_uid": {
+          "name": "ldap_uid",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
