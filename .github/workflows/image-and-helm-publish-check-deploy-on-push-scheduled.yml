@@ -254,15 +254,12 @@ jobs:
     runs-on: 'ubuntu-latest'
     steps:
       - name: Check if today is Monday
+        id: check_monday
         run: |
-          if [ "$(date +%u)" -eq 1 ]; then
-            echo "It's Monday, sending notification..."
-          else
-            echo "Not Monday, skipping notification."
-            exit 78
-          fi
+          echo "date=$(date +%u)" >> $GITHUB_OUTPUT
       - name: Send Notification to Rocket Chat
         uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
+        if: ${{ steps.check_monday.outputs.date == '1' }}
         with:
           type: failure
           job_name: 'Daily nightly image check failed'
