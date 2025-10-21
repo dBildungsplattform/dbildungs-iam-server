@@ -177,7 +177,7 @@ export class SetEmailAddressForSpshPersonService {
             emailDomain.domain,
             createdEmailAddress.address,
         );
-        if (createdLdapPerson instanceof Error) {
+        if (!createdLdapPerson.ok) {
             await this.emailAddressStatusRepo.create(
                 EmailAddressStatus.createNew({
                     emailAddressId: createdEmailAddress.id,
@@ -185,7 +185,7 @@ export class SetEmailAddressForSpshPersonService {
                 }),
             );
             this.logger.error(
-                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to create LDAP person: ${createdLdapPerson.message}`,
+                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to create LDAP person: ${createdLdapPerson.error}`,
             );
             return;
         }
