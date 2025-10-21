@@ -54,6 +54,7 @@ export class SetEmailAddressForSpshPersonService {
             params.lastName,
             params.spshPersonId,
             params.spshUsername,
+            params.kennungen,
             emailDomain,
             5,
         );
@@ -64,6 +65,7 @@ export class SetEmailAddressForSpshPersonService {
         lastName: string,
         spshPersonId: string,
         spshUsername: string,
+        kennungen: string[],
         emailDomain: EmailDomain<true>,
         recursionTry: number = 1,
     ): Promise<void> {
@@ -134,6 +136,7 @@ export class SetEmailAddressForSpshPersonService {
                     lastName,
                     spshPersonId,
                     spshUsername,
+                    kennungen,
                     emailDomain,
                     recursionTry - 1,
                 );
@@ -166,6 +169,13 @@ export class SetEmailAddressForSpshPersonService {
         this.logger.info(
             `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully connected oxUserId ${oxUserId} in DB`,
         );
+
+        //ADD OX USER TO OX GROUPS
+        for (const kennung of kennungen) {
+            //await in loop is on purpose because we dont want multiple parallel requests to ox here
+            //eslint-disable-next-line no-await-in-loop
+            await this.oxService.addOxUserToGroup(oxUserId, kennung);
+        }
 
         //CREATE IN LDAP
         const createdLdapPerson: Result<PersonData, Error> = await this.ldapClientService.createPerson(
