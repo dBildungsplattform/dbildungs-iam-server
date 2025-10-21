@@ -82,6 +82,10 @@ export class LdapClientService {
     public async createPerson(person: PersonData, domain: string, mail: string): Promise<Result<PersonData>> {
         return this.executeWithRetry(() => this.createPersonInternal(person, domain, mail), this.getNrOfRetries());
     }
+
+    public async isPersonExisting(uid: string, domain: string): Promise<Result<boolean>> {
+        return this.executeWithRetry(() => this.isPersonExistingInternal(uid, domain), this.getNrOfRetries());
+    }
     //** BELOW ONLY PRIVATE HELPER FUNCTIONS THAT NOT OPERATE ON LDAP - MUST NOT USE THE 'executeWithRetry'/
 
     private getNrOfRetries(): number {
@@ -177,7 +181,7 @@ export class LdapClientService {
                 },
             );
             if (searchResultLehrer.searchEntries.length > 0) {
-                this.logger.info(`LDAP: Lehrer ${lehrerUid} exists, nothing to create`);
+                this.logger.info(`LDAP: Person ${lehrerUid} exists, nothing to create`);
 
                 return { ok: true, value: person };
             }
@@ -196,12 +200,40 @@ export class LdapClientService {
 
             try {
                 await client.add(lehrerUid, entry);
+                this.logger.info(`LDAP: Creating person succeeded, uid:${lehrerUid}`);
                 return { ok: true, value: person };
             } catch (err) {
-                this.logger.logUnknownAsError(`LDAP: Creating lehrer FAILED, uid:${lehrerUid}`, err);
+                this.logger.logUnknownAsError(`LDAP: Creating person FAILED, uid:${lehrerUid}`, err);
 
                 return { ok: false, error: new LdapCreateLehrerError() };
             }
+        });
+    }
+
+    private async isPersonExistingInternal(uid: string, domain: string): Promise<Result<boolean>> {
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) {
+            return rootName;
+        }
+
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: isPersonExisting');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) {
+                return bindResult;
+            }
+
+            const searchResultLehrer: SearchResult = await client.search(
+                `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
+                {
+                    filter: `(uid=${uid})`,
+                },
+            );
+            if (searchResultLehrer.searchEntries.length > 0) {
+                return { ok: true, value: true };
+            }
+            return { ok: true, value: false };
         });
     }
 

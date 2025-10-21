@@ -2,17 +2,17 @@ import { MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
+import { EmailLdapModule } from '../email-ldap.module.js';
+import { LdapClient } from './ldap-client.js';
+import { Client } from 'ldapts';
 import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     LdapTestModule,
-} from '../../../../test/utils/index.js';
-import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
-import { LdapConfigModule } from '../ldap-config.module.js';
-import { EmailLdapModule } from '../email-ldap.module.js';
-import { LdapClient } from './ldap-client.js';
-import { Client } from 'ldapts';
+} from '../../../../../test/utils/index.js';
+import { GlobalValidationPipe } from '../../../../shared/validation/index.js';
+import { LdapConfigModule } from '../../../../core/ldap/ldap-config.module.js';
 
 describe('LDAP Client', () => {
     let app: INestApplication;

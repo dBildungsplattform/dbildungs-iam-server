@@ -5,4 +5,4 @@ import { LdapInstanceConfig } from './ldap-instance-config.js';
     providers: [LdapInstanceConfig.fromConfigService()],
     exports: [LdapInstanceConfig],
 })
-export class LdapConfigModule {}
+export class EmailLdapConfigModule {}

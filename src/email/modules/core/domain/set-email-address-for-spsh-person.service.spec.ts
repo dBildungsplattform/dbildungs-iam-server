@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SetEmailAddressForSpshPersonService } from './services/set-email-address-for-spsh-person.service.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
@@ -13,6 +12,11 @@ import { EmailAddressStatus } from './email-address-status.js';
 import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
 import { SetEmailAddressForSpshPersonParams } from '../api/dtos/params/set-email-addess-for-spsh-person.params.js';
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
+import { SetEmailAddressForSpshPersonService } from './set-email-address-for-spsh-person.service.js';
+import { OxService } from '../../ox/domain/ox-service.js';
+import { LdapClientService } from '../../ldap/domain/ldap-client.service.js';
+import { OxSendService } from '../../ox/domain/ox-send-service.js';
+import { HttpService } from '@nestjs/axios';
 
 describe('SetEmailAddressForSpshPersonService', () => {
     let module: TestingModule;
@@ -32,6 +36,10 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 EmailAddressStatusRepo,
                 EmailDomainRepo,
                 EmailAddressGenerator,
+                OxService,
+                OxSendService,
+                LdapClientService,
+                HttpService,
             ],
         })
             .overrideProvider(ClassLogger)
@@ -44,6 +52,14 @@ describe('SetEmailAddressForSpshPersonService', () => {
             .useValue(createMock<EmailDomainRepo>())
             .overrideProvider(EmailAddressGenerator)
             .useValue(createMock<EmailAddressGenerator>())
+            .overrideProvider(OxService)
+            .useValue(createMock<OxService>())
+            .overrideProvider(LdapClientService)
+            .useValue(createMock<LdapClientService>())
+            .overrideProvider(OxSendService)
+            .useValue(createMock<OxSendService>())
+            .overrideProvider(HttpService)
+            .useValue(createMock<HttpService>())
             .compile();
 
         sut = module.get(SetEmailAddressForSpshPersonService);
@@ -101,6 +117,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             firstName: 'Max',
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
+            spshUsername: faker.internet.userName(),
             emailDomainId: faker.string.uuid(),
         });
 
@@ -121,6 +138,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             firstName: 'Max',
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
+            spshUsername: faker.internet.userName(),
             emailDomainId: 'missing-domain-id',
         };
 
@@ -154,6 +172,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             firstName: 'Max',
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
+            spshUsername: faker.internet.userName(),
             emailDomainId: faker.string.uuid(),
         });
         expect(emailAddressRepoMock.save).not.toHaveBeenCalled();
@@ -179,6 +198,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             firstName: 'Max',
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
+            spshUsername: faker.internet.userName(),
             emailDomainId: faker.string.uuid(),
         };
 
@@ -209,6 +229,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 firstName: 'Max',
                 lastName: 'Mustermann',
                 spshPersonId: faker.string.uuid(),
+                spshUsername: faker.internet.userName(),
                 emailDomainId: faker.string.uuid(),
             }),
         ).rejects.toThrow(domainError);

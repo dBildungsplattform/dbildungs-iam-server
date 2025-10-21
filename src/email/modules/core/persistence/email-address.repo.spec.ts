@@ -11,11 +11,8 @@ import {
 import { EmailAddress } from '../domain/email-address.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { SetEmailAddressForSpshPersonService } from '../domain/set-email-address-for-spsh-person.service.js';
-import { EmailDomainRepo } from './email-domain.repo.js';
 import { EmailCoreModule } from '../email-core.module.js';
 import { EmailAddressStatusRepo } from './email-address-status.repo.js';
-import { EmailAddressGenerator } from '../domain/email-address-generator.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -25,18 +22,12 @@ describe('EmailRepo', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailCoreModule],
-            providers: [
-                SetEmailAddressForSpshPersonService,
-                EmailAddressRepo,
-                EmailDomainRepo,
-                EmailAddressStatusRepo,
-                ClassLogger,
-                EmailAddressGenerator,
-            ],
+            providers: [EmailAddressStatusRepo, EmailAddressRepo, ClassLogger],
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
             .compile();
+
         sut = module.get(EmailAddressRepo);
         orm = module.get(MikroORM);
 
