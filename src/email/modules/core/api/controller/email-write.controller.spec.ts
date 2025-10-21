@@ -33,19 +33,25 @@ describe('Email Write Controller', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+        jest.useRealTimers();
     });
 
     describe('setEmailAddressForSpshPerson', () => {
-        it('Should call setEmailAddressForSpshPersonService with right params', async () => {
+        it('Should call setEmailAddressForSpshPersonService with right params', () => {
             const params: SetEmailAddressForSpshPersonParams = {
                 spshPersonId: faker.string.uuid(),
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
                 emailDomainId: faker.string.uuid(),
+                spshUsername: faker.internet.userName(),
             };
             setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson.mockResolvedValue();
-            await emailWriteController.setEmailForPerson(params);
+            emailWriteController.setEmailForPerson(params);
+            jest.runAllTimers();
             expect(setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson).toHaveBeenCalledWith(params);
         });
     });
