@@ -60,6 +60,11 @@ describe('OxSendService', () => {
         await module.close();
     });
 
+    beforeEach(() => {
+        jest.clearAllMocks();
+        jest.resetAllMocks();
+    });
+
     it('should be defined', () => {
         expect(sut).toBeDefined();
     });
