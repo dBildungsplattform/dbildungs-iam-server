@@ -257,5 +257,8 @@ jobs:
       uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
       with:
         type: failure
-        job_name: 'Daily nightly image check failed - CVEs found so check'
+        job_name: 'Daily nightly image check failed'
+        message: |
+          'This notification will be sent only on Mondays in the future. The check may have been failing for several days. 
+          [Click here to see CVE scan results](https://github.com/dBildungsplattform/dbildungs-iam-server/security/code-scanning)'
         url: ${{ secrets.RC_WEBHOOK_SPSH_DEVELOPER_CHANNEL }}
