@@ -110,6 +110,7 @@ export class PersonController {
     }
 
     @Get('landesbediensteter')
+    @UseGuards(StepUpGuard)
     @ApiOkResponse({
         description: 'The landesbediensteter was successfully returned.',
         type: [PersonLandesbediensteterSearchResponse],
