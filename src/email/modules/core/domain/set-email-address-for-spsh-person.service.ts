@@ -164,6 +164,12 @@ export class SetEmailAddressForSpshPersonService {
         const saveResultAfterOxConnection: EmailAddress<true> | DomainError =
             await this.emailAddressRepo.save(createdEmailAddress);
         if (saveResultAfterOxConnection instanceof DomainError) {
+            await this.emailAddressStatusRepo.create(
+                EmailAddressStatus.createNew({
+                    emailAddressId: createdEmailAddress.id,
+                    status: EmailAddressStatusEnum.FAILED,
+                }),
+            );
             this.logger.error(
                 `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to save email address after trying to connect oxUserId ${oxUserId}`,
             );
