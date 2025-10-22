@@ -18,6 +18,7 @@ import { LdapClientService, PersonData } from '../../ldap/domain/ldap-client.ser
 import { OxSendService } from '../../ox/domain/ox-send-service.js';
 import { HttpService } from '@nestjs/axios';
 import { CreateUserResponse } from '../../ox/actions/user/create-user.action.js';
+import { OxPrimaryMailAlreadyExistsError } from '../../ox/error/ox-primary-mail-already-exists.error.js';
 
 describe('SetEmailAddressForSpshPersonService', () => {
     let module: TestingModule;
@@ -160,6 +161,100 @@ describe('SetEmailAddressForSpshPersonService', () => {
             expect.objectContaining({
                 status: EmailAddressStatusEnum.ACTIVE,
             }),
+        );
+    });
+
+    it('should mark email as exists only in ox and retry if OxPrimaryMailAlreadyExistsError is result of ox operation', async () => {
+        emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([]);
+        emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce({
+            ok: true,
+            value: 'max.mustermann@example.com',
+        });
+        emailDomainRepoMock.findById.mockResolvedValue(
+            EmailDomain.construct({
+                id: faker.string.uuid(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                domain: 'example.com',
+            }),
+        );
+        emailAddressRepoMock.save.mockResolvedValue(
+            EmailAddress.construct({
+                id: 'id',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                address: 'max.mustermann@example.com',
+                priority: 0,
+                spshPersonId: faker.string.uuid(),
+            }),
+        );
+        emailAddressStatusRepoMock.create.mockResolvedValue(
+            EmailAddressStatus.construct({
+                id: faker.string.uuid(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                emailAddressId: faker.string.uuid(),
+                status: EmailAddressStatusEnum.PENDING,
+            }),
+        );
+        emailAddressRepoMock.existsEmailAddress.mockResolvedValue(false);
+
+        oxSendServiceMock.send
+            .mockResolvedValueOnce({
+                ok: false,
+                error: new OxPrimaryMailAlreadyExistsError(''),
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    id: faker.string.numeric({ length: 5 }),
+                    firstname: 'max',
+                    lastname: 'mustermann',
+                    username: 'max.mustermann',
+                    primaryEmail: 'max.mustermann@example.com',
+                    mailenabled: true,
+                } satisfies CreateUserResponse,
+            });
+
+        ldapClientServiceMock.createPerson.mockResolvedValue({
+            ok: true,
+            value: {
+                firstName: 'Max',
+                lastName: 'Mustermann',
+                uid: faker.string.uuid(),
+            } satisfies PersonData,
+        });
+        ldapClientServiceMock.isPersonExisting.mockResolvedValue({ ok: true, value: false });
+
+        await sut.setEmailAddressForSpshPerson({
+            firstName: 'Max',
+            lastName: 'Mustermann',
+            spshPersonId: faker.string.uuid(),
+            spshUsername: faker.internet.userName(),
+            kennungen: [],
+            emailDomainId: faker.string.uuid(),
+        });
+
+        expect(emailAddressRepoMock.save).toHaveBeenCalledTimes(5);
+        expect(emailAddressStatusRepoMock.create).toHaveBeenCalledTimes(4);
+        expect(emailAddressStatusRepoMock.create).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({ status: EmailAddressStatusEnum.PENDING }),
+        );
+
+        expect(emailAddressStatusRepoMock.create).toHaveBeenNthCalledWith(
+            2,
+            expect.objectContaining({ status: EmailAddressStatusEnum.EXISTS_ONLY_IN_OX }),
+        );
+
+        expect(emailAddressStatusRepoMock.create).toHaveBeenNthCalledWith(
+            3,
+            expect.objectContaining({ status: EmailAddressStatusEnum.PENDING }),
+        );
+
+        expect(emailAddressStatusRepoMock.create).toHaveBeenNthCalledWith(
+            4,
+            expect.objectContaining({ status: EmailAddressStatusEnum.ACTIVE }),
         );
     });
 

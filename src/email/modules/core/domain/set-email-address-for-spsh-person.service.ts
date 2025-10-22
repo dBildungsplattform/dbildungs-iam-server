@@ -72,7 +72,8 @@ export class SetEmailAddressForSpshPersonService {
     ): Promise<void> {
         //GENERATE AND SETUP EMAIL ADDRESS
         if (recursionTry === 0) {
-            return;
+            this.logger.error(`CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - All retries failed`);
+            throw new EmailCreationFailedError(spshPersonId);
         }
 
         const emailAddressToCreate: EmailAddress<false> = await this.generateEmailAddress({
@@ -141,6 +142,7 @@ export class SetEmailAddressForSpshPersonService {
                     emailDomain,
                     recursionTry - 1,
                 );
+                return;
             }
         }
 
