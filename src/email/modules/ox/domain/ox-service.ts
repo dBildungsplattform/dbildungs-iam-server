@@ -22,9 +22,9 @@ import { OxGroupNameAmbiguousError } from '../error/ox-group-name-ambiguous.erro
 
 import { GroupMemberParams } from '../actions/group/ox-group.types.js';
 import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
-import { PersonReferrer } from '../../../../shared/types/aggregate-ids.types.js';
 import { CreateUserAction, CreateUserParams } from '../actions/user/create-user.action.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
+import { PersonUsername } from '../../../../shared/types/index.js';
 
 @Injectable()
 export class OxService {
@@ -239,7 +239,7 @@ export class OxService {
         return action;
     }
 
-    public createExistsUserAction(username: PersonReferrer): ExistsUserAction {
+    public createExistsUserAction(username: PersonUsername): ExistsUserAction {
         const existsParams: UserNameParams = {
             contextId: this.contextID,
             userName: username,

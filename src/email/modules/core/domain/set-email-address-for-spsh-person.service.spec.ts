@@ -14,9 +14,10 @@ import { SetEmailAddressForSpshPersonParams } from '../api/dtos/params/set-email
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 import { SetEmailAddressForSpshPersonService } from './set-email-address-for-spsh-person.service.js';
 import { OxService } from '../../ox/domain/ox-service.js';
-import { LdapClientService } from '../../ldap/domain/ldap-client.service.js';
+import { LdapClientService, PersonData } from '../../ldap/domain/ldap-client.service.js';
 import { OxSendService } from '../../ox/domain/ox-send-service.js';
 import { HttpService } from '@nestjs/axios';
+import { CreateUserResponse } from '../../ox/actions/user/create-user.action.js';
 
 describe('SetEmailAddressForSpshPersonService', () => {
     let module: TestingModule;
@@ -26,6 +27,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
     let emailDomainRepoMock: DeepMocked<EmailDomainRepo>;
     let emailAddressStatusRepoMock: DeepMocked<EmailAddressStatusRepo>;
     let emailAddressGeneratorMock: DeepMocked<EmailAddressGenerator>;
+    let oxSendServiceMock: DeepMocked<OxSendService>;
+    let ldapClientServiceMock: DeepMocked<LdapClientService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -68,6 +71,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
         emailDomainRepoMock = module.get(EmailDomainRepo);
         emailAddressGeneratorMock = module.get(EmailAddressGenerator);
         emailAddressStatusRepoMock = module.get(EmailAddressStatusRepo);
+        oxSendServiceMock = module.get(OxSendService);
+        ldapClientServiceMock = module.get(LdapClientService);
     });
 
     afterAll(async () => {
@@ -78,7 +83,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
         jest.resetAllMocks();
     });
 
-    it('should create first email address for person', async () => {
+    it('should successfullly create first email address for person', async () => {
         emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([]);
         emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce({
             ok: true,
@@ -113,17 +118,49 @@ describe('SetEmailAddressForSpshPersonService', () => {
         );
         emailAddressRepoMock.existsEmailAddress.mockResolvedValue(false);
 
+        oxSendServiceMock.send.mockResolvedValue({
+            ok: true,
+            value: {
+                id: faker.string.numeric({ length: 5 }),
+                firstname: 'max',
+                lastname: 'mustermann',
+                username: 'max.mustermann',
+                primaryEmail: 'max.mustermann@example.com',
+                mailenabled: true,
+            } satisfies CreateUserResponse,
+        });
+
+        ldapClientServiceMock.createPerson.mockResolvedValue({
+            ok: true,
+            value: {
+                firstName: 'Max',
+                lastName: 'Mustermann',
+                uid: faker.string.uuid(),
+            } satisfies PersonData,
+        });
+        ldapClientServiceMock.isPersonExisting.mockResolvedValue({ ok: true, value: false });
+
         await sut.setEmailAddressForSpshPerson({
             firstName: 'Max',
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
             spshUsername: faker.internet.userName(),
+            kennungen: [],
             emailDomainId: faker.string.uuid(),
         });
 
-        expect(emailAddressRepoMock.save).toHaveBeenCalledTimes(1);
-        expect(emailAddressStatusRepoMock.create).toHaveBeenCalledTimes(1);
-        expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Created email address'));
+        expect(emailAddressRepoMock.save).toHaveBeenCalledTimes(3);
+        expect(emailAddressStatusRepoMock.create).toHaveBeenCalledTimes(2);
+        expect(emailAddressStatusRepoMock.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                status: EmailAddressStatusEnum.PENDING,
+            }),
+        );
+        expect(emailAddressStatusRepoMock.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                status: EmailAddressStatusEnum.ACTIVE,
+            }),
+        );
     });
 
     it('should throw EmailDomainNotFoundError if email domain does not exist', async () => {
@@ -139,13 +176,16 @@ describe('SetEmailAddressForSpshPersonService', () => {
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
             spshUsername: faker.internet.userName(),
+            kennungen: [],
             emailDomainId: 'missing-domain-id',
         };
 
         await expect(sut.setEmailAddressForSpshPerson(params)).rejects.toThrow(
             new EmailDomainNotFoundError(`EmailDomain with id ${params.emailDomainId} not found`),
         );
-        expect(loggerMock.error).toHaveBeenCalledWith('EmailDomain with id missing-domain-id not found');
+        expect(loggerMock.error).toHaveBeenCalledWith(
+            expect.stringContaining('EmailDomain with id missing-domain-id not found'),
+        );
     });
 
     it('should log and not create email address if person already has addresses', async () => {
@@ -173,6 +213,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
             spshUsername: faker.internet.userName(),
+            kennungen: [],
             emailDomainId: faker.string.uuid(),
         });
         expect(emailAddressRepoMock.save).not.toHaveBeenCalled();
@@ -199,6 +240,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
             spshUsername: faker.internet.userName(),
+            kennungen: [],
             emailDomainId: faker.string.uuid(),
         };
 
@@ -230,6 +272,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 lastName: 'Mustermann',
                 spshPersonId: faker.string.uuid(),
                 spshUsername: faker.internet.userName(),
+                kennungen: [],
                 emailDomainId: faker.string.uuid(),
             }),
         ).rejects.toThrow(domainError);

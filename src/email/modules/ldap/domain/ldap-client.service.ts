@@ -7,7 +7,7 @@ import { Mutex } from 'async-mutex';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { PersonReferrer } from '../../../../shared/types/index.js';
+import { PersonUsername } from '../../../../shared/types/aggregate-ids.types.js';
 
 export type LdapPersonAttributes = {
     entryUUID?: string;
@@ -140,7 +140,7 @@ export class LdapClientService {
         };
     }
 
-    private getLehrerUid(username: PersonReferrer, rootName: string): string {
+    private getLehrerUid(username: PersonUsername, rootName: string): string {
         return `uid=${username},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
     }
 
@@ -153,7 +153,7 @@ export class LdapClientService {
     }
 
     private async createPersonInternal(person: PersonData, domain: string, mail: string): Promise<Result<PersonData>> {
-        const username: PersonReferrer | undefined = person.uid;
+        const username: PersonUsername | undefined = person.uid;
         if (!username) {
             return {
                 ok: false,

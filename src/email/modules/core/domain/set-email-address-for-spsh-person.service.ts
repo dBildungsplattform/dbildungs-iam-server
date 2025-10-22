@@ -14,9 +14,10 @@ import { DomainError } from '../../../../shared/error/domain.error.js';
 import { OxService } from '../../ox/domain/ox-service.js';
 import { OxSendService } from '../../ox/domain/ox-send-service.js';
 import { CreateUserAction, CreateUserResponse } from '../../ox/actions/user/create-user.action.js';
-import { PersonID, PersonReferrer } from '../../../../shared/types/index.js';
+import { PersonID, PersonUsername } from '../../../../shared/types/index.js';
 import { OxPrimaryMailAlreadyExistsError } from '../../ox/error/ox-primary-mail-already-exists.error.js';
 import { LdapClientService, PersonData } from '../../ldap/domain/ldap-client.service.js';
+import { EmailCreationFailedError } from '../error/email-creaton-failed.error.js';
 
 @Injectable()
 export class SetEmailAddressForSpshPersonService {
@@ -89,7 +90,7 @@ export class SetEmailAddressForSpshPersonService {
             this.logger.error(
                 `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to create email address: ${createdEmailAddress.message}`,
             );
-            return;
+            throw createdEmailAddress;
         }
 
         await this.emailAddressStatusRepo.create(
@@ -154,7 +155,7 @@ export class SetEmailAddressForSpshPersonService {
             this.logger.error(
                 `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to connect Ox user in Db because oxUserId is undefined`,
             );
-            return;
+            throw new EmailCreationFailedError(spshPersonId);
         }
         createdEmailAddress.oxUserId = oxUserId;
 
@@ -164,7 +165,7 @@ export class SetEmailAddressForSpshPersonService {
             this.logger.error(
                 `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to save email address after trying to connect oxUserId ${oxUserId}`,
             );
-            return;
+            throw saveResultAfterOxConnection;
         }
         this.logger.info(
             `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully connected oxUserId ${oxUserId} in DB`,
@@ -197,7 +198,7 @@ export class SetEmailAddressForSpshPersonService {
             this.logger.error(
                 `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to create LDAP person: ${createdLdapPerson.error}`,
             );
-            return;
+            throw createdLdapPerson.error;
         }
         this.logger.info(`CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully created LDAP person`);
 
@@ -217,7 +218,7 @@ export class SetEmailAddressForSpshPersonService {
             this.logger.error(
                 `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to save email address after trying to connect ldapUid ${ldapUid}`,
             );
-            return;
+            throw saveResultAfterLdapConnection;
         }
         this.logger.info(
             `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully connected ldapUid ${ldapUid}`,
@@ -237,7 +238,7 @@ export class SetEmailAddressForSpshPersonService {
 
     private async createOxUserForSpshPerson(
         spshPersonId: PersonID,
-        spshUsername: PersonReferrer,
+        spshUsername: PersonUsername,
         firstName: string,
         lastName: string,
         mostRecentRequestedEmailAddress: EmailAddress<true>,
