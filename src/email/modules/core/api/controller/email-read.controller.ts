@@ -49,10 +49,7 @@ export class EmailReadController {
         }
 
         return addresses
-            .filter(
-                (address: AddressWithStatusesDescDto) =>
-                    address.statuses.length > 0,
-            )
+            .filter((address: AddressWithStatusesDescDto) => address.statuses.length > 0)
             .map((address: AddressWithStatusesDescDto) => {
                 const status: EmailAddressStatus<true> | undefined = address.statuses.at(0);
                 if (status) {
