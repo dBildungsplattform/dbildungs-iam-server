@@ -58,6 +58,7 @@ export class EmailReadController {
                 if (status) {
                     return new EmailAddressResponse(address.emailAddress, status);
                 }
+                return undefined;
             })
             .filter((response: EmailAddressResponse | undefined) => response !== undefined);
     }

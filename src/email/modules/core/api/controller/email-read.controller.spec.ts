@@ -10,6 +10,7 @@ import { APP_PIPE } from '@nestjs/core';
 import { GlobalValidationPipe } from '../../../../../shared/validation/global-validation.pipe.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../../../../test/utils/index.js';
 import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
+import { EmailAddressStatus } from '../../domain/email-address-status.js';
 
 describe('EmailReadController', () => {
     let emailReadController: EmailReadController;
@@ -150,6 +151,31 @@ describe('EmailReadController', () => {
             };
             getEmailAddressForSpshPersonServiceMock.getEmailAddressWithStatusForSpshPerson.mockResolvedValue([
                 addressWithNoStatus,
+            ]);
+
+            const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonId(params);
+            expect(result).toEqual([]);
+        });
+
+        // This is just for test coverage, it should never be the case because we dont get undefined statuses from the service
+        it('should return undefined for addresses with statuses array containing only undefined', async () => {
+            const spshPersonId: string = faker.string.uuid();
+            const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
+            const addressWithUndefinedStatus: AddressWithStatusesDescDto = {
+                emailAddress: {
+                    id: faker.string.uuid(),
+                    address: 'undefined-status@example.com',
+                    priority: 0,
+                    spshPersonId,
+                    oxUserId: undefined,
+                    markedForCron: undefined,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
+                statuses: [undefined as unknown as EmailAddressStatus<true>],
+            };
+            getEmailAddressForSpshPersonServiceMock.getEmailAddressWithStatusForSpshPerson.mockResolvedValue([
+                addressWithUndefinedStatus,
             ]);
 
             const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonId(params);
