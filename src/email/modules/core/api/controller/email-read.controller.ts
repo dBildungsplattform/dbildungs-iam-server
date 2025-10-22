@@ -12,9 +12,9 @@ import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { Public } from '../../decorator/public.decorator.js';
-import { GetEmailAddressForSpshPersonService } from '../../domain/get-email-address-for-spsh-person.service.js';
 import { AddressWithStatusesDescDto } from '../dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 import { EmailAddressStatus } from '../../domain/email-address-status.js';
+import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
@@ -23,7 +23,7 @@ import { EmailAddressStatus } from '../../domain/email-address-status.js';
 export class EmailReadController {
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly getEmailAddressForSpshPersonService: GetEmailAddressForSpshPersonService,
+        private readonly emailAddressRepo: EmailAddressRepo,
     ) {}
 
     @Get(':spshPersonId')
@@ -40,8 +40,8 @@ export class EmailReadController {
         this.logger.info(`PersonId:${findEmailAddressByPersonIdParams.spshPersonId}`);
 
         const addresses: AddressWithStatusesDescDto[] =
-            await this.getEmailAddressForSpshPersonService.getEmailAddressWithStatusForSpshPerson(
-                findEmailAddressByPersonIdParams,
+            await this.emailAddressRepo.findAllEmailAddressesWithStatusesDescBySpshPersonId(
+                findEmailAddressByPersonIdParams.spshPersonId,
             );
 
         if (addresses.length === 0) {
@@ -51,7 +51,7 @@ export class EmailReadController {
         return addresses
             .filter(
                 (address: AddressWithStatusesDescDto) =>
-                    address.statuses.length > 0 && address.statuses.at(0) !== undefined,
+                    address.statuses.length > 0,
             )
             .map((address: AddressWithStatusesDescDto) => {
                 const status: EmailAddressStatus<true> | undefined = address.statuses.at(0);

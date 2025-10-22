@@ -7,13 +7,11 @@ import { EmailReadController } from './api/controller/email-read.controller.js';
 import { EmailWriteController } from './api/controller/email-write.controller.js';
 import { EmailAddressStatusRepo } from './persistence/email-address-status.repo.js';
 import { EmailAddressGenerator } from './domain/email-address-generator.js';
-import { GetEmailAddressForSpshPersonService } from './domain/get-email-address-for-spsh-person.service.js';
 
 @Module({
     imports: [LoggerModule.register(EmailCoreModule.name)],
     providers: [
         SetEmailAddressForSpshPersonService,
-        GetEmailAddressForSpshPersonService,
         EmailAddressRepo,
         EmailDomainRepo,
         EmailAddressStatusRepo,
