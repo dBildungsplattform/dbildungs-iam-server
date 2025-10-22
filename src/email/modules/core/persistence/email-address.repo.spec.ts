@@ -22,6 +22,7 @@ import { AddressWithStatusesDescDto } from '../api/dtos/address-with-statuses/ad
 describe('EmailRepo', () => {
     let module: TestingModule;
     let sut: EmailAddressRepo;
+    let eas: EmailAddressStatusRepo;
     let orm: MikroORM;
 
     beforeAll(async () => {
@@ -40,6 +41,7 @@ describe('EmailRepo', () => {
             .useValue(createMock<ClassLogger>())
             .compile();
         sut = module.get(EmailAddressRepo);
+        eas = module.get(EmailAddressStatusRepo);
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -137,21 +139,21 @@ describe('EmailRepo', () => {
             const now: Date = new Date();
             const earlier: Date = new Date(now.getTime() - 10000);
 
-            await module.get(EmailAddressStatusRepo).create({
+            await eas.create({
                 id: undefined,
                 createdAt: earlier,
                 updatedAt: earlier,
                 emailAddressId: mail1.id,
                 status: EmailAddressStatusEnum.PENDING,
             });
-            await module.get(EmailAddressStatusRepo).create({
+            await eas.create({
                 id: undefined,
                 createdAt: now,
                 updatedAt: now,
                 emailAddressId: mail1.id,
                 status: EmailAddressStatusEnum.ACTIVE,
             });
-            await module.get(EmailAddressStatusRepo).create({
+            await eas.create({
                 id: undefined,
                 createdAt: now,
                 updatedAt: now,

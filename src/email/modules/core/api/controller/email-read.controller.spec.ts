@@ -63,7 +63,7 @@ describe('EmailReadController', () => {
                         status: EmailAddressStatusEnum.ACTIVE,
                     },
                 ],
-            } as AddressWithStatusesDescDto;
+            };
             getEmailAddressForSpshPersonServiceMock.getEmailAddressWithStatusForSpshPerson.mockResolvedValue([
                 addressWithStatuses,
             ]);
@@ -109,7 +109,7 @@ describe('EmailReadController', () => {
                         status: EmailAddressStatusEnum.SUSPENDED,
                     },
                 ],
-            } as AddressWithStatusesDescDto;
+            };
             getEmailAddressForSpshPersonServiceMock.getEmailAddressWithStatusForSpshPerson.mockResolvedValue([
                 addressWithStatuses,
             ]);
@@ -147,7 +147,7 @@ describe('EmailReadController', () => {
                     updatedAt: new Date(),
                 },
                 statuses: [],
-            } as AddressWithStatusesDescDto;
+            };
             getEmailAddressForSpshPersonServiceMock.getEmailAddressWithStatusForSpshPerson.mockResolvedValue([
                 addressWithNoStatus,
             ]);
