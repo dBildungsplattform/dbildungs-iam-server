@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { GetEmailAddressForSpshPersonService } from '../../domain/get-email-address-for-spsh-person.service.js';
 import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
 import { AddressWithStatusesDescDto } from '../dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
@@ -10,10 +9,12 @@ import { APP_PIPE } from '@nestjs/core';
 import { GlobalValidationPipe } from '../../../../../shared/validation/global-validation.pipe.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../../../../test/utils/index.js';
 import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
+import { EmailAddressStatus } from '../../domain/email-address-status.js';
+import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
 
 describe('EmailReadController', () => {
     let emailReadController: EmailReadController;
-    let getEmailAddressForSpshPersonServiceMock: DeepMocked<GetEmailAddressForSpshPersonService>;
+    let emailAddressRepoMock: DeepMocked<EmailAddressRepo>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -24,15 +25,15 @@ describe('EmailReadController', () => {
                     useClass: GlobalValidationPipe,
                 },
                 EmailReadController,
-                GetEmailAddressForSpshPersonService,
+                EmailAddressRepo,
             ],
         })
-            .overrideProvider(GetEmailAddressForSpshPersonService)
-            .useValue(createMock<GetEmailAddressForSpshPersonService>())
+            .overrideProvider(EmailAddressRepo)
+            .useValue(createMock<EmailAddressRepo>())
             .compile();
 
         emailReadController = module.get(EmailReadController);
-        getEmailAddressForSpshPersonServiceMock = module.get(GetEmailAddressForSpshPersonService);
+        emailAddressRepoMock = module.get(EmailAddressRepo);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
@@ -64,7 +65,7 @@ describe('EmailReadController', () => {
                     },
                 ],
             };
-            getEmailAddressForSpshPersonServiceMock.getEmailAddressWithStatusForSpshPerson.mockResolvedValue([
+            emailAddressRepoMock.findAllEmailAddressesWithStatusesDescBySpshPersonId.mockResolvedValue([
                 addressWithStatuses,
             ]);
 
@@ -110,7 +111,7 @@ describe('EmailReadController', () => {
                     },
                 ],
             };
-            getEmailAddressForSpshPersonServiceMock.getEmailAddressWithStatusForSpshPerson.mockResolvedValue([
+            emailAddressRepoMock.findAllEmailAddressesWithStatusesDescBySpshPersonId.mockResolvedValue([
                 addressWithStatuses,
             ]);
 
@@ -124,7 +125,7 @@ describe('EmailReadController', () => {
 
         it('should return empty array if no addresses found', async () => {
             const spshPersonId: string = faker.string.uuid();
-            getEmailAddressForSpshPersonServiceMock.getEmailAddressWithStatusForSpshPerson.mockResolvedValue([]);
+            emailAddressRepoMock.findAllEmailAddressesWithStatusesDescBySpshPersonId.mockResolvedValue([]);
 
             const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonId({
                 spshPersonId,
@@ -148,8 +149,33 @@ describe('EmailReadController', () => {
                 },
                 statuses: [],
             };
-            getEmailAddressForSpshPersonServiceMock.getEmailAddressWithStatusForSpshPerson.mockResolvedValue([
+            emailAddressRepoMock.findAllEmailAddressesWithStatusesDescBySpshPersonId.mockResolvedValue([
                 addressWithNoStatus,
+            ]);
+
+            const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonId(params);
+            expect(result).toEqual([]);
+        });
+
+        // This is just for test coverage, it should never be the case because we dont get undefined statuses from the service
+        it('should hit the "return undefined" line when statuses.at(0) is undefined despite having length > 0', async () => {
+            const spshPersonId: string = faker.string.uuid();
+            const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
+            const addressWithUndefinedStatus: AddressWithStatusesDescDto = {
+                emailAddress: {
+                    id: faker.string.uuid(),
+                    address: 'undefined-status@example.com',
+                    priority: 0,
+                    spshPersonId,
+                    oxUserId: undefined,
+                    markedForCron: undefined,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
+                statuses: [undefined as unknown as EmailAddressStatus<true>],
+            };
+            emailAddressRepoMock.findAllEmailAddressesWithStatusesDescBySpshPersonId.mockResolvedValue([
+                addressWithUndefinedStatus,
             ]);
 
             const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonId(params);

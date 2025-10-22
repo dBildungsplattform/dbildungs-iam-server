@@ -9,13 +9,13 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { FindPersonenkontextRollenBodyParams } from './param/find-personenkontext-rollen.body.params.js';
-import { FindRollenResponse } from './response/find-rollen.response.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 import { PersonAdministrationService } from '../domain/person-administration.service.js';
+import { FindPersonenkontextRollenBodyParams } from './param/find-personenkontext-rollen.body.params.js';
+import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
+import { FindRollenResponse } from './response/find-rollen.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new PersonenkontextExceptionFilter())
 @ApiTags('person-administration')
