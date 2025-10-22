@@ -10,9 +10,12 @@ import { EmailRepo } from './persistence/email.repo.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { EmailConfigModule } from './email-config.module.js';
+import { EmailResolverService } from './email-resolve-service/email-resolve.service.js';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
     imports: [
+        HttpModule,
         EmailConfigModule,
         OrganisationModule,
         PersonModule,
@@ -22,7 +25,7 @@ import { EmailConfigModule } from './email-config.module.js';
         EventModule,
         LoggerModule.register(EmailModule.name),
     ],
-    providers: [EmailRepo, EmailFactory, EmailEventHandler],
-    exports: [EmailRepo],
+    providers: [EmailRepo, EmailFactory, EmailEventHandler, EmailResolverService],
+    exports: [EmailRepo, EmailResolverService],
 })
 export class EmailModule {}
