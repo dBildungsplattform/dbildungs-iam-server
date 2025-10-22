@@ -168,7 +168,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
     it('should mark email as exists only in ox and retry if OxPrimaryMailAlreadyExistsError is result of ox operation', async () => {
         emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([]);
-        emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce({
+        emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValue({
             ok: true,
             value: 'max.mustermann@example.com',
         });

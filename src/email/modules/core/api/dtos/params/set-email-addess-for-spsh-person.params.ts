@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { PersonUsername } from '../../../../../../shared/types';
 
 export class SetEmailAddressForSpshPersonParams {
     @IsString()
@@ -19,7 +20,7 @@ export class SetEmailAddressForSpshPersonParams {
         required: true,
         nullable: false,
     })
-    public readonly spshUsername!: string;
+    public readonly spshUsername!: PersonUsername;
 
     @IsArray()
     @IsNotEmpty()
