@@ -39,7 +39,7 @@ export class EmailReadController {
     ): Promise<EmailAddressResponse[]> {
         this.logger.info(`PersonId:${findEmailAddressByPersonIdParams.spshPersonId}`);
 
-        const addresses: Option<AddressWithStatusesDescDto[]> =
+        const addresses: AddressWithStatusesDescDto[] =
             await this.getEmailAddressForSpshPersonService.getEmailAddressWithStatusForSpshPerson(
                 findEmailAddressByPersonIdParams,
             );
@@ -58,7 +58,6 @@ export class EmailReadController {
                 if (status) {
                     return new EmailAddressResponse(address.emailAddress, status);
                 }
-                return undefined;
             })
             .filter((response: EmailAddressResponse | undefined) => response !== undefined);
     }
