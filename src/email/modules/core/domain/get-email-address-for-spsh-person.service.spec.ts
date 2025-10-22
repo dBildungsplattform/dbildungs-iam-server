@@ -46,7 +46,7 @@ describe('GetEmailAddressForSpshPersonService', () => {
                 updatedAt: new Date(),
             },
             statuses: [],
-        } as AddressWithStatusesDescDto;
+        };
         emailAddressRepoMock.findAllEmailAddressesWithStatusesDescBySpshPersonId.mockResolvedValue([
             addressWithStatuses,
         ]);
