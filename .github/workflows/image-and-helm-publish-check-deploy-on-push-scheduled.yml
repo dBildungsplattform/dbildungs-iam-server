@@ -236,7 +236,7 @@ jobs:
   # Scheduled
   scheduled_trivy_scan:
     name: "Scheduled trivy scan of latest image"
-    if: ${{ github.event_name == 'push' || github.event_name == 'schedule' }} # for testing purposes temporarily also on push
+    if: ${{ github.event_name == 'schedule' }} 
     permissions:
       packages: read
       security-events: write
@@ -248,7 +248,7 @@ jobs:
       trivyignores: '.trivyignore'
 
   trivy_scan_rocketchat_notification:
-    if: github.event_name == 'push' && failure() # for testing purposes temporarily only on push
+    if: github.event_name == 'schedule' && failure()
     needs:
     - scheduled_trivy_scan
     runs-on: 'ubuntu-latest'
