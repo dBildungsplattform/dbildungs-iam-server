@@ -25,7 +25,7 @@ import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
 import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
 import { UserLock } from '../../../keycloak-administration/domain/user-lock.js';
 import { PersonInfoResponse } from './v0/person-info.response.js';
-import { EmailResolverService } from '../../../email/email-resolve-service/email-resolve.service.js';
+import { EmailResolverService } from '../../../email/email-resolve-service/email-resolver.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiBearerAuth()

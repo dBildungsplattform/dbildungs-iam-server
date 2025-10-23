@@ -82,7 +82,7 @@ import { KafkaPersonLdapSyncEvent } from '../../../shared/events/kafka-person-ld
 import { PersonLandesbediensteterSearchQueryParams } from './person-landesbediensteter-search-query.param.js';
 import { PersonLandesbediensteterSearchResponse } from './person-landesbediensteter-search.response.js';
 import { PersonLandesbediensteterSearchService } from '../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
-import { EmailResolverService } from '../../email/email-resolve-service/email-resolve.service.js';
+import { EmailResolverService } from '../../email/email-resolve-service/email-resolver.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')

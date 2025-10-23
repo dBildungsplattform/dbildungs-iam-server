@@ -10,7 +10,7 @@ import { EmailRepo } from './persistence/email.repo.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { EmailConfigModule } from './email-config.module.js';
-import { EmailResolverService } from './email-resolve-service/email-resolve.service.js';
+import { EmailResolverService } from './email-resolve-service/email-resolver.service.js';
 import { HttpModule } from '@nestjs/axios';
 
 @Module({
