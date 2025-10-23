@@ -259,7 +259,7 @@ jobs:
           echo "date=$(date +%u)" >> $GITHUB_OUTPUT
       - name: Send Notification to Rocket Chat
         uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
-        if: ${{ steps.check_monday.outputs.date == '4' }} #for testing purposes temporarily on Thursday
+        if: ${{ steps.check_monday.outputs.date == '1' }}
         with:
           type: failure
           job_name: 'Daily nightly image check failed. This notification will be sent only on Mondays, so the check may have been failing for several days. CVE scan results: https://github.com/dBildungsplattform/dbildungs-iam-server/security/code-scanning'
