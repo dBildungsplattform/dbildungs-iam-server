@@ -51,14 +51,14 @@ describe('EmailRepo', () => {
         address?: string,
         priority?: number,
         spshPersonId?: string,
-        oxUserId?: string,
+        oxUserCounter?: string,
         markedForCron?: Date,
     ): Promise<EmailAddress<true>> {
         const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
             address: address ?? faker.internet.email(),
             priority: priority ?? 1,
             spshPersonId: spshPersonId ?? undefined,
-            oxUserId: oxUserId ?? undefined,
+            oxUserCounter: oxUserCounter ?? undefined,
             markedForCron: markedForCron ?? undefined,
         });
         const tmp: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
