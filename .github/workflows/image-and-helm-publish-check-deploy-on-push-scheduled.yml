@@ -236,7 +236,7 @@ jobs:
   # Scheduled
   scheduled_trivy_scan:
     name: "Scheduled trivy scan of latest image"
-    if: ${{ github.event_name == 'schedule' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'schedule' }} # for testing purposes temporarily also on push
     permissions:
       packages: read
       security-events: write
@@ -248,14 +248,19 @@ jobs:
       trivyignores: '.trivyignore'
 
   trivy_scan_rocketchat_notification:
-    if: github.event_name == 'schedule' && failure()
+    if: github.event_name == 'push' && failure() # for testing purposes temporarily only on push
     needs:
     - scheduled_trivy_scan
     runs-on: 'ubuntu-latest'
     steps:
-    - name: Send Notification to Rocket Chat
-      uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
-      with:
-        type: failure
-        job_name: 'Daily nightly image check failed. This notification will be sent only on Mondays, so the check may have been failing for several days. CVE scan results: https://github.com/dBildungsplattform/dbildungs-iam-server/security/code-scanning'
-        url: ${{ secrets.RC_WEBHOOK_SPSH_DEVELOPER_CHANNEL }}
+      - name: Check if today is Monday
+        id: check_monday
+        run: |
+          echo "date=$(date +%u)" >> $GITHUB_OUTPUT
+      - name: Send Notification to Rocket Chat
+        uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
+        if: ${{ steps.check_monday.outputs.date == '4' }} #for testing purposes temporarily on Thursday
+        with:
+          type: failure
+          job_name: 'Daily nightly image check failed. This notification will be sent only on Mondays, so the check may have been failing for several days. CVE scan results: https://github.com/dBildungsplattform/dbildungs-iam-server/security/code-scanning'
+          url: ${{ secrets.RC_WEBHOOK_SPSH_DEVELOPER_CHANNEL }}
