@@ -47,6 +47,7 @@ describe('Email Write Controller', () => {
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
                 emailDomainId: faker.string.uuid(),
+                kennungen: [],
                 spshUsername: faker.internet.userName(),
             };
             setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson.mockResolvedValue();
