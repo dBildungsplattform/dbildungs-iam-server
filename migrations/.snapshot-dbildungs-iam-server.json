@@ -870,8 +870,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "ox_user_id": {
-          "name": "ox_user_id",
+        "ox_user_counter": {
+          "name": "ox_user_counter",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -879,8 +879,8 @@
           "nullable": true,
           "mappedType": "string"
         },
-        "ldap_uid": {
-          "name": "ldap_uid",
+        "external_id": {
+          "name": "external_id",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -920,6 +920,16 @@
           "constraint": true,
           "primary": false,
           "unique": true
+        },
+        {
+          "columnNames": [
+            "external_id"
+          ],
+          "composite": false,
+          "keyName": "email_address_spsh_external_id_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
         },
         {
           "columnNames": [
@@ -2916,7 +2926,7 @@
           "constraint": false,
           "primary": false,
           "unique": false,
-          "expression": "create index \"person_referrer_trgm_index\" on \"person\" using gin (\"referrer\" gin_trgm_ops);"
+          "expression": "create index \"person_referrer_trgm_index\" on \"person\" using gin (\"username\" gin_trgm_ops);"
         },
         {
           "keyName": "person_familienname_trgm_index",

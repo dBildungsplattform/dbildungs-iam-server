@@ -23,7 +23,7 @@ export class EmailAddressResponse {
     public spshPersonId?: string;
 
     @ApiProperty({ required: false })
-    public oxUserId?: string;
+    public oxUserCounter?: string;
 
     public constructor(emailAddress: EmailAddress<true>, latestStatus: EmailAddressStatus<true>) {
         this.id = emailAddress.id;
@@ -32,6 +32,6 @@ export class EmailAddressResponse {
         this.address = emailAddress.address;
         this.status = latestStatus.status;
         this.spshPersonId = emailAddress.spshPersonId;
-        this.oxUserId = emailAddress.oxUserId ?? undefined;
+        this.oxUserCounter = emailAddress.oxUserCounter ?? undefined;
     }
 }

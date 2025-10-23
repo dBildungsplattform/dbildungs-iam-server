@@ -44,7 +44,7 @@ export class EmailReadController {
             address: 'test@schule-sh.de',
             priority: 0,
             spshPersonId: undefined,
-            oxUserId: undefined,
+            oxUserCounter: undefined,
             markedForCron: undefined,
         });
 

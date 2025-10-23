@@ -70,6 +70,8 @@ export class SetEmailAddressForSpshPersonService {
         emailDomain: EmailDomain<true>,
         recursionTry: number = 1,
     ): Promise<void> {
+        const externalId: string = spshPersonId; //Used as ox username and ldap uid.
+
         //GENERATE AND SETUP EMAIL ADDRESS
         if (recursionTry === 0) {
             this.logger.error(`CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - All retries failed`);
@@ -80,6 +82,7 @@ export class SetEmailAddressForSpshPersonService {
             firstName: firstName,
             lastName: lastName,
             spshPersonId: spshPersonId,
+            externalId: externalId,
             emailDomain: emailDomain,
         });
 
@@ -106,17 +109,18 @@ export class SetEmailAddressForSpshPersonService {
         );
 
         //CREATE IN OX
-        let oxUserId: string | undefined = undefined;
+        let oxUserCounter: string | undefined = undefined;
         try {
-            oxUserId = await this.createOxUserForSpshPerson(
+            oxUserCounter = await this.createOxUserForSpshPerson(
                 spshPersonId,
+                externalId,
                 spshUsername,
                 firstName,
                 lastName,
                 createdEmailAddress,
             );
             this.logger.info(
-                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully created OX user with  oxUserId ${oxUserId}`,
+                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully created OX user with  oxUserCounter ${oxUserCounter}`,
             );
         } catch (error) {
             if (error instanceof OxPrimaryMailAlreadyExistsError) {
@@ -146,8 +150,8 @@ export class SetEmailAddressForSpshPersonService {
             }
         }
 
-        //CONNECT OXUSERID IN DB
-        if (!oxUserId) {
+        //CONNECT OXUSERCounter IN DB
+        if (!oxUserCounter) {
             await this.emailAddressStatusRepo.create(
                 EmailAddressStatus.createNew({
                     emailAddressId: createdEmailAddress.id,
@@ -155,11 +159,11 @@ export class SetEmailAddressForSpshPersonService {
                 }),
             );
             this.logger.error(
-                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to connect Ox user in Db because oxUserId is undefined`,
+                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to connect Ox user in Db because oxUserCounter is undefined`,
             );
             throw new EmailCreationFailedError(spshPersonId);
         }
-        createdEmailAddress.oxUserId = oxUserId;
+        createdEmailAddress.oxUserCounter = oxUserCounter;
 
         const saveResultAfterOxConnection: EmailAddress<true> | DomainError =
             await this.emailAddressRepo.save(createdEmailAddress);
@@ -171,19 +175,19 @@ export class SetEmailAddressForSpshPersonService {
                 }),
             );
             this.logger.error(
-                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to save email address after trying to connect oxUserId ${oxUserId}`,
+                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to save email address after trying to connect oxUserCounter ${oxUserCounter}`,
             );
             throw saveResultAfterOxConnection;
         }
         this.logger.info(
-            `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully connected oxUserId ${oxUserId} in DB`,
+            `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully connected oxUserCounter ${oxUserCounter} in DB`,
         );
 
         //ADD OX USER TO OX GROUPS
         for (const kennung of kennungen) {
             //await in loop is on purpose because we dont want multiple parallel requests to ox here
             //eslint-disable-next-line no-await-in-loop
-            await this.oxService.addOxUserToGroup(oxUserId, kennung);
+            await this.oxService.addOxUserToGroup(oxUserCounter, kennung);
         }
 
         //CREATE IN LDAP
@@ -191,7 +195,7 @@ export class SetEmailAddressForSpshPersonService {
             {
                 firstName: firstName,
                 lastName: lastName,
-                uid: spshPersonId,
+                uid: externalId,
             },
             emailDomain.domain,
             createdEmailAddress.address,
@@ -210,28 +214,6 @@ export class SetEmailAddressForSpshPersonService {
         }
         this.logger.info(`CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully created LDAP person`);
 
-        //Even we know the ldapUid already in the beginning (since it is spshpersonId for new users) we set it after creating the LDAP person to be sure that field can only be set if also user in ldap exist.
-        const ldapUid: string = spshPersonId;
-        saveResultAfterOxConnection.ldapUid = ldapUid;
-
-        const saveResultAfterLdapConnection: EmailAddress<true> | DomainError =
-            await this.emailAddressRepo.save(saveResultAfterOxConnection);
-        if (saveResultAfterLdapConnection instanceof DomainError) {
-            await this.emailAddressStatusRepo.create(
-                EmailAddressStatus.createNew({
-                    emailAddressId: createdEmailAddress.id,
-                    status: EmailAddressStatusEnum.FAILED,
-                }),
-            );
-            this.logger.error(
-                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to save email address after trying to connect ldapUid ${ldapUid}`,
-            );
-            throw saveResultAfterLdapConnection;
-        }
-        this.logger.info(
-            `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully connected ldapUid ${ldapUid}`,
-        );
-
         //ACTIVATE IN DB
         await this.emailAddressStatusRepo.create(
             EmailAddressStatus.createNew({
@@ -246,6 +228,7 @@ export class SetEmailAddressForSpshPersonService {
 
     private async createOxUserForSpshPerson(
         spshPersonId: PersonID,
+        externalId: string,
         spshUsername: PersonUsername,
         firstName: string,
         lastName: string,
@@ -255,7 +238,7 @@ export class SetEmailAddressForSpshPersonService {
 
         const action: CreateUserAction = this.oxService.createCreateUserAction({
             displayName: spshUsername,
-            username: spshUsername,
+            username: externalId,
             firstname: firstName,
             lastname: lastName,
             primaryEmail: requestedEmailAddressString,
@@ -270,7 +253,7 @@ export class SetEmailAddressForSpshPersonService {
         }
 
         this.logger.info(
-            `CREATE OX USER FOR SPSH PERSON: ${spshPersonId} - Successfully created user in OX, oxUserId:${createUserResult.value.id}, oxEmail:${createUserResult.value.primaryEmail}`,
+            `CREATE OX USER FOR SPSH PERSON: ${spshPersonId} - Successfully created user in OX, oxUserCounter:${createUserResult.value.id}, oxEmail:${createUserResult.value.primaryEmail}`,
         );
 
         return createUserResult.value.id;
@@ -278,6 +261,7 @@ export class SetEmailAddressForSpshPersonService {
 
     private async generateEmailAddress(params: {
         spshPersonId: PersonID;
+        externalId: string;
         firstName: string;
         lastName: string;
         emailDomain: EmailDomain<true>;
@@ -299,7 +283,8 @@ export class SetEmailAddressForSpshPersonService {
             address: generationResult.value,
             priority: 0,
             spshPersonId: params.spshPersonId,
-            oxUserId: undefined,
+            externalId: params.externalId,
+            oxUserCounter: undefined,
             markedForCron: undefined,
         });
 

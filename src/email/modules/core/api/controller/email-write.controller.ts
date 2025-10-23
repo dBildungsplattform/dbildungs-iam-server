@@ -25,8 +25,8 @@ export class EmailWriteController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while setting email-address for person.' })
     public setEmailForPerson(@Body() params: SetEmailAddressForSpshPersonParams): void {
         setImmediate(() => {
-            this.setEmailAddressForSpshPersonService.setEmailAddressForSpshPerson(params).catch((err: unknown) => {
-                this.logger.error('Error in background email processing:', err);
+            this.setEmailAddressForSpshPersonService.setEmailAddressForSpshPerson(params).catch((err: Error) => {
+                this.logger.error(`Error in background email processing: ${err.message}`);
             });
         });
     }
