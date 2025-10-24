@@ -7,6 +7,7 @@ import { EmailWriteController } from './email-write.controller.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { SetEmailAddressForSpshPersonService } from '../../domain/set-email-address-for-spsh-person.service.js';
 import { SetEmailAddressForSpshPersonParams } from '../dtos/params/set-email-addess-for-spsh-person.params.js';
+import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 
 describe('Email Write Controller', () => {
     let emailWriteController: EmailWriteController;
@@ -22,10 +23,13 @@ describe('Email Write Controller', () => {
                 },
                 EmailWriteController,
                 SetEmailAddressForSpshPersonService,
+                ClassLogger,
             ],
         })
             .overrideProvider(SetEmailAddressForSpshPersonService)
             .useValue(createMock<SetEmailAddressForSpshPersonService>())
+            .overrideProvider(ClassLogger)
+            .useValue(createMock<ClassLogger>())
             .compile();
 
         emailWriteController = module.get(EmailWriteController);
@@ -41,7 +45,7 @@ describe('Email Write Controller', () => {
     });
 
     describe('setEmailAddressForSpshPerson', () => {
-        it('Should call setEmailAddressForSpshPersonService with right params', () => {
+        it('should resolve immediatly if setEmailAddressForSpshPerson succeeds', () => {
             const params: SetEmailAddressForSpshPersonParams = {
                 spshPersonId: faker.string.uuid(),
                 firstName: faker.person.firstName(),
@@ -51,7 +55,26 @@ describe('Email Write Controller', () => {
                 spshUsername: faker.internet.userName(),
             };
             setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson.mockResolvedValue();
-            emailWriteController.setEmailForPerson(params);
+            const result: void = emailWriteController.setEmailForPerson(params);
+            expect(result).toBeUndefined();
+            jest.runAllTimers();
+            expect(setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson).toHaveBeenCalledWith(params);
+        });
+
+        it('should resolve immediatly if setEmailAddressForSpshPerson fails', () => {
+            const params: SetEmailAddressForSpshPersonParams = {
+                spshPersonId: faker.string.uuid(),
+                firstName: faker.person.firstName(),
+                lastName: faker.person.lastName(),
+                emailDomainId: faker.string.uuid(),
+                kennungen: [],
+                spshUsername: faker.internet.userName(),
+            };
+            setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson.mockRejectedValue(
+                new Error('Test error'),
+            );
+            const result: void = emailWriteController.setEmailForPerson(params);
+            expect(result).toBeUndefined();
             jest.runAllTimers();
             expect(setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson).toHaveBeenCalledWith(params);
         });

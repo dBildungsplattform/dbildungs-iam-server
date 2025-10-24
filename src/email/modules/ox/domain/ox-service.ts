@@ -32,8 +32,6 @@ export class OxService {
 
     public static readonly LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX: string = 'lehrer-';
 
-    public ENABLED: boolean;
-
     public readonly authUser: string;
 
     public readonly authPassword: string;
@@ -52,7 +50,6 @@ export class OxService {
         protected configService: ConfigService<EmailAppConfig>,
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
-        this.ENABLED = oxConfig.ENABLED;
         this.authUser = oxConfig.USERNAME;
         this.authPassword = oxConfig.PASSWORD;
         this.contextID = oxConfig.CONTEXT_ID;
