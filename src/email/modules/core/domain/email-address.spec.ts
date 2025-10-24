@@ -8,7 +8,7 @@ describe('EmailAddress', () => {
                 address: faker.internet.email(),
                 priority: 1,
                 spshPersonId: undefined,
-                oxUserId: undefined,
+                oxUserCounter: undefined,
                 markedForCron: undefined,
             });
 
@@ -31,7 +31,7 @@ describe('EmailAddress', () => {
                 address: faker.internet.email(),
                 priority: 1,
                 spshPersonId: undefined,
-                oxUserId: undefined,
+                oxUserCounter: undefined,
                 markedForCron: undefined,
             });
 

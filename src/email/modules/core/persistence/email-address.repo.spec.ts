@@ -11,11 +11,8 @@ import {
 import { EmailAddress } from '../domain/email-address.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { SetEmailAddressForSpshPersonService } from '../domain/set-email-address-for-spsh-person.service.js';
-import { EmailDomainRepo } from './email-domain.repo.js';
 import { EmailCoreModule } from '../email-core.module.js';
 import { EmailAddressStatusRepo } from './email-address-status.repo.js';
-import { EmailAddressGenerator } from '../domain/email-address-generator.js';
 import { EmailAddressStatusEnum } from './email-address-status.entity.js';
 import { AddressWithStatusesDescDto } from '../api/dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 
@@ -28,18 +25,12 @@ describe('EmailRepo', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailCoreModule],
-            providers: [
-                SetEmailAddressForSpshPersonService,
-                EmailAddressRepo,
-                EmailDomainRepo,
-                EmailAddressStatusRepo,
-                ClassLogger,
-                EmailAddressGenerator,
-            ],
+            providers: [EmailAddressStatusRepo, EmailAddressRepo, ClassLogger],
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
             .compile();
+
         sut = module.get(EmailAddressRepo);
         emailAddressStatusRepo = module.get(EmailAddressStatusRepo);
         orm = module.get(MikroORM);
@@ -64,14 +55,14 @@ describe('EmailRepo', () => {
         address?: string,
         priority?: number,
         spshPersonId?: string,
-        oxUserId?: string,
+        oxUserCounter?: string,
         markedForCron?: Date,
     ): Promise<EmailAddress<true>> {
         const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
             address: address ?? faker.internet.email(),
             priority: priority ?? 1,
             spshPersonId: spshPersonId ?? undefined,
-            oxUserId: oxUserId ?? undefined,
+            oxUserCounter: oxUserCounter ?? undefined,
             markedForCron: markedForCron ?? undefined,
         });
         const tmp: EmailAddress<true> | DomainError = await sut.save(mailToCreate);

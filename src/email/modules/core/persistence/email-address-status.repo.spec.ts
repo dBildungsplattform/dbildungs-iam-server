@@ -89,9 +89,9 @@ describe('EmailAddressStatusRepo', () => {
             const result: EmailAddressStatus<true> | DomainError = await sut.create(statusToCreate);
             expect(result).toBeDefined();
             expect(result).not.toBeInstanceOf(DomainError);
-            expect((result as EmailAddressStatus<true>).id).toBeDefined();
-            expect((result as EmailAddressStatus<true>).emailAddressId).toBe(emailAddress.id);
-            expect((result as EmailAddressStatus<true>).status).toBe(EmailAddressStatusEnum.PENDING);
+            expect(result.id).toBeDefined();
+            expect(result.emailAddressId).toBe(emailAddress.id);
+            expect(result.status).toBe(EmailAddressStatusEnum.PENDING);
         });
     });
 
