@@ -1563,7 +1563,7 @@ describe('OxEventHandler', () => {
                 await sut.handleEmailAddressMarkedForDeletionEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+                    `Received EmailAddressMarkedForDeletionEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
                 );
                 expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
             });
