@@ -159,6 +159,8 @@ export class OxService {
                     ok: false,
                     error: mappedOxError,
                 };
+            } else {
+                this.logger.logUnknownAsError('Unknown error occurred during OX request', err);
             }
             return {
                 ok: false,
