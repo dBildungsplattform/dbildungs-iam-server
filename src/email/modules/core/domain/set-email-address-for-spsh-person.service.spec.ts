@@ -13,9 +13,9 @@ import { EmailAddressStatusEnum } from '../persistence/email-address-status.enti
 import { SetEmailAddressForSpshPersonParams } from '../api/dtos/params/set-email-addess-for-spsh-person.params.js';
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 import { SetEmailAddressForSpshPersonService } from './set-email-address-for-spsh-person.service.js';
-import { OxService } from '../../ox/domain/ox-service.js';
+import { OxService } from '../../ox/domain/ox.service.js';
 import { LdapClientService, PersonData } from '../../ldap/domain/ldap-client.service.js';
-import { OxSendService } from '../../ox/domain/ox-send-service.js';
+import { OxSendService } from '../../ox/domain/ox-send.service.js';
 import { HttpService } from '@nestjs/axios';
 import { CreateUserResponse } from '../../ox/actions/user/create-user.action.js';
 import { OxPrimaryMailAlreadyExistsError } from '../../ox/error/ox-primary-mail-already-exists.error.js';

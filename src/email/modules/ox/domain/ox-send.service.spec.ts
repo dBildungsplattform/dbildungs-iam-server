@@ -3,7 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosResponse } from 'axios';
 import { of, throwError } from 'rxjs';
-import { OxErrorType, OxSendService } from './ox-send-service';
+import { OxErrorType, OxSendService } from './ox-send.service';
 import { ClassLogger } from '../../../../core/logging/class-logger';
 import { ConfigTestModule } from '../../../../../test/utils';
 import { ConfigService } from '@nestjs/config';

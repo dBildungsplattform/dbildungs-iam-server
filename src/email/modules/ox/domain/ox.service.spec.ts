@@ -1,9 +1,9 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { OxService } from './ox-service';
+import { OxService } from './ox.service';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../../../test/utils/index.js';
-import { OxSendService } from './ox-send-service';
+import { OxSendService } from './ox-send.service';
 import { OxGroupNotFoundError } from '../error/ox-group-not-found.error';
 import { OxGroupNameAmbiguousError } from '../error/ox-group-name-ambiguous.error';
 import { DomainError } from '../../../../shared/error/index.js';

@@ -15,7 +15,7 @@ import { OxGroupNotFoundError } from '../error/ox-group-not-found.error.js';
 import { OxConfig } from '../../../../shared/config/ox.config.js';
 import { CreateGroupAction, CreateGroupParams, CreateGroupResponse } from '../actions/group/create-group.action.js';
 import { Injectable } from '@nestjs/common';
-import { OxSendService } from './ox-send-service.js';
+import { OxSendService } from './ox-send.service.js';
 import { DomainError } from '../../../../shared/error/index.js';
 import { ListGroupsAction, ListGroupsParams, ListGroupsResponse } from '../actions/group/list-groups.action.js';
 import { OxGroupNameAmbiguousError } from '../error/ox-group-name-ambiguous.error.js';
