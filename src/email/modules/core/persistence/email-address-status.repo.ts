@@ -14,7 +14,7 @@ export function mapAggregateToData(
     };
 }
 
-function mapEntityToAggregate(entity: EmailAddressStatusEntity): EmailAddressStatus<boolean> {
+export function mapEntityToAggregate(entity: EmailAddressStatusEntity): EmailAddressStatus<boolean> {
     return new EmailAddressStatus(entity.id, entity.createdAt, entity.updatedAt, entity.emailAddress.id, entity.status);
 }
 
