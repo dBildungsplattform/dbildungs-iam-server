@@ -11,9 +11,9 @@ import { isOxErrorResponse, OxBaseAction } from '../actions/ox-base-action.js';
 import { OxError } from '../../../shared/error/ox.error.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { OxErrorMapper } from '../../../email/modules/ox/domain/ox-error.mapper.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { OxNonRetryableError } from '../error/ox-non-retryable.error.js';
+import { OxErrorMapper } from './ox-error.mapper.js';
 
 export type OxErrorType = {
     message: string;
