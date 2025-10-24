@@ -1,5 +1,6 @@
-import { DateTimeType, Entity, Index, Property } from '@mikro-orm/core';
+import { Collection, DateTimeType, Entity, Index, OneToMany, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../../persistence/timestamped.entity.js';
+import { EmailAddressStatusEntity } from './email-address-status.entity.js';
 
 @Entity({ schema: 'email', tableName: 'address' })
 export class EmailAddrEntity extends TimestampedEntity {
@@ -21,4 +22,7 @@ export class EmailAddrEntity extends TimestampedEntity {
 
     @Property({ nullable: true, type: DateTimeType })
     public markedForCron?: Date;
+
+    @OneToMany(() => EmailAddressStatusEntity, (status: EmailAddressStatusEntity) => status.emailAddress)
+    public statuses: Collection<EmailAddressStatusEntity, object> = new Collection<EmailAddressStatusEntity>(this);
 }
