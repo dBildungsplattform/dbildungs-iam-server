@@ -18,7 +18,6 @@ export class EmailMicroserviceEventHandler {
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
     @EnsureRequestContext()
-    // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
     public async handlePersonenkontextUpdatedEvent(
         event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
     ): Promise<void> {
@@ -26,6 +25,6 @@ export class EmailMicroserviceEventHandler {
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, username:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
 
-        await this.handlePerson(event.person.id, event.person.username, event.removedKontexte);
+        await this.emailResolverService.setEmailAddressForPerson(event.person, event.removedKontexte);
     }
 }
