@@ -5,7 +5,7 @@ import { LdapClient } from './ldap-client.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { Mutex } from 'async-mutex';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
-import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
+import { LdapCreatePersonError } from '../error/ldap-create-person.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { PersonUsername } from '../../../../shared/types/aggregate-ids.types.js';
 
@@ -157,7 +157,7 @@ export class LdapClientService {
         if (!username) {
             return {
                 ok: false,
-                error: new LdapCreateLehrerError(),
+                error: new LdapCreatePersonError(),
             };
         }
         const rootName: Result<string> = this.getRootNameOrError(domain);
@@ -205,7 +205,7 @@ export class LdapClientService {
             } catch (err) {
                 this.logger.logUnknownAsError(`LDAP: Creating person FAILED, uid:${lehrerUid}`, err);
 
-                return { ok: false, error: new LdapCreateLehrerError() };
+                return { ok: false, error: new LdapCreatePersonError() };
             }
         });
     }

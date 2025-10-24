@@ -10,7 +10,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClient } from './ldap-client.js';
 import { Client, Entry, SearchResult } from 'ldapts';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
-import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
+import { LdapCreatePersonError } from '../error/ldap-create-person.error.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import assert from 'assert';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
@@ -364,7 +364,7 @@ describe('LDAP Client Service', () => {
                     `LDAP: Creating person FAILED, uid:${lehrerUid}`,
                     error,
                 );
-                expect(result.error).toEqual(new LdapCreateLehrerError());
+                expect(result.error).toEqual(new LdapCreatePersonError());
             });
 
             it('when called with explicit domain "ersatzschule-sh.de" should return truthy result', async () => {
