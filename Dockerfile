@@ -1,7 +1,7 @@
-ARG BASE_IMAGE_BUILDER=node:22.14.0-alpine3.21
+ARG BASE_IMAGE_BUILDER=node:22.21.0-alpine3.22
 
 # Build Stage
-FROM $BASE_IMAGE_BUILDER as build
+FROM $BASE_IMAGE_BUILDER AS build
 
 WORKDIR /app
 COPY tsconfig*.json ./
@@ -15,9 +15,8 @@ COPY migrations/ migrations/
 RUN npm run build
 
 # Deployment Stage
-FROM $BASE_IMAGE_BUILDER as deployment
+FROM $BASE_IMAGE_BUILDER AS deployment
 
-RUN apk --no-cache upgrade
 USER node
 ENV NODE_ENV=prod
 WORKDIR /app
