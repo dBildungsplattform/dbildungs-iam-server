@@ -185,6 +185,78 @@ describe('LDAP Client Service', () => {
         });
     });
 
+    describe('isPersonExisting', () => {
+        it('should return true when the person exists', async () => {
+            const uid: string = faker.string.uuid();
+            const domain: string = 'schule-sh.de';
+            const rootName: string = 'oeffentlicheSchulen';
+            const baseDn: string = mockLdapInstanceConfig.BASE_DN;
+
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockResolvedValueOnce({
+                    searchEntries: [{ dn: `uid=${uid},ou=${rootName},${baseDn}` }],
+                } as SearchResult);
+                return clientMock;
+            });
+
+            const result: Result<boolean> = await ldapClientService.isPersonExisting(uid, domain);
+
+            expect(result.ok).toBeTruthy();
+            if (result.ok) {
+                expect(result.value).toBe(true);
+            }
+            expect(clientMock.search).toHaveBeenCalledWith(`ou=${rootName},${baseDn}`, { filter: `(uid=${uid})` });
+        });
+
+        it('should return false when the person exists', async () => {
+            const uid: string = faker.string.uuid();
+            const domain: string = 'schule-sh.de';
+            const rootName: string = 'oeffentlicheSchulen';
+            const baseDn: string = mockLdapInstanceConfig.BASE_DN;
+
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockResolvedValueOnce({
+                    searchEntries: [],
+                } as unknown as SearchResult);
+                return clientMock;
+            });
+
+            const result: Result<boolean> = await ldapClientService.isPersonExisting(uid, domain);
+
+            expect(result.ok).toBeTruthy();
+            if (result.ok) {
+                expect(result.value).toBe(false);
+            }
+            expect(clientMock.search).toHaveBeenCalledWith(`ou=${rootName},${baseDn}`, { filter: `(uid=${uid})` });
+        });
+
+        it('should return error result when bind fails', async () => {
+            const uid: string = faker.string.uuid();
+            const domain: string = 'schule-sh.de';
+
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockRejectedValueOnce(undefined);
+                return clientMock;
+            });
+
+            jest.restoreAllMocks();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            jest.spyOn(ldapClientService as unknown as any, 'bind').mockResolvedValue({
+                ok: false,
+                error: new Error('bind failed'),
+            });
+
+            const result: Result<boolean> = await ldapClientService.isPersonExisting(uid, domain);
+
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toEqual(new Error('bind failed'));
+            }
+        });
+    });
+
     describe('executeWithRetry', () => {
         beforeEach(() => {
             jest.restoreAllMocks(); //Needed To Reset the global executeWithRetry Mock
@@ -205,6 +277,22 @@ describe('LDAP Client Service', () => {
             expect(result.ok).toBeTruthy();
             expect(clientMock.bind).toHaveBeenCalledTimes(1);
             expect(loggerMock.logUnknownAsError).not.toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
+        });
+
+        it('should throw an error when the function returns a Result with ok=false and handle it with retry', async () => {
+            jest.restoreAllMocks();
+            ldapClientMock.getClient.mockReturnValue(clientMock);
+            clientMock.bind.mockResolvedValue(undefined);
+            const customError: Error = new Error('custom error');
+
+            const failingFunc: () => Promise<Result<unknown, Error>> = jest
+                .fn()
+                .mockResolvedValue({ ok: false, error: customError });
+
+            await expect(ldapClientService['executeWithRetry'](failingFunc, 1)).resolves.toEqual({
+                ok: false,
+                error: customError,
+            });
         });
 
         it('when operation fails it should automatically retry the operation with nr of fallback retries and log error', async () => {
