@@ -1496,6 +1496,15 @@
           "primary": false,
           "nullable": false,
           "mappedType": "string"
+        },
+        "spsh_service_provider_id": {
+          "name": "spsh_service_provider_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
         }
       },
       "name": "domain",
@@ -2887,7 +2896,7 @@
           "constraint": false,
           "primary": false,
           "unique": false,
-          "expression": "create index \"person_referrer_trgm_index\" on \"person\" using gin (\"referrer\" gin_trgm_ops);"
+          "expression": "create index \"person_referrer_trgm_index\" on \"person\" using gin (\"username\" gin_trgm_ops);"
         },
         {
           "keyName": "person_familienname_trgm_index",

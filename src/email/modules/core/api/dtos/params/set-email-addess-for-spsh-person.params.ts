@@ -38,5 +38,5 @@ export class SetEmailAddressForSpshPersonParams {
         required: true,
         nullable: false,
     })
-    public readonly emailDomainId!: string;
+    public readonly spshServiceProviderId!: string;
 }

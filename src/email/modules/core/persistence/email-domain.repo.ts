@@ -11,11 +11,12 @@ export function mapAggregateToData(emailDomain: EmailDomain<boolean>): RequiredE
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: emailDomain.id,
         domain: emailDomain.domain,
+        spshServiceProviderId: emailDomain.spshServiceProviderId,
     };
 }
 
 function mapEntityToAggregate(entity: EmailDomainEntity): EmailDomain<boolean> {
-    return new EmailDomain(entity.id, entity.createdAt, entity.updatedAt, entity.domain);
+    return new EmailDomain(entity.id, entity.createdAt, entity.updatedAt, entity.domain, entity.spshServiceProviderId);
 }
 
 @Injectable()
@@ -28,6 +29,18 @@ export class EmailDomainRepo {
     public async findById(emailDomainId: string): Promise<Option<EmailDomain<true>>> {
         const emailDomainEntity: Option<EmailDomainEntity> = await this.em.findOne(EmailDomainEntity, {
             id: { $eq: emailDomainId },
+        });
+
+        if (emailDomainEntity) {
+            return mapEntityToAggregate(emailDomainEntity);
+        }
+
+        return null;
+    }
+
+    public async findBySpshServiceProviderId(spshServiceProviderId: string): Promise<Option<EmailDomain<true>>> {
+        const emailDomainEntity: Option<EmailDomainEntity> = await this.em.findOne(EmailDomainEntity, {
+            spshServiceProviderId: { $eq: spshServiceProviderId },
         });
 
         if (emailDomainEntity) {
