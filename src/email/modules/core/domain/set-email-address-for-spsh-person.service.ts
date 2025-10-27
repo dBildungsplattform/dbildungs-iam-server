@@ -68,7 +68,7 @@ export class SetEmailAddressForSpshPersonService {
         spshUsername: string,
         kennungen: string[],
         emailDomain: EmailDomain<true>,
-        recursionTry: number = 1,
+        recursionTry: number,
     ): Promise<void> {
         const externalId: string = spshPersonId; //Used as ox username and ldap uid.
 

@@ -1,9 +1,7 @@
-
 import { faker } from '@faker-js/faker';
 import { isOxErrorResponse, OxBaseAction } from './ox-base-action.js';
 import { DomainError } from '../../../../shared/error/index.js';
 import { OxError } from '../../../../shared/error/ox.error.js';
-
 
 function buildSuccessXMLResponse(): string {
     return `<soap:Envelope
