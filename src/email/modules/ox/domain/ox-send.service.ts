@@ -140,7 +140,7 @@ export class OxSendService {
             return action.parseResponse(response.data);
         } catch (err: unknown) {
             if (isOxErrorType(err)) {
-                this.logger.error(err.message);
+                this.logger.logUnknownAsError('Error occurred during OX request', err);
                 const oxResponse: unknown = this.xmlParser.parse(err.response.data);
 
                 if (!isOxErrorResponse(oxResponse)) {
@@ -153,13 +153,12 @@ export class OxSendService {
                 }
                 const mappedOxError: OxError = OxErrorMapper.mapOxErrorResponseToOxError(oxResponse);
 
-                this.logger.error(mappedOxError.code);
-
                 return {
                     ok: false,
                     error: mappedOxError,
                 };
             }
+            this.logger.logUnknownAsError('Unknown error occurred during OX request', err);
             return {
                 ok: false,
                 error: new OxError('Request failed'),
