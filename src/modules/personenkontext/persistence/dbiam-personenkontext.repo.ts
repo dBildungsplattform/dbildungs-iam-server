@@ -1,11 +1,17 @@
-import { Cursor, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
+import { Cursor, FilterQuery, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { OrganisationID, PersonID, PersonenkontextID, RolleID } from '../../../shared/types/index.js';
+import {
+    OrganisationID,
+    PersonID,
+    PersonenkontextID,
+    RolleID,
+    ServiceProviderID,
+} from '../../../shared/types/index.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
@@ -144,25 +150,40 @@ export class DBiamPersonenkontextRepo {
         });
     }
 
-    public async findByPersonIdsWithOrgaAndRolle(
+    public async findByPersonIdsAndServiceprovidersWithOrgaAndRolle(
         personIds: PersonID[],
+        serviceProviderIds: ServiceProviderID[],
+        permittedOrgas: PermittedOrgas,
     ): Promise<Map<PersonID, KontextWithOrgaAndRolle[]>> {
         const result: Map<PersonID, KontextWithOrgaAndRolle[]> = new Map<PersonID, KontextWithOrgaAndRolle[]>();
 
-        const personenKontexte: PersonenkontextEntity[] = await this.em.find(
-            PersonenkontextEntity,
-            { personId: { $in: personIds } },
-            {
-                populate: [
-                    'organisationId',
-                    'rolleId',
-                    'rolleId.merkmale',
-                    'rolleId.systemrechte',
-                    'rolleId.serviceProvider',
-                    'rolleId.serviceProvider.serviceProvider.merkmale',
-                ],
+        const filter: FilterQuery<PersonenkontextEntity> = {
+            personId: { $in: personIds },
+            rolleId: {
+                serviceProvider: {
+                    serviceProvider: {
+                        $in: serviceProviderIds,
+                    },
+                },
             },
-        );
+        };
+
+        if (!permittedOrgas.all) {
+            filter.organisationId = {
+                $in: permittedOrgas.orgaIds,
+            };
+        }
+
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, filter, {
+            populate: [
+                'organisationId',
+                'rolleId',
+                'rolleId.merkmale',
+                'rolleId.systemrechte',
+                'rolleId.serviceProvider',
+                'rolleId.serviceProvider.serviceProvider.merkmale',
+            ],
+        });
 
         for (const pk of personenKontexte) {
             const personId: string = pk.personId.id;
