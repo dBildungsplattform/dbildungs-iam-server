@@ -10,7 +10,10 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EmailHealthIndicator extends HealthIndicator {
-    public constructor(private readonly httpService: HttpService, private readonly configService: ConfigService) {
+    public constructor(
+        private readonly httpService: HttpService,
+        private readonly configService: ConfigService,
+    ) {
         super();
     }
 
