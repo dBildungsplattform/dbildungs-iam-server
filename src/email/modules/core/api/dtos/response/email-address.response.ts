@@ -25,9 +25,6 @@ export class EmailAddressResponse {
     @ApiProperty({ required: false })
     public externalId?: string;
 
-    @ApiProperty({ required: false })
-    public oxUserCounter?: string;
-
     public constructor(emailAddress: EmailAddress<true>, latestStatus: EmailAddressStatus<true>) {
         this.id = emailAddress.id;
         this.createdAt = emailAddress.createdAt;
@@ -36,6 +33,5 @@ export class EmailAddressResponse {
         this.status = latestStatus.status;
         this.spshPersonId = emailAddress.spshPersonId;
         this.externalId = emailAddress.externalId;
-        this.oxUserCounter = emailAddress.oxUserCounter ?? undefined;
     }
 }
