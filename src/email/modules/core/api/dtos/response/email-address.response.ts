@@ -22,9 +22,6 @@ export class EmailAddressResponse {
     @ApiProperty({ required: false })
     public spshPersonId?: string;
 
-    @ApiProperty({ required: false })
-    public externalId?: string;
-
     public constructor(emailAddress: EmailAddress<true>, latestStatus: EmailAddressStatus<true>) {
         this.id = emailAddress.id;
         this.createdAt = emailAddress.createdAt;
@@ -32,6 +29,5 @@ export class EmailAddressResponse {
         this.address = emailAddress.address;
         this.status = latestStatus.status;
         this.spshPersonId = emailAddress.spshPersonId;
-        this.externalId = emailAddress.externalId;
     }
 }
