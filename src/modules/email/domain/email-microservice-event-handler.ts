@@ -25,6 +25,9 @@ export class EmailMicroserviceEventHandler {
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, username:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
 
-        await this.emailResolverService.setEmailAddressForPerson(event.person, event.removedKontexte);
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Handle PersonenkontextUpdatedEvent in new Microservice`);
+            await this.emailResolverService.setEmailAddressForPerson(event.person, event.removedKontexte);
+        }
     }
 }

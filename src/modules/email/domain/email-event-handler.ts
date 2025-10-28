@@ -19,13 +19,14 @@ import { KafkaEmailAddressChangedEvent } from '../../../shared/events/email/kafk
 import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
 import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-email-address-generated.event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-renamed.event.js';
 import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
 import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
 import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
-import { PersonenkontextUpdatedPersonData } from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import {
     EmailAddressID,
@@ -59,6 +60,7 @@ import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.ev
 import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
 import { KafkaOxSyncUserCreatedEvent } from '../../../shared/events/ox/kafka-ox-sync-user-created.event.js';
 import { OxSyncUserCreatedEvent } from '../../../shared/events/ox/ox-sync-user-created.event.js';
+import { EmailResolverService } from '../email-resolve-service/email-resolver.service.js';
 
 export type EmailAddressGeneratedCreator = (
     personId: PersonID,
@@ -140,6 +142,7 @@ export class EmailEventHandler {
 
     public constructor(
         private readonly logger: ClassLogger,
+        private readonly emailResolverService: EmailResolverService,
         private readonly emailFactory: EmailFactory,
         private readonly emailRepo: EmailRepo,
         private readonly rolleRepo: RolleRepo,
@@ -323,14 +326,21 @@ export class EmailEventHandler {
         await this.handlePersonDueToLdapSyncFailed(event.personId, event.username);
     }
 
+    @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
+    @EventHandler(PersonenkontextUpdatedEvent)
     @EnsureRequestContext()
     // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
     public async handlePersonenkontextUpdatedEvent(
-        person: PersonenkontextUpdatedPersonData, removedKontexte: PersonenkontextEventKontextData[],
+        event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
     ): Promise<void> {
-        this.logger.info(`Handle PersonenkontextUpdatedEvent in old way`);
+        this.logger.info(
+            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, username:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
+        );
 
-        await this.handlePerson(person.id, person.username, removedKontexte);
+        if (!this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Handle PersonenkontextUpdatedEvent in old way`);
+            await this.handlePerson(event.person.id, event.person.username, event.removedKontexte);
+        }
     }
 
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received

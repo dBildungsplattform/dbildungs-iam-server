@@ -12,6 +12,7 @@ import { OrganisationModule } from '../organisation/organisation.module.js';
 import { EmailConfigModule } from './email-config.module.js';
 import { EmailResolverService } from './email-resolve-service/email-resolver.service.js';
 import { HttpModule } from '@nestjs/axios';
+import { PersonHandler } from './email-microservice/person-handler.js';
 
 @Module({
     imports: [
@@ -25,7 +26,7 @@ import { HttpModule } from '@nestjs/axios';
         EventModule,
         LoggerModule.register(EmailModule.name),
     ],
-    providers: [EmailRepo, EmailFactory, EmailEventHandler, EmailResolverService],
+    providers: [EmailRepo, EmailFactory, EmailEventHandler, EmailResolverService, PersonHandler],
     exports: [EmailRepo, EmailResolverService],
 })
 export class EmailModule {}
