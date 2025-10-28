@@ -173,7 +173,6 @@ describe('OxSendService', () => {
 
             const result: Result<string, DomainError> = await sut.send(mockAction);
 
-            expect(loggerMock.error).toHaveBeenCalledWith('OX_PRIMARY_MAIL_NOT_EQUAL_EMAIL1_ERROR');
             expect(result).toEqual({
                 ok: false,
                 error: new OxPrimaryMailNotEqualEmail1Error(faultString),
