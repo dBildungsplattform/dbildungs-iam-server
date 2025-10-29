@@ -1,15 +1,14 @@
-import { EnsureRequestContext } from "@mikro-orm/core";
-import { Injectable } from "@nestjs/common";
-import { EventHandler } from "../../../core/eventbus/decorators/event-handler.decorator";
-import { KafkaEventHandler } from "../../../core/eventbus/decorators/kafka-event-handler.decorator";
-import { ClassLogger } from "../../../core/logging/class-logger";
-import { KafkaPersonenkontextUpdatedEvent } from "../../../shared/events/kafka-personenkontext-updated.event";
-import { PersonenkontextUpdatedEvent } from "../../../shared/events/personenkontext-updated.event";
-import { EmailResolverService } from "../email-resolve-service/email-resolver.service";
+import { EnsureRequestContext } from '@mikro-orm/core';
+import { Injectable } from '@nestjs/common';
+import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator';
+import { ClassLogger } from '../../../core/logging/class-logger';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event';
+import { EmailResolverService } from '../email-resolve-service/email-resolver.service';
 
 @Injectable()
 export class EmailMicroserviceEventHandler {
-
     public constructor(
         private readonly logger: ClassLogger,
         private readonly emailResolverService: EmailResolverService,

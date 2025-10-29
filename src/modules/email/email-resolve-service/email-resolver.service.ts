@@ -17,7 +17,7 @@ import { EmailRepo } from '../persistence/email.repo.js';
 
 @Injectable()
 export class EmailResolverService {
-    constructor(
+    public constructor(
         private readonly logger: ClassLogger,
         private readonly configService: ConfigService,
         private readonly httpService: HttpService,
@@ -25,65 +25,70 @@ export class EmailResolverService {
         private readonly emailRepo: EmailRepo,
     ) {}
 
-    shouldUseEmailMicroservice(): boolean {
-        const emailMicroserviceConfig: EmailMicroserviceConfig = this.configService.getOrThrow<EmailMicroserviceConfig>(
-            'EMAIL_MICROSERVICE',
-        );
+    public shouldUseEmailMicroservice(): boolean {
+        const emailMicroserviceConfig: EmailMicroserviceConfig =
+            this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
         return emailMicroserviceConfig.USE_EMAIL_MICROSERVICE;
     }
 
-    getEndpoint(): string {
-        const emailMicroserviceConfig: EmailMicroserviceConfig = this.configService.getOrThrow<EmailMicroserviceConfig>(
-            'EMAIL_MICROSERVICE',
-        );
+    public getEndpoint(): string {
+        const emailMicroserviceConfig: EmailMicroserviceConfig =
+            this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
         return emailMicroserviceConfig.ENDPOINT;
     }
 
-    async getEmailAddressAndStatusForPerson(person: Person<true>): Promise<PersonEmailResponse | undefined> {
+    public async getEmailAddressAndStatusForPerson(person: Person<true>): Promise<PersonEmailResponse | undefined> {
         const useEmailMicroservice: boolean = this.shouldUseEmailMicroservice();
         const endpoint: string = this.getEndpoint();
         return useEmailMicroservice
-        ? this.findEmail(endpoint, person)
-        : await this.emailRepo.getEmailAddressAndStatusForPerson(person);
+            ? this.findEmail(endpoint, person)
+            : await this.emailRepo.getEmailAddressAndStatusForPerson(person);
     }
 
-    async findEmail(endpoint: string, person: Person<true>): Promise<PersonEmailResponse | undefined> {
+    public async findEmail(endpoint: string, person: Person<true>): Promise<PersonEmailResponse | undefined> {
         try {
-            const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(this.httpService.get(endpoint + `${person.id}`, { method: 'GET' }));
+            const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
+                this.httpService.get(endpoint + `${person.id}`, { method: 'GET' }),
+            );
             if (response.data[0] !== undefined) {
-                const status = this.mapStatus(response.data[0]?.status);
+                const status: EmailAddressStatus = this.mapStatus(response.data[0]?.status);
                 return new PersonEmailResponse(status, response.data[0].address);
             }
             return undefined;
         } catch (error) {
-            console.error(`Failed to fetch email for person ${person.id}`, error);
+            this.logger.error(`Failed to fetch email for person ${person.id}`, error);
             return undefined;
         }
     }
 
-    async setEmailAddressForPerson(person: PersonenkontextUpdatedPersonData, removedKontexte: PersonenkontextEventKontextData[]): Promise<void> {
-        const spId = await this.personHandler.handlePerson(person.id, person.username, removedKontexte);
+    public async setEmailAddressForPerson(
+        person: PersonenkontextUpdatedPersonData,
+        removedKontexte: PersonenkontextEventKontextData[],
+    ): Promise<void> {
+        const spId: string | void = await this.personHandler.handlePerson(person.id, person.username, removedKontexte);
         if (spId) {
             await this.setEmail(this.getEndpoint(), person, spId);
         }
     }
 
-    async setEmail(endpoint: string, person: PersonenkontextUpdatedPersonData, spId: string): Promise<void> {
+    public async setEmail(endpoint: string, person: PersonenkontextUpdatedPersonData, spId: string): Promise<void> {
         try {
             // For now just mocking the post
             this.logger.info(`Setting email for person ${person.id} via email microservice with spId ${spId}`);
-            await lastValueFrom(this.httpService.post(endpoint + `write/set-email-for-person`, {
-                spshPersonId: person.id,
-                firstname: person.vorname,
-                lastname: person.familienname,
-                spshServiceProviderId: spId,
-            }));
+            await lastValueFrom(
+                this.httpService.post(endpoint + `write/set-email-for-person`, {
+                    spshPersonId: person.id,
+                    firstname: person.vorname,
+                    lastname: person.familienname,
+                    spshServiceProviderId: spId,
+                }),
+            );
         } catch (error) {
-            console.error(`Failed to set email for person ${person.id}`, error);
+            this.logger.error(`Failed to set email for person ${person.id}`, error);
         }
     }
 
-    mapStatus(ease: EmailAddressStatusEnum): EmailAddressStatus {
+    public mapStatus(ease: EmailAddressStatusEnum): EmailAddressStatus {
         let eas: EmailAddressStatus;
         switch (ease) {
             case EmailAddressStatusEnum.PENDING:

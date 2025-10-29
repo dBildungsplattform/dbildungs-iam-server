@@ -198,9 +198,8 @@ export class PersonController {
             );
         }
 
-        const personEmailResponse: Option<PersonEmailResponse> = await this.emailResolverService.getEmailAddressAndStatusForPerson(
-            personResult.value,
-        );
+        const personEmailResponse: Option<PersonEmailResponse> =
+            await this.emailResolverService.getEmailAddressAndStatusForPerson(personResult.value);
 
         const response: PersonendatensatzResponse = new PersonendatensatzResponse(
             personResult.value,

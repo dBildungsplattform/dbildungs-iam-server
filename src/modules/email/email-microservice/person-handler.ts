@@ -1,28 +1,28 @@
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { EventRoutingLegacyKafkaService } from "../../../core/eventbus/services/event-routing-legacy-kafka.service.js";
-import { ClassLogger } from "../../../core/logging/class-logger.js";
-import { EmailAddress } from "../domain/email-address.js";
-import { EmailRepo } from "../persistence/email.repo.js";
-import { Organisation } from "../../organisation/domain/organisation.js";
-import { OrganisationRepository } from "../../organisation/persistence/organisation.repository.js";
-import { Person } from "../../person/domain/person.js";
-import { PersonDomainError } from "../../person/domain/person-domain.error.js";
-import { PersonRepository } from "../../person/persistence/person.repository.js";
-import { Personenkontext } from "../../personenkontext/domain/personenkontext.js";
-import { DBiamPersonenkontextRepo } from "../../personenkontext/persistence/dbiam-personenkontext.repo.js";
-import { Rolle } from "../../rolle/domain/rolle.js";
-import { RolleRepo } from "../../rolle/repo/rolle.repo.js";
-import { ServiceProvider } from "../../service-provider/domain/service-provider.js";
-import { ServiceProviderKategorie } from "../../service-provider/domain/service-provider.enum.js";
-import { ServiceProviderRepo } from "../../service-provider/repo/service-provider.repo.js";
-import { ServerConfig } from "../../../shared/config/server.config.js";
-import { OxConfig } from "../../../shared/config/ox.config.js";
-import { DomainError, EntityNotFoundError } from "../../../shared/error/index.js";
-import { EmailAddressDisabledEvent } from "../../../shared/events/email/email-address-disabled.event.js";
-import { KafkaEmailAddressDisabledEvent } from "../../../shared/events/email/kafka-email-address-disabled.event.js";
-import { PersonenkontextEventKontextData } from "../../../shared/events/personenkontext-event.types.js";
-import { OrganisationID, OrganisationKennung, PersonID, PersonUsername } from "../../../shared/types/index.js";
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { EmailAddress } from '../domain/email-address.js';
+import { EmailRepo } from '../persistence/email.repo.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonDomainError } from '../../person/domain/person-domain.error.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { ServerConfig } from '../../../shared/config/server.config.js';
+import { OxConfig } from '../../../shared/config/ox.config.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
+import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { OrganisationID, OrganisationKennung, PersonID, PersonUsername } from '../../../shared/types/index.js';
 
 @Injectable()
 export class PersonHandler {
@@ -79,7 +79,7 @@ export class PersonHandler {
         const rollenIdWithSPReference: Option<string> = await this.getAnyRolleReferencesEmailServiceProvider(rollen);
 
         if (rollenIdWithSPReference) {
-            return await this.handlePersonWithEmailSPReference(
+            return this.handlePersonWithEmailSPReference(
                 personId,
                 username,
                 personenkontexte,
@@ -148,13 +148,13 @@ export class PersonHandler {
         };
     }
 
-    private async handlePersonWithEmailSPReference(
+    private handlePersonWithEmailSPReference(
         personId: PersonID,
         username: PersonUsername | undefined,
         personenkontexte: Personenkontext<true>[],
         rollenIdWithSPReference: string,
         rolleIdPKMap: Map<string, Personenkontext<true>>,
-    ): Promise<string | void> {
+    ): string | void {
         // Array to store matching Personenkontext objects for further processing
         const pkOfRolleWithSPReferenceList: Personenkontext<true>[] = [];
 
