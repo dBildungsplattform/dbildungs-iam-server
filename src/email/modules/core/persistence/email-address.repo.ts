@@ -16,7 +16,8 @@ export function mapAggregateToData(emailAddress: EmailAddress<boolean>): Require
         address: emailAddress.address,
         priority: emailAddress.priority,
         spshPersonId: emailAddress.spshPersonId,
-        oxUserId: emailAddress.oxUserId,
+        externalId: emailAddress.externalId,
+        oxUserCounter: emailAddress.oxUserCounter,
         markedForCron: emailAddress.markedForCron,
     };
 }
@@ -29,7 +30,8 @@ function mapEntityToAggregate(entity: EmailAddrEntity): EmailAddress<boolean> {
         address: entity.address,
         priority: entity.priority,
         spshPersonId: entity.spshPersonId,
-        oxUserId: entity.oxUserId,
+        oxUserCounter: entity.oxUserCounter,
+        externalId: entity.externalId,
         markedForCron: entity.markedForCron,
     });
 }
@@ -95,7 +97,7 @@ export class EmailAddressRepo {
         }
     }
 
-    private async create(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {
+    private async create(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true>> {
         const emailAddressEntity: EmailAddrEntity = this.em.create(EmailAddrEntity, mapAggregateToData(emailAddress));
         await this.em.persistAndFlush(emailAddressEntity);
 
