@@ -10,7 +10,7 @@ import { EmailAddressGenerator } from './email-address-generator.js';
 import { EmailAddressStatusRepo } from '../persistence/email-address-status.repo.js';
 import { EmailAddressStatus } from './email-address-status.js';
 import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
-import { SetEmailAddressForSpshPersonParams } from '../api/dtos/params/set-email-addess-for-spsh-person.params.js';
+import { SetEmailAddressForSpshPersonParams } from '../api/dtos/params/set-email-address-for-spsh-person.params.js';
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 import { SetEmailAddressForSpshPersonService } from './set-email-address-for-spsh-person.service.js';
 import { OxService } from '../../ox/domain/ox.service.js';

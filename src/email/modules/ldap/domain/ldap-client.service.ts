@@ -274,8 +274,9 @@ export class LdapClientService {
         return result;
     }
 
-    private async sleep(ms: number): Promise<void> {
-        // eslint-disable-next-line no-promise-executor-return
-        return new Promise<void>((resolve: () => void) => setTimeout(resolve, ms));
+    private sleep(ms: number): Promise<void> {
+        return new Promise<void>((resolve: () => void) => {
+            setTimeout(resolve, ms);
+        });
     }
 }

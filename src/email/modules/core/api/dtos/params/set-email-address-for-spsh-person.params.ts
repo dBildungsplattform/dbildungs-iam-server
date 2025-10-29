@@ -22,6 +22,7 @@ export class SetEmailAddressForSpshPersonParams {
     public readonly spshUsername!: string;
 
     @IsArray()
+    @IsString({ each: true })
     @IsNotEmpty()
     @ApiProperty({
         description: 'Array of all school kennungen the person is associated with in spsh.',

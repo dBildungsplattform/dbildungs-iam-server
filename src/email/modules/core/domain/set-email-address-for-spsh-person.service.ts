@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SetEmailAddressForSpshPersonParams } from '../api/dtos/params/set-email-addess-for-spsh-person.params.js';
+import { SetEmailAddressForSpshPersonParams } from '../api/dtos/params/set-email-address-for-spsh-person.params.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
 import { EmailAddressGenerator } from './email-address-generator.js';
 import { EmailAddress } from './email-address.js';
