@@ -14,10 +14,16 @@ export class EmailDomain<WasPersisted extends boolean> {
         domain: string;
         spshServiceProviderId: string;
     }): EmailDomain<true> {
-        return new EmailDomain(params.id, params.createdAt, params.updatedAt, params.domain, params.spshServiceProviderId);
+        return new EmailDomain(
+            params.id,
+            params.createdAt,
+            params.updatedAt,
+            params.domain,
+            params.spshServiceProviderId,
+        );
     }
 
-    public static createNew(params: { domain: string, spshServiceProviderId: string }): EmailDomain<false> {
+    public static createNew(params: { domain: string; spshServiceProviderId: string }): EmailDomain<false> {
         return new EmailDomain(undefined, undefined, undefined, params.domain, params.spshServiceProviderId);
     }
 }

@@ -68,12 +68,13 @@ describe('SetEmailAddressForSpshPersonService', () => {
             ok: true,
             value: 'max.mustermann@example.com',
         });
-        emailDomainRepoMock.findById.mockResolvedValue(
+        emailDomainRepoMock.findBySpshServiceProviderId.mockResolvedValue(
             EmailDomain.construct({
                 id: faker.string.uuid(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 domain: 'example.com',
+                spshServiceProviderId: faker.string.uuid(),
             }),
         );
         emailAddressRepoMock.save.mockResolvedValue(
@@ -101,7 +102,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             firstName: 'Max',
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
-            emailDomainId: faker.string.uuid(),
+            spshServiceProviderId: faker.string.uuid(),
         });
 
         expect(emailAddressRepoMock.save).toHaveBeenCalledTimes(1);
@@ -115,17 +116,17 @@ describe('SetEmailAddressForSpshPersonService', () => {
             ok: true,
             value: 'max.mustermann@example.com',
         });
-        emailDomainRepoMock.findById.mockResolvedValue(undefined);
+        emailDomainRepoMock.findBySpshServiceProviderId.mockResolvedValue(undefined);
 
         const params: SetEmailAddressForSpshPersonParams = {
             firstName: 'Max',
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
-            emailDomainId: 'missing-domain-id',
+            spshServiceProviderId: 'missing-domain-id',
         };
 
         await expect(sut.setEmailAddressForSpshPerson(params)).rejects.toThrow(
-            new EmailDomainNotFoundError(`EmailDomain with id ${params.emailDomainId} not found`),
+            new EmailDomainNotFoundError(`EmailDomain with id ${params.spshServiceProviderId} not found`),
         );
         expect(loggerMock.error).toHaveBeenCalledWith('EmailDomain with id missing-domain-id not found');
     });
@@ -141,12 +142,13 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 spshPersonId: faker.string.uuid(),
             }),
         ]);
-        emailDomainRepoMock.findById.mockResolvedValue(
+        emailDomainRepoMock.findBySpshServiceProviderId.mockResolvedValue(
             EmailDomain.construct({
                 id: faker.string.uuid(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 domain: 'example.com',
+                spshServiceProviderId: faker.string.uuid(),
             }),
         );
 
@@ -154,7 +156,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             firstName: 'Max',
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
-            emailDomainId: faker.string.uuid(),
+            spshServiceProviderId: faker.string.uuid(),
         });
         expect(emailAddressRepoMock.save).not.toHaveBeenCalled();
         expect(loggerMock.crit).toHaveBeenCalled();
@@ -162,12 +164,13 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
     it('should throw if emailAddressGenerator.generateAvailableAddress returns error', async () => {
         emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([]);
-        emailDomainRepoMock.findById.mockResolvedValue(
+        emailDomainRepoMock.findBySpshServiceProviderId.mockResolvedValue(
             EmailDomain.construct({
                 id: faker.string.uuid(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 domain: 'example.com',
+                spshServiceProviderId: faker.string.uuid(),
             }),
         );
         emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValue({
@@ -179,7 +182,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             firstName: 'Max',
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
-            emailDomainId: faker.string.uuid(),
+            spshServiceProviderId: faker.string.uuid(),
         };
 
         await expect(sut.setEmailAddressForSpshPerson(params)).rejects.toThrow(new Error('Testerror'));
@@ -192,12 +195,13 @@ describe('SetEmailAddressForSpshPersonService', () => {
             ok: true,
             value: 'max.mustermann@example.com',
         });
-        emailDomainRepoMock.findById.mockResolvedValue(
+        emailDomainRepoMock.findBySpshServiceProviderId.mockResolvedValue(
             EmailDomain.construct({
                 id: faker.string.uuid(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 domain: 'example.com',
+                spshServiceProviderId: faker.string.uuid(),
             }),
         );
         const domainError: EmailDomainNotFoundError = new EmailDomainNotFoundError('Testerror');
@@ -209,7 +213,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 firstName: 'Max',
                 lastName: 'Mustermann',
                 spshPersonId: faker.string.uuid(),
-                emailDomainId: faker.string.uuid(),
+                spshServiceProviderId: faker.string.uuid(),
             }),
         ).rejects.toThrow(domainError);
 

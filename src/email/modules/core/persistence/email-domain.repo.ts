@@ -26,18 +26,6 @@ export class EmailDomainRepo {
         private readonly logger: ClassLogger,
     ) {}
 
-    public async findById(emailDomainId: string): Promise<Option<EmailDomain<true>>> {
-        const emailDomainEntity: Option<EmailDomainEntity> = await this.em.findOne(EmailDomainEntity, {
-            id: { $eq: emailDomainId },
-        });
-
-        if (emailDomainEntity) {
-            return mapEntityToAggregate(emailDomainEntity);
-        }
-
-        return null;
-    }
-
     public async findBySpshServiceProviderId(spshServiceProviderId: string): Promise<Option<EmailDomain<true>>> {
         const emailDomainEntity: Option<EmailDomainEntity> = await this.em.findOne(EmailDomainEntity, {
             spshServiceProviderId: { $eq: spshServiceProviderId },

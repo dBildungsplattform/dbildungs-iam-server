@@ -25,7 +25,9 @@ export class SetEmailAddressForSpshPersonService {
     public async setEmailAddressForSpshPerson(params: SetEmailAddressForSpshPersonParams): Promise<void> {
         const existingAddresses: EmailAddress<true>[] =
             await this.emailAddressRepo.findBySpshPersonIdSortedByPriorityAsc(params.spshPersonId);
-        const emailDomain: Option<EmailDomain<true>> = await this.emailDomainRepo.findBySpshServiceProviderId(params.spshServiceProviderId);
+        const emailDomain: Option<EmailDomain<true>> = await this.emailDomainRepo.findBySpshServiceProviderId(
+            params.spshServiceProviderId,
+        );
 
         if (!emailDomain) {
             this.logger.error(`EmailDomain with id ${params.spshServiceProviderId} not found`);
