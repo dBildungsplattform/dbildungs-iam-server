@@ -325,7 +325,7 @@ export class OxEventHandler {
     @EnsureRequestContext()
     public async handleEmailAddressMarkedForDeletionEvent(event: EmailAddressMarkedForDeletionEvent): Promise<void> {
         this.logger.info(
-            `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+            `Received EmailAddressMarkedForDeletionEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );
 
         // Check if the functionality is enabled

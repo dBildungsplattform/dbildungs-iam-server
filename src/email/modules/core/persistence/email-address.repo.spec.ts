@@ -11,33 +11,28 @@ import {
 import { EmailAddress } from '../domain/email-address.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { SetEmailAddressForSpshPersonService } from '../domain/set-email-address-for-spsh-person.service.js';
-import { EmailDomainRepo } from './email-domain.repo.js';
 import { EmailCoreModule } from '../email-core.module.js';
 import { EmailAddressStatusRepo } from './email-address-status.repo.js';
-import { EmailAddressGenerator } from '../domain/email-address-generator.js';
+import { EmailAddressStatusEnum } from './email-address-status.entity.js';
+import { AddressWithStatusesDescDto } from '../api/dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
     let sut: EmailAddressRepo;
+    let emailAddressStatusRepo: EmailAddressStatusRepo;
     let orm: MikroORM;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailCoreModule],
-            providers: [
-                SetEmailAddressForSpshPersonService,
-                EmailAddressRepo,
-                EmailDomainRepo,
-                EmailAddressStatusRepo,
-                ClassLogger,
-                EmailAddressGenerator,
-            ],
+            providers: [EmailAddressStatusRepo, EmailAddressRepo, ClassLogger],
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
             .compile();
+
         sut = module.get(EmailAddressRepo);
+        emailAddressStatusRepo = module.get(EmailAddressStatusRepo);
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -60,14 +55,14 @@ describe('EmailRepo', () => {
         address?: string,
         priority?: number,
         spshPersonId?: string,
-        oxUserId?: string,
+        oxUserCounter?: string,
         markedForCron?: Date,
     ): Promise<EmailAddress<true>> {
         const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
             address: address ?? faker.internet.email(),
             priority: priority ?? 1,
             spshPersonId: spshPersonId ?? undefined,
-            oxUserId: oxUserId ?? undefined,
+            oxUserCounter: oxUserCounter ?? undefined,
             markedForCron: markedForCron ?? undefined,
         });
         const tmp: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
@@ -122,6 +117,69 @@ describe('EmailRepo', () => {
         it('should return an empty array if no email addresses exist for the given spshPersonId', async () => {
             const unknownId: string = faker.string.uuid();
             const result: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(unknownId);
+            expect(result).toEqual([]);
+        });
+    });
+
+    describe('findAllEmailAddressesWithStatusesDescBySpshPersonId', () => {
+        const spshPersonId: string = faker.string.uuid();
+
+        it('should return email addresses with their statuses for a given spshPersonId', async () => {
+            const mail1: EmailAddress<true> = await createAndSaveMail(undefined, 1, spshPersonId);
+            const mail2: EmailAddress<true> = await createAndSaveMail(undefined, 2, spshPersonId);
+            const now: Date = new Date();
+            const earlier: Date = new Date(now.getTime() - 10000);
+
+            await emailAddressStatusRepo.create({
+                id: undefined,
+                createdAt: earlier,
+                updatedAt: earlier,
+                emailAddressId: mail1.id,
+                status: EmailAddressStatusEnum.PENDING,
+            });
+            await emailAddressStatusRepo.create({
+                id: undefined,
+                createdAt: now,
+                updatedAt: now,
+                emailAddressId: mail1.id,
+                status: EmailAddressStatusEnum.ACTIVE,
+            });
+            await emailAddressStatusRepo.create({
+                id: undefined,
+                createdAt: now,
+                updatedAt: now,
+                emailAddressId: mail2.id,
+                status: EmailAddressStatusEnum.PENDING,
+            });
+
+            const result: AddressWithStatusesDescDto[] =
+                await sut.findAllEmailAddressesWithStatusesDescBySpshPersonId(spshPersonId);
+            expect(result).toHaveLength(2);
+
+            const addresses: string[] = result.map((dto: AddressWithStatusesDescDto) => dto.emailAddress.address);
+            expect(addresses).toContain(mail1.address);
+            expect(addresses).toContain(mail2.address);
+
+            const mail1Dto: AddressWithStatusesDescDto | undefined = result.find(
+                (dto: AddressWithStatusesDescDto) => dto.emailAddress.id === mail1.id,
+            );
+            expect(mail1Dto).toBeDefined();
+            expect(mail1Dto!.statuses).toHaveLength(2);
+            expect(mail1Dto!.statuses[0]!.status).toBe(EmailAddressStatusEnum.ACTIVE);
+            expect(mail1Dto!.statuses[1]!.status).toBe(EmailAddressStatusEnum.PENDING);
+
+            const mail2Dto: AddressWithStatusesDescDto | undefined = result.find(
+                (dto: AddressWithStatusesDescDto) => dto.emailAddress.id === mail2.id,
+            );
+            expect(mail2Dto).toBeDefined();
+            expect(mail2Dto!.statuses).toHaveLength(1);
+            expect(mail2Dto!.statuses[0]!.status).toBe(EmailAddressStatusEnum.PENDING);
+        });
+
+        it('should return an empty array if no email addresses exist for the given spshPersonId', async () => {
+            const unknownId: string = faker.string.uuid();
+            const result: AddressWithStatusesDescDto[] =
+                await sut.findAllEmailAddressesWithStatusesDescBySpshPersonId(unknownId);
             expect(result).toEqual([]);
         });
     });
