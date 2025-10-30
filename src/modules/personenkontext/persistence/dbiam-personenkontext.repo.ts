@@ -24,6 +24,7 @@ import { OrganisationEntity } from '../../organisation/persistence/organisation.
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { PersonenkontextErweitertVirtualEntity } from './personenkontext-erweitert.virtual.entity.js';
 
 export type RollenCount = { rollenart: string; count: string };
 
@@ -157,7 +158,38 @@ export class DBiamPersonenkontextRepo {
     ): Promise<Map<PersonID, KontextWithOrgaAndRolle[]>> {
         const result: Map<PersonID, KontextWithOrgaAndRolle[]> = new Map<PersonID, KontextWithOrgaAndRolle[]>();
 
-        const filter: FilterQuery<PersonenkontextEntity> = {
+        // Find all Personenkontexte where the serviceprovider is available through an erweiterung
+        const erweiterungFilter: FilterQuery<PersonenkontextErweitertVirtualEntity>[] = [
+            {
+                personenkontext: {
+                    personId: {
+                        $in: personIds,
+                    },
+                },
+            },
+            {
+                serviceProvider: {
+                    $in: serviceProviderIds,
+                },
+            },
+        ];
+
+        if (!permittedOrgas.all) {
+            erweiterungFilter.push({
+                personenkontext: {
+                    organisationId: {
+                        $in: permittedOrgas.orgaIds,
+                    },
+                },
+            });
+        }
+
+        const erweiterungen: PersonenkontextErweitertVirtualEntity[] = await this.em.find(
+            PersonenkontextErweitertVirtualEntity,
+            erweiterungFilter,
+        );
+
+        const filter: FilterQuery<NoInfer<PersonenkontextEntity>> = {
             personId: { $in: personIds },
             rolleId: {
                 serviceProvider: {
@@ -174,16 +206,30 @@ export class DBiamPersonenkontextRepo {
             };
         }
 
-        const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, filter, {
-            populate: [
-                'organisationId',
-                'rolleId',
-                'rolleId.merkmale',
-                'rolleId.systemrechte',
-                'rolleId.serviceProvider',
-                'rolleId.serviceProvider.serviceProvider.merkmale',
-            ],
-        });
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(
+            PersonenkontextEntity,
+            {
+                $or: [
+                    {
+                        // Use found erweiterungen to fetch additional kontexte
+                        id: {
+                            $in: erweiterungen.map((e: PersonenkontextErweitertVirtualEntity) => e.personenkontext.id),
+                        },
+                    },
+                    filter,
+                ],
+            },
+            {
+                populate: [
+                    'organisationId',
+                    'rolleId',
+                    'rolleId.merkmale',
+                    'rolleId.systemrechte',
+                    'rolleId.serviceProvider',
+                    'rolleId.serviceProvider.serviceProvider.merkmale',
+                ],
+            },
+        );
 
         for (const pk of personenKontexte) {
             const personId: string = pk.personId.id;
@@ -202,6 +248,7 @@ export class DBiamPersonenkontextRepo {
 
             result.get(personId)!.push(kontext);
         }
+
         return result;
     }
 

@@ -44,6 +44,7 @@ import {
 import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -57,6 +58,7 @@ describe('dbiam Personenkontext Repo', () => {
     let organisationRepository: OrganisationRepository;
     let rolleRepo: RolleRepo;
     let serviceProviderRepo: ServiceProviderRepo;
+    let rollenerweiterungRepo: RollenerweiterungRepo;
     let rolleFactory: RolleFactory;
 
     let personenkontextFactory: PersonenkontextFactory;
@@ -100,6 +102,7 @@ describe('dbiam Personenkontext Repo', () => {
                 RolleFactory,
                 RolleRepo,
                 ServiceProviderRepo,
+                RollenerweiterungRepo,
                 PersonenkontextFactory,
                 EntityAggregateMapper,
                 {
@@ -134,6 +137,7 @@ describe('dbiam Personenkontext Repo', () => {
         rolleRepo = module.get(RolleRepo);
         serviceProviderRepo = module.get(ServiceProviderRepo);
         rolleFactory = module.get(RolleFactory);
+        rollenerweiterungRepo = module.get(RollenerweiterungRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -511,6 +515,45 @@ describe('dbiam Personenkontext Repo', () => {
                 await sut.findByPersonIdsAndServiceprovidersWithOrgaAndRolle([person.id], [serviceprovider.id], {
                     all: false,
                     orgaIds: [organisationA.id],
+                });
+
+            expect(personenkontexte.size).toEqual(1);
+            expect(personenkontexte.get(person.id)).toHaveLength(1);
+        });
+
+        it('should return all personenkontexte when a rollenerweiterung exists', async () => {
+            const person: Person<true> = await createPerson();
+            const serviceprovider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+            const organisation: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolle.id,
+                    organisationId: organisation.id,
+                    serviceProviderId: serviceprovider.id,
+                }),
+            );
+
+            await Promise.all([
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: person.id,
+                        rolleId: rolle.id,
+                        organisationId: organisation.id,
+                    }),
+                ),
+            ]);
+
+            const personenkontexte: Map<PersonID, KontextWithOrgaAndRolle[]> =
+                await sut.findByPersonIdsAndServiceprovidersWithOrgaAndRolle([person.id], [serviceprovider.id], {
+                    all: true,
                 });
 
             expect(personenkontexte.size).toEqual(1);
