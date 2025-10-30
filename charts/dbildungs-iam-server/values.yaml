@@ -279,6 +279,10 @@ kafka:
     tag: "3.9.0"
     pullPolicy: Always
   existingSecret: dbildungs-iam-kafka-tls
+  jobs:
+    cron-topic-cleaner:
+      schedule: "0 2 * * *"
+      script: "delete_topics.sh"
 
 autoscaling:
   enabled: false

@@ -1,0 +1,71 @@
+{{- if .Values.kafka.enabletopicCleaner }}
+{{- $job_name := "cron-topic-cleaner" }}
+{{- $job_options := index .Values.kafka.jobs $job_name }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "common.names.name" $ }}-{{ $job_name }}
+  namespace: {{ template "common.names.namespace" $ }}
+spec:
+  schedule: {{ $job_options.schedule | quote }}
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            cron: {{ $job_name }}
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          containers:
+            - name: "{{ template "common.names.name" . }}-kafka-topics-cleaner"
+              image: "{{ .Values.kafka.initImage.repository }}:{{ .Values.kafka.initImage.tag }}"
+              imagePullPolicy: {{ $.Values.kafka.initImage.pullPolicy | default "Always"}}
+              securityContext:
+                privileged: false
+                runAsUser: 1000
+                runAsNonRoot: true
+                capabilities:
+                  drop: [ "ALL" ]
+                readOnlyRootFilesystem: false
+                allowPrivilegeEscalation: false
+                seccompProfile:
+                  type: RuntimeDefault
+              envFrom:
+                - configMapRef:
+                    name: {{ template "common.names.name" $ }}-kafka-envs-configmap
+              env:
+                - name: KAFKA_BROKER
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.kafka.existingSecret }}
+                      key: kafka_broker
+              resources:
+                limits:
+                  memory: "128Mi"
+                  cpu: "200m"
+                requests:
+                  memory: "64Mi"
+                  cpu: "50m"
+              command: [ "sh", "/init/delete_topics.sh" ]
+              volumeMounts:
+                - name: kafka-delete-volume
+                  mountPath: /init
+                  readOnly: true
+                - name: dbildungs-iam-kafka-tls
+                  mountPath: /tls
+                  readOnly: true
+          volumes:
+            - name:  kafka-delete-volume
+              configMap:
+                name: {{ template "common.names.name" $ }}-kafka-delete-topic-configmap
+                defaultMode: 0555
+            - name: dbildungs-iam-kafka-tls
+              secret:
+                secretName: dbildungs-iam-kafka-tls
+                defaultMode: 0420
+{{- end }}

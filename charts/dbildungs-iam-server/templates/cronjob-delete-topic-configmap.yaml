@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "common.names.name" . }}-kafka-delete-topic-configmap
+  namespace: {{ template "common.names.namespace" . }}
+  labels: {{- include "common.labels" . | nindent 4 }}
+type: Opaque
+data:
+  delete_topics.sh: |
+    {{ .Files.Get "kafka/delete_topics.sh" | indent 4 }}
