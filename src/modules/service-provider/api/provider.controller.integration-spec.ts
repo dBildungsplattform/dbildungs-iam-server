@@ -280,6 +280,7 @@ describe('ServiceProvider API', () => {
                 kategorie: serviceProvider.kategorie,
                 requires2fa: serviceProvider.requires2fa,
                 merkmale: serviceProvider.merkmale,
+                url: serviceProvider.url,
                 rollenerweiterungen: [
                     {
                         organisation: {
