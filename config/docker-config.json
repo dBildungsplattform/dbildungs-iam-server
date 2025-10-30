@@ -133,5 +133,9 @@
     },
     "PORTAL": {
         "LIMITED_ROLLENART_ALLOWLIST": ["LERN", "EXTERN"]
+    },
+    "EMAIL_MICROSERVICE": {
+        "USE_EMAIL_MICROSERVICE": true,
+        "ENDPOINT": "http://localhost:9091/api/"
     }
 }
