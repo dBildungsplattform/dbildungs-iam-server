@@ -80,7 +80,11 @@ export class PersonenInfoService {
         ] = await Promise.all([
             this.personRepo.findByPersonIds(personIds),
             this.emailRepo.getEmailAddressAndStatusForPersonIds(personIds),
-            this.personenkontextRepo.findByPersonIdsWithOrgaAndRolle(personIds),
+            this.personenkontextRepo.findByPersonIdsAndServiceprovidersWithOrgaAndRolle(
+                personIds,
+                Array.from(permittedServiceProviderIds),
+                permittedOrgas,
+            ),
             this.userLockRepo.findByPersonIds(personIds),
         ]);
 

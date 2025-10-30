@@ -171,7 +171,7 @@ describe('PersonInfoService', () => {
                     [personId2, createMock<PersonEmailResponse>()],
                 ]),
             );
-            dBiamPersonenkontextRepoMock.findByPersonIdsWithOrgaAndRolle.mockResolvedValue(
+            dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
                 new Map([
                     [personId1, createMock<KontextWithOrgaAndRolle[]>()],
                     [personId2, createMock<KontextWithOrgaAndRolle[]>()],
@@ -195,8 +195,12 @@ describe('PersonInfoService', () => {
             expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
             );
-            expect(dBiamPersonenkontextRepoMock.findByPersonIdsWithOrgaAndRolle).toHaveBeenCalledWith(
+            expect(
+                dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle,
+            ).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
+                expect.arrayContaining(rolle.serviceProviderIds),
+                { all: false, orgaIds: [orga1.id, orga1.id] },
             );
             expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
@@ -266,7 +270,7 @@ describe('PersonInfoService', () => {
                     [personId2, createMock<PersonEmailResponse>()],
                 ]),
             );
-            dBiamPersonenkontextRepoMock.findByPersonIdsWithOrgaAndRolle.mockResolvedValue(
+            dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
                 new Map([
                     [personId1, createMock<KontextWithOrgaAndRolle[]>()],
                     [personId2, createMock<KontextWithOrgaAndRolle[]>()],
@@ -290,8 +294,12 @@ describe('PersonInfoService', () => {
             expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
             );
-            expect(dBiamPersonenkontextRepoMock.findByPersonIdsWithOrgaAndRolle).toHaveBeenCalledWith(
+            expect(
+                dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle,
+            ).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
+                expect.arrayContaining(rolle.serviceProviderIds),
+                { all: true },
             );
             expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
@@ -361,7 +369,7 @@ describe('PersonInfoService', () => {
                     [personId2, createMock<PersonEmailResponse>()],
                 ]),
             );
-            dBiamPersonenkontextRepoMock.findByPersonIdsWithOrgaAndRolle.mockResolvedValue(
+            dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
                 new Map([
                     ['', createMock<KontextWithOrgaAndRolle[]>()],
                     ['', createMock<KontextWithOrgaAndRolle[]>()],
@@ -385,8 +393,12 @@ describe('PersonInfoService', () => {
             expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
             );
-            expect(dBiamPersonenkontextRepoMock.findByPersonIdsWithOrgaAndRolle).toHaveBeenCalledWith(
+            expect(
+                dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle,
+            ).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
+                expect.arrayContaining(rolle.serviceProviderIds),
+                { all: true },
             );
             expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
