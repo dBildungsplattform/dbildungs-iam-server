@@ -542,12 +542,12 @@ describe('dbiam Personenkontext Repo', () => {
             );
 
             await personenkontextRepoInternal.save(
-                    createPersonenkontext(false, {
-                        personId: person.id,
-                        rolleId: rolle.id,
-                        organisationId: organisation.id,
-                    }),
-                );
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    rolleId: rolle.id,
+                    organisationId: organisation.id,
+                }),
+            );
 
             const personenkontexte: Map<PersonID, KontextWithOrgaAndRolle[]> =
                 await sut.findByPersonIdsAndServiceprovidersWithOrgaAndRolle([person.id], [serviceprovider.id], {
