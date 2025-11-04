@@ -1,20 +1,14 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { EntityManager } from '@mikro-orm/core';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils';
-import { EventService } from '../../../core/eventbus';
-import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service';
-import { KafkaEventService } from '../../../core/eventbus/services/kafka-event.service';
-import { ClassLogger } from '../../../core/logging/class-logger';
-import { EmailMicroserviceConfig } from '../../../shared/config/email-microservice.config';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository';
-import { RolleFactory } from '../../rolle/domain/rolle.factory';
-import { RolleRepo } from '../../rolle/repo/rolle.repo';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo';
-import { EmailRepo } from '../persistence/email.repo';
+import { ConfigTestModule, DatabaseTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../test/utils';
+import { ClassLogger } from '../../core/logging/class-logger';
+import { EmailMicroserviceConfig } from '../../shared/config/email-microservice.config';
+import { EmailRepo } from '../email/persistence/email.repo';
 import { EmailResolverService } from './email-resolver.service';
+import { RolleRepo } from '../rolle/repo/rolle.repo';
+import { EmailResolverModule } from './email-resolver.module';
 
 describe('EmailResolverService', () => {
     let sut: EmailResolverService;
@@ -46,7 +40,7 @@ describe('EmailResolverService', () => {
         emailRepo.getEmailAddressAndStatusForPerson = jest.fn();
 
         const module: TestingModule = await Test.createTestingModule({
-            imports: [],
+            imports: [EmailResolverModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [
                 ClassLogger,
                 EmailResolverService,
@@ -54,13 +48,6 @@ describe('EmailResolverService', () => {
                 EmailRepo,
                 RolleRepo,
                 ConfigService,
-                RolleFactory,
-                EventRoutingLegacyKafkaService,
-                ServiceProviderRepo,
-                OrganisationRepository,
-                EventService,
-                KafkaEventService,
-                EntityManager,
             ],
         })
             .overrideProvider(ClassLogger)

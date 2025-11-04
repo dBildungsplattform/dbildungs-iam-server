@@ -3,20 +3,20 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
 import { lastValueFrom } from 'rxjs';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
-import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
-import { EmailMicroserviceConfig } from '../../../shared/config/email-microservice.config.js';
-import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
-import { PersonenkontextUpdatedPersonData } from '../../../shared/events/personenkontext-updated.event.js';
-import { PersonEmailResponse } from '../../person/api/person-email-response.js';
-import { Person } from '../../person/domain/person.js';
-import { EmailAddressStatus } from '../domain/email-address.js';
-import { EmailRepo } from '../persistence/email.repo.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
+import { EmailAddressResponse } from '../../email/modules/core/api/dtos/response/email-address.response.js';
+import { EmailAddressStatusEnum } from '../../email/modules/core/persistence/email-address-status.entity.js';
+import { EmailMicroserviceConfig } from '../../shared/config/email-microservice.config.js';
+import { PersonenkontextEventKontextData } from '../../shared/events/personenkontext-event.types.js';
+import { PersonenkontextUpdatedPersonData } from '../../shared/events/personenkontext-updated.event.js';
+import { PersonEmailResponse } from '../person/api/person-email-response.js';
+import { Person } from '../person/domain/person.js';
+import { EmailAddressStatus } from '../email/domain/email-address.js';
+import { EmailRepo } from '../email/persistence/email.repo.js';
+import { Rolle } from '../rolle/domain/rolle.js';
+import { RolleRepo } from '../rolle/repo/rolle.repo.js';
+import { ServiceProvider } from '../service-provider/domain/service-provider.js';
+import { ServiceProviderSystem } from '../service-provider/domain/service-provider.enum.js';
 
 @Injectable()
 export class EmailResolverService {
