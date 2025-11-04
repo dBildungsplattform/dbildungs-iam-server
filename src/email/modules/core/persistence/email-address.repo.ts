@@ -43,6 +43,46 @@ export class EmailAddressRepo {
         private readonly logger: ClassLogger,
     ) {}
 
+    public async findEmailAddress(address: string): Promise<Option<EmailAddress<true>>> {
+        const emailAddressEntity: Option<EmailAddrEntity> = await this.em.findOne(
+            EmailAddrEntity,
+            { address: address },
+            {},
+        );
+
+        if (emailAddressEntity) {
+            return mapEntityToAggregate(emailAddressEntity);
+        }
+
+        return undefined;
+    }
+
+    public async findEmailAddressWithStatusDesc(address: string): Promise<Option<AddressWithStatusesDescDto>> {
+        const emailAddressEntity: Option<EmailAddrEntity> = await this.em.findOne(
+            EmailAddrEntity,
+            { address: address },
+            {
+                populate: ['statuses'],
+                orderBy: { id: 'asc' },
+            },
+        );
+
+        if (emailAddressEntity) {
+            new AddressWithStatusesDescDto(
+                mapEntityToAggregate(emailAddressEntity),
+                emailAddressEntity.statuses
+                    .getItems()
+                    .sort(
+                        (a: EmailAddressStatusEntity, b: EmailAddressStatusEntity) =>
+                            b.createdAt.getTime() - a.createdAt.getTime(),
+                    )
+                    .map(mapStatusEntityToAggregate),
+            );
+        }
+
+        return undefined;
+    }
+
     public async existsEmailAddress(address: string): Promise<boolean> {
         const emailAddressEntity: Option<EmailAddrEntity> = await this.em.findOne(
             EmailAddrEntity,

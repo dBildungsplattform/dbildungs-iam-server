@@ -15,6 +15,7 @@ import { Public } from '../../decorator/public.decorator.js';
 import { AddressWithStatusesDescDto } from '../dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 import { EmailAddressStatus } from '../../domain/email-address-status.js';
 import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
+import { FindEmailAddressParams } from '../dtos/params/find-email-address.params copy.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
@@ -58,5 +59,29 @@ export class EmailReadController {
                 return undefined;
             })
             .filter((response: EmailAddressResponse | undefined) => response !== undefined);
+    }
+
+    @Get(':emailAddress')
+    @Public()
+    @ApiOperation({ description: 'Get email-address by emailAddress.' })
+    @ApiOkResponse({
+        description: 'The email-addresses for corresponding person were successfully returned.',
+        type: [EmailAddressResponse],
+    })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting email-addresses by personId.' })
+    public async findEmailAddress(
+        @Param() findEmailAddressByPersonIdParams: FindEmailAddressParams,
+    ): Promise<Option<EmailAddressResponse>> {
+        this.logger.info(`EmailAddress:${findEmailAddressByPersonIdParams.emailAddress}`);
+
+        const emailAddressWithStatusDesc: Option<AddressWithStatusesDescDto> =
+            await this.emailAddressRepo.findEmailAddressWithStatusDesc(findEmailAddressByPersonIdParams.emailAddress);
+        if (!emailAddressWithStatusDesc) {
+            return undefined;
+        }
+        return new EmailAddressResponse(
+            emailAddressWithStatusDesc.emailAddress,
+            emailAddressWithStatusDesc.statuses.at(0)!,
+        );
     }
 }
