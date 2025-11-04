@@ -5,7 +5,7 @@ import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { EmailResolverService } from '../email-resolve-service/email-resolver.service.js';
+import { EmailResolverService } from '../email-resolver-service/email-resolver.service.js';
 
 @Injectable()
 export class EmailMicroserviceEventHandler {

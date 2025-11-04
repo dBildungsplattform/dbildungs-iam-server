@@ -62,6 +62,7 @@ import { EmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/e
 import { KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/kafka-email-address-generated-after-ldap-sync-failed.event.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
 import { OxSyncEventHandler } from './ox-sync-event-handler.js';
+import { EmailResolverService } from '../../email/email-resolver-service/email-resolver.service.js';
 
 @Injectable()
 export class OxEventHandler {
@@ -69,6 +70,7 @@ export class OxEventHandler {
 
     public constructor(
         protected readonly logger: ClassLogger,
+        protected readonly emailResolverService: EmailResolverService,
         protected readonly oxService: OxService,
         protected readonly oxEventService: OxEventService,
         protected readonly oxSyncEventHandler: OxSyncEventHandler,
@@ -217,6 +219,9 @@ export class OxEventHandler {
         this.logger.info(
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, username:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Not enabled, ignoring event`);
+        }
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
         }

@@ -28,30 +28,18 @@ export class EmailResolverService {
         private readonly rolleRepo: RolleRepo,
     ) {}
 
-    public shouldUseEmailMicroservice(): boolean {
-        const emailMicroserviceConfig: EmailMicroserviceConfig =
-            this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
-        return emailMicroserviceConfig.USE_EMAIL_MICROSERVICE;
-    }
-
-    public getEndpoint(): string {
-        const emailMicroserviceConfig: EmailMicroserviceConfig =
-            this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
-        return emailMicroserviceConfig.ENDPOINT;
-    }
-
     public async getEmailAddressAndStatusForPerson(person: Person<true>): Promise<PersonEmailResponse | undefined> {
         const useEmailMicroservice: boolean = this.shouldUseEmailMicroservice();
         const endpoint: string = this.getEndpoint();
         return useEmailMicroservice
-            ? this.findEmail(endpoint, person)
+            ? this.findEmail(endpoint, person.id)
             : await this.emailRepo.getEmailAddressAndStatusForPerson(person);
     }
 
-    public async findEmail(endpoint: string, person: Person<true>): Promise<PersonEmailResponse | undefined> {
+    public async findEmail(endpoint: string, personId: string): Promise<PersonEmailResponse | undefined> {
         try {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
-                this.httpService.get(endpoint + `read/${person.id}`, { method: 'GET' }),
+                this.httpService.get(endpoint + `read/${personId}`, { method: 'GET' }),
             );
             if (response.data[0] !== undefined) {
                 const status: EmailAddressStatus = this.mapStatus(response.data[0]?.status);
@@ -59,7 +47,7 @@ export class EmailResolverService {
             }
             return undefined;
         } catch (error) {
-            this.logger.logUnknownAsError(`Failed to fetch email for person ${person.id}`, error);
+            this.logger.logUnknownAsError(`Failed to fetch email for person ${personId}`, error);
             return undefined;
         }
     }
@@ -91,6 +79,20 @@ export class EmailResolverService {
         }
     }
 
+    // ==== Helper functions ====
+
+    public shouldUseEmailMicroservice(): boolean {
+        const emailMicroserviceConfig: EmailMicroserviceConfig =
+            this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
+        return emailMicroserviceConfig.USE_EMAIL_MICROSERVICE;
+    }
+
+    public getEndpoint(): string {
+        const emailMicroserviceConfig: EmailMicroserviceConfig =
+            this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
+        return emailMicroserviceConfig.ENDPOINT;
+    }
+
     public async getEmailServiceProviderId(
         currentKontexte: PersonenkontextEventKontextData[],
     ): Promise<string | undefined> {
@@ -101,9 +103,12 @@ export class EmailResolverService {
         const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
         const rollen: Rolle<true>[] = Array.from(rollenMap.values());
 
-        const spshServiceProviderId: string | undefined = rollen.flatMap((rolle: Rolle<true>) => rolle.serviceProviderData).find(
-            (serviceProvider: ServiceProvider<true>) => serviceProvider.externalSystem === ServiceProviderSystem.EMAIL,
-        )?.id;
+        const spshServiceProviderId: string | undefined = rollen
+            .flatMap((rolle: Rolle<true>) => rolle.serviceProviderData)
+            .find(
+                (serviceProvider: ServiceProvider<true>) =>
+                    serviceProvider.externalSystem === ServiceProviderSystem.EMAIL,
+            )?.id;
 
         return spshServiceProviderId;
     }
