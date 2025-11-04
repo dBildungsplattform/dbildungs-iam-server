@@ -6,9 +6,8 @@ import { ConfigTestModule, DatabaseTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINER
 import { ClassLogger } from '../../core/logging/class-logger';
 import { EmailMicroserviceConfig } from '../../shared/config/email-microservice.config';
 import { EmailRepo } from '../email/persistence/email.repo';
-import { EmailResolverService } from './email-resolver.service';
-import { RolleRepo } from '../rolle/repo/rolle.repo';
 import { EmailResolverModule } from './email-resolver.module';
+import { EmailResolverService } from './email-resolver.service';
 
 describe('EmailResolverService', () => {
     let sut: EmailResolverService;
@@ -41,14 +40,7 @@ describe('EmailResolverService', () => {
 
         const module: TestingModule = await Test.createTestingModule({
             imports: [EmailResolverModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
-            providers: [
-                ClassLogger,
-                EmailResolverService,
-                HttpService,
-                EmailRepo,
-                RolleRepo,
-                ConfigService,
-            ],
+            providers: [],
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
