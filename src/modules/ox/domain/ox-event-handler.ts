@@ -62,7 +62,7 @@ import { EmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/e
 import { KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/kafka-email-address-generated-after-ldap-sync-failed.event.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
 import { OxSyncEventHandler } from './ox-sync-event-handler.js';
-import { EmailResolverService } from '../../email-resolver-service/email-resolver.service.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 @Injectable()
 export class OxEventHandler {

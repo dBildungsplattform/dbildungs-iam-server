@@ -7,7 +7,7 @@ import { EventModule } from '../../../core/eventbus';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service';
 import { ClassLogger } from '../../../core/logging/class-logger';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event';
-import { EmailResolverService } from '../../email-resolver-service/email-resolver.service';
+import { EmailResolverService } from './email-resolver.service';
 import { EmailMicroserviceEventHandler } from './email-microservice-event-handler';
 
 describe('EmailMicroserviceEventHandler', () => {

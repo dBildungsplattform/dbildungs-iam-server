@@ -2,11 +2,11 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../test/utils';
-import { ClassLogger } from '../../core/logging/class-logger';
-import { EmailMicroserviceConfig } from '../../shared/config/email-microservice.config';
-import { EmailRepo } from '../email/persistence/email.repo';
-import { EmailResolverModule } from './email-resolver.module';
+import { ConfigTestModule, DatabaseTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils';
+import { ClassLogger } from '../../../core/logging/class-logger';
+import { EmailMicroserviceConfig } from '../../../shared/config/email-microservice.config';
+import { EmailRepo } from '../../email/persistence/email.repo';
+import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailResolverService } from './email-resolver.service';
 
 describe('EmailResolverService', () => {
@@ -39,7 +39,7 @@ describe('EmailResolverService', () => {
         emailRepo.getEmailAddressAndStatusForPerson = jest.fn();
 
         const module: TestingModule = await Test.createTestingModule({
-            imports: [EmailResolverModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
+            imports: [EmailMicroserviceModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [],
         })
             .overrideProvider(ClassLogger)

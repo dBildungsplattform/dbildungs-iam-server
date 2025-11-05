@@ -60,7 +60,7 @@ import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.ev
 import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
 import { KafkaOxSyncUserCreatedEvent } from '../../../shared/events/ox/kafka-ox-sync-user-created.event.js';
 import { OxSyncUserCreatedEvent } from '../../../shared/events/ox/ox-sync-user-created.event.js';
-import { EmailResolverService } from '../../email-resolver-service/email-resolver.service.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 export type EmailAddressGeneratedCreator = (
     personId: PersonID,
