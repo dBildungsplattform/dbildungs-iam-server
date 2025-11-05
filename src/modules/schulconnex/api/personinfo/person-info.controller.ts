@@ -26,6 +26,7 @@ import { UserLockRepository } from '../../../keycloak-administration/repository/
 import { UserLock } from '../../../keycloak-administration/domain/user-lock.js';
 import { PersonInfoResponse } from './v0/person-info.response.js';
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
+import { EmailRepo } from '../../../email/persistence/email.repo.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiBearerAuth()
@@ -38,6 +39,7 @@ export class PersonInfoController {
         private readonly personRepo: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly userLockRepo: UserLockRepository,
+        private readonly emailRepo: EmailRepo,
         private readonly emailResolverService: EmailResolverService,
     ) {
         this.logger.info(`Creating ${PersonInfoController.name}`);
@@ -59,7 +61,9 @@ export class PersonInfoController {
 
         const [email, kontexteWithOrgaAndRolle]: [Option<PersonEmailResponse>, Array<KontextWithOrgaAndRolle>] =
             await Promise.all([
-                this.emailResolverService.getEmailAddressAndStatusForPerson(person),
+                this.emailResolverService.shouldUseEmailMicroservice()
+                    ? this.emailResolverService.findEmailBySpshPerson(personId)
+                    : this.emailRepo.getEmailAddressAndStatusForPerson(person),
                 this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
             ]);
 
@@ -86,7 +90,9 @@ export class PersonInfoController {
             Array<KontextWithOrgaAndRolle>,
             UserLock[],
         ] = await Promise.all([
-            this.emailResolverService.getEmailAddressAndStatusForPerson(person),
+            this.emailResolverService.shouldUseEmailMicroservice()
+                ? this.emailResolverService.findEmailBySpshPerson(personId)
+                : this.emailRepo.getEmailAddressAndStatusForPerson(person),
             this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
             this.userLockRepo.findByPersonId(personId),
         ]);

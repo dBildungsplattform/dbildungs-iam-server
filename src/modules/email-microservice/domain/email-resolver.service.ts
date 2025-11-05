@@ -18,7 +18,7 @@ export class EmailResolverService {
         private readonly httpService: HttpService,
     ) {}
 
-    public async findEmailBySpshPerson(personId: string): Promise<Option<PersonEmailResponse>> {
+    public async findEmailBySpshPerson(personId: string): Promise<PersonEmailResponse | undefined> {
         try {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
                 this.httpService.get(this.getEndpoint() + `read/${personId}`),

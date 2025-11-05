@@ -82,7 +82,8 @@ import { KafkaPersonLdapSyncEvent } from '../../../shared/events/kafka-person-ld
 import { PersonLandesbediensteterSearchQueryParams } from './person-landesbediensteter-search-query.param.js';
 import { PersonLandesbediensteterSearchResponse } from './person-landesbediensteter-search.response.js';
 import { PersonLandesbediensteterSearchService } from '../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
-import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js'
+import { EmailRepo } from '../../email/persistence/email.repo.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -93,6 +94,7 @@ export class PersonController {
     public readonly ROOT_ORGANISATION_ID: string;
 
     public constructor(
+        private readonly emailRepo: EmailRepo,
         private readonly personRepository: PersonRepository,
         private readonly emailResolverService: EmailResolverService,
         private readonly personenkontextService: PersonenkontextService,
@@ -198,8 +200,12 @@ export class PersonController {
             );
         }
 
-        const personEmailResponse: Option<PersonEmailResponse> =
-            await this.emailResolverService.getEmailAddressAndStatusForPerson(personResult.value);
+        let personEmailResponse: Option<PersonEmailResponse>;
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            personEmailResponse = await this.emailResolverService.findEmailBySpshPerson(personResult.value.id);
+        } else {
+            personEmailResponse = await this.emailRepo.getEmailAddressAndStatusForPerson(personResult.value);
+        }
 
         const response: PersonendatensatzResponse = new PersonendatensatzResponse(
             personResult.value,
