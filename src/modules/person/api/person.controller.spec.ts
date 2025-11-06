@@ -3,7 +3,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { HttpException, NotImplementedException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
 import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
@@ -49,6 +49,7 @@ import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 import { PersonController } from './person.controller.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -67,7 +68,7 @@ describe('PersonController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [],
+            imports: [EmailMicroserviceModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [
                 PersonController,
                 PersonFactory,
@@ -137,7 +138,12 @@ describe('PersonController', () => {
                     useValue: createMock<LdapSyncEventHandler>(),
                 },
             ],
-        }).compile();
+        })
+            .overrideProvider(EventRoutingLegacyKafkaService)
+            .useValue(createMock<EventRoutingLegacyKafkaService>())
+            .overrideProvider(KeycloakUserService)
+            .useValue(createMock<KeycloakUserService>())
+            .compile();
         personController = module.get(PersonController);
         personRepositoryMock = module.get(PersonRepository);
         emailRepoMock = module.get(EmailRepo);
