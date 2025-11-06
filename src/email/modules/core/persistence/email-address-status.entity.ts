@@ -7,7 +7,9 @@ export enum EmailAddressStatusEnum {
     ACTIVE = 'ACTIVE',
     DEACTIVE = 'DEACTIVE',
     SUSPENDED = 'SUSPENDED',
+    FAILED = 'FAILED',
     TO_BE_DELETED = 'TO_BE_DELETED',
+    EXISTS_ONLY_IN_OX = 'EXISTS_ONLY_IN_OX',
 }
 
 @Entity({ schema: 'email', tableName: 'address_status' })
