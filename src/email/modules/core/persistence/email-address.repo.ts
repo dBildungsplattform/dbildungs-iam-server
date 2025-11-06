@@ -67,20 +67,20 @@ export class EmailAddressRepo {
             },
         );
 
-        if (emailAddressEntity) {
-            new AddressWithStatusesDescDto(
-                mapEntityToAggregate(emailAddressEntity),
-                emailAddressEntity.statuses
-                    .getItems()
-                    .sort(
-                        (a: EmailAddressStatusEntity, b: EmailAddressStatusEntity) =>
-                            b.createdAt.getTime() - a.createdAt.getTime(),
-                    )
-                    .map(mapStatusEntityToAggregate),
-            );
+        if (!emailAddressEntity) {
+            return undefined;
         }
 
-        return undefined;
+        return new AddressWithStatusesDescDto(
+            mapEntityToAggregate(emailAddressEntity),
+            emailAddressEntity.statuses
+                .getItems()
+                .sort(
+                    (a: EmailAddressStatusEntity, b: EmailAddressStatusEntity) =>
+                        b.createdAt.getTime() - a.createdAt.getTime(),
+                )
+                .map(mapStatusEntityToAggregate),
+        );
     }
 
     public async existsEmailAddress(address: string): Promise<boolean> {
