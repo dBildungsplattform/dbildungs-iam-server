@@ -90,6 +90,8 @@ export class EmailResolverService {
             case EmailAddressStatusEnum.TO_BE_DELETED:
                 eas = EmailAddressStatus.DELETED;
                 break;
+            default:
+                eas = EmailAddressStatus.DISABLED;
         }
         return eas;
     }
