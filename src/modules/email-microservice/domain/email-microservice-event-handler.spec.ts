@@ -104,6 +104,7 @@ describe('EmailMicroserviceEventHandler', () => {
                 }),
             ],
         });
+        emailResolverService.shouldUseEmailMicroservice = jest.fn().mockReturnValueOnce(true);
 
         jest.spyOn(rolleRepo, 'findByIds').mockResolvedValue(new Map([['r1', mockRolle]]));
 
@@ -124,12 +125,6 @@ describe('EmailMicroserviceEventHandler', () => {
             removedKontexte: [{}],
             currentKontexte: [{}],
         });
-        /*
-        const configService = module.get(ConfigService);
-        configService.getOrThrow = jest.fn().mockReturnValue({
-            USE_EMAIL_MICROSERVICE: false,
-            ENDPOINT: 'https://email.microservice/',
-        });*/
         emailResolverService.shouldUseEmailMicroservice = jest.fn().mockReturnValueOnce(false);
 
         await sut.handlePersonenkontextUpdatedEvent(mockEvent);

@@ -39,6 +39,7 @@ import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group
 import { EmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/email-address-generated-after-ldap-sync-failed.event.js';
 import { OxEventService } from './ox-event.service.js';
 import { OxSyncEventHandler } from './ox-sync-event-handler.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
@@ -50,6 +51,7 @@ describe('OxEventHandler', () => {
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let emailRepoMock: DeepMocked<EmailRepo>;
     let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
+    let emailResolverService: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -89,6 +91,10 @@ describe('OxEventHandler', () => {
                     provide: EventRoutingLegacyKafkaService,
                     useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
+                {
+                    provide: EmailResolverService,
+                    useValue: createMock<EmailResolverService>(),
+                },
             ],
         }).compile();
 
@@ -100,6 +106,7 @@ describe('OxEventHandler', () => {
         personRepositoryMock = module.get(PersonRepository);
         emailRepoMock = module.get(EmailRepo);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
+        emailResolverService = module.get(EmailResolverService);
         jest.useFakeTimers();
     });
 
@@ -255,6 +262,7 @@ describe('OxEventHandler', () => {
     beforeEach(() => {
         sut.ENABLED = true;
         jest.resetAllMocks();
+        emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
     });
 
     describe('createOxGroup', () => {

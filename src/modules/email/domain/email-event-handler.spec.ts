@@ -42,6 +42,7 @@ import { EmailFactory } from './email.factory.js';
 import { LdapSyncFailedEvent } from '../../../shared/events/ldap/ldap-sync-failed.event.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
 import { OxSyncUserCreatedEvent } from '../../../shared/events/ox/ox-sync-user-created.event.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 function getEmail(address?: string, status?: EmailAddressStatus): EmailAddress<true> {
     const fakePersonId: PersonID = faker.string.uuid();
@@ -68,6 +69,7 @@ describe('EmailEventHandler', () => {
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let loggerMock: DeepMocked<ClassLogger>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
+    let emailResolverService: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -106,6 +108,8 @@ describe('EmailEventHandler', () => {
             .useClass(EventRoutingLegacyKafkaService)
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
+            .overrideProvider(EmailResolverService)
+            .useValue(createMock<EmailResolverService>())
             .compile();
 
         emailEventHandler = module.get(EmailEventHandler);
@@ -118,6 +122,7 @@ describe('EmailEventHandler', () => {
         organisationRepositoryMock = module.get(OrganisationRepository);
         loggerMock = module.get(ClassLogger);
         personRepositoryMock = module.get(PersonRepository);
+        emailResolverService = module.get(EmailResolverService);
 
         app = module.createNestApplication();
         await app.init();
@@ -223,6 +228,8 @@ describe('EmailEventHandler', () => {
                 fakeEmailAddress,
                 EmailAddressStatus.ENABLED,
             );
+
+            emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
         });
 
         describe('createOrEnableEmail', () => {

@@ -146,6 +146,12 @@ describe('EmailResolverService', () => {
     });
 
     it('should return true when USE_EMAIL_MICROSERVICE is true', () => {
+        const configService: ConfigService = module.get(ConfigService);
+        jest.spyOn(configService, 'getOrThrow').mockReturnValueOnce({
+            USE_EMAIL_MICROSERVICE: true,
+            ENDPOINT: 'http://email-service/',
+        });
+
         expect(sut.shouldUseEmailMicroservice()).toBe(true);
     });
 

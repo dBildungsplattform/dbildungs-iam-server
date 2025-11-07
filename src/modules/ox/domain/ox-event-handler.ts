@@ -221,6 +221,7 @@ export class OxEventHandler {
         );
         if (this.emailResolverService.shouldUseEmailMicroservice()) {
             this.logger.info(`Not enabled, ignoring event`);
+            return;
         }
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
