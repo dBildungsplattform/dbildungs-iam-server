@@ -200,7 +200,16 @@ describe('EmailMicroserviceEventHandler', () => {
                     serviceProviderExternalSystems: [],
                 },
             ],
-            removedKontexte: [],
+            removedKontexte: [
+                {
+                    id: 'pk1',
+                    rolleId: 'r1',
+                    rolle: RollenArt.LERN,
+                    orgaId: faker.string.uuid(),
+                    isItslearningOrga: false,
+                    serviceProviderExternalSystems: [],
+                },
+            ],
             newKontexte: [],
             createdAt: new Date(),
             eventID: '',
