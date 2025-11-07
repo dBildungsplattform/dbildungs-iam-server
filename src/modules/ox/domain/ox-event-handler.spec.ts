@@ -265,6 +265,24 @@ describe('OxEventHandler', () => {
         emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
     });
 
+    describe('Ignore event when new Microservice enabled', () => {
+        it('should log ignoring event', async () => {
+            jest.resetAllMocks();
+            emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+            const personId: PersonID = faker.string.uuid();
+            const rollenArtLehrPKOrgaKennung: OrganisationKennung = faker.string.numeric(7);
+            const event: PersonenkontextUpdatedEvent = getPersonenkontextUpdatedEvent(
+                personId,
+                rollenArtLehrPKOrgaKennung,
+                true,
+            );
+
+            await sut.handlePersonenkontextUpdatedEvent(event);
+            expect(loggerMock.info).toHaveBeenCalledWith(`Not enabled, ignoring event`);
+        });
+    });
+
     describe('createOxGroup', () => {
         let personId: PersonID;
         let fakeDstNr: string;

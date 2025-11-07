@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils';
@@ -23,7 +23,7 @@ describe('EmailMicroserviceEventHandler', () => {
 
     let sut: EmailMicroserviceEventHandler;
     let logger: ClassLogger;
-    let emailResolverService: EmailResolverService;
+    let emailResolverService: DeepMocked<EmailResolverService>;
     let rolleRepo: RolleRepo;
 
     beforeAll(async () => {
@@ -104,7 +104,7 @@ describe('EmailMicroserviceEventHandler', () => {
                 }),
             ],
         });
-        emailResolverService.shouldUseEmailMicroservice = jest.fn().mockReturnValueOnce(true);
+        emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
 
         jest.spyOn(rolleRepo, 'findByIds').mockResolvedValue(new Map([['r1', mockRolle]]));
 
@@ -125,11 +125,58 @@ describe('EmailMicroserviceEventHandler', () => {
             removedKontexte: [{}],
             currentKontexte: [{}],
         });
-        emailResolverService.shouldUseEmailMicroservice = jest.fn().mockReturnValueOnce(false);
+        emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
 
         await sut.handlePersonenkontextUpdatedEvent(mockEvent);
         expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Received PersonenkontextUpdatedEvent'));
         expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Ignoring Event for'));
+        expect(emailResolverService.setEmailForSpshPerson).not.toHaveBeenCalled();
+    });
+
+    it('should log and return early when no email service provider is found', async () => {
+        const mockPersonId: string = faker.string.uuid();
+        const mockRolleId: string = 'r1';
+        const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
+            person: {
+                id: mockPersonId,
+                vorname: faker.person.firstName(),
+                familienname: faker.person.lastName(),
+                username: 'testuser',
+            },
+            currentKontexte: [
+                {
+                    id: 'pk1',
+                    rolleId: mockRolleId,
+                    rolle: RollenArt.LEHR,
+                    orgaId: faker.string.uuid(),
+                    isItslearningOrga: false,
+                    serviceProviderExternalSystems: [],
+                },
+            ],
+            removedKontexte: [],
+            newKontexte: [],
+            createdAt: new Date(),
+            eventID: '',
+        });
+        const mockRolle: Rolle<true> = createMock<Rolle<true>>({
+            id: mockRolleId,
+            serviceProviderData: [
+                createMock<ServiceProvider<true>>({
+                    id: faker.string.uuid(),
+                    externalSystem: ServiceProviderSystem.NONE,
+                }),
+            ],
+        });
+
+        emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+        jest.spyOn(rolleRepo, 'findByIds').mockResolvedValue(new Map([[mockRolleId, mockRolle]]));
+
+        await sut.handlePersonenkontextUpdatedEvent(mockEvent);
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Received PersonenkontextUpdatedEvent'));
+        expect(logger.info).toHaveBeenCalledWith(
+            expect.stringContaining(`No email service provider found for personId:${mockPersonId}`),
+        );
         expect(emailResolverService.setEmailForSpshPerson).not.toHaveBeenCalled();
     });
 
