@@ -252,7 +252,7 @@ export class ProviderController {
             serviceProviderWithOrganisationRollenAndErweiterungen.serviceProvider,
             serviceProviderWithOrganisationRollenAndErweiterungen.organisation,
             serviceProviderWithOrganisationRollenAndErweiterungen.rollen,
-            rollenerweiterungenWithNames,
+            rollenerweiterungenWithNames.length > 0, //Nicht alle laden
         );
     }
 }
