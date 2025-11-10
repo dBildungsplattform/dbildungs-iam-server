@@ -114,6 +114,6 @@
     },
     "EMAIL_MICROSERVICE": {
         "USE_EMAIL_MICROSERVICE": true,
-        "ENDPOINT": "http://dbildungs-iam-server-email-backend:80/api/"
+        "ENDPOINT": "http://dbildungs-iam-server-email-backend:80/"
     }
 }

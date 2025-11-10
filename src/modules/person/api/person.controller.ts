@@ -202,8 +202,12 @@ export class PersonController {
 
         let personEmailResponse: Option<PersonEmailResponse>;
         if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(
+                `Getting PersonEmailResponse for PersonId ${personResult.value.id} using new Microservice`,
+            );
             personEmailResponse = await this.emailResolverService.findEmailBySpshPerson(personResult.value.id);
         } else {
+            this.logger.info(`Getting PersonEmailResponse for PersonId ${personResult.value.id} using old emailRepo`);
             personEmailResponse = await this.emailRepo.getEmailAddressAndStatusForPerson(personResult.value);
         }
 

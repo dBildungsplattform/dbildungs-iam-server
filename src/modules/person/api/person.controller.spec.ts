@@ -53,6 +53,7 @@ import { EmailResolverService } from '../../email-microservice/domain/email-reso
 
 describe('PersonController', () => {
     let module: TestingModule;
+    let logger: ClassLogger;
     let personController: PersonController;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let emailRepoMock: DeepMocked<EmailRepo>;
@@ -74,6 +75,10 @@ describe('PersonController', () => {
                 PersonController,
                 PersonFactory,
                 PersonApiMapper,
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
+                },
                 {
                     provide: UsernameGeneratorService,
                     useValue: createMock<UsernameGeneratorService>(),
@@ -149,6 +154,7 @@ describe('PersonController', () => {
             .overrideProvider(KeycloakUserService)
             .useValue(createMock<KeycloakUserService>())
             .compile();
+        logger = module.get(ClassLogger);
         personController = module.get(PersonController);
         personRepositoryMock = module.get(PersonRepository);
         emailRepoMock = module.get(EmailRepo);
@@ -279,6 +285,7 @@ describe('PersonController', () => {
                     throw Error();
                 }
                 expect(emailResolverService.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using old emailRepo`));
                 expect(personResponse.person.email.status).toStrictEqual(EmailAddressStatus.ENABLED);
                 expect(personResponse.person.email.address).toStrictEqual(fakeEmailAddress);
             });
@@ -301,6 +308,7 @@ describe('PersonController', () => {
                     throw Error();
                 }
                 expect(emailResolverService.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using new Microservice`));
                 expect(personResponse.person.email.status).toStrictEqual(EmailAddressStatus.ENABLED);
                 expect(personResponse.person.email.address).toStrictEqual(fakeEmailAddress);
             });

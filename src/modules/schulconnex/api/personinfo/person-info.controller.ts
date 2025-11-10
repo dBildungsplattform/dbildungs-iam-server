@@ -59,15 +59,20 @@ export class PersonInfoController {
             );
         }
 
-        const [email, kontexteWithOrgaAndRolle]: [Option<PersonEmailResponse>, Array<KontextWithOrgaAndRolle>] =
-            await Promise.all([
-                this.emailResolverService.shouldUseEmailMicroservice()
-                    ? this.emailResolverService.findEmailBySpshPerson(personId)
-                    : this.emailRepo.getEmailAddressAndStatusForPerson(person),
-                this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
-            ]);
+        let personEmailResponse: Option<PersonEmailResponse>;
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Getting PersonEmailResponse for PersonId ${personId} using new Microservice`);
+            personEmailResponse = await this.emailResolverService.findEmailBySpshPerson(personId);
+        } else {
+            this.logger.info(`Getting PersonEmailResponse for PersonId ${personId} using old emailRepo`);
+            personEmailResponse = await this.emailRepo.getEmailAddressAndStatusForPerson(person);
+        }
 
-        return PersonInfoResponse.createNew(person, kontexteWithOrgaAndRolle, email);
+        const kontexteWithOrgaAndRolle: Array<KontextWithOrgaAndRolle> = await Promise.resolve(
+            this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
+        );
+
+        return PersonInfoResponse.createNew(person, kontexteWithOrgaAndRolle, personEmailResponse);
     }
 
     @Version('1')
@@ -85,18 +90,20 @@ export class PersonInfoController {
             );
         }
 
-        const [email, kontexteWithOrgaAndRolle, userLocks]: [
-            Option<PersonEmailResponse>,
-            Array<KontextWithOrgaAndRolle>,
-            UserLock[],
-        ] = await Promise.all([
-            this.emailResolverService.shouldUseEmailMicroservice()
-                ? this.emailResolverService.findEmailBySpshPerson(personId)
-                : this.emailRepo.getEmailAddressAndStatusForPerson(person),
+        let personEmailResponse: Option<PersonEmailResponse>;
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Getting PersonEmailResponse for PersonId ${personId} using new Microservice`);
+            personEmailResponse = await this.emailResolverService.findEmailBySpshPerson(personId);
+        } else {
+            this.logger.info(`Getting PersonEmailResponse for PersonId ${personId} using old emailRepo`);
+            personEmailResponse = await this.emailRepo.getEmailAddressAndStatusForPerson(person);
+        }
+
+        const [kontexteWithOrgaAndRolle, userLocks]: [Array<KontextWithOrgaAndRolle>, UserLock[]] = await Promise.all([
             this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
             this.userLockRepo.findByPersonId(personId),
         ]);
 
-        return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle, email, userLocks);
+        return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle, personEmailResponse, userLocks);
     }
 }

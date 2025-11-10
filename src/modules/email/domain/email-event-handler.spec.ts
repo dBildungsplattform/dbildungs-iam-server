@@ -873,6 +873,30 @@ describe('EmailEventHandler', () => {
             organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>());
         });
 
+        describe('when emsilMicroservice is enabled', () => {
+            it('should not call handlePerson when microservice is disabled', async () => {
+                const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
+                    person: {
+                        id: faker.string.uuid(),
+                        vorname: faker.person.firstName(),
+                        familienname: faker.person.lastName(),
+                        username: faker.internet.userName(),
+                    },
+                    newKontexte: [{}, {}],
+                    removedKontexte: [{}],
+                    currentKontexte: [{}],
+                });
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+                await emailEventHandler.handlePersonenkontextUpdatedEvent(mockEvent);
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect.stringContaining('Received PersonenkontextUpdatedEvent'),
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Ignoring Event for'));
+                expect(emailResolverService.setEmailForSpshPerson).not.toHaveBeenCalled();
+            });
+        });
+
         describe('when email exists, person with username can be found and is enabled', () => {
             it('should log matching info', async () => {
                 mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);

@@ -5,6 +5,6 @@ import { TimestampedEntity } from '../../../../persistence/timestamped.entity.js
 export class EmailDomainEntity extends TimestampedEntity {
     @Property({ nullable: false })
     public domain!: string;
-    @Property({ nullable: false })
+    @Property({ nullable: false, columnType: 'uuid' })
     public spshServiceProviderId!: string;
 }

@@ -41,8 +41,10 @@ export class SetEmailAddressForSpshPersonService {
         );
 
         if (!emailDomain) {
-            this.logger.error(`EmailDomain with id ${params.spshServiceProviderId} not found`);
-            throw new EmailDomainNotFoundError(`EmailDomain with id ${params.spshServiceProviderId} not found`);
+            this.logger.error(`EmailDomain with spshServiceProviderId ${params.spshServiceProviderId} not found`);
+            throw new EmailDomainNotFoundError(
+                `EmailDomain with spshServiceProviderId ${params.spshServiceProviderId} not found`,
+            );
         }
         if (existingAddresses.length > 0) {
             this.logger.crit(

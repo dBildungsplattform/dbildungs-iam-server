@@ -220,7 +220,7 @@ export class OxEventHandler {
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, username:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
         if (this.emailResolverService.shouldUseEmailMicroservice()) {
-            this.logger.info(`Not enabled, ignoring event`);
+            this.logger.info(`Ignoring Event for personId:${event.person.id} because email microservice is enabled`);
             return;
         }
         if (!this.ENABLED) {

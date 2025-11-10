@@ -21,7 +21,7 @@ export class EmailResolverService {
     public async findEmailBySpshPerson(personId: string): Promise<PersonEmailResponse | undefined> {
         try {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
-                this.httpService.get(this.getEndpoint() + `read/${personId}`),
+                this.httpService.get(this.getEndpoint() + `api/read/${personId}`),
             );
             if (response.data[0] !== undefined) {
                 const status: EmailAddressStatus = this.mapStatus(response.data[0]?.status);
@@ -46,7 +46,7 @@ export class EmailResolverService {
                 `Setting email for person ${params.spshPersonId} via email microservice with spId ${params.spshServiceProviderId}`,
             );
             await lastValueFrom(
-                this.httpService.post(this.getEndpoint() + `write/set-email-for-person`, {
+                this.httpService.post(this.getEndpoint() + `api/write/set-email-for-person`, {
                     spshPersonId: params.spshPersonId,
                     firstName: params.firstName,
                     lastName: params.lastName,

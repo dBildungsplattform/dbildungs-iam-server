@@ -598,10 +598,12 @@ describe('SetEmailAddressForSpshPersonService', () => {
         };
 
         await expect(sut.setEmailAddressForSpshPerson(params)).rejects.toThrow(
-            new EmailDomainNotFoundError(`EmailDomain with id ${params.spshServiceProviderId} not found`),
+            new EmailDomainNotFoundError(
+                `EmailDomain with spshServiceProviderId ${params.spshServiceProviderId} not found`,
+            ),
         );
         expect(loggerMock.error).toHaveBeenCalledWith(
-            expect.stringContaining('EmailDomain with id missing-domain-id not found'),
+            expect.stringContaining('EmailDomain with spshServiceProviderId missing-domain-id not found'),
         );
     });
 

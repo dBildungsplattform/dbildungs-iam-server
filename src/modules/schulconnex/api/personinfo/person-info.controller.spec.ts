@@ -28,13 +28,13 @@ import { PersonInfoController } from './person-info.controller.js';
 import { PersonInfoResponse, PersonNestedInPersonInfoResponse } from './v0/person-info.response.js';
 import { PersonInfoPersonResponseV1 } from './v1/person-info-person.response.v1.js';
 import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
-import { EmailMicroserviceModule } from '../../../email-microservice/email-microservice.module.js';
 import { ConfigTestModule, DatabaseTestModule } from '../../../../../test/utils/index.js';
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 
 describe('PersonInfoController', () => {
     let module: TestingModule;
     let sut: PersonInfoController;
+    let logger: DeepMocked<ClassLogger>;
     let personRepoMock: DeepMocked<PersonRepository>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let emailRepoMock: DeepMocked<EmailRepo>;
@@ -44,11 +44,7 @@ describe('PersonInfoController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                EmailMicroserviceModule,
-                ConfigTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
-            ],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [
                 PersonInfoController,
                 {
@@ -75,15 +71,18 @@ describe('PersonInfoController', () => {
                     provide: EmailRepo,
                     useValue: createMock<EmailRepo>(),
                 },
+                {
+                    provide: EmailResolverService,
+                    useValue: createMock<EmailResolverService>(),
+                },
             ],
         })
             .overrideProvider(UserLockRepository)
             .useValue(createMock<UserLockRepository>())
-            .overrideProvider(EmailResolverService)
-            .useValue(createMock<EmailResolverService>())
             .compile();
 
         sut = module.get<PersonInfoController>(PersonInfoController);
+        logger = module.get(ClassLogger);
         personRepoMock = module.get(PersonRepository);
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         emailRepoMock = module.get(EmailRepo);
@@ -165,6 +164,7 @@ describe('PersonInfoController', () => {
                 expect(result.person).toBeInstanceOf(PersonNestedInPersonInfoResponse);
                 expect(result.person).toEqual({ ...expectedBaseNestedPersonInfo, dienststellen: [orga!.kennung] });
 
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using old emailRepo`));
                 expect(result.pid).toEqual(person?.id);
                 expect(result.personenkontexte.length).toEqual(1);
                 expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
@@ -219,6 +219,7 @@ describe('PersonInfoController', () => {
                 expect(result.person).toBeInstanceOf(PersonNestedInPersonInfoResponse);
                 expect(result.person).toEqual({ ...expectedBaseNestedPersonInfo, dienststellen: [orga!.kennung] });
 
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using new Microservice`));
                 expect(result.pid).toEqual(person?.id);
                 expect(result.personenkontexte.length).toEqual(1);
                 expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
@@ -352,7 +353,7 @@ describe('PersonInfoController', () => {
         beforeEach(() => {
             person = DoFactory.createPerson(true);
             orga = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
-            emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+            emailResolverService.shouldUseEmailMicroservice.mockReturnValue(false);
         });
         describe('when person exists', () => {
             it('should return person info for locked person with kontext at land old Repo', async () => {
@@ -391,6 +392,7 @@ describe('PersonInfoController', () => {
                 expect(result).toBeInstanceOf(PersonInfoResponseV1);
                 expect(result.person).toBeInstanceOf(PersonInfoPersonResponseV1);
 
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using old emailRepo`));
                 expect(result.pid).toEqual(person?.id);
                 expect(result.person.name.vorname).toEqual(person?.vorname);
                 expect(result.person.name.familiennamen).toEqual(person?.familienname);
@@ -440,6 +442,7 @@ describe('PersonInfoController', () => {
                 expect(result).toBeInstanceOf(PersonInfoResponseV1);
                 expect(result.person).toBeInstanceOf(PersonInfoPersonResponseV1);
 
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using new Microservice`));
                 expect(result.pid).toEqual(person?.id);
                 expect(result.person.name.vorname).toEqual(person?.vorname);
                 expect(result.person.name.familiennamen).toEqual(person?.familienname);

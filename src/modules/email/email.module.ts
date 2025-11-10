@@ -11,7 +11,6 @@ import { PersonenKontextModule } from '../personenkontext/personenkontext.module
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { EmailConfigModule } from './email-config.module.js';
 import { HttpModule } from '@nestjs/axios';
-import { EmailMicroserviceEventHandler } from '../email-microservice/domain/email-microservice-event-handler.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
 
 @Module({
@@ -27,7 +26,7 @@ import { EmailMicroserviceModule } from '../email-microservice/email-microservic
         EmailMicroserviceModule,
         LoggerModule.register(EmailModule.name),
     ],
-    providers: [EmailRepo, EmailFactory, EmailEventHandler, EmailMicroserviceEventHandler],
+    providers: [EmailRepo, EmailFactory, EmailEventHandler],
     exports: [EmailRepo],
 })
 export class EmailModule {}

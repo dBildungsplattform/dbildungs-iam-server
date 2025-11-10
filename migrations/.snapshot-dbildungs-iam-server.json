@@ -1530,12 +1530,12 @@
         },
         "spsh_service_provider_id": {
           "name": "spsh_service_provider_id",
-          "type": "varchar(255)",
+          "type": "uuid",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "mappedType": "string"
+          "mappedType": "uuid"
         }
       },
       "name": "domain",

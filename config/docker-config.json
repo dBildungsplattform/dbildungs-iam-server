@@ -136,6 +136,6 @@
     },
     "EMAIL_MICROSERVICE": {
         "USE_EMAIL_MICROSERVICE": true,
-        "ENDPOINT": "http://localhost:9091/api/"
+        "ENDPOINT": "http://localhost:9091/"
     }
 }

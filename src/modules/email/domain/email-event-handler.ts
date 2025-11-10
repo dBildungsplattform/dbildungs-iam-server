@@ -337,10 +337,13 @@ export class EmailEventHandler {
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, username:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
 
-        if (!this.emailResolverService.shouldUseEmailMicroservice()) {
-            this.logger.info(`Handle PersonenkontextUpdatedEvent in old way`);
-            await this.handlePerson(event.person.id, event.person.username, event.removedKontexte);
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Ignoring Event for personId:${event.person.id} because email microservice is enabled`);
+            return;
         }
+
+        this.logger.info(`Handle PersonenkontextUpdatedEvent in old way`);
+        await this.handlePerson(event.person.id, event.person.username, event.removedKontexte);
     }
 
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received

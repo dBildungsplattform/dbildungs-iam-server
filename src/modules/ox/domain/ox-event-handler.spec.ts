@@ -279,7 +279,9 @@ describe('OxEventHandler', () => {
             );
 
             await sut.handlePersonenkontextUpdatedEvent(event);
-            expect(loggerMock.info).toHaveBeenCalledWith(`Not enabled, ignoring event`);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Ignoring Event for personId:${personId} because email microservice is enabled`,
+            );
         });
     });
 
