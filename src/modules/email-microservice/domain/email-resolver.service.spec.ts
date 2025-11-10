@@ -177,7 +177,7 @@ describe('EmailResolverService', () => {
             lastName: 'Mustermann',
             spshServiceProviderId: faker.string.uuid(),
         };
-        const expectedUrl: string = `${mockEndpoint}write/set-email-for-person`;
+        const expectedUrl: string = `${mockEndpoint}api/write/set-email-for-person`;
 
         mockHttpService.post.mockReturnValueOnce(of({ status: 200 } as AxiosResponse));
 
