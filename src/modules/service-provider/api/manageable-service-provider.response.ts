@@ -33,6 +33,9 @@ export class ManageableServiceProviderResponse {
     @ApiProperty({ enum: ServiceProviderMerkmal, enumName: ServiceProviderMerkmalTypName, isArray: true })
     public merkmale: ServiceProviderMerkmal[];
 
+    @ApiProperty({ description: 'Can be undefined, if `target` is not equal to `URL`' })
+    public url?: string;
+
     @ApiProperty({ type: RollenerweiterungForServiceProviderResponse, isArray: true })
     public rollenerweiterungen: RollenerweiterungForServiceProviderResponse[];
 
@@ -55,6 +58,7 @@ export class ManageableServiceProviderResponse {
         this.kategorie = serviceProvider.kategorie;
         this.requires2fa = serviceProvider.requires2fa;
         this.merkmale = serviceProvider.merkmale;
+        this.url = serviceProvider.url;
         this.rollenerweiterungen = rollenerweiterungen.map(
             (re: RollenerweiterungForManageableServiceProvider) => new RollenerweiterungForServiceProviderResponse(re),
         );

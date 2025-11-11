@@ -6,6 +6,7 @@ import { EmailAddressNotFoundError } from './email-address-not-found.error.js';
 import { DomainError } from '../../../../shared/error/index.js';
 import { EmailAddressGenerationAttemptsExceededError } from './email-address-generation-attempts-exceeds.error.js';
 import { EmailServerCommunicationInternalError } from '../../../../shared/error/email-server-communication-internal.error.js';
+import { EmailCreationFailedError } from './email-creaton-failed.error.js';
 
 @Catch(EmailDomainNotFoundError, EmailAddressNotFoundError, EmailAddressGenerationAttemptsExceededError)
 export class EmailExceptionFilter implements ExceptionFilter<DomainError> {
@@ -29,6 +30,13 @@ export class EmailExceptionFilter implements ExceptionFilter<DomainError> {
             new EmailServerCommunicationInternalError({
                 code: 400,
                 emailErrorCode: 'EMAIL_ADDRESS_GENERATION_ATTEMPTS_EXCEEDED',
+            }),
+        ],
+        [
+            EmailCreationFailedError.name,
+            new EmailServerCommunicationInternalError({
+                code: 500,
+                emailErrorCode: 'UNKNOWN_ERROR',
             }),
         ],
     ]);

@@ -1,11 +1,17 @@
-import { Cursor, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
+import { Cursor, FilterQuery, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { OrganisationID, PersonID, PersonenkontextID, RolleID } from '../../../shared/types/index.js';
+import {
+    OrganisationID,
+    PersonID,
+    PersonenkontextID,
+    RolleID,
+    ServiceProviderID,
+} from '../../../shared/types/index.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
@@ -18,6 +24,7 @@ import { OrganisationEntity } from '../../organisation/persistence/organisation.
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { PersonenkontextErweitertVirtualEntity } from './personenkontext-erweitert.virtual.entity.js';
 
 export type RollenCount = { rollenart: string; count: string };
 
@@ -144,14 +151,74 @@ export class DBiamPersonenkontextRepo {
         });
     }
 
-    public async findByPersonIdsWithOrgaAndRolle(
+    public async findByPersonIdsAndServiceprovidersWithOrgaAndRolle(
         personIds: PersonID[],
+        serviceProviderIds: ServiceProviderID[],
+        permittedOrgas: PermittedOrgas,
     ): Promise<Map<PersonID, KontextWithOrgaAndRolle[]>> {
         const result: Map<PersonID, KontextWithOrgaAndRolle[]> = new Map<PersonID, KontextWithOrgaAndRolle[]>();
 
+        // Find all Personenkontexte where the serviceprovider is available through an erweiterung
+        const erweiterungFilter: FilterQuery<PersonenkontextErweitertVirtualEntity>[] = [
+            {
+                personenkontext: {
+                    personId: {
+                        $in: personIds,
+                    },
+                },
+            },
+            {
+                serviceProvider: {
+                    $in: serviceProviderIds,
+                },
+            },
+        ];
+
+        if (!permittedOrgas.all) {
+            erweiterungFilter.push({
+                personenkontext: {
+                    organisationId: {
+                        $in: permittedOrgas.orgaIds,
+                    },
+                },
+            });
+        }
+
+        const erweiterungen: PersonenkontextErweitertVirtualEntity[] = await this.em.find(
+            PersonenkontextErweitertVirtualEntity,
+            erweiterungFilter,
+        );
+
+        const filter: FilterQuery<NoInfer<PersonenkontextEntity>> = {
+            personId: { $in: personIds },
+            rolleId: {
+                serviceProvider: {
+                    serviceProvider: {
+                        $in: serviceProviderIds,
+                    },
+                },
+            },
+        };
+
+        if (!permittedOrgas.all) {
+            filter.organisationId = {
+                $in: permittedOrgas.orgaIds,
+            };
+        }
+
         const personenKontexte: PersonenkontextEntity[] = await this.em.find(
             PersonenkontextEntity,
-            { personId: { $in: personIds } },
+            {
+                $or: [
+                    {
+                        // Use found erweiterungen to fetch additional kontexte
+                        id: {
+                            $in: erweiterungen.map((e: PersonenkontextErweitertVirtualEntity) => e.personenkontext.id),
+                        },
+                    },
+                    filter,
+                ],
+            },
             {
                 populate: [
                     'organisationId',
@@ -181,6 +248,7 @@ export class DBiamPersonenkontextRepo {
 
             result.get(personId)!.push(kontext);
         }
+
         return result;
     }
 
