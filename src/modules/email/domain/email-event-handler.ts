@@ -342,7 +342,7 @@ export class EmailEventHandler {
             return;
         }
 
-        this.logger.info(`Handle PersonenkontextUpdatedEvent in old way`);
+        this.logger.debug(`Handle PersonenkontextUpdatedEvent in old way`);
         await this.handlePerson(event.person.id, event.person.username, event.removedKontexte);
     }
 

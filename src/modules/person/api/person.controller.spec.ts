@@ -286,6 +286,7 @@ describe('PersonController', () => {
                 }
                 expect(emailResolverService.shouldUseEmailMicroservice).toHaveBeenCalled();
                 expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using old emailRepo`));
+                expect(emailRepoMock.getEmailAddressAndStatusForPerson).toHaveBeenCalled();
                 expect(personResponse.person.email.status).toStrictEqual(EmailAddressStatus.ENABLED);
                 expect(personResponse.person.email.address).toStrictEqual(fakeEmailAddress);
             });
@@ -309,6 +310,7 @@ describe('PersonController', () => {
                 }
                 expect(emailResolverService.shouldUseEmailMicroservice).toHaveBeenCalled();
                 expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using new Microservice`));
+                expect(emailResolverService.findEmailBySpshPerson).toHaveBeenCalled();
                 expect(personResponse.person.email.status).toStrictEqual(EmailAddressStatus.ENABLED);
                 expect(personResponse.person.email.address).toStrictEqual(fakeEmailAddress);
             });
