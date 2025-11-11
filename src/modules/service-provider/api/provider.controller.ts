@@ -147,8 +147,8 @@ export class ProviderController {
     ): Promise<RawPagedResponse<RollenerweiterungResponse>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ROLLEN_ERWEITERN, RollenSystemRecht.ANGEBOTE_VERWALTEN],
-            true,
             false,
+            true,
         );
         if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
             throw new UnauthorizedException('NOT_AUTHORIZED');
@@ -252,7 +252,7 @@ export class ProviderController {
             serviceProviderWithOrganisationRollenAndErweiterungen.serviceProvider,
             serviceProviderWithOrganisationRollenAndErweiterungen.organisation,
             serviceProviderWithOrganisationRollenAndErweiterungen.rollen,
-            rollenerweiterungenWithNames.length > 0, //Nicht alle laden
+            rollenerweiterungenWithNames.length > 0,
         );
     }
 }
