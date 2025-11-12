@@ -11,6 +11,8 @@ import {
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RequiredExternalPkData } from '../api/authentication.controller.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { Collection } from '@mikro-orm/core';
 
 export class UserExternaldataWorkflowAggregate {
     public contextID: OXContextID;
@@ -49,7 +51,12 @@ export class UserExternaldataWorkflowAggregate {
         // Additionally If there is an data-invalidity the Endpoint still works (If throwing Errors not) and allows the Keycloak the get the data for the other Personenkontexte
         this.checkedExternalPkData = externalPkData
             .map((expk: ExternalPkData) => {
-                if (expk.kennung && expk.rollenart) {
+                if (
+                    expk.kennung &&
+                    expk.rollenart &&
+                    expk.serviceProvider &&
+                    this.hasVidisAngebotId(expk.serviceProvider)
+                ) {
                     return {
                         rollenart: expk.rollenart,
                         serviceProvider: expk.serviceProvider,
@@ -59,5 +66,9 @@ export class UserExternaldataWorkflowAggregate {
                 return undefined;
             })
             .filter((item: RequiredExternalPkData | undefined): item is RequiredExternalPkData => item !== undefined);
+    }
+
+    public hasVidisAngebotId(serviceProvider: Collection<RolleServiceProviderEntity, object>): boolean {
+        return serviceProvider.getItems().some((sp: RolleServiceProviderEntity) => !!sp.serviceProvider.vidisAngebotId);
     }
 }
