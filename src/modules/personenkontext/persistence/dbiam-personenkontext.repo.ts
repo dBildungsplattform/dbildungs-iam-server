@@ -25,12 +25,14 @@ import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { PersonenkontextErweitertVirtualEntity } from './personenkontext-erweitert.virtual.entity.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 
 export type RollenCount = { rollenart: string; count: string };
 
 export type ExternalPkData = {
     rollenart?: RollenArt;
     kennung?: string;
+    serviceProvider?: ServiceProvider<true>;
 };
 
 export type KontextWithOrgaAndRolle = {
@@ -42,7 +44,7 @@ export type KontextWithOrgaAndRolle = {
 export type ExternalPkDataLoaded = Loaded<
     PersonenkontextEntity,
     'organisationId' | 'rolleId',
-    'organisationId.kennung' | 'rolleId.rollenart',
+    'organisationId.kennung' | 'rolleId.rollenart' | 'rolleId.serviceProvider',
     never
 >;
 
@@ -372,12 +374,13 @@ export class DBiamPersonenkontextRepo {
             { personId },
             {
                 populate: ['rolleId', 'organisationId'],
-                fields: ['rolleId.rollenart', 'organisationId.kennung'],
+                fields: ['rolleId.rollenart', 'organisationId.kennung', 'rolleId.serviceProvider'],
             },
         );
         return personenkontextEntities.map((pk: ExternalPkDataLoaded) => ({
             rollenart: pk.rolleId.unwrap().rollenart,
             kennung: pk.organisationId.unwrap().kennung,
+            serviceProvider: pk.rolleId.unwrap().serviceProvider,
         }));
     }
 
