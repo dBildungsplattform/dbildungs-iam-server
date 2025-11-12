@@ -1,4 +1,4 @@
-import { Collection, Cursor, FilterQuery, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
+import { Cursor, FilterQuery, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import {
@@ -26,13 +26,14 @@ import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapp
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { PersonenkontextErweitertVirtualEntity } from './personenkontext-erweitert.virtual.entity.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 
 export type RollenCount = { rollenart: string; count: string };
 
 export type ExternalPkData = {
     rollenart?: RollenArt;
     kennung?: string;
-    serviceProvider?: Collection<RolleServiceProviderEntity>;
+    serviceProvider?: ServiceProviderEntity[];
 };
 
 export type KontextWithOrgaAndRolle = {
@@ -45,6 +46,13 @@ export type ExternalPkDataLoaded = Loaded<
     PersonenkontextEntity,
     'organisationId' | 'rolleId',
     'organisationId.kennung' | 'rolleId.rollenart' | 'rolleId.serviceProvider',
+    never
+>;
+
+export type PersonenkontextErweitertVirtualEntityLoaded = Loaded<
+    PersonenkontextErweitertVirtualEntity,
+    'serviceProvider' | 'personenkontext',
+    'serviceProvider' | 'personenkontext',
     never
 >;
 
@@ -369,6 +377,30 @@ export class DBiamPersonenkontextRepo {
     }
 
     public async findExternalPkData(personId: PersonID): Promise<ExternalPkData[]> {
+        const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = await this.em.find(
+            PersonenkontextErweitertVirtualEntity,
+            {
+                personenkontext: {
+                    personId,
+                },
+            },
+            {
+                populate: ['serviceProvider', 'personenkontext'],
+                fields: ['serviceProvider', 'personenkontext'],
+            },
+        );
+
+        const erweiterungenMap: Map<string, ServiceProviderEntity[]> = new Map<string, ServiceProviderEntity[]>();
+        for (const erweiterung of personenKontextErweiterungen) {
+            const pkId: string = erweiterung.personenkontext.unwrap().id;
+            const sp: Loaded<ServiceProviderEntity & object, never, never, never> =
+                erweiterung.serviceProvider.unwrap();
+            if (!erweiterungenMap.has(pkId)) {
+                erweiterungenMap.set(pkId, []);
+            }
+            erweiterungenMap.get(pkId)?.push(sp);
+        }
+
         const personenkontextEntities: ExternalPkDataLoaded[] = await this.em.find(
             PersonenkontextEntity,
             { personId },
@@ -377,11 +409,25 @@ export class DBiamPersonenkontextRepo {
                 fields: ['rolleId.rollenart', 'rolleId.serviceProvider', 'organisationId.kennung'],
             },
         );
-        return personenkontextEntities.map((pk: ExternalPkDataLoaded) => ({
-            rollenart: pk.rolleId.unwrap().rollenart,
-            serviceProvider: pk.rolleId.unwrap().serviceProvider,
-            kennung: pk.organisationId.unwrap().kennung,
-        }));
+
+        return personenkontextEntities.map((pk: ExternalPkDataLoaded) => {
+            const rolle: Loaded<RolleEntity & object, never, 'rollenart' | 'serviceProvider', never> =
+                pk.rolleId.unwrap();
+            const org: Loaded<OrganisationEntity & object, never, 'kennung', never> = pk.organisationId.unwrap();
+
+            const originalSp: ServiceProviderEntity[] = rolle.serviceProvider
+                .getItems()
+                .map((rsp: RolleServiceProviderEntity) => rsp.serviceProvider);
+            const extraSp: ServiceProviderEntity[] = erweiterungenMap.get(pk.id) ?? [];
+            const mergedSp: ServiceProviderEntity[] = [...originalSp, ...extraSp];
+            const uniqueSp = Array.from(new Map(mergedSp.map((sp) => [sp.id, sp])).values());
+
+            return {
+                rollenart: rolle.rollenart,
+                rolleServiceProvider: uniqueSp,
+                kennung: org.kennung,
+            };
+        });
     }
 
     public async hasSystemrechtAtOrganisation(

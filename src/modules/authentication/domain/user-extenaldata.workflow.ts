@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { OxConfig } from '../../../shared/config/ox.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { OXContextID } from '../../../shared/types/ox-ids.types.js';
 import { Person } from '../../person/domain/person.js';
@@ -9,10 +10,8 @@ import {
     DBiamPersonenkontextRepo,
     ExternalPkData,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { RequiredExternalPkData } from '../api/authentication.controller.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
-import { Collection } from '@mikro-orm/core';
 
 export class UserExternaldataWorkflowAggregate {
     public contextID: OXContextID;
@@ -68,7 +67,7 @@ export class UserExternaldataWorkflowAggregate {
             .filter((item: RequiredExternalPkData | undefined): item is RequiredExternalPkData => item !== undefined);
     }
 
-    public hasVidisAngebotId(serviceProvider: Collection<RolleServiceProviderEntity, object>): boolean {
-        return serviceProvider.getItems().some((sp: RolleServiceProviderEntity) => !!sp.serviceProvider.vidisAngebotId);
+    public hasVidisAngebotId(serviceProvider: ServiceProviderEntity[]): boolean {
+        return serviceProvider.some((sp: ServiceProviderEntity) => !!sp.vidisAngebotId);
     }
 }
