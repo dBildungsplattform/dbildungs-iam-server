@@ -52,6 +52,7 @@ export class UserExternaldataWorkflowAggregate {
                 if (expk.kennung && expk.rollenart) {
                     return {
                         rollenart: expk.rollenart,
+                        serviceProvider: expk.serviceProvider,
                         kennung: expk.kennung,
                     } satisfies RequiredExternalPkData;
                 }

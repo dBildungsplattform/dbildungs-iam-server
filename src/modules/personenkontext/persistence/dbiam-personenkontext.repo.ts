@@ -1,4 +1,4 @@
-import { Cursor, FilterQuery, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
+import { Collection, Cursor, FilterQuery, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import {
@@ -25,14 +25,14 @@ import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { PersonenkontextErweitertVirtualEntity } from './personenkontext-erweitert.virtual.entity.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 
 export type RollenCount = { rollenart: string; count: string };
 
 export type ExternalPkData = {
     rollenart?: RollenArt;
     kennung?: string;
-    serviceProvider?: ServiceProvider<true>;
+    serviceProvider?: Collection<RolleServiceProviderEntity>;
 };
 
 export type KontextWithOrgaAndRolle = {
@@ -374,13 +374,13 @@ export class DBiamPersonenkontextRepo {
             { personId },
             {
                 populate: ['rolleId', 'organisationId'],
-                fields: ['rolleId.rollenart', 'organisationId.kennung', 'rolleId.serviceProvider'],
+                fields: ['rolleId.rollenart', 'rolleId.serviceProvider', 'organisationId.kennung'],
             },
         );
         return personenkontextEntities.map((pk: ExternalPkDataLoaded) => ({
             rollenart: pk.rolleId.unwrap().rollenart,
-            kennung: pk.organisationId.unwrap().kennung,
             serviceProvider: pk.rolleId.unwrap().serviceProvider,
+            kennung: pk.organisationId.unwrap().kennung,
         }));
     }
 
