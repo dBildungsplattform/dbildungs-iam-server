@@ -420,7 +420,7 @@ export class DBiamPersonenkontextRepo {
                 .map((rsp: RolleServiceProviderEntity) => rsp.serviceProvider);
             const extraSp: ServiceProviderEntity[] = erweiterungenMap.get(pk.id) ?? [];
             const mergedSp: ServiceProviderEntity[] = [...originalSp, ...extraSp];
-            const uniqueSp = Array.from(new Map(mergedSp.map((sp) => [sp.id, sp])).values());
+            const uniqueSp: ServiceProviderEntity[] = Array.from(new Set(mergedSp));
 
             return {
                 rollenart: rolle.rollenart,
