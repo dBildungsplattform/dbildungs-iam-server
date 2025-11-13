@@ -117,6 +117,57 @@ describe('EmailMicroserviceEventHandler', () => {
         expect(emailResolverService.setEmailForSpshPerson).toHaveBeenCalledWith(params);
     });
 
+    it('should log and call emailResolverService when microservice is enabled and username is undefined (not in praxis)', async () => {
+        const mockServiceProviderId: string = faker.string.uuid();
+        const params: SetEmailParams = {
+            spshPersonId: faker.string.uuid(),
+            spshUsername: '',
+            kennungen: ['0706054'],
+            firstName: faker.person.firstName(),
+            lastName: faker.person.lastName(),
+            spshServiceProviderId: mockServiceProviderId,
+        } satisfies SetEmailAddressForSpshPersonParams;
+        const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
+            person: {
+                id: params.spshPersonId,
+                vorname: params.firstName,
+                familienname: params.lastName,
+                username: undefined,
+            },
+            currentKontexte: [
+                {
+                    id: 'pk1',
+                    rolleId: 'r1',
+                    rolle: RollenArt.LERN,
+                    orgaId: faker.string.uuid(),
+                    orgaKennung: '0706054',
+                    isItslearningOrga: false,
+                    serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
+                },
+            ],
+            removedKontexte: [],
+            newKontexte: [],
+            createdAt: new Date(),
+            eventID: '',
+        });
+        const mockRolle: Rolle<true> = createMock<Rolle<true>>({
+            id: faker.string.uuid(),
+            serviceProviderData: [
+                createMock<ServiceProvider<true>>({
+                    id: mockServiceProviderId,
+                    externalSystem: ServiceProviderSystem.EMAIL,
+                }),
+            ],
+        });
+        emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+        jest.spyOn(rolleRepo, 'findByIds').mockResolvedValue(new Map([['r1', mockRolle]]));
+
+        await sut.handlePersonenkontextUpdatedEvent(mockEvent);
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Received PersonenkontextUpdatedEvent'));
+        expect(emailResolverService.setEmailForSpshPerson).toHaveBeenCalledWith(params);
+    });
+
     it('should not call emailResolverService when microservice is disabled', async () => {
         const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
             person: {
