@@ -13,6 +13,7 @@ import { EmailAddressStatus } from '../../email/domain/email-address';
 import { PersonEmailResponse } from '../../person/api/person-email-response';
 import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailResolverService } from './email-resolver.service';
+import { SetEmailAddressForSpshPersonParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.params';
 
 type SetEmailParams = Parameters<EmailResolverService['setEmailForSpshPerson']>[0];
 
@@ -100,10 +101,12 @@ describe('EmailResolverService', () => {
     it('should send email data to microservice successfully', async () => {
         const params: SetEmailParams = {
             spshPersonId: faker.string.uuid(),
+            spshUsername: 'mmustermann',
+            kennungen: ['0706054'],
             firstName: 'Max',
             lastName: 'Mustermann',
             spshServiceProviderId: faker.string.uuid(),
-        };
+        } satisfies SetEmailAddressForSpshPersonParams;
         const mockAxiosResponse: AxiosResponse<EmailAddressResponse[]> = {
             data: [],
             status: 200,
@@ -129,10 +132,12 @@ describe('EmailResolverService', () => {
     it('should log error when microservice post call fails', async () => {
         const params: SetEmailParams = {
             spshPersonId: faker.string.uuid(),
+            spshUsername: 'mmustermann',
+            kennungen: ['0706054'],
             firstName: 'Max',
             lastName: 'Mustermann',
             spshServiceProviderId: faker.string.uuid(),
-        };
+        } satisfies SetEmailAddressForSpshPersonParams;
         const error: Error = new Error('Microservice failure');
 
         mockHttpService.post.mockImplementation(() => {
@@ -173,10 +178,12 @@ describe('EmailResolverService', () => {
         });
         const params: SetEmailParams = {
             spshPersonId: faker.string.uuid(),
+            spshUsername: 'mmustermann',
+            kennungen: ['0706054'],
             firstName: 'Max',
             lastName: 'Mustermann',
             spshServiceProviderId: faker.string.uuid(),
-        };
+        } satisfies SetEmailAddressForSpshPersonParams;
         const expectedUrl: string = `${mockEndpoint}api/write/set-email-for-person`;
 
         mockHttpService.post.mockReturnValueOnce(of({ status: 200 } as AxiosResponse));

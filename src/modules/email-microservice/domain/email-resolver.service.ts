@@ -37,7 +37,7 @@ export class EmailResolverService {
 
     public async setEmailForSpshPerson(params: {
         spshPersonId: string;
-        username: string;
+        spshUsername: string;
         kennungen: string[];
         firstName: string;
         lastName: string;
@@ -48,10 +48,11 @@ export class EmailResolverService {
             this.logger.info(
                 `Setting email for person ${params.spshPersonId} via email microservice with spId ${params.spshServiceProviderId}`,
             );
+            this.logger.info(`Params: ${JSON.stringify(params)}`);
             await lastValueFrom(
                 this.httpService.post(this.getEndpoint() + `api/write/set-email-for-person`, {
                     spshPersonId: params.spshPersonId,
-                    spshUsername: params.username,
+                    spshUsername: params.spshUsername,
                     kennungen: params.kennungen,
                     firstName: params.firstName,
                     lastName: params.lastName,

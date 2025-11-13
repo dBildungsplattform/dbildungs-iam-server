@@ -14,6 +14,7 @@ import { ServiceProviderSystem } from '../../service-provider/domain/service-pro
 import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailMicroserviceEventHandler } from './email-microservice-event-handler';
 import { EmailResolverService } from './email-resolver.service';
+import { SetEmailAddressForSpshPersonParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.params';
 
 type SetEmailParams = Parameters<EmailResolverService['setEmailForSpshPerson']>[0];
 
@@ -69,16 +70,18 @@ describe('EmailMicroserviceEventHandler', () => {
         const mockServiceProviderId: string = faker.string.uuid();
         const params: SetEmailParams = {
             spshPersonId: faker.string.uuid(),
+            spshUsername: faker.internet.userName(),
+            kennungen: ['0706054'],
             firstName: faker.person.firstName(),
             lastName: faker.person.lastName(),
             spshServiceProviderId: mockServiceProviderId,
-        };
+        } satisfies SetEmailAddressForSpshPersonParams;
         const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
             person: {
                 id: params.spshPersonId,
                 vorname: params.firstName,
                 familienname: params.lastName,
-                username: 'testuser',
+                username: params.spshUsername,
             },
             currentKontexte: [
                 {
@@ -86,6 +89,7 @@ describe('EmailMicroserviceEventHandler', () => {
                     rolleId: 'r1',
                     rolle: RollenArt.LERN,
                     orgaId: faker.string.uuid(),
+                    orgaKennung: '0706054',
                     isItslearningOrga: false,
                     serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
                 },
@@ -196,6 +200,7 @@ describe('EmailMicroserviceEventHandler', () => {
                     rolleId: 'r1',
                     rolle: RollenArt.LERN,
                     orgaId: faker.string.uuid(),
+                    orgaKennung: '0706054',
                     isItslearningOrga: false,
                     serviceProviderExternalSystems: [],
                 },
@@ -235,6 +240,8 @@ describe('EmailMicroserviceEventHandler', () => {
         await sut.handlePersonenkontextUpdatedEvent(mockEvent);
         expect(setEmailSpy).toHaveBeenCalledWith({
             spshPersonId: mockPersonId,
+            spshUsername: 'testuser',
+            kennungen: ['0706054'],
             firstName: 'Max',
             lastName: 'Mustermann',
             spshServiceProviderId: mockServiceProviderId,

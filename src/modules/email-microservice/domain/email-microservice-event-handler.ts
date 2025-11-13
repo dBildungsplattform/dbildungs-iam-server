@@ -62,7 +62,7 @@ export class EmailMicroserviceEventHandler {
 
         await this.emailResolverService.setEmailForSpshPerson({
             spshPersonId: event.person.id,
-            username: event.person.username ?? '',
+            spshUsername: event.person.username ?? '',
             kennungen: kennungen,
             firstName: event.person.vorname,
             lastName: event.person.familienname,
