@@ -48,6 +48,9 @@ export class SetEmailAddressForSpshPersonService {
                 `EmailDomain with spshServiceProviderId ${params.spshServiceProviderId} not found`,
             );
         }
+
+        const uniqueKennungen: string[] = Array.from(new Set(params.kennungen));
+
         if (existingAddresses.length > 0) {
             this.logger.crit(
                 `SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - Person already has email addresses assigned. Not implemented yet [WIP]`,
@@ -59,7 +62,7 @@ export class SetEmailAddressForSpshPersonService {
             params.lastName,
             params.spshPersonId,
             params.spshUsername,
-            params.kennungen,
+            uniqueKennungen,
             emailDomain,
             5,
         );

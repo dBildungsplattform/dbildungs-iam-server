@@ -9,6 +9,7 @@ import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/
 import { EmailMicroserviceConfig } from '../../../shared/config/email-microservice.config.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { SetEmailAddressForSpshPersonParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.params.js';
 
 @Injectable()
 export class EmailResolverService {
@@ -36,6 +37,8 @@ export class EmailResolverService {
 
     public async setEmailForSpshPerson(params: {
         spshPersonId: string;
+        username: string;
+        kennungen: string[];
         firstName: string;
         lastName: string;
         spshServiceProviderId: string;
@@ -48,10 +51,12 @@ export class EmailResolverService {
             await lastValueFrom(
                 this.httpService.post(this.getEndpoint() + `api/write/set-email-for-person`, {
                     spshPersonId: params.spshPersonId,
+                    spshUsername: params.username,
+                    kennungen: params.kennungen,
                     firstName: params.firstName,
                     lastName: params.lastName,
                     spshServiceProviderId: params.spshServiceProviderId,
-                }),
+                } satisfies SetEmailAddressForSpshPersonParams),
             );
         } catch (error) {
             this.logger.logUnknownAsError(`Failed to set email for person ${params.spshPersonId}`, error);

@@ -41,6 +41,9 @@ export class EmailMicroserviceEventHandler {
 
         //Current Kontexte can be used here because it includes also the new Kontexte
         let allKontexteForPerson: PersonenkontextEventKontextData[] = event.currentKontexte;
+        const kennungen: string[] = allKontexteForPerson
+            .map((kontext: PersonenkontextEventKontextData) => kontext.orgaKennung)
+            .filter((kennung: string | undefined): kennung is string => !!kennung);
 
         if (event.removedKontexte) {
             allKontexteForPerson = allKontexteForPerson.filter((pk: PersonenkontextEventKontextData) =>
@@ -59,6 +62,8 @@ export class EmailMicroserviceEventHandler {
 
         await this.emailResolverService.setEmailForSpshPerson({
             spshPersonId: event.person.id,
+            username: event.person.username ?? '',
+            kennungen: kennungen,
             firstName: event.person.vorname,
             lastName: event.person.familienname,
             spshServiceProviderId: emailServiceProviderId,
