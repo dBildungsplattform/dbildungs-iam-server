@@ -3,7 +3,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { HttpException, NotImplementedException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
 import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
@@ -49,12 +49,15 @@ import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 import { PersonController } from './person.controller.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
+    let logger: ClassLogger;
     let personController: PersonController;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let emailRepoMock: DeepMocked<EmailRepo>;
+    let emailResolverService: DeepMocked<EmailResolverService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let keycloakUserService: DeepMocked<KeycloakUserService>;
@@ -67,11 +70,15 @@ describe('PersonController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [
                 PersonController,
                 PersonFactory,
                 PersonApiMapper,
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
+                },
                 {
                     provide: UsernameGeneratorService,
                     useValue: createMock<UsernameGeneratorService>(),
@@ -136,11 +143,22 @@ describe('PersonController', () => {
                     provide: LdapSyncEventHandler,
                     useValue: createMock<LdapSyncEventHandler>(),
                 },
+                {
+                    provide: EmailResolverService,
+                    useValue: createMock<EmailResolverService>(),
+                },
             ],
-        }).compile();
+        })
+            .overrideProvider(EventRoutingLegacyKafkaService)
+            .useValue(createMock<EventRoutingLegacyKafkaService>())
+            .overrideProvider(KeycloakUserService)
+            .useValue(createMock<KeycloakUserService>())
+            .compile();
+        logger = module.get(ClassLogger);
         personController = module.get(PersonController);
         personRepositoryMock = module.get(PersonRepository);
         emailRepoMock = module.get(EmailRepo);
+        emailResolverService = module.get(EmailResolverService);
         personenkontextServiceMock = module.get(PersonenkontextService);
         rolleRepoMock = module.get(RolleRepo);
         personDeleteServiceMock = module.get(PersonDeleteService);
@@ -249,15 +267,14 @@ describe('PersonController', () => {
         });
 
         describe('when person has an email-address assigned', () => {
-            it('should get a person', async () => {
+            it('should get a person old Repo', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+
                 personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
                 const fakeEmailAddress: string = faker.internet.email();
-                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValue(
-                    createMock<PersonEmailResponse>({
-                        address: fakeEmailAddress,
-                        status: EmailAddressStatus.ENABLED,
-                    }),
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(
+                    new PersonEmailResponse(EmailAddressStatus.ENABLED, fakeEmailAddress),
                 );
                 const personResponse: PersonendatensatzResponse = await personController.findPersonById(
                     params,
@@ -267,6 +284,33 @@ describe('PersonController', () => {
                 if (!personResponse.person.email) {
                     throw Error();
                 }
+                expect(emailResolverService.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using old emailRepo`));
+                expect(emailRepoMock.getEmailAddressAndStatusForPerson).toHaveBeenCalled();
+                expect(personResponse.person.email.status).toStrictEqual(EmailAddressStatus.ENABLED);
+                expect(personResponse.person.email.address).toStrictEqual(fakeEmailAddress);
+            });
+
+            it('should get a person new Microservice', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+                personRepositoryMock.findById.mockResolvedValue(person);
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                const fakeEmailAddress: string = faker.internet.email();
+                emailResolverService.findEmailBySpshPerson.mockResolvedValueOnce(
+                    new PersonEmailResponse(EmailAddressStatus.ENABLED, fakeEmailAddress),
+                );
+                const personResponse: PersonendatensatzResponse = await personController.findPersonById(
+                    params,
+                    personPermissionsMock,
+                );
+
+                if (!personResponse.person.email) {
+                    throw Error();
+                }
+                expect(emailResolverService.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using new Microservice`));
+                expect(emailResolverService.findEmailBySpshPerson).toHaveBeenCalled();
                 expect(personResponse.person.email.status).toStrictEqual(EmailAddressStatus.ENABLED);
                 expect(personResponse.person.email.address).toStrictEqual(fakeEmailAddress);
             });

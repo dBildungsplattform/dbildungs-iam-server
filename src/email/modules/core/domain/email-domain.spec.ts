@@ -5,7 +5,8 @@ describe('EmailDomain', () => {
     describe('createNew', () => {
         it('should create a new EmailDomain instance with WasPersisted=false', () => {
             const domain: string = faker.internet.domainName();
-            const emailDomain: EmailDomain<false> = EmailDomain.createNew({ domain });
+            const spshServiceProviderId: string = faker.string.uuid();
+            const emailDomain: EmailDomain<false> = EmailDomain.createNew({ domain, spshServiceProviderId });
 
             expect(emailDomain).toBeInstanceOf(EmailDomain);
             expect(emailDomain.domain).toBe(domain);
@@ -21,12 +22,14 @@ describe('EmailDomain', () => {
             const createdAt: Date = faker.date.past();
             const updatedAt: Date = faker.date.past();
             const domain: string = faker.internet.domainName();
+            const spshServiceProviderId: string = faker.string.uuid();
 
             const emailDomain: EmailDomain<true> = EmailDomain.construct({
                 id,
                 createdAt,
                 updatedAt,
                 domain,
+                spshServiceProviderId,
             });
 
             expect(emailDomain).toBeInstanceOf(EmailDomain);

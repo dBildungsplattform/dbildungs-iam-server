@@ -50,7 +50,7 @@ describe('Email Write Controller', () => {
                 spshPersonId: faker.string.uuid(),
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
-                emailDomainId: faker.string.uuid(),
+                spshServiceProviderId: faker.string.uuid(),
                 kennungen: [],
                 spshUsername: faker.internet.userName(),
             };
@@ -66,7 +66,7 @@ describe('Email Write Controller', () => {
                 spshPersonId: faker.string.uuid(),
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
-                emailDomainId: faker.string.uuid(),
+                spshServiceProviderId: faker.string.uuid(),
                 kennungen: [],
                 spshUsername: faker.internet.userName(),
             };

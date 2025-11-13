@@ -20,6 +20,7 @@ import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { RedisConfig } from './redis.config.js';
 import { SystemConfig } from './system.config.js';
 import { VidisConfig } from './vidis.config.js';
+import { EmailMicroserviceConfig } from './email-microservice.config.js';
 
 export class JsonConfig {
     @ValidateNested()
@@ -101,4 +102,8 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => CronConfig)
     public readonly CRON!: CronConfig;
+
+    @ValidateNested()
+    @Type(() => EmailMicroserviceConfig)
+    public readonly EMAIL_MICROSERVICE!: EmailMicroserviceConfig;
 }
