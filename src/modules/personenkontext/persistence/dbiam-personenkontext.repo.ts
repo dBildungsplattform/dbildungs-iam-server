@@ -44,7 +44,7 @@ export type KontextWithOrgaAndRolle = {
 
 export type ExternalPkDataLoaded = Loaded<
     PersonenkontextEntity,
-    'organisationId' | 'rolleId',
+    'organisationId' | 'rolleId.serviceProvider.serviceProvider',
     'organisationId.kennung' | 'rolleId.rollenart' | 'rolleId.serviceProvider',
     never
 >;
@@ -389,6 +389,7 @@ export class DBiamPersonenkontextRepo {
                 fields: ['serviceProvider', 'personenkontext'],
             },
         );
+        console.log(`Erweiterungen: ${JSON.stringify(personenKontextErweiterungen)}`);
 
         const erweiterungenMap: Map<string, ServiceProviderEntity[]> = new Map<string, ServiceProviderEntity[]>();
         for (const erweiterung of personenKontextErweiterungen) {
@@ -405,13 +406,18 @@ export class DBiamPersonenkontextRepo {
             PersonenkontextEntity,
             { personId },
             {
-                populate: ['rolleId', 'organisationId'],
-                fields: ['rolleId.rollenart', 'rolleId.serviceProvider', 'organisationId.kennung'],
+                populate: ['rolleId.serviceProvider.serviceProvider', 'organisationId'],
+                fields: [
+                    'rolleId.rollenart',
+                    'rolleId.serviceProvider.serviceProvider.vidisAngebotId',
+                    'organisationId.kennung',
+                ],
             },
         );
+        console.log(`PkEntities: ${JSON.stringify(personenkontextEntities)}`);
 
         return personenkontextEntities.map((pk: ExternalPkDataLoaded) => {
-            const rolle: Loaded<RolleEntity & object, never, 'rollenart' | 'serviceProvider', never> =
+            const rolle: Loaded<RolleEntity & object, 'serviceProvider', 'serviceProvider' | 'rollenart', never> =
                 pk.rolleId.unwrap();
             const org: Loaded<OrganisationEntity & object, never, 'kennung', never> = pk.organisationId.unwrap();
 
@@ -424,7 +430,7 @@ export class DBiamPersonenkontextRepo {
 
             return {
                 rollenart: rolle.rollenart,
-                rolleServiceProvider: uniqueSp,
+                serviceProvider: uniqueSp,
                 kennung: org.kennung,
             };
         });
