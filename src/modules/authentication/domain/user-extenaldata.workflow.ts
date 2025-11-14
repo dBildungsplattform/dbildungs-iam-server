@@ -67,7 +67,7 @@ export class UserExternaldataWorkflowAggregate {
             .filter((item: RequiredExternalPkData | undefined): item is RequiredExternalPkData => item !== undefined);
     }
 
-    public hasVidisAngebotId(serviceProvider: ServiceProviderEntity[]): boolean {
+    private hasVidisAngebotId(serviceProvider: ServiceProviderEntity[]): boolean {
         return serviceProvider.some((sp: ServiceProviderEntity) => !!sp.vidisAngebotId);
     }
 }
