@@ -22,6 +22,7 @@ import { PersonLandesbediensteterSearchResponse } from '../api/person-landesbedi
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 describe('PersonLandesbediensteterSearchService', () => {
     let module: TestingModule;
@@ -31,6 +32,7 @@ describe('PersonLandesbediensteterSearchService', () => {
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let emailRepoMock: DeepMocked<EmailRepo>;
     let userLockRepositoryMock: DeepMocked<UserLockRepository>;
+    let emailResolverServiceMock: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -40,6 +42,7 @@ describe('PersonLandesbediensteterSearchService', () => {
                 { provide: DBiamPersonenkontextRepo, useValue: createMock<DBiamPersonenkontextRepo>() },
                 { provide: EmailRepo, useValue: createMock<EmailRepo>() },
                 { provide: UserLockRepository, useValue: createMock<UserLockRepository>() },
+                { provide: EmailResolverService, useValue: createMock<EmailResolverService>() },
             ],
         }).compile();
 
@@ -48,6 +51,7 @@ describe('PersonLandesbediensteterSearchService', () => {
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         emailRepoMock = module.get(EmailRepo);
         userLockRepositoryMock = module.get(UserLockRepository);
+        emailResolverServiceMock = module.get(EmailResolverService);
     });
 
     afterAll(async () => {
@@ -56,6 +60,7 @@ describe('PersonLandesbediensteterSearchService', () => {
 
     beforeEach(() => {
         jest.resetAllMocks();
+        emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
     });
 
     it('should be defined', () => {
