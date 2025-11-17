@@ -431,9 +431,6 @@ describe('RollenerweiterungRepo', () => {
                 factory.createNew(organisation1.id, rolle.id, serviceProvider.id),
                 factory.createNew(organisation2.id, rolle.id, serviceProvider.id),
             ];
-            for (const erweiterung of erweiterungen) {
-                // eslint-disable-next-line no-await-in-loop
-                await sut.create(erweiterung);
             await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
 
             const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderId(
@@ -453,9 +450,6 @@ describe('RollenerweiterungRepo', () => {
                 factory.createNew(organisation2.id, rolle.id, serviceProvider.id),
                 factory.createNew(organisation3.id, rolle.id, serviceProvider.id),
             ];
-            for (const erweiterung of erweiterungen) {
-                // eslint-disable-next-line no-await-in-loop
-                await sut.create(erweiterung);
             await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
 
             const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderId(
