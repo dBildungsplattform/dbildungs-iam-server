@@ -15,6 +15,7 @@ import { LandesbediensteterSearchNoPersonFoundError } from '../domain/landesbedi
 import { LandesbediensteterSearchMultiplePersonsFoundError } from '../domain/landesbediensteter-search-multiple-persons-found.error.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Err, Ok } from '../../../shared/util/result.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 @Injectable()
 export class PersonLandesbediensteterSearchService {
@@ -23,6 +24,7 @@ export class PersonLandesbediensteterSearchService {
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly userLockRepository: UserLockRepository,
         private readonly emailRepo: EmailRepo,
+        private readonly emailResolverService: EmailResolverService,
     ) {}
 
     public async findLandesbediensteter(
@@ -48,7 +50,7 @@ export class PersonLandesbediensteterSearchService {
         if (personalnummer) {
             persons = await this.personRepository.findByPersonalnummer(personalnummer.trim());
         } else if (primaryEmailAddress) {
-            persons = await this.personRepository.findByPrimaryEmailAddress(primaryEmailAddress.trim());
+            persons = await this.handleFindByPrimaryEmailAddress(primaryEmailAddress);
         } else if (username) {
             persons = await this.personRepository.findByUsername(username.trim());
         } else if (vorname && familienname) {
@@ -94,5 +96,23 @@ export class PersonLandesbediensteterSearchService {
         }
 
         return Ok(undefined);
+    }
+
+    private async handleFindByPrimaryEmailAddress(primaryEmailAddress: string): Promise<Person<true>[]> {
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            const spshPersonId: Option<string> = await this.emailResolverService.findSpshPersonIdForPrimaryAddress(
+                primaryEmailAddress.trim(),
+            );
+            if (!spshPersonId) {
+                return [];
+            }
+            const person: Option<Person<true>> = await this.personRepository.findById(spshPersonId);
+            return person ? [person] : [];
+        } else {
+            const persons: Person<true>[] = await this.personRepository.findByPrimaryEmailAddress(
+                primaryEmailAddress.trim(),
+            );
+            return persons;
+        }
     }
 }

@@ -19,7 +19,7 @@ export class EmailResolverService {
         private readonly httpService: HttpService,
     ) {}
 
-    public async findEmailBySpshPerson(personId: string): Promise<PersonEmailResponse | undefined> {
+    public async findEmailBySpshPerson(personId: string): Promise<Option<PersonEmailResponse>> {
         try {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
                 this.httpService.get(this.getEndpoint() + `api/read/${personId}`),
@@ -31,6 +31,21 @@ export class EmailResolverService {
             return undefined;
         } catch (error) {
             this.logger.logUnknownAsError(`Failed to fetch email for person ${personId}`, error);
+            return undefined;
+        }
+    }
+
+    public async findSpshPersonIdForPrimaryAddress(emailAddress: string): Promise<Option<string>> {
+        try {
+            const response: AxiosResponse<Option<EmailAddressResponse>> = await lastValueFrom(
+                this.httpService.get(this.getEndpoint() + `api/read/email/${emailAddress}`),
+            );
+            if (response.data !== undefined && response.data?.spshPersonId && response.data.isPrimary) {
+                return response.data.spshPersonId;
+            }
+            return undefined;
+        } catch (error) {
+            this.logger.logUnknownAsError(`Failed to fetch email for address ${emailAddress}`, error);
             return undefined;
         }
     }

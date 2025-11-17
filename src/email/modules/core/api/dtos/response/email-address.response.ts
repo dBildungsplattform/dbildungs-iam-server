@@ -19,6 +19,9 @@ export class EmailAddressResponse {
     @ApiProperty()
     public status: EmailAddressStatusEnum;
 
+    @ApiProperty()
+    public isPrimary: boolean;
+
     @ApiProperty({ required: false })
     public spshPersonId?: string;
 
@@ -28,6 +31,6 @@ export class EmailAddressResponse {
         this.updatedAt = emailAddress.updatedAt;
         this.address = emailAddress.address;
         this.status = latestStatus.status;
-        this.spshPersonId = emailAddress.spshPersonId;
+        this.isPrimary = emailAddress.priority === 0;
     }
 }
