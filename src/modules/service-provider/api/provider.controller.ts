@@ -132,14 +132,14 @@ export class ProviderController {
     }
 
     @Get(':angebotId/rollenerweiterung')
-    @ApiOperation({ description: 'Get service-providers the logged-in user is allowed to manage.' })
-    @ApiOkResponsePaginated(ManageableServiceProviderListEntryResponse, {
+    @ApiOperation({ description: 'Get rollenerweiterungen for service-provider with provided id.' })
+    @ApiOkResponsePaginated(RollenerweiterungResponse, {
         description:
-            'The service providers were successfully returned. WARNING: This endpoint returns all service providers as default when no paging parameters were set.',
+            'The rollenerweiterungen were successfully returned. WARNING: This endpoint returns all rollenerweiterungen of the service-provider as default when no paging parameters were set.',
     })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get rollenerweiterungen.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollenerweiterungen.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rollenerweiterungen.' })
     public async findRollenerweiterungenByServiceProviderId(
         @Permissions() permissions: PersonPermissions,
         @Param() pathParams: RollenerweiterungByServiceProvidersIdPathParams,
