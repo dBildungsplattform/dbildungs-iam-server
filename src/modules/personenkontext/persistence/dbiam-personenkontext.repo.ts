@@ -386,10 +386,9 @@ export class DBiamPersonenkontextRepo {
             },
             {
                 populate: ['serviceProvider', 'personenkontext'],
-                fields: ['serviceProvider', 'personenkontext'],
+                exclude: ['serviceProvider.logo', 'serviceProvider.logoMimeType'],
             },
         );
-        console.log(`Erweiterungen: ${JSON.stringify(personenKontextErweiterungen)}`);
 
         const erweiterungenMap: Map<string, ServiceProviderEntity[]> = new Map<string, ServiceProviderEntity[]>();
         for (const erweiterung of personenKontextErweiterungen) {
@@ -407,18 +406,20 @@ export class DBiamPersonenkontextRepo {
             { personId },
             {
                 populate: ['rolleId.serviceProvider.serviceProvider', 'organisationId'],
-                fields: [
-                    'rolleId.rollenart',
-                    'rolleId.serviceProvider.serviceProvider.vidisAngebotId',
-                    'organisationId.kennung',
+                exclude: [
+                    'rolleId.serviceProvider.serviceProvider.logo',
+                    'rolleId.serviceProvider.serviceProvider.logoMimeType',
                 ],
             },
         );
-        console.log(`PkEntities: ${JSON.stringify(personenkontextEntities)}`);
 
         return personenkontextEntities.map((pk: ExternalPkDataLoaded) => {
-            const rolle: Loaded<RolleEntity & object, 'serviceProvider', 'serviceProvider' | 'rollenart', never> =
-                pk.rolleId.unwrap();
+            const rolle: Loaded<
+                RolleEntity & object,
+                'serviceProvider.serviceProvider',
+                'rollenart' | 'serviceProvider',
+                never
+            > = pk.rolleId.unwrap();
             const org: Loaded<OrganisationEntity & object, never, 'kennung', never> = pk.organisationId.unwrap();
 
             const originalSp: ServiceProviderEntity[] = rolle.serviceProvider
