@@ -20,6 +20,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { HttpException } from '@nestjs/common';
 import { KeycloakInternalController } from './keycloakinternal.controller.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 
 describe('KeycloakInternalController', () => {
     let module: TestingModule;
@@ -83,14 +84,17 @@ describe('KeycloakInternalController', () => {
                 {
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
+                    serviceProvider: [createMock<ServiceProviderEntity>({ vidisAngebotId: faker.string.uuid() })],
                 },
                 {
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
+                    serviceProvider: [createMock<ServiceProviderEntity>({ vidisAngebotId: faker.string.uuid() })],
                 },
                 {
                     rollenart: RollenArt.LEHR,
                     kennung: undefined, //To Be Filtered Out
+                    serviceProvider: [],
                 },
             ];
 
