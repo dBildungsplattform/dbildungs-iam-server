@@ -456,7 +456,7 @@ describe('RollenerweiterungRepo', () => {
             for (const erweiterung of erweiterungen) {
                 // eslint-disable-next-line no-await-in-loop
                 await sut.create(erweiterung);
-            }
+            await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
 
             const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderId(
                 serviceProvider.id,
