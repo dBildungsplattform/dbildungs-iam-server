@@ -110,6 +110,17 @@ describe('UserExternaldataWorkflow', () => {
                         }),
                     ],
                 },
+                {
+                    rollenart: RollenArt.LEHR,
+                    kennung: '7654321',
+                    serviceProvider: [
+                        createMock<ServiceProviderEntity>({
+                            id: faker.string.uuid(),
+                            name: 'ServiceProvider A',
+                            vidisAngebotId: undefined,
+                        }),
+                    ],
+                },
             ];
 
             personRepositoryMock.findById.mockResolvedValue(person);
