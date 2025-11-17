@@ -38,12 +38,16 @@ export class EmailMicroserviceEventHandler {
             this.logger.info(`Ignoring Event for personId:${event.person.id} because email microservice is disabled`);
             return;
         }
+        if (!event.person.username) {
+            throw new Error(`Person with id:${event.person.id} has no username, cannot resolve email.`);
+        }
 
         //Current Kontexte can be used here because it includes also the new Kontexte
         let allKontexteForPerson: PersonenkontextEventKontextData[] = event.currentKontexte;
         const kennungen: string[] = allKontexteForPerson
             .map((kontext: PersonenkontextEventKontextData) => kontext.orgaKennung)
             .filter((kennung: string | undefined): kennung is string => !!kennung);
+        const uniqueKennungen: string[] = Array.from(new Set(kennungen));
 
         if (event.removedKontexte) {
             allKontexteForPerson = allKontexteForPerson.filter((pk: PersonenkontextEventKontextData) =>
@@ -63,7 +67,7 @@ export class EmailMicroserviceEventHandler {
         await this.emailResolverService.setEmailForSpshPerson({
             spshPersonId: event.person.id,
             spshUsername: event.person.username ?? '',
-            kennungen: kennungen,
+            kennungen: uniqueKennungen,
             firstName: event.person.vorname,
             lastName: event.person.familienname,
             spshServiceProviderId: emailServiceProviderId,

@@ -163,9 +163,11 @@ describe('EmailMicroserviceEventHandler', () => {
 
         jest.spyOn(rolleRepo, 'findByIds').mockResolvedValue(new Map([['r1', mockRolle]]));
 
-        await sut.handlePersonenkontextUpdatedEvent(mockEvent);
+        await expect(sut.handlePersonenkontextUpdatedEvent(mockEvent)).rejects.toThrow(
+            `Person with id:${params.spshPersonId} has no username, cannot resolve email.`,
+        );
         expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Received PersonenkontextUpdatedEvent'));
-        expect(emailResolverService.setEmailForSpshPerson).toHaveBeenCalledWith(params);
+        expect(emailResolverService.setEmailForSpshPerson).not.toHaveBeenCalled();
     });
 
     it('should not call emailResolverService when microservice is disabled', async () => {
