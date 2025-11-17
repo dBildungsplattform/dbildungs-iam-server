@@ -1,5 +1,6 @@
 import { CronConfig } from './cron.config.js';
 import { DbConfig } from './db.config.js';
+import { EmailMicroserviceConfig } from './email-microservice.config.js';
 import { FeatureFlagConfig } from './featureflag.config.js';
 import { FrontendConfig } from './frontend.config.js';
 import { HeaderApiKeyConfig } from './headerapikey.config.js';
@@ -35,6 +36,7 @@ export type Config = {
     KAFKA: Partial<KafkaConfig>;
     PORTAL: Partial<PortalConfig>;
     CRON: Partial<CronConfig>;
+    EMAIL_MICROSERVICE: Partial<EmailMicroserviceConfig>;
 };
 
 export default (): Config => ({
@@ -151,5 +153,9 @@ export default (): Config => ({
     CRON: {
         PERSON_WITHOUT_ORG_LIMIT: envToOptionalInteger('CRON_PERSON_WITHOUT_ORG_LIMIT'),
         EMAIL_ADDRESSES_DELETE_LIMIT: envToOptionalInteger('CRON_EMAIL_ADDRESSES_DELETE_LIMIT'),
+    },
+    EMAIL_MICROSERVICE: {
+        USE_EMAIL_MICROSERVICE: envToOptionalBoolean('EMAIL_MICROSERVICE__USE_EMAIL_MICROSERVICE'),
+        ENDPOINT: process.env['EMAIL_MICROSERVICE__ENDPOINT'],
     },
 });

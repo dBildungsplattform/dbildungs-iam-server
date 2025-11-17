@@ -137,6 +137,10 @@ describe('configloader', () => {
                     PERSON_WITHOUT_ORG_LIMIT: 30,
                     EMAIL_ADDRESSES_DELETE_LIMIT: 10,
                 },
+                EMAIL_MICROSERVICE: {
+                    USE_EMAIL_MICROSERVICE: false,
+                    ENDPOINT: 'http://localhost:9091/',
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -312,6 +316,10 @@ describe('configloader', () => {
                 CRON: {
                     PERSON_WITHOUT_ORG_LIMIT: 30,
                     EMAIL_ADDRESSES_DELETE_LIMIT: 10,
+                },
+                EMAIL_MICROSERVICE: {
+                    USE_EMAIL_MICROSERVICE: false,
+                    ENDPOINT: 'http://localhost:9091/',
                 },
             };
 
