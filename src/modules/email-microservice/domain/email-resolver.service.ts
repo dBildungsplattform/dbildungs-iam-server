@@ -40,7 +40,12 @@ export class EmailResolverService {
             const response: AxiosResponse<Option<EmailAddressResponse>> = await lastValueFrom(
                 this.httpService.get(this.getEndpoint() + `api/read/email/${emailAddress}`),
             );
-            if (response.data !== undefined && response.data?.spshPersonId && response.data.isPrimary) {
+            if (
+                response.status === 200 &&
+                response.data !== undefined &&
+                response.data?.spshPersonId &&
+                response.data.isPrimary
+            ) {
                 return response.data.spshPersonId;
             }
             return undefined;
