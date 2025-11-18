@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createMock } from '@golevelup/ts-jest';
-import { EntityManager, MikroORM } from '@mikro-orm/core';
+import { DeepPartial, EntityManager, EntityName, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import {
@@ -47,6 +47,7 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextErweitertVirtualEntity } from './personenkontext-erweitert.virtual.entity.js';
 
 describe('dbiam Personenkontext Repo', () => {
@@ -353,6 +354,7 @@ describe('dbiam Personenkontext Repo', () => {
             ).not.toEqual(-1);
         });
 
+        // This extra test is for the line coverage of the mapping from RolleServiceProviderEntity to ServiceProviderEntity
         it('should find relevant external personenkontext data including original and extra serviceProvider', async () => {
             const person: Person<true> = await createPerson();
             const organisationA: Organisation<true> = await organisationRepository.save(
@@ -384,45 +386,50 @@ describe('dbiam Personenkontext Repo', () => {
             );
 
             // Mock the ORM response for rolle.serviceProvider.getItems()
-            const mockServiceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
-            );
-            const mockRolleServiceProviderEntity: RolleServiceProviderEntity = {
-                serviceProvider: mockServiceProvider,
-            } as unknown as RolleServiceProviderEntity;
-
-            // Spy on the entity manager find to inject mocked relation
-            jest.spyOn(sut['em'], 'find').mockImplementation(async (entityClass: any) => {
-                if (entityClass.name === 'PersonenkontextEntity') {
-                    return [
-                        {
-                            id: 'pk-123',
-                            rolleId: {
-                                unwrap: () => ({
-                                    rollenart: rolleA.rollenart,
-                                    serviceProvider: {
-                                        getItems: () => [mockRolleServiceProviderEntity], // <-- triggers .map()
-                                    },
-                                }),
-                            },
-                            organisationId: {
-                                unwrap: () => ({ kennung: organisationA.kennung }),
-                            },
-                        },
-                    ] as unknown as ExternalPkData[];
-                }
-
-                if (entityClass.name === 'PersonenkontextErweitertVirtualEntity') {
-                    return [
-                        {
-                            personenkontext: { unwrap: () => ({ id: 'pk-123' }) },
-                            serviceProvider: { unwrap: () => spExtra }, // extra SP
-                        },
-                    ] as unknown as PersonenkontextErweitertVirtualEntity[];
-                }
-
-                return [];
+            const mockServiceProvider: DeepPartial<ServiceProviderEntity> = createMock<
+                DeepPartial<ServiceProviderEntity>
+            >({
+                id: faker.string.uuid(),
+                name: 'Mocked Service Provider',
+                vidisAngebotId: faker.string.uuid(),
             });
+            const mockRolleServiceProviderEntity: RolleServiceProviderEntity = createMock<RolleServiceProviderEntity>({
+                serviceProvider: mockServiceProvider,
+            });
+
+            const findSpy: jest.SpyInstance = jest
+                .spyOn(sut['em'], 'find')
+                .mockImplementation(<T>(entityClass: EntityName<T>) => {
+                    if (entityClass === PersonenkontextEntity) {
+                        return Promise.resolve([
+                            {
+                                id: 'pk-123',
+                                rolleId: {
+                                    unwrap: () => ({
+                                        rollenart: rolleA.rollenart,
+                                        serviceProvider: {
+                                            getItems: () => [mockRolleServiceProviderEntity],
+                                        },
+                                    }),
+                                },
+                                organisationId: {
+                                    unwrap: () => ({ kennung: organisationA.kennung }),
+                                },
+                            },
+                        ]);
+                    }
+
+                    if (entityClass === PersonenkontextErweitertVirtualEntity) {
+                        return Promise.resolve([
+                            {
+                                personenkontext: { unwrap: () => ({ id: 'pk-123' }) },
+                                serviceProvider: { unwrap: () => spExtra },
+                            },
+                        ]);
+                    }
+
+                    return Promise.resolve([]);
+                });
 
             const result: ExternalPkData[] = await sut.findExternalPkData(person.id);
 
@@ -431,10 +438,11 @@ describe('dbiam Personenkontext Repo', () => {
             expect(pkData?.rollenart).toEqual(rolleA.rollenart);
             expect(pkData?.kennung).toEqual(organisationA.kennung);
 
-            // Assert both service providers are present
             const spIds: string[] | undefined = pkData?.serviceProvider?.map((sp: ServiceProviderEntity) => sp.id);
             expect(spIds).toContain(mockServiceProvider.id); // from mocked RolleServiceProviderEntity
-            expect(spIds).toContain(spExtra.id); // from Rollenerweiterung
+            expect(spIds).toContain(spExtra.id); // from mocked Rollenerweiterung
+
+            findSpy.mockRestore();
         });
     });
 
