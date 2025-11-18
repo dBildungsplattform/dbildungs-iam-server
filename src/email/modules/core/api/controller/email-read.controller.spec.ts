@@ -7,10 +7,15 @@ import { EmailAddressResponse } from '../dtos/response/email-address.response.js
 import { EmailReadController } from './email-read.controller.js';
 import { APP_PIPE } from '@nestjs/core';
 import { GlobalValidationPipe } from '../../../../../shared/validation/global-validation.pipe.js';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    LoggingTestModule,
+} from '../../../../../../test/utils/index.js';
 import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
 import { EmailAddressStatus } from '../../domain/email-address-status.js';
 import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
+import { EmailOxModule } from '../../../ox/email-ox.module.js';
 
 describe('EmailReadController', () => {
     let emailReadController: EmailReadController;
@@ -18,7 +23,7 @@ describe('EmailReadController', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [LoggingTestModule],
+            imports: [LoggingTestModule, EmailOxModule, ConfigTestModule],
             providers: [
                 {
                     provide: APP_PIPE,
@@ -49,6 +54,7 @@ describe('EmailReadController', () => {
                     id: faker.string.uuid(),
                     address: 'test@example.com',
                     priority: 0,
+                    externalId: faker.string.uuid(),
                     spshPersonId,
                     oxUserCounter: undefined,
                     markedForCron: undefined,
@@ -88,6 +94,7 @@ describe('EmailReadController', () => {
                     id: faker.string.uuid(),
                     address: 'multi-status@example.com',
                     priority: 0,
+                    externalId: faker.string.uuid(),
                     spshPersonId,
                     oxUserCounter: undefined,
                     markedForCron: undefined,
@@ -141,6 +148,7 @@ describe('EmailReadController', () => {
                     id: faker.string.uuid(),
                     address: 'no-status@example.com',
                     priority: 0,
+                    externalId: faker.string.uuid(),
                     spshPersonId,
                     oxUserCounter: undefined,
                     markedForCron: undefined,
@@ -166,6 +174,7 @@ describe('EmailReadController', () => {
                     id: faker.string.uuid(),
                     address: 'undefined-status@example.com',
                     priority: 0,
+                    externalId: faker.string.uuid(),
                     spshPersonId,
                     oxUserCounter: undefined,
                     markedForCron: undefined,

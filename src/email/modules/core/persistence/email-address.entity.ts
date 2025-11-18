@@ -14,11 +14,11 @@ export class EmailAddrEntity extends TimestampedEntity {
     @Property({ nullable: true })
     public oxUserCounter?: string;
 
-    @Property({ nullable: true })
+    @Property({ nullable: false })
     @Index({
         name: 'email_address_spsh_external_id_index',
     })
-    public externalId?: string; //used as ox username and ldap uid --> spshusername for all existing (stable, doesnt event change on rename) and spshpersonId for all new
+    public externalId!: string; //used as ox username and ldap uid --> spshusername for all existing (stable, doesnt event change on rename) and spshpersonId for all new
 
     @Property({ nullable: true })
     @Index({

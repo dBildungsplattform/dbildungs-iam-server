@@ -15,6 +15,7 @@ import { Public } from '../../decorator/public.decorator.js';
 import { AddressWithStatusesDescDto } from '../dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 import { EmailAddressStatus } from '../../domain/email-address-status.js';
 import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
+import { OxService } from '../../../ox/domain/ox.service.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
@@ -24,6 +25,7 @@ export class EmailReadController {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly emailAddressRepo: EmailAddressRepo,
+        private readonly oxService: OxService,
     ) {}
 
     @Get(':spshPersonId')
@@ -53,7 +55,7 @@ export class EmailReadController {
             .map((address: AddressWithStatusesDescDto) => {
                 const status: EmailAddressStatus<true> | undefined = address.statuses.at(0);
                 if (status) {
-                    return new EmailAddressResponse(address.emailAddress, status);
+                    return new EmailAddressResponse(address.emailAddress, status, this.oxService.contextID);
                 }
                 return undefined;
             })

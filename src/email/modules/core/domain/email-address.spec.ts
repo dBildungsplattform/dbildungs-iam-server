@@ -7,6 +7,7 @@ describe('EmailAddress', () => {
             const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
                 address: faker.internet.email(),
                 priority: 1,
+                externalId: faker.string.uuid(),
                 spshPersonId: undefined,
                 oxUserCounter: undefined,
                 markedForCron: undefined,
@@ -30,6 +31,7 @@ describe('EmailAddress', () => {
                 updatedAt: updatedAt,
                 address: faker.internet.email(),
                 priority: 1,
+                externalId: faker.string.uuid(),
                 spshPersonId: undefined,
                 oxUserCounter: undefined,
                 markedForCron: undefined,
