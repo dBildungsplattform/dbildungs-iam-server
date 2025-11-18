@@ -36,14 +36,21 @@ export class SetEmailAddressForSpshPersonService {
         this.logger.info(`SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - Request Received`);
         const existingAddresses: EmailAddress<true>[] =
             await this.emailAddressRepo.findBySpshPersonIdSortedByPriorityAsc(params.spshPersonId);
-        const emailDomain: Option<EmailDomain<true>> = await this.emailDomainRepo.findById(params.emailDomainId);
+        const emailDomain: Option<EmailDomain<true>> = await this.emailDomainRepo.findBySpshServiceProviderId(
+            params.spshServiceProviderId,
+        );
 
         if (!emailDomain) {
             this.logger.error(
-                `SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - EmailDomain with id ${params.emailDomainId} not found`,
+                `SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - EmailDomain with spshServiceProviderId ${params.spshServiceProviderId} not found`,
             );
-            throw new EmailDomainNotFoundError(`EmailDomain with id ${params.emailDomainId} not found`);
+            throw new EmailDomainNotFoundError(
+                `EmailDomain with spshServiceProviderId ${params.spshServiceProviderId} not found`,
+            );
         }
+
+        const uniqueKennungen: string[] = Array.from(new Set(params.kennungen));
+
         if (existingAddresses.length > 0) {
             this.logger.crit(
                 `SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - Person already has email addresses assigned. Not implemented yet [WIP]`,
@@ -55,7 +62,7 @@ export class SetEmailAddressForSpshPersonService {
             params.lastName,
             params.spshPersonId,
             params.spshUsername,
-            params.kennungen,
+            uniqueKennungen,
             emailDomain,
             5,
         );

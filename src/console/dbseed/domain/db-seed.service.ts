@@ -244,6 +244,7 @@ export class DbSeedService {
         for (const file of files) {
             const emailDomain: EmailDomain<false> = EmailDomain.createNew({
                 domain: file.domain,
+                spshServiceProviderId: file.spshServiceProviderId,
             });
             emailDomain.id = file.overrideId;
 

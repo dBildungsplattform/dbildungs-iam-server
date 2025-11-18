@@ -50,7 +50,6 @@ import { AuthenticationExceptionFilter } from '../../authentication/api/authenti
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PermittedOrgas, PersonFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
@@ -83,6 +82,8 @@ import { KafkaPersonLdapSyncEvent } from '../../../shared/events/kafka-person-ld
 import { PersonLandesbediensteterSearchQueryParams } from './person-landesbediensteter-search-query.param.js';
 import { PersonLandesbediensteterSearchResponse } from './person-landesbediensteter-search.response.js';
 import { PersonLandesbediensteterSearchService } from '../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -93,8 +94,9 @@ export class PersonController {
     public readonly ROOT_ORGANISATION_ID: string;
 
     public constructor(
-        private readonly personRepository: PersonRepository,
         private readonly emailRepo: EmailRepo,
+        private readonly personRepository: PersonRepository,
+        private readonly emailResolverService: EmailResolverService,
         private readonly personenkontextService: PersonenkontextService,
         private readonly personDeleteService: PersonDeleteService,
         private readonly personLandesbediensteterSearchService: PersonLandesbediensteterSearchService,
@@ -198,14 +200,21 @@ export class PersonController {
             );
         }
 
-        const personEmailResponse: Option<PersonEmailResponse> = await this.emailRepo.getEmailAddressAndStatusForPerson(
-            personResult.value,
-        );
+        let personEmailResponse: Option<PersonEmailResponse>;
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(
+                `Getting PersonEmailResponse for PersonId ${personResult.value.id} using new Microservice`,
+            );
+            personEmailResponse = await this.emailResolverService.findEmailBySpshPerson(personResult.value.id);
+        } else {
+            this.logger.info(`Getting PersonEmailResponse for PersonId ${personResult.value.id} using old emailRepo`);
+            personEmailResponse = await this.emailRepo.getEmailAddressAndStatusForPerson(personResult.value);
+        }
 
         const response: PersonendatensatzResponse = new PersonendatensatzResponse(
             personResult.value,
             false,
-            personEmailResponse ?? undefined,
+            personEmailResponse,
         );
 
         return response;
