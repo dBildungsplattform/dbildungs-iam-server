@@ -46,6 +46,8 @@ import { PersonenkontextScope } from './personenkontext.scope.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
+import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { PersonenkontextErweitertVirtualEntity } from './personenkontext-erweitert.virtual.entity.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -349,6 +351,90 @@ describe('dbiam Personenkontext Repo', () => {
                         expk.serviceProvider?.find((sp: ServiceProviderEntity) => sp.id === serviceprovider.id)?.id,
                 ),
             ).not.toEqual(-1);
+        });
+
+        it('should find relevant external personenkontext data including original and extra serviceProvider', async () => {
+            const person: Person<true> = await createPerson();
+            const organisationA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    rolleId: rolleA.id,
+                    organisationId: organisationA.id,
+                }),
+            );
+
+            // Extra service provider via Rollenerweiterung
+            const spExtra: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleA.id,
+                    organisationId: organisationA.id,
+                    serviceProviderId: spExtra.id,
+                }),
+            );
+
+            // Mock the ORM response for rolle.serviceProvider.getItems()
+            const mockServiceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const mockRolleServiceProviderEntity: RolleServiceProviderEntity = {
+                serviceProvider: mockServiceProvider,
+            } as unknown as RolleServiceProviderEntity;
+
+            // Spy on the entity manager find to inject mocked relation
+            jest.spyOn(sut['em'], 'find').mockImplementation(async (entityClass: any) => {
+                if (entityClass.name === 'PersonenkontextEntity') {
+                    return [
+                        {
+                            id: 'pk-123',
+                            rolleId: {
+                                unwrap: () => ({
+                                    rollenart: rolleA.rollenart,
+                                    serviceProvider: {
+                                        getItems: () => [mockRolleServiceProviderEntity], // <-- triggers .map()
+                                    },
+                                }),
+                            },
+                            organisationId: {
+                                unwrap: () => ({ kennung: organisationA.kennung }),
+                            },
+                        },
+                    ] as unknown as ExternalPkData[];
+                }
+
+                if (entityClass.name === 'PersonenkontextErweitertVirtualEntity') {
+                    return [
+                        {
+                            personenkontext: { unwrap: () => ({ id: 'pk-123' }) },
+                            serviceProvider: { unwrap: () => spExtra }, // extra SP
+                        },
+                    ] as unknown as PersonenkontextErweitertVirtualEntity[];
+                }
+
+                return [];
+            });
+
+            const result: ExternalPkData[] = await sut.findExternalPkData(person.id);
+
+            expect(result.length).toEqual(1);
+            const pkData: ExternalPkData | undefined = result[0];
+            expect(pkData?.rollenart).toEqual(rolleA.rollenart);
+            expect(pkData?.kennung).toEqual(organisationA.kennung);
+
+            // Assert both service providers are present
+            const spIds: string[] | undefined = pkData?.serviceProvider?.map((sp: ServiceProviderEntity) => sp.id);
+            expect(spIds).toContain(mockServiceProvider.id); // from mocked RolleServiceProviderEntity
+            expect(spIds).toContain(spExtra.id); // from Rollenerweiterung
         });
     });
 
