@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, StreamableFile, UseFilters } from '@nestjs/common';
+import { Controller, Get, Param, Query, StreamableFile, UnauthorizedException, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -19,7 +19,7 @@ import { ApiOkResponsePaginated, RawPagedResponse } from '../../../shared/paging
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
@@ -33,6 +33,12 @@ import { ManageableServiceProviderListEntryResponse } from './manageable-service
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
+import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweiterung-by-service-provider-id.pathparams.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RollenerweiterungResponse } from '../../rolle/api/rollenerweiterung.response.js';
+import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
@@ -44,6 +50,7 @@ export class ProviderController {
         private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderService: ServiceProviderService,
+        private readonly rollenerweiterungRepo: RollenerweiterungRepo,
     ) {}
 
     @Get('all')
@@ -122,6 +129,48 @@ export class ProviderController {
         });
 
         return logoFile;
+    }
+
+    @Get(':angebotId/rollenerweiterung')
+    @ApiOperation({ description: 'Get rollenerweiterungen for service-provider with provided id.' })
+    @ApiOkResponsePaginated(RollenerweiterungResponse, {
+        description:
+            'The rollenerweiterungen were successfully returned. WARNING: This endpoint returns all rollenerweiterungen of the service-provider as default when no paging parameters were set.',
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get rollenerweiterungen.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollenerweiterungen.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rollenerweiterungen.' })
+    public async findRollenerweiterungenByServiceProviderId(
+        @Permissions() permissions: PersonPermissions,
+        @Param() pathParams: RollenerweiterungByServiceProvidersIdPathParams,
+        @Query() queryParams: RollenerweiterungByServiceProvidersIdQueryParams,
+    ): Promise<RawPagedResponse<RollenerweiterungResponse>> {
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ROLLEN_ERWEITERN, RollenSystemRecht.ANGEBOTE_VERWALTEN],
+            false,
+            true,
+        );
+        if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
+            throw new UnauthorizedException('NOT_AUTHORIZED');
+        }
+
+        const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
+            await this.rollenerweiterungRepo.findByServiceProviderId(
+                pathParams.angebotId,
+                queryParams.offset,
+                queryParams.limit,
+            );
+
+        const rollenerweiterungResponses: RollenerweiterungResponse[] = rollenerweiterungen.map(
+            (re: Rollenerweiterung<true>) => new RollenerweiterungResponse(re),
+        );
+
+        return new RawPagedResponse({
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? total,
+            total,
+            items: rollenerweiterungResponses,
+        });
     }
 
     @Get('manageable')
@@ -203,7 +252,7 @@ export class ProviderController {
             serviceProviderWithOrganisationRollenAndErweiterungen.serviceProvider,
             serviceProviderWithOrganisationRollenAndErweiterungen.organisation,
             serviceProviderWithOrganisationRollenAndErweiterungen.rollen,
-            rollenerweiterungenWithNames,
+            rollenerweiterungenWithNames.length > 0,
         );
     }
 }

@@ -393,4 +393,73 @@ describe('RollenerweiterungRepo', () => {
             });
         });
     });
+
+    describe('findByServiceProviderId', () => {
+        let organisation1: Organisation<true>;
+        let organisation2: Organisation<true>;
+        let organisation3: Organisation<true>;
+        let rolle: Rolle<true>;
+        let serviceProvider: ServiceProvider<true>;
+
+        beforeEach(async () => {
+            organisation1 = await organisationRepo.save(DoFactory.createOrganisation(false));
+            organisation2 = await organisationRepo.save(DoFactory.createOrganisation(false));
+            organisation3 = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const rolleOrError: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleOrError instanceof DomainError) {
+                throw new Error('Failed to create Rolle');
+            }
+            rolle = rolleOrError;
+            serviceProvider = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false, {
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+            );
+        });
+
+        it('should return empty array and count 0 if no rollenerweiterung exists for serviceProviderId', async () => {
+            const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderId(
+                serviceProvider.id,
+            );
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(0);
+            expect(count).toBe(0);
+        });
+
+        it('should return all rollenerweiterungen and correct count for serviceProviderId', async () => {
+            const erweiterungen: Rollenerweiterung<false>[] = [
+                factory.createNew(organisation1.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation2.id, rolle.id, serviceProvider.id),
+            ];
+            await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
+
+            const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderId(
+                serviceProvider.id,
+            );
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(erweiterungen.length);
+            expect(count).toBe(erweiterungen.length);
+            for (const erweiterung of result) {
+                expect(erweiterung.serviceProviderId).toBe(serviceProvider.id);
+            }
+        });
+
+        it('should respect limit and offset parameters', async () => {
+            const erweiterungen: Rollenerweiterung<false>[] = [
+                factory.createNew(organisation1.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation2.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation3.id, rolle.id, serviceProvider.id),
+            ];
+            await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
+
+            const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderId(
+                serviceProvider.id,
+                1,
+                2,
+            );
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(2);
+            expect(count).toBe(3);
+        });
+    });
 });

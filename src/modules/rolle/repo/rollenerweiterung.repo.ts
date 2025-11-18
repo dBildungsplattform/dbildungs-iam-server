@@ -156,4 +156,28 @@ export class RollenerweiterungRepo {
             ]),
         );
     }
+
+    public async findByServiceProviderId(
+        serviceProviderId: ServiceProviderID,
+        offset?: number,
+        limit?: number,
+    ): Promise<Counted<Rollenerweiterung<true>>> {
+        const [rollenerweiterungEntities, count]: Counted<Loaded<RollenerweiterungEntity>> = await this.em.findAndCount(
+            RollenerweiterungEntity,
+            {
+                serviceProviderId: serviceProviderId,
+            },
+            {
+                limit,
+                offset,
+                orderBy: {
+                    id: 'ASC',
+                },
+            },
+        );
+        const rollenerweiterungen: Rollenerweiterung<true>[] = rollenerweiterungEntities.map(
+            (entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity),
+        );
+        return [rollenerweiterungen, count];
+    }
 }
