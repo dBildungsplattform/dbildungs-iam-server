@@ -53,9 +53,9 @@ export class SetEmailAddressForSpshPersonParams {
     @IsUUID()
     @IsNotEmpty()
     @ApiProperty({
-        description: 'The domain Id from the email domain entity to be used.',
+        description: 'The spshServiceProviderId from the email domain entity to be used.',
         required: true,
         nullable: false,
     })
-    public readonly emailDomainId!: string;
+    public readonly spshServiceProviderId!: string;
 }

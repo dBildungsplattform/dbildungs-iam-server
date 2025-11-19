@@ -4,4 +4,6 @@ export class EmailDomainFile {
     public overrideId!: string;
 
     public domain!: string;
+
+    public spshServiceProviderId!: string;
 }
