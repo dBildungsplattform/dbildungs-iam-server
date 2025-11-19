@@ -26,9 +26,21 @@ export class EmailResolverService {
             );
             if (response.data[0] !== undefined) {
                 const status: EmailAddressStatus = this.mapStatus(response.data[0]?.status);
-                return new PersonEmailResponse(status, response.data[0].address, response.data[0].oxLoginId);
+                return new PersonEmailResponse(status, response.data[0].address);
             }
             return undefined;
+        } catch (error) {
+            this.logger.logUnknownAsError(`Failed to fetch email for person ${personId}`, error);
+            return undefined;
+        }
+    }
+
+    public async findEmailBySpshPersonWithOxLoginId(personId: string): Promise<EmailAddressResponse | undefined> {
+        try {
+            const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
+                this.httpService.get(this.getEndpoint() + `api/read/${personId}`),
+            );
+            return response.data[0];
         } catch (error) {
             this.logger.logUnknownAsError(`Failed to fetch email for person ${personId}`, error);
             return undefined;

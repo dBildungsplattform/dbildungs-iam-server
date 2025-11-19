@@ -1,20 +1,20 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { EventModule } from '../../../core/eventbus/event.module.js';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
+import { DomainError } from '../../../shared/error/index.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 import {
     DBiamPersonenkontextRepo,
     ExternalPkData,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { ConfigService } from '@nestjs/config';
-import { faker } from '@faker-js/faker';
-import { Person } from '../../person/domain/person.js';
-import { DomainError } from '../../../shared/error/index.js';
-import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
-import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 
 describe('UserExternaldataWorkflow', () => {
     let module: TestingModule;
@@ -105,8 +105,8 @@ describe('UserExternaldataWorkflow', () => {
             personRepositoryMock.findById.mockResolvedValue(person);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock<ExternalPkData[]>());
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-            emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValue(
-                createMock<PersonEmailResponse>({ oxLoginId: oxLoginId }),
+            emailResolverServiceMock.findEmailBySpshPersonWithOxLoginId.mockResolvedValue(
+                createMock<EmailAddressResponse>({ oxLoginId: oxLoginId }),
             );
 
             await sut.initialize(person.id);

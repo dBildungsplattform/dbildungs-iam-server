@@ -1,11 +1,11 @@
 import { ConfigService } from '@nestjs/config';
+import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { OXContextID } from '../../../shared/types/ox-ids.types.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
-import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import {
@@ -55,10 +55,9 @@ export class UserExternaldataWorkflowAggregate {
         this.person = person;
 
         if (this.emailResolverService.shouldUseEmailMicroservice()) {
-            const personEmailResponse: Option<PersonEmailResponse> =
-                await this.emailResolverService.findEmailBySpshPerson(personId);
-            // if there is an email, there is also an oxLoginId
-            if (personEmailResponse && personEmailResponse.oxLoginId) {
+            const personEmailResponse: Option<EmailAddressResponse> =
+                await this.emailResolverService.findEmailBySpshPersonWithOxLoginId(personId);
+            if (personEmailResponse) {
                 this.contextID = personEmailResponse.oxLoginId;
             }
         }
