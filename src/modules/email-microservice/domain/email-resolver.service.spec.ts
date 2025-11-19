@@ -52,10 +52,12 @@ describe('EmailResolverService', () => {
 
     it('should return PersonEmailResponse when get call returns valid data', async () => {
         const mockPersonId: string = faker.string.uuid();
+        const mockOxLoginId: string = faker.string.uuid();
         const mockEmail: string = 'test@example.com';
         const mockResponseData: EmailAddressResponse[] = [
             createMock<EmailAddressResponse>({
                 address: mockEmail,
+                oxLoginId: mockOxLoginId,
                 status: EmailAddressStatusEnum.ACTIVE,
             }),
         ];
@@ -72,7 +74,7 @@ describe('EmailResolverService', () => {
         mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
         const result: PersonEmailResponse | undefined = await sut.findEmailBySpshPerson(mockPersonId);
-        expect(result).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, mockEmail));
+        expect(result).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, mockEmail, mockOxLoginId));
     });
 
     it('should return undefined when get call returns empty data', async () => {
@@ -200,6 +202,7 @@ describe('EmailResolverService', () => {
         [EmailAddressStatusEnum.TO_BE_DELETED, EmailAddressStatus.DELETED],
     ])('should map %s to %s', async (inputStatus: EmailAddressStatusEnum, expectedStatus: EmailAddressStatus) => {
         const mockPersonId: string = faker.string.uuid();
+        const mockOxLoginId: string = faker.string.uuid();
         const mockEmail: string = 'test@example.com';
         const mockAxiosResponse: AxiosResponse<EmailAddressResponse[]> = {
             data: [
@@ -209,6 +212,7 @@ describe('EmailResolverService', () => {
                     id: faker.string.uuid(),
                     createdAt: new Date(),
                     updatedAt: new Date(),
+                    oxLoginId: mockOxLoginId,
                 },
             ],
             status: 200,
@@ -222,11 +226,12 @@ describe('EmailResolverService', () => {
         mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
         const result: PersonEmailResponse | undefined = await sut.findEmailBySpshPerson(mockPersonId);
-        expect(result).toEqual(new PersonEmailResponse(expectedStatus, mockEmail));
+        expect(result).toEqual(new PersonEmailResponse(expectedStatus, mockEmail, mockOxLoginId));
     });
 
     it('should map unknown status to DISABLED (default case)', async () => {
         const mockPersonId: string = faker.string.uuid();
+        const mockOxLoginId: string = faker.string.uuid();
         const mockEmail: string = 'test@example.com';
         const invalidStatus: EmailAddressStatusEnum = 'UNKNOWN_STATUS' as EmailAddressStatusEnum;
         const mockAxiosResponse: AxiosResponse<EmailAddressResponse[]> = {
@@ -237,6 +242,7 @@ describe('EmailResolverService', () => {
                     id: faker.string.uuid(),
                     createdAt: new Date(),
                     updatedAt: new Date(),
+                    oxLoginId: mockOxLoginId,
                 },
             ],
             status: 200,
@@ -250,6 +256,6 @@ describe('EmailResolverService', () => {
         mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
         const result: PersonEmailResponse | undefined = await sut.findEmailBySpshPerson(mockPersonId);
-        expect(result).toEqual(new PersonEmailResponse(EmailAddressStatus.DISABLED, mockEmail));
+        expect(result).toEqual(new PersonEmailResponse(EmailAddressStatus.DISABLED, mockEmail, mockOxLoginId));
     });
 });

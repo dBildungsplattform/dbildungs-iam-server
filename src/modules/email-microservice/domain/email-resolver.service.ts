@@ -26,7 +26,7 @@ export class EmailResolverService {
             );
             if (response.data[0] !== undefined) {
                 const status: EmailAddressStatus = this.mapStatus(response.data[0]?.status);
-                return new PersonEmailResponse(status, response.data[0].address);
+                return new PersonEmailResponse(status, response.data[0].address, response.data[0].oxLoginId);
             }
             return undefined;
         } catch (error) {

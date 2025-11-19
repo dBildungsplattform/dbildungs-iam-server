@@ -13,12 +13,15 @@ import { ConfigService } from '@nestjs/config';
 import { faker } from '@faker-js/faker';
 import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/index.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 
 describe('UserExternaldataWorkflow', () => {
     let module: TestingModule;
     let sut: UserExternaldataWorkflowAggregate;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
+    let emailResolverServiceMock: DeepMocked<EmailResolverService>;
 
     beforeEach(async () => {
         module = await Test.createTestingModule({
@@ -32,14 +35,20 @@ describe('UserExternaldataWorkflow', () => {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
                 },
+                {
+                    provide: EmailResolverService,
+                    useValue: createMock<EmailResolverService>(),
+                },
             ],
         }).compile();
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personRepositoryMock = module.get(PersonRepository);
+        emailResolverServiceMock = module.get(EmailResolverService);
         sut = UserExternaldataWorkflowAggregate.createNew(
             dBiamPersonenkontextRepoMock,
             personRepositoryMock,
             createMock<ConfigService>(),
+            emailResolverServiceMock,
         );
     });
 
@@ -76,6 +85,34 @@ describe('UserExternaldataWorkflow', () => {
             await sut.initialize(person.id);
             expect(sut.person).toBeDefined();
             expect(sut.checkedExternalPkData).toBeDefined();
+        });
+
+        it('should initialize aggregate with contextID', async () => {
+            const keycloakSub: string = faker.string.uuid();
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                keycloakSub,
+                faker.string.uuid(),
+            );
+            const oxLoginId: string = faker.string.uuid();
+
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock<ExternalPkData[]>());
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+            emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValue(
+                createMock<PersonEmailResponse>({ oxLoginId: oxLoginId }),
+            );
+
+            await sut.initialize(person.id);
+            expect(sut.person).toBeDefined();
+            expect(sut.checkedExternalPkData).toBeDefined();
+            expect(sut.contextID).toBe(oxLoginId);
         });
 
         it('should return entity Not found error when person not found', async () => {

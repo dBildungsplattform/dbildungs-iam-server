@@ -1,8 +1,11 @@
 import { ConfigService } from '@nestjs/config';
 import { OxConfig } from '../../../shared/config/ox.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { OXContextID } from '../../../shared/types/ox-ids.types.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import {
@@ -10,7 +13,6 @@ import {
     ExternalPkData,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RequiredExternalPkData } from '../api/authentication.controller.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
 
 export class UserExternaldataWorkflowAggregate {
     public contextID: OXContextID;
@@ -23,6 +25,7 @@ export class UserExternaldataWorkflowAggregate {
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personRepo: PersonRepository,
         configService: ConfigService<ServerConfig>,
+        private readonly emailResolverService: EmailResolverService,
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
         this.contextID = oxConfig.CONTEXT_ID;
@@ -32,8 +35,14 @@ export class UserExternaldataWorkflowAggregate {
         personenkontextRepo: DBiamPersonenkontextRepo,
         personRepo: PersonRepository,
         configService: ConfigService<ServerConfig>,
+        emailResolverService: EmailResolverService,
     ): UserExternaldataWorkflowAggregate {
-        return new UserExternaldataWorkflowAggregate(personenkontextRepo, personRepo, configService);
+        return new UserExternaldataWorkflowAggregate(
+            personenkontextRepo,
+            personRepo,
+            configService,
+            emailResolverService,
+        );
     }
 
     public async initialize(personId: string): Promise<void | DomainError> {
@@ -44,6 +53,15 @@ export class UserExternaldataWorkflowAggregate {
             return new EntityNotFoundError('Person', personId);
         }
         this.person = person;
+
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            const personEmailResponse: Option<PersonEmailResponse> =
+                await this.emailResolverService.findEmailBySpshPerson(personId);
+            // if there is an email, there is also an oxLoginId
+            if (personEmailResponse && personEmailResponse.oxLoginId) {
+                this.contextID = personEmailResponse.oxLoginId;
+            }
+        }
 
         // Filtering out !expk.kennung || !expk.rollenart automatically leads to only valid organisations of type SCHOOLS are included
         // Additionally If there is an data-invalidity the Endpoint still works (If throwing Errors not) and allows the Keycloak the get the data for the other Personenkontexte

@@ -8,8 +8,12 @@ export class PersonEmailResponse {
     @ApiProperty({ type: String, required: true })
     public readonly address: string;
 
-    public constructor(status: EmailAddressStatus, address: string) {
+    @ApiProperty({ type: String, required: false })
+    public readonly oxLoginId?: string;
+
+    public constructor(status: EmailAddressStatus, address: string, oxLoginId?: string) {
         this.status = status;
         this.address = address;
+        this.oxLoginId = oxLoginId;
     }
 }
