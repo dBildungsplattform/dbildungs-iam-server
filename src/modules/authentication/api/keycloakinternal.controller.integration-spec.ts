@@ -20,6 +20,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { HttpException } from '@nestjs/common';
 import { KeycloakInternalController } from './keycloakinternal.controller.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 
 describe('KeycloakInternalController', () => {
     let module: TestingModule;
@@ -35,6 +36,7 @@ describe('KeycloakInternalController', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,
                 PersonenKontextModule,
+                EmailMicroserviceModule,
             ],
             providers: [KeycloakInternalController, UserExternaldataWorkflowFactory],
         })

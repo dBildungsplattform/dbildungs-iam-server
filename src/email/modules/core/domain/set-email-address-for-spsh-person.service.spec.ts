@@ -108,6 +108,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 updatedAt: new Date(),
                 address: 'max.mustermann@example.com',
                 priority: 0,
+                externalId: faker.string.uuid(),
                 spshPersonId: faker.string.uuid(),
             }),
         );
@@ -189,6 +190,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 updatedAt: new Date(),
                 address: 'max.mustermann@example.com',
                 priority: 0,
+                externalId: faker.string.uuid(),
                 spshPersonId: faker.string.uuid(),
             }),
         );
@@ -284,6 +286,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 updatedAt: new Date(),
                 address: 'max.mustermann@example.com',
                 priority: 0,
+                externalId: faker.string.uuid(),
                 spshPersonId: faker.string.uuid(),
             }),
         );
@@ -348,6 +351,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 updatedAt: new Date(),
                 address: 'max.mustermann@example.com',
                 priority: 0,
+                externalId: faker.string.uuid(),
                 spshPersonId: faker.string.uuid(),
             }),
         );
@@ -435,6 +439,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                     updatedAt: new Date(),
                     address: 'max.mustermann@example.com',
                     priority: 0,
+                    externalId: faker.string.uuid(),
                     spshPersonId: faker.string.uuid(),
                 }),
             )
@@ -523,6 +528,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 updatedAt: new Date(),
                 address: 'max.mustermann@example.com',
                 priority: 0,
+                externalId: faker.string.uuid(),
                 spshPersonId: faker.string.uuid(),
             }),
         );
@@ -615,6 +621,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 updatedAt: new Date(),
                 address: 'max.mustermann@example.com',
                 priority: 0,
+                externalId: faker.string.uuid(),
                 spshPersonId: faker.string.uuid(),
             }),
         ]);
