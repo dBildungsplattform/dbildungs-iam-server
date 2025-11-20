@@ -99,6 +99,16 @@ export class ClassLogger extends Logger {
     }
 
     /**
+     * Logs the message with log-level info, then logs the content of the parameter 'details' by calling util.inspect on it
+     * @param message
+     * @param details
+     * @param trace
+     */
+    public infoWithDetails(message: string, details: object, trace?: unknown): void {
+        this.info(message + ' - ' + inspect(details, false, 2, false), trace);
+    }
+
+    /**
      * Logs the message with log-level warning, then either logs the content of the parameter 'error' by calling util.inspect on it, if
      * its type is not Error, or
      * logs the message and stack contained in the parameter 'error', if its type is Error.

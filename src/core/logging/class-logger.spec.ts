@@ -237,6 +237,15 @@ describe('ClassLogger', () => {
         });
     });
 
+    describe('infoWithDetails', () => {
+        it('should log appropriately for level info', () => {
+            sut.infoWithDetails('Blah', { foo: 'bar' });
+
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('info', createTestMessage("Blah - { foo: 'bar' }"));
+        });
+    });
+
     describe('logUnknownAsError', () => {
         const errorMessage: string = 'error-message';
 

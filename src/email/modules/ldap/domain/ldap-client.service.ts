@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Client, SearchResult } from 'ldapts';
+import { Attribute, Change, Client, SearchResult } from 'ldapts';
 import { LdapPersonEntry } from './ldap.types.js';
 import { LdapClient } from './ldap-client.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
@@ -7,7 +7,7 @@ import { Mutex } from 'async-mutex';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapCreatePersonError } from '../error/ldap-create-person.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { PersonUsername } from '../../../../shared/types/aggregate-ids.types.js';
+import { PersonExternalID, PersonUsername } from '../../../../shared/types/aggregate-ids.types.js';
 
 export type LdapPersonAttributes = {
     entryUUID?: string;
@@ -22,7 +22,8 @@ export type LdapPersonAttributes = {
 export type PersonData = {
     firstName: string;
     lastName: string;
-    uid: string;
+    username: PersonUsername;
+    uid: PersonExternalID;
 };
 
 @Injectable()
@@ -79,8 +80,28 @@ export class LdapClientService {
 
     //** BELOW ONLY PUBLIC FUNCTIONS - MUST USE THE 'executeWithRetry' WRAPPER TO HAVE STRONG FAULT TOLERANCE*/
 
-    public async createPerson(person: PersonData, domain: string, mail: string): Promise<Result<PersonData>> {
-        return this.executeWithRetry(() => this.createPersonInternal(person, domain, mail), this.getNrOfRetries());
+    public async createPerson(
+        person: PersonData,
+        domain: string,
+        primaryMail: string,
+        alternativeEmail: string | undefined,
+    ): Promise<Result<PersonData>> {
+        return this.executeWithRetry(
+            () => this.createPersonInternal(person, domain, primaryMail, alternativeEmail),
+            this.getNrOfRetries(),
+        );
+    }
+
+    public async updatePerson(
+        person: PersonData,
+        domain: string,
+        primaryMail: string,
+        alternativeEmail: string | undefined,
+    ): Promise<Result<PersonData>> {
+        return this.executeWithRetry(
+            () => this.updatePersonInternal(person, domain, primaryMail, alternativeEmail),
+            this.getNrOfRetries(),
+        );
     }
 
     public async isPersonExisting(uid: string, domain: string): Promise<Result<boolean>> {
@@ -140,8 +161,8 @@ export class LdapClientService {
         };
     }
 
-    private getLehrerUid(username: PersonUsername, rootName: string): string {
-        return `uid=${username},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
+    private getLehrerUid(uid: PersonExternalID, rootName: string): string {
+        return `uid=${uid},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
     }
 
     private getRootNameOrError(domain: string): Result<string> {
@@ -152,20 +173,18 @@ export class LdapClientService {
         return rootName;
     }
 
-    private async createPersonInternal(person: PersonData, domain: string, mail: string): Promise<Result<PersonData>> {
-        const username: PersonUsername | undefined = person.uid;
-        if (!username) {
-            return {
-                ok: false,
-                error: new LdapCreatePersonError(),
-            };
-        }
+    private async createPersonInternal(
+        person: PersonData,
+        domain: string,
+        primaryMail: string,
+        alternativeEmail: string | undefined,
+    ): Promise<Result<PersonData>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
         if (!rootName.ok) {
             return rootName;
         }
 
-        const lehrerUid: string = this.getLehrerUid(username, rootName.value);
+        const lehrerUid: string = this.getLehrerUid(person.uid, rootName.value);
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: createLehrer');
             const client: Client = this.ldapClient.getClient();
@@ -186,16 +205,16 @@ export class LdapClientService {
                 return { ok: true, value: person };
             }
             const entry: LdapPersonEntry = {
-                uid: username,
+                uid: person.uid,
                 uidNumber: LdapClientService.UID_NUMBER,
                 gidNumber: LdapClientService.GID_NUMBER,
                 homeDirectory: LdapClientService.HOME_DIRECTORY,
-                cn: username,
+                cn: person.username,
                 givenName: person.firstName,
                 sn: person.lastName,
                 objectclass: ['inetOrgPerson', 'univentionMail', 'posixAccount'],
-                mailPrimaryAddress: mail,
-                mailAlternativeAddress: mail,
+                mailPrimaryAddress: primaryMail,
+                mailAlternativeAddress: alternativeEmail,
             };
 
             try {
@@ -204,6 +223,71 @@ export class LdapClientService {
                 return { ok: true, value: person };
             } catch (err) {
                 this.logger.logUnknownAsError(`LDAP: Creating person FAILED, uid:${lehrerUid}`, err);
+
+                return { ok: false, error: new LdapCreatePersonError() };
+            }
+        });
+    }
+
+    private async updatePersonInternal(
+        person: PersonData,
+        domain: string,
+        primaryMail: string,
+        alternativeEmail: string | undefined,
+    ): Promise<Result<PersonData>> {
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) {
+            return rootName;
+        }
+
+        const lehrerUid: string = this.getLehrerUid(person.uid, rootName.value);
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: createLehrer');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) {
+                return bindResult;
+            }
+
+            const changes: Change[] = [
+                new Change({
+                    operation: 'replace',
+                    modification: new Attribute({ type: 'cn', values: [person.username] }),
+                }),
+                new Change({
+                    operation: 'replace',
+                    modification: new Attribute({ type: 'givenName', values: [person.firstName] }),
+                }),
+                new Change({
+                    operation: 'replace',
+                    modification: new Attribute({ type: 'sn', values: [person.lastName] }),
+                }),
+                new Change({
+                    operation: 'replace',
+                    modification: new Attribute({ type: 'mailPrimaryAddress', values: [primaryMail] }),
+                }),
+
+                new Change({
+                    operation: 'replace',
+                    modification: new Attribute({
+                        type: 'mailAlternativeAddress',
+                        values: [alternativeEmail].filter(Boolean),
+                    }),
+                }),
+            ];
+
+            try {
+                await client.modify(lehrerUid, changes);
+                this.logger.info(`LDAP: Modify person succeeded, uid:${lehrerUid}, `);
+                this.logger.infoWithDetails('LDAP: Modify person succeeded', {
+                    uid: lehrerUid,
+                    username: person.username,
+                    firstname: person.firstName,
+                    lastname: person.lastName,
+                });
+                return { ok: true, value: person };
+            } catch (err) {
+                this.logger.logUnknownAsError(`LDAP: Modify person FAILED, uid:${lehrerUid}`, err);
 
                 return { ok: false, error: new LdapCreatePersonError() };
             }

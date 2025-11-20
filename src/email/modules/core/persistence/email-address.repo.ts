@@ -1,13 +1,15 @@
-import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, raw, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EmailAddrEntity } from './email-address.entity.js';
 import { EmailAddress } from '../domain/email-address.js';
-import { DomainError } from '../../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../../shared/error/index.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { mapEntityToAggregate as mapStatusEntityToAggregate } from './email-address-status.repo.js';
 import { AddressWithStatusesDescDto } from '../api/dtos/address-with-statuses/address-with-statuses-desc.dto.js';
-import { EmailAddressStatusEntity } from './email-address-status.entity.js';
+import { EmailAddressStatusEntity, EmailAddressStatusEnum } from './email-address-status.entity.js';
+import { PersonID } from '../../../../shared/types/aggregate-ids.types.js';
+import { Err, Ok } from '../../../../shared/util/result.js';
 
 export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddrEntity> {
     return {
@@ -34,6 +36,10 @@ function mapEntityToAggregate(entity: EmailAddrEntity): EmailAddress<boolean> {
         externalId: entity.externalId,
         markedForCron: entity.markedForCron,
     });
+}
+
+function statusSortFn(a: EmailAddressStatusEntity, b: EmailAddressStatusEntity): number {
+    return b.createdAt.getTime() - a.createdAt.getTime();
 }
 
 @Injectable()
@@ -78,15 +84,79 @@ export class EmailAddressRepo {
             (entity: EmailAddrEntity) =>
                 new AddressWithStatusesDescDto(
                     mapEntityToAggregate(entity),
-                    entity.statuses
-                        .getItems()
-                        .sort(
-                            (a: EmailAddressStatusEntity, b: EmailAddressStatusEntity) =>
-                                b.createdAt.getTime() - a.createdAt.getTime(),
-                        )
-                        .map(mapStatusEntityToAggregate),
+                    entity.statuses.getItems().sort(statusSortFn).map(mapStatusEntityToAggregate),
                 ),
         );
+    }
+
+    public async shiftPriorities(
+        emailAddress: EmailAddress<true>,
+        targetPriority: number,
+    ): Promise<Result<EmailAddress<true>[], DomainError>> {
+        const emails: EmailAddrEntity[] = await this.em.find(EmailAddrEntity, {
+            spshPersonId: emailAddress.spshPersonId,
+        });
+
+        const targetEmailAddress: Option<EmailAddrEntity> = emails.find(
+            (em: EmailAddrEntity) => em.id === emailAddress.id,
+        );
+
+        if (!targetEmailAddress) {
+            return Err(new EntityNotFoundError('EmailAddress', emailAddress.id));
+        }
+
+        // Only move when necessary
+        if (targetEmailAddress.priority !== targetPriority) {
+            const minShiftedPriority: number = targetPriority;
+            const maxShiftedPriority: number =
+                targetPriority < targetEmailAddress.priority ? targetEmailAddress.priority : Infinity;
+
+            // Shift all E-Mails that need to be moved and set priority for the target email
+            emails
+                .filter((em: EmailAddrEntity) => em.priority >= minShiftedPriority && em.priority < maxShiftedPriority)
+                .forEach((em: EmailAddrEntity) => {
+                    em.priority = raw(`priority + 1`);
+                });
+
+            targetEmailAddress.priority = targetPriority;
+
+            await this.em.flush();
+        }
+
+        return Ok(emails.map(mapEntityToAggregate));
+    }
+
+    public async ensureStatusesAndCronDateForPerson(spshPersonId: PersonID, cronDate: Date): Promise<void> {
+        const emails: EmailAddrEntity[] = await this.em.find(
+            EmailAddrEntity,
+            {
+                spshPersonId,
+            },
+            { populate: ['statuses'] },
+        );
+
+        for (const em of emails) {
+            // Ensure all emails with priority 1 or higher have a cron date
+            if (em.priority >= 1) {
+                em.markedForCron ??= cronDate;
+            }
+
+            // Ensure there are no emails with priority 2 or higher with status "ACTIVE"
+            if (em.priority >= 2) {
+                const newestStatus: EmailAddressStatusEntity | undefined = em.statuses.getItems().sort(statusSortFn)[0];
+
+                if (!newestStatus || newestStatus.status === EmailAddressStatusEnum.ACTIVE) {
+                    em.statuses.add(
+                        this.em.create(EmailAddressStatusEntity, {
+                            emailAddress: em,
+                            status: EmailAddressStatusEnum.DEACTIVE,
+                        }),
+                    );
+                }
+            }
+        }
+
+        await this.em.flush();
     }
 
     public async save(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {

@@ -57,6 +57,25 @@ describe('EmailAddressGenerator', () => {
         });
     });
 
+    describe('isEqualIgnoreCount', () => {
+        it.each([
+            ['firstname.lastname@domain', 'firstname', 'lastname', 'domain', true],
+            ['firstname.lastname123@domain', 'firstname', 'lastname', 'domain', true],
+            ['firstname.lastname@domain', 'firstname', 'lastname', 'wrongdomain', false],
+            ['firstname.lastname@domain', 'wrongfirstname', 'lastname', 'domain', false],
+            ['firstname.lastname@domain', 'firstname', 'wronglastname', 'domain', false],
+            ['differentfirstname.lastname@domain', 'firstname', 'lastname', 'domain', false],
+            ['firstname.differentlastname@domain', 'firstname', 'lastname', 'domain', false],
+            ['firstname.lastnameNaN@domain', 'firstname', 'lastname', 'domain', false],
+            ['a.tooshort@domain', 'a', 'tooshort', 'domain', false],
+        ])(
+            'isEqualIgnoreCount(%s, %s, %s, %s) should equal %s',
+            (address: string, firstname: string, lastname: string, emailDomain: string, expected: boolean) => {
+                expect(sut.isEqualIgnoreCount(address, firstname, lastname, emailDomain)).toBe(expected);
+            },
+        );
+    });
+
     describe('generateName', () => {
         describe('when firstname has less than 2 characters', () => {
             it('should return error', async () => {
