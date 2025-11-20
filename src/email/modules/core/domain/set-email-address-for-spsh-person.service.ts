@@ -22,6 +22,7 @@ import { EmailAddress } from './email-address.js';
 import { EmailDomain } from './email-domain.js';
 import { EmailUpdateInProgressError } from '../error/email-update-in-progress.error.js';
 import { EmailAddressGenerationAttemptsExceededError } from '../error/email-address-generation-attempts-exceeds.error.js';
+import { uniq } from 'lodash-es';
 
 @Injectable()
 export class SetEmailAddressForSpshPersonService {
@@ -39,13 +40,17 @@ export class SetEmailAddressForSpshPersonService {
     public async setEmailAddressForSpshPerson(params: SetEmailAddressForSpshPersonParams): Promise<void> {
         this.logger.info(`SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - Request Received`);
 
-        const emailDomain: Option<EmailDomain<true>> = await this.emailDomainRepo.findById(params.emailDomainId);
+        const emailDomain: Option<EmailDomain<true>> = await this.emailDomainRepo.findBySpshServiceProviderId(
+            params.spshServiceProviderId,
+        );
 
         if (!emailDomain) {
             this.logger.error(
-                `SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - EmailDomain with id ${params.emailDomainId} not found`,
+                `SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - EmailDomain with spshServiceProviderId ${params.spshServiceProviderId} not found`,
             );
-            throw new EmailDomainNotFoundError(`EmailDomain with id ${params.emailDomainId} not found`);
+            throw new EmailDomainNotFoundError(
+                `EmailDomain with spshServiceProviderId ${params.spshServiceProviderId} not found`,
+            );
         }
 
         if (await this.checkForPendingEmail(params.spshPersonId)) {
@@ -55,6 +60,8 @@ export class SetEmailAddressForSpshPersonService {
             throw new EmailUpdateInProgressError('e-mail generation already in progress');
         }
 
+        const uniqueKennungen: string[] = uniq(params.kennungen);
+
         const ATTEMPTS: number = 5;
 
         await this.createOrUpdateEmailWithRetries(
@@ -63,7 +70,7 @@ export class SetEmailAddressForSpshPersonService {
             params.lastName,
             params.spshPersonId,
             params.spshUsername,
-            params.kennungen,
+            uniqueKennungen,
             emailDomain,
         );
     }

@@ -9,8 +9,6 @@ import {
     ServiceProviderMerkmalTypName,
 } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
-import { RollenerweiterungForManageableServiceProvider } from '../domain/types.js';
-import { RollenerweiterungForServiceProviderResponse } from './rollenerweiterung-for-service-provider.response.js';
 import { OrganisationRefResponse } from './organisation-ref.response.js';
 import { RolleRefResponse } from './rolle-ref.response.js';
 
@@ -36,8 +34,8 @@ export class ManageableServiceProviderResponse {
     @ApiProperty({ description: 'Can be undefined, if `target` is not equal to `URL`' })
     public url?: string;
 
-    @ApiProperty({ type: RollenerweiterungForServiceProviderResponse, isArray: true })
-    public rollenerweiterungen: RollenerweiterungForServiceProviderResponse[];
+    @ApiProperty()
+    public hasRollenerweiterung: boolean;
 
     @ApiProperty({ type: RolleRefResponse, isArray: true })
     public rollen: RolleRefResponse[];
@@ -46,7 +44,7 @@ export class ManageableServiceProviderResponse {
         serviceProvider: ServiceProvider<true>,
         organisation: Organisation<true>,
         rollen: Rolle<true>[],
-        rollenerweiterungen: RollenerweiterungForManageableServiceProvider[],
+        hasRollenerweiterung: boolean,
     ) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;
@@ -59,9 +57,7 @@ export class ManageableServiceProviderResponse {
         this.requires2fa = serviceProvider.requires2fa;
         this.merkmale = serviceProvider.merkmale;
         this.url = serviceProvider.url;
-        this.rollenerweiterungen = rollenerweiterungen.map(
-            (re: RollenerweiterungForManageableServiceProvider) => new RollenerweiterungForServiceProviderResponse(re),
-        );
+        this.hasRollenerweiterung = hasRollenerweiterung;
         this.rollen = rollen.map((r: Rolle<true>) => ({ id: r.id, name: r.name }));
     }
 }
