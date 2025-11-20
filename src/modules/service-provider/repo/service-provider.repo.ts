@@ -216,6 +216,16 @@ export class ServiceProviderRepo {
         return entity ? mapEntityToAggregate(entity) : entity;
     }
 
+    public async findBySchulstrukturknoten(
+        organisationsId: string,
+        options?: ServiceProviderFindOptions,
+    ): Promise<Array<ServiceProvider<true>>> {
+        const exclude: readonly ['logo'] | undefined = options?.withLogo ? undefined : ['logo'];
+        return (
+            await this.em.find(ServiceProviderEntity, { providedOnSchulstrukturknoten: organisationsId }, { exclude })
+        ).map(mapEntityToAggregate);
+    }
+
     public async save(serviceProvider: ServiceProvider<boolean>): Promise<ServiceProvider<true>> {
         if (serviceProvider.id) {
             return this.update(serviceProvider);

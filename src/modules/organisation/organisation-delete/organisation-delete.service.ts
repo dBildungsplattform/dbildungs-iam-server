@@ -1,0 +1,62 @@
+import { Injectable } from '@nestjs/common';
+
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { OrganisationID } from '../../../shared/types/index.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonenkontextScope } from '../../personenkontext/persistence/personenkontext.scope.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
+import { OrganisationScope } from '../persistence/organisation.scope.js';
+import { OrganisationHasChildrenError } from './errors/organisation-has-children.error.js';
+import { OrganisationHasPersonenkontexteError } from './errors/organisation-has-personenkontexte.error.js';
+import { OrganisationHasRollenError } from './errors/organisation-has-rollen.error.js';
+import { OrganisationHasServiceProviders } from './errors/organisation-has-service-provider.error.js';
+import { Organisation } from '../domain/organisation.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+
+@Injectable()
+export class OrganisationDeleteService {
+    public constructor(
+        private readonly organisationRepo: OrganisationRepository,
+        private readonly rolleRepo: RolleRepo,
+        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly serviceProviderRepo: ServiceProviderRepo,
+    ) {}
+
+    public async deleteOrganisation(organisationId: OrganisationID): Promise<void | DomainError> {
+        const hasNoReferences: Result<undefined, DomainError> = await this.hasNoReferences(organisationId);
+        return hasNoReferences.ok ? this.organisationRepo.delete(organisationId) : hasNoReferences.error;
+    }
+
+    private async hasNoReferences(organisationId: OrganisationID): Promise<Result<undefined, DomainError>> {
+        const childOrganisations: Counted<Organisation<true>> = await this.organisationRepo.findBy(
+            new OrganisationScope().findAdministrierteVon(organisationId).paged(0, 1),
+        );
+        if (childOrganisations.length) {
+            return { ok: false, error: new OrganisationHasChildrenError() };
+        }
+
+        const referencedRollen: Rolle<true>[] = await this.rolleRepo.findBySchulstrukturknoten(organisationId);
+        if (referencedRollen.length) {
+            return { ok: false, error: new OrganisationHasRollenError() };
+        }
+
+        const referencedPersonenkontexte: Counted<Personenkontext<true>> = await this.personenkontextRepo.findBy(
+            new PersonenkontextScope().byOrganisations([organisationId]).paged(0, 1),
+        );
+        if (referencedPersonenkontexte.length) {
+            return { ok: false, error: new OrganisationHasPersonenkontexteError() };
+        }
+
+        const referencedServiceProvider: Array<ServiceProvider<true>> =
+            await this.serviceProviderRepo.findBySchulstrukturknoten(organisationId);
+        if (referencedServiceProvider.length) {
+            return { ok: false, error: new OrganisationHasServiceProviders() };
+        }
+
+        return { ok: true, value: undefined };
+    }
+}
