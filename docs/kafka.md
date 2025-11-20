@@ -6,6 +6,8 @@ The container exposes an external client on port 9094.
 
 Running the `kafka-init` using `docker compose` will create a topic for every line in `config/kafka-topics.txt` (if it doesn't already exist)
 
+The file kafka-topics.txt needs to have LV line endings. Please make sure that `git autorcrlf` is set to `false`. If it was set to true while checking out, you need to change the line endings manually. In VS Code there is a little button on the lower right.
+
 ## Using a Kafka-client using docker
 
 You can use the same image to create a container with an interactive shell:
@@ -14,8 +16,6 @@ You can use the same image to create a container with an interactive shell:
 
 Inside this shell you can access the shell-scripts provided by Kafka.
 Just make sure to include `--bootstrap-server localhost:9094` so the client points to the container from the `compose.yaml`.
-
-The file kafka-topics.txt needs to have LV line endings. Please make sure that `git autorcrlf` is set to `false`. If it was set to true while checking out, you need to change the line endings manually. In VS Code there is a little button on the lower right.
 
 ### Examples
 
