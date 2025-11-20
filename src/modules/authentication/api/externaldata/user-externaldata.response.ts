@@ -47,9 +47,9 @@ export class UserExeternalDataResponse {
     ): UserExeternalDataResponse {
         let ox: UserExeternalDataResponseOx;
         if (emailResolverService.shouldUseEmailMicroservice()) {
-            ox = new UserExeternalDataResponseOx({ contextId: contextID });
+            ox = new UserExeternalDataResponseOx({ oxContextId: contextID });
         } else {
-            ox = new UserExeternalDataResponseOx({ username: person.username!, contextId: contextID });
+            ox = new UserExeternalDataResponseOx({ username: person.username!, oxContextId: contextID });
         }
         const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(person.id);
         const vidis: UserExeternalDataResponseVidis = new UserExeternalDataResponseVidis(

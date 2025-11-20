@@ -2,11 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 
 interface OldParams {
     username: string;
-    oxContext: string;
+    oxContextId: string;
 }
 
 interface NewParams {
-    contextId: string;
+    oxContextId: string;
 }
 
 export class UserExeternalDataResponseOx {
@@ -15,9 +15,9 @@ export class UserExeternalDataResponseOx {
 
     public constructor(params: OldParams | NewParams) {
         if ('username' in params) {
-            this.id = `${params.username}@${params.oxContext}`;
+            this.id = `${params.username}@${params.oxContextId}`;
         } else {
-            this.id = params.contextId;
+            this.id = params.oxContextId;
         }
     }
 }
