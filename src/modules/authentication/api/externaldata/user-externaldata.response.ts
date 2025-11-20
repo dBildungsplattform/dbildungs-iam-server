@@ -7,6 +7,7 @@ import { UserExeternalDataResponseVidis } from './user-externaldata-vidis.respon
 import { UserExeternalDataResponseOpshPk } from './user-externaldata-opsh-pk.response.js';
 import { RequiredExternalPkData } from '../authentication.controller.js';
 import { Person } from '../../../person/domain/person.js';
+import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 
 export class UserExeternalDataResponse {
     @ApiProperty({ type: UserExeternalDataResponseOx })
@@ -42,8 +43,14 @@ export class UserExeternalDataResponse {
         person: Person<true>,
         externalPkData: RequiredExternalPkData[],
         contextID: string,
+        emailResolverService: EmailResolverService,
     ): UserExeternalDataResponse {
-        const ox: UserExeternalDataResponseOx = new UserExeternalDataResponseOx(person.username!, contextID);
+        let ox: UserExeternalDataResponseOx;
+        if (emailResolverService.shouldUseEmailMicroservice()) {
+            ox = new UserExeternalDataResponseOx({ contextId: contextID });
+        } else {
+            ox = new UserExeternalDataResponseOx({ username: person.username!, contextId: contextID });
+        }
         const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(person.id);
         const vidis: UserExeternalDataResponseVidis = new UserExeternalDataResponseVidis(
             person.id,
