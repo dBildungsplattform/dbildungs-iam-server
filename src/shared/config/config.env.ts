@@ -14,6 +14,7 @@ import { OxConfig } from './ox.config.js';
 import { PortalConfig } from './portal.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { RedisConfig } from './redis.config.js';
+import { SchulconnexConfig } from './schulconnex.config.js';
 import { SystemConfig } from './system.config.js';
 import { envToOptionalBoolean, envToOptionalInteger, envToStringArray } from './utils.js';
 import { VidisConfig } from './vidis.config.js';
@@ -37,6 +38,7 @@ export type Config = {
     PORTAL: Partial<PortalConfig>;
     CRON: Partial<CronConfig>;
     EMAIL_MICROSERVICE: Partial<EmailMicroserviceConfig>;
+    SCHULCONNEX: Partial<SchulconnexConfig>;
 };
 
 export default (): Config => ({
@@ -157,5 +159,8 @@ export default (): Config => ({
     EMAIL_MICROSERVICE: {
         USE_EMAIL_MICROSERVICE: envToOptionalBoolean('EMAIL_MICROSERVICE__USE_EMAIL_MICROSERVICE'),
         ENDPOINT: process.env['EMAIL_MICROSERVICE__ENDPOINT'],
+    },
+    SCHULCONNEX: {
+        LIMIT_PERSONENINFO: envToOptionalInteger('SCHULCONNEX_LIMIT_PERSONENINFO'),
     },
 });

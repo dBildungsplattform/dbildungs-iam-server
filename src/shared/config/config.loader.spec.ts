@@ -141,6 +141,9 @@ describe('configloader', () => {
                     USE_EMAIL_MICROSERVICE: false,
                     ENDPOINT: 'http://localhost:9091/',
                 },
+                SCHULCONNEX: {
+                    LIMIT_PERSONENINFO: 2500,
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -320,6 +323,9 @@ describe('configloader', () => {
                 EMAIL_MICROSERVICE: {
                     USE_EMAIL_MICROSERVICE: false,
                     ENDPOINT: 'http://localhost:9091/',
+                },
+                SCHULCONNEX: {
+                    LIMIT_PERSONENINFO: 2500,
                 },
             };
 
