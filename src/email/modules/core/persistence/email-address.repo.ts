@@ -135,20 +135,27 @@ export class EmailAddressRepo {
             { populate: ['statuses'] },
         );
 
-        for (const em of emails) {
+        for (const email of emails) {
+            // Ensure the primary email has no cron date
+            if (email.priority === 0) {
+                email.markedForCron = undefined;
+            }
+
             // Ensure all emails with priority 1 or higher have a cron date
-            if (em.priority >= 1) {
-                em.markedForCron ??= cronDate;
+            if (email.priority >= 1) {
+                email.markedForCron ??= cronDate;
             }
 
             // Ensure there are no emails with priority 2 or higher with status "ACTIVE"
-            if (em.priority >= 2) {
-                const newestStatus: EmailAddressStatusEntity | undefined = em.statuses.getItems().sort(statusSortFn)[0];
+            if (email.priority >= 2) {
+                const newestStatus: EmailAddressStatusEntity | undefined = email.statuses
+                    .getItems()
+                    .sort(statusSortFn)[0];
 
                 if (!newestStatus || newestStatus.status === EmailAddressStatusEnum.ACTIVE) {
-                    em.statuses.add(
+                    email.statuses.add(
                         this.em.create(EmailAddressStatusEntity, {
-                            emailAddress: em,
+                            emailAddress: email,
                             status: EmailAddressStatusEnum.DEACTIVE,
                         }),
                     );
