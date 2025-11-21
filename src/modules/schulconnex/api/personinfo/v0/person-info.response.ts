@@ -94,20 +94,20 @@ export class PersonInfoResponse {
     protected constructor(
         pid: string,
         kontexte: PersonenInfoKontextResponse[],
-        email: PersonEmailResponse | undefined,
+        email: Option<PersonEmailResponse>,
         nestedPerson: PersonNestedInPersonInfoResponse,
     ) {
         this.pid = pid;
         this.person = nestedPerson;
         this.personenkontexte = kontexte;
         this.gruppen = [];
-        this.email = email;
+        this.email = email ? email : undefined;
     }
 
     public static createNew(
         person: Person<true>,
         kontexteWithOrgaAndRolle: KontextWithOrgaAndRolle[],
-        email: PersonEmailResponse | undefined,
+        email: Option<PersonEmailResponse>,
     ): PersonInfoResponse {
         const dienststellen: string[] = kontexteWithOrgaAndRolle
             .map((k: KontextWithOrgaAndRolle) => k.organisation.kennung)
