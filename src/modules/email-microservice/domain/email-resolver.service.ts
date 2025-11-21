@@ -35,6 +35,18 @@ export class EmailResolverService {
         }
     }
 
+    public async findEmailBySpshPersonWithOxLoginId(personId: string): Promise<EmailAddressResponse | undefined> {
+        try {
+            const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
+                this.httpService.get(this.getEndpoint() + `api/read/${personId}`),
+            );
+            return response.data[0];
+        } catch (error) {
+            this.logger.logUnknownAsError(`Failed to fetch email for person ${personId}`, error);
+            return undefined;
+        }
+    }
+
     public async setEmailForSpshPerson(params: {
         spshPersonId: string;
         spshUsername: string;

@@ -16,6 +16,7 @@ import { RolleModule } from '../rolle/rolle.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { UserExternaldataWorkflowFactory } from './domain/user-extenaldata.factory.js';
 import { KeycloakInternalController } from './api/keycloakinternal.controller.js';
+import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
 
 @Module({
     imports: [
@@ -26,6 +27,7 @@ import { KeycloakInternalController } from './api/keycloakinternal.controller.js
         OrganisationModule,
         RolleModule,
         KeycloakAdministrationModule,
+        EmailMicroserviceModule,
     ],
     providers: [
         OpenIdConnectStrategy,

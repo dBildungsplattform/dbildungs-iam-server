@@ -4,6 +4,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 @Injectable()
 export class UserExternaldataWorkflowFactory {
@@ -11,6 +12,7 @@ export class UserExternaldataWorkflowFactory {
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personRepo: PersonRepository,
         private readonly configService: ConfigService<ServerConfig>,
+        private readonly emailResolverService: EmailResolverService,
     ) {}
 
     public createNew(): UserExternaldataWorkflowAggregate {
@@ -18,6 +20,7 @@ export class UserExternaldataWorkflowFactory {
             this.personenkontextRepo,
             this.personRepo,
             this.configService,
+            this.emailResolverService,
         );
     }
 }
