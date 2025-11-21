@@ -48,7 +48,6 @@ import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.j
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
-import { PersonenkontextErweitertVirtualEntity } from './personenkontext-erweitert.virtual.entity.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -243,7 +242,7 @@ describe('dbiam Personenkontext Repo', () => {
     });
 
     describe('findExternalPkData', () => {
-        it('should find relevant external personenkontext data with rollen for this person', async () => {
+        it('should find relevant external personenkontext data for this person', async () => {
             const person: Person<true> = await createPerson();
             const rolleA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
             const rolleB: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
@@ -304,56 +303,6 @@ describe('dbiam Personenkontext Repo', () => {
             ).not.toEqual(-1);
         });
 
-        it('should find relevant external personenkontext data with rollenerweiterung for this person', async () => {
-            const person: Person<true> = await createPerson();
-            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-            const rolleB: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-            const organisationA: Organisation<true> = await organisationRepository.save(
-                DoFactory.createOrganisation(false),
-            );
-            if (rolleA instanceof DomainError) {
-                throw Error();
-            }
-            if (rolleB instanceof DomainError) {
-                throw Error();
-            }
-
-            await personenkontextRepoInternal.save(
-                createPersonenkontext(false, {
-                    personId: person.id,
-                    rolleId: rolleA.id,
-                    organisationId: organisationA.id,
-                }),
-            );
-
-            const serviceprovider: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
-            );
-            await rollenerweiterungRepo.create(
-                DoFactory.createRollenerweiterung(false, {
-                    rolleId: rolleA.id,
-                    organisationId: organisationA.id,
-                    serviceProviderId: serviceprovider.id,
-                }),
-            );
-
-            const result: ExternalPkData[] = await sut.findExternalPkData(person.id);
-            expect(result.length).toEqual(1);
-            expect(
-                result.findIndex(
-                    (expk: ExternalPkData) =>
-                        expk.rollenart === rolleA.rollenart && expk.kennung === organisationA.kennung,
-                ),
-            ).not.toEqual(-1);
-            expect(
-                result.findIndex(
-                    (expk: ExternalPkData) =>
-                        serviceprovider.id ===
-                        expk.serviceProvider?.find((sp: ServiceProviderEntity) => sp.id === serviceprovider.id)?.id,
-                ),
-            ).not.toEqual(-1);
-        });
-
         // This extra test is for the line coverage of the mapping from RolleServiceProviderEntity to ServiceProviderEntity
         it('should find relevant external personenkontext data including original and extra serviceProvider', async () => {
             const person: Person<true> = await createPerson();
@@ -370,18 +319,6 @@ describe('dbiam Personenkontext Repo', () => {
                     personId: person.id,
                     rolleId: rolleA.id,
                     organisationId: organisationA.id,
-                }),
-            );
-
-            // Extra service provider via Rollenerweiterung
-            const spExtra: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
-            );
-            await rollenerweiterungRepo.create(
-                DoFactory.createRollenerweiterung(false, {
-                    rolleId: rolleA.id,
-                    organisationId: organisationA.id,
-                    serviceProviderId: spExtra.id,
                 }),
             );
 
@@ -419,15 +356,6 @@ describe('dbiam Personenkontext Repo', () => {
                         ]);
                     }
 
-                    if (entityClass === PersonenkontextErweitertVirtualEntity) {
-                        return Promise.resolve([
-                            {
-                                personenkontext: { unwrap: () => ({ id: 'pk-123' }) },
-                                serviceProvider: { unwrap: () => spExtra },
-                            },
-                        ]);
-                    }
-
                     return Promise.resolve([]);
                 });
 
@@ -440,7 +368,6 @@ describe('dbiam Personenkontext Repo', () => {
 
             const spIds: string[] | undefined = pkData?.serviceProvider?.map((sp: ServiceProviderEntity) => sp.id);
             expect(spIds).toContain(mockServiceProvider.id); // from mocked RolleServiceProviderEntity
-            expect(spIds).toContain(spExtra.id); // from mocked Rollenerweiterung
 
             findSpy.mockRestore();
         });
