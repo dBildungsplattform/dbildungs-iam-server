@@ -13,6 +13,7 @@ import {
     ExternalPkData,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RequiredExternalPkData } from '../api/authentication.controller.js';
+import { EmailAddressNotFoundError } from '../../email/error/email-address-not-found.error.js';
 
 export class UserExternaldataWorkflowAggregate {
     public contextID: OXContextID;
@@ -59,6 +60,8 @@ export class UserExternaldataWorkflowAggregate {
                 await this.emailResolverService.findEmailBySpshPersonWithOxLoginId(personId);
             if (personEmailResponse) {
                 this.contextID = personEmailResponse.oxLoginId;
+            } else {
+                return new EmailAddressNotFoundError(personId);
             }
         }
 

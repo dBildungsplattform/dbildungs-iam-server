@@ -15,6 +15,7 @@ import {
     ExternalPkData,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
+import { EmailAddressNotFoundError } from '../../email/error/email-address-not-found.error.js';
 
 describe('UserExternaldataWorkflow', () => {
     let module: TestingModule;
@@ -121,6 +122,30 @@ describe('UserExternaldataWorkflow', () => {
 
             const response: void | DomainError = await sut.initialize(faker.string.uuid());
             expect(response).toBeInstanceOf(DomainError);
+        });
+
+        it('should return EmailAddressNotFoundError when email not found', async () => {
+            const keycloakSub: string = faker.string.uuid();
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                keycloakSub,
+                faker.string.uuid(),
+            );
+
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock<ExternalPkData[]>());
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+            emailResolverServiceMock.findEmailBySpshPersonWithOxLoginId.mockResolvedValue(undefined);
+
+            const response: void | DomainError = await sut.initialize(person.id);
+
+            expect(response).toBeInstanceOf(EmailAddressNotFoundError);
         });
     });
 });
