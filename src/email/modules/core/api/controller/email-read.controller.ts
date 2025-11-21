@@ -67,12 +67,14 @@ export class EmailReadController {
 
     @Get('email/:emailAddress')
     @Public()
-    @ApiOperation({ description: 'Get email-address by emailAddress.' })
+    @ApiOperation({ description: 'Get email-address response by email-address.' })
     @ApiOkResponse({
-        description: 'The email-addresses for corresponding person were successfully returned.',
+        description: 'The email-address response for corresponding email-address was successfully returned.',
         type: [EmailAddressResponse],
     })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting email-addresses by personId.' })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while getting email-address response by email-address.',
+    })
     public async findEmailAddress(
         @Param() findEmailAddressByPersonIdParams: FindEmailAddressParams,
     ): Promise<Option<EmailAddressResponse>> {
