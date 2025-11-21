@@ -78,7 +78,7 @@ describe('PersonLandesbediensteterSearchService', () => {
             const result: PersonLandesbediensteterSearchResponse[] = await sut.findLandesbediensteter(
                 undefined,
                 undefined,
-                faker.internet.userName(),
+                faker.internet.username(),
                 undefined,
             );
             expect(result).toEqual([]);
@@ -88,7 +88,7 @@ describe('PersonLandesbediensteterSearchService', () => {
             const person: Person<true> = DoFactory.createPerson(true);
             personRepositoryMock.findByUsername.mockResolvedValueOnce([person, person]);
             await expect(
-                sut.findLandesbediensteter(undefined, undefined, faker.internet.userName(), undefined),
+                sut.findLandesbediensteter(undefined, undefined, faker.internet.username(), undefined),
             ).rejects.toThrow(LandesbediensteterSearchMultiplePersonsFoundError);
         });
 
@@ -97,7 +97,7 @@ describe('PersonLandesbediensteterSearchService', () => {
             personRepositoryMock.findByUsername.mockResolvedValueOnce([person]);
             userLockRepositoryMock.findByPersonId.mockResolvedValueOnce([]);
             await expect(
-                sut.findLandesbediensteter(undefined, undefined, faker.internet.userName(), undefined),
+                sut.findLandesbediensteter(undefined, undefined, faker.internet.username(), undefined),
             ).rejects.toThrow(LandesbediensteterSearchNoPersonFoundError);
         });
 
@@ -108,7 +108,7 @@ describe('PersonLandesbediensteterSearchService', () => {
                 { locked_occasion: PersonLockOccasion.MANUELL_GESPERRT } as UserLock,
             ]);
             await expect(
-                sut.findLandesbediensteter(undefined, undefined, faker.internet.userName(), undefined),
+                sut.findLandesbediensteter(undefined, undefined, faker.internet.username(), undefined),
             ).rejects.toThrow(LandesbediensteterSearchNoPersonFoundError);
         });
 
@@ -245,7 +245,7 @@ describe('PersonLandesbediensteterSearchService', () => {
             const result: PersonLandesbediensteterSearchResponse[] = await sut.findLandesbediensteter(
                 undefined,
                 undefined,
-                faker.internet.userName(),
+                faker.internet.username(),
                 undefined,
             );
 

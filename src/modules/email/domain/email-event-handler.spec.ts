@@ -185,8 +185,8 @@ describe('EmailEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             fakePersonId = faker.string.uuid();
-            fakeUsername = faker.internet.userName();
-            fakeOldUsername = faker.internet.userName();
+            fakeUsername = faker.internet.username();
+            fakeOldUsername = faker.internet.username();
             fakeRolleId = faker.string.uuid();
             fakeOrgaId = faker.string.uuid();
             fakeEmailAddress = faker.internet.email();
@@ -439,7 +439,7 @@ describe('EmailEventHandler', () => {
 
         beforeEach(() => {
             fakePersonId = faker.string.uuid();
-            fakeKeycloakUsername = faker.internet.userName();
+            fakeKeycloakUsername = faker.internet.username();
             fakeOXUserId = faker.string.numeric();
             fakeContextId = faker.string.numeric();
             fakeOXUserName = fakeKeycloakUsername;
@@ -650,7 +650,7 @@ describe('EmailEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             fakePersonId = faker.string.uuid();
-            fakeUsername = faker.internet.userName();
+            fakeUsername = faker.internet.username();
             fakeRolleId = faker.string.uuid();
             fakeEmailAddress = faker.internet.email();
             event = createMock<LdapSyncFailedEvent>({
@@ -842,7 +842,7 @@ describe('EmailEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             fakePersonId = faker.string.uuid();
-            fakeUsername = faker.internet.userName();
+            fakeUsername = faker.internet.username();
             fakeRolleId = faker.string.uuid();
             fakePKId = faker.string.uuid();
             fakeEmailAddressString = faker.internet.email();
@@ -1351,7 +1351,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ id: faker.string.uuid(), username: faker.internet.userName() }),
+                    createMock<Person<true>>({ id: faker.string.uuid(), username: faker.internet.username() }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -1395,8 +1395,8 @@ describe('EmailEventHandler', () => {
 
         beforeEach(() => {
             fakePersonId = faker.string.uuid();
-            fakeUsername = faker.internet.userName();
-            fakeOldUsername = faker.internet.userName();
+            fakeUsername = faker.internet.username();
+            fakeOldUsername = faker.internet.username();
             fakeRolleId = faker.string.uuid();
             fakeEmailAddress = faker.internet.email();
             fakeNewEmailAddress = faker.internet.email();
@@ -1438,7 +1438,7 @@ describe('EmailEventHandler', () => {
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(emailAddress);
                     //mock person with username is found
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: faker.string.uuid(), username: faker.internet.userName() }),
+                        createMock<Person<true>>({ id: faker.string.uuid(), username: faker.internet.username() }),
                     );
 
                     emailRepoMock.save.mockResolvedValueOnce(emailAddress);
@@ -1782,7 +1782,7 @@ describe('EmailEventHandler', () => {
 
         beforeEach(() => {
             fakePersonId = faker.string.uuid();
-            fakeKeycloakUsername = faker.internet.userName();
+            fakeKeycloakUsername = faker.internet.username();
             fakeOXUserId = faker.string.numeric();
             fakeOXUserName = fakeKeycloakUsername;
             fakeOXContextId = faker.string.numeric();

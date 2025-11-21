@@ -143,7 +143,7 @@ describe('dbiam Personenkontext Repo', () => {
         const personResult: Person<false> | DomainError = await personFactory.createNew({
             vorname: faker.person.firstName(),
             familienname: faker.person.lastName(),
-            username: faker.internet.userName(),
+            username: faker.internet.username(),
             password: generatePassword(),
         });
         if (personResult instanceof DomainError) {

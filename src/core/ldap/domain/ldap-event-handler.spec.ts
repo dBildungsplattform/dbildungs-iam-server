@@ -172,7 +172,7 @@ describe('LdapEventHandler', () => {
             it('should NOT log errors', async () => {
                 const modifyResult: Result<PersonUsername> = {
                     ok: true,
-                    value: faker.internet.userName(),
+                    value: faker.internet.username(),
                 };
                 ldapClientServiceMock.modifyPersonAttributes.mockResolvedValueOnce(modifyResult);
                 await ldapEventHandler.personRenamedEventHandler(createMock<PersonRenamedEvent>());
@@ -200,7 +200,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [
                     {
@@ -240,7 +240,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [
                     {
@@ -282,7 +282,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [],
                 [
@@ -322,7 +322,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [],
                 [
@@ -361,7 +361,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [],
                 [
@@ -404,7 +404,7 @@ describe('LdapEventHandler', () => {
                         id: faker.string.uuid(),
                         vorname: faker.person.firstName(),
                         familienname: faker.person.lastName(),
-                        username: faker.internet.userName(),
+                        username: faker.internet.username(),
                     },
                     [
                         {
@@ -436,7 +436,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [],
                 [
@@ -470,7 +470,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [],
                 [
@@ -498,7 +498,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [
                     {
@@ -527,7 +527,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [],
                 [
@@ -570,7 +570,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [],
                 [
@@ -612,7 +612,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [
                     {
@@ -653,7 +653,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [
                     {
@@ -695,7 +695,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [
                     {
@@ -744,7 +744,7 @@ describe('LdapEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [
                     {
@@ -795,7 +795,7 @@ describe('LdapEventHandler', () => {
         it('should call ldap client changeEmailAddressByPersonId', async () => {
             const event: EmailAddressGeneratedEvent = new EmailAddressGeneratedEvent(
                 faker.string.uuid(),
-                faker.internet.userName(),
+                faker.internet.username(),
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
@@ -815,7 +815,7 @@ describe('LdapEventHandler', () => {
         it('should call LdapClientService changeEmailAddressByPersonId', async () => {
             const event: EmailAddressChangedEvent = new EmailAddressChangedEvent(
                 faker.string.uuid(),
-                faker.internet.userName(),
+                faker.internet.username(),
                 faker.string.uuid(),
                 faker.internet.email(),
                 faker.string.uuid(),
@@ -839,7 +839,7 @@ describe('LdapEventHandler', () => {
 
         beforeEach(() => {
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             address = faker.internet.email();
         });
         describe('when username is UNDEFINED in event', () => {
@@ -912,7 +912,7 @@ describe('LdapEventHandler', () => {
 
     describe('handleEmailAddressesPurgedEvent', () => {
         const personId: PersonID = faker.string.uuid();
-        const username: PersonUsername = faker.internet.userName();
+        const username: PersonUsername = faker.internet.username();
 
         it('should log error when username is UNDEFINED in event', async () => {
             const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(

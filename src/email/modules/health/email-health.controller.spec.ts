@@ -43,6 +43,7 @@ describe('EmailHealthController', () => {
         expect(lastCallArguments).toBeDefined();
 
         if (lastCallArguments) {
+            // eslint-disable-next-line @typescript-eslint/await-thenable
             await Promise.all(lastCallArguments.map((hif: HealthIndicatorFunction) => hif.call(hif)));
         }
         expect(emailHealthIndicator.check).toHaveBeenCalled();

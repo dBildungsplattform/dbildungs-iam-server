@@ -7,7 +7,7 @@ import { PersonUsername } from '../../types/aggregate-ids.types.js';
 describe('KafkaLdapPersonEntryChangedEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {
         const person: Person<true> = DoFactory.createPerson(true);
-        const username: PersonUsername = faker.internet.userName();
+        const username: PersonUsername = faker.internet.username();
         const primaryMail: string = faker.internet.email();
         const alternativeMail: string = faker.internet.email();
         const passwordChanged: boolean = faker.datatype.boolean();

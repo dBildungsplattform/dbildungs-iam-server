@@ -174,7 +174,7 @@ describe('OxEventHandler', () => {
     ): GetDataForUserResponse {
         return {
             id: id ?? faker.string.numeric(),
-            username: username ?? faker.internet.userName(),
+            username: username ?? faker.internet.username(),
             firstname: faker.person.firstName(),
             lastname: faker.person.lastName(),
             mailenabled: true,
@@ -193,7 +193,7 @@ describe('OxEventHandler', () => {
     function getPerson(id?: PersonID, username?: PersonUsername, oxUserId?: OXUserID, email?: string): Person<true> {
         return createMock<Person<true>>({
             id: id ?? faker.string.uuid(),
-            username: username ?? faker.internet.userName(),
+            username: username ?? faker.internet.username(),
             oxUserId: oxUserId ?? faker.string.numeric(),
             email: email ?? faker.internet.email(),
         });
@@ -228,7 +228,7 @@ describe('OxEventHandler', () => {
                 id: personId,
                 vorname: faker.person.firstName(),
                 familienname: faker.person.lastName(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
             },
             [],
             [
@@ -269,13 +269,13 @@ describe('OxEventHandler', () => {
             fakeDstNr = faker.string.numeric();
             event = new EmailAddressGeneratedEvent(
                 personId,
-                faker.internet.userName(),
+                faker.internet.username(),
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
                 fakeDstNr,
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.username() });
         });
 
         describe('when creating group fails', () => {
@@ -326,13 +326,13 @@ describe('OxEventHandler', () => {
             fakeDstNr = faker.string.numeric();
             event = new EmailAddressGeneratedEvent(
                 personId,
-                faker.internet.userName(),
+                faker.internet.username(),
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
                 fakeDstNr,
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.username() });
         });
 
         describe('when existing group is found', () => {
@@ -528,7 +528,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -542,7 +542,7 @@ describe('OxEventHandler', () => {
                 true,
                 fakeDstNr,
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.username() });
         });
 
         describe('when adding user as member to group fails because member is already in group', () => {
@@ -644,7 +644,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -934,7 +934,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -1028,14 +1028,14 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
             };
             email = faker.internet.email();
             oxUserId = faker.string.numeric();
-            oxUserName = faker.internet.userName();
+            oxUserName = faker.internet.username();
             contextId = '10';
             contextName = 'testContext';
             event = new EmailAddressChangedEvent(
@@ -1226,7 +1226,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -1235,7 +1235,7 @@ describe('OxEventHandler', () => {
             email = faker.internet.email();
             domain = faker.internet.domainName();
             oxUserId = faker.string.numeric();
-            oxUserName = faker.internet.userName();
+            oxUserName = faker.internet.username();
             contextId = '10';
             contextName = 'testContext';
             event = new DisabledEmailAddressGeneratedEvent(personId, username, email, emailId, domain);
@@ -1309,7 +1309,7 @@ describe('OxEventHandler', () => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
             event = new EmailAddressAlreadyExistsEvent(personId, faker.string.uuid());
-            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.username() });
         });
 
         describe('when handler is disabled', () => {
@@ -1380,7 +1380,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -1542,7 +1542,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             oxUserId = faker.string.numeric();
             emailAddressId = faker.string.uuid();
             status = EmailAddressStatus.DISABLED;
@@ -1684,7 +1684,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -1791,7 +1791,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -1906,7 +1906,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -1991,7 +1991,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             oxUserId = faker.string.numeric();
             event = new PersonDeletedAfterDeadlineExceededEvent(personId, username, oxUserId);
         });

@@ -11,7 +11,7 @@ describe('ChangeUserAction', () => {
     let email: string;
 
     beforeEach(() => {
-        username = faker.internet.userName();
+        username = faker.internet.username();
         oxUserId = faker.string.uuid();
         firstname = faker.person.firstName();
         lastname = faker.person.lastName();
