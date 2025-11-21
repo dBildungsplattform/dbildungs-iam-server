@@ -32,5 +32,6 @@ export class EmailAddressResponse {
         this.address = emailAddress.address;
         this.status = latestStatus.status;
         this.isPrimary = emailAddress.priority === 0;
+        this.spshPersonId = emailAddress.spshPersonId;
     }
 }

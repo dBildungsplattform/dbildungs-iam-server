@@ -22,7 +22,7 @@ export class EmailResolverService {
     public async findEmailBySpshPerson(personId: string): Promise<Option<PersonEmailResponse>> {
         try {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
-                this.httpService.get(this.getEndpoint() + `api/read/${personId}`),
+                this.httpService.get(this.getEndpoint() + `api/read/spshperson/${personId}`),
             );
             if (response.data[0] !== undefined) {
                 const status: EmailAddressStatus = this.mapStatus(response.data[0]?.status);
