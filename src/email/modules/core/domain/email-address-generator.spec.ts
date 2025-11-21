@@ -68,6 +68,7 @@ describe('EmailAddressGenerator', () => {
             ['firstname.differentlastname@domain', 'firstname', 'lastname', 'domain', false],
             ['firstname.lastnameNaN@domain', 'firstname', 'lastname', 'domain', false],
             ['a.tooshort@domain', 'a', 'tooshort', 'domain', false],
+            ['noatsign', 'no', 'atsign', 'domain', false],
         ])(
             'isEqualIgnoreCount(%s, %s, %s, %s) should equal %s',
             (address: string, firstname: string, lastname: string, emailDomain: string, expected: boolean) => {

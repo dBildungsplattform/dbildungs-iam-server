@@ -138,7 +138,10 @@ export class OxService {
             await this.oxSendService.send(removeMemberFromGroupAction);
 
         if (!result.ok) {
-            this.logger.error(`Could not remove oxUser from oxGroup, oxUserId:${oxUserId} oxGroupId:${oxGroupId}`);
+            return this.logger.logUnknownAsError(
+                `Could not remove oxUser from oxGroup, oxUserId:${oxUserId} oxGroupId:${oxGroupId}`,
+                result.error,
+            );
         }
 
         this.logger.info(`Successfully removed oxUser from oxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);

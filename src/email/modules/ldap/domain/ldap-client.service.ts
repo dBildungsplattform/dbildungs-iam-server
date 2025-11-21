@@ -8,6 +8,7 @@ import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapCreatePersonError } from '../error/ldap-create-person.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { PersonExternalID, PersonUsername } from '../../../../shared/types/aggregate-ids.types.js';
+import { LdapModifyPersonError } from '../error/ldap-modify-person.error.js';
 
 export type LdapPersonAttributes = {
     entryUUID?: string;
@@ -289,7 +290,7 @@ export class LdapClientService {
             } catch (err) {
                 this.logger.logUnknownAsError(`LDAP: Modify person FAILED, uid:${lehrerUid}`, err);
 
-                return { ok: false, error: new LdapCreatePersonError() };
+                return { ok: false, error: new LdapModifyPersonError() };
             }
         });
     }
