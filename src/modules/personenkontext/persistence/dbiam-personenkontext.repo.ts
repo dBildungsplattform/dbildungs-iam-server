@@ -1,6 +1,9 @@
 import { Cursor, FilterQuery, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import {
     OrganisationID,
     PersonID,
@@ -8,29 +11,27 @@ import {
     RolleID,
     ServiceProviderID,
 } from '../../../shared/types/index.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
+import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Personenkontext } from '../domain/personenkontext.js';
+import { PersonenkontextErweitertVirtualEntity } from './personenkontext-erweitert.virtual.entity.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
-import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
-import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
-import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
-import { PersonenkontextErweitertVirtualEntity } from './personenkontext-erweitert.virtual.entity.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
-import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 
 export type RollenCount = { rollenart: string; count: string };
 
 export type ExternalPkData = {
+    pkId: string;
     rollenart?: RollenArt;
     kennung?: string;
     serviceProvider?: ServiceProviderEntity[];
@@ -46,13 +47,6 @@ export type ExternalPkDataLoaded = Loaded<
     PersonenkontextEntity,
     'organisationId' | 'rolleId.serviceProvider.serviceProvider',
     'organisationId.kennung' | 'rolleId.rollenart' | 'rolleId.serviceProvider',
-    never
->;
-
-export type PersonenkontextErweitertVirtualEntityLoaded = Loaded<
-    PersonenkontextErweitertVirtualEntity,
-    'serviceProvider' | 'personenkontext',
-    'serviceProvider' | 'personenkontext',
     never
 >;
 
@@ -377,30 +371,6 @@ export class DBiamPersonenkontextRepo {
     }
 
     public async findExternalPkData(personId: PersonID): Promise<ExternalPkData[]> {
-        const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = await this.em.find(
-            PersonenkontextErweitertVirtualEntity,
-            {
-                personenkontext: {
-                    personId,
-                },
-            },
-            {
-                populate: ['serviceProvider', 'personenkontext'],
-                exclude: ['serviceProvider.logo', 'serviceProvider.logoMimeType'],
-            },
-        );
-
-        const erweiterungenMap: Map<string, ServiceProviderEntity[]> = new Map<string, ServiceProviderEntity[]>();
-        for (const erweiterung of personenKontextErweiterungen) {
-            const pkId: string = erweiterung.personenkontext.unwrap().id;
-            const sp: Loaded<ServiceProviderEntity & object, never, never, never> =
-                erweiterung.serviceProvider.unwrap();
-            if (!erweiterungenMap.has(pkId)) {
-                erweiterungenMap.set(pkId, []);
-            }
-            erweiterungenMap.get(pkId)?.push(sp);
-        }
-
         const personenkontextEntities: ExternalPkDataLoaded[] = await this.em.find(
             PersonenkontextEntity,
             { personId },
@@ -412,27 +382,17 @@ export class DBiamPersonenkontextRepo {
                 ],
             },
         );
-
         return personenkontextEntities.map((pk: ExternalPkDataLoaded) => {
-            const rolle: Loaded<
-                RolleEntity & object,
-                'serviceProvider.serviceProvider',
-                'rollenart' | 'serviceProvider',
-                never
-            > = pk.rolleId.unwrap();
-            const org: Loaded<OrganisationEntity & object, never, 'kennung', never> = pk.organisationId.unwrap();
-
-            const originalSp: ServiceProviderEntity[] = rolle.serviceProvider
-                .getItems()
+            const serviceProvider: ServiceProviderEntity[] = pk.rolleId
+                .unwrap()
+                .serviceProvider.getItems()
                 .map((rsp: RolleServiceProviderEntity) => rsp.serviceProvider);
-            const extraSp: ServiceProviderEntity[] = erweiterungenMap.get(pk.id) ?? [];
-            const mergedSp: ServiceProviderEntity[] = [...originalSp, ...extraSp];
-            const uniqueSp: ServiceProviderEntity[] = Array.from(new Set(mergedSp));
 
             return {
-                rollenart: rolle.rollenart,
-                serviceProvider: uniqueSp,
-                kennung: org.kennung,
+                pkId: pk.id,
+                rollenart: pk.rolleId.unwrap().rollenart,
+                kennung: pk.organisationId.unwrap().kennung,
+                serviceProvider: serviceProvider,
             };
         });
     }

@@ -4,11 +4,13 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 
 @Injectable()
 export class UserExternaldataWorkflowFactory {
     public constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly personRepo: PersonRepository,
         private readonly configService: ConfigService<ServerConfig>,
     ) {}
@@ -16,6 +18,7 @@ export class UserExternaldataWorkflowFactory {
     public createNew(): UserExternaldataWorkflowAggregate {
         return UserExternaldataWorkflowAggregate.createNew(
             this.personenkontextRepo,
+            this.rollenerweiterungRepo,
             this.personRepo,
             this.configService,
         );

@@ -60,6 +60,11 @@ export class KeycloakInternalController {
             );
         }
 
-        return UserExeternalDataResponse.createNew(workflow.person, workflow.checkedExternalPkData, workflow.contextID);
+        return UserExeternalDataResponse.createNew(
+            workflow.person,
+            workflow.checkedExternalPkData,
+            workflow.personenKontextErweiterungen!,
+            workflow.contextID,
+        );
     }
 }
