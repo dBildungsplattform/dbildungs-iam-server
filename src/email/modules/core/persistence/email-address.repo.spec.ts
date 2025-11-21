@@ -353,6 +353,10 @@ describe('EmailRepo', () => {
 
             const emailsAfterwards: AddressWithStatusesDescDto[] =
                 await sut.findAllEmailAddressesWithStatusesDescBySpshPersonId(personId);
+            emailsAfterwards.sort(
+                (a: AddressWithStatusesDescDto, b: AddressWithStatusesDescDto) =>
+                    a.emailAddress.priority - b.emailAddress.priority,
+            );
 
             expect(emailsAfterwards[0]?.emailAddress.markedForCron).toBe(undefined);
             expect(emailsAfterwards[1]?.emailAddress.markedForCron).toBe(cronDate);

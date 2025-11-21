@@ -471,7 +471,7 @@ export class SetEmailAddressForSpshPersonService {
             const createResult: Result<CreateUserResponse, DomainError> = await this.oxSendService.send(createAction);
 
             if (!createResult.ok) {
-                this.logger.error('TODO');
+                this.logger.logUnknownAsError(`Could not create user in ox`, createResult.error);
                 return createResult;
             }
 

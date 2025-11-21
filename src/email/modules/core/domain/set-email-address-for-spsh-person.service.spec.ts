@@ -26,6 +26,8 @@ import { EmailAddressStatus } from './email-address-status.js';
 import { EmailAddress } from './email-address.js';
 import { EmailDomain } from './email-domain.js';
 import { SetEmailAddressForSpshPersonService } from './set-email-address-for-spsh-person.service.js';
+import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
+import { OxError } from '../../../../shared/error/ox.error.js';
 
 describe('SetEmailAddressForSpshPersonService', () => {
     let module: TestingModule;
@@ -244,6 +246,58 @@ describe('SetEmailAddressForSpshPersonService', () => {
             );
         });
 
+        it('should not change priorities if the email is already active', async () => {
+            const domain: EmailDomain<true> = await setupDomain();
+            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+            const oldOxId: string = faker.string.numeric(5);
+
+            const email: EmailAddress<true> = await setupEmailWithStatus(
+                EmailAddress.createNew({
+                    address: faker.internet.email(),
+                    externalId: params.spshPersonId,
+                    oxUserCounter: oldOxId,
+                    priority: 0,
+                    spshPersonId: params.spshPersonId,
+                    markedForCron: faker.date.future(),
+                }),
+                EmailAddressStatusEnum.FAILED,
+            );
+
+            emailAddressGeneratorMock.isEqualIgnoreCount.mockReturnValueOnce(true);
+            oxSendServiceMock.send.mockResolvedValueOnce(Ok(createMock())); // Check if person exists
+            oxSendServiceMock.send.mockResolvedValueOnce(Ok(createMock())); // Update person
+            ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Ok(true)); // Check if person exists
+            ldapClientServiceMock.updatePerson.mockResolvedValueOnce(Ok(createMock()));
+
+            const shiftPrioritiesSpy: jest.SpyInstance = jest.spyOn(emailAddressRepo, 'shiftPriorities');
+
+            await sut.setEmailAddressForSpshPerson(params);
+
+            const emailResult: AddressWithStatusesDescDto[] =
+                await emailAddressRepo.findAllEmailAddressesWithStatusesDescBySpshPersonId(params.spshPersonId);
+
+            expect(emailResult).toHaveLength(1);
+            expect(emailResult[0]?.emailAddress).toEqual(
+                expect.objectContaining({
+                    id: email.id,
+                    address: email.address,
+                    priority: 0,
+                    spshPersonId: params.spshPersonId,
+                    oxUserCounter: oldOxId,
+                    externalId: params.spshPersonId,
+                    markedForCron: undefined,
+                }),
+            );
+            expect(emailResult[0]?.statuses[0]).toEqual(
+                expect.objectContaining({
+                    emailAddressId: email.id,
+                    status: EmailAddressStatusEnum.ACTIVE,
+                }),
+            );
+
+            expect(shiftPrioritiesSpy).not.toHaveBeenCalled();
+        });
+
         it('should throw error if domain can not be found', async () => {
             await expect(() =>
                 sut.setEmailAddressForSpshPerson(makeParams(faker.string.uuid())),
@@ -285,6 +339,73 @@ describe('SetEmailAddressForSpshPersonService', () => {
             expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
                 `SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - Error while creating or updating the email`,
                 generationError,
+            );
+        });
+
+        it('should error when updating of priorities fails', async () => {
+            const domain: EmailDomain<true> = await setupDomain();
+            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+            const expectedEmailAddress: string = `${params.firstName}.${params.lastName}@${domain.domain}`;
+
+            emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce(Ok(expectedEmailAddress));
+            const error: EntityNotFoundError = new EntityNotFoundError('E-Mail');
+            jest.spyOn(emailAddressRepo, 'shiftPriorities').mockResolvedValueOnce(Err(error));
+
+            await expect(() => sut.setEmailAddressForSpshPerson(params)).rejects.toBeInstanceOf(
+                EmailAddressGenerationAttemptsExceededError,
+            );
+
+            const emailResult: AddressWithStatusesDescDto[] =
+                await emailAddressRepo.findAllEmailAddressesWithStatusesDescBySpshPersonId(params.spshPersonId);
+
+            expect(emailResult).toHaveLength(1);
+            expect(emailResult[0]?.statuses[0]).toEqual(
+                expect.objectContaining({
+                    status: EmailAddressStatusEnum.FAILED,
+                }),
+            );
+        });
+
+        it('should error when ox upsert fails', async () => {
+            const domain: EmailDomain<true> = await setupDomain();
+            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+            const expectedEmailAddress: string = `${params.firstName}.${params.lastName}@${domain.domain}`;
+
+            emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce(Ok(expectedEmailAddress));
+            const error: OxError = new OxError('Test Error');
+            oxSendServiceMock.send.mockResolvedValueOnce(Err(error));
+
+            await expect(() => sut.setEmailAddressForSpshPerson(params)).rejects.toBeInstanceOf(
+                EmailAddressGenerationAttemptsExceededError,
+            );
+
+            const emailResult: AddressWithStatusesDescDto[] =
+                await emailAddressRepo.findAllEmailAddressesWithStatusesDescBySpshPersonId(params.spshPersonId);
+
+            expect(emailResult).toHaveLength(1);
+            expect(emailResult[0]?.statuses[0]).toEqual(
+                expect.objectContaining({
+                    status: EmailAddressStatusEnum.FAILED,
+                }),
+            );
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(`Could not create user in ox`, error);
+        });
+
+        it('should log on unknown error', async () => {
+            const domain: EmailDomain<true> = await setupDomain();
+            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+
+            const error: Error = new Error('Test Error');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            jest.spyOn(sut as any, 'createOrUpdateEmail').mockRejectedValueOnce(error);
+
+            await expect(() => sut.setEmailAddressForSpshPerson(params)).rejects.toBeInstanceOf(
+                EmailAddressGenerationAttemptsExceededError,
+            );
+
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                `SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - Unknown error`,
+                error,
             );
         });
     });
