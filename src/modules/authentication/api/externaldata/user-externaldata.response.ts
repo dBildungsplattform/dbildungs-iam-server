@@ -1,12 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Person } from '../../../person/domain/person.js';
+import { RequiredExternalPkData } from '../authentication.controller.js';
 import { UserExeternalDataResponseItslearning } from './user-externaldata-itslearning.response.js';
 import { UserExeternalDataResponseOnlineDateiablage } from './user-externaldata-onlinedateiablage.response.js';
+import { UserExeternalDataResponseOpshPk } from './user-externaldata-opsh-pk.response.js';
 import { UserExeternalDataResponseOpsh } from './user-externaldata-opsh.response.js';
 import { UserExeternalDataResponseOx } from './user-externaldata-ox.response.js';
 import { UserExeternalDataResponseVidis } from './user-externaldata-vidis.response.js';
-import { UserExeternalDataResponseOpshPk } from './user-externaldata-opsh-pk.response.js';
-import { RequiredExternalPkData } from '../authentication.controller.js';
-import { Person } from '../../../person/domain/person.js';
+import { ServiceProviderEntity } from '../../../service-provider/repo/service-provider.entity.js';
+import { PersonenkontextErweitertVirtualEntityLoaded } from '../../../rolle/repo/rollenerweiterung.repo.js';
+import { Loaded } from '@mikro-orm/core';
 
 export class UserExeternalDataResponse {
     @ApiProperty({ type: UserExeternalDataResponseOx })
@@ -41,17 +44,26 @@ export class UserExeternalDataResponse {
     public static createNew(
         person: Person<true>,
         externalPkData: RequiredExternalPkData[],
+        personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[],
         contextID: string,
     ): UserExeternalDataResponse {
         const ox: UserExeternalDataResponseOx = new UserExeternalDataResponseOx(person.username!, contextID);
         const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(person.id);
+        const mergedExternalPkData: RequiredExternalPkData[] = UserExeternalDataResponse.mergeServiceProviders(
+            externalPkData,
+            personenKontextErweiterungen,
+        );
+        const externalPkDataWithVidisAngebotId: RequiredExternalPkData[] =
+            UserExeternalDataResponse.getExternalPkDataWithSpWithVidisAngebotId(mergedExternalPkData);
         const vidis: UserExeternalDataResponseVidis = new UserExeternalDataResponseVidis(
             person.id,
             person.vorname,
             person.familienname,
             externalPkData[0]?.rollenart,
             person.email,
-            externalPkData.map((pk: RequiredExternalPkData) => pk.kennung),
+            externalPkDataWithVidisAngebotId
+                .map((pk: RequiredExternalPkData) => pk.kennung)
+                .filter((k: string, i: number, arr: string[]) => !!k && arr.indexOf(k) === i),
         );
         const opsh: UserExeternalDataResponseOpsh = new UserExeternalDataResponseOpsh(
             person.vorname,
@@ -65,5 +77,45 @@ export class UserExeternalDataResponse {
             new UserExeternalDataResponseOnlineDateiablage(person.id);
 
         return new UserExeternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage);
+    }
+
+    private static mergeServiceProviders(
+        externalPkData: RequiredExternalPkData[],
+        personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[],
+    ): RequiredExternalPkData[] {
+        const erweiterungenMap: Map<string, ServiceProviderEntity[]> = new Map<string, ServiceProviderEntity[]>();
+        for (const erweiterung of personenKontextErweiterungen) {
+            const pkId: string = erweiterung.personenkontext.unwrap().id;
+            const sp: Loaded<ServiceProviderEntity & object, never, never, never> =
+                erweiterung.serviceProvider.unwrap();
+            if (!erweiterungenMap.has(pkId)) {
+                erweiterungenMap.set(pkId, []);
+            }
+            erweiterungenMap.get(pkId)?.push(sp);
+        }
+
+        return externalPkData.map((pk: RequiredExternalPkData) => {
+            const extraSp: ServiceProviderEntity[] = erweiterungenMap.get(pk.pkId) ?? [];
+            const mergedSp: ServiceProviderEntity[] = [...pk.serviceProvider, ...extraSp];
+            const uniqueSp: ServiceProviderEntity[] = Array.from(new Set(mergedSp));
+
+            return {
+                ...pk,
+                serviceProvider: uniqueSp,
+            };
+        });
+    }
+
+    private static getExternalPkDataWithSpWithVidisAngebotId(
+        externalPkData: RequiredExternalPkData[],
+    ): RequiredExternalPkData[] {
+        return externalPkData
+            .map((pk: RequiredExternalPkData) => {
+                if (pk.serviceProvider.some((sp: ServiceProviderEntity) => !!sp.vidisAngebotId)) {
+                    return pk;
+                }
+                return undefined;
+            })
+            .filter((item: RequiredExternalPkData | undefined): item is RequiredExternalPkData => item !== undefined);
     }
 }
