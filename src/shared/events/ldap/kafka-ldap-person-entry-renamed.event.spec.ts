@@ -9,7 +9,7 @@ describe('KafkaLdapPersonEntryRenamedEvent', () => {
         const person: Person<true> = DoFactory.createPerson(true);
         const renamedEvent: PersonRenamedEvent = PersonRenamedEvent.fromPerson(
             person,
-            faker.internet.userName(),
+            faker.internet.username(),
             faker.person.firstName(),
             faker.person.lastName(),
         );

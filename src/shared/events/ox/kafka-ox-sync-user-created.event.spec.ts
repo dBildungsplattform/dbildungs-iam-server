@@ -4,9 +4,9 @@ import { KafkaOxSyncUserCreatedEvent } from './kafka-ox-sync-user-created.event.
 describe('KafkaOxSyncUserCreatedEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {
         const personId: string = faker.string.uuid();
-        const keycloakUsername: string = faker.internet.userName();
+        const keycloakUsername: string = faker.internet.username();
         const oxUserId: string = faker.string.uuid();
-        const oxUserName: string = faker.internet.userName();
+        const oxUserName: string = faker.internet.username();
         const oxContextName: string = faker.string.uuid();
         const oxContextId: string = faker.string.uuid();
         const email: string = faker.internet.email();

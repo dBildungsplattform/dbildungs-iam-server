@@ -107,7 +107,7 @@ describe('EmailAddressDeletionService', () => {
         for (let i: number = 0; i < size; i++) {
             const person: Person<true> = createMock<Person<true>>({
                 id: faker.string.uuid(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
                 vorname: faker.person.firstName(),
                 familienname: faker.person.lastName(),
             });

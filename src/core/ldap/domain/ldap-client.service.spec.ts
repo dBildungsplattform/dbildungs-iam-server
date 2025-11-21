@@ -91,7 +91,7 @@ describe('LDAP Client Service', () => {
             id: id ?? faker.string.uuid(),
             vorname: vorname ?? faker.person.firstName(),
             familienname: familienname ?? faker.person.lastName(),
-            username: username ?? faker.internet.userName(),
+            username: username ?? faker.internet.username(),
             ldapEntryUUID: ldapEntryUUID ?? faker.string.uuid(),
         };
     }
@@ -185,7 +185,7 @@ describe('LDAP Client Service', () => {
             faker.person.lastName(),
             faker.person.firstName(),
             '1',
-            faker.internet.userName(),
+            faker.internet.username(),
             faker.lorem.word(),
             undefined,
         );
@@ -770,7 +770,7 @@ describe('LDAP Client Service', () => {
 
     describe('removeMailAlternativeAddress', () => {
         const personId: PersonID = faker.string.uuid();
-        const username: PersonUsername = faker.internet.userName();
+        const username: PersonUsername = faker.internet.username();
 
         describe('when emailAddress CANNOT be splitted at @', () => {
             it('should return error', async () => {
@@ -1058,7 +1058,7 @@ describe('LDAP Client Service', () => {
             });
             const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
                 faker.string.uuid(),
-                faker.internet.userName(),
+                faker.internet.username(),
                 faker.internet.email(),
             );
 
@@ -1571,7 +1571,7 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
                 const result: Result<PersonUsername> = await ldapClientService.modifyPersonAttributes(
-                    faker.internet.userName(),
+                    faker.internet.username(),
                 );
 
                 expect(result.ok).toBeFalsy();
@@ -1591,7 +1591,7 @@ describe('LDAP Client Service', () => {
                 });
 
                 const result: Result<PersonUsername> = await ldapClientService.modifyPersonAttributes(
-                    faker.internet.userName(),
+                    faker.internet.username(),
                 );
 
                 expect(result.ok).toBeFalsy();
@@ -1621,7 +1621,7 @@ describe('LDAP Client Service', () => {
             });
             describe('when modifying', () => {
                 it('Should Update LDAP When called with Attributes', async () => {
-                    const oldUsername: PersonUsername = faker.internet.userName();
+                    const oldUsername: PersonUsername = faker.internet.username();
                     const newGivenName: string = faker.person.firstName();
                     const newSn: string = faker.person.lastName();
                     const newUid: string = faker.string.alphanumeric(6);
@@ -1664,7 +1664,7 @@ describe('LDAP Client Service', () => {
 
                 it('Should Do nothing when called with No Attributes', async () => {
                     const result: Result<PersonUsername> = await ldapClientService.modifyPersonAttributes(
-                        faker.internet.userName(),
+                        faker.internet.username(),
                     );
                     expect(result.ok).toBeTruthy();
                     expect(clientMock.modify).not.toHaveBeenCalled();
@@ -1672,7 +1672,7 @@ describe('LDAP Client Service', () => {
                 });
 
                 it('should return error if updateMemberDnInGroups fails', async () => {
-                    const oldUsername: PersonUsername = faker.internet.userName();
+                    const oldUsername: PersonUsername = faker.internet.username();
                     const newUid: string = faker.string.alphanumeric(6);
 
                     jest.spyOn(ldapClientService, 'updateMemberDnInGroups').mockResolvedValue({
@@ -1698,7 +1698,7 @@ describe('LDAP Client Service', () => {
     });
 
     describe('getPersonAttributes', () => {
-        const username: PersonUsername = faker.internet.userName();
+        const username: PersonUsername = faker.internet.username();
         const personId: PersonID = faker.string.uuid();
         const dn: string = 'dn';
         const oeffentlicheSchulenDoamin: string = 'schule-sh.de';
@@ -2097,7 +2097,7 @@ describe('LDAP Client Service', () => {
     });
 
     describe('setMailAlternativeAddress', () => {
-        const username: PersonUsername = faker.internet.userName();
+        const username: PersonUsername = faker.internet.username();
         const personId: PersonID = faker.string.uuid();
         const dn: string = 'dn';
         const newMailAlternativeAddress: string = 'newMailAlternativeAddress@schule-sh.de';
@@ -2224,7 +2224,7 @@ describe('LDAP Client Service', () => {
     });
 
     describe('getGroupsForPerson', () => {
-        const username: PersonUsername = faker.internet.userName();
+        const username: PersonUsername = faker.internet.username();
         const personId: PersonID = faker.string.uuid();
         const dn: string = 'dn';
         const givenName: string = faker.person.firstName();
@@ -2364,7 +2364,7 @@ describe('LDAP Client Service', () => {
     });
 
     describe('changeEmailAddressByPersonId', () => {
-        const fakeUsername: PersonUsername = faker.internet.userName();
+        const fakeUsername: PersonUsername = faker.internet.username();
         const fakePersonID: PersonID = faker.string.uuid();
         const fakeDN: string = faker.string.alpha();
         const newEmailAddress: string = 'new-address@schule-sh.de';
@@ -2379,7 +2379,7 @@ describe('LDAP Client Service', () => {
                 });
                 const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
                     faker.string.uuid(),
-                    faker.internet.userName(),
+                    faker.internet.username(),
                     fakeSchuleSHAddress,
                 );
 
@@ -2391,7 +2391,7 @@ describe('LDAP Client Service', () => {
             it('should return falsy result', async () => {
                 const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
                     faker.string.uuid(),
-                    faker.internet.userName(),
+                    faker.internet.username(),
                     fakeSchuleSHAddress,
                 );
 
@@ -2403,7 +2403,7 @@ describe('LDAP Client Service', () => {
             it('should return LdapEmailDomainError', async () => {
                 const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
                     faker.string.uuid(),
-                    faker.internet.userName(),
+                    faker.internet.username(),
                     'user@wrong-email-domain.de',
                 );
 
@@ -2416,7 +2416,7 @@ describe('LDAP Client Service', () => {
             it('should return LdapEmailAddressError', async () => {
                 const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
                     faker.string.uuid(),
-                    faker.internet.userName(),
+                    faker.internet.username(),
                     'user-at-wrong-email-domain.de',
                 );
 
@@ -2439,7 +2439,7 @@ describe('LDAP Client Service', () => {
 
                 const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
                     faker.string.uuid(),
-                    faker.internet.userName(),
+                    faker.internet.username(),
                     fakeSchuleSHAddress,
                 );
 
@@ -2472,7 +2472,7 @@ describe('LDAP Client Service', () => {
                 });
                 const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
                     fakePersonID,
-                    faker.internet.userName(),
+                    faker.internet.username(),
                     newEmailAddress,
                 );
 
@@ -3027,7 +3027,7 @@ describe('LDAP Client Service', () => {
                 });
                 const result: Result<PersonID> = await ldapClientService.changeUserPasswordByPersonId(
                     faker.string.uuid(),
-                    faker.internet.userName(),
+                    faker.internet.username(),
                 );
 
                 expect(result.ok).toBeFalsy();
@@ -3048,7 +3048,7 @@ describe('LDAP Client Service', () => {
 
                 const result: Result<PersonID> = await ldapClientService.changeUserPasswordByPersonId(
                     faker.string.uuid(),
-                    faker.internet.userName(),
+                    faker.internet.username(),
                 );
 
                 expect(result.ok).toBeFalsy();
@@ -3061,7 +3061,7 @@ describe('LDAP Client Service', () => {
 
         describe('when person can be found but modification fails', () => {
             fakePersonID = faker.string.uuid();
-            fakeUsername = faker.internet.userName();
+            fakeUsername = faker.internet.username();
             fakeDN = faker.string.alpha();
 
             it('should NOT publish event and throw LdapPersonEntryChangedEvent', async () => {
@@ -3100,7 +3100,7 @@ describe('LDAP Client Service', () => {
         describe('when person can be found and userPassword can be modified', () => {
             beforeEach(() => {
                 fakePersonID = faker.string.uuid();
-                fakeUsername = faker.internet.userName();
+                fakeUsername = faker.internet.username();
                 fakeDN = faker.string.alpha();
             });
 

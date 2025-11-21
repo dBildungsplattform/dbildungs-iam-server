@@ -4,7 +4,7 @@ import { ExistsUserAction, ExistsUserResponseBody } from './exists-user.action.j
 describe('ExistsUserAction', () => {
     describe('buildRequest', () => {
         it('should return object', () => {
-            const username: string = faker.internet.userName();
+            const username: string = faker.internet.username();
 
             const action: ExistsUserAction = new ExistsUserAction({
                 contextId: faker.string.uuid(),
@@ -19,7 +19,7 @@ describe('ExistsUserAction', () => {
 
     describe('parseBody', () => {
         it('should return ExistsUserResponse', () => {
-            const username: string = faker.internet.userName();
+            const username: string = faker.internet.username();
 
             const action: ExistsUserAction = new ExistsUserAction({
                 contextId: faker.string.uuid(),

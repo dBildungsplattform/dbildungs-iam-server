@@ -274,7 +274,7 @@ describe('AuthenticationController', () => {
         it('should redirect to the correct Keycloak URL', () => {
             const responseMock: Response = createMock<Response>();
             const redirectUrl: string = faker.internet.url();
-            const loginHint: string = faker.internet.userName();
+            const loginHint: string = faker.internet.username();
             authController.resetPassword(redirectUrl, loginHint, responseMock);
             const keyCloakRealm: string = keyCloakConfig.REALM_NAME.toLowerCase();
             const expectedUrl: string = `${oidcClient.issuer.metadata.authorization_endpoint}?client_id=${keyCloakRealm}&login_hint=${loginHint}&response_type=code&scope=openid&kc_action=UPDATE_PASSWORD&redirect_uri=${redirectUrl}`;

@@ -70,7 +70,7 @@ describe('EmailMicroserviceEventHandler', () => {
         const mockServiceProviderId: string = faker.string.uuid();
         const params: SetEmailParams = {
             spshPersonId: faker.string.uuid(),
-            spshUsername: faker.internet.userName(),
+            spshUsername: faker.internet.username(),
             kennungen: ['0706054'],
             firstName: faker.person.firstName(),
             lastName: faker.person.lastName(),
@@ -176,7 +176,7 @@ describe('EmailMicroserviceEventHandler', () => {
                 id: faker.string.uuid(),
                 vorname: faker.person.firstName(),
                 familienname: faker.person.lastName(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
             },
             newKontexte: [{}, {}],
             removedKontexte: [{}],
