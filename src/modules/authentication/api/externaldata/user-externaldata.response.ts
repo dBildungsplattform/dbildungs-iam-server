@@ -53,13 +53,17 @@ export class UserExeternalDataResponse {
             externalPkData,
             personenKontextErweiterungen,
         );
+        const externalPkDataWithVidisAngebotId: RequiredExternalPkData[] =
+            UserExeternalDataResponse.getExternalPkDataWithSpWithVidisAngebotId(mergedExternalPkData);
         const vidis: UserExeternalDataResponseVidis = new UserExeternalDataResponseVidis(
             person.id,
             person.vorname,
             person.familienname,
             externalPkData[0]?.rollenart,
             person.email,
-            mergedExternalPkData.map((pk: RequiredExternalPkData) => pk.kennung),
+            externalPkDataWithVidisAngebotId
+                .map((pk: RequiredExternalPkData) => pk.kennung)
+                .filter((k: string, i: number, arr: string[]) => !!k && arr.indexOf(k) === i),
         );
         const opsh: UserExeternalDataResponseOpsh = new UserExeternalDataResponseOpsh(
             person.vorname,
@@ -100,5 +104,18 @@ export class UserExeternalDataResponse {
                 serviceProvider: uniqueSp,
             };
         });
+    }
+
+    private static getExternalPkDataWithSpWithVidisAngebotId(
+        externalPkData: RequiredExternalPkData[],
+    ): RequiredExternalPkData[] {
+        return externalPkData
+            .map((pk: RequiredExternalPkData) => {
+                if (pk.serviceProvider.some((sp: ServiceProviderEntity) => !!sp.vidisAngebotId)) {
+                    return pk;
+                }
+                return undefined;
+            })
+            .filter((item: RequiredExternalPkData | undefined): item is RequiredExternalPkData => item !== undefined);
     }
 }
