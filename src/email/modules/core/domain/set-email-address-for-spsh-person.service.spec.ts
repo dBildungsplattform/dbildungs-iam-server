@@ -28,6 +28,7 @@ import { EmailDomain } from './email-domain.js';
 import { SetEmailAddressForSpshPersonService } from './set-email-address-for-spsh-person.service.js';
 import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
 import { OxError } from '../../../../shared/error/ox.error.js';
+import { OxPrimaryMailAlreadyExistsError } from '../../ox/error/ox-primary-mail-already-exists.error.js';
 
 describe('SetEmailAddressForSpshPersonService', () => {
     let module: TestingModule;
@@ -101,6 +102,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
         jest.resetAllMocks();
         jest.restoreAllMocks();
+
+        // Don't retry by default
+        sut.RETRY_ATTEMPTS = 1;
     });
 
     function makeParams(spshServiceProviderId: string): SetEmailAddressForSpshPersonParams {
@@ -144,11 +148,6 @@ describe('SetEmailAddressForSpshPersonService', () => {
     }
 
     describe('setEmailAddressForSpshPerson', () => {
-        beforeEach(() => {
-            // Don't retry by default
-            sut.RETRY_ATTEMPTS = 1;
-        });
-
         it('should create new email if no other mail exists', async () => {
             const domain: EmailDomain<true> = await setupDomain();
             const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
@@ -366,29 +365,244 @@ describe('SetEmailAddressForSpshPersonService', () => {
             );
         });
 
-        it('should error when ox upsert fails', async () => {
-            const domain: EmailDomain<true> = await setupDomain();
-            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
-            const expectedEmailAddress: string = `${params.firstName}.${params.lastName}@${domain.domain}`;
+        describe('getOrCreateAvailableEmail', () => {
+            it('should return error if generation failed', async () => {
+                const domain: EmailDomain<true> = await setupDomain();
+                const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
 
-            emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce(Ok(expectedEmailAddress));
-            const error: OxError = new OxError('Test Error');
-            oxSendServiceMock.send.mockResolvedValueOnce(Err(error));
+                const error: Error = new Error('test error');
+                emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce(Err(error));
 
-            await expect(() => sut.setEmailAddressForSpshPerson(params)).rejects.toBeInstanceOf(
-                EmailAddressGenerationAttemptsExceededError,
-            );
+                await expect(() => sut.setEmailAddressForSpshPerson(params)).rejects.toBeInstanceOf(
+                    EmailAddressGenerationAttemptsExceededError,
+                );
 
-            const emailResult: AddressWithStatusesDescDto[] =
-                await emailAddressRepo.findAllEmailAddressesWithStatusesDescBySpshPersonId(params.spshPersonId);
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    `Could not determine available e-mail`,
+                    error,
+                );
+            });
+        });
 
-            expect(emailResult).toHaveLength(1);
-            expect(emailResult[0]?.statuses[0]).toEqual(
-                expect.objectContaining({
-                    status: EmailAddressStatusEnum.FAILED,
-                }),
-            );
-            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(`Could not create user in ox`, error);
+        describe('upsertOxUser', () => {
+            let domain: EmailDomain<true>;
+            let params: SetEmailAddressForSpshPersonParams;
+            let address: string;
+
+            beforeEach(async () => {
+                domain = await setupDomain();
+                params = makeParams(domain.spshServiceProviderId);
+                address = `${params.firstName}.${params.lastName}@${domain.domain}`;
+
+                emailAddressGeneratorMock.isEqualIgnoreCount.mockReturnValue(false);
+                emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce(Ok(address));
+            });
+
+            it('should error when exists check fails', async () => {
+                // E-Mails with ox id needs to exist
+                await setupEmailWithStatus(
+                    EmailAddress.createNew({
+                        priority: 0,
+                        spshPersonId: params.spshPersonId,
+                        address: faker.internet.email(),
+                        externalId: params.spshPersonId,
+                        oxUserCounter: faker.string.numeric(5),
+                    }),
+                    EmailAddressStatusEnum.ACTIVE,
+                );
+                const error: OxError = new OxError('test error');
+                oxSendServiceMock.send.mockResolvedValueOnce(Err(error));
+
+                await expect(() => sut.setEmailAddressForSpshPerson(params)).rejects.toBeInstanceOf(
+                    EmailAddressGenerationAttemptsExceededError,
+                );
+
+                const emailResult: AddressWithStatusesDescDto[] =
+                    await emailAddressRepo.findAllEmailAddressesWithStatusesDescBySpshPersonId(params.spshPersonId);
+                emailResult.sort(
+                    (a: AddressWithStatusesDescDto, b: AddressWithStatusesDescDto) =>
+                        a.emailAddress.priority - b.emailAddress.priority,
+                );
+
+                expect(emailResult).toHaveLength(2);
+                expect(emailResult[0]?.statuses[0]).toEqual(
+                    expect.objectContaining({
+                        status: EmailAddressStatusEnum.FAILED,
+                    }),
+                );
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(`Error while updating ox user`, error);
+            });
+
+            it('should error when modify fails', async () => {
+                // E-Mails with ox id needs to exist
+                await setupEmailWithStatus(
+                    EmailAddress.createNew({
+                        priority: 0,
+                        spshPersonId: params.spshPersonId,
+                        address: faker.internet.email(),
+                        externalId: params.spshPersonId,
+                        oxUserCounter: faker.string.numeric(5),
+                    }),
+                    EmailAddressStatusEnum.ACTIVE,
+                );
+                const error: OxError = new OxError('test error');
+                oxSendServiceMock.send.mockResolvedValueOnce(Ok(true)); // exists
+                oxSendServiceMock.send.mockResolvedValueOnce(Err(error)); // modify
+
+                await expect(() => sut.setEmailAddressForSpshPerson(params)).rejects.toBeInstanceOf(
+                    EmailAddressGenerationAttemptsExceededError,
+                );
+
+                const emailResult: AddressWithStatusesDescDto[] =
+                    await emailAddressRepo.findAllEmailAddressesWithStatusesDescBySpshPersonId(params.spshPersonId);
+                emailResult.sort(
+                    (a: AddressWithStatusesDescDto, b: AddressWithStatusesDescDto) =>
+                        a.emailAddress.priority - b.emailAddress.priority,
+                );
+
+                expect(emailResult).toHaveLength(2);
+                expect(emailResult[0]?.statuses[0]).toEqual(
+                    expect.objectContaining({
+                        status: EmailAddressStatusEnum.FAILED,
+                    }),
+                );
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(`Error while updating ox user`, error);
+            });
+
+            it('should error when create fails', async () => {
+                const error: OxError = new OxError('test error');
+                oxSendServiceMock.send.mockResolvedValueOnce(Err(error)); // modify
+
+                await expect(() => sut.setEmailAddressForSpshPerson(params)).rejects.toBeInstanceOf(
+                    EmailAddressGenerationAttemptsExceededError,
+                );
+
+                const emailResult: AddressWithStatusesDescDto[] =
+                    await emailAddressRepo.findAllEmailAddressesWithStatusesDescBySpshPersonId(params.spshPersonId);
+                emailResult.sort(
+                    (a: AddressWithStatusesDescDto, b: AddressWithStatusesDescDto) =>
+                        a.emailAddress.priority - b.emailAddress.priority,
+                );
+
+                expect(emailResult).toHaveLength(1);
+                expect(emailResult[0]?.statuses[0]).toEqual(
+                    expect.objectContaining({
+                        status: EmailAddressStatusEnum.FAILED,
+                    }),
+                );
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(`Error while updating ox user`, error);
+            });
+
+            it('should set status to ALREADY_IN_OX if that error was returned', async () => {
+                const error: OxPrimaryMailAlreadyExistsError = new OxPrimaryMailAlreadyExistsError('test error');
+                oxSendServiceMock.send.mockResolvedValueOnce(Err(error)); // modify
+
+                await expect(() => sut.setEmailAddressForSpshPerson(params)).rejects.toBeInstanceOf(
+                    EmailAddressGenerationAttemptsExceededError,
+                );
+
+                const emailResult: AddressWithStatusesDescDto[] =
+                    await emailAddressRepo.findAllEmailAddressesWithStatusesDescBySpshPersonId(params.spshPersonId);
+                emailResult.sort(
+                    (a: AddressWithStatusesDescDto, b: AddressWithStatusesDescDto) =>
+                        a.emailAddress.priority - b.emailAddress.priority,
+                );
+
+                expect(emailResult).toHaveLength(1);
+                expect(emailResult[0]?.statuses[0]).toEqual(
+                    expect.objectContaining({
+                        status: EmailAddressStatusEnum.EXISTS_ONLY_IN_OX,
+                    }),
+                );
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(`Error while updating ox user`, error);
+            });
+        });
+
+        describe('upsertLdap', () => {
+            let domain: EmailDomain<true>;
+            let params: SetEmailAddressForSpshPersonParams;
+            let expectedEmailAddress: string;
+
+            beforeEach(async () => {
+                domain = await setupDomain();
+                params = makeParams(domain.spshServiceProviderId);
+                expectedEmailAddress = `${params.firstName}.${params.lastName}@${domain.domain}`;
+
+                emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce(Ok(expectedEmailAddress));
+
+                oxSendServiceMock.send.mockResolvedValueOnce(Ok({ id: faker.string.numeric(5) }));
+            });
+
+            it('should error when exists-check fails', async () => {
+                const error: Error = new Error('Test Error');
+                ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Err(error));
+
+                await expect(() => sut.setEmailAddressForSpshPerson(params)).rejects.toBeInstanceOf(
+                    EmailAddressGenerationAttemptsExceededError,
+                );
+
+                const emailResult: AddressWithStatusesDescDto[] =
+                    await emailAddressRepo.findAllEmailAddressesWithStatusesDescBySpshPersonId(params.spshPersonId);
+
+                expect(emailResult).toHaveLength(1);
+                expect(emailResult[0]?.statuses[0]).toEqual(
+                    expect.objectContaining({
+                        status: EmailAddressStatusEnum.FAILED,
+                    }),
+                );
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    `Error while updating/creating LDAP user`,
+                    error,
+                );
+            });
+
+            it('should error when ldap upsert create fails', async () => {
+                ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Ok(false));
+                const error: Error = new Error('Test Error');
+                ldapClientServiceMock.createPerson.mockResolvedValueOnce(Err(error));
+
+                await expect(() => sut.setEmailAddressForSpshPerson(params)).rejects.toBeInstanceOf(
+                    EmailAddressGenerationAttemptsExceededError,
+                );
+
+                const emailResult: AddressWithStatusesDescDto[] =
+                    await emailAddressRepo.findAllEmailAddressesWithStatusesDescBySpshPersonId(params.spshPersonId);
+
+                expect(emailResult).toHaveLength(1);
+                expect(emailResult[0]?.statuses[0]).toEqual(
+                    expect.objectContaining({
+                        status: EmailAddressStatusEnum.FAILED,
+                    }),
+                );
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    `Error while updating/creating LDAP user`,
+                    error,
+                );
+            });
+
+            it('should error when ldap upsert update fails', async () => {
+                ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Ok(true));
+                const error: Error = new Error('Test Error');
+                ldapClientServiceMock.updatePerson.mockResolvedValueOnce(Err(error));
+
+                await expect(() => sut.setEmailAddressForSpshPerson(params)).rejects.toBeInstanceOf(
+                    EmailAddressGenerationAttemptsExceededError,
+                );
+
+                const emailResult: AddressWithStatusesDescDto[] =
+                    await emailAddressRepo.findAllEmailAddressesWithStatusesDescBySpshPersonId(params.spshPersonId);
+
+                expect(emailResult).toHaveLength(1);
+                expect(emailResult[0]?.statuses[0]).toEqual(
+                    expect.objectContaining({
+                        status: EmailAddressStatusEnum.FAILED,
+                    }),
+                );
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    `Error while updating/creating LDAP user`,
+                    error,
+                );
+            });
         });
 
         it('should log on unknown error', async () => {

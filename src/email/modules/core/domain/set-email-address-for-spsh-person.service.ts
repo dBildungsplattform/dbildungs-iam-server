@@ -414,10 +414,6 @@ export class SetEmailAddressForSpshPersonService {
         alternativeEmail: EmailAddress<true> | undefined,
         kennungen: string[],
     ): Promise<Result<string>> {
-        if (alternativeEmail && primaryEmail.oxUserCounter !== alternativeEmail.oxUserCounter) {
-            return Err(new Error('Primary and alternative have different external OX IDs'));
-        }
-
         const externalId: string = primaryEmail.externalId;
         const oxUserCounter: string | undefined = primaryEmail.oxUserCounter;
 
@@ -430,7 +426,8 @@ export class SetEmailAddressForSpshPersonService {
 
             // Maybe split this
             if (!exists.ok) {
-                return Err(new Error('TODO'));
+                this.logger.logUnknownAsError(`Could not find user in ox`, exists.error);
+                return exists;
             }
 
             // update OX user
@@ -451,15 +448,15 @@ export class SetEmailAddressForSpshPersonService {
             );
 
             if (!changeResult.ok) {
-                return Err(new Error('TODO'));
+                this.logger.logUnknownAsError(`Could not create update in ox`, changeResult.error);
+                return changeResult;
             }
 
             await this.oxService.setUserOxGroups(oxUserCounter, kennungen);
 
             return Ok(oxUserCounter);
         } else {
-            // create ox user (keep ID!)
-
+            // create ox user (returning ID!)
             const createAction: CreateUserAction = this.oxService.createCreateUserAction({
                 username: externalId,
                 displayName: spshUsername,
@@ -493,7 +490,7 @@ export class SetEmailAddressForSpshPersonService {
         const exists: Result<boolean> = await this.ldapClientService.isPersonExisting(uid, domain);
 
         if (!exists.ok) {
-            return Err(new Error('TODO'));
+            return exists;
         }
 
         if (exists.value) {
