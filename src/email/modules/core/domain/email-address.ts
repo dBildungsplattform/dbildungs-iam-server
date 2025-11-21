@@ -5,9 +5,9 @@ export class EmailAddress<WasPersisted extends boolean> {
         public readonly updatedAt: Persisted<Date, WasPersisted>,
         public address: string,
         public priority: number,
-        public spshPersonId?: string,
-        public oxUserCounter?: string,
-        public externalId?: string,
+        public spshPersonId: string,
+        public oxUserCounter: string | undefined,
+        public externalId: string,
         public markedForCron?: Date,
     ) {}
 
@@ -17,9 +17,9 @@ export class EmailAddress<WasPersisted extends boolean> {
         updatedAt: Date;
         address: string;
         priority: number;
-        spshPersonId?: string;
-        oxUserCounter?: string;
-        externalId?: string;
+        spshPersonId: string;
+        oxUserCounter: string | undefined;
+        externalId: string;
         markedForCron?: Date;
     }): EmailAddress<true> {
         return new EmailAddress(
@@ -38,9 +38,9 @@ export class EmailAddress<WasPersisted extends boolean> {
     public static createNew(params: {
         address: string;
         priority: number;
-        spshPersonId?: string;
-        oxUserCounter?: string;
-        externalId?: string;
+        spshPersonId: string;
+        oxUserCounter: string | undefined;
+        externalId: string;
         markedForCron?: Date;
     }): EmailAddress<false> {
         return new EmailAddress(

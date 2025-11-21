@@ -131,7 +131,7 @@ export class RolleController {
             (r: Rolle<true>) => {
                 const sps: ServiceProvider<true>[] = r.serviceProviderIds
                     .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
-                    .filter(Boolean) as ServiceProvider<true>[];
+                    .filter(Boolean);
 
                 const administeredBySchulstrukturknoten: Organisation<true> | undefined = administeredOrganisations.get(
                     r.administeredBySchulstrukturknoten,
@@ -535,7 +535,7 @@ export class RolleController {
 
         const rolleServiceProviders: ServiceProvider<true>[] = rolle.serviceProviderIds
             .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
-            .filter(Boolean) as ServiceProvider<true>[];
+            .filter(Boolean);
 
         return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
     }

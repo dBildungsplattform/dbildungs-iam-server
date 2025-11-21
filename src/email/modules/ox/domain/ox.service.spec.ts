@@ -17,6 +17,9 @@ import { DeleteUserAction } from '../actions/user/delete-user.action';
 import { ExistsUserAction } from '../actions/user/exists-user.action';
 import { ChangeByModuleAccessAction } from '../actions/user/change-by-module-access.action';
 import { CreateUserAction } from '../actions/user/create-user.action';
+import { Err, Ok } from '../../../../shared/util/result';
+import { OXGroup } from '../actions/group/ox-group.types';
+import { OxError } from '../../../../shared/error/ox.error';
 
 describe('OxService', () => {
     let module: TestingModule;
@@ -334,6 +337,75 @@ describe('OxService', () => {
         it('createChangeByModuleAccessAction returns ChangeByModuleAccessAction', () => {
             const action: ChangeByModuleAccessAction = sut.createChangeByModuleAccessAction(faker.string.uuid());
             expect(action).toBeInstanceOf(ChangeByModuleAccessAction);
+        });
+    });
+
+    describe('setUserOxGroups', () => {
+        function makeOxGroup(): OXGroup {
+            return {
+                id: faker.string.uuid(),
+                displayname: faker.string.alphanumeric(10),
+                name: faker.string.alphanumeric(10),
+                memberIds: [],
+            };
+        }
+
+        it('should do stuff', async () => {
+            const oldGroup: OXGroup = makeOxGroup();
+            const newGroup: OXGroup = makeOxGroup();
+            const groups: OXGroup[] = [oldGroup];
+            const oxUser: string = faker.string.numeric(5);
+
+            const addOxUserToGroupSpy: jest.SpyInstance = jest.spyOn(sut, 'addOxUserToGroup').mockResolvedValueOnce();
+            const removeOxUserFromGroupSpy: jest.SpyInstance = jest
+                .spyOn(sut, 'removeOxUserFromGroup')
+                .mockResolvedValueOnce();
+
+            oxSendService.send.mockResolvedValueOnce(Ok({ groups }));
+
+            await sut.setUserOxGroups(oxUser, [newGroup.name]);
+
+            expect(addOxUserToGroupSpy).toHaveBeenCalledWith(oxUser, newGroup.name);
+            expect(removeOxUserFromGroupSpy).toHaveBeenCalledWith(oxUser, oldGroup.id);
+        });
+
+        it('should log error if groups can not be retrieved', async () => {
+            const oxUser: string = faker.string.numeric(5);
+            oxSendService.send.mockResolvedValueOnce(Err(new OxError()));
+
+            await sut.setUserOxGroups(oxUser, []);
+
+            expect(loggerMock.error).toHaveBeenLastCalledWith(`Could not get groups for ox user ${oxUser}`);
+        });
+    });
+
+    describe('removeOxUserFromGroup', () => {
+        it('should log on success', async () => {
+            const oxUserId: string = faker.string.numeric(5);
+            const oxGroupId: string = faker.string.uuid();
+
+            oxSendService.send.mockResolvedValueOnce(Ok(undefined));
+
+            await sut.removeOxUserFromGroup(oxUserId, oxGroupId);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Successfully removed oxUser from oxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
+            );
+        });
+
+        it('should log on error', async () => {
+            const oxUserId: string = faker.string.numeric(5);
+            const oxGroupId: string = faker.string.uuid();
+            const error: OxError = new OxError();
+
+            oxSendService.send.mockResolvedValueOnce(Err(error));
+
+            await sut.removeOxUserFromGroup(oxUserId, oxGroupId);
+
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                `Could not remove oxUser from oxGroup, oxUserId:${oxUserId} oxGroupId:${oxGroupId}`,
+                error,
+            );
         });
     });
 });

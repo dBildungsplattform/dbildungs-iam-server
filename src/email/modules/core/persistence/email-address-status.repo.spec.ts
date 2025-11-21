@@ -56,6 +56,8 @@ describe('EmailAddressStatusRepo', () => {
             address: faker.internet.email(),
             priority: 1,
             spshPersonId: faker.string.uuid(),
+            externalId: faker.string.uuid(),
+            oxUserCounter: undefined,
         });
         const tmp: EmailAddress<true> | DomainError = await emailAddressRepo.save(mailToCreate);
         if (tmp instanceof DomainError) {
