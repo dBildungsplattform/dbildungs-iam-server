@@ -23,8 +23,9 @@ import { EmailDomain } from './email-domain.js';
 import { EmailUpdateInProgressError } from '../error/email-update-in-progress.error.js';
 import { EmailAddressGenerationAttemptsExceededError } from '../error/email-address-generation-attempts-exceeds.error.js';
 import { uniq } from 'lodash-es';
+import { OxError } from '../../../../shared/error/ox.error.js';
 
-const MAX_SAFE_INTEGER: number = 2 ** 31 - 1; // Max safe integer for DB
+const MAX_EMAIL_PRIORITY: number = 99999; // E-Mails will be created with this priority before being activated
 
 @Injectable()
 export class SetEmailAddressForSpshPersonService {
@@ -394,7 +395,7 @@ export class SetEmailAddressForSpshPersonService {
 
         const emailAddressToCreate: EmailAddress<false> = EmailAddress.createNew({
             address: generationResult.value,
-            priority: MAX_SAFE_INTEGER, // Needs to be shifted into position
+            priority: MAX_EMAIL_PRIORITY, // Needs to be shifted into position
             spshPersonId: params.spshPersonId,
             externalId,
             oxUserCounter,
@@ -424,10 +425,14 @@ export class SetEmailAddressForSpshPersonService {
                 this.oxService.createGetDataForUserAction(externalId),
             );
 
-            // Maybe split this
             if (!exists.ok) {
                 this.logger.logUnknownAsError(`Could not find user in ox`, exists.error);
                 return exists;
+            }
+
+            if (!exists.value) {
+                this.logger.error(`Could not find user in ox`);
+                return Err(new OxError('User not found'));
             }
 
             // update OX user
