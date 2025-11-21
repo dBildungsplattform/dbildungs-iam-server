@@ -23,7 +23,6 @@ import { PassportUser } from '../../authentication/types/user.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { ServiceProvider } from '../domain/service-provider.js';
@@ -228,7 +227,6 @@ describe('ServiceProvider API', () => {
         let serviceProvider: ServiceProvider<true>;
         let rolle: Rolle<true>;
         let rolleWithErweiterung: Rolle<true>;
-        let rollenerweiterung: Rollenerweiterung<true>;
 
         beforeEach(async () => {
             organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
@@ -252,7 +250,7 @@ describe('ServiceProvider API', () => {
             if (rolleWithErweiterung instanceof DomainError) {
                 throw rolleWithErweiterung;
             }
-            rollenerweiterung = await rollenerweiterungRepo.create(
+            await rollenerweiterungRepo.create(
                 DoFactory.createRollenerweiterung(false, {
                     organisationId: organisation.id,
                     rolleId: rolleWithErweiterung.id,
@@ -280,16 +278,8 @@ describe('ServiceProvider API', () => {
                 kategorie: serviceProvider.kategorie,
                 requires2fa: serviceProvider.requires2fa,
                 merkmale: serviceProvider.merkmale,
-                rollenerweiterungen: [
-                    {
-                        organisation: {
-                            id: rollenerweiterung.organisationId,
-                            name: organisation.name!,
-                            kennung: organisation.kennung!,
-                        },
-                        rolle: { id: rollenerweiterung.rolleId, name: rolleWithErweiterung.name },
-                    },
-                ],
+                url: serviceProvider.url,
+                hasRollenerweiterung: true,
                 rollen: [
                     {
                         id: rolle.id,

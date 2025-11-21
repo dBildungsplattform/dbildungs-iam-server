@@ -3,53 +3,29 @@
 > This site contains general advice and notes that should help developers
 > during development and avoid some pitfalls with the used libraries.
 
-## Object Mapping
+## Setting up
 
-The use of **Automapper** is deprecated, because it seems to be unmaintained at present.
+Necessary tools:
 
-We are using a library called [Automapper](https://automapperts.netlify.app/) with the [classes strategy](https://automapperts.netlify.app/docs/strategies/classes)
-and [camel case naming convention](https://automapperts.netlify.app/docs/mapping-configuration/naming-conventions).
-The mapper works annotation based for each property. Every type besides the primitive types (boolean, number, string)
-needs the type function in the decorator. Here are some examples:
+- A Node runtime environment. Please check the [package.json](https://github.com/dBildungsplattform/dbildungs-iam-server/blob/main/package.json) to find the correct version.
+- A local Kubernetes cluster, e.g. [Rancher-Desktop](https://www.rancher.com/products/rancher-desktop)
 
-```typescript
+The basic developer setup consists of the client, the server and a range of other components that are provided via docker compose.
 
-enum SomeEnum {
-    Foo,
-    Bar,
-}
+So you need to clone this repository and the [client repo](https://github.com/dBildungsplattform/schulportal-client)
+Make sure that `git autorcrlf` is set to `false`. You can set this to `git config --global core.autocrlf false`. Otherwise Kafke will not run properly in the later steps.
 
-enum SomeStringEnum {
-    Foo = 'foo',
-    Bar = 'bar',
-}
+In both repos you call <br>
+`npm ci` ([What's that?](https://docs.npmjs.com/cli/v9/commands/npm-ci))
 
-class SomeNestedType {
-    @AutoMapper()
-    public someBoolean?: boolean;
+In the server you call <br>
+`docker compose --profile third-party up`([What's that?](https://docs.docker.com/compose/))
 
-    @AutoMapper()
-    public someNumber?: number;
+To initialize the database you run in the server folder <br>
+`npm run setup`
 
-    @AutoMapper(() => Date)
-    public someDate?: Date;
-}
+All necessary components should be ready now. You can start the server. <br>
+`npm run start`
 
-class SomeType {
-    @AutoMapper()
-    public someString?: string;
-
-    @AutoMapper(() => [String])
-    public someStringArray?: string[];
-
-    @AutoMapper(() => SomeNestedType)
-    public someNestedType?: SomeNestedType;
-
-    @AutoMapper(() => Number)
-    public someEnum?: SomeEnum;
-
-    @AutoMapper(() => String)
-    public someStringEnum?: SomeStringEnum;
-}
-
-```
+In the client folder you can start the client by running <br>
+`npm run dev`

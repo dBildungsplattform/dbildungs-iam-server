@@ -137,6 +137,10 @@ describe('configloader', () => {
                     PERSON_WITHOUT_ORG_LIMIT: 30,
                     EMAIL_ADDRESSES_DELETE_LIMIT: 10,
                 },
+                EMAIL_MICROSERVICE: {
+                    USE_EMAIL_MICROSERVICE: false,
+                    ENDPOINT: 'http://localhost:9091/',
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -313,6 +317,10 @@ describe('configloader', () => {
                     PERSON_WITHOUT_ORG_LIMIT: 30,
                     EMAIL_ADDRESSES_DELETE_LIMIT: 10,
                 },
+                EMAIL_MICROSERVICE: {
+                    USE_EMAIL_MICROSERVICE: false,
+                    ENDPOINT: 'http://localhost:9091/',
+                },
             };
 
             it("should not load the secrets file if it can't find it", () => {
@@ -385,11 +393,30 @@ describe('configloader', () => {
                     USERNAME: 'admin',
                     DB_NAME: 'test-db',
                     USE_SSL: false,
-                    SECRET: 'gehaim',
+                },
+                OX: {
+                    ENABLED: true,
+                    ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
+                    CONTEXT_ID: '1337',
+                    CONTEXT_NAME: 'context1',
+                    USERNAME: 'username',
+                    USER_PASSWORD_DEFAULT: 'password',
+                    EMAIL_ADDRESS_DELETED_EVENT_DELAY: 0,
+                },
+                LDAP: {
+                    URL: 'ldap://localhost',
+                    BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
+                    BASE_DN: 'dc=schule-sh,dc=de',
                 },
             };
 
-            const secrets: DeepPartial<EmailAppConfig> = {};
+            const secrets: DeepPartial<JsonConfig> = {
+                DB: { SECRET: 'SuperSecretSecret' },
+                LDAP: { ADMIN_PASSWORD: 'password' },
+                OX: {
+                    PASSWORD: 'password',
+                },
+            };
 
             beforeEach(() => {
                 readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
@@ -425,7 +452,23 @@ describe('configloader', () => {
                     USERNAME: 'admin',
                     DB_NAME: 'test-db',
                     USE_SSL: false,
-                    SECRET: 'gehaim',
+                    SECRET: 'x',
+                },
+                OX: {
+                    ENABLED: true,
+                    ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
+                    CONTEXT_ID: '1337',
+                    CONTEXT_NAME: 'context1',
+                    USERNAME: 'username',
+                    USER_PASSWORD_DEFAULT: 'password',
+                    EMAIL_ADDRESS_DELETED_EVENT_DELAY: 0,
+                    PASSWORD: 'x',
+                },
+                LDAP: {
+                    URL: 'ldap://localhost',
+                    BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
+                    BASE_DN: 'dc=schule-sh,dc=de',
+                    ADMIN_PASSWORD: 'x',
                 },
             };
 

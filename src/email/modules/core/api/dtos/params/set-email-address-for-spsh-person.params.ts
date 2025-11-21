@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class SetEmailAddressForSpshPersonParams {
     @IsString()
@@ -11,6 +11,25 @@ export class SetEmailAddressForSpshPersonParams {
         nullable: false,
     })
     public readonly spshPersonId!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({
+        description: 'The username of the person.',
+        required: true,
+        nullable: false,
+    })
+    public readonly spshUsername!: string;
+
+    @IsArray()
+    @IsString({ each: true })
+    @IsNotEmpty()
+    @ApiProperty({
+        description: 'Array of all school kennungen the person is associated with in spsh.',
+        required: true,
+        nullable: false,
+    })
+    public readonly kennungen!: string[];
 
     @IsString()
     @IsNotEmpty()
@@ -34,9 +53,9 @@ export class SetEmailAddressForSpshPersonParams {
     @IsUUID()
     @IsNotEmpty()
     @ApiProperty({
-        description: 'The domain Id from the email domain entity to be used.',
+        description: 'The spshServiceProviderId from the email domain entity to be used.',
         required: true,
         nullable: false,
     })
-    public readonly emailDomainId!: string;
+    public readonly spshServiceProviderId!: string;
 }

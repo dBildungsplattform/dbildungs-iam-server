@@ -82,7 +82,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -359,7 +361,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -629,7 +633,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -864,8 +870,17 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "ox_user_id": {
-          "name": "ox_user_id",
+        "ox_user_counter": {
+          "name": "ox_user_counter",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
+        },
+        "external_id": {
+          "name": "external_id",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -905,6 +920,16 @@
           "constraint": true,
           "primary": false,
           "unique": true
+        },
+        {
+          "columnNames": [
+            "external_id"
+          ],
+          "composite": false,
+          "keyName": "email_address_spsh_external_id_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
         },
         {
           "columnNames": [
@@ -958,7 +983,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -1197,7 +1224,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ],
           "mappedType": "enum"
         }
@@ -1271,7 +1300,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -1496,6 +1527,15 @@
           "primary": false,
           "nullable": false,
           "mappedType": "string"
+        },
+        "spsh_service_provider_id": {
+          "name": "spsh_service_provider_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
         }
       },
       "name": "domain",
@@ -1543,7 +1583,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -1841,7 +1883,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -2254,7 +2298,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -2544,7 +2590,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -2887,7 +2935,7 @@
           "constraint": false,
           "primary": false,
           "unique": false,
-          "expression": "create index \"person_referrer_trgm_index\" on \"person\" using gin (\"referrer\" gin_trgm_ops);"
+          "expression": "create index \"person_referrer_trgm_index\" on \"person\" using gin (\"username\" gin_trgm_ops);"
         },
         {
           "keyName": "person_familienname_trgm_index",
@@ -2989,7 +3037,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -3333,7 +3383,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -3613,7 +3665,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -3932,7 +3986,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -4398,7 +4454,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -4784,7 +4842,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -5149,7 +5209,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -5430,7 +5492,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -5727,7 +5791,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -6118,7 +6184,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -6396,7 +6464,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -6768,7 +6838,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -7046,7 +7118,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -7327,7 +7401,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -7652,7 +7728,9 @@
             "ACTIVE",
             "DEACTIVE",
             "SUSPENDED",
-            "TO_BE_DELETED"
+            "FAILED",
+            "TO_BE_DELETED",
+            "EXISTS_ONLY_IN_OX"
           ]
         },
         "meldung_status_enum": {
@@ -7868,7 +7946,9 @@
         "ACTIVE",
         "DEACTIVE",
         "SUSPENDED",
-        "TO_BE_DELETED"
+        "FAILED",
+        "TO_BE_DELETED",
+        "EXISTS_ONLY_IN_OX"
       ]
     },
     "meldung_status_enum": {

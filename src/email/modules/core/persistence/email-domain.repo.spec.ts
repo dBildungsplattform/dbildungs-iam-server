@@ -10,12 +10,10 @@ import {
 } from '../../../../../test/utils/index.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { SetEmailAddressForSpshPersonService } from '../domain/set-email-address-for-spsh-person.service.js';
 import { EmailDomainRepo } from './email-domain.repo.js';
 import { EmailCoreModule } from '../email-core.module.js';
 import { EmailDomain } from '../domain/email-domain.js';
 import { EmailAddressStatusRepo } from './email-address-status.repo.js';
-import { EmailAddressGenerator } from '../domain/email-address-generator.js';
 
 describe('EmailDomainRepo', () => {
     let module: TestingModule;
@@ -25,18 +23,12 @@ describe('EmailDomainRepo', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailCoreModule],
-            providers: [
-                SetEmailAddressForSpshPersonService,
-                EmailAddressRepo,
-                EmailDomainRepo,
-                EmailAddressStatusRepo,
-                ClassLogger,
-                EmailAddressGenerator,
-            ],
+            providers: [EmailAddressStatusRepo, EmailAddressRepo, ClassLogger],
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
             .compile();
+
         sut = module.get(EmailDomainRepo);
         orm = module.get(MikroORM);
 
@@ -56,8 +48,11 @@ describe('EmailDomainRepo', () => {
         expect(sut).toBeDefined();
     });
 
-    async function createAndSaveDomain(domain?: string): Promise<EmailDomain<true>> {
-        const mailToCreate: EmailDomain<false> = EmailDomain.createNew({ domain: domain ?? faker.internet.email() });
+    async function createAndSaveDomain(domain?: string, spshServiceProviderId?: string): Promise<EmailDomain<true>> {
+        const mailToCreate: EmailDomain<false> = EmailDomain.createNew({
+            domain: domain ?? faker.internet.email(),
+            spshServiceProviderId: spshServiceProviderId ?? faker.string.uuid(),
+        });
         const tmp: EmailDomain<true> | DomainError = await sut.save(mailToCreate);
         if (tmp instanceof DomainError) {
             throw tmp;
@@ -73,7 +68,9 @@ describe('EmailDomainRepo', () => {
         });
 
         it('should return true if email domain exists', async () => {
-            const result: Option<EmailDomain<true>> = await sut.findById(createdDomain.id);
+            const result: Option<EmailDomain<true>> = await sut.findBySpshServiceProviderId(
+                createdDomain.spshServiceProviderId,
+            );
             expect(result).toBeDefined();
             expect(result).not.toBeNull();
             expect(result).toBeInstanceOf(EmailDomain);
@@ -82,7 +79,7 @@ describe('EmailDomainRepo', () => {
         });
 
         it('should return false if email domain does not exist', async () => {
-            const result: Option<EmailDomain<true>> = await sut.findById(faker.string.uuid());
+            const result: Option<EmailDomain<true>> = await sut.findBySpshServiceProviderId(faker.string.uuid());
             expect(result).toBeNull();
         });
     });
@@ -90,21 +87,28 @@ describe('EmailDomainRepo', () => {
     describe('.save', () => {
         it('should create a new email domain', async () => {
             const domainName: string = faker.internet.domainName();
-            const mailToCreate: EmailDomain<false> = EmailDomain.createNew({ domain: domainName });
+            const spshServiceProviderId: string = faker.string.uuid();
+            const mailToCreate: EmailDomain<false> = EmailDomain.createNew({
+                domain: domainName,
+                spshServiceProviderId: spshServiceProviderId,
+            });
             const result: EmailDomain<true> | DomainError = await sut.save(mailToCreate);
 
             expect(result).toBeDefined();
             expect(result).not.toBeInstanceOf(DomainError);
             expect((result as EmailDomain<true>).domain).toBe(domainName);
 
-            const persisted: Option<EmailDomain<true>> = await sut.findById((result as EmailDomain<true>).id);
+            const persisted: Option<EmailDomain<true>> = await sut.findBySpshServiceProviderId(
+                (result as EmailDomain<true>).spshServiceProviderId,
+            );
             expect(persisted).toBeDefined();
             expect((persisted as EmailDomain<true>).domain).toBe(domainName);
         });
 
         it('should update an existing email domain', async () => {
             const originalDomain: string = faker.internet.domainName();
-            const created: EmailDomain<true> = await createAndSaveDomain(originalDomain);
+            const spshServiceProviderId: string = faker.string.uuid();
+            const created: EmailDomain<true> = await createAndSaveDomain(originalDomain, spshServiceProviderId);
 
             const updatedDomainValue: string = faker.internet.domainName();
             const updatedDomain: EmailDomain<boolean> = new EmailDomain(
@@ -112,6 +116,7 @@ describe('EmailDomainRepo', () => {
                 created.createdAt,
                 created.updatedAt,
                 updatedDomainValue,
+                created.spshServiceProviderId,
             );
 
             const result: EmailDomain<true> | DomainError = await sut.save(updatedDomain);
@@ -120,7 +125,9 @@ describe('EmailDomainRepo', () => {
             expect(result).not.toBeInstanceOf(DomainError);
             expect((result as EmailDomain<true>).domain).toBe(updatedDomainValue);
 
-            const persisted: Option<EmailDomain<true>> = await sut.findById(created.id);
+            const persisted: Option<EmailDomain<true>> = await sut.findBySpshServiceProviderId(
+                created.spshServiceProviderId,
+            );
             expect(persisted).toBeDefined();
             expect((persisted as EmailDomain<true>).domain).toBe(updatedDomainValue);
         });
@@ -128,11 +135,13 @@ describe('EmailDomainRepo', () => {
         it('should return DomainError when updating a non-existent email domain', async () => {
             const nonExistentId: string = faker.string.uuid();
             const updatedDomainValue: string = faker.internet.domainName();
+            const spshServiceProviderId: string = faker.string.uuid();
             const updatedDomain: EmailDomain<boolean> = new EmailDomain(
                 nonExistentId,
                 new Date(),
                 new Date(),
                 updatedDomainValue,
+                spshServiceProviderId,
             );
 
             const result: EmailDomain<true> | DomainError = await sut.save(updatedDomain);
