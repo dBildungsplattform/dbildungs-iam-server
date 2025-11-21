@@ -880,7 +880,7 @@ describe('EmailEventHandler', () => {
                         id: faker.string.uuid(),
                         vorname: faker.person.firstName(),
                         familienname: faker.person.lastName(),
-                        username: faker.internet.userName(),
+                        username: faker.internet.username(),
                     },
                     newKontexte: [{}, {}],
                     removedKontexte: [{}],

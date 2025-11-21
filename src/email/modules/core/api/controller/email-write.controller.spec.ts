@@ -52,7 +52,7 @@ describe('Email Write Controller', () => {
                 lastName: faker.person.lastName(),
                 spshServiceProviderId: faker.string.uuid(),
                 kennungen: [],
-                spshUsername: faker.internet.userName(),
+                spshUsername: faker.internet.username(),
             };
             setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson.mockResolvedValue();
             const result: void = emailWriteController.setEmailForPerson(params);
@@ -68,7 +68,7 @@ describe('Email Write Controller', () => {
                 lastName: faker.person.lastName(),
                 spshServiceProviderId: faker.string.uuid(),
                 kennungen: [],
-                spshUsername: faker.internet.userName(),
+                spshUsername: faker.internet.username(),
             };
             setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson.mockRejectedValue(
                 new Error('Test error'),

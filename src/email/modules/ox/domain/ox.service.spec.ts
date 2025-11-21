@@ -286,7 +286,7 @@ describe('OxService', () => {
         it('createChangeUserAction returns ChangeUserAction', () => {
             const action: ChangeUserAction = sut.createChangeUserAction(
                 faker.string.uuid(),
-                faker.internet.userName(),
+                faker.internet.username(),
                 [faker.internet.email()],
                 faker.person.firstName(),
                 faker.person.lastName(),
@@ -316,14 +316,14 @@ describe('OxService', () => {
         });
 
         it('createExistsUserAction returns ExistsUserAction', () => {
-            const action: ExistsUserAction = sut.createExistsUserAction(faker.internet.userName());
+            const action: ExistsUserAction = sut.createExistsUserAction(faker.internet.username());
             expect(action).toBeInstanceOf(ExistsUserAction);
         });
 
         it('createCreateUserAction returns CreateUserAction', () => {
             const action: CreateUserAction = sut.createCreateUserAction({
                 displayName: faker.person.fullName(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
                 firstname: faker.person.firstName(),
                 lastname: faker.person.lastName(),
                 primaryEmail: faker.internet.email(),
