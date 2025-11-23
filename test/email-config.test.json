@@ -23,5 +23,6 @@
         "CONTEXT_ID": "10",
         "CONTEXT_NAME": "testContext",
         "NUMBER_OF_RETRIES": 1
-    }
+    },
+    "NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS": 84
 }

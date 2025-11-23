@@ -1,4 +1,4 @@
-import { EntityManager, raw, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EmailAddrEntity } from './email-address.entity.js';
 import { EmailAddress } from '../domain/email-address.js';
@@ -93,40 +93,45 @@ export class EmailAddressRepo {
         emailAddress: EmailAddress<true>,
         targetPriority: number,
     ): Promise<Result<EmailAddress<true>[], DomainError>> {
-        const emails: EmailAddrEntity[] = await this.em.find(EmailAddrEntity, {
-            spshPersonId: emailAddress.spshPersonId,
-        });
-
-        const targetEmailAddress: Option<EmailAddrEntity> = emails.find(
-            (em: EmailAddrEntity) => em.id === emailAddress.id,
+        const emails: EmailAddrEntity[] = await this.em.find(
+            EmailAddrEntity,
+            {
+                spshPersonId: emailAddress.spshPersonId,
+            },
+            {
+                orderBy: { priority: 'asc' },
+            },
         );
 
-        if (!targetEmailAddress) {
+        const targetEmailAddressIdx: number = emails.findIndex((em: EmailAddrEntity) => em.id === emailAddress.id);
+
+        if (targetEmailAddressIdx < 0) {
             return Err(new EntityNotFoundError('EmailAddress', emailAddress.id));
         }
 
-        // Only move when necessary
-        if (targetEmailAddress.priority !== targetPriority) {
-            const minShiftedPriority: number = targetPriority;
-            const maxShiftedPriority: number =
-                targetPriority < targetEmailAddress.priority ? targetEmailAddress.priority : Infinity;
+        // Null assertion is valid because of the check above
+        const targetEmailAddress: EmailAddrEntity = emails.splice(targetEmailAddressIdx, 1)[0]!;
 
-            // Shift all E-Mails that need to be moved and set priority for the target email
-            emails
-                .filter((em: EmailAddrEntity) => em.priority >= minShiftedPriority && em.priority < maxShiftedPriority)
-                .forEach((em: EmailAddrEntity) => {
-                    em.priority = raw(`priority + 1`);
-                });
-
-            targetEmailAddress.priority = targetPriority;
-
-            await this.em.flush();
+        // Shift all emails that need to be moved
+        let priorityToMove: number = targetPriority;
+        for (const em of emails) {
+            if (em.priority === priorityToMove) {
+                em.priority += 1;
+                priorityToMove += 1;
+            }
         }
 
-        return Ok(emails.map(mapEntityToAggregate));
+        targetEmailAddress.priority = targetPriority;
+
+        await this.em.flush();
+
+        return Ok([targetEmailAddress, ...emails].map(mapEntityToAggregate));
     }
 
-    public async ensureStatusesAndCronDateForPerson(spshPersonId: PersonID, cronDate: Date): Promise<void> {
+    public async ensureStatusesAndCronDateForPerson(
+        spshPersonId: PersonID,
+        cronDate: Date,
+    ): Promise<EmailAddress<true>[]> {
         const emails: EmailAddrEntity[] = await this.em.find(
             EmailAddrEntity,
             {
@@ -164,6 +169,8 @@ export class EmailAddressRepo {
         }
 
         await this.em.flush();
+
+        return emails.map(mapEntityToAggregate);
     }
 
     public async save(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {

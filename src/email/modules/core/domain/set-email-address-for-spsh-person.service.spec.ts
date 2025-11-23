@@ -298,7 +298,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             expect(emailResult[1]?.emailAddress).toEqual(
                 expect.objectContaining({
                     address: email.address,
-                    priority: 3,
+                    priority: 2,
                     spshPersonId: params.spshPersonId,
                     oxUserCounter: oldOxId,
                     externalId: params.spshPersonId,

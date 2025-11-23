@@ -1,9 +1,9 @@
 import { Type } from 'class-transformer';
-import { ValidateNested } from 'class-validator';
-import { HostConfig } from './host.config.js';
-import { LoggingConfig } from './logging.config.js';
+import { IsInt, Min, ValidateNested } from 'class-validator';
 import { DbConfig } from './db.config.js';
+import { HostConfig } from './host.config.js';
 import { LdapConfig } from './ldap.config.js';
+import { LoggingConfig } from './logging.config.js';
 import { OxConfig } from './ox.config.js';
 
 export class EmailAppConfig {
@@ -26,4 +26,8 @@ export class EmailAppConfig {
     @ValidateNested()
     @Type(() => OxConfig)
     public readonly OX!: OxConfig;
+
+    @Min(0)
+    @IsInt()
+    public NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS!: number;
 }

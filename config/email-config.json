@@ -29,5 +29,6 @@
         "NUMBER_OF_RETRIES": 3,
         "USER_PASSWORD_DEFAULT": "placeholder",
         "EMAIL_ADDRESS_DELETED_EVENT_DELAY": 0
-    }
+    },
+    "NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS": 84
 }

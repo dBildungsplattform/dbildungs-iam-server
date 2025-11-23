@@ -24,12 +24,16 @@ import { EmailUpdateInProgressError } from '../error/email-update-in-progress.er
 import { EmailAddressGenerationAttemptsExceededError } from '../error/email-address-generation-attempts-exceeds.error.js';
 import { uniq } from 'lodash-es';
 import { OxError } from '../../../../shared/error/ox.error.js';
+import { ConfigService } from '@nestjs/config';
+import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
 
 const MAX_EMAIL_PRIORITY: number = 99999; // E-Mails will be created with this priority before being activated
 
 @Injectable()
 export class SetEmailAddressForSpshPersonService {
     public RETRY_ATTEMPTS: number = 5;
+
+    private NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: number;
 
     public constructor(
         private readonly emailAddressRepo: EmailAddressRepo,
@@ -40,7 +44,12 @@ export class SetEmailAddressForSpshPersonService {
         private readonly oxService: OxService,
         private readonly oxSendService: OxSendService,
         private readonly ldapClientService: LdapClientService,
-    ) {}
+        configService: ConfigService<EmailAppConfig>,
+    ) {
+        this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS = configService.getOrThrow<number>(
+            'NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS',
+        );
+    }
 
     public async setEmailAddressForSpshPerson(params: SetEmailAddressForSpshPersonParams): Promise<void> {
         this.logger.info(`SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - Request Received`);
@@ -162,7 +171,7 @@ export class SetEmailAddressForSpshPersonService {
             return newPrimaryEmailResult;
         }
 
-        const newPrimaryEmail: EmailAddress<true> = newPrimaryEmailResult.value;
+        let newPrimaryEmail: EmailAddress<true> = newPrimaryEmailResult.value;
 
         const externalId: string = newPrimaryEmail.externalId; // Used as ox username and ldap uid.
 
@@ -232,7 +241,15 @@ export class SetEmailAddressForSpshPersonService {
                 return updatedEmailsResult;
             }
 
-            await this.emailAddressRepo.ensureStatusesAndCronDateForPerson(spshPersonId, new Date()); // TODO
+            const cronDate: Date = new Date();
+            cronDate.setDate(cronDate.getDate() + this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS);
+            const emailsAfter: EmailAddress<true>[] = await this.emailAddressRepo.ensureStatusesAndCronDateForPerson(
+                spshPersonId,
+                cronDate,
+            );
+
+            // Replace the primary email with the saved one (to make sure everything is up to date)
+            newPrimaryEmail = emailsAfter.find((em: EmailAddress<true>) => em.priority === 0)!;
 
             // Find the email which is not at priority 1 to use as an alternative mail
             alternativeEmail = updatedEmailsResult.value.find((em: EmailAddress<true>) => em.priority === 1);
@@ -276,7 +293,6 @@ export class SetEmailAddressForSpshPersonService {
 
         // Update e-mail with the ox user ID and priority
         {
-            newPrimaryEmail.priority = 0;
             newPrimaryEmail.oxUserCounter = oxUserIdResult.value;
             newPrimaryEmail.markedForCron = undefined;
 
