@@ -11,6 +11,7 @@ export type EmailConfig = {
     DB: Partial<DbConfig>;
     LDAP: Partial<LdapConfig>;
     OX: Partial<OxConfig>;
+    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS?: number;
 };
 
 export function getEmailConfig(): EmailConfig {
@@ -45,5 +46,8 @@ export function getEmailConfig(): EmailConfig {
             USER_PASSWORD_DEFAULT: process.env['OX_USER_PASSWORD_DEFAULT'],
             EMAIL_ADDRESS_DELETED_EVENT_DELAY: envToOptionalInteger('OX_EMAIL_ADDRESS_DELETED_EVENT_DELAY'),
         },
+        NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: envToOptionalInteger(
+            'NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS',
+        ),
     };
 }

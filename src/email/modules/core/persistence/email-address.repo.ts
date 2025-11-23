@@ -93,84 +93,88 @@ export class EmailAddressRepo {
         emailAddress: EmailAddress<true>,
         targetPriority: number,
     ): Promise<Result<EmailAddress<true>[], DomainError>> {
-        const emails: EmailAddrEntity[] = await this.em.find(
-            EmailAddrEntity,
-            {
-                spshPersonId: emailAddress.spshPersonId,
-            },
-            {
-                orderBy: { priority: 'asc' },
-            },
-        );
+        return this.em.transactional(async (em: EntityManager) => {
+            const emails: EmailAddrEntity[] = await em.find(
+                EmailAddrEntity,
+                {
+                    spshPersonId: emailAddress.spshPersonId,
+                },
+                {
+                    orderBy: { priority: 'asc' },
+                },
+            );
 
-        const targetEmailAddressIdx: number = emails.findIndex((em: EmailAddrEntity) => em.id === emailAddress.id);
+            const targetEmailAddressIdx: number = emails.findIndex((em: EmailAddrEntity) => em.id === emailAddress.id);
 
-        if (targetEmailAddressIdx < 0) {
-            return Err(new EntityNotFoundError('EmailAddress', emailAddress.id));
-        }
-
-        // Null assertion is valid because of the check above
-        const targetEmailAddress: EmailAddrEntity = emails.splice(targetEmailAddressIdx, 1)[0]!;
-
-        // Shift all emails that need to be moved
-        let priorityToMove: number = targetPriority;
-        for (const em of emails) {
-            if (em.priority === priorityToMove) {
-                em.priority += 1;
-                priorityToMove += 1;
+            if (targetEmailAddressIdx < 0) {
+                return Err(new EntityNotFoundError('EmailAddress', emailAddress.id));
             }
-        }
 
-        targetEmailAddress.priority = targetPriority;
+            // Null assertion is valid because of the check above
+            const targetEmailAddress: EmailAddrEntity = emails.splice(targetEmailAddressIdx, 1)[0]!;
 
-        await this.em.flush();
+            // Shift all emails that need to be moved
+            let priorityToMove: number = targetPriority;
+            for (const em of emails) {
+                if (em.priority === priorityToMove) {
+                    em.priority += 1;
+                    priorityToMove += 1;
+                }
+            }
 
-        return Ok([targetEmailAddress, ...emails].map(mapEntityToAggregate));
+            targetEmailAddress.priority = targetPriority;
+
+            await em.flush();
+
+            return Ok([targetEmailAddress, ...emails].map(mapEntityToAggregate));
+        });
     }
 
     public async ensureStatusesAndCronDateForPerson(
         spshPersonId: PersonID,
         cronDate: Date,
     ): Promise<EmailAddress<true>[]> {
-        const emails: EmailAddrEntity[] = await this.em.find(
-            EmailAddrEntity,
-            {
-                spshPersonId,
-            },
-            { populate: ['statuses'] },
-        );
+        return this.em.transactional(async (em: EntityManager) => {
+            const emails: EmailAddrEntity[] = await em.find(
+                EmailAddrEntity,
+                {
+                    spshPersonId,
+                },
+                { populate: ['statuses'] },
+            );
 
-        for (const email of emails) {
-            // Ensure the primary email has no cron date
-            if (email.priority === 0) {
-                email.markedForCron = undefined;
-            }
+            for (const email of emails) {
+                // Ensure the primary email has no cron date
+                if (email.priority === 0) {
+                    email.markedForCron = undefined;
+                }
 
-            // Ensure all emails with priority 1 or higher have a cron date
-            if (email.priority >= 1) {
-                email.markedForCron ??= cronDate;
-            }
+                // Ensure all emails with priority 1 or higher have a cron date
+                if (email.priority >= 1) {
+                    email.markedForCron ??= cronDate;
+                }
 
-            // Ensure there are no emails with priority 2 or higher with status "ACTIVE"
-            if (email.priority >= 2) {
-                const newestStatus: EmailAddressStatusEntity | undefined = email.statuses
-                    .getItems()
-                    .sort(statusSortFn)[0];
+                // Ensure there are no emails with priority 2 or higher with status "ACTIVE"
+                if (email.priority >= 2) {
+                    const newestStatus: EmailAddressStatusEntity | undefined = email.statuses
+                        .getItems()
+                        .sort(statusSortFn)[0];
 
-                if (!newestStatus || newestStatus.status === EmailAddressStatusEnum.ACTIVE) {
-                    email.statuses.add(
-                        this.em.create(EmailAddressStatusEntity, {
-                            emailAddress: email,
-                            status: EmailAddressStatusEnum.DEACTIVE,
-                        }),
-                    );
+                    if (!newestStatus || newestStatus.status === EmailAddressStatusEnum.ACTIVE) {
+                        email.statuses.add(
+                            em.create(EmailAddressStatusEntity, {
+                                emailAddress: email,
+                                status: EmailAddressStatusEnum.DEACTIVE,
+                            }),
+                        );
+                    }
                 }
             }
-        }
 
-        await this.em.flush();
+            await em.flush();
 
-        return emails.map(mapEntityToAggregate);
+            return emails.map(mapEntityToAggregate);
+        });
     }
 
     public async save(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {
