@@ -408,7 +408,9 @@ describe('configloader', () => {
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     BASE_DN: 'dc=schule-sh,dc=de',
                 },
-                NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 84,
+                EMAIL: {
+                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 84,
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -471,7 +473,9 @@ describe('configloader', () => {
                     BASE_DN: 'dc=schule-sh,dc=de',
                     ADMIN_PASSWORD: 'x',
                 },
-                NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 84,
+                EMAIL: {
+                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 84,
+                },
             };
 
             it("should not load the secrets file if it can't find it", () => {

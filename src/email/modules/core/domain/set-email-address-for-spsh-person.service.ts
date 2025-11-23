@@ -26,6 +26,7 @@ import { uniq } from 'lodash-es';
 import { OxError } from '../../../../shared/error/ox.error.js';
 import { ConfigService } from '@nestjs/config';
 import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
+import { EmailConfig } from '../../../../shared/config/email.config.js';
 
 const MAX_EMAIL_PRIORITY: number = 99999; // E-Mails will be created with this priority before being activated
 
@@ -46,9 +47,8 @@ export class SetEmailAddressForSpshPersonService {
         private readonly ldapClientService: LdapClientService,
         configService: ConfigService<EmailAppConfig>,
     ) {
-        this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS = configService.getOrThrow<number>(
-            'NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS',
-        );
+        this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS =
+            configService.getOrThrow<EmailConfig>('EMAIL').NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS ?? 84;
     }
 
     public async setEmailAddressForSpshPerson(params: SetEmailAddressForSpshPersonParams): Promise<void> {
