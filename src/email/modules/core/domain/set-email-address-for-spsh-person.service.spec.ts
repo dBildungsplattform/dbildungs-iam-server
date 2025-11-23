@@ -179,12 +179,24 @@ describe('SetEmailAddressForSpshPersonService', () => {
             const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
             const oldOxId: string = faker.string.numeric(5);
 
-            const email: EmailAddress<true> = await setupEmailWithStatus(
+            const email1: EmailAddress<true> = await setupEmailWithStatus(
                 EmailAddress.createNew({
                     address: faker.internet.email(),
                     externalId: params.spshPersonId,
                     oxUserCounter: oldOxId,
                     priority: 2,
+                    spshPersonId: params.spshPersonId,
+                    markedForCron: faker.date.future(),
+                }),
+                EmailAddressStatusEnum.DEACTIVE,
+            );
+
+            await setupEmailWithStatus(
+                EmailAddress.createNew({
+                    address: faker.internet.email(),
+                    externalId: params.spshPersonId,
+                    oxUserCounter: oldOxId,
+                    priority: 3,
                     spshPersonId: params.spshPersonId,
                     markedForCron: faker.date.future(),
                 }),
@@ -205,8 +217,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
             expect(emailResult).toHaveLength(1);
             expect(emailResult[0]?.emailAddress).toEqual(
                 expect.objectContaining({
-                    id: email.id,
-                    address: email.address,
+                    id: email1.id,
+                    address: email1.address,
                     priority: 0,
                     spshPersonId: params.spshPersonId,
                     oxUserCounter: oldOxId,
@@ -216,7 +228,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             );
             expect(emailResult[0]?.statuses[0]).toEqual(
                 expect.objectContaining({
-                    emailAddressId: email.id,
+                    emailAddressId: email1.id,
                     status: EmailAddressStatusEnum.ACTIVE,
                 }),
             );
@@ -224,12 +236,12 @@ describe('SetEmailAddressForSpshPersonService', () => {
             expect(oxServiceMock.createChangeUserAction).toHaveBeenCalledWith(
                 oldOxId,
                 params.spshPersonId,
-                expect.arrayContaining([email.address]),
+                expect.arrayContaining([email1.address]),
                 params.firstName,
                 params.lastName,
                 params.spshUsername,
-                email.address,
-                email.address,
+                email1.address,
+                email1.address,
             );
             expect(ldapClientServiceMock.isPersonExisting).toHaveBeenCalledWith(params.spshPersonId, domain.domain);
             expect(ldapClientServiceMock.updatePerson).toHaveBeenCalledWith(
@@ -240,7 +252,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                     uid: params.spshPersonId,
                 },
                 domain.domain,
-                email.address,
+                email1.address,
                 undefined,
             );
         });
