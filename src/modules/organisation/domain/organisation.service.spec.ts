@@ -7,13 +7,14 @@ import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js
 import { PersonPermissionsMock } from '../../../../test/utils/person-permissions.mock.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { EntityCouldNotBeUpdated, MissingPermissionsError } from '../../../shared/error/index.js';
+import { DomainError, EntityCouldNotBeUpdated, MissingPermissionsError } from '../../../shared/error/index.js';
 import { Paged } from '../../../shared/paging/index.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import {
     PersonenkontextRolleWithOrganisation,
     PersonPermissions,
 } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
 import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
@@ -1047,5 +1048,63 @@ describe('OrganisationService', () => {
                 expect(result.items).toBeInstanceOf(Array);
             });
         });
+    });
+
+    describe('findOrganisationByIdAndMatchingPermissions', () => {
+        it('should return an error, if orga can not be found', async () => {
+            const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            organisationRepositoryMock.findAuthorized.mockResolvedValue([[], 0, 0]);
+            const result: Result<Organisation<true>, DomainError> = await organisationService.findOrganisationByIdAndMatchingPermissions(permissionsMock, faker.string.uuid());
+            expect(result.ok).toBeFalsy();
+            expect(!result.ok && result.error).toBeInstanceOf(EntityNotFoundError);
+        });
+
+        it('should return an error, if orga has no type', async () => {
+            const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const mockOrganisation: Organisation<true> = DoFactory.createOrganisation(true, { typ: undefined });
+            organisationRepositoryMock.findAuthorized.mockResolvedValue([[mockOrganisation], 1, 1]);
+            const result: Result<Organisation<true>, DomainError> = await organisationService.findOrganisationByIdAndMatchingPermissions(permissionsMock, mockOrganisation.id);
+            expect(result.ok).toBeFalsy();
+            expect(!result.ok && result.error).toBeInstanceOf(MissingPermissionsError);
+        });
+
+        describe.each([
+            {
+                organisation: DoFactory.createOrganisation(true, { typ: OrganisationsTyp.TRAEGER }),
+                expectedSystemrecht: RollenSystemRecht.SCHULTRAEGER_VERWALTEN,
+            },
+            {
+                organisation: DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
+                expectedSystemrecht: RollenSystemRecht.SCHULEN_VERWALTEN,
+            },
+            {
+                organisation: DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE }),
+                expectedSystemrecht: RollenSystemRecht.KLASSEN_VERWALTEN,
+            },
+        ])(
+            'with organisation of type $organisation.typ',
+            ({
+                organisation,
+                expectedSystemrecht,
+            }: {
+                organisation: Organisation<true>;
+                expectedSystemrecht: RollenSystemRecht;
+            }) => {
+                test(`it should use ${expectedSystemrecht.name} for permissions check`, async () => {
+                    organisationRepositoryMock.findAuthorized.mockResolvedValue([[organisation], 1, 1]);
+                    const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                    permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+                    await organisationService.findOrganisationByIdAndMatchingPermissions(
+                        permissionsMock,
+                        organisation.id,
+                    );
+                    expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenCalledTimes(1);
+                    expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenCalledWith(
+                        organisation.id,
+                        expectedSystemrecht,
+                    );
+                });
+            },
+        );
     });
 });

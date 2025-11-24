@@ -1,6 +1,6 @@
 import { OrganisationSpecificationError } from '../../specification/error/organisation-specification.error';
 
-export class OrganisationHasServiceProviders extends OrganisationSpecificationError {
+export class OrganisationHasServiceProvidersError extends OrganisationSpecificationError {
     public constructor(details?: unknown[] | Record<string, undefined>) {
         super(
             `Organisation Entity could not be deleted because it is referenced by service-providers`,

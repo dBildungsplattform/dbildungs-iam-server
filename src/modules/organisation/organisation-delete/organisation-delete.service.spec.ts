@@ -1,16 +1,28 @@
-import { Test, TestingModule } from "@nestjs/testing"
-import { OrganisationDeleteService } from "./organisation-delete.service";
-import { createMock } from "@golevelup/ts-jest";
-import { EventRoutingLegacyKafkaService } from "../../../core/eventbus/services/event-routing-legacy-kafka.service";
-import { DBiamPersonenkontextRepo } from "../../personenkontext/persistence/dbiam-personenkontext.repo";
-import { OrganisationController } from "../api/organisation.controller";
-import { OrganisationService } from "../domain/organisation.service";
-import { OrganisationRepository } from "../persistence/organisation.repository";
-import { RolleRepo } from "../../rolle/repo/rolle.repo";
-import { ServiceProviderRepo } from "../../service-provider/repo/service-provider.repo";
+import { faker } from '@faker-js/faker';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { OrganisationID } from '../../../shared/types';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo';
+import { RolleRepo } from '../../rolle/repo/rolle.repo';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo';
+import { OrganisationRepository } from '../persistence/organisation.repository';
+import { OrganisationDeleteService } from './organisation-delete.service';
+import { DoFactory } from '../../../../test/utils';
+import { DomainError } from '../../../shared/error';
+import { OrganisationHasChildrenError } from './errors/organisation-has-children.error';
+import { OrganisationHasRollenError } from './errors/organisation-has-rollen.error';
+import { OrganisationHasPersonenkontexteError } from './errors/organisation-has-personenkontexte.error';
+import { OrganisationHasServiceProvidersError } from './errors/organisation-has-service-provider.error';
 
 describe('OrganisationDeleteService', () => {
     let module: TestingModule;
+    let organisationRepo: DeepMocked<OrganisationRepository>;
+    let rolleRepo: DeepMocked<RolleRepo>;
+    let personenkontextRepo: DeepMocked<DBiamPersonenkontextRepo>;
+    let serviceProviderRepoRepo: DeepMocked<ServiceProviderRepo>;
+
+    let organisationDeleteService: OrganisationDeleteService;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -34,6 +46,11 @@ describe('OrganisationDeleteService', () => {
                 },
             ],
         }).compile();
+        organisationRepo = module.get(OrganisationRepository);
+        rolleRepo = module.get(RolleRepo);
+        personenkontextRepo = module.get(DBiamPersonenkontextRepo);
+        serviceProviderRepoRepo = module.get(ServiceProviderRepo);
+        organisationDeleteService = module.get(OrganisationDeleteService);
     });
 
     afterAll(async () => {
@@ -43,4 +60,81 @@ describe('OrganisationDeleteService', () => {
     beforeEach(() => {
         jest.resetAllMocks();
     });
-})
+
+    describe('deleteOrganisation', () => {
+        it('should call delete, if no references are found', async () => {
+            organisationRepo.findBy.mockResolvedValue([[], 0]);
+            rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
+            personenkontextRepo.findBy.mockResolvedValue([[], 0]);
+            serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([]);
+
+            const organisationId: OrganisationID = faker.string.uuid();
+
+            await organisationDeleteService.deleteOrganisation(organisationId);
+            expect(organisationRepo.delete).toHaveBeenCalledTimes(1);
+            expect(organisationRepo.delete).toHaveBeenCalledWith(organisationId);
+        });
+
+        it('should return OrganisationHasChildrenError, if org has children', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            organisationRepo.findBy.mockResolvedValue([
+                [DoFactory.createOrganisation(true, { administriertVon: organisationId })],
+                1,
+            ]);
+
+            const result: void | DomainError = await organisationDeleteService.deleteOrganisation(organisationId);
+
+            expect(result).toBeInstanceOf(OrganisationHasChildrenError);
+            expect(rolleRepo.findBySchulstrukturknoten).toHaveBeenCalledTimes(0);
+            expect(personenkontextRepo.findBy).toHaveBeenCalledTimes(0);
+            expect(serviceProviderRepoRepo.findBySchulstrukturknoten).toHaveBeenCalledTimes(0);
+            expect(organisationRepo.delete).toHaveBeenCalledTimes(0);
+        });
+
+        it('should return OrganisationHasRollenError, if rollen are administered by org', async () => {
+            organisationRepo.findBy.mockResolvedValue([[], 0]);
+            const organisationId: OrganisationID = faker.string.uuid();
+            rolleRepo.findBySchulstrukturknoten.mockResolvedValue([
+                DoFactory.createRolle(true, { administeredBySchulstrukturknoten: organisationId }),
+            ]);
+
+            const result: void | DomainError = await organisationDeleteService.deleteOrganisation(organisationId);
+
+            expect(result).toBeInstanceOf(OrganisationHasRollenError);
+            expect(personenkontextRepo.findBy).toHaveBeenCalledTimes(0);
+            expect(serviceProviderRepoRepo.findBySchulstrukturknoten).toHaveBeenCalledTimes(0);
+            expect(organisationRepo.delete).toHaveBeenCalledTimes(0);
+        });
+
+        it('should return OrganisationHasPersonenkontexteError, if org has personenkontexte', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            organisationRepo.findBy.mockResolvedValue([[], 0]);
+            rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
+            personenkontextRepo.findBy.mockResolvedValue([
+                [DoFactory.createPersonenkontext(true, { organisationId })],
+                1,
+            ]);
+
+            const result: void | DomainError = await organisationDeleteService.deleteOrganisation(organisationId);
+
+            expect(result).toBeInstanceOf(OrganisationHasPersonenkontexteError);
+            expect(serviceProviderRepoRepo.findBySchulstrukturknoten).toHaveBeenCalledTimes(0);
+            expect(organisationRepo.delete).toHaveBeenCalledTimes(0);
+        });
+
+        it('should return OrganisationHasServiceProvidersError, if org has serviceProviders', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            organisationRepo.findBy.mockResolvedValue([[], 0]);
+            rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
+            personenkontextRepo.findBy.mockResolvedValue([[], 0]);
+            serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([
+                DoFactory.createServiceProvider(true, { providedOnSchulstrukturknoten: organisationId }),
+            ]);
+
+            const result: void | DomainError = await organisationDeleteService.deleteOrganisation(organisationId);
+
+            expect(result).toBeInstanceOf(OrganisationHasServiceProvidersError);
+            expect(organisationRepo.delete).toHaveBeenCalledTimes(0);
+        });
+    });
+});

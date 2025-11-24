@@ -574,7 +574,7 @@ export class OrganisationService {
                 { organisationIds: [organisationId] },
             );
         const organisation: Option<Organisation<true>> = organisations[0];
-        if (!organisation?.typ) {
+        if (!organisation) {
             return { ok: false, error: new EntityNotFoundError('Organisation', organisationId) };
         }
 
@@ -585,6 +585,7 @@ export class OrganisationService {
                 error: new MissingPermissionsError('Permission to manage organisation does not exist'),
             };
         }
+
         if (await permissions.hasSystemrechtAtOrganisation(organisationId, systemrecht)) {
             return {
                 ok: true,
@@ -595,7 +596,7 @@ export class OrganisationService {
         }
     }
 
-    private findSystemRechtForOrganisationsTyp(typ: OrganisationsTyp): Option<RollenSystemRecht> {
+    private findSystemRechtForOrganisationsTyp(typ?: OrganisationsTyp): Option<RollenSystemRecht> {
         switch (typ) {
             case OrganisationsTyp.TRAEGER:
                 return RollenSystemRecht.SCHULTRAEGER_VERWALTEN;

@@ -11,7 +11,7 @@ import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { OrganisationHasChildrenError } from './errors/organisation-has-children.error.js';
 import { OrganisationHasPersonenkontexteError } from './errors/organisation-has-personenkontexte.error.js';
 import { OrganisationHasRollenError } from './errors/organisation-has-rollen.error.js';
-import { OrganisationHasServiceProviders } from './errors/organisation-has-service-provider.error.js';
+import { OrganisationHasServiceProvidersError } from './errors/organisation-has-service-provider.error.js';
 import { Organisation } from '../domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
@@ -32,10 +32,10 @@ export class OrganisationDeleteService {
     }
 
     private async hasNoReferences(organisationId: OrganisationID): Promise<Result<undefined, DomainError>> {
-        const childOrganisations: Counted<Organisation<true>> = await this.organisationRepo.findBy(
+        const [, childOrganisationCount]: Counted<Organisation<true>> = await this.organisationRepo.findBy(
             new OrganisationScope().findAdministrierteVon(organisationId).paged(0, 1),
         );
-        if (childOrganisations.length) {
+        if (childOrganisationCount) {
             return { ok: false, error: new OrganisationHasChildrenError() };
         }
 
@@ -44,17 +44,17 @@ export class OrganisationDeleteService {
             return { ok: false, error: new OrganisationHasRollenError() };
         }
 
-        const referencedPersonenkontexte: Counted<Personenkontext<true>> = await this.personenkontextRepo.findBy(
+        const [, referencedPersonenkontexteCount]: Counted<Personenkontext<true>> = await this.personenkontextRepo.findBy(
             new PersonenkontextScope().byOrganisations([organisationId]).paged(0, 1),
         );
-        if (referencedPersonenkontexte.length) {
+        if (referencedPersonenkontexteCount) {
             return { ok: false, error: new OrganisationHasPersonenkontexteError() };
         }
 
         const referencedServiceProvider: Array<ServiceProvider<true>> =
             await this.serviceProviderRepo.findBySchulstrukturknoten(organisationId);
         if (referencedServiceProvider.length) {
-            return { ok: false, error: new OrganisationHasServiceProviders() };
+            return { ok: false, error: new OrganisationHasServiceProvidersError() };
         }
 
         return { ok: true, value: undefined };
