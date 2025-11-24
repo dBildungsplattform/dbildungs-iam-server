@@ -464,7 +464,7 @@ export class SetEmailAddressForSpshPersonService {
                     lastname,
                     spshUsername,
                     primaryEmail.address,
-                    primaryEmail.address,
+                    alternativeEmail?.address,
                 ),
             );
 
@@ -492,6 +492,8 @@ export class SetEmailAddressForSpshPersonService {
                 this.logger.logUnknownAsError(`Could not create user in ox`, createResult.error);
                 return createResult;
             }
+
+            await this.oxService.setUserOxGroups(createResult.value.id, kennungen);
 
             return Ok(createResult.value.id);
         }
