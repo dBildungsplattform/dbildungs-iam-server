@@ -48,7 +48,7 @@ export class SetEmailAddressForSpshPersonService {
         configService: ConfigService<EmailAppConfig>,
     ) {
         this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS =
-            configService.getOrThrow<EmailConfig>('EMAIL').NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS ?? 84;
+            configService.getOrThrow<EmailConfig>('EMAIL').NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS ?? 90;
     }
 
     public async setEmailAddressForSpshPerson(params: SetEmailAddressForSpshPersonParams): Promise<void> {

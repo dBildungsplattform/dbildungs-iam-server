@@ -409,7 +409,7 @@ describe('configloader', () => {
                     BASE_DN: 'dc=schule-sh,dc=de',
                 },
                 EMAIL: {
-                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 84,
+                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 90,
                 },
             };
 
@@ -474,7 +474,7 @@ describe('configloader', () => {
                     ADMIN_PASSWORD: 'x',
                 },
                 EMAIL: {
-                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 84,
+                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 90,
                 },
             };
 
