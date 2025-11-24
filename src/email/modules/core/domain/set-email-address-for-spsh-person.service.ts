@@ -438,7 +438,7 @@ export class SetEmailAddressForSpshPersonService {
             // Check if OX User exists -> otherwise error
 
             const exists: Result<GetDataForUserResponse, DomainError> = await this.oxSendService.send(
-                this.oxService.createGetDataForUserAction(externalId),
+                this.oxService.createGetDataForUserAction(oxUserCounter),
             );
 
             if (!exists.ok) {

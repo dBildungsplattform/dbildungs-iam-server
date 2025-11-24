@@ -215,7 +215,7 @@ export class LdapClientService {
                 sn: person.lastName,
                 objectclass: ['inetOrgPerson', 'univentionMail', 'posixAccount'],
                 mailPrimaryAddress: primaryMail,
-                mailAlternativeAddress: alternativeEmail,
+                mailAlternativeAddress: alternativeEmail ?? '',
             };
 
             try {
@@ -243,7 +243,7 @@ export class LdapClientService {
 
         const lehrerUid: string = this.getLehrerUid(person.uid, rootName.value);
         return this.mutex.runExclusive(async () => {
-            this.logger.info('LDAP: createLehrer');
+            this.logger.info('LDAP: updateLehrer');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) {
@@ -253,25 +253,28 @@ export class LdapClientService {
             const changes: Change[] = [
                 new Change({
                     operation: 'replace',
-                    modification: new Attribute({ type: 'cn', values: [person.username] }),
+                    modification: new Attribute({ type: LdapClientService.COMMON_NAME, values: [person.username] }),
                 }),
                 new Change({
                     operation: 'replace',
-                    modification: new Attribute({ type: 'givenName', values: [person.firstName] }),
+                    modification: new Attribute({ type: LdapClientService.GIVEN_NAME, values: [person.firstName] }),
                 }),
                 new Change({
                     operation: 'replace',
-                    modification: new Attribute({ type: 'sn', values: [person.lastName] }),
+                    modification: new Attribute({ type: LdapClientService.SUR_NAME, values: [person.lastName] }),
                 }),
                 new Change({
                     operation: 'replace',
-                    modification: new Attribute({ type: 'mailPrimaryAddress', values: [primaryMail] }),
+                    modification: new Attribute({
+                        type: LdapClientService.MAIL_PRIMARY_ADDRESS,
+                        values: [primaryMail],
+                    }),
                 }),
 
                 new Change({
                     operation: 'replace',
                     modification: new Attribute({
-                        type: 'mailAlternativeAddress',
+                        type: LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
                         values: [alternativeEmail].filter(Boolean),
                     }),
                 }),
