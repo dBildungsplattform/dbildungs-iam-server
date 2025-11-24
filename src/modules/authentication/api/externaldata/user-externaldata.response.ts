@@ -110,12 +110,9 @@ export class UserExeternalDataResponse {
         externalPkData: RequiredExternalPkData[],
     ): RequiredExternalPkData[] {
         return externalPkData
-            .map((pk: RequiredExternalPkData) => {
-                if (pk.serviceProvider.some((sp: ServiceProviderEntity) => !!sp.vidisAngebotId)) {
-                    return pk;
-                }
-                return undefined;
-            })
+            .filter((pk: RequiredExternalPkData): pk is RequiredExternalPkData =>
+                pk.serviceProvider.some((sp: ServiceProviderEntity) => Boolean(sp.vidisAngebotId)),
+            )
             .filter((item: RequiredExternalPkData | undefined): item is RequiredExternalPkData => item !== undefined);
     }
 }
