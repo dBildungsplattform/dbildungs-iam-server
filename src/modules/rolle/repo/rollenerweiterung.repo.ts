@@ -5,6 +5,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PersonenkontextErweitertVirtualEntity } from '../../personenkontext/persistence/personenkontext-erweitert.virtual.entity.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { RollenSystemRecht } from '../domain/systemrecht.js';
@@ -19,6 +20,13 @@ type RollenerweiterungIds = {
     rolleId: RolleID;
     serviceProviderId: ServiceProviderID;
 };
+
+export type PersonenkontextErweitertVirtualEntityLoaded = Loaded<
+    PersonenkontextErweitertVirtualEntity,
+    'serviceProvider' | 'personenkontext',
+    'serviceProvider' | 'personenkontext',
+    never
+>;
 
 @Injectable()
 export class RollenerweiterungRepo {
@@ -179,5 +187,21 @@ export class RollenerweiterungRepo {
             (entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity),
         );
         return [rollenerweiterungen, count];
+    }
+
+    public async findPKErweiterungen(personId: string): Promise<PersonenkontextErweitertVirtualEntityLoaded[]> {
+        const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = await this.em.find(
+            PersonenkontextErweitertVirtualEntity,
+            {
+                personenkontext: {
+                    personId,
+                },
+            },
+            {
+                populate: ['serviceProvider', 'personenkontext'],
+                exclude: ['serviceProvider.logo', 'serviceProvider.logoMimeType'],
+            },
+        );
+        return personenKontextErweiterungen;
     }
 }

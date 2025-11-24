@@ -28,7 +28,19 @@ import { RollenerweiterungEntity } from '../entity/rollenerweiterung.entity.js';
 import { NoRedundantRollenerweiterungError } from '../specification/error/no-redundant-rollenerweiterung.error.js';
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
 import { RolleRepo } from './rolle.repo.js';
-import { RollenerweiterungRepo } from './rollenerweiterung.repo.js';
+import { PersonenkontextErweitertVirtualEntityLoaded, RollenerweiterungRepo } from './rollenerweiterung.repo.js';
+import { Person } from '../../person/domain/person.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
+import { PersonFactory } from '../../person/domain/person.factory.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
+import { OrganisationModule } from '../../organisation/organisation.module.js';
+import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
+import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 
 describe('RollenerweiterungRepo', () => {
     let module: TestingModule;
@@ -39,10 +51,20 @@ describe('RollenerweiterungRepo', () => {
     let organisationRepo: OrganisationRepository;
     let rolleRepo: RolleRepo;
     let serviceProviderRepo: ServiceProviderRepo;
+    let personFactory: PersonFactory;
+    let personRepo: PersonRepository;
+    let organisationRepository: OrganisationRepository;
+    let personenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
+    let personenkontextFactory: PersonenkontextFactory;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
+            imports: [
+                ConfigTestModule,
+                LoggingTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                OrganisationModule,
+            ],
             providers: [
                 RolleRepo,
                 RolleFactory,
@@ -51,6 +73,31 @@ describe('RollenerweiterungRepo', () => {
                 ServiceProviderRepo,
                 OrganisationRepository,
                 EventRoutingLegacyKafkaService,
+                PersonFactory,
+                PersonRepository,
+                PersonenkontextFactory,
+                DBiamPersonenkontextRepoInternal,
+                UsernameGeneratorService,
+                OxUserBlacklistRepo,
+                {
+                    provide: KeycloakUserService,
+                    useValue: createMock<KeycloakUserService>({
+                        create: () =>
+                            Promise.resolve({
+                                ok: true,
+                                value: faker.string.uuid(),
+                            }),
+                        setPassword: () =>
+                            Promise.resolve({
+                                ok: true,
+                                value: faker.string.alphanumeric(16),
+                            }),
+                    }),
+                },
+                {
+                    provide: UserLockRepository,
+                    useValue: createMock<UserLockRepository>(),
+                },
             ],
         })
             .overrideProvider(EventRoutingLegacyKafkaService)
@@ -64,9 +111,52 @@ describe('RollenerweiterungRepo', () => {
         organisationRepo = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
         serviceProviderRepo = module.get(ServiceProviderRepo);
+        personFactory = module.get(PersonFactory);
+        personRepo = module.get(PersonRepository);
+        organisationRepository = module.get(OrganisationRepository);
+        personenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
+        personenkontextFactory = module.get(PersonenkontextFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+
+    async function createPerson(): Promise<Person<true>> {
+        const personResult: Person<false> | DomainError = await personFactory.createNew({
+            vorname: faker.person.firstName(),
+            familienname: faker.person.lastName(),
+            username: faker.internet.userName(),
+            password: generatePassword(),
+        });
+        if (personResult instanceof DomainError) {
+            throw personResult;
+        }
+        const person: Person<true> | DomainError = await personRepo.create(personResult);
+        if (person instanceof DomainError) {
+            throw person;
+        }
+
+        return person;
+    }
+
+    function createPersonenkontext<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        params: Partial<Personenkontext<boolean>> = {},
+    ): Personenkontext<WasPersisted> {
+        const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
+            withId ? faker.string.uuid() : undefined,
+            withId ? faker.date.past() : undefined,
+            withId ? faker.date.recent() : undefined,
+            undefined,
+            faker.string.uuid(),
+            faker.string.uuid(),
+            faker.string.uuid(),
+        );
+
+        Object.assign(personenkontext, params);
+
+        return personenkontext;
+    }
 
     afterAll(async () => {
         await orm.close();
@@ -460,6 +550,47 @@ describe('RollenerweiterungRepo', () => {
             expect(result).toBeInstanceOf(Array);
             expect(result).toHaveLength(2);
             expect(count).toBe(3);
+        });
+    });
+
+    describe('findPkErweiterungen', () => {
+        it('should find pkErweiterungen for this person', async () => {
+            const person: Person<true> = await createPerson();
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            const organisationA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    rolleId: rolleA.id,
+                    organisationId: organisationA.id,
+                }),
+            );
+
+            const serviceprovider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            await sut.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleA.id,
+                    organisationId: organisationA.id,
+                    serviceProviderId: serviceprovider.id,
+                }),
+            );
+
+            const result: PersonenkontextErweitertVirtualEntityLoaded[] = await sut.findPKErweiterungen(person.id);
+            expect(result.length).toEqual(1);
+            expect(
+                result.findIndex(
+                    (pker: PersonenkontextErweitertVirtualEntityLoaded) =>
+                        pker.serviceProvider.unwrap().id === serviceprovider.id,
+                ),
+            ).not.toEqual(-1);
         });
     });
 });

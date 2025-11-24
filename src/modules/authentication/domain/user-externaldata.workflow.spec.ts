@@ -1,23 +1,28 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { EventModule } from '../../../core/eventbus/event.module.js';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { DomainError } from '../../../shared/error/index.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 import {
     DBiamPersonenkontextRepo,
     ExternalPkData,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import {
+    PersonenkontextErweitertVirtualEntityLoaded,
+    RollenerweiterungRepo,
+} from '../../rolle/repo/rollenerweiterung.repo.js';
 import { UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { ConfigService } from '@nestjs/config';
-import { faker } from '@faker-js/faker';
-import { Person } from '../../person/domain/person.js';
-import { DomainError } from '../../../shared/error/index.js';
 
 describe('UserExternaldataWorkflow', () => {
     let module: TestingModule;
     let sut: UserExternaldataWorkflowAggregate;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
+    let rollenerweiterungRepoMock: DeepMocked<RollenerweiterungRepo>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
 
     beforeEach(async () => {
@@ -29,15 +34,21 @@ describe('UserExternaldataWorkflow', () => {
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
+                    provide: RollenerweiterungRepo,
+                    useValue: createMock<RollenerweiterungRepo>(),
+                },
+                {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
                 },
             ],
         }).compile();
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        rollenerweiterungRepoMock = module.get(RollenerweiterungRepo);
         personRepositoryMock = module.get(PersonRepository);
         sut = UserExternaldataWorkflowAggregate.createNew(
             dBiamPersonenkontextRepoMock,
+            rollenerweiterungRepoMock,
             personRepositoryMock,
             createMock<ConfigService>(),
         );
@@ -72,6 +83,9 @@ describe('UserExternaldataWorkflow', () => {
 
             personRepositoryMock.findById.mockResolvedValue(person);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock<ExternalPkData[]>());
+            rollenerweiterungRepoMock.findPKErweiterungen.mockResolvedValue(
+                createMock<PersonenkontextErweitertVirtualEntityLoaded[]>(),
+            );
 
             await sut.initialize(person.id);
             expect(sut.person).toBeDefined();
@@ -81,6 +95,9 @@ describe('UserExternaldataWorkflow', () => {
         it('should return entity Not found error when person not found', async () => {
             personRepositoryMock.findById.mockResolvedValue(undefined);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock<ExternalPkData[]>());
+            rollenerweiterungRepoMock.findPKErweiterungen.mockResolvedValue(
+                createMock<PersonenkontextErweitertVirtualEntityLoaded[]>(),
+            );
 
             const response: void | DomainError = await sut.initialize(faker.string.uuid());
             expect(response).toBeInstanceOf(DomainError);
