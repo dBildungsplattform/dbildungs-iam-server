@@ -109,10 +109,8 @@ export class UserExeternalDataResponse {
     private static getExternalPkDataWithSpWithVidisAngebotId(
         externalPkData: RequiredExternalPkData[],
     ): RequiredExternalPkData[] {
-        return externalPkData
-            .filter((pk: RequiredExternalPkData): pk is RequiredExternalPkData =>
-                pk.serviceProvider.some((sp: ServiceProviderEntity) => Boolean(sp.vidisAngebotId)),
-            )
-            .filter((item: RequiredExternalPkData | undefined): item is RequiredExternalPkData => item !== undefined);
+        return externalPkData.filter((pk: RequiredExternalPkData): pk is RequiredExternalPkData =>
+            pk.serviceProvider.some((sp: ServiceProviderEntity) => Boolean(sp.vidisAngebotId)),
+        );
     }
 }
