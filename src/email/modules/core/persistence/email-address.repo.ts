@@ -151,6 +151,12 @@ export class EmailAddressRepo {
         });
     }
 
+    /**
+     * Ensures the following things:
+     * - The address with priority 0 should not be marked for cron (if it has a date, the date will be removed)
+     * - All addresses with priority >=1 should be marked for cron (if it does not have a date, the date will be set to the given date)
+     * - All addresses with priority >= 2 should not have an ACTIVE status. If they do, a DEACTIVE status will be set
+     */
     public async ensureStatusesAndCronDateForPerson(
         spshPersonId: PersonID,
         cronDate: Date,

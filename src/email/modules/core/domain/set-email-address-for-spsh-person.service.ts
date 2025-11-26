@@ -51,6 +51,26 @@ export class SetEmailAddressForSpshPersonService {
             configService.getOrThrow<EmailConfig>('EMAIL').NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS ?? 90;
     }
 
+    /**
+     * Makes sure the given user *will* have an e-mail matching their details.
+     *
+     * Will instantly abort, if the user currently has an address in a PENDING state
+     *
+     * 1. If the users first- and lastname no longer match their address (or if they don't have an address) they should get a matching address
+     *    - If the user has an old address that would match their name, that one should be reactivated
+     *    - Otherwise a new address will be generated
+     * 2. Other addresses should remain at their relative priorities (but may be shifted back to make room for the new/reactivated address)
+     *    - Exception: If the current priority 0 address is not active (i.e. there was an error) it will be set to priority 2 first (so the alternative mail will be correct)
+     * 3. The user should be created/update in OX
+     *    - If our data suggests an OX account should already exist, it will be updated (if it doesn't actually exist, this is considered an error)
+     *    - Otherwise a new user will be created and the returned ID from OX will be persisted
+     * 4. The users groups in OX should be updated
+     * 5. The user should be created/updated in LDAP
+     *    - If the user exists, it will be updated
+     *    - Otherwise a new user will be created
+     *
+     * The whole process will be retried 5 times on errors
+     */
     public async setEmailAddressForSpshPerson(params: SetEmailAddressForSpshPersonParams): Promise<void> {
         this.logger.info(`SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - Request Received`);
 
@@ -423,6 +443,16 @@ export class SetEmailAddressForSpshPersonService {
         return UnionToResult(createResult);
     }
 
+    /**
+     * Will create or update an user in OX, depending on wether the given address has an oxUserCounter.
+     *
+     * If the oxUserCounter is given, the user will be updated (if it can't be found in OX, an error will be returned).
+     * Otherwise a new user will be created.
+     *
+     * In both cases, the users groups will be updated.
+     *
+     * @returns the oxUserCounter of the user (if the user was newly created, this will be the generated value)
+     */
     private async upsertOxUser(
         spshUsername: PersonUsername,
         firstname: string,
@@ -499,6 +529,9 @@ export class SetEmailAddressForSpshPersonService {
         }
     }
 
+    /**
+     * Will create or update the user in LDAP, depending on wether it already exists.
+     */
     private async upsertLdapUser(
         uid: string,
         username: string,
