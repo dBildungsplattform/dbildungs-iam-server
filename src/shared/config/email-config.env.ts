@@ -1,20 +1,21 @@
 import { DbConfig } from './db.config.js';
+import { EmailConfig } from './email.config.js';
 import { HostConfig } from './host.config.js';
 import { LdapConfig } from './ldap.config.js';
 import { LoggingConfig } from './logging.config.js';
 import { OxConfig } from './ox.config.js';
 import { envToOptionalBoolean, envToOptionalInteger } from './utils.js';
 
-export type EmailConfig = {
+export type EmailAppConfig = {
     HOST: Partial<HostConfig>;
     LOGGING: Partial<LoggingConfig>;
     DB: Partial<DbConfig>;
     LDAP: Partial<LdapConfig>;
     OX: Partial<OxConfig>;
-    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS?: number;
+    EMAIL: Partial<EmailConfig>;
 };
 
-export function getEmailConfig(): EmailConfig {
+export function getEmailConfig(): EmailAppConfig {
     return {
         HOST: {},
         LOGGING: {
@@ -46,8 +47,10 @@ export function getEmailConfig(): EmailConfig {
             USER_PASSWORD_DEFAULT: process.env['OX_USER_PASSWORD_DEFAULT'],
             EMAIL_ADDRESS_DELETED_EVENT_DELAY: envToOptionalInteger('OX_EMAIL_ADDRESS_DELETED_EVENT_DELAY'),
         },
-        NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: envToOptionalInteger(
-            'NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS',
-        ),
+        EMAIL: {
+            NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: envToOptionalInteger(
+                'NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS',
+            ),
+        },
     };
 }

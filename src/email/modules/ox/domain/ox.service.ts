@@ -91,11 +91,13 @@ export class OxService {
                 existingGroup.name === OxService.LEHRER_OX_GROUP_NAME_PREFIX + targetGroup,
         );
 
+        // Sequential updating because OX doesn't like simultaneous updates to a single user
         for (const schuleDstrNr of toAdd) {
             // eslint-disable-next-line no-await-in-loop
             await this.addOxUserToGroup(oxUserId, schuleDstrNr);
         }
 
+        // Sequential updating because OX doesn't like simultaneous updates to a single user
         for (const g of toRemove) {
             // eslint-disable-next-line no-await-in-loop
             await this.removeOxUserFromGroup(oxUserId, g.id);
