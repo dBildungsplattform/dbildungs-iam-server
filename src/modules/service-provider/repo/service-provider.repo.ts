@@ -216,9 +216,7 @@ export class ServiceProviderRepo {
         return entity ? mapEntityToAggregate(entity) : entity;
     }
 
-    public async findBySchulstrukturknoten(
-        organisationsId: string,
-    ): Promise<Array<ServiceProvider<true>>> {
+    public async findBySchulstrukturknoten(organisationsId: string): Promise<Array<ServiceProvider<true>>> {
         const exclude: readonly ['logo'] | undefined = ['logo'];
         return (
             await this.em.find(ServiceProviderEntity, { providedOnSchulstrukturknoten: organisationsId }, { exclude })

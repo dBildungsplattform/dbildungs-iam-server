@@ -1054,7 +1054,13 @@ describe('OrganisationService', () => {
         it('should return an error, if orga can not be found', async () => {
             const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             organisationRepositoryMock.findAuthorized.mockResolvedValue([[], 0, 0]);
-            const result: Result<Organisation<true>, DomainError> = await organisationService.findOrganisationByIdAndMatchingPermissions(permissionsMock, faker.string.uuid());
+            const result: Result<
+                Organisation<true>,
+                DomainError
+            > = await organisationService.findOrganisationByIdAndMatchingPermissions(
+                permissionsMock,
+                faker.string.uuid(),
+            );
             expect(result.ok).toBeFalsy();
             expect(!result.ok && result.error).toBeInstanceOf(EntityNotFoundError);
         });
@@ -1063,7 +1069,13 @@ describe('OrganisationService', () => {
             const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             const mockOrganisation: Organisation<true> = DoFactory.createOrganisation(true, { typ: undefined });
             organisationRepositoryMock.findAuthorized.mockResolvedValue([[mockOrganisation], 1, 1]);
-            const result: Result<Organisation<true>, DomainError> = await organisationService.findOrganisationByIdAndMatchingPermissions(permissionsMock, mockOrganisation.id);
+            const result: Result<
+                Organisation<true>,
+                DomainError
+            > = await organisationService.findOrganisationByIdAndMatchingPermissions(
+                permissionsMock,
+                mockOrganisation.id,
+            );
             expect(result.ok).toBeFalsy();
             expect(!result.ok && result.error).toBeInstanceOf(MissingPermissionsError);
         });

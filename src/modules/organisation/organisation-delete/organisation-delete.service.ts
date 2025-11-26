@@ -44,9 +44,10 @@ export class OrganisationDeleteService {
             return { ok: false, error: new OrganisationHasRollenError() };
         }
 
-        const [, referencedPersonenkontexteCount]: Counted<Personenkontext<true>> = await this.personenkontextRepo.findBy(
-            new PersonenkontextScope().byOrganisations([organisationId]).paged(0, 1),
-        );
+        const [, referencedPersonenkontexteCount]: Counted<Personenkontext<true>> =
+            await this.personenkontextRepo.findBy(
+                new PersonenkontextScope().byOrganisations([organisationId]).paged(0, 1),
+            );
         if (referencedPersonenkontexteCount) {
             return { ok: false, error: new OrganisationHasPersonenkontexteError() };
         }

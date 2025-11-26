@@ -1007,7 +1007,7 @@ describe('OrganisationController', () => {
                     ok: false,
                     error: new MissingPermissionsError('Missing permissions'),
                 });
-                expect(
+                await expect(
                     organisationController.deleteOrganisation({ organisationId: faker.string.uuid() }, permissionsMock),
                 ).rejects.toThrow(MissingPermissionsError);
             });
@@ -1021,7 +1021,7 @@ describe('OrganisationController', () => {
                     value: orga,
                 });
                 organisationDeleteServiceMock.deleteOrganisation.mockResolvedValue(new OrganisationHasChildrenError());
-                expect(
+                await expect(
                     organisationController.deleteOrganisation({ organisationId: orga.id }, permissionsMock),
                 ).rejects.toThrow(OrganisationHasChildrenError);
             });

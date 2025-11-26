@@ -266,7 +266,7 @@ describe('Organisation API', () => {
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
                 const orga: OrganisationEntity = new OrganisationEntity();
                 Object.assign(orga, DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }));
-                em.persistAndFlush(orga);
+                await em.persistAndFlush(orga);
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .delete(`/organisationen/${orga.id}`)
@@ -282,7 +282,10 @@ describe('Organisation API', () => {
                 const orga: OrganisationEntity = new OrganisationEntity();
                 Object.assign(orga, DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }));
                 const childOrga: OrganisationEntity = new OrganisationEntity();
-                Object.assign(childOrga, DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, administriertVon: orga.id }));
+                Object.assign(
+                    childOrga,
+                    DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, administriertVon: orga.id }),
+                );
                 await em.persistAndFlush([orga, childOrga]);
 
                 const response: Response = await request(app.getHttpServer() as App)

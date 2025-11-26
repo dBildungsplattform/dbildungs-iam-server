@@ -399,9 +399,12 @@ describe('ServiceProviderRepo', () => {
     describe('findBySchulstrukturknoten', () => {
         it('should return the service provider', async () => {
             const providedOnSchulstrukturknoten: string = faker.string.uuid();
-            const sp: ServiceProvider<false> = DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten });
-            const persistedServiceProvider = await sut.save(sp);
-            const result: Array<ServiceProvider<true>> = await sut.findBySchulstrukturknoten(providedOnSchulstrukturknoten);
+            const sp: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+                providedOnSchulstrukturknoten,
+            });
+            const persistedServiceProvider: ServiceProvider<true> = await sut.save(sp);
+            const result: Array<ServiceProvider<true>> =
+                await sut.findBySchulstrukturknoten(providedOnSchulstrukturknoten);
 
             expect(result).toHaveLength(1);
             expect(result).toEqual(expect.arrayContaining([persistedServiceProvider]));
