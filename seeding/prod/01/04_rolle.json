@@ -40,7 +40,7 @@
             "rollenart": "LEHR",
             "merkmale": ["KOPERS_PFLICHT"],
             "systemrechte": [],
-            "serviceProviderIds": [0, 1, 2, 4, 6, 7, 8, 9, 10, 11]
+            "serviceProviderIds": [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]
         },
         {
             "id": 3,
@@ -146,15 +146,6 @@
             "merkmale": ["KOPERS_PFLICHT"],
             "systemrechte": [],
             "serviceProviderIds": [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]
-        },
-        {
-            "id": 15,
-            "administeredBySchulstrukturknoten": 0,
-            "name": "itslearning-Lehrkraft",
-            "rollenart": "LEHR",
-            "merkmale": [],
-            "systemrechte": [],
-            "serviceProviderIds": [3]
         },
         {
             "id": 16,
