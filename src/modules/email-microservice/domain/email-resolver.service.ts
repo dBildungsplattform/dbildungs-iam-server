@@ -35,7 +35,9 @@ export class EmailResolverService {
         }
     }
 
-    public async findEmailBySpshPersonWithOxLoginId(personId: string): Promise<EmailAddressResponse | undefined> {
+    public async findEmailBySpshPersonAsEmailAddressResponse(
+        personId: string,
+    ): Promise<EmailAddressResponse | undefined> {
         try {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
                 this.httpService.get(this.getEndpoint() + `api/read/${personId}`),

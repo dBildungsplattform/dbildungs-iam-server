@@ -82,6 +82,7 @@ describe('UserExternaldataWorkflow', () => {
 
             personRepositoryMock.findById.mockResolvedValue(person);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock<ExternalPkData[]>());
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
 
             await sut.initialize(person.id);
             expect(sut.person).toBeDefined();
@@ -106,14 +107,14 @@ describe('UserExternaldataWorkflow', () => {
             personRepositoryMock.findById.mockResolvedValue(person);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock<ExternalPkData[]>());
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-            emailResolverServiceMock.findEmailBySpshPersonWithOxLoginId.mockResolvedValue(
+            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValue(
                 createMock<EmailAddressResponse>({ oxLoginId: oxLoginId }),
             );
 
             await sut.initialize(person.id);
             expect(sut.person).toBeDefined();
             expect(sut.checkedExternalPkData).toBeDefined();
-            expect(sut.contextID).toBe(oxLoginId);
+            expect(sut.oxLoginId).toBe(oxLoginId);
         });
 
         it('should return entity Not found error when person not found', async () => {
@@ -141,7 +142,7 @@ describe('UserExternaldataWorkflow', () => {
             personRepositoryMock.findById.mockResolvedValue(person);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock<ExternalPkData[]>());
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-            emailResolverServiceMock.findEmailBySpshPersonWithOxLoginId.mockResolvedValue(undefined);
+            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValue(undefined);
 
             const response: void | DomainError = await sut.initialize(person.id);
 

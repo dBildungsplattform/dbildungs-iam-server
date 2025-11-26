@@ -1,23 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { OXContextID } from '../../../../shared/types/ox-ids.types';
 
-interface OldParams {
+export interface OldOxParams {
     username: string;
-    oxContextId: string;
+    contextId: OXContextID;
 }
 
-interface NewParams {
-    oxContextId: string;
+export interface NewOxParams {
+    oxLoginId: OXContextID;
 }
 
 export class UserExeternalDataResponseOx {
     @ApiProperty()
     public id: string;
 
-    public constructor(params: OldParams | NewParams) {
+    private constructor(id: string) {
+        this.id = id;
+    }
+
+    public static createNew(params: OldOxParams | NewOxParams): UserExeternalDataResponseOx {
+        let id: string;
         if ('username' in params) {
-            this.id = `${params.username}@${params.oxContextId}`;
+            id = `${params.username}@${params.contextId}`;
         } else {
-            this.id = params.oxContextId;
+            id = params.oxLoginId;
         }
+        return new UserExeternalDataResponseOx(id);
     }
 }

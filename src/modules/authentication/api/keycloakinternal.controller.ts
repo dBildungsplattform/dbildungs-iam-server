@@ -12,6 +12,7 @@ import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { AccessApiKeyGuard } from './access.apikey.guard.js';
 import { Public } from './public.decorator.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { NewOxParams, OldOxParams } from './externaldata/user-externaldata-ox.response.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -62,11 +63,17 @@ export class KeycloakInternalController {
             );
         }
 
-        return UserExeternalDataResponse.createNew(
-            workflow.person,
-            workflow.checkedExternalPkData,
-            workflow.contextID,
-            this.emailResolverService,
-        );
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            const oxParams: NewOxParams = {
+                oxLoginId: workflow.oxLoginId!,
+            };
+            return UserExeternalDataResponse.createNew(workflow.person, workflow.checkedExternalPkData, oxParams);
+        } else {
+            const oxParams: OldOxParams = {
+                contextId: workflow.contextID,
+                username: workflow.person.username!,
+            };
+            return UserExeternalDataResponse.createNew(workflow.person, workflow.checkedExternalPkData, oxParams);
+        }
     }
 }

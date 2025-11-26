@@ -2,12 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { UserExeternalDataResponseItslearning } from './user-externaldata-itslearning.response.js';
 import { UserExeternalDataResponseOnlineDateiablage } from './user-externaldata-onlinedateiablage.response.js';
 import { UserExeternalDataResponseOpsh } from './user-externaldata-opsh.response.js';
-import { UserExeternalDataResponseOx } from './user-externaldata-ox.response.js';
+import { NewOxParams, OldOxParams, UserExeternalDataResponseOx } from './user-externaldata-ox.response.js';
 import { UserExeternalDataResponseVidis } from './user-externaldata-vidis.response.js';
 import { UserExeternalDataResponseOpshPk } from './user-externaldata-opsh-pk.response.js';
 import { RequiredExternalPkData } from '../authentication.controller.js';
 import { Person } from '../../../person/domain/person.js';
-import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 
 export class UserExeternalDataResponse {
     @ApiProperty({ type: UserExeternalDataResponseOx })
@@ -42,15 +41,9 @@ export class UserExeternalDataResponse {
     public static createNew(
         person: Person<true>,
         externalPkData: RequiredExternalPkData[],
-        contextID: string,
-        emailResolverService: EmailResolverService,
+        contextParams: OldOxParams | NewOxParams,
     ): UserExeternalDataResponse {
-        let ox: UserExeternalDataResponseOx;
-        if (emailResolverService.shouldUseEmailMicroservice()) {
-            ox = new UserExeternalDataResponseOx({ oxContextId: contextID });
-        } else {
-            ox = new UserExeternalDataResponseOx({ username: person.username!, oxContextId: contextID });
-        }
+        const ox: UserExeternalDataResponseOx = UserExeternalDataResponseOx.createNew(contextParams);
         const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(person.id);
         const vidis: UserExeternalDataResponseVidis = new UserExeternalDataResponseVidis(
             person.id,

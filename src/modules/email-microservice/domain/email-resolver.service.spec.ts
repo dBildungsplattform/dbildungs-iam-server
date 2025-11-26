@@ -125,7 +125,8 @@ describe('EmailResolverService', () => {
 
             mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
-            const result: EmailAddressResponse | undefined = await sut.findEmailBySpshPersonWithOxLoginId(mockPersonId);
+            const result: EmailAddressResponse | undefined =
+                await sut.findEmailBySpshPersonAsEmailAddressResponse(mockPersonId);
             expect(result).toEqual(mockResponseData[0]);
         });
 
@@ -134,7 +135,8 @@ describe('EmailResolverService', () => {
 
             mockHttpService.get.mockReturnValueOnce(of({ data: [] } as AxiosResponse));
 
-            const result: EmailAddressResponse | undefined = await sut.findEmailBySpshPersonWithOxLoginId(mockPersonId);
+            const result: EmailAddressResponse | undefined =
+                await sut.findEmailBySpshPersonAsEmailAddressResponse(mockPersonId);
             expect(result).toBeUndefined();
         });
 
@@ -147,7 +149,8 @@ describe('EmailResolverService', () => {
 
             const errorLoggerSpy: jest.SpyInstance = jest.spyOn(sut['logger'], 'logUnknownAsError');
 
-            const result: EmailAddressResponse | undefined = await sut.findEmailBySpshPersonWithOxLoginId(mockPersonId);
+            const result: EmailAddressResponse | undefined =
+                await sut.findEmailBySpshPersonAsEmailAddressResponse(mockPersonId);
             expect(result).toBeUndefined();
             expect(errorLoggerSpy).toHaveBeenCalledWith(`Failed to fetch email for person ${mockPersonId}`, error);
         });
