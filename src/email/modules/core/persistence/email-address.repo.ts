@@ -89,6 +89,27 @@ export class EmailAddressRepo {
         );
     }
 
+    /**
+     * Takes in an email-address (needs to already be persisted!) and a target priority X.
+     * At the end, the given email will have priority X.
+     * If there already was an email with priority X, that one will have priority X+1.
+     * If X+1 was also already used, THAT email will end up at X+2 and so on.
+     *
+     * Example:
+     *
+     * Before:
+     * Priority: 0   1   2   3   4   5
+     * E-Mail  : A   B   C   _   D   E
+     *
+     * After shiftPriorities(E, 1):
+     * Priority: 0   1   2   3   4   5
+     * E-Mail  : A   E   B   C   D   _
+     *
+     * @param emailAddress an email that is already persisted in the DB (caution: this function will not save the aggregate, just update the priority)
+     * @param targetPriority the priority the given address should have afterwards
+     *
+     * @returns The updated e-mail aggregates
+     */
     public async shiftPriorities(
         emailAddress: EmailAddress<true>,
         targetPriority: number,
