@@ -494,7 +494,7 @@ export class SetEmailAddressForSpshPersonService {
                     lastname,
                     spshUsername,
                     primaryEmail.address,
-                    alternativeEmail?.address,
+                    primaryEmail.address,
                 ),
             );
 

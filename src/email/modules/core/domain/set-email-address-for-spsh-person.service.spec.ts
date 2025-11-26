@@ -296,7 +296,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 params.lastName,
                 params.spshUsername,
                 email3.address,
-                email1.address,
+                email3.address,
             );
             expect(ldapClientServiceMock.isPersonExisting).toHaveBeenCalledWith(params.spshPersonId, domain.domain);
             expect(ldapClientServiceMock.updatePerson).toHaveBeenCalledWith(
