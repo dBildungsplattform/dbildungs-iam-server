@@ -22,6 +22,7 @@ import { HttpException } from '@nestjs/common';
 import { KeycloakInternalController } from './keycloakinternal.controller.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
 
 describe('KeycloakInternalController', () => {
     let module: TestingModule;
@@ -56,6 +57,7 @@ describe('KeycloakInternalController', () => {
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personRepoMock = module.get(PersonRepository);
         emailResolverServiceMock = module.get(EmailResolverService);
+        jest.disableAutomock();
     });
 
     afterEach(() => {
@@ -126,7 +128,7 @@ describe('KeycloakInternalController', () => {
         });
 
         it('should return user external data new Microservice', async () => {
-            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
             const keycloakSub: string = faker.string.uuid();
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
@@ -155,6 +157,11 @@ describe('KeycloakInternalController', () => {
                 },
             ];
 
+            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValueOnce(
+                createMock<EmailAddressResponse>({
+                    oxLoginId: `${faker.string.uuid()}@${faker.number.int({ min: 1000, max: 9999 })}`,
+                }),
+            );
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
             personRepoMock.findById.mockResolvedValueOnce(person);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
