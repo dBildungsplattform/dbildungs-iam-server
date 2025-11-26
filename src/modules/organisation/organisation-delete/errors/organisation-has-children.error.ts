@@ -1,4 +1,4 @@
-import { OrganisationSpecificationError } from '../../specification/error/organisation-specification.error';
+import { OrganisationSpecificationError } from '../../specification/error/organisation-specification.error.js';
 
 export class OrganisationHasChildrenError extends OrganisationSpecificationError {
     public constructor(details?: unknown[] | Record<string, undefined>) {

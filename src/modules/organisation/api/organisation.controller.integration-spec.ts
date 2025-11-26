@@ -148,7 +148,7 @@ describe('Organisation API', () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
 
-    describe('/DELETE organisationId', () => {
+    describe('/DELETE klasse by organisationId', () => {
         describe('should return error', () => {
             it('if user is missing permissions', async () => {
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
@@ -255,6 +255,40 @@ describe('Organisation API', () => {
                     .send();
 
                 expect(response.status).toBe(204);
+            });
+        });
+    });
+
+    describe('/DELETE organisation', () => {
+        describe('when all conditions pass', () => {
+            it('should succeed', async () => {
+                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+                const orga: OrganisationEntity = new OrganisationEntity();
+                Object.assign(orga, DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }));
+                em.persistAndFlush(orga);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/organisationen/${orga.id}`)
+                    .send();
+                expect(response.status).toBe(204);
+            });
+        });
+
+        describe('when orga is still referenced', () => {
+            it('should fail', async () => {
+                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+                const orga: OrganisationEntity = new OrganisationEntity();
+                Object.assign(orga, DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }));
+                const childOrga: OrganisationEntity = new OrganisationEntity();
+                Object.assign(childOrga, DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, administriertVon: orga.id }));
+                await em.persistAndFlush([orga, childOrga]);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/organisationen/${orga.id}`)
+                    .send();
+                expect(response.status).toBe(400);
             });
         });
     });
