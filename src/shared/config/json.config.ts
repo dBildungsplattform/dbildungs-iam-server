@@ -21,6 +21,7 @@ import { RedisConfig } from './redis.config.js';
 import { SystemConfig } from './system.config.js';
 import { VidisConfig } from './vidis.config.js';
 import { EmailMicroserviceConfig } from './email-microservice.config.js';
+import { SchulconnexConfig } from './schulconnex.config.js';
 
 export class JsonConfig {
     @ValidateNested()
@@ -106,4 +107,8 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => EmailMicroserviceConfig)
     public readonly EMAIL_MICROSERVICE!: EmailMicroserviceConfig;
+
+    @ValidateNested()
+    @Type(() => SchulconnexConfig)
+    public readonly SCHULCONNEX!: SchulconnexConfig;
 }
