@@ -20,12 +20,16 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { HttpException } from '@nestjs/common';
 import { KeycloakInternalController } from './keycloakinternal.controller.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
 
 describe('KeycloakInternalController', () => {
     let module: TestingModule;
     let keycloakinternalController: KeycloakInternalController;
     let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let personRepoMock: DeepMocked<PersonRepository>;
+    let emailResolverServiceMock: DeepMocked<EmailResolverService>;
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
@@ -35,6 +39,7 @@ describe('KeycloakInternalController', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,
                 PersonenKontextModule,
+                EmailMicroserviceModule,
             ],
             providers: [KeycloakInternalController, UserExternaldataWorkflowFactory],
         })
@@ -42,6 +47,8 @@ describe('KeycloakInternalController', () => {
             .useValue(createMock<PersonRepository>())
             .overrideProvider(DBiamPersonenkontextRepo)
             .useValue(createMock<DBiamPersonenkontextRepo>())
+            .overrideProvider(EmailResolverService)
+            .useValue(createMock<EmailResolverService>())
             .compile();
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
@@ -49,6 +56,8 @@ describe('KeycloakInternalController', () => {
         keycloakinternalController = module.get(KeycloakInternalController);
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personRepoMock = module.get(PersonRepository);
+        emailResolverServiceMock = module.get(EmailResolverService);
+        jest.disableAutomock();
     });
 
     afterEach(() => {
@@ -65,7 +74,8 @@ describe('KeycloakInternalController', () => {
     });
 
     describe('externalData', () => {
-        it('should return user external data', async () => {
+        it('should return user external data old way', async () => {
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
             const keycloakSub: string = faker.string.uuid();
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
@@ -103,6 +113,64 @@ describe('KeycloakInternalController', () => {
             });
             expect(result).toBeInstanceOf(UserExeternalDataResponse);
             expect(result.ox.id).toContain(`${person.username}@`);
+            expect(result.itslearning.personId).toEqual(person.id);
+            expect(result.vidis.personId).toEqual(person.id);
+            expect(result.vidis.vorname).toEqual(person.vorname);
+            expect(result.vidis.nachname).toEqual(person.familienname);
+            expect(result.vidis.emailAdresse).toEqual(person.email);
+            expect(result.vidis.rollenart).toEqual(pkExternalData[0]?.rollenart);
+            expect(result.vidis.dienststellenNummern.length).toEqual(2);
+            expect(result.opsh.vorname).toEqual(person.vorname);
+            expect(result.opsh.nachname).toEqual(person.familienname);
+            expect(result.opsh.emailAdresse).toEqual(person.email);
+            expect(result.opsh.personenkontexte.length).toEqual(2);
+            expect(result.onlineDateiablage.personId).toEqual(person.id);
+        });
+
+        it('should return user external data new Microservice', async () => {
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+            const keycloakSub: string = faker.string.uuid();
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                keycloakSub,
+                faker.string.uuid(),
+            );
+
+            const pkExternalData: ExternalPkData[] = [
+                {
+                    rollenart: RollenArt.LEHR,
+                    kennung: faker.lorem.word(),
+                },
+                {
+                    rollenart: RollenArt.LEHR,
+                    kennung: faker.lorem.word(),
+                },
+                {
+                    rollenart: RollenArt.LEHR,
+                    kennung: undefined, //To Be Filtered Out
+                },
+            ];
+
+            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValueOnce(
+                createMock<EmailAddressResponse>({
+                    oxLoginId: `${faker.string.uuid()}@${faker.number.int({ min: 1000, max: 9999 })}`,
+                }),
+            );
+            personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
+            personRepoMock.findById.mockResolvedValueOnce(person);
+            dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
+
+            const result: UserExeternalDataResponse = await keycloakinternalController.getExternalData({
+                sub: keycloakSub,
+            });
+            expect(result).toBeInstanceOf(UserExeternalDataResponse);
+            expect(result.ox.id).toContain(`@`);
             expect(result.itslearning.personId).toEqual(person.id);
             expect(result.vidis.personId).toEqual(person.id);
             expect(result.vidis.vorname).toEqual(person.vorname);

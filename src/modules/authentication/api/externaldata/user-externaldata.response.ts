@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { UserExeternalDataResponseItslearning } from './user-externaldata-itslearning.response.js';
 import { UserExeternalDataResponseOnlineDateiablage } from './user-externaldata-onlinedateiablage.response.js';
 import { UserExeternalDataResponseOpsh } from './user-externaldata-opsh.response.js';
-import { UserExeternalDataResponseOx } from './user-externaldata-ox.response.js';
+import { NewOxParams, OldOxParams, UserExeternalDataResponseOx } from './user-externaldata-ox.response.js';
 import { UserExeternalDataResponseVidis } from './user-externaldata-vidis.response.js';
 import { UserExeternalDataResponseOpshPk } from './user-externaldata-opsh-pk.response.js';
 import { RequiredExternalPkData } from '../authentication.controller.js';
@@ -41,9 +41,9 @@ export class UserExeternalDataResponse {
     public static createNew(
         person: Person<true>,
         externalPkData: RequiredExternalPkData[],
-        contextID: string,
+        contextParams: OldOxParams | NewOxParams,
     ): UserExeternalDataResponse {
-        const ox: UserExeternalDataResponseOx = new UserExeternalDataResponseOx(person.username!, contextID);
+        const ox: UserExeternalDataResponseOx = UserExeternalDataResponseOx.createNew(contextParams);
         const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(person.id);
         const vidis: UserExeternalDataResponseVidis = new UserExeternalDataResponseVidis(
             person.id,

@@ -61,6 +61,7 @@ describe('EmailRepo', () => {
         const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
             address: address ?? faker.internet.email(),
             priority: priority ?? 1,
+            externalId: faker.string.uuid(),
             spshPersonId: spshPersonId ?? undefined,
             oxUserCounter: oxUserCounter ?? undefined,
             markedForCron: markedForCron ?? undefined,
@@ -189,6 +190,7 @@ describe('EmailRepo', () => {
             const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
                 address: faker.internet.email(),
                 priority: 5,
+                externalId: faker.string.uuid(),
                 spshPersonId: faker.string.uuid(),
             });
             const result: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
@@ -202,6 +204,7 @@ describe('EmailRepo', () => {
             const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
                 address: faker.internet.email(),
                 priority: 1,
+                externalId: faker.string.uuid(),
                 spshPersonId: faker.string.uuid(),
             });
             const created: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
@@ -224,6 +227,7 @@ describe('EmailRepo', () => {
                 id: faker.string.uuid(),
                 address: faker.internet.email(),
                 priority: 1,
+                externalId: faker.string.uuid(),
                 spshPersonId: faker.string.uuid(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
