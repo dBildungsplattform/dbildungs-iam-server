@@ -14,7 +14,11 @@ export enum EmailAddressStatusEnum {
 
 @Entity({ schema: 'email', tableName: 'address_status' })
 export class EmailAddressStatusEntity extends TimestampedEntity {
-    @ManyToOne({ fieldName: 'email_address_id', entity: () => EmailAddrEntity })
+    @ManyToOne({
+        entity: () => EmailAddrEntity,
+        fieldName: 'email_address_id',
+        deleteRule: 'cascade',
+    })
     @Index({ name: 'email_address_id', type: 'hash' })
     public emailAddress!: Ref<EmailAddrEntity>;
 

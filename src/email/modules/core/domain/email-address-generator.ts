@@ -22,6 +22,44 @@ export class EmailAddressGenerator {
         return address === createAddress.value + '@' + emailDomain;
     }
 
+    /**
+     * Same as isEqual, but ignores trailing digits in the username part of the address
+     */
+    public isEqualIgnoreCount(address: string, firstname: string, lastname: string, emailDomain: string): boolean {
+        const expectedAddress: Result<string> = this.generateAddress(firstname, lastname);
+
+        if (!expectedAddress.ok) {
+            // Generation of address failed
+            return false;
+        }
+
+        const split: string[] = address.split('@');
+        if (split.length !== 2) {
+            // Input address is invalid
+            return false;
+        }
+
+        const [actualUsername, actualDomain]: [string, string] = split as [string, string];
+
+        // Domains need to match in order to be equal
+        if (actualDomain !== emailDomain) {
+            return false;
+        }
+
+        // Cut of any expected count
+        const [expectedUsername, possibleCount]: [string, string] = [
+            actualUsername.substring(0, expectedAddress.value.length),
+            actualUsername.substring(expectedAddress.value.length),
+        ];
+
+        if (expectedUsername !== expectedAddress.value) {
+            return false;
+        }
+
+        // The remaining characters should only be digits
+        return !!possibleCount.match(/^\d*$/);
+    }
+
     public generateAddress(firstname: string, lastname: string): Result<string> {
         // Check for minimum length
         if (firstname.length < 2) {

@@ -15,7 +15,13 @@ export function mapAggregateToData(
 }
 
 export function mapEntityToAggregate(entity: EmailAddressStatusEntity): EmailAddressStatus<boolean> {
-    return new EmailAddressStatus(entity.id, entity.createdAt, entity.updatedAt, entity.emailAddress.id, entity.status);
+    return EmailAddressStatus.construct({
+        id: entity.id,
+        createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt,
+        emailAddressId: entity.emailAddress.id,
+        status: entity.status,
+    });
 }
 
 @Injectable()

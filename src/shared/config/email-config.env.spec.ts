@@ -1,4 +1,4 @@
-import { EmailConfig, getEmailConfig } from './email-config.env.js';
+import { EmailAppConfig, getEmailConfig } from './email-config.env.js';
 
 describe('Config Loader For Email App', () => {
     beforeEach(() => {
@@ -9,7 +9,7 @@ describe('Config Loader For Email App', () => {
     describe('Email App Config', () => {
         it('should load System configuration with parsed integer values', () => {
             process.env['LOGGING_DEFAULT_LOG_LEVEL'] = 'debug';
-            const config: EmailConfig = getEmailConfig();
+            const config: EmailAppConfig = getEmailConfig();
             expect(config).toEqual(
                 expect.objectContaining({
                     LOGGING: {

@@ -885,7 +885,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "mappedType": "string"
         },
         "spsh_person_id": {
@@ -894,7 +894,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "mappedType": "string"
         },
         "marked_for_cron": {
@@ -1268,6 +1268,7 @@
             "id"
           ],
           "referencedTableName": "email.address",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       },

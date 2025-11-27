@@ -9,7 +9,7 @@ import { OxUsernameAlreadyExistsError } from '../error/ox-username-already-exist
 
 export class OxErrorMapper {
     private static readonly USERNAME_ALREADY_EXISTS_REGEX: RegExp =
-        /^User [A-Za-z0-9]* already exists in this context; exceptionId [\w\d-]*/;
+        /^User [\w\d-]+ already exists in this context; exceptionId [\w\d-]*/;
 
     private static readonly DISPLAYNAME_ALDREADY_USED_REGEX: RegExp = /^The displayname is already used;[.]*/;
 
