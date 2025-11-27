@@ -37,8 +37,12 @@ import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweite
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { RollenerweiterungResponse } from '../../rolle/api/rollenerweiterung.response.js';
 import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
+import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RolleID, ServiceProviderID } from '../../../shared/types/index.js';
+import { uniq } from 'lodash-es';
+import { Rolle } from '../../rolle/domain/rolle.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
@@ -49,6 +53,7 @@ export class ProviderController {
     public constructor(
         private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly rolleRepo: RolleRepo,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
     ) {}
@@ -133,7 +138,7 @@ export class ProviderController {
 
     @Get(':angebotId/rollenerweiterung')
     @ApiOperation({ description: 'Get rollenerweiterungen for service-provider with provided id.' })
-    @ApiOkResponsePaginated(RollenerweiterungResponse, {
+    @ApiOkResponsePaginated(RollenerweiterungWithExtendedDataResponse, {
         description:
             'The rollenerweiterungen were successfully returned. WARNING: This endpoint returns all rollenerweiterungen of the service-provider as default when no paging parameters were set.',
     })
@@ -144,7 +149,7 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Param() pathParams: RollenerweiterungByServiceProvidersIdPathParams,
         @Query() queryParams: RollenerweiterungByServiceProvidersIdQueryParams,
-    ): Promise<RawPagedResponse<RollenerweiterungResponse>> {
+    ): Promise<RawPagedResponse<RollenerweiterungWithExtendedDataResponse>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ROLLEN_ERWEITERN, RollenSystemRecht.ANGEBOTE_VERWALTEN],
             false,
@@ -155,14 +160,30 @@ export class ProviderController {
         }
 
         const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
-            await this.rollenerweiterungRepo.findByServiceProviderId(
+            await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrga(
                 pathParams.angebotId,
                 queryParams.offset,
                 queryParams.limit,
             );
 
-        const rollenerweiterungResponses: RollenerweiterungResponse[] = rollenerweiterungen.map(
-            (re: Rollenerweiterung<true>) => new RollenerweiterungResponse(re),
+        const rolleIds: RolleID[] = uniq(rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.rolleId));
+        const serviceProviderIds: ServiceProviderID[] = uniq(
+            rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.serviceProviderId),
+        );
+
+        const [rollen, serviceProviders]: [Map<RolleID, Rolle<true>>, Map<ServiceProviderID, ServiceProvider<true>>] =
+            await Promise.all([
+                this.rolleRepo.findByIds(rolleIds),
+                this.serviceProviderRepo.findByIds(serviceProviderIds),
+            ]);
+
+        const rollenerweiterungResponses: RollenerweiterungWithExtendedDataResponse[] = rollenerweiterungen.map(
+            (re: Rollenerweiterung<true>) =>
+                new RollenerweiterungWithExtendedDataResponse(
+                    re,
+                    rollen.get(re.rolleId)?.name ?? '',
+                    serviceProviders.get(re.serviceProviderId)?.name ?? '',
+                ),
         );
 
         return new RawPagedResponse({

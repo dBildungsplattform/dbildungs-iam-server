@@ -418,7 +418,7 @@ describe('RollenerweiterungRepo', () => {
         });
 
         it('should return empty array and count 0 if no rollenerweiterung exists for serviceProviderId', async () => {
-            const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderId(
+            const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderIdPagedAndSortedByOrga(
                 serviceProvider.id,
             );
             expect(result).toBeInstanceOf(Array);
@@ -433,7 +433,7 @@ describe('RollenerweiterungRepo', () => {
             ];
             await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
 
-            const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderId(
+            const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderIdPagedAndSortedByOrga(
                 serviceProvider.id,
             );
             expect(result).toBeInstanceOf(Array);
@@ -452,7 +452,7 @@ describe('RollenerweiterungRepo', () => {
             ];
             await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
 
-            const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderId(
+            const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderIdPagedAndSortedByOrga(
                 serviceProvider.id,
                 1,
                 2,

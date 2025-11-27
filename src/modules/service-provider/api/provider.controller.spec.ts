@@ -104,7 +104,7 @@ describe('Provider Controller Test', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
 
             const rollenerweiterung: Rollenerweiterung<true> = DoFactory.createRollenerweiterung(true);
-            rollenerweiterungRepoMock.findByServiceProviderId.mockResolvedValueOnce([[rollenerweiterung], 1]);
+            rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrga.mockResolvedValueOnce([[rollenerweiterung], 1]);
 
             const offset: number = faker.number.int({ min: 1, max: 100 });
             const limit: number = faker.number.int({ min: 1, max: 100 });
@@ -128,7 +128,7 @@ describe('Provider Controller Test', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
 
             const rollenerweiterung: Rollenerweiterung<true> = DoFactory.createRollenerweiterung(true);
-            rollenerweiterungRepoMock.findByServiceProviderId.mockResolvedValueOnce([[rollenerweiterung], 1]);
+            rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrga.mockResolvedValueOnce([[rollenerweiterung], 1]);
 
             const result: RawPagedResponse<RollenerweiterungResponse> =
                 await providerController.findRollenerweiterungenByServiceProviderId(
@@ -145,7 +145,7 @@ describe('Provider Controller Test', () => {
 
         it('should return empty items if repo returns empty array', async () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
-            rollenerweiterungRepoMock.findByServiceProviderId.mockResolvedValueOnce([[], 0]);
+            rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrga.mockResolvedValueOnce([[], 0]);
 
             const result: RawPagedResponse<RollenerweiterungResponse> =
                 await providerController.findRollenerweiterungenByServiceProviderId(

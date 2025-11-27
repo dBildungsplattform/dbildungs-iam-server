@@ -157,7 +157,7 @@ export class RollenerweiterungRepo {
         );
     }
 
-    public async findByServiceProviderId(
+    public async findByServiceProviderIdPagedAndSortedByOrga(
         serviceProviderId: ServiceProviderID,
         offset?: number,
         limit?: number,
@@ -171,6 +171,7 @@ export class RollenerweiterungRepo {
                 limit,
                 offset,
                 orderBy: {
+                    organisationId: 'ASC', //MUSS DURCH KENNUNG ERSETZT WERDEN MIT JOIN
                     id: 'ASC',
                 },
             },
