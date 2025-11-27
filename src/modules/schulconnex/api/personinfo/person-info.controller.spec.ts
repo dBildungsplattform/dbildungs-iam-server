@@ -133,10 +133,6 @@ describe('PersonInfoController', () => {
                         id: faker.string.uuid(),
                     },
                 } as PersonPermissions;
-                const email: PersonEmailResponse = {
-                    address: faker.internet.email(),
-                    status: faker.helpers.enumValue(EmailAddressStatus),
-                };
                 const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                     loeschungZeitpunkt: new Date(),
@@ -157,7 +153,7 @@ describe('PersonInfoController', () => {
                         rolle: rolle,
                     } satisfies KontextWithOrgaAndRolle,
                 ]);
-                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(undefined);
 
                 const result: PersonInfoResponse = await sut.info(permissions);
                 expect(result).toBeInstanceOf(PersonInfoResponse);
@@ -175,10 +171,7 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.rollenart).toEqual(rolle.rollenart);
                 expect(result.personenkontexte.at(0)?.rollenname).toEqual(rolle.name);
                 expect(result.gruppen).toEqual([]);
-                expect(result.email).toEqual({
-                    address: email.address,
-                    status: email.status,
-                });
+                expect(result.email).toEqual(undefined);
             });
             it('should return person info with loeschung new Microservice', async () => {
                 emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
