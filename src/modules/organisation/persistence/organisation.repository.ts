@@ -749,10 +749,12 @@ export class OrganisationRepository {
         }
 
         this.eventService.publish(
-            new OrganisationDeletedEvent(organisationId, entity.typ),
-            new KafkaOrganisationDeletedEvent(organisationId, entity.typ),
+            OrganisationDeletedEvent.fromOrganisation(entity),
+            KafkaOrganisationDeletedEvent.fromOrganisation(entity),
         );
 
         await this.em.removeAndFlush(entity);
+
+        this.logger.info(`Organisation ${entity.name} vom Typ ${entity.typ} entfernt.`);
     }
 }

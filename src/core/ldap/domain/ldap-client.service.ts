@@ -20,6 +20,8 @@ import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.err
 import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
 import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
 import { KafkaLdapPersonEntryChangedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-changed.event.js';
+import { LdapDeleteRoleError } from '../error/ldap-delete-role.error.js';
+import { LdapDeleteOrganisationError } from '../error/ldap-delete-organisation.error.js';
 
 export type LdapPersonAttributes = {
     entryUUID?: string;
@@ -255,6 +257,10 @@ export class LdapClientService {
             () => this.changeUserPasswordByPersonIdInternal(personId, username),
             this.getNrOfRetries(),
         );
+    }
+
+    public async deleteOrganisation(kennung: string): Promise<Result<string>> {
+        return this.executeWithRetry(() => this.deleteOrganisationInternal(kennung), this.getNrOfRetries());
     }
 
     //** BELOW ONLY PUBLIC HELPER FUNCTIONS THAT NOT OPERATE ON LDAP - MUST NOT USE THE 'executeWithRetry'/
@@ -1405,6 +1411,38 @@ export class LdapClientService {
 
                 return { ok: false, error: new LdapModifyUserPasswordError() };
             }
+        });
+    }
+
+    private async deleteOrganisationInternal(kennung: string): Promise<Result<string>> {
+        return this.mutex.runExclusive(async () => {
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) {
+                return bindResult;
+            }
+
+            const orgUnitDn: string = `ou=${kennung},${this.ldapInstanceConfig.BASE_DN}`;
+            const orgRoleDn: string = `cn=${LdapClientService.GROUPS},${orgUnitDn}`;
+
+            try {
+                await client.del(orgRoleDn);
+            } catch (err) {
+                this.logger.logUnknownAsError(`LDAP: Deleting orgRole FAILED for kennung:${kennung}`, err);
+                // TODO: is this actually fatal and warrants aborting?
+                return { ok: false, error: new LdapDeleteRoleError({ kennung }) };
+            }
+
+            try {
+                await client.del(orgUnitDn);
+            } catch (err) {
+                this.logger.logUnknownAsError(`LDAP: Deleting orgUnit FAILED for kennung:${kennung}`, err);
+                return { ok: false, error: new LdapDeleteOrganisationError({ kennung }) };
+            }
+
+            this.logger.info(`LDAP: Successfully deleted organisation with kennung:${kennung}.`);
+
+            return { ok: true, value: kennung };
         });
     }
 
