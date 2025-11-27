@@ -186,7 +186,7 @@ export class DBiamPersonenkontextRepo {
 
         const erweiterungen: PersonenkontextErweitertVirtualEntity[] = await this.em.find(
             PersonenkontextErweitertVirtualEntity,
-            erweiterungFilter,
+            { $and: erweiterungFilter },
         );
 
         const filter: FilterQuery<NoInfer<PersonenkontextEntity>> = {
