@@ -1268,6 +1268,7 @@
             "id"
           ],
           "referencedTableName": "email.address",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       },
