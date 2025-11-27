@@ -320,6 +320,10 @@ export class OrganisationController {
         return new PagedResponse(pagedOrganisationResponse);
     }
 
+    public async getOrganisationenForServiceProvider(): Promise<void> {
+        // impl
+    }
+
     @Get(':organisationId/administriert')
     @ApiOkResponse({
         description: 'The organizations were successfully returned.',
