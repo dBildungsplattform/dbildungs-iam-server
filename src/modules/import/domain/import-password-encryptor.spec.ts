@@ -50,9 +50,7 @@ describe('ImportPasswordEncryptor', () => {
                 const importvorgangId: string = faker.string.uuid();
                 const error: DomainError = new ImportDomainError('iv for decryption not found', importvorgangId);
 
-                await expect(sut.decryptPassword(invalidEncryptedPasswordData, importvorgangId)).rejects.toThrowError(
-                    error,
-                );
+                await expect(sut.decryptPassword(invalidEncryptedPasswordData, importvorgangId)).rejects.toThrow(error);
             });
         });
 
@@ -65,9 +63,7 @@ describe('ImportPasswordEncryptor', () => {
                     importvorgangId,
                 );
 
-                await expect(sut.decryptPassword(invalidEncryptedPasswordData, importvorgangId)).rejects.toThrowError(
-                    error,
-                );
+                await expect(sut.decryptPassword(invalidEncryptedPasswordData, importvorgangId)).rejects.toThrow(error);
             });
         });
 

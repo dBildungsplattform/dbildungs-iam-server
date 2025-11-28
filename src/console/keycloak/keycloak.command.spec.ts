@@ -29,7 +29,7 @@ describe('KeycloakCommand', () => {
         describe('when running the keycloak command', () => {
             it('should print reminder, that no sub command was provided', async () => {
                 await expect(sut.run([])).resolves.not.toThrow();
-                expect(loggerMock.info).toBeCalledWith('Did you forget the sub command?');
+                expect(loggerMock.info).toHaveBeenCalledWith('Did you forget the sub command?');
             });
         });
     });

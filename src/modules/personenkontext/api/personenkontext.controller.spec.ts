@@ -156,7 +156,7 @@ describe('PersonenkontextController', () => {
 
                 personenkontextService.findPersonenkontextById.mockRejectedValue(new Error());
 
-                await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toThrowError(Error);
+                await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toThrow(Error);
             });
         });
 
