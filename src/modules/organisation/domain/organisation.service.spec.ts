@@ -1080,6 +1080,22 @@ describe('OrganisationService', () => {
             expect(!result.ok && result.error).toBeInstanceOf(MissingPermissionsError);
         });
 
+        it('should return an error, if permissions are missing', async () => {
+            const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
+            const mockOrganisation: Organisation<true> = DoFactory.createOrganisation(true);
+            organisationRepositoryMock.findAuthorized.mockResolvedValue([[mockOrganisation], 1, 1]);
+            const result: Result<
+                Organisation<true>,
+                DomainError
+            > = await organisationService.findOrganisationByIdAndMatchingPermissions(
+                permissionsMock,
+                mockOrganisation.id,
+            );
+            expect(result.ok).toBeFalsy();
+            expect(!result.ok && result.error).toBeInstanceOf(MissingPermissionsError);
+        });
+
         describe.each([
             {
                 organisation: DoFactory.createOrganisation(true, { typ: OrganisationsTyp.TRAEGER }),
