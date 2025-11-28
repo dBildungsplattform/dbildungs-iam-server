@@ -22,6 +22,7 @@ import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js'
 import { KafkaLdapPersonEntryChangedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-changed.event.js';
 import { LdapDeleteRoleError } from '../error/ldap-delete-role.error.js';
 import { LdapDeleteOrganisationError } from '../error/ldap-delete-organisation.error.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 
 export type LdapPersonAttributes = {
     entryUUID?: string;
@@ -1430,19 +1431,19 @@ export class LdapClientService {
             } catch (err) {
                 this.logger.logUnknownAsError(`LDAP: Deleting orgRole FAILED for kennung:${kennung}`, err);
                 // TODO: is this actually fatal and warrants aborting?
-                return { ok: false, error: new LdapDeleteRoleError({ kennung }) };
+                return Err(new LdapDeleteRoleError({ kennung }));
             }
 
             try {
                 await client.del(orgUnitDn);
             } catch (err) {
                 this.logger.logUnknownAsError(`LDAP: Deleting orgUnit FAILED for kennung:${kennung}`, err);
-                return { ok: false, error: new LdapDeleteOrganisationError({ kennung }) };
+                return Err( new LdapDeleteOrganisationError({ kennung }) );
             }
 
             this.logger.info(`LDAP: Successfully deleted organisation with kennung:${kennung}.`);
 
-            return { ok: true, value: kennung };
+            return Ok<string, Error>(kennung);
         });
     }
 
