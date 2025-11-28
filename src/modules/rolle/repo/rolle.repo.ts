@@ -301,6 +301,12 @@ export class RolleRepo {
         return [rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory)), total];
     }
 
+    public async findBySchulstrukturknoten(administeredBySchulstrukturknoten: OrganisationID): Promise<Rolle<true>[]> {
+        return (await this.em.find(this.entityName, { administeredBySchulstrukturknoten })).map(
+            (rolleEntity: RolleEntity) => mapRolleEntityToAggregate(rolleEntity, this.rolleFactory),
+        );
+    }
+
     public async findByServiceProviderIds(
         serviceProviderIds: string[],
     ): Promise<Map<ServiceProviderID, Rolle<true>[]>> {

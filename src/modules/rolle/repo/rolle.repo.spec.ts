@@ -221,16 +221,18 @@ describe('RolleRepo', () => {
 
             expect(rolle).toBeNull();
         });
-    });
 
-    it('should return undefined if the entity is technisch', async () => {
-        const rolle: Rolle<true> | DomainError = await sut.save(DoFactory.createRolle(false, { istTechnisch: true }));
-        if (rolle instanceof DomainError) {
-            throw Error();
-        }
+        it('should return undefined if the entity is technisch', async () => {
+            const rolle: Rolle<true> | DomainError = await sut.save(
+                DoFactory.createRolle(false, { istTechnisch: true }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
-        const rolleResult: Option<Rolle<true>> = await sut.findById(rolle.id);
-        expect(rolleResult).toBeNull();
+            const rolleResult: Option<Rolle<true>> = await sut.findById(rolle.id);
+            expect(rolleResult).toBeNull();
+        });
     });
 
     describe('findByIdAuthorized', () => {
@@ -287,6 +289,7 @@ describe('RolleRepo', () => {
             expect(rolleResult.ok).toBeFalsy();
         });
     });
+
     describe('findRollenAuthorized', () => {
         it('should return no rollen because there are none', async () => {
             const organisationId: OrganisationID = faker.string.uuid();
@@ -451,6 +454,7 @@ describe('RolleRepo', () => {
             expect(total).toBe(1);
         });
     });
+
     describe('findByName', () => {
         it('should return the rolle', async () => {
             const rolle: Rolle<true> | DomainError = await sut.save(DoFactory.createRolle(false));
@@ -531,6 +535,22 @@ describe('RolleRepo', () => {
             expect(rollenarten).toContain(RollenArt.LEIT);
             expect(rollenarten).toContain(RollenArt.LEHR);
             expect(rollenarten).not.toContain(RollenArt.LERN);
+        });
+    });
+
+    describe('findBySchulstrukturknoten', () => {
+        it('should return rolle', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            const rolle: Rolle<true> | DomainError = await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+            const result: Array<Rolle<true>> = await sut.findBySchulstrukturknoten(organisationId);
+
+            expect(result).toHaveLength(1);
+            expect(result).toEqual(expect.arrayContaining([rolle]));
         });
     });
 
