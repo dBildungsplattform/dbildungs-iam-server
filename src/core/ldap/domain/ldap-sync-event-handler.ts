@@ -371,11 +371,13 @@ export class LdapSyncEventHandler {
         );
 
         await Promise.all([
-            ldapSyncData.groupsToAdd.map((kennung: string) =>
-                this.ldapClientService.addPersonToGroup(ldapSyncData.username, kennung, personAttributes.dn),
+            ...ldapSyncData.groupsToAdd.map(
+                (kennung: string): Promise<Result<boolean>> =>
+                    this.ldapClientService.addPersonToGroup(ldapSyncData.username, kennung, personAttributes.dn),
             ),
-            ldapSyncData.groupsToRemove.map((kennung: string) =>
-                this.ldapClientService.removePersonFromGroup(ldapSyncData.username, kennung, personAttributes.dn),
+            ...ldapSyncData.groupsToRemove.map(
+                (kennung: string): Promise<Result<boolean>> =>
+                    this.ldapClientService.removePersonFromGroup(ldapSyncData.username, kennung, personAttributes.dn),
             ),
         ]);
     }

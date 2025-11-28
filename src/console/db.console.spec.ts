@@ -30,7 +30,7 @@ describe('DbConsole', () => {
         describe('when running the db command', () => {
             it('should print reminder, that no sub command was provided', async () => {
                 await expect(sut.run([])).resolves.not.toThrow();
-                expect(classloggerMock.info).toBeCalledWith('Did you forget the sub command?');
+                expect(classloggerMock.info).toHaveBeenCalledWith('Did you forget the sub command?');
             });
         });
     });

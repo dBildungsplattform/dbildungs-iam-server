@@ -108,7 +108,7 @@ describe('ImportEventHandler', () => {
             importVorgangRepositoryMock.findById.mockResolvedValueOnce(null);
             const error: DomainError = new EntityNotFoundError('ImportVorgang', importvorgangId);
 
-            await expect(sut.handleExecuteImport(event)).rejects.toThrowError(error);
+            await expect(sut.handleExecuteImport(event)).rejects.toThrow(error);
 
             expect(personenkontextCreationServiceMock.createPersonWithPersonenkontexte).not.toHaveBeenCalled();
         });

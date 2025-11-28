@@ -35,9 +35,9 @@ describe('GlobalPagingHeadersInterceptor', () => {
                 await lastValueFrom(observable);
 
                 expect(responseMock.setHeader).toBeCalledTimes(4);
-                expect(responseMock.setHeader).toBeCalledWith(PagingHeaders.OFFSET, 0);
-                expect(responseMock.setHeader).toBeCalledWith(PagingHeaders.LIMIT, 0);
-                expect(responseMock.setHeader).toBeCalledWith(PagingHeaders.TOTAL, 0);
+                expect(responseMock.setHeader).toHaveBeenCalledWith(PagingHeaders.OFFSET, 0);
+                expect(responseMock.setHeader).toHaveBeenCalledWith(PagingHeaders.LIMIT, 0);
+                expect(responseMock.setHeader).toHaveBeenCalledWith(PagingHeaders.TOTAL, 0);
             });
 
             it('should change response type to list', async () => {

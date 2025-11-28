@@ -31,7 +31,7 @@ describe('ConsoleLoggerService', () => {
         describe('when receiving a message', () => {
             it('should write to console', () => {
                 expect(() => sut.trace('trace')).not.toThrow();
-                expect(traceSpy).toBeCalledWith('trace');
+                expect(traceSpy).toHaveBeenCalledWith('trace');
             });
         });
     });

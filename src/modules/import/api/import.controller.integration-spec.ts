@@ -125,7 +125,7 @@ describe('Import API', () => {
         personPermissionsMock = createMock<PersonPermissions>();
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
         personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-        personPermissionsMock.personFields.username = faker.internet.userName();
+        personPermissionsMock.personFields.username = faker.internet.username();
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
@@ -690,7 +690,7 @@ describe('Import API', () => {
                     importvorgangId: importVorgang.id,
                     klasse: klasse.name,
                     personalnummer: undefined,
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                     password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
                     status: ImportDataItemStatus.SUCCESS,
                 }),
@@ -946,7 +946,7 @@ describe('Import API', () => {
                     importvorgangId: importVorgang.id,
                     klasse: '1a',
                     personalnummer: undefined,
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                     password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
                 }),
             );
@@ -956,7 +956,7 @@ describe('Import API', () => {
                     importvorgangId: importVorgang.id,
                     klasse: '1a',
                     personalnummer: undefined,
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                     password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
                 }),
             );
@@ -1021,7 +1021,7 @@ describe('Import API', () => {
                     importvorgangId: importVorgang.id,
                     klasse: '1a',
                     personalnummer: undefined,
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                     password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
                 }),
             );
@@ -1031,7 +1031,7 @@ describe('Import API', () => {
                     importvorgangId: importVorgang.id,
                     klasse: '1a',
                     personalnummer: undefined,
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                     password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
                 }),
             );

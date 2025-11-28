@@ -55,7 +55,7 @@ describe('ClassLogger', () => {
     describe('when a message is logged', () => {
         const personIdentifier: PersonIdentifier = {
             personId: faker.string.uuid(),
-            username: faker.internet.userName(),
+            username: faker.internet.username(),
         };
         it('should log appropriately for level debug', () => {
             sut.debug('Blah');
@@ -137,7 +137,7 @@ describe('ClassLogger', () => {
     describe('when a message with a trace was logged', () => {
         const personIdentifier: PersonIdentifier = {
             personId: faker.string.uuid(),
-            username: faker.internet.userName(),
+            username: faker.internet.username(),
         };
 
         it('should take the trace into account for level debug', () => {

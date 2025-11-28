@@ -263,7 +263,7 @@ describe('OxSyncEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             oxUserId = faker.string.numeric({ length: 5 });
             personIdentifier = {
                 personId: personId,
@@ -272,7 +272,7 @@ describe('OxSyncEventHandler', () => {
             event = new LdapSyncCompletedEvent(personId, username);
             person = createMock<Person<true>>({
                 email: faker.internet.email(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
                 oxUserId: oxUserId,
             });
             address = faker.internet.email();
@@ -547,12 +547,12 @@ describe('OxSyncEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             oxUserId = faker.string.numeric({ length: 5 });
             event = new LdapSyncCompletedEvent(personId, username);
             person = createMock<Person<true>>({
                 email: faker.internet.email(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
                 oxUserId: oxUserId,
             });
             address = faker.internet.email();

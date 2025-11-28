@@ -90,7 +90,7 @@ describe('ItsLearning Persons Event Handler', () => {
     });
 
     describe('personExternalSystemSyncEventHandler', () => {
-        const person: Person<true> = DoFactory.createPerson(true, { username: faker.internet.userName() });
+        const person: Person<true> = DoFactory.createPerson(true, { username: faker.internet.username() });
 
         const schuleWithItslearning: Organisation<true> = DoFactory.createOrganisation(true, {
             typ: OrganisationsTyp.SCHULE,

@@ -93,7 +93,7 @@ describe('Itslearning Person Repo', () => {
             const personResponse: PersonResponse = {
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
                 institutionRole: faker.helpers.enumValue(IMSESInstitutionRoleType),
                 primaryRoleType: true,
             };
@@ -153,7 +153,7 @@ describe('Itslearning Person Repo', () => {
                 id: faker.string.uuid(),
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
                 institutionRoleType: faker.helpers.enumValue(IMSESInstitutionRoleType),
             };
             itsLearningServiceMock.send.mockResolvedValueOnce({
@@ -176,7 +176,7 @@ describe('Itslearning Person Repo', () => {
                 id: faker.string.uuid(),
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
                 institutionRoleType: faker.helpers.enumValue(IMSESInstitutionRoleType),
             };
             itsLearningServiceMock.send.mockResolvedValueOnce({
@@ -194,7 +194,7 @@ describe('Itslearning Person Repo', () => {
                 id: faker.string.uuid(),
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
                 institutionRoleType: faker.helpers.enumValue(IMSESInstitutionRoleType),
             };
             const error: DomainError = new ItsLearningError('Test Error');
@@ -215,7 +215,7 @@ describe('Itslearning Person Repo', () => {
                 id: faker.string.uuid(),
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
                 institutionRoleType: faker.helpers.enumValue(IMSESInstitutionRoleType),
             };
             itsLearningServiceMock.send.mockResolvedValueOnce({

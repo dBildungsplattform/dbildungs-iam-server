@@ -1024,7 +1024,7 @@ describe('Rolle API', () => {
                 const personData: Person<false> | DomainError = await personFactory.createNew({
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                     password: generatePassword(),
                 });
                 if (personData instanceof DomainError) {
@@ -1172,7 +1172,7 @@ describe('Rolle API', () => {
                 const personData: Person<false> | DomainError = await personFactory.createNew({
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                     password: generatePassword(),
                 });
                 if (personData instanceof DomainError) {

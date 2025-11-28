@@ -149,7 +149,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
             spshServiceProviderId: faker.string.uuid(),
-            spshUsername: faker.internet.userName(),
+            spshUsername: faker.internet.username(),
             kennungen: ['01234567'],
         });
 
@@ -234,7 +234,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             firstName: 'Max',
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
-            spshUsername: faker.internet.userName(),
+            spshUsername: faker.internet.username(),
             kennungen: [],
             spshServiceProviderId: faker.string.uuid(),
         });
@@ -318,7 +318,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 firstName: 'Max',
                 lastName: 'Mustermann',
                 spshPersonId: faker.string.uuid(),
-                spshUsername: faker.internet.userName(),
+                spshUsername: faker.internet.username(),
                 kennungen: [],
                 spshServiceProviderId: faker.string.uuid(),
             }),
@@ -389,7 +389,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 firstName: 'Max',
                 lastName: 'Mustermann',
                 spshPersonId: faker.string.uuid(),
-                spshUsername: faker.internet.userName(),
+                spshUsername: faker.internet.username(),
                 kennungen: [],
                 spshServiceProviderId: faker.string.uuid(),
             }),
@@ -478,7 +478,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 firstName: 'Max',
                 lastName: 'Mustermann',
                 spshPersonId: faker.string.uuid(),
-                spshUsername: faker.internet.userName(),
+                spshUsername: faker.internet.username(),
                 kennungen: [],
                 spshServiceProviderId: faker.string.uuid(),
             }),
@@ -560,7 +560,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 firstName: 'Max',
                 lastName: 'Mustermann',
                 spshPersonId: faker.string.uuid(),
-                spshUsername: faker.internet.userName(),
+                spshUsername: faker.internet.username(),
                 kennungen: [],
                 spshServiceProviderId: faker.string.uuid(),
             }),
@@ -593,7 +593,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
             spshServiceProviderId: 'missing-domain-id',
-            spshUsername: faker.internet.userName(),
+            spshUsername: faker.internet.username(),
             kennungen: [],
         };
 
@@ -633,7 +633,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
             spshServiceProviderId: faker.string.uuid(),
-            spshUsername: faker.internet.userName(),
+            spshUsername: faker.internet.username(),
             kennungen: [],
         });
         expect(emailAddressRepoMock.save).not.toHaveBeenCalled();
@@ -661,7 +661,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             lastName: 'Mustermann',
             spshPersonId: faker.string.uuid(),
             spshServiceProviderId: faker.string.uuid(),
-            spshUsername: faker.internet.userName(),
+            spshUsername: faker.internet.username(),
             kennungen: [],
         };
 
@@ -694,7 +694,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 lastName: 'Mustermann',
                 spshPersonId: faker.string.uuid(),
                 spshServiceProviderId: faker.string.uuid(),
-                spshUsername: faker.internet.userName(),
+                spshUsername: faker.internet.username(),
                 kennungen: [],
             }),
         ).rejects.toThrow(domainError);

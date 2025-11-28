@@ -1,5 +1,9 @@
-/** @type {import('ts-jest').JestConfigWithTsJest} */
-const commonConfig = {
+/** @jest-config-loader ts-node */
+import type { Config } from 'jest';
+// import { createDefaultPreset } from 'ts-jest';
+// import { createJsWithTsEsmPreset, type JestConfigWithTsJest } from 'ts-jest';
+
+const commonConfig: Partial<Config> = {
     testEnvironment: 'node',
     rootDir: './src',
     preset: 'ts-jest/presets/default-esm',
@@ -15,10 +19,11 @@ const commonConfig = {
             },
         ],
     },
+    transformIgnorePatterns: ['node_modules'],
 };
 
-/** @type {import('jest').Config} */
-module.exports = {
+const config: Config = {
+    // ...createDefaultPreset(),
     projects: [
         {
             displayName: 'unit',
@@ -52,3 +57,5 @@ module.exports = {
     },
     testTimeout: 1000000,
 };
+
+export default config;
