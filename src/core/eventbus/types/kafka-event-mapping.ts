@@ -159,29 +159,29 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
 
     'klasse.created': {
         eventClass: KafkaKlasseCreatedEvent,
-        topic: 'klasse-topic',
-        topicDlq: 'klasse-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
     'klasse.deleted': {
         eventClass: KafkaKlasseDeletedEvent,
-        topic: 'klasse-topic',
-        topicDlq: 'klasse-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
     'klasse.updated': {
         eventClass: KafkaKlasseUpdatedEvent,
-        topic: 'klasse-topic',
-        topicDlq: 'klasse-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
 
     'schule.created': {
         eventClass: KafkaSchuleCreatedEvent,
-        topic: 'schule-topic',
-        topicDlq: 'schule-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
     'schule.itslearning_enabled': {
         eventClass: KafkaSchuleItslearningEnabledEvent,
-        topic: 'schule-topic',
-        topicDlq: 'schule-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
 
     'user.email.already_exists': {
