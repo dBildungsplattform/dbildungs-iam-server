@@ -372,7 +372,9 @@ export class LdapEventHandler {
         this.logger.info(
             `Received OrganisationDeletedEvent, organisationId:${event.organisationId}, name:${event.name}, kennung:${event.kennung}, typ:${event.typ}`,
         );
-        if (event?.typ !== OrganisationsTyp.SCHULE || !event.kennung) return { ok: true, value: null };
+        if (event?.typ !== OrganisationsTyp.SCHULE || !event.kennung) {
+            return { ok: true, value: null };
+        }
 
         return this.ldapClientService.deleteOrganisation(event.kennung);
     }

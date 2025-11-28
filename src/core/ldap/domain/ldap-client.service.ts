@@ -1,28 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { ClassLogger } from '../../logging/class-logger.js';
-import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
-import { LdapEntityType, LdapPersonEntry } from './ldap.types.js';
-import { LdapClient } from './ldap-client.js';
-import { LdapInstanceConfig } from '../ldap-instance-config.js';
-import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
 import { Mutex } from 'async-mutex';
-import { LdapSearchError } from '../error/ldap-search.error.js';
-import { OrganisationKennung, PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
-import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
+import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
+import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
+import { KafkaLdapPersonEntryChangedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-changed.event.js';
 import { LdapPersonEntryChangedEvent } from '../../../shared/events/ldap/ldap-person-entry-changed.event.js';
+import { OrganisationKennung, PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../logging/class-logger.js';
+import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.error.js';
+import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
+import { LdapDeleteOrganisationError } from '../error/ldap-delete-organisation.error.js';
 import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
-import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
+import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
 import { LdapModifyEmailError } from '../error/ldap-modify-email.error.js';
 import { LdapModifyUserPasswordError } from '../error/ldap-modify-user-password.error.js';
-import { generatePassword } from '../../../shared/util/password-generator.js';
-import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.error.js';
 import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
-import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
-import { KafkaLdapPersonEntryChangedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-changed.event.js';
-import { LdapDeleteRoleError } from '../error/ldap-delete-role.error.js';
-import { LdapDeleteOrganisationError } from '../error/ldap-delete-organisation.error.js';
-import { Err, Ok } from '../../../shared/util/result.js';
+import { LdapSearchError } from '../error/ldap-search.error.js';
+import { LdapInstanceConfig } from '../ldap-instance-config.js';
+import { LdapClient } from './ldap-client.js';
+import { LdapEntityType, LdapPersonEntry } from './ldap.types.js';
 
 export type LdapPersonAttributes = {
     entryUUID?: string;
@@ -1424,21 +1423,12 @@ export class LdapClientService {
             }
 
             const orgUnitDn: string = `ou=${kennung},${this.ldapInstanceConfig.BASE_DN}`;
-            const orgRoleDn: string = `cn=${LdapClientService.GROUPS},${orgUnitDn}`;
-
-            try {
-                await client.del(orgRoleDn);
-            } catch (err) {
-                this.logger.logUnknownAsError(`LDAP: Deleting orgRole FAILED for kennung:${kennung}`, err);
-                // TODO: is this actually fatal and warrants aborting?
-                return Err(new LdapDeleteRoleError({ kennung }));
-            }
 
             try {
                 await client.del(orgUnitDn);
             } catch (err) {
                 this.logger.logUnknownAsError(`LDAP: Deleting orgUnit FAILED for kennung:${kennung}`, err);
-                return Err( new LdapDeleteOrganisationError({ kennung }) );
+                return Err(new LdapDeleteOrganisationError({ kennung }));
             }
 
             this.logger.info(`LDAP: Successfully deleted organisation with kennung:${kennung}.`);
