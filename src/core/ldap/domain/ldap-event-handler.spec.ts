@@ -35,6 +35,10 @@ import { EmailAddressStatus } from '../../../modules/email/domain/email-address.
 import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
+import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
+import { Ok } from '../../../shared/util/result.js';
+import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 
 describe('LdapEventHandler', () => {
     let app: INestApplication;
@@ -979,6 +983,59 @@ describe('LdapEventHandler', () => {
             expect(ldapClientServiceMock.deleteLehrerByUsername).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenLastCalledWith(error.message);
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+        });
+    });
+
+    describe('handleOrganisationDeletedEvent', () => {
+        let orga: Organisation<true>;  
+        function expectLog(event: OrganisationDeletedEvent): void {
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Received OrganisationDeletedEvent, organisationId:${event.organisationId}, name:${event.name}, kennung:${event.kennung}, typ:${event.typ}`,
+            );
+        }
+
+        beforeEach(() => {
+            orga = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
+            ldapClientServiceMock.deleteOrganisation.mockResolvedValue(Ok(orga.kennung!));
+        });
+
+        describe('when event is complete', () => {
+            it('should log and return true', async () => {
+                const event: OrganisationDeletedEvent = OrganisationDeletedEvent.fromOrganisation(orga);
+
+                await expect(ldapEventHandler.handleOrganisationDeletedEvent(event)).resolves.toEqual(Ok(orga.kennung));
+                expectLog(event);
+                expect(ldapClientServiceMock.deleteOrganisation).toHaveBeenLastCalledWith(orga.kennung);
+            });
+        });
+
+        describe.each([['typ'], ['kennung']] as Array<Array<keyof OrganisationDeletedEvent>>)(
+            'when event is missing %s',
+            (missingPropertyKey: keyof OrganisationDeletedEvent) => {
+                it('should return without calling the service', async () => {
+                    const event: OrganisationDeletedEvent = OrganisationDeletedEvent.fromOrganisation(orga);
+                    delete event[missingPropertyKey];
+
+                    await expect(ldapEventHandler.handleOrganisationDeletedEvent(event)).resolves.toEqual(
+                        Ok(undefined),
+                    );
+                    expectLog(event);
+                    expect(ldapClientServiceMock.deleteOrganisation).not.toHaveBeenCalled();
+                });
+            },
+        );
+
+        describe(`when orga.typ is not ${OrganisationsTyp.SCHULE}`, () => {
+            it('should return without calling the service', async () => {
+                const event: OrganisationDeletedEvent = OrganisationDeletedEvent.fromOrganisation({
+                    ...orga,
+                    typ: OrganisationsTyp.LAND,
+                });
+
+                await expect(ldapEventHandler.handleOrganisationDeletedEvent(event)).resolves.toEqual(Ok(undefined));
+                expectLog(event);
+                expect(ldapClientServiceMock.deleteOrganisation).not.toHaveBeenCalled();
+            });
         });
     });
 });

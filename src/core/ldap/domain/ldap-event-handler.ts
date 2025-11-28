@@ -39,6 +39,7 @@ import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/ka
 import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
 import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
+import { Ok } from '../../../shared/util/result.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -373,7 +374,7 @@ export class LdapEventHandler {
             `Received OrganisationDeletedEvent, organisationId:${event.organisationId}, name:${event.name}, kennung:${event.kennung}, typ:${event.typ}`,
         );
         if (event?.typ !== OrganisationsTyp.SCHULE || !event.kennung) {
-            return { ok: true, value: null };
+            return Ok(undefined);
         }
 
         return this.ldapClientService.deleteOrganisation(event.kennung);
