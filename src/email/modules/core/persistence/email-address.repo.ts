@@ -38,7 +38,7 @@ function mapEntityToAggregate(entity: EmailAddrEntity): EmailAddress<boolean> {
     });
 }
 
-function statusSortFn(a: EmailAddressStatusEntity, b: EmailAddressStatusEntity): number {
+function statusSortByCreationTimeFn(a: EmailAddressStatusEntity, b: EmailAddressStatusEntity): number {
     return b.createdAt.getTime() - a.createdAt.getTime();
 }
 
@@ -84,7 +84,7 @@ export class EmailAddressRepo {
             (entity: EmailAddrEntity) =>
                 new AddressWithStatusesDescDto(
                     mapEntityToAggregate(entity),
-                    entity.statuses.getItems().sort(statusSortFn).map(mapStatusEntityToAggregate),
+                    entity.statuses.getItems().sort(statusSortByCreationTimeFn).map(mapStatusEntityToAggregate),
                 ),
         );
     }
@@ -185,7 +185,7 @@ export class EmailAddressRepo {
                 if (email.priority >= 2) {
                     const newestStatus: EmailAddressStatusEntity | undefined = email.statuses
                         .getItems()
-                        .sort(statusSortFn)[0];
+                        .sort(statusSortByCreationTimeFn)[0];
 
                     if (!newestStatus || newestStatus.status === EmailAddressStatusEnum.ACTIVE) {
                         email.statuses.add(

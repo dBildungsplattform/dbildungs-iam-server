@@ -419,7 +419,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             );
         });
 
-        it('should not change priorities if the email is already active', async () => {
+        it('should not change priorities if the email has prio 0 and the status is not ALREADY_IN_OX', async () => {
             const domain: EmailDomain<true> = await setupDomain();
             const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
             const oldOxId: string = faker.string.numeric(5);

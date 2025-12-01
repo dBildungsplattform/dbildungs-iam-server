@@ -18,6 +18,7 @@ import {
     KontextWithOrgaAndRolle,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { uniq } from 'lodash-es';
 
 @Injectable()
 export class EmailMicroserviceEventHandler {
@@ -106,7 +107,7 @@ export class EmailMicroserviceEventHandler {
         const kennungen: string[] = allKontexteForPerson
             .map((kontext: KontextWithOrgaAndRolle) => kontext.organisation.kennung)
             .filter((kennung: string | undefined): kennung is string => !!kennung);
-        const uniqueKennungen: string[] = Array.from(new Set(kennungen));
+        const uniqueKennungen: string[] = uniq(kennungen);
 
         const emailServiceProviderId: string | undefined = await this.getEmailServiceProviderId(
             allKontexteForPerson.map((k: KontextWithOrgaAndRolle) => k.rolle.id),

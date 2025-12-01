@@ -562,7 +562,7 @@ describe('LDAP Client Service', () => {
         });
     });
 
-    describe('update', () => {
+    describe('updatePerson', () => {
         const fakeEmailDomain: string = 'schule-sh.de';
 
         it('should modify person in ldap', async () => {

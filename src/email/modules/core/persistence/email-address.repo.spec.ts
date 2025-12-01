@@ -319,6 +319,65 @@ describe('EmailRepo', () => {
             }
         });
 
+        it("only shift addresses if needed (fill gaps but don't move unnecessarily)", async () => {
+            const spshPersonId: string = faker.string.uuid();
+            const externalId: string = faker.string.uuid();
+            const oxUserCounter: string = faker.string.numeric(5);
+
+            async function createMail(prio: number): Promise<EmailAddress<true>> {
+                const mail: EmailAddress<false> = EmailAddress.createNew({
+                    address: `${prio}@example.com`,
+                    priority: prio,
+                    externalId,
+                    oxUserCounter,
+                    spshPersonId,
+                });
+
+                const saved: EmailAddress<true> | DomainError = await sut.save(mail);
+
+                if (saved instanceof DomainError) {
+                    throw saved;
+                }
+
+                return saved;
+            }
+
+            const mail0: EmailAddress<true> = await createMail(0);
+            const mail1: EmailAddress<true> = await createMail(1);
+            const mail2: EmailAddress<true> = await createMail(3);
+            const mail3: EmailAddress<true> = await createMail(4);
+
+            const result: Result<EmailAddress<true>[]> = await sut.shiftPriorities(mail3, 0);
+
+            expectOkResult(result);
+
+            expect(result.value).toContainEqual(
+                expect.objectContaining({
+                    id: mail3.id,
+                    priority: 0,
+                }),
+            );
+            expect(result.value).toContainEqual(
+                expect.objectContaining({
+                    id: mail0.id,
+                    priority: 1,
+                }),
+            );
+            expect(result.value).toContainEqual(
+                expect.objectContaining({
+                    id: mail1.id,
+                    priority: 2,
+                }),
+            );
+            // Should stay at priority 3
+            expect(result.value).toContainEqual(
+                expect.objectContaining({
+                    id: mail2.id,
+                    priority: 3,
+                }),
+            );
+        });
+
         it('should return error if the target e-mail can not be found', async () => {
             const targetMail: EmailAddress<true> = EmailAddress.construct({
                 id: faker.string.uuid(),
