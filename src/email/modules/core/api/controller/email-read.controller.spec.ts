@@ -11,6 +11,8 @@ import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../
 import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
 import { EmailAddressStatus } from '../../domain/email-address-status.js';
 import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
+import { EmailAddressNotFoundError } from '../../error/email-address-not-found.error.js';
+import { EmailAddressMissingStatusError } from '../../error/email-address-missing-status.error.js';
 
 describe('EmailReadController', () => {
     let emailReadController: EmailReadController;
@@ -38,6 +40,75 @@ describe('EmailReadController', () => {
 
     beforeEach(() => {
         jest.resetAllMocks();
+    });
+
+    describe('findEmailAddress', () => {
+        it('should return address if found', async () => {
+            const emailAddressToSearch: string = faker.internet.email();
+            const addressWithStatuses: AddressWithStatusesDescDto = {
+                emailAddress: {
+                    id: faker.string.uuid(),
+                    address: emailAddressToSearch,
+                    priority: 0,
+                    spshPersonId: faker.string.uuid(),
+                    oxUserCounter: undefined,
+                    markedForCron: undefined,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
+                statuses: [
+                    {
+                        id: faker.string.uuid(),
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                        emailAddressId: faker.string.uuid(),
+                        status: EmailAddressStatusEnum.ACTIVE,
+                    },
+                ],
+            };
+            emailAddressRepoMock.findEmailAddressWithStatusDesc.mockResolvedValue(addressWithStatuses);
+
+            const result: Option<EmailAddressResponse> = await emailReadController.findEmailAddress({
+                emailAddress: emailAddressToSearch,
+            });
+            expect(result).not.toEqual(undefined);
+            expect(result?.address).toEqual(emailAddressToSearch);
+        });
+
+        it('should throw if no address is found', async () => {
+            const emailAddressToSearch: string = faker.internet.email();
+            emailAddressRepoMock.findEmailAddressWithStatusDesc.mockResolvedValue(undefined);
+
+            await expect(
+                emailReadController.findEmailAddress({
+                    emailAddress: emailAddressToSearch,
+                }),
+            ).rejects.toThrow(EmailAddressNotFoundError);
+        });
+
+        it('should throw if address is found but has no status', async () => {
+            const emailAddressToSearch: string = faker.internet.email();
+            const addressWithStatuses: AddressWithStatusesDescDto = {
+                emailAddress: {
+                    id: faker.string.uuid(),
+                    address: emailAddressToSearch,
+                    priority: 0,
+                    spshPersonId: faker.string.uuid(),
+                    oxUserCounter: undefined,
+                    markedForCron: undefined,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
+                statuses: [],
+            };
+            emailAddressRepoMock.findEmailAddressWithStatusDesc.mockResolvedValue(addressWithStatuses);
+
+            await expect(
+                emailReadController.findEmailAddress({
+                    emailAddress: emailAddressToSearch,
+                }),
+            ).rejects.toThrow(EmailAddressMissingStatusError);
+        });
     });
 
     describe('findEmailAddressesForSpshPerson', () => {
