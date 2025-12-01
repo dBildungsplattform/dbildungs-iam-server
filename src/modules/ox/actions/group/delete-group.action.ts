@@ -5,9 +5,9 @@ import { AuthParams, OxBaseAction } from '../ox-base-action.js';
 export type DeleteGroupParams = AuthParams & {
     contextId: string;
     id: string;
-}
-export type DeleteGroupResponse = {}
-export type DeleteGroupResponseBody = {}
+};
+export type DeleteGroupResponse = object;
+export type DeleteGroupResponseBody = object;
 
 export class DeleteGroupAction extends OxBaseAction<DeleteGroupResponseBody, DeleteGroupResponse> {
     public override action: string = 'http://soap.admin.openexchange.com/create';
@@ -20,7 +20,6 @@ export class DeleteGroupAction extends OxBaseAction<DeleteGroupResponseBody, Del
 
     public override buildRequest(): object {
         return {
-
             'tns:create': {
                 '@_xmlns:tns': TNS_SCHEMA,
                 '@_xmlns:ns2': NS2_SCHEMA,

@@ -433,7 +433,7 @@ export class OxEventHandler {
             return this.logger.info('OrganisationDeletedEvent does not apply, ignoring event');
         }
 
-        const oxGroupName : string = this.getOxLehrerGroupName(event.kennung);
+        const oxGroupName: string = this.getOxLehrerGroupName(event.kennung);
 
         await this.oxEventService.removeOxGroup(oxGroupName);
     }

@@ -417,7 +417,10 @@ export class OxEventService {
         const action: DeleteGroupAction = this.createDeleteGroupAction(oxGroupId);
         const result: Result<DeleteGroupResponse, DomainError> = await this.oxService.send(action);
         if (!result.ok) {
-            this.logger.logUnknownAsError(`Could Not Delete OxGroup ${oxGroupName}, oxGroupId:${oxGroupId}`, result.error);
+            this.logger.logUnknownAsError(
+                `Could Not Delete OxGroup ${oxGroupName}, oxGroupId:${oxGroupId}`,
+                result.error,
+            );
         } else {
             this.logger.info(`Successfully Deleted OxGroup ${oxGroupName}, oxGroupId:${oxGroupId}`);
         }
@@ -597,10 +600,10 @@ export class OxEventService {
 
     public createDeleteGroupAction(oxGroupId: string): DeleteGroupAction {
         return new DeleteGroupAction({
-            contextId: this.contextID, 
-            id: oxGroupId, 
+            contextId: this.contextID,
+            id: oxGroupId,
             login: this.authUser,
             password: this.authPassword,
-        })
+        });
     }
 }

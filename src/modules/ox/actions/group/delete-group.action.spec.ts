@@ -19,6 +19,7 @@ describe('DeleteGroupAction', () => {
         it('should return request object', () => {
             const request: object = action.buildRequest();
             expect(request).toEqual({
+                /* eslint-disable @typescript-eslint/no-unsafe-assignment */
                 'tns:create': expect.objectContaining({
                     'tns:ctx': {
                         'ns6:id': params.contextId,
