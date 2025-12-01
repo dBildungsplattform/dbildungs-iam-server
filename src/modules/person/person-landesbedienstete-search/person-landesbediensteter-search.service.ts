@@ -57,12 +57,11 @@ export class PersonLandesbediensteterSearchService {
             if (this.emailResolverService.shouldUseEmailMicroservice()) {
                 const response: Option<PersonIdWithEmailResponse> =
                     await this.emailResolverService.findByPrimaryAddress(primaryEmailAddress.trim());
-                if (!response) {
-                    return [];
+                if (response) {
+                    const person: Option<Person<true>> = await this.personRepository.findById(response.personId);
+                    persons = person ? [person] : [];
+                    personEmailResponse = response.personEmailResponse;
                 }
-                const person: Option<Person<true>> = await this.personRepository.findById(response.personId);
-                persons = person ? [person] : [];
-                personEmailResponse = response.personEmailResponse;
             } else {
                 persons = await this.personRepository.findByPrimaryEmailAddress(primaryEmailAddress.trim());
             }
