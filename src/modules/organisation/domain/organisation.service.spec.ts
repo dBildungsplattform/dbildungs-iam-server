@@ -1080,10 +1080,12 @@ describe('OrganisationService', () => {
             expect(!result.ok && result.error).toBeInstanceOf(MissingPermissionsError);
         });
 
-        it('should return an error, if permissions are missing', async () => {
+        it('should return an error, if permissions are not defined for OrganisationsTyp', async () => {
             const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
-            const mockOrganisation: Organisation<true> = DoFactory.createOrganisation(true);
+            const mockOrganisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.ROOT,
+            });
             organisationRepositoryMock.findAuthorized.mockResolvedValue([[mockOrganisation], 1, 1]);
             const result: Result<
                 Organisation<true>,
@@ -1118,7 +1120,7 @@ describe('OrganisationService', () => {
                 organisation: Organisation<true>;
                 expectedSystemrecht: RollenSystemRecht;
             }) => {
-                test(`it should use ${expectedSystemrecht.name} for permissions check`, async () => {
+                it(`it should use ${expectedSystemrecht.name} for permissions check`, async () => {
                     organisationRepositoryMock.findAuthorized.mockResolvedValue([[organisation], 1, 1]);
                     const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
                     permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
@@ -1126,6 +1128,26 @@ describe('OrganisationService', () => {
                         permissionsMock,
                         organisation.id,
                     );
+                    expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenCalledTimes(1);
+                    expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenCalledWith(
+                        organisation.id,
+                        expectedSystemrecht,
+                    );
+                });
+
+                it('should return an error, if permissions are missing', async () => {
+                    organisationRepositoryMock.findAuthorized.mockResolvedValue([[organisation], 1, 1]);
+                    const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                    permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
+                    const result: Result<
+                        Organisation<true>,
+                        DomainError
+                    > = await organisationService.findOrganisationByIdAndMatchingPermissions(
+                        permissionsMock,
+                        organisation.id,
+                    );
+                    expect(result.ok).toBeFalsy();
+                    expect(!result.ok && result.error).toBeInstanceOf(MissingPermissionsError);
                     expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenCalledTimes(1);
                     expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenCalledWith(
                         organisation.id,
