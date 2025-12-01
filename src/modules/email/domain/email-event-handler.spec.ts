@@ -1463,7 +1463,7 @@ describe('EmailEventHandler', () => {
         });
 
         describe('when emailMicroservice is enabled', () => {
-            it('should not call handlePerson when microservice is disabled', async () => {
+            it('should not call handlePerson', async () => {
                 emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
 
                 await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
