@@ -212,10 +212,6 @@ export class DbSeedService {
                 sp.id,
             );
 
-            if (rollenerweiterung instanceof DomainError) {
-                throw rollenerweiterung;
-            }
-
             const persistedRollenerweiterung: Rollenerweiterung<true> =
                 await this.rollenerweiterungRepo.create(rollenerweiterung);
             if (persistedRollenerweiterung && file.id != null) {
