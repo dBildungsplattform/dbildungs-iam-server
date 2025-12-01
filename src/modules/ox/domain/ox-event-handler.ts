@@ -63,6 +63,9 @@ import { KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../sha
 import { OxConfig } from '../../../shared/config/ox.config.js';
 import { OxSyncEventHandler } from './ox-sync-event-handler.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
+import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 @Injectable()
 export class OxEventHandler {
@@ -413,6 +416,28 @@ export class OxEventHandler {
         });
     }
 
+    @KafkaEventHandler(KafkaOrganisationDeletedEvent)
+    @EventHandler(OrganisationDeletedEvent)
+    @EnsureRequestContext()
+    public async handleOrganisationDeletedEvent(event: OrganisationDeletedEvent): Promise<void> {
+        this.logger.info(
+            `Received OrganisationDeletedEvent, organisationId:${event.organisationId}, name:${event.name}, kennung:${event.kennung}, typ:${event.typ}`,
+        );
+
+        // Check if the functionality is enabled
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+
+        if (!event.kennung || event?.typ !== OrganisationsTyp.SCHULE) {
+            return this.logger.info('OrganisationDeletedEvent does not apply, ignoring event');
+        }
+
+        const oxGroupName : string = this.getOxLehrerGroupName(event.kennung);
+
+        await this.oxEventService.removeOxGroup(oxGroupName);
+    }
+
     private async removeOxUserFromAllItsGroupsAndDeleteOxAccount(
         oxUserId: OXUserID,
         personIdentifier: PersonIdentifier,
@@ -700,5 +725,9 @@ export class OxEventHandler {
             person.username, //strictEquals the new OxUsername
             requestedEmailAddressString,
         );
+    }
+
+    private getOxLehrerGroupName(kennung: OrganisationKennung): string {
+        return OxEventService.LEHRER_OX_GROUP_NAME_PREFIX + kennung;
     }
 }

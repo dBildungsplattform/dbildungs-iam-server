@@ -1,3 +1,21 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
+import { OxConfig } from '../../../shared/config/ox.config.js';
+import { ServerConfig } from '../../../shared/config/server.config.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
+import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
+import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
+import { KafkaOxSyncUserCreatedEvent } from '../../../shared/events/ox/kafka-ox-sync-user-created.event.js';
+import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
+import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox/ox-email-address-deleted.event.js';
+import { OxSyncUserCreatedEvent } from '../../../shared/events/ox/ox-sync-user-created.event.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
+import { PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
 import {
     OXContextID,
     OXContextName,
@@ -6,52 +24,37 @@ import {
     OXUserID,
     OXUserName,
 } from '../../../shared/types/ox-ids.types.js';
-import { ConfigService } from '@nestjs/config';
-import { ServerConfig } from '../../../shared/config/server.config.js';
-import { OxConfig } from '../../../shared/config/ox.config.js';
-import { PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
+import { Err } from '../../../shared/util/result.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { AddMemberToGroupAction } from '../actions/group/add-member-to-group.action.js';
 import { CreateGroupAction, CreateGroupParams, CreateGroupResponse } from '../actions/group/create-group.action.js';
-import { ListGroupsAction, ListGroupsParams, ListGroupsResponse } from '../actions/group/list-groups.action.js';
-import { OxGroupNotFoundError } from '../error/ox-group-not-found.error.js';
-import { OxGroupNameAmbiguousError } from '../error/ox-group-name-ambiguous.error.js';
-import { OxService } from './ox.service.js';
-import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
-import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
-import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
-import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
+import { DeleteGroupAction, DeleteGroupResponse } from '../actions/group/delete-group.action.js';
 import {
     ListGroupsForUserAction,
     ListGroupsForUserParams,
     ListGroupsForUserResponse,
 } from '../actions/group/list-groups-for-user.action.js';
-import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
+import { ListGroupsAction, ListGroupsParams, ListGroupsResponse } from '../actions/group/list-groups.action.js';
+import { GroupMemberParams, OXGroup } from '../actions/group/ox-group.types.js';
 import {
     RemoveMemberFromGroupAction,
     RemoveMemberFromGroupResponse,
 } from '../actions/group/remove-member-from-group.action.js';
-import { GroupMemberParams, OXGroup } from '../actions/group/ox-group.types.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { OxSyncUserCreatedEvent } from '../../../shared/events/ox/ox-sync-user-created.event.js';
-import { KafkaOxSyncUserCreatedEvent } from '../../../shared/events/ox/kafka-ox-sync-user-created.event.js';
-import { Injectable } from '@nestjs/common';
-import { ChangeUserAction, ChangeUserParams } from '../actions/user/change-user.action.js';
-import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
-import { GetDataForUserAction } from '../actions/user/get-data-user.action.js';
-import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox/ox-email-address-deleted.event.js';
-import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
-import { DeleteUserAction } from '../actions/user/delete-user.action.js';
-import { AddMemberToGroupAction } from '../actions/group/add-member-to-group.action.js';
-import { ExistsUserAction } from '../actions/user/exists-user.action.js';
-import { CreateUserAction, CreateUserParams } from '../actions/user/create-user.action.js';
 import {
     ChangeByModuleAccessAction,
     ChangeByModuleAccessParams,
 } from '../actions/user/change-by-module-access.action.js';
+import { ChangeUserAction, ChangeUserParams } from '../actions/user/change-user.action.js';
+import { CreateUserAction, CreateUserParams } from '../actions/user/create-user.action.js';
+import { DeleteUserAction } from '../actions/user/delete-user.action.js';
+import { ExistsUserAction } from '../actions/user/exists-user.action.js';
+import { GetDataForUserAction } from '../actions/user/get-data-user.action.js';
+import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
+import { OxGroupNameAmbiguousError } from '../error/ox-group-name-ambiguous.error.js';
+import { OxGroupNotFoundError } from '../error/ox-group-not-found.error.js';
+import { OxService } from './ox.service.js';
 
 export type OxUserCreatedEventCreator = (
     personId: PersonID,
@@ -404,6 +407,23 @@ export class OxEventService {
         }
     }
 
+    public async removeOxGroup(oxGroupName: string): Promise<Result<DeleteGroupResponse, DomainError>> {
+        const oxGroupId: OXGroupID | DomainError = await this.getOxGroupByName(oxGroupName);
+        if (oxGroupId instanceof DomainError) {
+            this.logger.logUnknownAsError(`Could Not Find OxGroup ${oxGroupName} for Deletion`, oxGroupId);
+            return Err(oxGroupId);
+        }
+
+        const action: DeleteGroupAction = this.createDeleteGroupAction(oxGroupId);
+        const result: Result<DeleteGroupResponse, DomainError> = await this.oxService.send(action);
+        if (!result.ok) {
+            this.logger.logUnknownAsError(`Could Not Delete OxGroup ${oxGroupName}, oxGroupId:${oxGroupId}`, result.error);
+        } else {
+            this.logger.info(`Successfully Deleted OxGroup ${oxGroupName}, oxGroupId:${oxGroupId}`);
+        }
+        return result;
+    }
+
     public publishOxEmailAddressDeletedEvent(
         personId: PersonID | undefined,
         username: PersonUsername | undefined,
@@ -573,5 +593,14 @@ export class OxEventService {
             changeByModuleAccessParams,
         );
         return changeByModuleAccessAction;
+    }
+
+    public createDeleteGroupAction(oxGroupId: string): DeleteGroupAction {
+        return new DeleteGroupAction({
+            contextId: this.contextID, 
+            id: oxGroupId, 
+            login: this.authUser,
+            password: this.authPassword,
+        })
     }
 }
