@@ -631,6 +631,68 @@ describe('dbiam Personenkontext Repo', () => {
             expect(personenkontexte.get(person.id)).toHaveLength(1);
         });
 
+        // see bug spsh-2982
+        it('should not personenkontexte when another rollenerweiterung exists', async () => {
+            const person: Person<true> = await createPerson();
+            const serviceproviderA: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const serviceproviderB: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const rolleWithProviderA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleWithProviderA instanceof DomainError) {
+                throw Error();
+            }
+            const rolleWithProviderB: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleWithProviderB instanceof DomainError) {
+                throw Error();
+            }
+            const organisationA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            const organisationB: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleWithProviderA.id,
+                    organisationId: organisationA.id,
+                    serviceProviderId: serviceproviderA.id,
+                }),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleWithProviderB.id,
+                    organisationId: organisationB.id,
+                    serviceProviderId: serviceproviderB.id,
+                }),
+            );
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    rolleId: rolleWithProviderA.id,
+                    organisationId: organisationA.id,
+                }),
+            );
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    rolleId: rolleWithProviderB.id,
+                    organisationId: organisationB.id,
+                }),
+            );
+
+            const personenkontexte: Map<PersonID, KontextWithOrgaAndRolle[]> =
+                await sut.findByPersonIdsAndServiceprovidersWithOrgaAndRolle([person.id], [serviceproviderA.id], {
+                    all: true,
+                });
+
+            expect(personenkontexte.size).toEqual(1);
+            expect(personenkontexte.get(person.id)).toHaveLength(1);
+        });
+
         it('should return not return personenkontexte when it doesnt have the serviceprovider', async () => {
             const person: Person<true> = await createPerson();
             const serviceproviderA: ServiceProvider<true> = await serviceProviderRepo.save(
