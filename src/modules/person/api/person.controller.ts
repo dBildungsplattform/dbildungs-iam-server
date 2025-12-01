@@ -214,7 +214,7 @@ export class PersonController {
         const response: PersonendatensatzResponse = new PersonendatensatzResponse(
             personResult.value,
             false,
-            personEmailResponse,
+            personEmailResponse ? personEmailResponse : undefined,
         );
 
         return response;

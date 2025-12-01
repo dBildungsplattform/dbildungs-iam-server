@@ -266,6 +266,42 @@ describe('PersonController', () => {
             expect(personRepositoryMock.findById).toHaveBeenCalledTimes(0);
         });
 
+        describe('when person has no email-address assigned', () => {
+            it('should get a person without Email old way', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+
+                personRepositoryMock.findById.mockResolvedValue(person);
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(undefined);
+                const personResponse: PersonendatensatzResponse = await personController.findPersonById(
+                    params,
+                    personPermissionsMock,
+                );
+
+                expect(emailResolverService.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using old emailRepo`));
+                expect(emailRepoMock.getEmailAddressAndStatusForPerson).toHaveBeenCalled();
+                expect(personResponse.person.email).toEqual(undefined);
+            });
+
+            it('should get a person without Email new microservice', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+                personRepositoryMock.findById.mockResolvedValue(person);
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                emailResolverService.findEmailBySpshPerson.mockResolvedValueOnce(undefined);
+                const personResponse: PersonendatensatzResponse = await personController.findPersonById(
+                    params,
+                    personPermissionsMock,
+                );
+
+                expect(emailResolverService.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using new Microservice`));
+                expect(emailResolverService.findEmailBySpshPerson).toHaveBeenCalled();
+                expect(personResponse.person.email).toEqual(undefined);
+            });
+        });
+
         describe('when person has an email-address assigned', () => {
             it('should get a person old Repo', async () => {
                 emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
