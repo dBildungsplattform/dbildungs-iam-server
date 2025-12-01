@@ -120,6 +120,27 @@ describe('Provider Controller Test', () => {
             const offset: number = faker.number.int({ min: 1, max: 100 });
             const limit: number = faker.number.int({ min: 1, max: 100 });
 
+            organisationRepositoryMock.findByIds.mockResolvedValue(
+                new Map([
+                    [
+                        rollenerweiterung.organisationId,
+                        DoFactory.createOrganisation(true, {
+                            id: rollenerweiterung.organisationId,
+                            name: 'FixedOrgaName',
+                            kennung: 'FixedOrgaKennung',
+                        }),
+                    ],
+                ]),
+            );
+            rolleRepoMock.findByIds.mockResolvedValue(
+                new Map([
+                    [
+                        rollenerweiterung.rolleId,
+                        DoFactory.createRolle(true, { id: rollenerweiterung.rolleId, name: 'FixedRolleName' }),
+                    ],
+                ]),
+            );
+
             const result: RawPagedResponse<RollenerweiterungWithExtendedDataResponse> =
                 await providerController.findRollenerweiterungenByServiceProviderId(
                     permissionsMock,
@@ -133,6 +154,42 @@ describe('Provider Controller Test', () => {
             expect(result.total).toBe(1);
             expect(result.items).toHaveLength(1);
             expect(result.items[0]).toBeInstanceOf(RollenerweiterungWithExtendedDataResponse);
+            expect(result.items[0]?.rolleName).toBe('FixedRolleName');
+            expect(result.items[0]?.organisationName).toBe('FixedOrgaName');
+            expect(result.items[0]?.organisationKennung).toBe('FixedOrgaKennung');
+        });
+
+        it('should return fallbacks as empty strings for extended data of related aggregate is mising', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+
+            const rollenerweiterung: Rollenerweiterung<true> = DoFactory.createRollenerweiterung(true);
+            rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrgaKennung.mockResolvedValueOnce([
+                [rollenerweiterung],
+                1,
+            ]);
+
+            organisationRepositoryMock.findByIds.mockResolvedValue(new Map());
+            rolleRepoMock.findByIds.mockResolvedValue(new Map());
+
+            const offset: number = faker.number.int({ min: 1, max: 100 });
+            const limit: number = faker.number.int({ min: 1, max: 100 });
+
+            const result: RawPagedResponse<RollenerweiterungWithExtendedDataResponse> =
+                await providerController.findRollenerweiterungenByServiceProviderId(
+                    permissionsMock,
+                    { angebotId: faker.string.uuid() },
+                    { offset: offset, limit: limit },
+                );
+
+            expect(result).toBeInstanceOf(RawPagedResponse);
+            expect(result.offset).toBe(offset);
+            expect(result.limit).toBe(limit);
+            expect(result.total).toBe(1);
+            expect(result.items).toHaveLength(1);
+            expect(result.items[0]).toBeInstanceOf(RollenerweiterungWithExtendedDataResponse);
+            expect(result.items[0]?.rolleName).toBe('');
+            expect(result.items[0]?.organisationName).toBe('');
+            expect(result.items[0]?.organisationKennung).toBe('');
         });
 
         it('should return paged response with default offset and limit if not provided', async () => {
