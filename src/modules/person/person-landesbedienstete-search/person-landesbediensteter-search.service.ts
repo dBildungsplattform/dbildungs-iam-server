@@ -15,7 +15,10 @@ import { LandesbediensteterSearchNoPersonFoundError } from '../domain/landesbedi
 import { LandesbediensteterSearchMultiplePersonsFoundError } from '../domain/landesbediensteter-search-multiple-persons-found.error.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Err, Ok } from '../../../shared/util/result.js';
-import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import {
+    EmailResolverService,
+    PersonIdWithEmailResponse,
+} from '../../email-microservice/domain/email-resolver.service.js';
 
 @Injectable()
 export class PersonLandesbediensteterSearchService {
@@ -46,11 +49,23 @@ export class PersonLandesbediensteterSearchService {
         }
 
         let persons: Person<true>[] = [];
+        let personEmailResponse: Option<PersonEmailResponse> = undefined;
 
         if (personalnummer) {
             persons = await this.personRepository.findByPersonalnummer(personalnummer.trim());
         } else if (primaryEmailAddress) {
-            persons = await this.handleFindByPrimaryEmailAddress(primaryEmailAddress);
+            if (this.emailResolverService.shouldUseEmailMicroservice()) {
+                const response: Option<PersonIdWithEmailResponse> =
+                    await this.emailResolverService.findByPrimaryAddress(primaryEmailAddress.trim());
+                if (!response) {
+                    return [];
+                }
+                const person: Option<Person<true>> = await this.personRepository.findById(response.personId);
+                persons = person ? [person] : [];
+                personEmailResponse = response.personEmailResponse;
+            } else {
+                persons = await this.personRepository.findByPrimaryEmailAddress(primaryEmailAddress.trim());
+            }
         } else if (username) {
             persons = await this.personRepository.findByUsername(username.trim());
         } else if (vorname && familienname) {
@@ -73,7 +88,7 @@ export class PersonLandesbediensteterSearchService {
 
         const [email, kontexteWithOrgaAndRolle]: [Option<PersonEmailResponse>, Array<KontextWithOrgaAndRolle>] =
             await Promise.all([
-                this.emailRepo.getEmailAddressAndStatusForPerson(person),
+                personEmailResponse ?? this.emailRepo.getEmailAddressAndStatusForPerson(person),
                 this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(person.id),
             ]);
 
@@ -96,23 +111,5 @@ export class PersonLandesbediensteterSearchService {
         }
 
         return Ok(undefined);
-    }
-
-    private async handleFindByPrimaryEmailAddress(primaryEmailAddress: string): Promise<Person<true>[]> {
-        if (this.emailResolverService.shouldUseEmailMicroservice()) {
-            const spshPersonId: Option<string> = await this.emailResolverService.findSpshPersonIdForPrimaryAddress(
-                primaryEmailAddress.trim(),
-            );
-            if (!spshPersonId) {
-                return [];
-            }
-            const person: Option<Person<true>> = await this.personRepository.findById(spshPersonId);
-            return person ? [person] : [];
-        } else {
-            const persons: Person<true>[] = await this.personRepository.findByPrimaryEmailAddress(
-                primaryEmailAddress.trim(),
-            );
-            return persons;
-        }
     }
 }

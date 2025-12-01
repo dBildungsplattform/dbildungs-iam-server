@@ -12,7 +12,7 @@ import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/
 import { EmailAddressStatus } from '../../email/domain/email-address';
 import { PersonEmailResponse } from '../../person/api/person-email-response';
 import { EmailMicroserviceModule } from '../email-microservice.module';
-import { EmailResolverService } from './email-resolver.service';
+import { EmailResolverService, PersonIdWithEmailResponse } from './email-resolver.service';
 import { SetEmailAddressForSpshPersonParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.params';
 
 type SetEmailParams = Parameters<EmailResolverService['setEmailForSpshPerson']>[0];
@@ -50,7 +50,7 @@ describe('EmailResolverService', () => {
         expect(mockHttpService).toBeDefined();
     });
 
-    describe('findSpshPersonIdForPrimaryAddress', () => {
+    describe('findByPrimaryAddress', () => {
         it('should return spshPersonId when get call returns valid primary email data', async () => {
             const address: string = faker.internet.email();
             const spshPersonId: string = faker.string.uuid();
@@ -73,8 +73,8 @@ describe('EmailResolverService', () => {
 
             mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
-            const result: Option<string> = await sut.findSpshPersonIdForPrimaryAddress(address);
-            expect(result).toEqual(spshPersonId);
+            const result: Option<PersonIdWithEmailResponse> = await sut.findByPrimaryAddress(address);
+            expect(result?.personId).toEqual(spshPersonId);
         });
 
         it('should return undefined when get call returns error code', async () => {
@@ -93,7 +93,7 @@ describe('EmailResolverService', () => {
 
             mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
-            const result: Option<string> = await sut.findSpshPersonIdForPrimaryAddress(address);
+            const result: Option<PersonIdWithEmailResponse> = await sut.findByPrimaryAddress(address);
             expect(result).toEqual(undefined);
         });
 
@@ -119,7 +119,7 @@ describe('EmailResolverService', () => {
 
             mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
-            const result: Option<string> = await sut.findSpshPersonIdForPrimaryAddress(address);
+            const result: Option<PersonIdWithEmailResponse> = await sut.findByPrimaryAddress(address);
             expect(result).toEqual(undefined);
         });
 
@@ -144,7 +144,7 @@ describe('EmailResolverService', () => {
 
             mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
-            const result: Option<string> = await sut.findSpshPersonIdForPrimaryAddress(address);
+            const result: Option<PersonIdWithEmailResponse> = await sut.findByPrimaryAddress(address);
             expect(result).toEqual(undefined);
         });
 
@@ -157,7 +157,7 @@ describe('EmailResolverService', () => {
 
             const errorLoggerSpy: jest.SpyInstance = jest.spyOn(sut['logger'], 'logUnknownAsError');
 
-            const result: Option<string> = await sut.findSpshPersonIdForPrimaryAddress(address);
+            const result: Option<PersonIdWithEmailResponse> = await sut.findByPrimaryAddress(address);
             expect(result).toEqual(undefined);
             expect(errorLoggerSpy).toHaveBeenCalledWith(`Failed to fetch email for address ${address}`, error);
         });

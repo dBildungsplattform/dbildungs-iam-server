@@ -22,7 +22,10 @@ import { PersonLandesbediensteterSearchResponse } from '../api/person-landesbedi
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import {
+    EmailResolverService,
+    PersonIdWithEmailResponse,
+} from '../../email-microservice/domain/email-resolver.service.js';
 
 describe('PersonLandesbediensteterSearchService', () => {
     let module: TestingModule;
@@ -300,7 +303,9 @@ describe('PersonLandesbediensteterSearchService', () => {
         it('should return valid response if email resolver service is enabled and spshPersonId is found', async () => {
             const mockedSpshPersonId: string = faker.string.uuid();
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-            emailResolverServiceMock.findSpshPersonIdForPrimaryAddress.mockResolvedValueOnce(mockedSpshPersonId);
+            emailResolverServiceMock.findByPrimaryAddress.mockResolvedValueOnce({
+                personId: mockedSpshPersonId,
+            } as PersonIdWithEmailResponse);
             const person: Person<true> = DoFactory.createPerson(true);
             person.personalnummer = faker.string.alphanumeric(5);
             const email: PersonEmailResponse = {
@@ -338,13 +343,13 @@ describe('PersonLandesbediensteterSearchService', () => {
             );
 
             expect(result).toBeDefined();
-            expect(emailResolverServiceMock.findSpshPersonIdForPrimaryAddress).toHaveBeenCalledWith(address);
+            expect(emailResolverServiceMock.findByPrimaryAddress).toHaveBeenCalledWith(address);
             expect(result[0]?.personenkontexte.length).toEqual(1);
         });
 
         it('should return an empty array if email resolver service is enabled and spshPersonId is not found for given mail', async () => {
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-            emailResolverServiceMock.findSpshPersonIdForPrimaryAddress.mockResolvedValueOnce(undefined);
+            emailResolverServiceMock.findByPrimaryAddress.mockResolvedValueOnce(undefined);
             const person: Person<true> = DoFactory.createPerson(true);
             person.personalnummer = faker.string.alphanumeric(5);
             const email: PersonEmailResponse = {
@@ -382,14 +387,16 @@ describe('PersonLandesbediensteterSearchService', () => {
             );
 
             expect(result).toBeDefined();
-            expect(emailResolverServiceMock.findSpshPersonIdForPrimaryAddress).toHaveBeenCalledWith(address);
+            expect(emailResolverServiceMock.findByPrimaryAddress).toHaveBeenCalledWith(address);
             expect(result.length).toEqual(0);
         });
 
         it('should return an empty array if email resolver service is enabled and spshPersonId is found for given mail but person doesnt exists in spsh anymore', async () => {
             const mockedSpshPersonId: string = faker.string.uuid();
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-            emailResolverServiceMock.findSpshPersonIdForPrimaryAddress.mockResolvedValueOnce(mockedSpshPersonId);
+            emailResolverServiceMock.findByPrimaryAddress.mockResolvedValueOnce({
+                personId: mockedSpshPersonId,
+            } as PersonIdWithEmailResponse);
             const person: Person<true> = DoFactory.createPerson(true);
             person.personalnummer = faker.string.alphanumeric(5);
             const email: PersonEmailResponse = {
@@ -427,7 +434,7 @@ describe('PersonLandesbediensteterSearchService', () => {
             );
 
             expect(result).toBeDefined();
-            expect(emailResolverServiceMock.findSpshPersonIdForPrimaryAddress).toHaveBeenCalledWith(address);
+            expect(emailResolverServiceMock.findByPrimaryAddress).toHaveBeenCalledWith(address);
             expect(result.length).toEqual(0);
         });
 
