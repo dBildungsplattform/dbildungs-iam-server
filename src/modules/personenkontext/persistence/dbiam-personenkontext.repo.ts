@@ -50,6 +50,13 @@ export type ExternalPkDataLoaded = Loaded<
     never
 >;
 
+export type PersonenkontextErweitertVirtualEntityLoaded = Loaded<
+    PersonenkontextErweitertVirtualEntity,
+    'serviceProvider' | 'personenkontext',
+    'serviceProvider' | 'personenkontext',
+    never
+>;
+
 function mapEntityToAggregate(
     entity: PersonenkontextEntity,
     personenkontextFactory: PersonenkontextFactory,
@@ -528,5 +535,21 @@ export class DBiamPersonenkontextRepo {
 
         const result: RollenCount[] = await this.em.execute(query, []);
         return result;
+    }
+
+    public async findPKErweiterungen(personId: string): Promise<PersonenkontextErweitertVirtualEntityLoaded[]> {
+        const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = await this.em.find(
+            PersonenkontextErweitertVirtualEntity,
+            {
+                personenkontext: {
+                    personId,
+                },
+            },
+            {
+                populate: ['serviceProvider', 'personenkontext'],
+                exclude: ['serviceProvider.logo', 'serviceProvider.logoMimeType'],
+            },
+        );
+        return personenKontextErweiterungen;
     }
 }

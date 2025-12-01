@@ -11,18 +11,14 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import {
     DBiamPersonenkontextRepo,
     ExternalPkData,
-} from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import {
     PersonenkontextErweitertVirtualEntityLoaded,
-    RollenerweiterungRepo,
-} from '../../rolle/repo/rollenerweiterung.repo.js';
+} from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
 
 describe('UserExternaldataWorkflow', () => {
     let module: TestingModule;
     let sut: UserExternaldataWorkflowAggregate;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
-    let rollenerweiterungRepoMock: DeepMocked<RollenerweiterungRepo>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
 
     beforeEach(async () => {
@@ -34,21 +30,15 @@ describe('UserExternaldataWorkflow', () => {
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
-                    provide: RollenerweiterungRepo,
-                    useValue: createMock<RollenerweiterungRepo>(),
-                },
-                {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
                 },
             ],
         }).compile();
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
-        rollenerweiterungRepoMock = module.get(RollenerweiterungRepo);
         personRepositoryMock = module.get(PersonRepository);
         sut = UserExternaldataWorkflowAggregate.createNew(
             dBiamPersonenkontextRepoMock,
-            rollenerweiterungRepoMock,
             personRepositoryMock,
             createMock<ConfigService>(),
         );
@@ -83,7 +73,7 @@ describe('UserExternaldataWorkflow', () => {
 
             personRepositoryMock.findById.mockResolvedValue(person);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock<ExternalPkData[]>());
-            rollenerweiterungRepoMock.findPKErweiterungen.mockResolvedValue(
+            dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue(
                 createMock<PersonenkontextErweitertVirtualEntityLoaded[]>(),
             );
 
@@ -95,7 +85,7 @@ describe('UserExternaldataWorkflow', () => {
         it('should return entity Not found error when person not found', async () => {
             personRepositoryMock.findById.mockResolvedValue(undefined);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock<ExternalPkData[]>());
-            rollenerweiterungRepoMock.findPKErweiterungen.mockResolvedValue(
+            dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue(
                 createMock<PersonenkontextErweitertVirtualEntityLoaded[]>(),
             );
 

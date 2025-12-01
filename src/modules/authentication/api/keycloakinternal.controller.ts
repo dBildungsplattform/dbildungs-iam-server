@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UserExeternalDataResponse } from './externaldata/user-externaldata.response.js';
+import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { UserExternaldataWorkflowAggregate } from '../domain/user-extenaldata.workflow.js';
@@ -37,8 +37,8 @@ export class KeycloakInternalController {
     @Public()
     @UseGuards(AccessApiKeyGuard)
     @ApiOperation({ summary: 'External Data about requested in user.' })
-    @ApiOkResponse({ description: 'Returns external Data about the requested user.', type: UserExeternalDataResponse })
-    public async getExternalData(@Body() params: { sub: string }): Promise<UserExeternalDataResponse> {
+    @ApiOkResponse({ description: 'Returns external Data about the requested user.', type: UserExternalDataResponse })
+    public async getExternalData(@Body() params: { sub: string }): Promise<UserExternalDataResponse> {
         const person: Option<Person<true>> = await this.personRepository.findByKeycloakUserId(params.sub);
         if (!person) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -60,7 +60,7 @@ export class KeycloakInternalController {
             );
         }
 
-        return UserExeternalDataResponse.createNew(
+        return UserExternalDataResponse.createNew(
             workflow.person,
             workflow.checkedExternalPkData,
             workflow.personenKontextErweiterungen!,

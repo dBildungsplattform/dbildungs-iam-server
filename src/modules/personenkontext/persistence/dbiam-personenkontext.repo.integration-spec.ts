@@ -39,6 +39,7 @@ import {
     DBiamPersonenkontextRepo,
     ExternalPkData,
     KontextWithOrgaAndRolle,
+    PersonenkontextErweitertVirtualEntityLoaded,
     RollenCount,
 } from './dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
@@ -1124,6 +1125,47 @@ describe('dbiam Personenkontext Repo', () => {
             );
 
             expect(result).toBe(false);
+        });
+    });
+
+    describe('findPkErweiterungen', () => {
+        it('should find pkErweiterungen for this person', async () => {
+            const person: Person<true> = await createPerson();
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            const organisationA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    rolleId: rolleA.id,
+                    organisationId: organisationA.id,
+                }),
+            );
+
+            const serviceprovider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleA.id,
+                    organisationId: organisationA.id,
+                    serviceProviderId: serviceprovider.id,
+                }),
+            );
+
+            const result: PersonenkontextErweitertVirtualEntityLoaded[] = await sut.findPKErweiterungen(person.id);
+            expect(result.length).toEqual(1);
+            expect(
+                result.findIndex(
+                    (pker: PersonenkontextErweitertVirtualEntityLoaded) =>
+                        pker.serviceProvider.unwrap().id === serviceprovider.id,
+                ),
+            ).not.toEqual(-1);
         });
     });
 });

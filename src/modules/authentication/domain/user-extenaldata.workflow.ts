@@ -1,4 +1,6 @@
+import { Loaded } from '@mikro-orm/core';
 import { ConfigService } from '@nestjs/config';
+import { uniqBy } from 'lodash-es';
 import { OxConfig } from '../../../shared/config/ox.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -9,11 +11,9 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import {
     DBiamPersonenkontextRepo,
     ExternalPkData,
-} from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import {
     PersonenkontextErweitertVirtualEntityLoaded,
-    RollenerweiterungRepo,
-} from '../../rolle/repo/rollenerweiterung.repo.js';
+} from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { RequiredExternalPkData } from '../api/authentication.controller.js';
 
 export class UserExternaldataWorkflowAggregate {
@@ -27,7 +27,6 @@ export class UserExternaldataWorkflowAggregate {
 
     private constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
-        private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly personRepo: PersonRepository,
         configService: ConfigService<ServerConfig>,
     ) {
@@ -37,23 +36,17 @@ export class UserExternaldataWorkflowAggregate {
 
     public static createNew(
         personenkontextRepo: DBiamPersonenkontextRepo,
-        rollenerweiterungRepo: RollenerweiterungRepo,
         personRepo: PersonRepository,
         configService: ConfigService<ServerConfig>,
     ): UserExternaldataWorkflowAggregate {
-        return new UserExternaldataWorkflowAggregate(
-            personenkontextRepo,
-            rollenerweiterungRepo,
-            personRepo,
-            configService,
-        );
+        return new UserExternaldataWorkflowAggregate(personenkontextRepo, personRepo, configService);
     }
 
     public async initialize(personId: string): Promise<void | DomainError> {
         const person: Option<Person<true>> = await this.personRepo.findById(personId);
         const externalPkData: ExternalPkData[] = await this.personenkontextRepo.findExternalPkData(personId);
         const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] =
-            await this.rollenerweiterungRepo.findPKErweiterungen(personId);
+            await this.personenkontextRepo.findPKErweiterungen(personId);
 
         if (!person) {
             return new EntityNotFoundError('Person', personId);
@@ -80,6 +73,41 @@ export class UserExternaldataWorkflowAggregate {
             (
                 pkErw: PersonenkontextErweitertVirtualEntityLoaded | undefined,
             ): pkErw is PersonenkontextErweitertVirtualEntityLoaded => pkErw !== undefined,
+        );
+    }
+
+    public static mergeServiceProviders(
+        externalPkData: RequiredExternalPkData[],
+        personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[],
+    ): RequiredExternalPkData[] {
+        const erweiterungenMap: Map<string, ServiceProviderEntity[]> = new Map<string, ServiceProviderEntity[]>();
+        for (const erweiterung of personenKontextErweiterungen) {
+            const pkId: string = erweiterung.personenkontext.unwrap().id;
+            const sp: Loaded<ServiceProviderEntity & object, never, never, never> =
+                erweiterung.serviceProvider.unwrap();
+            if (!erweiterungenMap.has(pkId)) {
+                erweiterungenMap.set(pkId, []);
+            }
+            erweiterungenMap.get(pkId)?.push(sp);
+        }
+
+        return externalPkData.map((pk: RequiredExternalPkData) => {
+            const extraSp: ServiceProviderEntity[] = erweiterungenMap.get(pk.pkId) ?? [];
+            const mergedSp: ServiceProviderEntity[] = [...pk.serviceProvider, ...extraSp];
+            const uniqueSp: ServiceProviderEntity[] = uniqBy(mergedSp, 'id');
+
+            return {
+                ...pk,
+                serviceProvider: uniqueSp,
+            };
+        });
+    }
+
+    public static getExternalPkDataWithSpWithVidisAngebotId(
+        externalPkData: RequiredExternalPkData[],
+    ): RequiredExternalPkData[] {
+        return externalPkData.filter((pk: RequiredExternalPkData): pk is RequiredExternalPkData =>
+            pk.serviceProvider.some((sp: ServiceProviderEntity) => Boolean(sp.vidisAngebotId)),
         );
     }
 }

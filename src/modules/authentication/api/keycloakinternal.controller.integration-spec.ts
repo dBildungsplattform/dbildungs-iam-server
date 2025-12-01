@@ -1,38 +1,38 @@
-import { faker } from '@faker-js/faker/';
+import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { Loaded, LoadedReference, MikroORM } from '@mikro-orm/core';
 import { HttpException } from '@nestjs/common';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { DatabaseTestModule } from '../../../../test/utils/index.js';
+import { DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { PersonModule } from '../../person/person.module.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import {
     DBiamPersonenkontextRepo,
     ExternalPkData,
+    PersonenkontextErweitertVirtualEntityLoaded,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import {
-    PersonenkontextErweitertVirtualEntityLoaded,
-    RollenerweiterungRepo,
-} from '../../rolle/repo/rollenerweiterung.repo.js';
 import { RolleModule } from '../../rolle/rolle.module.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
-import { UserExeternalDataResponse } from './externaldata/user-externaldata.response.js';
+import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { KeycloakInternalController } from './keycloakinternal.controller.js';
 
 describe('KeycloakInternalController', () => {
     let module: TestingModule;
     let keycloakinternalController: KeycloakInternalController;
+    let serviceProviderRepo: ServiceProviderRepo;
     let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
-    let rollenerweiterungRepoMock: DeepMocked<RollenerweiterungRepo>;
     let personRepoMock: DeepMocked<PersonRepository>;
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -51,15 +51,13 @@ describe('KeycloakInternalController', () => {
             .useValue(createMock<PersonRepository>())
             .overrideProvider(DBiamPersonenkontextRepo)
             .useValue(createMock<DBiamPersonenkontextRepo>())
-            .overrideProvider(RollenerweiterungRepo)
-            .useValue(createMock<RollenerweiterungRepo>())
             .compile();
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
 
         keycloakinternalController = module.get(KeycloakInternalController);
+        serviceProviderRepo = module.get(ServiceProviderRepo);
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
-        rollenerweiterungRepoMock = module.get(RollenerweiterungRepo);
         personRepoMock = module.get(PersonRepository);
     });
 
@@ -111,23 +109,27 @@ describe('KeycloakInternalController', () => {
                     serviceProvider: [],
                 },
             ];
-            const spEntity: DeepMocked<ServiceProviderEntity> = createMock<ServiceProviderEntity>({
-                name: 'Erweiterung SP 1',
-                vidisAngebotId: faker.string.uuid(),
+            const spEntity: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+
+            const pkEntity: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                personId: person.id,
+                rolleId: faker.string.uuid(),
+                organisationId: faker.string.uuid(),
             });
-            const spRef: DeepMocked<LoadedReference<Loaded<ServiceProviderEntity>>> = createMock<
-                LoadedReference<Loaded<ServiceProviderEntity>>
-            >({
-                get: jest.fn().mockReturnValue(spEntity),
+
+            const spRef: LoadedReference<Loaded<ServiceProviderEntity>> = {
+                get: () => spEntity,
                 load: jest.fn().mockResolvedValue(spEntity),
-            });
-            const pkEntityMock: DeepMocked<PersonenkontextEntity> = createMock<PersonenkontextEntity>();
-            const pkRef: DeepMocked<LoadedReference<Loaded<PersonenkontextEntity>>> = createMock<
-                LoadedReference<Loaded<PersonenkontextEntity>>
-            >({
-                get: jest.fn().mockReturnValue(pkEntityMock),
-                load: jest.fn().mockResolvedValue(pkEntityMock),
-            });
+                unwrap: () => spEntity,
+            } as unknown as LoadedReference<Loaded<ServiceProviderEntity>>;
+
+            const pkRef: LoadedReference<Loaded<PersonenkontextEntity>> = {
+                get: () => pkEntity,
+                load: jest.fn().mockResolvedValue(pkEntity),
+                unwrap: () => pkEntity,
+            } as unknown as LoadedReference<Loaded<PersonenkontextEntity>>;
 
             const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = [
                 {
@@ -139,12 +141,12 @@ describe('KeycloakInternalController', () => {
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
             personRepoMock.findById.mockResolvedValueOnce(person);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
-            rollenerweiterungRepoMock.findPKErweiterungen.mockResolvedValueOnce(personenKontextErweiterungen);
+            dbiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValueOnce(personenKontextErweiterungen);
 
-            const result: UserExeternalDataResponse = await keycloakinternalController.getExternalData({
+            const result: UserExternalDataResponse = await keycloakinternalController.getExternalData({
                 sub: keycloakSub,
             });
-            expect(result).toBeInstanceOf(UserExeternalDataResponse);
+            expect(result).toBeInstanceOf(UserExternalDataResponse);
             expect(result.ox.id).toContain(`${person.username}@`);
             expect(result.itslearning.personId).toEqual(person.id);
             expect(result.vidis.personId).toEqual(person.id);
