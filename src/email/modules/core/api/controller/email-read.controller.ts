@@ -15,7 +15,7 @@ import { Public } from '../../decorator/public.decorator.js';
 import { AddressWithStatusesDescDto } from '../dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 import { EmailAddressStatus } from '../../domain/email-address-status.js';
 import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
-import { FindEmailAddressParams } from '../dtos/params/find-email-address.params copy.js';
+import { FindEmailAddressParams } from '../dtos/params/find-email-address.params.js';
 import { EmailAddressNotFoundError } from '../../error/email-address-not-found.error.js';
 import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
 import { EmailAddressMissingStatusError } from '../../error/email-address-missing-status.error.js';
