@@ -40,9 +40,11 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
 import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { RolleID, ServiceProviderID } from '../../../shared/types/index.js';
+import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { uniq } from 'lodash-es';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
@@ -53,9 +55,10 @@ export class ProviderController {
     public constructor(
         private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
-        private readonly rolleRepo: RolleRepo,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
+        private readonly rolleRepo: RolleRepo,
+        private readonly organisationRepo: OrganisationRepository,
     ) {}
 
     @Get('all')
@@ -160,29 +163,29 @@ export class ProviderController {
         }
 
         const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
-            await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrga(
+            await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrgaKennung(
                 pathParams.angebotId,
                 queryParams.offset,
                 queryParams.limit,
             );
 
         const rolleIds: RolleID[] = uniq(rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.rolleId));
-        const serviceProviderIds: ServiceProviderID[] = uniq(
-            rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.serviceProviderId),
+        const organisationIds: OrganisationID[] = uniq(
+            rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.organisationId),
         );
 
-        const [rollen, serviceProviders]: [Map<RolleID, Rolle<true>>, Map<ServiceProviderID, ServiceProvider<true>>] =
-            await Promise.all([
-                this.rolleRepo.findByIds(rolleIds),
-                this.serviceProviderRepo.findByIds(serviceProviderIds),
-            ]);
+        const [rollen, organisationen]: [Map<RolleID, Rolle<true>>, Map<OrganisationID, Organisation<true>>] =
+            await Promise.all([this.rolleRepo.findByIds(rolleIds), this.organisationRepo.findByIds(organisationIds)]);
 
+        /* The data is passed as option<> instead of mandatory with error checking,
+        because otherwise a single faulty relation in an extension
+        could cause all other extensions to fail to load */
         const rollenerweiterungResponses: RollenerweiterungWithExtendedDataResponse[] = rollenerweiterungen.map(
             (re: Rollenerweiterung<true>) =>
                 new RollenerweiterungWithExtendedDataResponse(
                     re,
-                    rollen.get(re.rolleId)?.name ?? '',
-                    serviceProviders.get(re.serviceProviderId)?.name ?? '',
+                    rollen.get(re.rolleId),
+                    organisationen.get(re.organisationId),
                 ),
         );
 

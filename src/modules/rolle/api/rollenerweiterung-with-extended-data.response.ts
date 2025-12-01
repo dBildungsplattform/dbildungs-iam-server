@@ -1,17 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RollenerweiterungResponse } from './rollenerweiterung.response';
+import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung';
+import { Rolle } from '../domain/rolle';
+import { Organisation } from '../../organisation/domain/organisation';
 
 export class RollenerweiterungWithExtendedDataResponse extends RollenerweiterungResponse {
-    public constructor(rollenerweiterung: Rollenerweiterung<true>, rolleName: string, serviceProviderName: string) {
+    public constructor(
+        rollenerweiterung: Rollenerweiterung<true>,
+        rolle: Option<Rolle<true>>,
+        organisation: Option<Organisation<true>>,
+    ) {
         super(rollenerweiterung);
-        this.rolleName = rolleName;
-        this.serviceProviderName = serviceProviderName;
+        this.rolleName = rolle?.name ?? '';
+        this.organisationName = organisation?.name ?? '';
+        this.organisationKennung = organisation?.kennung ?? '';
     }
 
     @ApiProperty()
     public rolleName: string;
 
     @ApiProperty()
-    public serviceProviderName: string;
+    public organisationName: string;
+
+    @ApiProperty()
+    public organisationKennung: string;
 }
