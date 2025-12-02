@@ -925,7 +925,7 @@ export class PersonRepository {
         if (criteria === SortFieldPerson.USERNAME) {
             scope.sortBy(criteria, order);
         } else {
-            scope.sortBy(raw(`lower(${criteria})`), order);
+            scope.sortBy(raw<PersonEntity, keyof PersonEntity>(`lower(${criteria})`), order);
         }
     }
 

@@ -49,7 +49,7 @@ describe('ReadAllPersonsAction', () => {
                 pageSize: 10,
             });
             const personId: string = faker.string.uuid();
-            const userId: string = faker.internet.userName();
+            const userId: string = faker.internet.username();
 
             expect(
                 action.parseBody({

@@ -86,7 +86,7 @@ export class DoFactory {
         const user: User<false> = {
             id: withId ? faker.string.uuid() : undefined,
             createdDate: withId ? faker.date.past() : undefined,
-            username: faker.internet.userName(),
+            username: faker.internet.username(),
             email: faker.internet.email(),
             externalSystemIDs: {},
             enabled: true,
@@ -239,7 +239,7 @@ export class DoFactory {
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
-            importByUsername: faker.internet.userName(),
+            importByUsername: faker.internet.username(),
             rollename: faker.lorem.word(),
             organisationsname: faker.lorem.word(),
             dataItemCount: 100,

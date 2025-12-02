@@ -23,7 +23,7 @@ describe('ReadPersonAction', () => {
     describe('parseBody', () => {
         it('should return result', () => {
             const userId: string = faker.string.uuid();
-            const username: string = faker.internet.userName();
+            const username: string = faker.internet.username();
             const firstName: string = faker.person.firstName();
             const lastName: string = faker.person.lastName();
             const email: string = faker.internet.email();
@@ -66,7 +66,7 @@ describe('ReadPersonAction', () => {
 
         it('should return error, if firstname is missing', () => {
             const userId: string = faker.string.uuid();
-            const username: string = faker.internet.userName();
+            const username: string = faker.internet.username();
             const lastName: string = faker.person.lastName();
             const email: string = faker.internet.email();
             const institutionRole: IMSESInstitutionRoleType = faker.helpers.enumValue(IMSESInstitutionRoleType);
@@ -99,7 +99,7 @@ describe('ReadPersonAction', () => {
 
         it('should return error, if lastname is missing', () => {
             const userId: string = faker.string.uuid();
-            const username: string = faker.internet.userName();
+            const username: string = faker.internet.username();
             const firstName: string = faker.person.firstName();
             const email: string = faker.internet.email();
             const institutionRole: IMSESInstitutionRoleType = faker.helpers.enumValue(IMSESInstitutionRoleType);

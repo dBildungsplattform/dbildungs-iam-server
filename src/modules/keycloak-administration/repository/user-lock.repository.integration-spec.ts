@@ -213,7 +213,7 @@ describe('UserLockRepository', () => {
                 new Date(),
             );
 
-            await expect(sut.update(nonExistentUserLock)).rejects.toThrowError();
+            await expect(sut.update(nonExistentUserLock)).rejects.toThrow();
         });
     });
 

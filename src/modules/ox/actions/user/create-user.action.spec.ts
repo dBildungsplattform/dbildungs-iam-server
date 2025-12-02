@@ -5,7 +5,7 @@ import { CreateUserAction, CreateUserResponseBody } from './create-user.action.j
 describe('CreateUserAction', () => {
     describe('buildRequest', () => {
         it('should return object', () => {
-            const username: string = faker.internet.userName();
+            const username: string = faker.internet.username();
             const firstname: string = faker.person.firstName();
             const lastname: string = faker.person.lastName();
             const email: string = firstname + '.' + lastname + '@test.de';
@@ -30,7 +30,7 @@ describe('CreateUserAction', () => {
 
     describe('parseBody', () => {
         it('should return CreateUserResponse', () => {
-            const username: string = faker.internet.userName();
+            const username: string = faker.internet.username();
             const firstname: string = faker.person.firstName();
             const lastname: string = faker.person.lastName();
             const email: string = firstname + '.' + lastname + '@test.de';
