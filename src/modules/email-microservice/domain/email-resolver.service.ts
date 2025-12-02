@@ -48,7 +48,7 @@ export class EmailResolverService {
     ): Promise<EmailAddressResponse | undefined> {
         try {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
-                this.httpService.get(this.getEndpoint() + `api/read/${personId}`),
+                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`),
             );
             return response.data[0];
         } catch (error) {
