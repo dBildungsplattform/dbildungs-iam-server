@@ -55,7 +55,6 @@ describe('EmailAddressStatusRepo', () => {
         const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
             address: faker.internet.email(),
             priority: 1,
-            externalId: faker.string.uuid(),
             spshPersonId: faker.string.uuid(),
             externalId: faker.string.uuid(),
             oxUserCounter: undefined,
