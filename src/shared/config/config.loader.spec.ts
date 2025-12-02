@@ -414,6 +414,9 @@ describe('configloader', () => {
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     BASE_DN: 'dc=schule-sh,dc=de',
                 },
+                EMAIL: {
+                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 90,
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -475,6 +478,9 @@ describe('configloader', () => {
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     BASE_DN: 'dc=schule-sh,dc=de',
                     ADMIN_PASSWORD: 'x',
+                },
+                EMAIL: {
+                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 90,
                 },
             };
 

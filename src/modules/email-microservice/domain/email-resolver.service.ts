@@ -11,18 +11,26 @@ import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { SetEmailAddressForSpshPersonParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.params.js';
 
+export interface PersonIdWithEmailResponse {
+    personId: string;
+    personEmailResponse: PersonEmailResponse;
+}
+
 @Injectable()
 export class EmailResolverService {
+    private static readPath: string = 'api/read';
+    private static writePath: string = 'api/write';
+
     public constructor(
         private readonly logger: ClassLogger,
         private readonly configService: ConfigService,
         private readonly httpService: HttpService,
     ) {}
 
-    public async findEmailBySpshPerson(personId: string): Promise<PersonEmailResponse | undefined> {
+    public async findEmailBySpshPerson(personId: string): Promise<Option<PersonEmailResponse>> {
         try {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
-                this.httpService.get(this.getEndpoint() + `api/read/${personId}`),
+                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`),
             );
             if (response.data[0] !== undefined) {
                 const status: EmailAddressStatus = this.mapStatus(response.data[0]?.status);
@@ -31,6 +39,30 @@ export class EmailResolverService {
             return undefined;
         } catch (error) {
             this.logger.logUnknownAsError(`Failed to fetch email for person ${personId}`, error);
+            return undefined;
+        }
+    }
+
+    public async findByPrimaryAddress(emailAddress: string): Promise<Option<PersonIdWithEmailResponse>> {
+        try {
+            const response: AxiosResponse<Option<EmailAddressResponse>> = await lastValueFrom(
+                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/email/${emailAddress}`),
+            );
+            if (
+                response.status === 200 &&
+                response.data !== undefined &&
+                response.data?.spshPersonId &&
+                response.data.isPrimary
+            ) {
+                const status: EmailAddressStatus = this.mapStatus(response.data?.status);
+                return {
+                    personId: response.data.spshPersonId,
+                    personEmailResponse: new PersonEmailResponse(status, response.data.address),
+                };
+            }
+            return undefined;
+        } catch (error) {
+            this.logger.logUnknownAsError(`Failed to fetch email for address ${emailAddress}`, error);
             return undefined;
         }
     }
@@ -50,7 +82,7 @@ export class EmailResolverService {
             );
             this.logger.info(`Params: ${JSON.stringify(params)}`);
             await lastValueFrom(
-                this.httpService.post(this.getEndpoint() + `api/write/set-email-for-person`, {
+                this.httpService.post(this.getEndpoint() + `${EmailResolverService.writePath}/set-email-for-person`, {
                     spshPersonId: params.spshPersonId,
                     spshUsername: params.spshUsername,
                     kennungen: params.kennungen,
