@@ -10,7 +10,7 @@ export interface NewOxParams {
     oxLoginId: OXContextID;
 }
 
-export class UserExeternalDataResponseOx {
+export class UserExternalDataResponseOx {
     @ApiProperty()
     public id: string;
 
@@ -18,13 +18,13 @@ export class UserExeternalDataResponseOx {
         this.id = id;
     }
 
-    public static createNew(params: OldOxParams | NewOxParams): UserExeternalDataResponseOx {
+    public static createNew(params: OldOxParams | NewOxParams): UserExternalDataResponseOx {
         let id: string;
         if ('username' in params) {
             id = `${params.username}@${params.contextId}`;
         } else {
             id = params.oxLoginId;
         }
-        return new UserExeternalDataResponseOx(id);
+        return new UserExternalDataResponseOx(id);
     }
 }
