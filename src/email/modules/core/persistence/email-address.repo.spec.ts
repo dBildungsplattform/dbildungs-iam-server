@@ -73,6 +73,88 @@ describe('EmailRepo', () => {
         return tmp;
     }
 
+    describe('findEmailAddress', () => {
+        let createdMail: EmailAddress<true>;
+
+        beforeEach(async () => {
+            createdMail = await createAndSaveMail();
+        });
+
+        it('should return EmailAddress if address exists', async () => {
+            const result: Option<EmailAddress<true>> = await sut.findEmailAddress(createdMail.address);
+            expect(result).toBeDefined();
+            expect(result).not.toBeInstanceOf(DomainError);
+            expect(result!.address).toBe(createdMail.address);
+            expect(result!.id).toBe(createdMail.id);
+        });
+
+        it('should return undefined if address does not exist', async () => {
+            const result: Option<EmailAddress<true>> = await sut.findEmailAddress(faker.internet.email());
+            expect(result).toBeUndefined();
+        });
+    });
+
+    describe('findEmailAddressWithStatusDesc', () => {
+        let createdMail: EmailAddress<true>;
+
+        beforeEach(async () => {
+            createdMail = await createAndSaveMail();
+        });
+
+        it('should return undefined if address does not exist', async () => {
+            const result: Option<AddressWithStatusesDescDto> = await sut.findEmailAddressWithStatusDesc(
+                faker.internet.email(),
+            );
+            expect(result).toBeUndefined();
+        });
+
+        it('should return AddressWithStatusesDescDto with sorted and mapped statuses if address exists', async () => {
+            const now: Date = new Date();
+            const earlier: Date = new Date(now.getTime() - 10000);
+
+            await emailAddressStatusRepo.create({
+                id: undefined,
+                createdAt: earlier,
+                updatedAt: earlier,
+                emailAddressId: createdMail.id,
+                status: EmailAddressStatusEnum.PENDING,
+            });
+            await emailAddressStatusRepo.create({
+                id: undefined,
+                createdAt: now,
+                updatedAt: now,
+                emailAddressId: createdMail.id,
+                status: EmailAddressStatusEnum.ACTIVE,
+            });
+
+            const result: Option<AddressWithStatusesDescDto> = await sut.findEmailAddressWithStatusDesc(
+                createdMail.address,
+            );
+
+            expect(result).toBeDefined();
+            if (!result) {
+                return;
+            }
+
+            expect(result).toBeInstanceOf(AddressWithStatusesDescDto);
+            expect(result.emailAddress.address).toBe(createdMail.address);
+            expect(result.statuses.length).toBe(2);
+            expect(result.statuses.at(0)?.status).toBe(EmailAddressStatusEnum.ACTIVE);
+            expect(result?.statuses.at(1)?.status).toBe(EmailAddressStatusEnum.PENDING);
+        });
+
+        it('should return AddressWithStatusesDescDto with empty statuses if address exists but has no statuses', async () => {
+            const result: Option<AddressWithStatusesDescDto> = await sut.findEmailAddressWithStatusDesc(
+                createdMail.address,
+            );
+
+            expect(result).toBeDefined();
+            expect(result).toBeInstanceOf(AddressWithStatusesDescDto);
+            expect(result!.emailAddress.address).toBe(createdMail.address);
+            expect(result!.statuses.length).toBe(0);
+        });
+    });
+
     describe('existsEmailAddress', () => {
         let createdMail: EmailAddress<true>;
 

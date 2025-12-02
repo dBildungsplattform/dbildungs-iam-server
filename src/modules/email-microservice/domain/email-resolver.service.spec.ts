@@ -7,13 +7,13 @@ import { AxiosHeaders, AxiosResponse } from 'axios';
 import { of } from 'rxjs';
 import { ConfigTestModule, DatabaseTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils';
 import { ClassLogger } from '../../../core/logging/class-logger';
-import { SetEmailAddressForSpshPersonParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.params';
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity';
 import { EmailAddressStatus } from '../../email/domain/email-address';
 import { PersonEmailResponse } from '../../person/api/person-email-response';
 import { EmailMicroserviceModule } from '../email-microservice.module';
-import { EmailResolverService } from './email-resolver.service';
+import { EmailResolverService, PersonIdWithEmailResponse } from './email-resolver.service';
+import { SetEmailAddressForSpshPersonParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.params';
 
 type SetEmailParams = Parameters<EmailResolverService['setEmailForSpshPerson']>[0];
 
@@ -72,7 +72,7 @@ describe('EmailResolverService', () => {
 
             mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
-            const result: PersonEmailResponse | undefined = await sut.findEmailBySpshPerson(mockPersonId);
+            const result: Option<PersonEmailResponse> = await sut.findEmailBySpshPerson(mockPersonId);
             expect(result).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, mockEmail));
         });
 
@@ -81,7 +81,7 @@ describe('EmailResolverService', () => {
 
             mockHttpService.get.mockReturnValueOnce(of({ data: [] } as AxiosResponse));
 
-            const result: PersonEmailResponse | undefined = await sut.findEmailBySpshPerson(mockPersonId);
+            const result: Option<PersonEmailResponse> = await sut.findEmailBySpshPerson(mockPersonId);
             expect(result).toBeUndefined();
         });
 
@@ -94,9 +94,170 @@ describe('EmailResolverService', () => {
 
             const errorLoggerSpy: jest.SpyInstance = jest.spyOn(sut['logger'], 'logUnknownAsError');
 
-            const result: PersonEmailResponse | undefined = await sut.findEmailBySpshPerson(mockPersonId);
+            const result: Option<PersonEmailResponse> = await sut.findEmailBySpshPerson(mockPersonId);
             expect(result).toBeUndefined();
             expect(errorLoggerSpy).toHaveBeenCalledWith(`Failed to fetch email for person ${mockPersonId}`, error);
+        });
+
+        it('should return PersonEmailResponse when get call returns valid data', async () => {
+            const mockPersonId: string = faker.string.uuid();
+            const mockEmail: string = 'test@example.com';
+            const mockResponseData: EmailAddressResponse[] = [
+                createMock<EmailAddressResponse>({
+                    address: mockEmail,
+                    status: EmailAddressStatusEnum.ACTIVE,
+                }),
+            ];
+            const mockAxiosResponse: AxiosResponse<EmailAddressResponse[]> = {
+                data: mockResponseData,
+                status: 200,
+                statusText: 'OK',
+                headers: {},
+                config: {
+                    headers: new AxiosHeaders(),
+                },
+            };
+
+            mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
+
+            const result: Option<PersonEmailResponse> = await sut.findEmailBySpshPerson(mockPersonId);
+            expect(result).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, mockEmail));
+        });
+
+        it('should return undefined when get call returns empty data', async () => {
+            const mockPersonId: string = faker.string.uuid();
+
+            mockHttpService.get.mockReturnValueOnce(of({ data: [] } as AxiosResponse));
+
+            const result: Option<PersonEmailResponse> = await sut.findEmailBySpshPerson(mockPersonId);
+            expect(result).toBeUndefined();
+        });
+
+        it('should log error and return undefined when get call fails', async () => {
+            const mockPersonId: string = faker.string.uuid();
+            const error: Error = new Error('Network error');
+            mockHttpService.get.mockImplementation(() => {
+                throw error;
+            });
+
+            const errorLoggerSpy: jest.SpyInstance = jest.spyOn(sut['logger'], 'logUnknownAsError');
+
+            const result: Option<PersonEmailResponse> = await sut.findEmailBySpshPerson(mockPersonId);
+            expect(result).toBeUndefined();
+            expect(errorLoggerSpy).toHaveBeenCalledWith(`Failed to fetch email for person ${mockPersonId}`, error);
+        });
+    });
+
+    describe('findByPrimaryAddress', () => {
+        it('should return spshPersonId when get call returns valid primary email data', async () => {
+            const address: string = faker.internet.email();
+            const spshPersonId: string = faker.string.uuid();
+            const mockResponseData: EmailAddressResponse = createMock<EmailAddressResponse>({
+                address: address,
+                status: EmailAddressStatusEnum.ACTIVE,
+                isPrimary: true,
+                spshPersonId: spshPersonId,
+            });
+
+            const mockAxiosResponse: AxiosResponse<EmailAddressResponse> = {
+                data: mockResponseData,
+                status: 200,
+                statusText: 'OK',
+                headers: {},
+                config: {
+                    headers: new AxiosHeaders(),
+                },
+            };
+
+            mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
+
+            const result: Option<PersonIdWithEmailResponse> = await sut.findByPrimaryAddress(address);
+            expect(result?.personId).toEqual(spshPersonId);
+        });
+
+        it('should return undefined when get call returns error code', async () => {
+            const address: string = faker.internet.email();
+            const mockResponseData: EmailAddressResponse = createMock<EmailAddressResponse>({});
+
+            const mockAxiosResponse: AxiosResponse<EmailAddressResponse> = {
+                data: mockResponseData,
+                status: 400,
+                statusText: 'Bad Request',
+                headers: {},
+                config: {
+                    headers: new AxiosHeaders(),
+                },
+            };
+
+            mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
+
+            const result: Option<PersonIdWithEmailResponse> = await sut.findByPrimaryAddress(address);
+            expect(result).toEqual(undefined);
+        });
+
+        it('should return undefined when get call returns valid non primary email data', async () => {
+            const address: string = faker.internet.email();
+            const spshPersonId: string = faker.string.uuid();
+            const mockResponseData: EmailAddressResponse = createMock<EmailAddressResponse>({
+                address: address,
+                status: EmailAddressStatusEnum.ACTIVE,
+                isPrimary: false,
+                spshPersonId: spshPersonId,
+            });
+
+            const mockAxiosResponse: AxiosResponse<EmailAddressResponse> = {
+                data: mockResponseData,
+                status: 200,
+                statusText: 'OK',
+                headers: {},
+                config: {
+                    headers: new AxiosHeaders(),
+                },
+            };
+
+            mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
+
+            const result: Option<PersonIdWithEmailResponse> = await sut.findByPrimaryAddress(address);
+            expect(result).toEqual(undefined);
+        });
+
+        it('should return undefined when get call returns without spshPersonId', async () => {
+            const address: string = faker.internet.email();
+            const mockResponseData: EmailAddressResponse = createMock<EmailAddressResponse>({
+                address: address,
+                status: EmailAddressStatusEnum.ACTIVE,
+                isPrimary: true,
+                spshPersonId: undefined,
+            });
+
+            const mockAxiosResponse: AxiosResponse<EmailAddressResponse> = {
+                data: mockResponseData,
+                status: 200,
+                statusText: 'OK',
+                headers: {},
+                config: {
+                    headers: new AxiosHeaders(),
+                },
+            };
+
+            mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
+
+            const result: Option<PersonIdWithEmailResponse> = await sut.findByPrimaryAddress(address);
+            expect(result).toEqual(undefined);
+        });
+
+        it('should log error when microservice  call throws error', async () => {
+            const address: string = faker.internet.email();
+            const error: Error = new Error('Network error');
+            mockHttpService.get.mockImplementation(() => {
+                throw new Error('Network error');
+            });
+
+            const errorLoggerSpy: jest.SpyInstance = jest.spyOn(sut['logger'], 'logUnknownAsError');
+
+            const result: Option<PersonIdWithEmailResponse> = await sut.findByPrimaryAddress(address);
+            expect(result).toEqual(undefined);
+            expect(errorLoggerSpy).toHaveBeenCalledWith(`Failed to fetch email for address ${address}`, error);
         });
     });
 
@@ -269,6 +430,7 @@ describe('EmailResolverService', () => {
                     createdAt: new Date(),
                     updatedAt: new Date(),
                     oxLoginId: mockOxLoginId,
+                    isPrimary: true,
                 },
             ],
             status: 200,
@@ -281,7 +443,7 @@ describe('EmailResolverService', () => {
 
         mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
-        const result: PersonEmailResponse | undefined = await sut.findEmailBySpshPerson(mockPersonId);
+        const result: Option<PersonEmailResponse> = await sut.findEmailBySpshPerson(mockPersonId);
         expect(result).toEqual(new PersonEmailResponse(expectedStatus, mockEmail));
     });
 
@@ -299,6 +461,7 @@ describe('EmailResolverService', () => {
                     createdAt: new Date(),
                     updatedAt: new Date(),
                     oxLoginId: mockOxLoginId,
+                    isPrimary: true,
                 },
             ],
             status: 200,
@@ -311,7 +474,7 @@ describe('EmailResolverService', () => {
 
         mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
-        const result: PersonEmailResponse | undefined = await sut.findEmailBySpshPerson(mockPersonId);
+        const result: Option<PersonEmailResponse> = await sut.findEmailBySpshPerson(mockPersonId);
         expect(result).toEqual(new PersonEmailResponse(EmailAddressStatus.DISABLED, mockEmail));
     });
 });

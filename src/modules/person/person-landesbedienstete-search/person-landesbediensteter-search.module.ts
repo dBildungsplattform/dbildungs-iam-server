@@ -5,6 +5,7 @@ import { PersonModule } from '../person.module.js';
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { EmailModule } from '../../email/email.module.js';
 import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 
 @Module({
     imports: [
@@ -12,6 +13,7 @@ import { KeycloakAdministrationModule } from '../../keycloak-administration/keyc
         PersonenKontextModule,
         EmailModule,
         KeycloakAdministrationModule,
+        EmailMicroserviceModule,
         LoggerModule.register(PersonLandesbediensteterSearchModule.name),
     ],
     providers: [PersonLandesbediensteterSearchService],

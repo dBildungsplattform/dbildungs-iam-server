@@ -21,6 +21,7 @@ export class EmailAddressResponse {
 
     @ApiProperty()
     public oxLoginId: string;
+    public isPrimary: boolean;
 
     @ApiProperty({ required: false })
     public spshPersonId?: string;
@@ -32,6 +33,7 @@ export class EmailAddressResponse {
         this.address = emailAddress.address;
         this.status = latestStatus.status;
         this.oxLoginId = emailAddress.externalId + '@' + oxContextId;
+        this.isPrimary = emailAddress.priority === 0;
         this.spshPersonId = emailAddress.spshPersonId;
     }
 }
