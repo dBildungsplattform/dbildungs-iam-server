@@ -57,6 +57,7 @@ describe('EmailReadController', () => {
                     priority: 0,
                     externalId: faker.string.uuid(),
                     spshPersonId: faker.string.uuid(),
+                    externalId: faker.string.uuid(),
                     oxUserCounter: undefined,
                     markedForCron: undefined,
                     createdAt: new Date(),
@@ -101,6 +102,7 @@ describe('EmailReadController', () => {
                     priority: 0,
                     externalId: faker.string.uuid(),
                     spshPersonId: faker.string.uuid(),
+                    externalId: faker.string.uuid(),
                     oxUserCounter: undefined,
                     markedForCron: undefined,
                     createdAt: new Date(),
@@ -133,6 +135,7 @@ describe('EmailReadController', () => {
                     markedForCron: undefined,
                     createdAt: new Date(),
                     updatedAt: new Date(),
+                    externalId: spshPersonId,
                 },
                 statuses: [
                     {
@@ -173,6 +176,7 @@ describe('EmailReadController', () => {
                     markedForCron: undefined,
                     createdAt: earlier,
                     updatedAt: earlier,
+                    externalId: spshPersonId,
                 },
                 statuses: [
                     {
@@ -227,6 +231,7 @@ describe('EmailReadController', () => {
                     markedForCron: undefined,
                     createdAt: new Date(),
                     updatedAt: new Date(),
+                    externalId: spshPersonId,
                 },
                 statuses: [],
             };
@@ -253,6 +258,7 @@ describe('EmailReadController', () => {
                     markedForCron: undefined,
                     createdAt: new Date(),
                     updatedAt: new Date(),
+                    externalId: spshPersonId,
                 },
                 statuses: [undefined as unknown as EmailAddressStatus<true>],
             };

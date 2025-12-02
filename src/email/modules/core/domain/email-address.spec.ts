@@ -7,10 +7,10 @@ describe('EmailAddress', () => {
             const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
                 address: faker.internet.email(),
                 priority: 1,
-                externalId: faker.string.uuid(),
-                spshPersonId: undefined,
+                spshPersonId: faker.string.uuid(),
                 oxUserCounter: undefined,
                 markedForCron: undefined,
+                externalId: faker.string.uuid(),
             });
 
             expect(mailToCreate).toBeInstanceOf(EmailAddress);
@@ -31,10 +31,10 @@ describe('EmailAddress', () => {
                 updatedAt: updatedAt,
                 address: faker.internet.email(),
                 priority: 1,
-                externalId: faker.string.uuid(),
-                spshPersonId: undefined,
+                spshPersonId: faker.string.uuid(),
                 oxUserCounter: undefined,
                 markedForCron: undefined,
+                externalId: faker.string.uuid(),
             });
 
             expect(emailDomain).toBeInstanceOf(EmailAddress);
