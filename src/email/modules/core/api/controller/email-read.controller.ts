@@ -15,6 +15,7 @@ import { Public } from '../../decorator/public.decorator.js';
 import { AddressWithStatusesDescDto } from '../dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 import { EmailAddressStatus } from '../../domain/email-address-status.js';
 import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
+import { OxService } from '../../../ox/domain/ox.service.js';
 import { FindEmailAddressParams } from '../dtos/params/find-email-address.params.js';
 import { EmailAddressNotFoundError } from '../../error/email-address-not-found.error.js';
 import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
@@ -29,6 +30,7 @@ export class EmailReadController {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly emailAddressRepo: EmailAddressRepo,
+        private readonly oxService: OxService,
     ) {}
 
     @Get('spshperson/:spshPersonId')
@@ -58,7 +60,7 @@ export class EmailReadController {
             .map((address: AddressWithStatusesDescDto) => {
                 const status: EmailAddressStatus<true> | undefined = address.statuses.at(0);
                 if (status) {
-                    return new EmailAddressResponse(address.emailAddress, status);
+                    return new EmailAddressResponse(address.emailAddress, status, this.oxService.contextID);
                 }
                 return undefined;
             })
@@ -89,6 +91,10 @@ export class EmailReadController {
         if (!latestStatus) {
             throw new EmailAddressMissingStatusError(emailAddressWithStatusDesc.emailAddress.address);
         }
-        return new EmailAddressResponse(emailAddressWithStatusDesc.emailAddress, latestStatus);
+        return new EmailAddressResponse(
+            emailAddressWithStatusDesc.emailAddress,
+            latestStatus,
+            this.oxService.contextID,
+        );
     }
 }
