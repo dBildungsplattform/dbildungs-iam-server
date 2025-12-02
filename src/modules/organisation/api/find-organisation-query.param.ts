@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ArrayUnique, IsBoolean, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 import { OrganisationsTyp, OrganisationsTypName, SortFieldOrganisation } from '../domain/organisation.enums.js';
@@ -123,4 +123,12 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
         description: 'Field to sort by.',
     })
     public readonly sortField?: SortFieldOrganisation;
+
+    @IsOptional()
+    @IsBoolean()
+    @ApiProperty({
+        required: false,
+        nullable: true,
+    })
+    public readonly getAllRecursivly?: boolean;
 }
