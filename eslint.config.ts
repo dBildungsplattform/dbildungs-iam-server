@@ -99,6 +99,10 @@ export default defineConfig(
             // you should turn the original rule off *only* for test files
             '@typescript-eslint/unbound-method': 'off',
             '@typescript-eslint/no-empty-function': 'off',
+            'import/no-extraneous-dependencies':  [
+                "error",
+                { "devDependencies": true, "optionalDependencies": false, "peerDependencies": false }
+            ],
         },
     },
     {
