@@ -6,14 +6,14 @@ import { UserExeternalDataResponseItslearning } from './user-externaldata-itslea
 import { UserExeternalDataResponseOnlineDateiablage } from './user-externaldata-onlinedateiablage.response.js';
 import { UserExeternalDataResponseOpshPk } from './user-externaldata-opsh-pk.response.js';
 import { UserExeternalDataResponseOpsh } from './user-externaldata-opsh.response.js';
-import { UserExeternalDataResponseOx } from './user-externaldata-ox.response.js';
+import { NewOxParams, OldOxParams, UserExternalDataResponseOx } from './user-externaldata-ox.response.js';
 import { UserExeternalDataResponseVidis } from './user-externaldata-vidis.response.js';
 import { UserExternaldataWorkflowAggregate } from '../../domain/user-extenaldata.workflow.js';
 import { PersonenkontextErweitertVirtualEntityLoaded } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 export class UserExternalDataResponse {
-    @ApiProperty({ type: UserExeternalDataResponseOx })
-    public ox: UserExeternalDataResponseOx;
+    @ApiProperty({ type: UserExternalDataResponseOx })
+    public ox: UserExternalDataResponseOx;
 
     @ApiProperty({ type: UserExeternalDataResponseItslearning })
     public itslearning: UserExeternalDataResponseItslearning;
@@ -28,7 +28,7 @@ export class UserExternalDataResponse {
     public onlineDateiablage: UserExeternalDataResponseOnlineDateiablage;
 
     private constructor(
-        ox: UserExeternalDataResponseOx,
+        ox: UserExternalDataResponseOx,
         itslearning: UserExeternalDataResponseItslearning,
         vidis: UserExeternalDataResponseVidis,
         opsh: UserExeternalDataResponseOpsh,
@@ -45,9 +45,9 @@ export class UserExternalDataResponse {
         person: Person<true>,
         externalPkData: RequiredExternalPkData[],
         personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[],
-        contextID: string,
+        contextParams: OldOxParams | NewOxParams,
     ): UserExternalDataResponse {
-        const ox: UserExeternalDataResponseOx = new UserExeternalDataResponseOx(person.username!, contextID);
+        const ox: UserExternalDataResponseOx = UserExternalDataResponseOx.createNew(contextParams);
         const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(person.id);
         const mergedExternalPkData: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
             externalPkData,

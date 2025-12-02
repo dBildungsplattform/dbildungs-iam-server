@@ -43,6 +43,20 @@ export class EmailResolverService {
         }
     }
 
+    public async findEmailBySpshPersonAsEmailAddressResponse(
+        personId: string,
+    ): Promise<EmailAddressResponse | undefined> {
+        try {
+            const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
+                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`),
+            );
+            return response.data[0];
+        } catch (error) {
+            this.logger.logUnknownAsError(`Failed to fetch email for person ${personId}`, error);
+            return undefined;
+        }
+    }
+
     public async findByPrimaryAddress(emailAddress: string): Promise<Option<PersonIdWithEmailResponse>> {
         try {
             const response: AxiosResponse<Option<EmailAddressResponse>> = await lastValueFrom(

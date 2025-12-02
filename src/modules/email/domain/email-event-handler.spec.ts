@@ -1462,6 +1462,20 @@ describe('EmailEventHandler', () => {
             organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>());
         });
 
+        describe('when emailMicroservice is enabled', () => {
+            it('should not call handlePerson', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+                await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect.stringContaining('Received LdapPersonEntryRenamedEvent'),
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Ignoring Event for'));
+                expect(emailResolverService.setEmailForSpshPerson).not.toHaveBeenCalled();
+            });
+        });
+
         describe('when rolle exists and service provider with kategorie email is found', () => {
             describe('when enabled email already exists and save disabling is successful', () => {
                 it('should log info only', async () => {

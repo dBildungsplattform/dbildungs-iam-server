@@ -11,6 +11,8 @@ import { Person } from '../../person/domain/person.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { AccessApiKeyGuard } from './access.apikey.guard.js';
 import { Public } from './public.decorator.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { NewOxParams, OldOxParams } from './externaldata/user-externaldata-ox.response.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -24,6 +26,7 @@ export class KeycloakInternalController {
     public constructor(
         private readonly userExternaldataWorkflowFactory: UserExternaldataWorkflowFactory,
         private readonly personRepository: PersonRepository,
+        private readonly emailResolverService: EmailResolverService,
     ) {}
 
     /*
@@ -60,11 +63,27 @@ export class KeycloakInternalController {
             );
         }
 
-        return UserExternalDataResponse.createNew(
-            workflow.person,
-            workflow.checkedExternalPkData,
-            workflow.personenKontextErweiterungen!,
-            workflow.contextID,
-        );
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            const oxParams: NewOxParams = {
+                oxLoginId: workflow.oxLoginId!,
+            };
+            return UserExternalDataResponse.createNew(
+                workflow.person,
+                workflow.checkedExternalPkData,
+                workflow.personenKontextErweiterungen!,
+                oxParams,
+            );
+        } else {
+            const oxParams: OldOxParams = {
+                contextId: workflow.contextID,
+                username: workflow.person.username!,
+            };
+            return UserExternalDataResponse.createNew(
+                workflow.person,
+                workflow.checkedExternalPkData,
+                workflow.personenKontextErweiterungen!,
+                oxParams,
+            );
+        }
     }
 }
