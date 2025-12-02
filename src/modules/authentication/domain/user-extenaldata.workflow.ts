@@ -83,8 +83,7 @@ export class UserExternaldataWorkflowAggregate {
         const erweiterungenMap: Map<string, ServiceProviderEntity[]> = new Map<string, ServiceProviderEntity[]>();
         for (const erweiterung of personenKontextErweiterungen) {
             const pkId: string = erweiterung.personenkontext.unwrap().id;
-            const sp: Loaded<ServiceProviderEntity & object, never, never, never> =
-                erweiterung.serviceProvider.unwrap();
+            const sp: Loaded<ServiceProviderEntity> = erweiterung.serviceProvider.unwrap();
             if (!erweiterungenMap.has(pkId)) {
                 erweiterungenMap.set(pkId, []);
             }

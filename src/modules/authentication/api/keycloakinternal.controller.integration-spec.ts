@@ -109,27 +109,25 @@ describe('KeycloakInternalController', () => {
                     serviceProvider: [],
                 },
             ];
-            const spEntity: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
-            );
+            const sp: ServiceProvider<true> = await serviceProviderRepo.save(DoFactory.createServiceProvider(false));
 
-            const pkEntity: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+            const pk: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                 personId: person.id,
                 rolleId: faker.string.uuid(),
                 organisationId: faker.string.uuid(),
             });
 
-            const spRef: LoadedReference<Loaded<ServiceProviderEntity>> = {
-                get: () => spEntity,
-                load: jest.fn().mockResolvedValue(spEntity),
-                unwrap: () => spEntity,
-            } as unknown as LoadedReference<Loaded<ServiceProviderEntity>>;
+            const spRef: DeepMocked<LoadedReference<Loaded<ServiceProviderEntity>>> = createMock<
+                LoadedReference<Loaded<ServiceProviderEntity>>
+            >({
+                load: jest.fn().mockResolvedValue(sp),
+            });
 
-            const pkRef: LoadedReference<Loaded<PersonenkontextEntity>> = {
-                get: () => pkEntity,
-                load: jest.fn().mockResolvedValue(pkEntity),
-                unwrap: () => pkEntity,
-            } as unknown as LoadedReference<Loaded<PersonenkontextEntity>>;
+            const pkRef: DeepMocked<LoadedReference<Loaded<PersonenkontextEntity>>> = createMock<
+                LoadedReference<Loaded<PersonenkontextEntity>>
+            >({
+                load: jest.fn().mockResolvedValue(pk),
+            });
 
             const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = [
                 {

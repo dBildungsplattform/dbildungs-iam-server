@@ -206,7 +206,7 @@ export class DbSeedService {
             const orga: Organisation<true> = await this.getReferencedOrganisation(file.organisationId);
             const rolle: Rolle<true> = await this.getReferencedRolle(file.rolleId);
             const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(file.serviceProviderId);
-            const rollenerweiterung: Rollenerweiterung<false> | DomainError = this.rollenerweiterungFactory.createNew(
+            const rollenerweiterung: Rollenerweiterung<false> = this.rollenerweiterungFactory.createNew(
                 orga.id,
                 rolle.id,
                 sp.id,
