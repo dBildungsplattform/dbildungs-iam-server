@@ -409,7 +409,6 @@ export class OxEventService {
 
     public async removeOxGroup(kennung: OrganisationKennung): Promise<Result<DeleteGroupResponse, DomainError>> {
         const oxGroupName: string = this.getOxLehrerGroupName(kennung);
-        const oxGroupDisplayName: string = this.getOxLehrerGroupDisplayName(kennung);
         const oxGroupId: OXGroupID | DomainError = await this.getOxGroupByName(oxGroupName);
         if (oxGroupId instanceof DomainError) {
             this.logger.logUnknownAsError(`Could Not Find OxGroup ${oxGroupName} for Deletion`, oxGroupId);
@@ -417,7 +416,7 @@ export class OxEventService {
             return Err(oxGroupId);
         }
 
-        const action: DeleteGroupAction = this.createDeleteGroupAction(oxGroupId, oxGroupName, oxGroupDisplayName);
+        const action: DeleteGroupAction = this.createDeleteGroupAction(oxGroupId);
         const result: Result<DeleteGroupResponse, DomainError> = await this.oxService.send(action);
         if (!result.ok) {
             this.logger.logUnknownAsError(
@@ -601,12 +600,10 @@ export class OxEventService {
         return changeByModuleAccessAction;
     }
 
-    public createDeleteGroupAction(oxGroupId: string, oxGroupName: string, oxGroupDisplayName: string): DeleteGroupAction {
+    public createDeleteGroupAction(oxGroupId: string): DeleteGroupAction {
         return new DeleteGroupAction({
             contextId: this.contextID,
             id: oxGroupId,
-            displayname: oxGroupDisplayName,
-            name: oxGroupName,
             login: this.authUser,
             password: this.authPassword,
         });
@@ -614,9 +611,5 @@ export class OxEventService {
 
     private getOxLehrerGroupName(kennung: OrganisationKennung): string {
         return OxEventService.LEHRER_OX_GROUP_NAME_PREFIX + kennung;
-    }
-
-    private getOxLehrerGroupDisplayName(kennung: OrganisationKennung): string {
-        return OxEventService.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + kennung;
     }
 }

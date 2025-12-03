@@ -5,8 +5,6 @@ import { AuthParams, OxBaseAction } from '../ox-base-action.js';
 export type DeleteGroupParams = AuthParams & {
     contextId: string;
     id: string;
-    displayname: string;
-    name: string;
 };
 export type DeleteGroupResponse = object;
 export type DeleteGroupResponseBody = object;
@@ -33,8 +31,6 @@ export class DeleteGroupAction extends OxBaseAction<DeleteGroupResponseBody, Del
 
                 'tns:grp': {
                     'ns6:id': this.params.id,
-                    'ns6:displayname': this.params.displayname,
-                    'ns6:name': this.params.name,
                 },
 
                 'tns:auth': {
