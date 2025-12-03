@@ -1,0 +1,11 @@
+{
+    "entityName": "Rollenerweiterung",
+    "entities": [
+        {
+            "id": 0,
+            "organisationId": 4,
+            "rolleId": 2,
+            "serviceProviderId": 18
+        }
+    ]
+}
