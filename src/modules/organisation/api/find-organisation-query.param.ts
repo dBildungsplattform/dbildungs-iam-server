@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayUnique, IsBoolean, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 import { OrganisationsTyp, OrganisationsTypName, SortFieldOrganisation } from '../domain/organisation.enums.js';
@@ -124,11 +124,12 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
     })
     public readonly sortField?: SortFieldOrganisation;
 
+    // If we want using boolean we have to add global pipe for transforming query params to correct type to app
     @IsOptional()
-    @IsBoolean()
+    @IsString()
     @ApiProperty({
         required: false,
         nullable: true,
     })
-    public readonly getChildrenRecursivly?: boolean;
+    public readonly getChildrenRecursivly?: string;
 }

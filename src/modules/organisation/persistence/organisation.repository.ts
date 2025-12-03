@@ -86,7 +86,7 @@ export type OrganisationSeachOptions = {
     readonly limit?: number;
     readonly sortField?: SortFieldOrganisation;
     readonly sortOrder?: ScopeOrder;
-    readonly getChildrenRecursivly?: boolean;
+    readonly getChildrenRecursivly?: string;
 };
 
 @Injectable()
@@ -377,11 +377,12 @@ export class OrganisationRepository {
             );
         }
 
+        const recursivly: boolean = searchOptions.getChildrenRecursivly === 'true';
         let allIds: string[] = [];
-        if (searchOptions.getChildrenRecursivly) {
+        if (recursivly) {
             const query: string = `
                 WITH RECURSIVE org_tree AS (
-                    SELECT id, administriert_von FROM organisation WHERE administriert_von = ANY(?)
+                    SELECT id, administriert_von FROM organisation WHERE administriert_von IN (?)
                     UNION ALL
                     SELECT o.id, o.administriert_von FROM organisation o INNER JOIN org_tree t ON o.administriert_von = t.id
                 )
@@ -407,7 +408,7 @@ export class OrganisationRepository {
             andClauses.push({ typ: searchOptions.typ });
         }
         if (searchOptions.administriertVon) {
-            if (searchOptions.getChildrenRecursivly) {
+            if (recursivly) {
                 andClauses.push({ id: { $in: allIds } });
             } else {
                 andClauses.push({ administriertVon: { $in: searchOptions.administriertVon } });
