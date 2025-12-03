@@ -7,6 +7,8 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    expectErrResult,
+    expectOkResult,
 } from '../../../../../test/utils/index.js';
 import { EmailAddress } from '../domain/email-address.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
@@ -15,6 +17,8 @@ import { EmailCoreModule } from '../email-core.module.js';
 import { EmailAddressStatusRepo } from './email-address-status.repo.js';
 import { EmailAddressStatusEnum } from './email-address-status.entity.js';
 import { AddressWithStatusesDescDto } from '../api/dtos/address-with-statuses/address-with-statuses-desc.dto.js';
+import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
+import { EmailAddressStatus } from '../domain/email-address-status.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -61,9 +65,10 @@ describe('EmailRepo', () => {
         const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
             address: address ?? faker.internet.email(),
             priority: priority ?? 1,
-            spshPersonId: spshPersonId ?? undefined,
+            spshPersonId: spshPersonId ?? faker.string.uuid(),
             oxUserCounter: oxUserCounter ?? undefined,
             markedForCron: markedForCron ?? undefined,
+            externalId: faker.string.uuid(),
         });
         const tmp: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
         if (tmp instanceof DomainError) {
@@ -272,6 +277,8 @@ describe('EmailRepo', () => {
                 address: faker.internet.email(),
                 priority: 5,
                 spshPersonId: faker.string.uuid(),
+                externalId: faker.string.uuid(),
+                oxUserCounter: undefined,
             });
             const result: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
             expect(result).toBeDefined();
@@ -285,6 +292,8 @@ describe('EmailRepo', () => {
                 address: faker.internet.email(),
                 priority: 1,
                 spshPersonId: faker.string.uuid(),
+                externalId: faker.string.uuid(),
+                oxUserCounter: undefined,
             });
             const created: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
             if (created instanceof DomainError) {
@@ -309,10 +318,222 @@ describe('EmailRepo', () => {
                 spshPersonId: faker.string.uuid(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
+                externalId: faker.string.uuid(),
+                oxUserCounter: undefined,
             });
             const result: EmailAddress<true> | DomainError = await sut.save(mailToUpdate);
             expect(result).toBeInstanceOf(DomainError);
             expect(result.constructor.name).toBe('EmailAddressNotFoundError');
+        });
+    });
+
+    describe('shiftPriorities', () => {
+        async function createMultipleEmails(n: number): Promise<EmailAddress<true>[]> {
+            const spshPersonId: string = faker.string.uuid();
+            const externalId: string = faker.string.uuid();
+            const oxUserCounter: string = faker.string.numeric(5);
+
+            const mails: EmailAddress<false>[] = Array.from({ length: n }, (_: unknown, i: number) =>
+                EmailAddress.createNew({
+                    address: `${i}@example.com`,
+                    priority: i,
+                    externalId,
+                    oxUserCounter,
+                    spshPersonId,
+                }),
+            );
+
+            const savedMails: (EmailAddress<true> | DomainError)[] = await Promise.all(
+                mails.map((m: EmailAddress<false>) => sut.save(m)),
+            );
+
+            for (const sm of savedMails) {
+                if (sm instanceof Error) {
+                    throw sm;
+                }
+            }
+
+            return savedMails as EmailAddress<true>[];
+        }
+
+        it('should increment priorities for emails', async () => {
+            const mails: EmailAddress<true>[] = await createMultipleEmails(4);
+            const targetMail: EmailAddress<true> = mails[3]!;
+
+            const result: Result<EmailAddress<true>[]> = await sut.shiftPriorities(targetMail, 0);
+
+            expectOkResult(result);
+
+            mails.forEach((em: EmailAddress<true>) => {
+                em.priority += 1;
+            });
+            targetMail.priority = 0;
+
+            for (const mail of mails) {
+                expect(result.value).toContainEqual(
+                    expect.objectContaining({
+                        id: mail.id,
+                        priority: mail.priority,
+                    }),
+                );
+            }
+        });
+
+        it('should be able to move priority forwards', async () => {
+            const mails: EmailAddress<true>[] = await createMultipleEmails(4);
+            const targetMail: EmailAddress<true> = mails[0]!;
+
+            const result: Result<EmailAddress<true>[]> = await sut.shiftPriorities(targetMail, 2);
+
+            expectOkResult(result);
+
+            targetMail.priority = 2;
+            mails[2]!.priority = 3;
+            mails[3]!.priority = 4;
+
+            for (const mail of mails) {
+                expect(result.value).toContainEqual(
+                    expect.objectContaining({
+                        id: mail.id,
+                        priority: mail.priority,
+                    }),
+                );
+            }
+        });
+
+        it("only shift addresses if needed (fill gaps but don't move unnecessarily)", async () => {
+            const spshPersonId: string = faker.string.uuid();
+            const externalId: string = faker.string.uuid();
+            const oxUserCounter: string = faker.string.numeric(5);
+
+            async function createMail(prio: number): Promise<EmailAddress<true>> {
+                const mail: EmailAddress<false> = EmailAddress.createNew({
+                    address: `${prio}@example.com`,
+                    priority: prio,
+                    externalId,
+                    oxUserCounter,
+                    spshPersonId,
+                });
+
+                const saved: EmailAddress<true> | DomainError = await sut.save(mail);
+
+                if (saved instanceof DomainError) {
+                    throw saved;
+                }
+
+                return saved;
+            }
+
+            const mail0: EmailAddress<true> = await createMail(0);
+            const mail1: EmailAddress<true> = await createMail(1);
+            const mail2: EmailAddress<true> = await createMail(3);
+            const mail3: EmailAddress<true> = await createMail(4);
+
+            const result: Result<EmailAddress<true>[]> = await sut.shiftPriorities(mail3, 0);
+
+            expectOkResult(result);
+
+            expect(result.value).toContainEqual(
+                expect.objectContaining({
+                    id: mail3.id,
+                    priority: 0,
+                }),
+            );
+            expect(result.value).toContainEqual(
+                expect.objectContaining({
+                    id: mail0.id,
+                    priority: 1,
+                }),
+            );
+            expect(result.value).toContainEqual(
+                expect.objectContaining({
+                    id: mail1.id,
+                    priority: 2,
+                }),
+            );
+            // Should stay at priority 3
+            expect(result.value).toContainEqual(
+                expect.objectContaining({
+                    id: mail2.id,
+                    priority: 3,
+                }),
+            );
+        });
+
+        it('should return error if the target e-mail can not be found', async () => {
+            const targetMail: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                address: faker.internet.email(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                externalId: faker.string.uuid(),
+                oxUserCounter: faker.string.numeric(6),
+                priority: 0,
+                spshPersonId: faker.string.uuid(),
+            });
+
+            const result: Result<unknown> = await sut.shiftPriorities(targetMail, 0);
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(EntityNotFoundError);
+        });
+    });
+
+    describe('ensureStatusesAndCronDateForPerson', () => {
+        it('should set markedForCron for priority >= 1', async () => {
+            const personId: string = faker.string.uuid();
+            const oxUserCounter: string = faker.string.uuid();
+
+            const cronDate: Date = faker.date.future();
+
+            await createAndSaveMail(faker.internet.email(), 0, personId, oxUserCounter, undefined);
+            await createAndSaveMail(faker.internet.email(), 1, personId, oxUserCounter, undefined);
+            await createAndSaveMail(faker.internet.email(), 2, personId, oxUserCounter, undefined);
+
+            await sut.ensureStatusesAndCronDateForPerson(personId, cronDate);
+
+            const emailsAfterwards: AddressWithStatusesDescDto[] =
+                await sut.findAllEmailAddressesWithStatusesDescBySpshPersonId(personId);
+            emailsAfterwards.sort(
+                (a: AddressWithStatusesDescDto, b: AddressWithStatusesDescDto) =>
+                    a.emailAddress.priority - b.emailAddress.priority,
+            );
+
+            expect(emailsAfterwards[0]?.emailAddress.markedForCron).toBe(undefined);
+            expect(emailsAfterwards[1]?.emailAddress.markedForCron).toBe(cronDate);
+            expect(emailsAfterwards[2]?.emailAddress.markedForCron).toBe(cronDate);
+        });
+
+        it('should add deactive status to active mails with high priority', async () => {
+            const personId: string = faker.string.uuid();
+            const oxUserCounter: string = faker.string.uuid();
+
+            const cronDate: Date = faker.date.future();
+
+            const mail1: EmailAddress<true> = await createAndSaveMail(
+                faker.internet.email(),
+                2,
+                personId,
+                oxUserCounter,
+                undefined,
+            );
+
+            await emailAddressStatusRepo.create(
+                EmailAddressStatus.createNew({
+                    emailAddressId: mail1.id,
+                    status: EmailAddressStatusEnum.ACTIVE,
+                }),
+            );
+
+            await sut.ensureStatusesAndCronDateForPerson(personId, cronDate);
+
+            const emailsAfterwards: AddressWithStatusesDescDto[] =
+                await sut.findAllEmailAddressesWithStatusesDescBySpshPersonId(personId);
+
+            expect(emailsAfterwards[0]?.statuses).toEqual([
+                expect.objectContaining({ status: EmailAddressStatusEnum.DEACTIVE }),
+                expect.objectContaining({ status: EmailAddressStatusEnum.ACTIVE }),
+            ]);
         });
     });
 });

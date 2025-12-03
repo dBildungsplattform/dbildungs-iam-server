@@ -7,6 +7,9 @@ export type PersonID = Flavor<string, typeof personSymbol>;
 declare const personUsernameSymbol: unique symbol;
 export type PersonUsername = Flavor<string, typeof personUsernameSymbol>;
 
+declare const personExternalIdSymbol: unique symbol;
+export type PersonExternalID = Flavor<string, typeof personExternalIdSymbol>;
+
 declare const organisationSymbol: unique symbol;
 export type OrganisationID = Flavor<string, typeof organisationSymbol>;
 

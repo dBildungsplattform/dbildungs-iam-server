@@ -20,7 +20,7 @@ import { EmailMicroserviceModule } from '../email-microservice/email-microservic
         KeycloakAdministrationModule,
         LoggerModule.register(PersonModule.name),
         EventModule,
-        EmailMicroserviceModule,
+        forwardRef(() => EmailMicroserviceModule),
         forwardRef(() => PersonenKontextModule),
     ],
     providers: [
