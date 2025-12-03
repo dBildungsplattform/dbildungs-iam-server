@@ -25,12 +25,17 @@ import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
 import { CreateUserAction, CreateUserParams } from '../actions/user/create-user.action.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 import { PersonUsername } from '../../../../shared/types/index.js';
-import { ListGroupsForUserAction, ListGroupsForUserResponse } from '../actions/group/list-groups-for-user.action.js';
+import {
+    ListGroupsForUserAction,
+    ListGroupsForUserParams,
+    ListGroupsForUserResponse,
+} from '../actions/group/list-groups-for-user.action.js';
 import { differenceWith } from 'lodash-es';
 import {
     RemoveMemberFromGroupAction,
     RemoveMemberFromGroupResponse,
 } from '../actions/group/remove-member-from-group.action.js';
+import { PersonIdentifier } from '../../../../core/logging/person-identifier.js';
 
 @Injectable()
 export class OxService {
@@ -229,6 +234,39 @@ export class OxService {
         this.logger.info(`Found existing oxGroup for oxGroupName:${oxGroupName}`);
 
         return result.value.groups[0].id;
+    }
+
+    public async getOxGroupsForOxUserId(oxUserId: OXUserID): Promise<Result<ListGroupsForUserResponse>> {
+        const params: ListGroupsForUserParams = {
+            contextId: this.contextID,
+            userId: oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+        const action: ListGroupsForUserAction = new ListGroupsForUserAction(params);
+        const result: Result<ListGroupsForUserResponse, DomainError> = await this.oxSendService.send(action);
+        if (!result.ok) {
+            this.logger.error(`Could Not Retrieve OxGroups For OxUser, oxUserId:${oxUserId}`);
+        } else {
+            this.logger.info(`Successfully Retrieved OxGroups For OxUser, oxUserId:${oxUserId}`);
+        }
+        return result;
+    }
+
+    public async removeOxUserFromAllItsOxGroups(oxUserId: OXUserID, personIdentifier: PersonIdentifier): Promise<void> {
+        const listGroupsForUserResponse: Result<ListGroupsForUserResponse> =
+            await this.getOxGroupsForOxUserId(oxUserId);
+        if (!listGroupsForUserResponse.ok) {
+            return this.logger.errorPersonalized(`Retrieving OxGroups For OxUser Failed`, personIdentifier);
+        }
+        //Removal from Standard-Group is possible even when user is member of other OxGroups
+        const oxGroups: OXGroup[] = listGroupsForUserResponse.value.groups;
+        // The sent Ox-request should be awaited explicitly to avoid failures due to async execution in OX-Database (SQL-exceptions)
+        for (const oxGroup of oxGroups) {
+            //logging of results is done in removeOxUserFromOxGroup
+            /* eslint-disable-next-line no-await-in-loop */
+            await this.removeOxUserFromGroup(oxUserId, oxGroup.id);
+        }
     }
 
     public createChangeUserAction(
