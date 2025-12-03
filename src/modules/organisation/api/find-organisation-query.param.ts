@@ -130,5 +130,5 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
         required: false,
         nullable: true,
     })
-    public readonly getAllRecursivly?: boolean;
+    public readonly getChildrenRecursivly?: boolean;
 }
