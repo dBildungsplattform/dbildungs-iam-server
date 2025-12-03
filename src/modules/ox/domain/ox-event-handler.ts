@@ -433,9 +433,8 @@ export class OxEventHandler {
             return this.logger.info('OrganisationDeletedEvent does not apply, ignoring event');
         }
 
-        const oxGroupName: string = this.getOxLehrerGroupName(event.kennung);
 
-        await this.oxEventService.removeOxGroup(oxGroupName);
+        await this.oxEventService.removeOxGroup(event.kennung);
     }
 
     private async removeOxUserFromAllItsGroupsAndDeleteOxAccount(
@@ -725,9 +724,5 @@ export class OxEventHandler {
             person.username, //strictEquals the new OxUsername
             requestedEmailAddressString,
         );
-    }
-
-    private getOxLehrerGroupName(kennung: OrganisationKennung): string {
-        return OxEventService.LEHRER_OX_GROUP_NAME_PREFIX + kennung;
     }
 }

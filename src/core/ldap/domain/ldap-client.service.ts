@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Mutex } from 'async-mutex';
-import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
+import { Attribute, Change, Client, Entry, NoSuchObjectError, SearchResult } from 'ldapts';
 import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
 import { KafkaLdapPersonEntryChangedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-changed.event.js';
 import { LdapPersonEntryChangedEvent } from '../../../shared/events/ldap/ldap-person-entry-changed.event.js';
@@ -1423,12 +1423,24 @@ export class LdapClientService {
             }
 
             const orgUnitDn: string = `ou=${kennung},${this.ldapInstanceConfig.BASE_DN}`;
+            const groupDn: string = `cn=${LdapClientService.GROUPS},${orgUnitDn}`;
+
+            try {
+                await client.del(groupDn);
+            } catch (err) {
+                if (!(err instanceof NoSuchObjectError)) {
+                    this.logger.logUnknownAsError(`LDAP: Deleting group FAILED for kennung:${kennung}`, err);
+                    return Err(new LdapDeleteOrganisationError({ kennung }));
+                }
+            }
 
             try {
                 await client.del(orgUnitDn);
             } catch (err) {
-                this.logger.logUnknownAsError(`LDAP: Deleting orgUnit FAILED for kennung:${kennung}`, err);
-                return Err(new LdapDeleteOrganisationError({ kennung }));
+                if (!(err instanceof NoSuchObjectError)) {
+                    this.logger.logUnknownAsError(`LDAP: Deleting orgUnit FAILED for kennung:${kennung}`, err);
+                    return Err(new LdapDeleteOrganisationError({ kennung }));
+                }
             }
 
             this.logger.info(`LDAP: Successfully deleted organisation with kennung:${kennung}.`);

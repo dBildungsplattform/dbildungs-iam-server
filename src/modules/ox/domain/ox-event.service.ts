@@ -15,7 +15,7 @@ import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user
 import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox/ox-email-address-deleted.event.js';
 import { OxSyncUserCreatedEvent } from '../../../shared/events/ox/ox-sync-user-created.event.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
-import { PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationKennung, PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
 import {
     OXContextID,
     OXContextName,
@@ -24,7 +24,7 @@ import {
     OXUserID,
     OXUserName,
 } from '../../../shared/types/ox-ids.types.js';
-import { Err } from '../../../shared/util/result.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -407,14 +407,17 @@ export class OxEventService {
         }
     }
 
-    public async removeOxGroup(oxGroupName: string): Promise<Result<DeleteGroupResponse, DomainError>> {
+    public async removeOxGroup(kennung: OrganisationKennung): Promise<Result<DeleteGroupResponse, DomainError>> {
+        const oxGroupName: string = this.getOxLehrerGroupName(kennung);
+        const oxGroupDisplayName: string = this.getOxLehrerGroupDisplayName(kennung);
         const oxGroupId: OXGroupID | DomainError = await this.getOxGroupByName(oxGroupName);
         if (oxGroupId instanceof DomainError) {
             this.logger.logUnknownAsError(`Could Not Find OxGroup ${oxGroupName} for Deletion`, oxGroupId);
+            if (oxGroupId instanceof OxGroupNotFoundError) return Ok({});
             return Err(oxGroupId);
         }
 
-        const action: DeleteGroupAction = this.createDeleteGroupAction(oxGroupId);
+        const action: DeleteGroupAction = this.createDeleteGroupAction(oxGroupId, oxGroupName, oxGroupDisplayName);
         const result: Result<DeleteGroupResponse, DomainError> = await this.oxService.send(action);
         if (!result.ok) {
             this.logger.logUnknownAsError(
@@ -598,12 +601,22 @@ export class OxEventService {
         return changeByModuleAccessAction;
     }
 
-    public createDeleteGroupAction(oxGroupId: string): DeleteGroupAction {
+    public createDeleteGroupAction(oxGroupId: string, oxGroupName: string, oxGroupDisplayName: string): DeleteGroupAction {
         return new DeleteGroupAction({
             contextId: this.contextID,
             id: oxGroupId,
+            displayname: oxGroupDisplayName,
+            name: oxGroupName,
             login: this.authUser,
             password: this.authPassword,
         });
+    }
+
+    private getOxLehrerGroupName(kennung: OrganisationKennung): string {
+        return OxEventService.LEHRER_OX_GROUP_NAME_PREFIX + kennung;
+    }
+
+    private getOxLehrerGroupDisplayName(kennung: OrganisationKennung): string {
+        return OxEventService.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + kennung;
     }
 }
