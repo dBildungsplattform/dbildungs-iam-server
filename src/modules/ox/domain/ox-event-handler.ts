@@ -433,7 +433,6 @@ export class OxEventHandler {
             return this.logger.info('OrganisationDeletedEvent does not apply, ignoring event');
         }
 
-
         await this.oxEventService.removeOxGroup(event.kennung);
     }
 

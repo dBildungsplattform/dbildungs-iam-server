@@ -412,7 +412,9 @@ export class OxEventService {
         const oxGroupId: OXGroupID | DomainError = await this.getOxGroupByName(oxGroupName);
         if (oxGroupId instanceof DomainError) {
             this.logger.logUnknownAsError(`Could Not Find OxGroup ${oxGroupName} for Deletion`, oxGroupId);
-            if (oxGroupId instanceof OxGroupNotFoundError) return Ok({});
+            if (oxGroupId instanceof OxGroupNotFoundError) {
+                return Ok({});
+            }
             return Err(oxGroupId);
         }
 

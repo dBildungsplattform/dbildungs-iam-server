@@ -590,9 +590,7 @@ describe('ItsLearning Organisations Event Handler', () => {
                 RootDirectChildrenType.OEFFENTLICH,
             );
             orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
-            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(
-                createMock<DomainError>({ message: 'Error' }),
-            );
+            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(createMock<DomainError>({ message: 'Error' }));
 
             await sut.organisationDeletedEventHandler(event);
 

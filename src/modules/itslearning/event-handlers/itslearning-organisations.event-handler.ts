@@ -245,9 +245,7 @@ export class ItsLearningOrganisationsEventHandler {
     @KafkaEventHandler(KafkaOrganisationDeletedEvent)
     @EventHandler(OrganisationDeletedEvent)
     public async organisationDeletedEventHandler(event: OrganisationDeletedEvent): Promise<void> {
-        this.logger.info(
-            `[EventID: ${event.eventID}] Received OrganisationDeletedEvent, ID: ${event.organisationId}`,
-        );
+        this.logger.info(`[EventID: ${event.eventID}] Received OrganisationDeletedEvent, ID: ${event.organisationId}`);
 
         if (!this.ENABLED) {
             this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
@@ -261,16 +259,15 @@ export class ItsLearningOrganisationsEventHandler {
             return;
         }
 
-        const rootType: RootDirectChildrenType = await this.organisationRepo.findOrganisationZuordnungErsatzOderOeffentlich(event.organisationId);
+        const rootType: RootDirectChildrenType =
+            await this.organisationRepo.findOrganisationZuordnungErsatzOderOeffentlich(event.organisationId);
 
         if (rootType === RootDirectChildrenType.ERSATZ) {
             this.logger.error(`[EventID: ${event.eventID}] Ersatzschule, ignoring.`);
             return;
         }
 
-        const deleteError: Option<DomainError> = await this.itslearningGroupRepo.deleteGroup(
-            event.organisationId,
-        );
+        const deleteError: Option<DomainError> = await this.itslearningGroupRepo.deleteGroup(event.organisationId);
 
         if (deleteError) {
             return this.logger.error(
@@ -278,9 +275,7 @@ export class ItsLearningOrganisationsEventHandler {
             );
         }
 
-        this.logger.info(
-            `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} was deleted.`,
-        );
+        this.logger.info(`[EventID: ${event.eventID}] Schule with ID ${event.organisationId} was deleted.`);
     }
 
     private makeSchulName(dienststellennummer: string | undefined, name: string | undefined): string {
