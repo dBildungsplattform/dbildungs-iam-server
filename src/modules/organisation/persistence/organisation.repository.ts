@@ -390,9 +390,6 @@ export class OrganisationRepository {
             const rawIds: { id: string }[] = await this.em.execute(query, [searchOptions.administriertVon]);
 
             allIds = rawIds.map((r: { id: string }) => r.id);
-            if (searchOptions.administriertVon) {
-                allIds.push(...searchOptions.administriertVon);
-            }
         }
 
         let whereClause: QBFilterQuery<OrganisationEntity> = {};
