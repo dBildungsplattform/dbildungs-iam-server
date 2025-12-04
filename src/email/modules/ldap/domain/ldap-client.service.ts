@@ -162,8 +162,8 @@ export class LdapClientService {
         };
     }
 
-    private getLehrerUid(uid: PersonExternalID, rootName: string): string {
-        return `uid=${uid},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
+    private getPersonUid(externalId: PersonExternalID, rootName: string): string {
+        return `uid=${externalId},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
     }
 
     private getRootNameOrError(domain: string): Result<string> {
@@ -172,6 +172,48 @@ export class LdapClientService {
             this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
         }
         return rootName;
+    }
+
+    public async deletePerson(externalId: string, domain: string): Promise<Result<void>> {
+        return this.executeWithRetry(() => this.deletePersonInternal(externalId, domain), this.getNrOfRetries());
+    }
+
+    private async deletePersonInternal(externalId: string, domain: string): Promise<Result<void>> {
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) {
+            return rootName;
+        }
+
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: deletePerson by person');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) {
+                return bindResult;
+            }
+            const personUid: string = this.getPersonUid(externalId, rootName.value);
+            try {
+                const searchResultLehrer: SearchResult = await client.search(
+                    `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
+                    {
+                        filter: `(uid=${personUid})`,
+                    },
+                );
+                if (!searchResultLehrer.searchEntries[0]) {
+                    this.logger.info(`LDAP: Person ${personUid} does not exist, nothing to delete`);
+
+                    return { ok: true, value: undefined };
+                }
+                await client.del(personUid);
+                this.logger.info(`LDAP: Successfully deleted person ${personUid}`);
+
+                return { ok: true, value: undefined };
+            } catch (err) {
+                this.logger.logUnknownAsError(`LDAP: Deleting person FAILED, uid:${personUid}`, err);
+
+                return { ok: false, error: new Error() };
+            }
+        });
     }
 
     private async createPersonInternal(

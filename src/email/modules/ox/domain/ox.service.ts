@@ -35,7 +35,6 @@ import {
     RemoveMemberFromGroupAction,
     RemoveMemberFromGroupResponse,
 } from '../actions/group/remove-member-from-group.action.js';
-import { PersonIdentifier } from '../../../../core/logging/person-identifier.js';
 
 @Injectable()
 export class OxService {
@@ -253,11 +252,11 @@ export class OxService {
         return result;
     }
 
-    public async removeOxUserFromAllItsOxGroups(oxUserId: OXUserID, personIdentifier: PersonIdentifier): Promise<void> {
+    public async removeOxUserFromAllItsOxGroups(oxUserId: OXUserID): Promise<void> {
         const listGroupsForUserResponse: Result<ListGroupsForUserResponse> =
             await this.getOxGroupsForOxUserId(oxUserId);
         if (!listGroupsForUserResponse.ok) {
-            return this.logger.errorPersonalized(`Retrieving OxGroups For OxUser Failed`, personIdentifier);
+            return this.logger.error(`Retrieving OxGroups For OxUser Failed, oxUserId:${oxUserId}`);
         }
         //Removal from Standard-Group is possible even when user is member of other OxGroups
         const oxGroups: OXGroup[] = listGroupsForUserResponse.value.groups;
