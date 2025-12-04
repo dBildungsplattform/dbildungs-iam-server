@@ -1,4 +1,6 @@
+import { Loaded } from '@mikro-orm/core';
 import { ConfigService } from '@nestjs/config';
+import { uniqBy } from 'lodash-es';
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
@@ -10,7 +12,9 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import {
     DBiamPersonenkontextRepo,
     ExternalPkData,
+    PersonenkontextErweitertVirtualEntityLoaded,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { RequiredExternalPkData } from '../api/authentication.controller.js';
 import { EmailAddressNotFoundError } from '../../email/error/email-address-not-found.error.js';
 import { OXContextID } from '../../../shared/types/ox-ids.types.js';
@@ -23,6 +27,8 @@ export class UserExternaldataWorkflowAggregate {
     public person?: Person<true>;
 
     public checkedExternalPkData?: RequiredExternalPkData[];
+
+    public personenKontextErweiterungen?: PersonenkontextErweitertVirtualEntityLoaded[];
 
     private constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
@@ -51,6 +57,8 @@ export class UserExternaldataWorkflowAggregate {
     public async initialize(personId: string): Promise<void | DomainError> {
         const person: Option<Person<true>> = await this.personRepo.findById(personId);
         const externalPkData: ExternalPkData[] = await this.personenkontextRepo.findExternalPkData(personId);
+        const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] =
+            await this.personenkontextRepo.findPKErweiterungen(personId);
 
         if (!person) {
             return new EntityNotFoundError('Person', personId);
@@ -71,14 +79,56 @@ export class UserExternaldataWorkflowAggregate {
         // Additionally If there is an data-invalidity the Endpoint still works (If throwing Errors not) and allows the Keycloak the get the data for the other Personenkontexte
         this.checkedExternalPkData = externalPkData
             .map((expk: ExternalPkData) => {
-                if (expk.kennung && expk.rollenart) {
+                if (expk.pkId && expk.kennung && expk.rollenart && expk.serviceProvider) {
                     return {
+                        pkId: expk.pkId,
                         rollenart: expk.rollenart,
+                        serviceProvider: expk.serviceProvider,
                         kennung: expk.kennung,
                     } satisfies RequiredExternalPkData;
                 }
                 return undefined;
             })
             .filter((item: RequiredExternalPkData | undefined): item is RequiredExternalPkData => item !== undefined);
+
+        this.personenKontextErweiterungen = personenKontextErweiterungen.filter(
+            (
+                pkErw: PersonenkontextErweitertVirtualEntityLoaded | undefined,
+            ): pkErw is PersonenkontextErweitertVirtualEntityLoaded => pkErw !== undefined,
+        );
+    }
+
+    public static mergeServiceProviders(
+        externalPkData: RequiredExternalPkData[],
+        personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[],
+    ): RequiredExternalPkData[] {
+        const erweiterungenMap: Map<string, ServiceProviderEntity[]> = new Map<string, ServiceProviderEntity[]>();
+        for (const erweiterung of personenKontextErweiterungen) {
+            const pkId: string = erweiterung.personenkontext.unwrap().id;
+            const sp: Loaded<ServiceProviderEntity> = erweiterung.serviceProvider.unwrap();
+            if (!erweiterungenMap.has(pkId)) {
+                erweiterungenMap.set(pkId, []);
+            }
+            erweiterungenMap.get(pkId)?.push(sp);
+        }
+
+        return externalPkData.map((pk: RequiredExternalPkData) => {
+            const extraSp: ServiceProviderEntity[] = erweiterungenMap.get(pk.pkId) ?? [];
+            const mergedSp: ServiceProviderEntity[] = [...pk.serviceProvider, ...extraSp];
+            const uniqueSp: ServiceProviderEntity[] = uniqBy(mergedSp, 'id');
+
+            return {
+                ...pk,
+                serviceProvider: uniqueSp,
+            };
+        });
+    }
+
+    public static getExternalPkDataWithSpWithVidisAngebotId(
+        externalPkData: RequiredExternalPkData[],
+    ): RequiredExternalPkData[] {
+        return externalPkData.filter((pk: RequiredExternalPkData): pk is RequiredExternalPkData =>
+            pk.serviceProvider.some((sp: ServiceProviderEntity) => Boolean(sp.vidisAngebotId)),
+        );
     }
 }
