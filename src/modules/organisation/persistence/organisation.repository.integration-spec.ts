@@ -2001,6 +2001,97 @@ describe('OrganisationRepository', () => {
             expect(result[0].some((org: Organisation<true>) => org.id === orgas[3]!.id)).toBeTruthy();
         });
 
+        it('should return all authorized organisations with correct type and parent under administriertVon with Recursion', async () => {
+            const orgas: OrganisationEntity[] = [];
+            const orgaLand: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                '',
+                'Öffentliche Schulen Land Schleswig-Holstein',
+                undefined,
+                undefined,
+                OrganisationsTyp.LAND,
+            );
+            if (orgaLand instanceof DomainError) {
+                return;
+            }
+            const mappedOrgaLand: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaLand));
+            await em.persistAndFlush(mappedOrgaLand);
+            orgas.push(mappedOrgaLand);
+
+            for (let i: number = 0; i < 3; i++) {
+                const orga: Organisation<false> | DomainError = Organisation.createNew(
+                    mappedOrgaLand.id,
+                    mappedOrgaLand.id,
+                    faker.string.numeric(6),
+                    faker.company.name(),
+                    undefined,
+                    undefined,
+                    OrganisationsTyp.SCHULE,
+                );
+                if (orga instanceof DomainError) {
+                    fail('could not create Schule under Land');
+                }
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
+                await em.persistAndFlush(mappedOrga);
+                orgas.push(mappedOrga);
+            }
+            const orgaTraeger: Organisation<false> | DomainError = Organisation.createNew(
+                mappedOrgaLand.id,
+                mappedOrgaLand.id,
+                faker.string.numeric(6),
+                faker.company.name(),
+                undefined,
+                undefined,
+                OrganisationsTyp.TRAEGER,
+            );
+            if (orgaTraeger instanceof DomainError) {
+                fail('could not create Traeger');
+            }
+            const mappedOrgaTraeger: OrganisationEntity = em.create(
+                OrganisationEntity,
+                mapOrgaAggregateToData(orgaTraeger),
+            );
+            await em.persistAndFlush(mappedOrgaTraeger);
+            orgas.push(mappedOrgaTraeger);
+
+            for (let i: number = 0; i < 3; i++) {
+                const orga: Organisation<false> | DomainError = Organisation.createNew(
+                    mappedOrgaTraeger.id,
+                    mappedOrgaTraeger.id,
+                    faker.string.numeric(6),
+                    faker.company.name(),
+                    undefined,
+                    undefined,
+                    OrganisationsTyp.SCHULE,
+                );
+                if (orga instanceof DomainError) {
+                    fail('could not create Schule under root');
+                }
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
+                await em.persistAndFlush(mappedOrga);
+                orgas.push(mappedOrga);
+            }
+            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                personPermissions,
+                [RollenSystemRecht.SCHULEN_VERWALTEN],
+                { administriertVon: [mappedOrgaLand.id], typ: OrganisationsTyp.SCHULE, getChildrenRecursivly: true },
+            );
+
+            expect(result[1]).toBe(6);
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[1]!.id)).toBeTruthy();
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[2]!.id)).toBeTruthy();
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[3]!.id)).toBeTruthy();
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[5]!.id)).toBeTruthy();
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[6]!.id)).toBeTruthy();
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[7]!.id)).toBeTruthy();
+        });
+
         it('should return all authorized organisations with correct type and parent under zugehoerig zu', async () => {
             const orgas: OrganisationEntity[] = [];
             const orgaLand: Organisation<false> | DomainError = Organisation.createNew(
