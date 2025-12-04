@@ -58,7 +58,7 @@ jobs:
   codeql_analyze:
     name: "CodeQL"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@OPS-10097-Fix-CodeQL-Analysis
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@8
     with:
       codeql_languages: javascript
     permissions:
