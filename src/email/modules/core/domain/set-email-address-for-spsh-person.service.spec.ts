@@ -12,7 +12,7 @@ import { Err, Ok } from '../../../../shared/util/result.js';
 import { LdapClientService } from '../../ldap/domain/ldap-client.service.js';
 import { OxSendService } from '../../ox/domain/ox-send.service.js';
 import { OxService } from '../../ox/domain/ox.service.js';
-import { SetEmailAddressForSpshPersonParams } from '../api/dtos/params/set-email-address-for-spsh-person.params.js';
+import { SetEmailAddressForSpshPersonBodyParams } from '../api/dtos/params/set-email-address-for-spsh-person.bodyparams.js';
 import { EmailAddressGenerationAttemptsExceededError } from '../error/email-address-generation-attempts-exceeds.error.js';
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 import { EmailUpdateInProgressError } from '../error/email-update-in-progress.error.js';
@@ -103,7 +103,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
         sut.RETRY_ATTEMPTS = 1;
     });
 
-    function makeParams(spshServiceProviderId: string): SetEmailAddressForSpshPersonParams {
+    function makeParams(spshServiceProviderId: string): SetEmailAddressForSpshPersonBodyParams {
         return {
             firstName: faker.person.firstName(),
             lastName: faker.person.lastName(),
@@ -134,7 +134,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
     describe('setEmailAddressForSpshPerson', () => {
         it('should create new email if no other mail exists', async () => {
             const domain: EmailDomain<true> = await setupDomain();
-            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+            const params: SetEmailAddressForSpshPersonBodyParams = makeParams(domain.spshServiceProviderId);
             const newOxId: string = faker.string.numeric(5);
             const expectedEmailAddress: string = `${params.firstName}.${params.lastName}@${domain.domain}`;
 
@@ -160,7 +160,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
         it('should reactivate old email', async () => {
             const domain: EmailDomain<true> = await setupDomain();
-            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+            const params: SetEmailAddressForSpshPersonBodyParams = makeParams(domain.spshServiceProviderId);
             const oldOxId: string = faker.string.numeric(5);
 
             const email1: EmailAddress<true> = await setupEmail(
@@ -279,7 +279,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
         it('should shift failed email from prio 0', async () => {
             const domain: EmailDomain<true> = await setupDomain();
-            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+            const params: SetEmailAddressForSpshPersonBodyParams = makeParams(domain.spshServiceProviderId);
             const oldOxId: string = faker.string.numeric(5);
             const expectedEmailAddress: string = `${params.firstName}.${params.lastName}@${domain.domain}`;
 
@@ -336,7 +336,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
         it('should error if shifting of old failed address fails', async () => {
             const domain: EmailDomain<true> = await setupDomain();
-            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+            const params: SetEmailAddressForSpshPersonBodyParams = makeParams(domain.spshServiceProviderId);
             const oldOxId: string = faker.string.numeric(5);
             const expectedEmailAddress: string = `${params.firstName}.${params.lastName}@${domain.domain}`;
 
@@ -374,7 +374,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
         it('should not change priorities if the email has prio 0 and the status is not ALREADY_IN_OX', async () => {
             const domain: EmailDomain<true> = await setupDomain();
-            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+            const params: SetEmailAddressForSpshPersonBodyParams = makeParams(domain.spshServiceProviderId);
             const oldOxId: string = faker.string.numeric(5);
 
             const email: EmailAddress<true> = await setupEmail(
@@ -428,7 +428,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
         it('should throw error if user already has a pending e-mail', async () => {
             const domain: EmailDomain<true> = await setupDomain();
-            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+            const params: SetEmailAddressForSpshPersonBodyParams = makeParams(domain.spshServiceProviderId);
 
             await setupEmail(
                 EmailAddress.createNew({
@@ -448,7 +448,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
         it('should throw error if new email can not be determined', async () => {
             const domain: EmailDomain<true> = await setupDomain();
-            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+            const params: SetEmailAddressForSpshPersonBodyParams = makeParams(domain.spshServiceProviderId);
             const generationError: Error = new Error('Could not generate mail');
 
             // User has no emails
@@ -466,7 +466,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
         it('should error when updating of priorities fails', async () => {
             const domain: EmailDomain<true> = await setupDomain();
-            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+            const params: SetEmailAddressForSpshPersonBodyParams = makeParams(domain.spshServiceProviderId);
             const expectedEmailAddress: string = `${params.firstName}.${params.lastName}@${domain.domain}`;
 
             emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce(Ok(expectedEmailAddress));
@@ -487,7 +487,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
         it('should error if save after ox-sync fails', async () => {
             const domain: EmailDomain<true> = await setupDomain();
-            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+            const params: SetEmailAddressForSpshPersonBodyParams = makeParams(domain.spshServiceProviderId);
             await setupEmail(
                 EmailAddress.createNew({
                     address: faker.internet.email(),
@@ -526,7 +526,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
         describe('getOrCreateAvailableEmail', () => {
             it('should return error if generation failed', async () => {
                 const domain: EmailDomain<true> = await setupDomain();
-                const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+                const params: SetEmailAddressForSpshPersonBodyParams = makeParams(domain.spshServiceProviderId);
 
                 const error: Error = new Error('test error');
                 emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce(Err(error));
@@ -544,7 +544,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
         describe('upsertOxUser', () => {
             let domain: EmailDomain<true>;
-            let params: SetEmailAddressForSpshPersonParams;
+            let params: SetEmailAddressForSpshPersonBodyParams;
             let address: string;
 
             beforeEach(async () => {
@@ -680,7 +680,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
         describe('upsertLdap', () => {
             let domain: EmailDomain<true>;
-            let params: SetEmailAddressForSpshPersonParams;
+            let params: SetEmailAddressForSpshPersonBodyParams;
             let expectedEmailAddress: string;
 
             beforeEach(async () => {
@@ -758,7 +758,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
         it('should log on unknown error', async () => {
             const domain: EmailDomain<true> = await setupDomain();
-            const params: SetEmailAddressForSpshPersonParams = makeParams(domain.spshServiceProviderId);
+            const params: SetEmailAddressForSpshPersonBodyParams = makeParams(domain.spshServiceProviderId);
 
             const error: Error = new Error('Test Error');
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

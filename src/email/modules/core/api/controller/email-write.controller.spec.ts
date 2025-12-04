@@ -6,7 +6,7 @@ import { faker } from '@faker-js/faker';
 import { EmailWriteController } from './email-write.controller.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { SetEmailAddressForSpshPersonService } from '../../domain/set-email-address-for-spsh-person.service.js';
-import { SetEmailAddressForSpshPersonParams } from '../dtos/params/set-email-address-for-spsh-person.params.js';
+import { SetEmailAddressForSpshPersonBodyParams } from '../dtos/params/set-email-address-for-spsh-person.bodyparams.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 
 describe('Email Write Controller', () => {
@@ -46,7 +46,7 @@ describe('Email Write Controller', () => {
 
     describe('setEmailAddressForSpshPerson', () => {
         it('should resolve immediatly if setEmailAddressForSpshPerson succeeds', () => {
-            const params: SetEmailAddressForSpshPersonParams = {
+            const params: SetEmailAddressForSpshPersonBodyParams = {
                 spshPersonId: faker.string.uuid(),
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
@@ -62,7 +62,7 @@ describe('Email Write Controller', () => {
         });
 
         it('should resolve immediatly if setEmailAddressForSpshPerson fails', () => {
-            const params: SetEmailAddressForSpshPersonParams = {
+            const params: SetEmailAddressForSpshPersonBodyParams = {
                 spshPersonId: faker.string.uuid(),
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
