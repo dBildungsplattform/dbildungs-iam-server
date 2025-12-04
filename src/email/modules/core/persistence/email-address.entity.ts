@@ -34,6 +34,7 @@ export class EmailAddrEntity extends TimestampedEntity {
         entity: () => EmailAddressStatusEntity,
         mappedBy: 'emailAddress',
         eager: true,
+        orphanRemoval: true,
         orderBy: { createdAt: QueryOrder.DESC },
     })
     public statuses: Collection<EmailAddressStatusEntity> = new Collection<EmailAddressStatusEntity>(this);

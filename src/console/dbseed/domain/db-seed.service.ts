@@ -38,6 +38,10 @@ import { DbSeedReference } from './db-seed-reference.js';
 import { EmailDomainFile } from '../file/email-domain-file.js';
 import { EmailDomain } from '../../../email/modules/core/domain/email-domain.js';
 import { EmailDomainRepo } from '../../../email/modules/core/persistence/email-domain.repo.js';
+import { RollenerweiterungFile } from '../file/rollenerweiterung-file.js';
+import { Rollenerweiterung } from '../../../modules/rolle/domain/rollenerweiterung.js';
+import { RollenerweiterungFactory } from '../../../modules/rolle/domain/rollenerweiterung.factory.js';
+import { RollenerweiterungRepo } from '../../../modules/rolle/repo/rollenerweiterung.repo.js';
 
 @Injectable()
 export class DbSeedService {
@@ -51,6 +55,8 @@ export class DbSeedService {
         private readonly organisationRepository: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
+        private readonly rollenerweiterungRepo: RollenerweiterungRepo,
+        private readonly rollenerweiterungFactory: RollenerweiterungFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderFactory: ServiceProviderFactory,
         private readonly emailDomainRepo: EmailDomainRepo,
@@ -189,6 +195,38 @@ export class DbSeedService {
             }
         }
         this.logger.info(`Insert ${files.length} entities of type Rolle`);
+    }
+
+    public async seedRollenerweiterung(fileContentAsStr: string): Promise<void> {
+        const rollenerweiterungFile: EntityFile<RollenerweiterungFile> = JSON.parse(
+            fileContentAsStr,
+        ) as EntityFile<RollenerweiterungFile>;
+        const files: RollenerweiterungFile[] = plainToInstance(RollenerweiterungFile, rollenerweiterungFile.entities);
+        for (const file of files) {
+            const orga: Organisation<true> = await this.getReferencedOrganisation(file.organisationId);
+            const rolle: Rolle<true> = await this.getReferencedRolle(file.rolleId);
+            const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(file.serviceProviderId);
+            const rollenerweiterung: Rollenerweiterung<false> = this.rollenerweiterungFactory.createNew(
+                orga.id,
+                rolle.id,
+                sp.id,
+            );
+
+            const persistedRollenerweiterung: Rollenerweiterung<true> =
+                await this.rollenerweiterungRepo.create(rollenerweiterung);
+            if (persistedRollenerweiterung && file.id != null) {
+                const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
+                    ReferencedEntityType.ROLLENERWEITERUNG,
+                    file.id,
+                    persistedRollenerweiterung.id,
+                );
+                await this.dbSeedReferenceRepo.create(dbSeedReference);
+            } else {
+                this.logger.error('Rollenerweiterung without ID thus not referenceable:');
+                this.logger.error(JSON.stringify(rollenerweiterung));
+            }
+        }
+        this.logger.info(`Insert ${files.length} entities of type Rollenerweiterung`);
     }
 
     public async seedServiceProvider(fileContentAsStr: string): Promise<void> {

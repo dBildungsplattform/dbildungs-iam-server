@@ -70,11 +70,9 @@ export class EmailAddressRepo {
     }
 
     public async existsEmailAddress(address: string): Promise<boolean> {
-        const emailAddressEntity: Option<EmailAddrEntity> = await this.em.findOne(
-            EmailAddrEntity,
-            { address: address },
-            {},
-        );
+        const emailAddressEntity: Option<EmailAddrEntity> = await this.em.findOne(EmailAddrEntity, {
+            address: address,
+        });
 
         return !!emailAddressEntity;
     }
