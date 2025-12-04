@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ArrayUnique, IsBoolean, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
-import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
-import { OrganisationsTyp, OrganisationsTypName, SortFieldOrganisation } from '../domain/organisation.enums.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../../rolle/domain/systemrecht.js';
+import { OrganisationsTyp, OrganisationsTypName, SortFieldOrganisation } from '../domain/organisation.enums.js';
+import { Transform } from 'class-transformer';
 
 export class FindOrganisationQueryParams extends PagedQueryParams {
     @IsString()
@@ -124,12 +125,16 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
     })
     public readonly sortField?: SortFieldOrganisation;
 
-    // If we want using boolean we have to add global pipe for transforming query params to correct type to app
     @IsOptional()
-    @IsString()
+    @IsBoolean()
+    // eslint-disable-next-line @typescript-eslint/typedef
+    @Transform(({ obj, key }) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+        return obj[key] === 'true' ? true : obj[key] === 'false' ? false : obj[key];
+    })
     @ApiProperty({
         required: false,
         nullable: true,
     })
-    public readonly getChildrenRecursivly?: string;
+    public readonly getChildrenRecursivly?: boolean;
 }
