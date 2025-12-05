@@ -86,7 +86,7 @@ export type OrganisationSeachOptions = {
     readonly limit?: number;
     readonly sortField?: SortFieldOrganisation;
     readonly sortOrder?: ScopeOrder;
-    readonly getChildrenRecursivly?: boolean;
+    readonly getChildrenRecursively?: boolean;
 };
 
 @Injectable()
@@ -377,21 +377,6 @@ export class OrganisationRepository {
             );
         }
 
-        let allIds: string[] = [];
-        if (searchOptions.getChildrenRecursivly) {
-            const query: string = `
-                WITH RECURSIVE org_tree AS (
-                    SELECT id, administriert_von FROM organisation WHERE administriert_von IN (?)
-                    UNION ALL
-                    SELECT o.id, o.administriert_von FROM organisation o INNER JOIN org_tree t ON o.administriert_von = t.id
-                )
-                SELECT id FROM org_tree;
-            `;
-            const rawIds: { id: string }[] = await this.em.execute(query, [searchOptions.administriertVon]);
-
-            allIds = rawIds.map((r: { id: string }) => r.id);
-        }
-
         let whereClause: QBFilterQuery<OrganisationEntity> = {};
         const andClauses: QBFilterQuery<OrganisationEntity>[] = [];
         if (searchOptions.kennung) {
@@ -404,7 +389,19 @@ export class OrganisationRepository {
             andClauses.push({ typ: searchOptions.typ });
         }
         if (searchOptions.administriertVon) {
-            if (searchOptions.getChildrenRecursivly) {
+            if (searchOptions.getChildrenRecursively) {
+                const query: string = `
+                    WITH RECURSIVE org_tree AS (
+                        SELECT id, administriert_von FROM organisation WHERE administriert_von IN (?)
+                        UNION ALL
+                        SELECT o.id, o.administriert_von FROM organisation o INNER JOIN org_tree t ON o.administriert_von = t.id
+                    )
+                    SELECT id FROM org_tree;
+                `;
+                const rawIds: { id: string }[] = await this.em.execute(query, [searchOptions.administriertVon]);
+
+                const allIds: string[] = rawIds.map((r: { id: string }) => r.id);
+
                 andClauses.push({ id: { $in: allIds } });
             } else {
                 andClauses.push({ administriertVon: { $in: searchOptions.administriertVon } });

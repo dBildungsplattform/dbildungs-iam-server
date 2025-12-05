@@ -5,7 +5,7 @@ import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../../rolle/domain/systemrecht.js';
 import { OrganisationsTyp, OrganisationsTypName, SortFieldOrganisation } from '../domain/organisation.enums.js';
-import { Transform } from 'class-transformer';
+import { TransformToBoolean } from '../../../shared/util/boolean-transform.validator.js';
 
 export class FindOrganisationQueryParams extends PagedQueryParams {
     @IsString()
@@ -127,14 +127,10 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
 
     @IsOptional()
     @IsBoolean()
-    // eslint-disable-next-line @typescript-eslint/typedef
-    @Transform(({ obj, key }) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-        return obj[key] === 'true' ? true : obj[key] === 'false' ? false : obj[key];
-    })
+    @TransformToBoolean()
     @ApiProperty({
         required: false,
         nullable: true,
     })
-    public readonly getChildrenRecursivly?: boolean;
+    public readonly getChildrenRecursively?: boolean;
 }
