@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker';
-import { jest } from '@jest/globals';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';

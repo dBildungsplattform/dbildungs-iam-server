@@ -84,7 +84,10 @@ export default defineConfig(
         languageOptions: languageOptions,
         files: ['**/*.ts'],
         ignores: ['**/*spec.ts', 'test-migrations/**/*.ts', 'migrations/**/*.ts'],
-        rules: rules,
+        rules: {
+            ...rules,
+            'import/no-extraneous-dependencies': 'error'
+        }
     },
     {
         name: 'jest-config',
@@ -99,9 +102,10 @@ export default defineConfig(
             // you should turn the original rule off *only* for test files
             '@typescript-eslint/unbound-method': 'off',
             '@typescript-eslint/no-empty-function': 'off',
-            'import/no-extraneous-dependencies':  [
-                "error",
-                { "devDependencies": true, "optionalDependencies": false, "peerDependencies": false }
+            'import/no-extraneous-dependencies':
+            [
+                'error',
+                { 'devDependencies': true }
             ],
         },
     },

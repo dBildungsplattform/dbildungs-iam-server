@@ -9,7 +9,7 @@ const commonConfig: Partial<Config> = {
     preset: 'ts-jest/presets/default-esm',
     moduleNameMapper: {
         '^(\\.{1,2}/.*)\\.js$': '$1',
-        '^lodash-es$': 'lodash',
+        // '^lodash-es$': 'lodash',
     },
     transform: {
         '^.+\\.tsx?$': [
@@ -20,6 +20,7 @@ const commonConfig: Partial<Config> = {
         ],
     },
     transformIgnorePatterns: ['node_modules'],
+    setupFiles: ['../test/test-setup.ts'],
 };
 
 const config: Config = {
