@@ -6,6 +6,7 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
 import { StreamableFileFactory } from '../../shared/util/streamable-file.factory.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { RolleModule } from '../rolle/rolle.module.js';
+import { OrganisationModule } from '../organisation/organisation.module.js';
 
 @Module({
     imports: [
@@ -13,6 +14,7 @@ import { RolleModule } from '../rolle/rolle.module.js';
         LoggerModule.register(ServiceProviderApiModule.name),
         PersonenKontextModule,
         forwardRef(() => RolleModule),
+        forwardRef(() => OrganisationModule),
         KeycloakAdministrationModule,
     ],
     providers: [StreamableFileFactory],
