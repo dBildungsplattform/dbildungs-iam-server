@@ -153,6 +153,30 @@ export class OxService {
         };
     }
 
+    public async removeOxUserFromGroup(oxUserId: OXUserID, oxGroupId: string): Promise<Result<void>> {
+        const removeMemberFromGroupAction: RemoveMemberFromGroupAction = this.createRemoveMemberFromGroupAction(
+            oxGroupId,
+            oxUserId,
+        );
+
+        const result: Result<RemoveMemberFromGroupResponse, DomainError> =
+            await this.oxSendService.send(removeMemberFromGroupAction);
+
+        if (!result.ok) {
+            this.logger.logUnknownAsError(
+                `Could not remove oxUser from oxGroup, oxUserId:${oxUserId} oxGroupId:${oxGroupId}`,
+                result.error,
+            );
+            return result;
+        }
+
+        this.logger.info(`Successfully removed oxUser from oxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+        return {
+            ok: true,
+            value: undefined,
+        };
+    }
+
     public async getExistingOxGroupByNameOrCreateOxGroup(
         oxGroupName: OXGroupName,
         displayName: string,
