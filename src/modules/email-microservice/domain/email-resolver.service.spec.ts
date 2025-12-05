@@ -13,7 +13,7 @@ import { EmailAddressStatus } from '../../email/domain/email-address';
 import { PersonEmailResponse } from '../../person/api/person-email-response';
 import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailResolverService, PersonIdWithEmailResponse } from './email-resolver.service';
-import { SetEmailAddressForSpshPersonParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.params';
+import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams';
 
 type SetEmailParams = Parameters<EmailResolverService['setEmailForSpshPerson']>[0];
 
@@ -325,7 +325,7 @@ describe('EmailResolverService', () => {
             firstName: 'Max',
             lastName: 'Mustermann',
             spshServiceProviderId: faker.string.uuid(),
-        } satisfies SetEmailAddressForSpshPersonParams;
+        } satisfies SetEmailAddressForSpshPersonBodyParams;
         const mockAxiosResponse: AxiosResponse<EmailAddressResponse[]> = {
             data: [],
             status: 200,
@@ -356,7 +356,7 @@ describe('EmailResolverService', () => {
             firstName: 'Max',
             lastName: 'Mustermann',
             spshServiceProviderId: faker.string.uuid(),
-        } satisfies SetEmailAddressForSpshPersonParams;
+        } satisfies SetEmailAddressForSpshPersonBodyParams;
         const error: Error = new Error('Microservice failure');
 
         mockHttpService.post.mockImplementation(() => {
@@ -402,7 +402,7 @@ describe('EmailResolverService', () => {
             firstName: 'Max',
             lastName: 'Mustermann',
             spshServiceProviderId: faker.string.uuid(),
-        } satisfies SetEmailAddressForSpshPersonParams;
+        } satisfies SetEmailAddressForSpshPersonBodyParams;
         const expectedUrl: string = `${mockEndpoint}api/write/set-email-for-person`;
 
         mockHttpService.post.mockReturnValueOnce(of({ status: 200 } as AxiosResponse));

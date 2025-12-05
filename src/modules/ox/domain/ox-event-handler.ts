@@ -299,6 +299,11 @@ export class OxEventHandler {
     public async handlePersonDeletedEvent(event: PersonDeletedEvent | KafkaPersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
 
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Ignoring Event for personId:${event.personId} because email microservice is enabled`);
+            return;
+        }
+
         // Check if the functionality is enabled
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');

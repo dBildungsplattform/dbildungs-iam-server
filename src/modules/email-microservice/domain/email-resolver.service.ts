@@ -9,7 +9,7 @@ import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/
 import { EmailMicroserviceConfig } from '../../../shared/config/email-microservice.config.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
-import { SetEmailAddressForSpshPersonParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.params.js';
+import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams.js';
 
 export interface PersonIdWithEmailResponse {
     personId: string;
@@ -96,14 +96,30 @@ export class EmailResolverService {
             );
             this.logger.info(`Params: ${JSON.stringify(params)}`);
             await lastValueFrom(
-                this.httpService.post(this.getEndpoint() + `${EmailResolverService.writePath}/set-email-for-person`, {
-                    spshPersonId: params.spshPersonId,
-                    spshUsername: params.spshUsername,
-                    kennungen: params.kennungen,
-                    firstName: params.firstName,
-                    lastName: params.lastName,
-                    spshServiceProviderId: params.spshServiceProviderId,
-                } satisfies SetEmailAddressForSpshPersonParams),
+                this.httpService.post(
+                    this.getEndpoint() + `${EmailResolverService.writePath}/${params.spshPersonId}/set-email`,
+                    {
+                        spshUsername: params.spshUsername,
+                        kennungen: params.kennungen,
+                        firstName: params.firstName,
+                        lastName: params.lastName,
+                        spshServiceProviderId: params.spshServiceProviderId,
+                    } satisfies SetEmailAddressForSpshPersonBodyParams,
+                ),
+            );
+        } catch (error) {
+            this.logger.logUnknownAsError(`Failed to set email for person ${params.spshPersonId}`, error);
+        }
+    }
+
+    public async deleteEmailsForSpshPerson(params: { spshPersonId: string }): Promise<void> {
+        try {
+            // For now just mocking the post
+            this.logger.info(`Deleting email for person ${params.spshPersonId} via email microservice`);
+            await lastValueFrom(
+                this.httpService.delete(
+                    this.getEndpoint() + `${EmailResolverService.writePath}/${params.spshPersonId}/delete-emails`,
+                ),
             );
         } catch (error) {
             this.logger.logUnknownAsError(`Failed to set email for person ${params.spshPersonId}`, error);

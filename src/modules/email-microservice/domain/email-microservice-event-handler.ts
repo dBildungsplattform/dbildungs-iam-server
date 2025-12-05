@@ -19,6 +19,8 @@ import {
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { uniq } from 'lodash-es';
+import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 
 @Injectable()
 export class EmailMicroserviceEventHandler {
@@ -128,6 +130,20 @@ export class EmailMicroserviceEventHandler {
             lastName: event.familienname,
             spshServiceProviderId: emailServiceProviderId,
         });
+    }
+
+    @KafkaEventHandler(KafkaPersonDeletedEvent)
+    @EventHandler(PersonDeletedEvent)
+    @EnsureRequestContext()
+    public async handlePersonDeletedEvent(event: PersonDeletedEvent | KafkaPersonDeletedEvent): Promise<void> {
+        this.logger.info(
+            `Received PersonenkontextDeletedEvent, personId:${event.personId}, username:${event.username}`,
+        );
+        if (!this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Ignoring Event for personId:${event.personId} because email microservice is disabled`);
+            return;
+        }
+        await this.emailResolverService.deleteEmailsForSpshPerson({ spshPersonId: event.personId });
     }
 
     private async getEmailServiceProviderId(rollenIds: RolleID[]): Promise<string | undefined> {

@@ -2,7 +2,6 @@ import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
-import { AddressWithStatusesDescDto } from '../dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
 import { EmailReadController } from './email-read.controller.js';
 import { APP_PIPE } from '@nestjs/core';
@@ -12,12 +11,12 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     LoggingTestModule,
 } from '../../../../../../test/utils/index.js';
-import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
-import { EmailAddressStatus } from '../../domain/email-address-status.js';
+import { FindEmailAddressBySpshPersonIdPathParams } from '../dtos/params/find-email-address-by-spsh-person-id.pathparams.js';
 import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
 import { EmailOxModule } from '../../../ox/email-ox.module.js';
 import { EmailAddressNotFoundError } from '../../error/email-address-not-found.error.js';
 import { EmailAddressMissingStatusError } from '../../error/email-address-missing-status.error.js';
+import { EmailAddress } from '../../domain/email-address.js';
 
 describe('EmailReadController', () => {
     let emailReadController: EmailReadController;
@@ -50,29 +49,24 @@ describe('EmailReadController', () => {
     describe('findEmailAddress', () => {
         it('should return address if found', async () => {
             const emailAddressToSearch: string = faker.internet.email();
-            const addressWithStatuses: AddressWithStatusesDescDto = {
-                emailAddress: {
-                    id: faker.string.uuid(),
-                    address: emailAddressToSearch,
-                    priority: 0,
-                    spshPersonId: faker.string.uuid(),
-                    externalId: faker.string.uuid(),
-                    oxUserCounter: undefined,
-                    markedForCron: undefined,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                },
-                statuses: [
+            const address: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                address: emailAddressToSearch,
+                priority: 0,
+                spshPersonId: faker.string.uuid(),
+                externalId: faker.string.uuid(),
+                oxUserCounter: undefined,
+                markedForCron: undefined,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                sortedStatuses: [
                     {
                         id: faker.string.uuid(),
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                        emailAddressId: faker.string.uuid(),
                         status: EmailAddressStatusEnum.ACTIVE,
                     },
                 ],
-            };
-            emailAddressRepoMock.findEmailAddressWithStatusDesc.mockResolvedValue(addressWithStatuses);
+            });
+            emailAddressRepoMock.findEmailAddress.mockResolvedValueOnce(address);
 
             const result: Option<EmailAddressResponse> = await emailReadController.findEmailAddress({
                 emailAddress: emailAddressToSearch,
@@ -83,7 +77,7 @@ describe('EmailReadController', () => {
 
         it('should throw if no address is found', async () => {
             const emailAddressToSearch: string = faker.internet.email();
-            emailAddressRepoMock.findEmailAddressWithStatusDesc.mockResolvedValue(undefined);
+            emailAddressRepoMock.findEmailAddress.mockResolvedValue(undefined);
 
             await expect(
                 emailReadController.findEmailAddress({
@@ -94,21 +88,19 @@ describe('EmailReadController', () => {
 
         it('should throw if address is found but has no status', async () => {
             const emailAddressToSearch: string = faker.internet.email();
-            const addressWithStatuses: AddressWithStatusesDescDto = {
-                emailAddress: {
-                    id: faker.string.uuid(),
-                    address: emailAddressToSearch,
-                    priority: 0,
-                    spshPersonId: faker.string.uuid(),
-                    externalId: faker.string.uuid(),
-                    oxUserCounter: undefined,
-                    markedForCron: undefined,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                },
-                statuses: [],
-            };
-            emailAddressRepoMock.findEmailAddressWithStatusDesc.mockResolvedValue(addressWithStatuses);
+            const address: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                address: emailAddressToSearch,
+                priority: 0,
+                spshPersonId: faker.string.uuid(),
+                externalId: faker.string.uuid(),
+                oxUserCounter: undefined,
+                markedForCron: undefined,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                sortedStatuses: [],
+            });
+            emailAddressRepoMock.findEmailAddress.mockResolvedValueOnce(address);
 
             await expect(
                 emailReadController.findEmailAddress({
@@ -121,32 +113,25 @@ describe('EmailReadController', () => {
     describe('findEmailAddressesForSpshPerson', () => {
         it('should return EmailAddressResponse[] for person with addresses and statuses', async () => {
             const spshPersonId: string = faker.string.uuid();
-            const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
-            const addressWithStatuses: AddressWithStatusesDescDto = {
-                emailAddress: {
-                    id: faker.string.uuid(),
-                    address: 'test@example.com',
-                    priority: 0,
-                    spshPersonId,
-                    oxUserCounter: undefined,
-                    markedForCron: undefined,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    externalId: spshPersonId,
-                },
-                statuses: [
+            const params: FindEmailAddressBySpshPersonIdPathParams = { spshPersonId };
+            const address: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                address: 'test@example.com',
+                priority: 0,
+                spshPersonId,
+                oxUserCounter: undefined,
+                markedForCron: undefined,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                externalId: spshPersonId,
+                sortedStatuses: [
                     {
                         id: faker.string.uuid(),
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                        emailAddressId: faker.string.uuid(),
                         status: EmailAddressStatusEnum.ACTIVE,
                     },
                 ],
-            };
-            emailAddressRepoMock.findAllEmailAddressesWithStatusesDescBySpshPersonId.mockResolvedValue([
-                addressWithStatuses,
-            ]);
+            });
+            emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValueOnce([address]);
 
             const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonId(params);
             expect(result).toHaveLength(1);
@@ -159,41 +144,31 @@ describe('EmailReadController', () => {
         // Maybe this test is now useless when we already test the right order in repo
         it('should return EmailAddressResponse[] using the latest status if multiple statuses exist', async () => {
             const spshPersonId: string = faker.string.uuid();
-            const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
+            const params: FindEmailAddressBySpshPersonIdPathParams = { spshPersonId };
             const now: Date = new Date();
             const earlier: Date = new Date(now.getTime() - 10000);
-            const addressWithStatuses: AddressWithStatusesDescDto = {
-                emailAddress: {
-                    id: faker.string.uuid(),
-                    address: 'multi-status@example.com',
-                    priority: 0,
-                    spshPersonId,
-                    oxUserCounter: undefined,
-                    markedForCron: undefined,
-                    createdAt: earlier,
-                    updatedAt: earlier,
-                    externalId: spshPersonId,
-                },
-                statuses: [
+            const address: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                address: 'multi-status@example.com',
+                priority: 0,
+                spshPersonId,
+                oxUserCounter: undefined,
+                markedForCron: undefined,
+                createdAt: earlier,
+                updatedAt: earlier,
+                externalId: spshPersonId,
+                sortedStatuses: [
                     {
                         id: faker.string.uuid(),
-                        createdAt: now,
-                        updatedAt: now,
-                        emailAddressId: faker.string.uuid(),
                         status: EmailAddressStatusEnum.PENDING,
                     },
                     {
                         id: faker.string.uuid(),
-                        createdAt: earlier,
-                        updatedAt: earlier,
-                        emailAddressId: faker.string.uuid(),
                         status: EmailAddressStatusEnum.SUSPENDED,
                     },
                 ],
-            };
-            emailAddressRepoMock.findAllEmailAddressesWithStatusesDescBySpshPersonId.mockResolvedValue([
-                addressWithStatuses,
-            ]);
+            });
+            emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValueOnce([address]);
 
             const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonId(params);
             expect(result).toHaveLength(1);
@@ -205,7 +180,7 @@ describe('EmailReadController', () => {
 
         it('should return empty array if no addresses found', async () => {
             const spshPersonId: string = faker.string.uuid();
-            emailAddressRepoMock.findAllEmailAddressesWithStatusesDescBySpshPersonId.mockResolvedValue([]);
+            emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([]);
 
             const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonId({
                 spshPersonId,
@@ -215,50 +190,20 @@ describe('EmailReadController', () => {
 
         it('should filter out addresses with no statuses', async () => {
             const spshPersonId: string = faker.string.uuid();
-            const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
-            const addressWithNoStatus: AddressWithStatusesDescDto = {
-                emailAddress: {
-                    id: faker.string.uuid(),
-                    address: 'no-status@example.com',
-                    priority: 0,
-                    spshPersonId,
-                    oxUserCounter: undefined,
-                    markedForCron: undefined,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    externalId: spshPersonId,
-                },
-                statuses: [],
-            };
-            emailAddressRepoMock.findAllEmailAddressesWithStatusesDescBySpshPersonId.mockResolvedValue([
-                addressWithNoStatus,
-            ]);
-
-            const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonId(params);
-            expect(result).toEqual([]);
-        });
-
-        // This is just for test coverage, it should never be the case because we dont get undefined statuses from the service
-        it('should hit the "return undefined" line when statuses.at(0) is undefined despite having length > 0', async () => {
-            const spshPersonId: string = faker.string.uuid();
-            const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
-            const addressWithUndefinedStatus: AddressWithStatusesDescDto = {
-                emailAddress: {
-                    id: faker.string.uuid(),
-                    address: 'undefined-status@example.com',
-                    priority: 0,
-                    spshPersonId,
-                    oxUserCounter: undefined,
-                    markedForCron: undefined,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    externalId: spshPersonId,
-                },
-                statuses: [undefined as unknown as EmailAddressStatus<true>],
-            };
-            emailAddressRepoMock.findAllEmailAddressesWithStatusesDescBySpshPersonId.mockResolvedValue([
-                addressWithUndefinedStatus,
-            ]);
+            const params: FindEmailAddressBySpshPersonIdPathParams = { spshPersonId };
+            const address: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                address: 'no-status@example.com',
+                priority: 0,
+                spshPersonId,
+                oxUserCounter: undefined,
+                markedForCron: undefined,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                externalId: spshPersonId,
+                sortedStatuses: [],
+            });
+            emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValueOnce([address]);
 
             const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonId(params);
             expect(result).toEqual([]);

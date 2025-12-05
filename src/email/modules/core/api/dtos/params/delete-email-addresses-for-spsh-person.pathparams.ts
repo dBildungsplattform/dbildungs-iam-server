@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
-export class FindEmailAddressBySpshPersonIdParams {
+export class DeleteEmailAddressesForSpshPersonPathParams {
     @IsString()
     @IsUUID()
     @IsNotEmpty()
     @ApiProperty({
-        description: 'The spshPersonId for the emailAddress.',
+        description: 'The spshPersonId of the person.',
         required: true,
         nullable: false,
     })

@@ -20,7 +20,7 @@ import { ServiceProviderSystem } from '../../service-provider/domain/service-pro
 import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailMicroserviceEventHandler } from './email-microservice-event-handler';
 import { EmailResolverService } from './email-resolver.service';
-import { SetEmailAddressForSpshPersonParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.params';
+import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event';
 import { EventModule } from '../../../core/eventbus';
@@ -92,7 +92,7 @@ describe('EmailMicroserviceEventHandler', () => {
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
                 spshServiceProviderId: mockServiceProviderId,
-            } satisfies SetEmailAddressForSpshPersonParams;
+            } satisfies SetEmailAddressForSpshPersonBodyParams;
             const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
                 person: {
                     id: params.spshPersonId,
@@ -145,7 +145,7 @@ describe('EmailMicroserviceEventHandler', () => {
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
                 spshServiceProviderId: mockServiceProviderId,
-            } satisfies SetEmailAddressForSpshPersonParams;
+            } satisfies SetEmailAddressForSpshPersonBodyParams;
             const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
                 person: {
                     id: params.spshPersonId,
