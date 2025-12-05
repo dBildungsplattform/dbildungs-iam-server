@@ -31,6 +31,8 @@ import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.err
 import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
 import { LdapModifyUserPasswordError } from '../error/ldap-modify-user-password.error.js';
 import assert from 'assert';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { LdapDeleteOrganisationError } from '../error/ldap-delete-organisation.error.js';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -3137,6 +3139,53 @@ describe('LDAP Client Service', () => {
             });
         });
     });
+
+    describe('deleteOrganisation', () => {
+        it('should succeed', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.del.mockResolvedValueOnce();
+                return clientMock;
+            });
+            const kennung: string = faker.string.numeric(7);
+
+            const result: Result<string> = await ldapClientService.deleteOrganisation(kennung);
+
+            expect(clientMock.del).toHaveBeenLastCalledWith(`ou=${kennung},${mockLdapInstanceConfig.BASE_DN}`);
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `LDAP: Successfully deleted organisation with kennung:${kennung}.`,
+            );
+            expect(result).toEqual(Ok(kennung));
+        });
+
+        describe('when bind fails', () => {
+            it('should return error', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockRejectedValueOnce(Err(false));
+                    return clientMock;
+                });
+                const kennung: string = faker.string.numeric(7);
+
+                const promise: Promise<Result<string>> = ldapClientService.deleteOrganisation(kennung);
+                await expect(promise).resolves.toEqual(Err(new Error('LDAP bind FAILED')));
+            });
+        });
+
+        describe('when deletion fails', () => {
+            it('should return an error', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.del.mockRejectedValueOnce(new Error());
+                    return clientMock;
+                });
+                const kennung: string = faker.string.numeric(7);
+
+                const promise: Promise<Result<string>> = ldapClientService.deleteOrganisation(kennung);
+                await expect(promise).resolves.toEqual(Err(new LdapDeleteOrganisationError({ kennung })));
+            });
+        });
+    });
+
     describe('createNewLehrerUidFromOldUid', () => {
         it('should replace the old uid with the new username and join the DN parts with commas', () => {
             const oldUid: string = 'uid=oldUser,ou=users,dc=example,dc=com';
