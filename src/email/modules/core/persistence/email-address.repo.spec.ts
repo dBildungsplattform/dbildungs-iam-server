@@ -11,32 +11,27 @@ import {
     expectOkResult,
 } from '../../../../../test/utils/index.js';
 import { EmailAddress } from '../domain/email-address.js';
-import { DomainError } from '../../../../shared/error/domain.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailCoreModule } from '../email-core.module.js';
-import { EmailAddressStatusRepo } from './email-address-status.repo.js';
 import { EmailAddressStatusEnum } from './email-address-status.entity.js';
-import { AddressWithStatusesDescDto } from '../api/dtos/address-with-statuses/address-with-statuses-desc.dto.js';
 import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
-import { EmailAddressStatus } from '../domain/email-address-status.js';
+import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
     let sut: EmailAddressRepo;
-    let emailAddressStatusRepo: EmailAddressStatusRepo;
     let orm: MikroORM;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailCoreModule],
-            providers: [EmailAddressStatusRepo, EmailAddressRepo, ClassLogger],
+            providers: [EmailAddressRepo, ClassLogger],
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
             .compile();
 
         sut = module.get(EmailAddressRepo);
-        emailAddressStatusRepo = module.get(EmailAddressStatusRepo);
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -70,11 +65,18 @@ describe('EmailRepo', () => {
             markedForCron: markedForCron ?? undefined,
             externalId: faker.string.uuid(),
         });
-        const tmp: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
-        if (tmp instanceof DomainError) {
-            throw tmp;
-        }
-        return tmp;
+
+        const saveResult: Result<EmailAddress<true>> = await sut.save(mailToCreate);
+
+        expectOkResult(saveResult);
+        return saveResult.value;
+    }
+
+    async function setStatus(mail: EmailAddress<true>, status: EmailAddressStatusEnum): Promise<EmailAddress<true>> {
+        mail.setStatus(status);
+        const saveResult: Result<EmailAddress<true>> = await sut.save(mail);
+        expectOkResult(saveResult);
+        return saveResult.value;
     }
 
     describe('findEmailAddress', () => {
@@ -87,75 +89,38 @@ describe('EmailRepo', () => {
         it('should return EmailAddress if address exists', async () => {
             const result: Option<EmailAddress<true>> = await sut.findEmailAddress(createdMail.address);
             expect(result).toBeDefined();
-            expect(result).not.toBeInstanceOf(DomainError);
             expect(result!.address).toBe(createdMail.address);
             expect(result!.id).toBe(createdMail.id);
+        });
+
+        it('should return EmailAddress with sorted statuses', async () => {
+            async function setStatusAndSave(status: EmailAddressStatusEnum): Promise<void> {
+                createdMail.setStatus(status);
+                const saveResult: Result<EmailAddress<true>> = await sut.save(createdMail);
+
+                expectOkResult(saveResult);
+                createdMail = saveResult.value;
+            }
+
+            await setStatusAndSave(EmailAddressStatusEnum.PENDING);
+            await setStatusAndSave(EmailAddressStatusEnum.ACTIVE);
+            await setStatusAndSave(EmailAddressStatusEnum.FAILED);
+            await setStatusAndSave(EmailAddressStatusEnum.SUSPENDED);
+
+            const result: Option<EmailAddress<true>> = await sut.findEmailAddress(createdMail.address);
+
+            expect(result).toBeDefined();
+            expect(result!.sortedStatuses).toEqual([
+                expect.objectContaining({ status: EmailAddressStatusEnum.SUSPENDED }),
+                expect.objectContaining({ status: EmailAddressStatusEnum.FAILED }),
+                expect.objectContaining({ status: EmailAddressStatusEnum.ACTIVE }),
+                expect.objectContaining({ status: EmailAddressStatusEnum.PENDING }),
+            ]);
         });
 
         it('should return undefined if address does not exist', async () => {
             const result: Option<EmailAddress<true>> = await sut.findEmailAddress(faker.internet.email());
             expect(result).toBeUndefined();
-        });
-    });
-
-    describe('findEmailAddressWithStatusDesc', () => {
-        let createdMail: EmailAddress<true>;
-
-        beforeEach(async () => {
-            createdMail = await createAndSaveMail();
-        });
-
-        it('should return undefined if address does not exist', async () => {
-            const result: Option<AddressWithStatusesDescDto> = await sut.findEmailAddressWithStatusDesc(
-                faker.internet.email(),
-            );
-            expect(result).toBeUndefined();
-        });
-
-        it('should return AddressWithStatusesDescDto with sorted and mapped statuses if address exists', async () => {
-            const now: Date = new Date();
-            const earlier: Date = new Date(now.getTime() - 10000);
-
-            await emailAddressStatusRepo.create({
-                id: undefined,
-                createdAt: earlier,
-                updatedAt: earlier,
-                emailAddressId: createdMail.id,
-                status: EmailAddressStatusEnum.PENDING,
-            });
-            await emailAddressStatusRepo.create({
-                id: undefined,
-                createdAt: now,
-                updatedAt: now,
-                emailAddressId: createdMail.id,
-                status: EmailAddressStatusEnum.ACTIVE,
-            });
-
-            const result: Option<AddressWithStatusesDescDto> = await sut.findEmailAddressWithStatusDesc(
-                createdMail.address,
-            );
-
-            expect(result).toBeDefined();
-            if (!result) {
-                return;
-            }
-
-            expect(result).toBeInstanceOf(AddressWithStatusesDescDto);
-            expect(result.emailAddress.address).toBe(createdMail.address);
-            expect(result.statuses.length).toBe(2);
-            expect(result.statuses.at(0)?.status).toBe(EmailAddressStatusEnum.ACTIVE);
-            expect(result?.statuses.at(1)?.status).toBe(EmailAddressStatusEnum.PENDING);
-        });
-
-        it('should return AddressWithStatusesDescDto with empty statuses if address exists but has no statuses', async () => {
-            const result: Option<AddressWithStatusesDescDto> = await sut.findEmailAddressWithStatusDesc(
-                createdMail.address,
-            );
-
-            expect(result).toBeDefined();
-            expect(result).toBeInstanceOf(AddressWithStatusesDescDto);
-            expect(result!.emailAddress.address).toBe(createdMail.address);
-            expect(result!.statuses.length).toBe(0);
         });
     });
 
@@ -212,61 +177,39 @@ describe('EmailRepo', () => {
         const spshPersonId: string = faker.string.uuid();
 
         it('should return email addresses with their statuses for a given spshPersonId', async () => {
-            const mail1: EmailAddress<true> = await createAndSaveMail(undefined, 1, spshPersonId);
-            const mail2: EmailAddress<true> = await createAndSaveMail(undefined, 2, spshPersonId);
-            const now: Date = new Date();
-            const earlier: Date = new Date(now.getTime() - 10000);
+            let mail1: EmailAddress<true> = await createAndSaveMail(undefined, 1, spshPersonId);
+            let mail2: EmailAddress<true> = await createAndSaveMail(undefined, 2, spshPersonId);
 
-            await emailAddressStatusRepo.create({
-                id: undefined,
-                createdAt: earlier,
-                updatedAt: earlier,
-                emailAddressId: mail1.id,
-                status: EmailAddressStatusEnum.PENDING,
-            });
-            await emailAddressStatusRepo.create({
-                id: undefined,
-                createdAt: now,
-                updatedAt: now,
-                emailAddressId: mail1.id,
-                status: EmailAddressStatusEnum.ACTIVE,
-            });
-            await emailAddressStatusRepo.create({
-                id: undefined,
-                createdAt: now,
-                updatedAt: now,
-                emailAddressId: mail2.id,
-                status: EmailAddressStatusEnum.PENDING,
-            });
+            mail1 = await setStatus(mail1, EmailAddressStatusEnum.PENDING);
+            mail1 = await setStatus(mail1, EmailAddressStatusEnum.ACTIVE);
+            mail2 = await setStatus(mail2, EmailAddressStatusEnum.PENDING);
 
-            const result: AddressWithStatusesDescDto[] =
-                await sut.findAllEmailAddressesWithStatusesDescBySpshPersonId(spshPersonId);
+            const result: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(spshPersonId);
+
             expect(result).toHaveLength(2);
-
-            const addresses: string[] = result.map((dto: AddressWithStatusesDescDto) => dto.emailAddress.address);
+            const addresses: string[] = result.map((mail: EmailAddress<true>) => mail.address);
             expect(addresses).toContain(mail1.address);
             expect(addresses).toContain(mail2.address);
 
-            const mail1Dto: AddressWithStatusesDescDto | undefined = result.find(
-                (dto: AddressWithStatusesDescDto) => dto.emailAddress.id === mail1.id,
+            const mail1Dto: EmailAddress<true> | undefined = result.find(
+                (mail: EmailAddress<true>) => mail.id === mail1.id,
             );
             expect(mail1Dto).toBeDefined();
-            expect(mail1Dto!.statuses).toHaveLength(2);
-            expect(mail1Dto!.statuses[0]!.status).toBe(EmailAddressStatusEnum.ACTIVE);
-            expect(mail1Dto!.statuses[1]!.status).toBe(EmailAddressStatusEnum.PENDING);
+            expect(mail1Dto!.sortedStatuses).toHaveLength(2);
+            expect(mail1Dto!.sortedStatuses[0]?.status).toBe(EmailAddressStatusEnum.ACTIVE);
+            expect(mail1Dto!.sortedStatuses[1]?.status).toBe(EmailAddressStatusEnum.PENDING);
 
-            const mail2Dto: AddressWithStatusesDescDto | undefined = result.find(
-                (dto: AddressWithStatusesDescDto) => dto.emailAddress.id === mail2.id,
+            const mail2Dto: EmailAddress<true> | undefined = result.find(
+                (mail: EmailAddress<true>) => mail.id === mail2.id,
             );
             expect(mail2Dto).toBeDefined();
-            expect(mail2Dto!.statuses).toHaveLength(1);
-            expect(mail2Dto!.statuses[0]!.status).toBe(EmailAddressStatusEnum.PENDING);
+            expect(mail2Dto!.sortedStatuses).toHaveLength(1);
+            expect(mail2Dto!.sortedStatuses[0]?.status).toBe(EmailAddressStatusEnum.PENDING);
         });
 
         it('should return an empty array if no email addresses exist for the given spshPersonId', async () => {
             const unknownId: string = faker.string.uuid();
-            const result: AddressWithStatusesDescDto[] =
-                await sut.findAllEmailAddressesWithStatusesDescBySpshPersonId(unknownId);
+            const result: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(unknownId);
             expect(result).toEqual([]);
         });
     });
@@ -280,11 +223,12 @@ describe('EmailRepo', () => {
                 externalId: faker.string.uuid(),
                 oxUserCounter: undefined,
             });
-            const result: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
-            expect(result).toBeDefined();
-            expect(result).not.toBeInstanceOf(DomainError);
-            expect((result as EmailAddress<true>).id).toBeDefined();
-            expect((result as EmailAddress<true>).address).toBe(mailToCreate.address);
+            const result: Result<EmailAddress<true>> = await sut.save(mailToCreate);
+
+            expectOkResult(result);
+            expect(result.value).toBeDefined();
+            expect(result.value.id).toBeDefined();
+            expect(result.value.address).toBe(mailToCreate.address);
         });
 
         it('should update an existing email address if id is set', async () => {
@@ -295,19 +239,17 @@ describe('EmailRepo', () => {
                 externalId: faker.string.uuid(),
                 oxUserCounter: undefined,
             });
-            const created: EmailAddress<true> | DomainError = await sut.save(mailToCreate);
-            if (created instanceof DomainError) {
-                throw created;
-            }
+            const created: Result<EmailAddress<true>> = await sut.save(mailToCreate);
+            expectOkResult(created);
 
             const updatedMail: EmailAddress<true> = EmailAddress.construct({
-                ...created,
+                ...created.value,
                 priority: 99,
             });
-            const updated: EmailAddress<true> | DomainError = await sut.save(updatedMail);
-            expect(updated).toBeDefined();
-            expect(updated).not.toBeInstanceOf(DomainError);
-            expect((updated as EmailAddress<true>).priority).toBe(99);
+            const updated: Result<EmailAddress<true>> = await sut.save(updatedMail);
+            expectOkResult(updated);
+            expect(updated.value).toBeDefined();
+            expect(updated.value.priority).toBe(99);
         });
 
         it('should return EmailAddressNotFoundError if updating non-existing id', async () => {
@@ -320,10 +262,12 @@ describe('EmailRepo', () => {
                 updatedAt: new Date(),
                 externalId: faker.string.uuid(),
                 oxUserCounter: undefined,
+                sortedStatuses: [],
             });
-            const result: EmailAddress<true> | DomainError = await sut.save(mailToUpdate);
-            expect(result).toBeInstanceOf(DomainError);
-            expect(result.constructor.name).toBe('EmailAddressNotFoundError');
+            const result: Result<EmailAddress<true>> = await sut.save(mailToUpdate);
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(EmailAddressNotFoundError);
         });
     });
 
@@ -343,17 +287,15 @@ describe('EmailRepo', () => {
                 }),
             );
 
-            const savedMails: (EmailAddress<true> | DomainError)[] = await Promise.all(
+            const savedMails: Result<EmailAddress<true>>[] = await Promise.all(
                 mails.map((m: EmailAddress<false>) => sut.save(m)),
             );
 
-            for (const sm of savedMails) {
-                if (sm instanceof Error) {
-                    throw sm;
-                }
+            for (const mail of savedMails) {
+                expectOkResult(mail);
             }
 
-            return savedMails as EmailAddress<true>[];
+            return (savedMails as { value: EmailAddress<true> }[]).map((r: { value: EmailAddress<true> }) => r.value);
         }
 
         it('should increment priorities for emails', async () => {
@@ -415,13 +357,9 @@ describe('EmailRepo', () => {
                     spshPersonId,
                 });
 
-                const saved: EmailAddress<true> | DomainError = await sut.save(mail);
-
-                if (saved instanceof DomainError) {
-                    throw saved;
-                }
-
-                return saved;
+                const saveResult: Result<EmailAddress<true>> = await sut.save(mail);
+                expectOkResult(saveResult);
+                return saveResult.value;
             }
 
             const mail0: EmailAddress<true> = await createMail(0);
@@ -470,6 +408,7 @@ describe('EmailRepo', () => {
                 oxUserCounter: faker.string.numeric(6),
                 priority: 0,
                 spshPersonId: faker.string.uuid(),
+                sortedStatuses: [],
             });
 
             const result: Result<unknown> = await sut.shiftPriorities(targetMail, 0);
@@ -492,16 +431,11 @@ describe('EmailRepo', () => {
 
             await sut.ensureStatusesAndCronDateForPerson(personId, cronDate);
 
-            const emailsAfterwards: AddressWithStatusesDescDto[] =
-                await sut.findAllEmailAddressesWithStatusesDescBySpshPersonId(personId);
-            emailsAfterwards.sort(
-                (a: AddressWithStatusesDescDto, b: AddressWithStatusesDescDto) =>
-                    a.emailAddress.priority - b.emailAddress.priority,
-            );
+            const emailsAfterwards: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(personId);
 
-            expect(emailsAfterwards[0]?.emailAddress.markedForCron).toBe(undefined);
-            expect(emailsAfterwards[1]?.emailAddress.markedForCron).toBe(cronDate);
-            expect(emailsAfterwards[2]?.emailAddress.markedForCron).toBe(cronDate);
+            expect(emailsAfterwards[0]?.markedForCron).toBe(undefined);
+            expect(emailsAfterwards[1]?.markedForCron).toBe(cronDate);
+            expect(emailsAfterwards[2]?.markedForCron).toBe(cronDate);
         });
 
         it('should add deactive status to active mails with high priority', async () => {
@@ -517,20 +451,13 @@ describe('EmailRepo', () => {
                 oxUserCounter,
                 undefined,
             );
-
-            await emailAddressStatusRepo.create(
-                EmailAddressStatus.createNew({
-                    emailAddressId: mail1.id,
-                    status: EmailAddressStatusEnum.ACTIVE,
-                }),
-            );
+            await setStatus(mail1, EmailAddressStatusEnum.ACTIVE);
 
             await sut.ensureStatusesAndCronDateForPerson(personId, cronDate);
 
-            const emailsAfterwards: AddressWithStatusesDescDto[] =
-                await sut.findAllEmailAddressesWithStatusesDescBySpshPersonId(personId);
+            const emailsAfterwards: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(personId);
 
-            expect(emailsAfterwards[0]?.statuses).toEqual([
+            expect(emailsAfterwards[0]?.sortedStatuses).toEqual([
                 expect.objectContaining({ status: EmailAddressStatusEnum.DEACTIVE }),
                 expect.objectContaining({ status: EmailAddressStatusEnum.ACTIVE }),
             ]);

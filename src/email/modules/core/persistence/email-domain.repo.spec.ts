@@ -13,7 +13,6 @@ import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailDomainRepo } from './email-domain.repo.js';
 import { EmailCoreModule } from '../email-core.module.js';
 import { EmailDomain } from '../domain/email-domain.js';
-import { EmailAddressStatusRepo } from './email-address-status.repo.js';
 
 describe('EmailDomainRepo', () => {
     let module: TestingModule;
@@ -23,7 +22,7 @@ describe('EmailDomainRepo', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailCoreModule],
-            providers: [EmailAddressStatusRepo, EmailAddressRepo, ClassLogger],
+            providers: [EmailAddressRepo, ClassLogger],
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
