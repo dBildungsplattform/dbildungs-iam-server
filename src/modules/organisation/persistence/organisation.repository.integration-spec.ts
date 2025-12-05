@@ -2001,6 +2001,86 @@ describe('OrganisationRepository', () => {
             expect(result[0].some((org: Organisation<true>) => org.id === orgas[3]!.id)).toBeTruthy();
         });
 
+        it('should return all authorized organisations with correct type and parent under administriertVon with Recursion', async () => {
+            const orgas: Organisation<true>[] = [];
+            const orgaLand: Organisation<true> = await sut.save(
+                DoFactory.createOrganisation(false, {
+                    administriertVon: sut.ROOT_ORGANISATION_ID,
+                    typ: OrganisationsTyp.LAND,
+                }),
+            );
+            orgas.push(orgaLand);
+
+            for (let i: number = 0; i < 3; i++) {
+                const orga: Organisation<true> = await sut.save(
+                    DoFactory.createOrganisation(false, {
+                        administriertVon: orgaLand.id,
+                        typ: OrganisationsTyp.SCHULE,
+                    }),
+                );
+                orgas.push(orga);
+            }
+
+            const orgaTraeger: Organisation<true> = await sut.save(
+                DoFactory.createOrganisation(false, {
+                    administriertVon: orgaLand.id,
+                    typ: OrganisationsTyp.TRAEGER,
+                }),
+            );
+            orgas.push(orgaTraeger);
+
+            for (let i: number = 0; i < 3; i++) {
+                const orga: Organisation<true> = await sut.save(
+                    DoFactory.createOrganisation(false, {
+                        administriertVon: orgaTraeger.id,
+                        typ: OrganisationsTyp.SCHULE,
+                    }),
+                );
+                orgas.push(orga);
+            }
+
+            // Land and Schulen that should not be fetched
+            const orgaLand2: Organisation<true> = await sut.save(
+                DoFactory.createOrganisation(false, {
+                    administriertVon: sut.ROOT_ORGANISATION_ID,
+                    typ: OrganisationsTyp.LAND,
+                }),
+            );
+            orgas.push(orgaLand2);
+            for (let i: number = 0; i < 3; i++) {
+                const orga: Organisation<true> = await sut.save(
+                    DoFactory.createOrganisation(false, {
+                        administriertVon: orgaLand2.id,
+                        typ: OrganisationsTyp.SCHULE,
+                    }),
+                );
+                orgas.push(orga);
+            }
+
+            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                personPermissions,
+                [RollenSystemRecht.SCHULEN_VERWALTEN],
+                { administriertVon: [orgaLand.id], typ: OrganisationsTyp.SCHULE, getChildrenRecursively: true },
+            );
+
+            expect(result[1]).toBe(6);
+            expect(result[0]).toContainEqual(expect.objectContaining({ id: orgas[1]!.id }));
+            expect(result[0]).toContainEqual(expect.objectContaining({ id: orgas[2]!.id }));
+            expect(result[0]).toContainEqual(expect.objectContaining({ id: orgas[3]!.id }));
+            expect(result[0]).toContainEqual(expect.objectContaining({ id: orgas[5]!.id }));
+            expect(result[0]).toContainEqual(expect.objectContaining({ id: orgas[6]!.id }));
+            expect(result[0]).toContainEqual(expect.objectContaining({ id: orgas[7]!.id }));
+            expect(result[0]).not.toContainEqual(expect.objectContaining({ id: orgas[8]!.id }));
+            expect(result[0]).not.toContainEqual(expect.objectContaining({ id: orgas[9]!.id }));
+            expect(result[0]).not.toContainEqual(expect.objectContaining({ id: orgas[10]!.id }));
+            expect(result[0]).not.toContainEqual(expect.objectContaining({ id: orgas[11]!.id }));
+        });
+
         it('should return all authorized organisations with correct type and parent under zugehoerig zu', async () => {
             const orgas: OrganisationEntity[] = [];
             const orgaLand: Organisation<false> | DomainError = Organisation.createNew(
