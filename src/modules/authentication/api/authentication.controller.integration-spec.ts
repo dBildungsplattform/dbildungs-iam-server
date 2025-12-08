@@ -32,6 +32,8 @@ import { PassportUser } from '../types/user.js';
 import { AuthenticationController } from './authentication.controller.js';
 import { UserinfoResponse } from './userinfo.response.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RolleModule } from '../../rolle/rolle.module.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -50,6 +52,8 @@ describe('AuthenticationController', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,
                 PersonenKontextModule,
+                RolleModule,
+                EmailMicroserviceModule,
             ],
             providers: [
                 AuthenticationController,

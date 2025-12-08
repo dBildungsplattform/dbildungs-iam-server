@@ -1,41 +1,75 @@
 import { Injectable } from '@nestjs/common';
+import { ClassLogger } from '../../../../core/logging/class-logger.js';
+import { DomainError } from '../../../../shared/error/domain.error.js';
+import { PersonID, PersonUsername } from '../../../../shared/types/index.js';
+import { Err, Ok } from '../../../../shared/util/result.js';
+import { LdapClientService, PersonData } from '../../ldap/domain/ldap-client.service.js';
+import { CreateUserAction, CreateUserResponse } from '../../ox/actions/user/create-user.action.js';
+import { GetDataForUserResponse } from '../../ox/actions/user/get-data-user.action.js';
+import { OxSendService } from '../../ox/domain/ox-send.service.js';
+import { OxService } from '../../ox/domain/ox.service.js';
+import { OxPrimaryMailAlreadyExistsError } from '../../ox/error/ox-primary-mail-already-exists.error.js';
 import { SetEmailAddressForSpshPersonParams } from '../api/dtos/params/set-email-address-for-spsh-person.params.js';
+import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
+import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
+import { EmailDomainRepo } from '../persistence/email-domain.repo.js';
 import { EmailAddressGenerator } from './email-address-generator.js';
 import { EmailAddress } from './email-address.js';
-import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { EmailDomainRepo } from '../persistence/email-domain.repo.js';
 import { EmailDomain } from './email-domain.js';
-import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
-import { EmailAddressStatus } from './email-address-status.js';
-import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
-import { EmailAddressStatusRepo } from '../persistence/email-address-status.repo.js';
-import { DomainError } from '../../../../shared/error/domain.error.js';
-import { OxService } from '../../ox/domain/ox.service.js';
-import { OxSendService } from '../../ox/domain/ox-send.service.js';
-import { CreateUserAction, CreateUserResponse } from '../../ox/actions/user/create-user.action.js';
-import { PersonID, PersonUsername } from '../../../../shared/types/index.js';
-import { OxPrimaryMailAlreadyExistsError } from '../../ox/error/ox-primary-mail-already-exists.error.js';
-import { LdapClientService, PersonData } from '../../ldap/domain/ldap-client.service.js';
-import { EmailCreationFailedError } from '../error/email-creaton-failed.error.js';
+import { EmailUpdateInProgressError } from '../error/email-update-in-progress.error.js';
+import { EmailAddressGenerationAttemptsExceededError } from '../error/email-address-generation-attempts-exceeds.error.js';
+import { uniq } from 'lodash-es';
+import { OxError } from '../../../../shared/error/ox.error.js';
+import { ConfigService } from '@nestjs/config';
+import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
+import { EmailConfig } from '../../../../shared/config/email.config.js';
+
+const MAX_EMAIL_PRIORITY: number = 99999; // E-Mails will be created with this priority before being activated
 
 @Injectable()
 export class SetEmailAddressForSpshPersonService {
+    public RETRY_ATTEMPTS: number = 5;
+
+    private NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: number;
+
     public constructor(
         private readonly emailAddressRepo: EmailAddressRepo,
         private readonly emailDomainRepo: EmailDomainRepo,
-        private readonly emailAddressStatusRepo: EmailAddressStatusRepo,
         private readonly logger: ClassLogger,
         private readonly emailAddressGenerator: EmailAddressGenerator,
         private readonly oxService: OxService,
         private readonly oxSendService: OxSendService,
         private readonly ldapClientService: LdapClientService,
-    ) {}
+        configService: ConfigService<EmailAppConfig>,
+    ) {
+        this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS =
+            configService.getOrThrow<EmailConfig>('EMAIL').NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS ?? 90;
+    }
 
+    /**
+     * Makes sure the given user *will* have an e-mail matching their details.
+     *
+     * Will instantly abort, if the user currently has an address in a PENDING state
+     *
+     * 1. If the users first- and lastname no longer match their address (or if they don't have an address) they should get a matching address
+     *    - If the user has an old address that would match their name, that one should be reactivated
+     *    - Otherwise a new address will be generated
+     * 2. Other addresses should remain at their relative priorities (but may be shifted back to make room for the new/reactivated address)
+     *    - Exception: If the current priority 0 address is not active (i.e. there was an error) it will be set to priority 2 first (so the alternative mail will be correct)
+     * 3. The user should be created/update in OX
+     *    - If our data suggests an OX account should already exist, it will be updated (if it doesn't actually exist, this is considered an error)
+     *    - Otherwise a new user will be created and the returned ID from OX will be persisted
+     * 4. The users groups in OX should be updated
+     * 5. The user should be created/updated in LDAP
+     *    - If the user exists, it will be updated
+     *    - Otherwise a new user will be created
+     *
+     * The whole process will be retried 5 times on errors
+     */
     public async setEmailAddressForSpshPerson(params: SetEmailAddressForSpshPersonParams): Promise<void> {
         this.logger.info(`SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - Request Received`);
-        const existingAddresses: EmailAddress<true>[] =
-            await this.emailAddressRepo.findBySpshPersonIdSortedByPriorityAsc(params.spshPersonId);
+
         const emailDomain: Option<EmailDomain<true>> = await this.emailDomainRepo.findBySpshServiceProviderId(
             params.spshServiceProviderId,
         );
@@ -49,230 +83,291 @@ export class SetEmailAddressForSpshPersonService {
             );
         }
 
-        const uniqueKennungen: string[] = Array.from(new Set(params.kennungen));
-
-        if (existingAddresses.length > 0) {
-            this.logger.crit(
-                `SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - Person already has email addresses assigned. Not implemented yet [WIP]`,
+        if (await this.checkForPendingEmail(params.spshPersonId)) {
+            this.logger.error(
+                `SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - Some e-mail already requested, aborting.`,
             );
-            return;
+            throw new EmailUpdateInProgressError('e-mail generation already in progress');
         }
-        await this.createFirstEmailForSpshPerson(
+
+        const uniqueKennungen: string[] = uniq(params.kennungen);
+
+        const result: Result<void> = await this.createOrUpdateEmailWithRetries(
+            this.RETRY_ATTEMPTS,
             params.firstName,
             params.lastName,
             params.spshPersonId,
             params.spshUsername,
             uniqueKennungen,
             emailDomain,
-            5,
         );
+
+        if (!result.ok) {
+            throw result.error;
+        }
     }
 
-    private async createFirstEmailForSpshPerson(
+    private async createOrUpdateEmailWithRetries(
+        attempts: number,
         firstName: string,
         lastName: string,
         spshPersonId: string,
         spshUsername: string,
         kennungen: string[],
         emailDomain: EmailDomain<true>,
-        recursionTry: number,
-    ): Promise<void> {
-        const externalId: string = spshPersonId; //Used as ox username and ldap uid.
+    ): Promise<Result<void>> {
+        for (let i: number = 0; i < attempts; i++) {
+            this.logger.info(`SET EMAIL FOR SPSHPERSONID: ${spshPersonId} - Attempt ${i + 1}`);
 
-        //GENERATE AND SETUP EMAIL ADDRESS
-        if (recursionTry === 0) {
-            this.logger.error(`CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - All retries failed`);
-            throw new EmailCreationFailedError(spshPersonId);
-        }
-
-        const emailAddressToCreate: EmailAddress<false> = await this.generateEmailAddress({
-            firstName: firstName,
-            lastName: lastName,
-            spshPersonId: spshPersonId,
-            externalId: externalId,
-            emailDomain: emailDomain,
-        });
-
-        //CREATE IN DB
-        const createdEmailAddress: EmailAddress<true> | DomainError =
-            await this.emailAddressRepo.save(emailAddressToCreate);
-
-        if (createdEmailAddress instanceof DomainError) {
-            this.logger.error(
-                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to create email address: ${createdEmailAddress.message}`,
-            );
-            throw createdEmailAddress;
-        }
-
-        await this.emailAddressStatusRepo.create(
-            EmailAddressStatus.createNew({
-                emailAddressId: createdEmailAddress.id,
-                status: EmailAddressStatusEnum.PENDING,
-            }),
-        );
-
-        this.logger.info(
-            `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully created email address ${createdEmailAddress.address} in status PENDING in DB`,
-        );
-
-        //CREATE IN OX
-        let oxUserCounter: string | undefined = undefined;
-        try {
-            oxUserCounter = await this.createOxUserForSpshPerson(
-                spshPersonId,
-                externalId,
-                spshUsername,
-                firstName,
-                lastName,
-                createdEmailAddress,
-            );
-            this.logger.info(
-                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully created OX user with  oxUserCounter ${oxUserCounter}`,
-            );
-        } catch (error) {
-            if (error instanceof OxPrimaryMailAlreadyExistsError) {
-                this.logger.info(
-                    `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Email address ${createdEmailAddress.address} already exists in Ox, trying again with a new email address, ${recursionTry - 1} tries left`,
-                );
-                createdEmailAddress.spshPersonId = undefined;
-                await this.emailAddressRepo.save(createdEmailAddress);
-
-                await this.emailAddressStatusRepo.create(
-                    EmailAddressStatus.createNew({
-                        emailAddressId: createdEmailAddress.id,
-                        status: EmailAddressStatusEnum.EXISTS_ONLY_IN_OX,
-                    }),
-                );
-
-                await this.createFirstEmailForSpshPerson(
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                const result: Result<void> = await this.createOrUpdateEmail(
                     firstName,
                     lastName,
                     spshPersonId,
                     spshUsername,
                     kennungen,
                     emailDomain,
-                    recursionTry - 1,
                 );
-                return;
+
+                if (result.ok) {
+                    // Success, abort the retry loop
+                    this.logger.info(`SET EMAIL FOR SPSHPERSONID: ${spshPersonId} - Success`);
+                    return Ok(undefined);
+                }
+
+                this.logger.logUnknownAsError(
+                    `SET EMAIL FOR SPSHPERSONID: ${spshPersonId} - Error while creating or updating the email`,
+                    result.error,
+                );
+            } catch (err) {
+                this.logger.logUnknownAsError(`SET EMAIL FOR SPSHPERSONID: ${spshPersonId} - Unknown error`, err);
             }
         }
 
-        //CONNECT OXUSERCounter IN DB
-        if (!oxUserCounter) {
-            await this.emailAddressStatusRepo.create(
-                EmailAddressStatus.createNew({
-                    emailAddressId: createdEmailAddress.id,
-                    status: EmailAddressStatusEnum.FAILED,
-                }),
-            );
-            this.logger.error(
-                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to connect Ox user in Db because oxUserCounter is undefined`,
-            );
-            throw new EmailCreationFailedError(spshPersonId);
-        }
-        createdEmailAddress.oxUserCounter = oxUserCounter;
+        this.logger.error(`SET EMAIL FOR SPSHPERSONID: ${spshPersonId} - All attempts failed, aborting`);
+        return Err(new EmailAddressGenerationAttemptsExceededError());
+    }
 
-        const saveResultAfterOxConnection: EmailAddress<true> | DomainError =
-            await this.emailAddressRepo.save(createdEmailAddress);
-        if (saveResultAfterOxConnection instanceof DomainError) {
-            await this.emailAddressStatusRepo.create(
-                EmailAddressStatus.createNew({
-                    emailAddressId: createdEmailAddress.id,
-                    status: EmailAddressStatusEnum.FAILED,
-                }),
-            );
-            this.logger.error(
-                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to save email address after trying to connect oxUserCounter ${oxUserCounter}`,
-            );
-            throw saveResultAfterOxConnection;
-        }
-        this.logger.info(
-            `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully connected oxUserCounter ${oxUserCounter} in DB`,
-        );
+    /**
+     * Checks if the person has a e-mail that is currently in a pending state
+     * @param spshPersonId
+     */
+    private async checkForPendingEmail(spshPersonId: PersonID): Promise<boolean> {
+        const addressesWithStatuses: EmailAddress<true>[] =
+            await this.emailAddressRepo.findBySpshPersonIdSortedByPriorityAsc(spshPersonId);
 
-        //ADD OX USER TO OX GROUPS
-        for (const kennung of kennungen) {
-            //await in loop is on purpose because we dont want multiple parallel requests to ox here
-            //eslint-disable-next-line no-await-in-loop
-            await this.oxService.addOxUserToGroup(oxUserCounter, kennung);
-        }
-
-        //CREATE IN LDAP
-        const createdLdapPerson: Result<PersonData, Error> = await this.ldapClientService.createPerson(
-            {
-                firstName: firstName,
-                lastName: lastName,
-                uid: externalId,
-            },
-            emailDomain.domain,
-            createdEmailAddress.address,
-        );
-        if (!createdLdapPerson.ok) {
-            await this.emailAddressStatusRepo.create(
-                EmailAddressStatus.createNew({
-                    emailAddressId: createdEmailAddress.id,
-                    status: EmailAddressStatusEnum.FAILED,
-                }),
-            );
-            this.logger.error(
-                `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Failed to create LDAP person: ${createdLdapPerson.error}`,
-            );
-            throw createdLdapPerson.error;
-        }
-        this.logger.info(`CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully created LDAP person`);
-
-        //ACTIVATE IN DB
-        await this.emailAddressStatusRepo.create(
-            EmailAddressStatus.createNew({
-                emailAddressId: createdEmailAddress.id,
-                status: EmailAddressStatusEnum.ACTIVE,
-            }),
-        );
-        this.logger.info(
-            `CREATE FIRST EMAIL FOR SPSHPERSONID: ${spshPersonId} - Successfully activated email address ${createdEmailAddress.address} in DB after completing all steps`,
+        return !!addressesWithStatuses.find(
+            (aws: EmailAddress<true>) => aws.getStatus() === EmailAddressStatusEnum.PENDING,
         );
     }
 
-    private async createOxUserForSpshPerson(
-        spshPersonId: PersonID,
-        externalId: string,
-        spshUsername: PersonUsername,
+    /**
+     * Tries to (re)activate an existing mail or generate a new one, if the existing ones no longer match the name
+     * Also updates OX and LDAP entries
+     */
+    private async createOrUpdateEmail(
         firstName: string,
         lastName: string,
-        mostRecentRequestedEmailAddress: EmailAddress<true>,
-    ): Promise<string> {
-        const requestedEmailAddressString: string = mostRecentRequestedEmailAddress.address;
-
-        const action: CreateUserAction = this.oxService.createCreateUserAction({
-            displayName: spshUsername,
-            username: externalId,
-            firstname: firstName,
-            lastname: lastName,
-            primaryEmail: requestedEmailAddressString,
+        spshPersonId: string,
+        spshUsername: string,
+        kennungen: string[],
+        emailDomain: EmailDomain<true>,
+    ): Promise<Result<void>> {
+        const newPrimaryEmailResult: Result<EmailAddress<true>> = await this.getOrCreateAvailableEmail({
+            emailDomain: emailDomain,
+            firstName,
+            lastName,
+            spshPersonId,
         });
-        const createUserResult: Result<CreateUserResponse, DomainError> = await this.oxSendService.send(action);
 
-        if (!createUserResult.ok) {
-            this.logger.error(
-                `CREATE OX USER FOR SPSH PERSON: ${spshPersonId} - Could not create user in OX, error:${createUserResult.error.message}`,
-            );
-            throw createUserResult.error;
+        if (!newPrimaryEmailResult.ok) {
+            this.logger.logUnknownAsError(`Could not determine available e-mail`, newPrimaryEmailResult.error);
+
+            return newPrimaryEmailResult;
         }
 
-        this.logger.info(
-            `CREATE OX USER FOR SPSH PERSON: ${spshPersonId} - Successfully created user in OX, oxUserCounter:${createUserResult.value.id}, oxEmail:${createUserResult.value.primaryEmail}`,
+        let newPrimaryEmail: EmailAddress<true> = newPrimaryEmailResult.value;
+
+        const externalId: string = newPrimaryEmail.externalId; // Used as ox username and ldap uid.
+
+        {
+            const allEmailsWithStatuses: EmailAddress<true>[] =
+                await this.emailAddressRepo.findBySpshPersonIdSortedByPriorityAsc(spshPersonId);
+
+            const currentPrioZero: EmailAddress<true> | undefined = allEmailsWithStatuses.find(
+                (em: EmailAddress<true>) => em.priority === 0,
+            );
+
+            // Shift email back if necessary
+            if (currentPrioZero?.id !== newPrimaryEmail.id) {
+                if (currentPrioZero && currentPrioZero.getStatus() !== EmailAddressStatusEnum.ACTIVE) {
+                    const shiftResult: Result<unknown, Error> = await this.emailAddressRepo.shiftPriorities(
+                        currentPrioZero,
+                        2,
+                    );
+
+                    if (!shiftResult.ok) {
+                        this.logger.logUnknownAsError(
+                            `Error while updating e-mail priorities for prio 0 mail`,
+                            shiftResult.error,
+                        );
+
+                        newPrimaryEmail.setStatus(EmailAddressStatusEnum.FAILED);
+                        newPrimaryEmail = await this.updateEmailIgnoreMissing(newPrimaryEmail);
+
+                        return shiftResult;
+                    }
+                }
+            }
+        }
+
+        let alternativeEmail: EmailAddress<true> | undefined;
+
+        // Don't set pending status, if the email is already prio 0
+        if (newPrimaryEmail.priority > 0) {
+            newPrimaryEmail.setStatus(EmailAddressStatusEnum.PENDING);
+            newPrimaryEmail = await this.updateEmailIgnoreMissing(newPrimaryEmail);
+
+            const updatedEmailsResult: Result<EmailAddress<true>[], Error> =
+                await this.emailAddressRepo.shiftPriorities(newPrimaryEmail, 0);
+
+            if (!updatedEmailsResult.ok) {
+                this.logger.logUnknownAsError(`Error while updating e-mail priorities`, updatedEmailsResult.error);
+
+                newPrimaryEmail.setStatus(EmailAddressStatusEnum.FAILED);
+                newPrimaryEmail = await this.updateEmailIgnoreMissing(newPrimaryEmail);
+
+                return updatedEmailsResult;
+            }
+
+            const cronDate: Date = new Date();
+            cronDate.setDate(cronDate.getDate() + this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS);
+            const emailsAfter: EmailAddress<true>[] = await this.emailAddressRepo.ensureStatusesAndCronDateForPerson(
+                spshPersonId,
+                cronDate,
+            );
+
+            // Replace the primary email with the saved one (to make sure everything is up to date)
+            newPrimaryEmail = emailsAfter.find((em: EmailAddress<true>) => em.priority === 0)!;
+
+            // Find the email which is not at priority 1 to use as an alternative mail
+            alternativeEmail = updatedEmailsResult.value.find((em: EmailAddress<true>) => em.priority === 1);
+        } else {
+            const mails: EmailAddress<true>[] =
+                await this.emailAddressRepo.findBySpshPersonIdSortedByPriorityAsc(spshPersonId);
+            alternativeEmail = mails.find((em: EmailAddress<true>) => em.priority === 1);
+        }
+
+        // Update or create ox user
+        const oxUserIdResult: Result<string> = await this.upsertOxUser(
+            spshUsername,
+            firstName,
+            lastName,
+            newPrimaryEmail,
+            alternativeEmail,
+            kennungen,
         );
 
-        return createUserResult.value.id;
+        if (!oxUserIdResult.ok) {
+            this.logger.logUnknownAsError(`Error while updating ox user`, oxUserIdResult.error);
+
+            if (oxUserIdResult.error instanceof OxPrimaryMailAlreadyExistsError) {
+                newPrimaryEmail.setStatus(EmailAddressStatusEnum.EXISTS_ONLY_IN_OX);
+                newPrimaryEmail = await this.updateEmailIgnoreMissing(newPrimaryEmail);
+            } else {
+                newPrimaryEmail.setStatus(EmailAddressStatusEnum.FAILED);
+                newPrimaryEmail = await this.updateEmailIgnoreMissing(newPrimaryEmail);
+            }
+
+            return oxUserIdResult;
+        }
+
+        // Update e-mail with the ox user ID and priority
+        {
+            newPrimaryEmail.oxUserCounter = oxUserIdResult.value;
+            newPrimaryEmail.markedForCron = undefined;
+
+            const saveResult: Result<unknown, DomainError> = await this.emailAddressRepo.save(newPrimaryEmail);
+
+            if (!saveResult.ok) {
+                this.logger.logUnknownAsError(`Error while updating e-mail`, saveResult.error);
+
+                // Persist the e-mail as failed
+                newPrimaryEmail.setStatus(EmailAddressStatusEnum.FAILED);
+                newPrimaryEmail = await this.updateEmailIgnoreMissing(newPrimaryEmail);
+
+                return saveResult;
+            }
+        }
+
+        // update or create LDAP user
+        const ldapResult: Result<void> = await this.upsertLdapUser(
+            externalId,
+            spshUsername,
+            firstName,
+            lastName,
+            newPrimaryEmail.address,
+            alternativeEmail?.address,
+            emailDomain.domain,
+        );
+
+        if (!ldapResult.ok) {
+            this.logger.logUnknownAsError(`Error while updating/creating LDAP user`, ldapResult.error);
+
+            // Persist the e-mail as failed
+            newPrimaryEmail.setStatus(EmailAddressStatusEnum.FAILED);
+            newPrimaryEmail = await this.updateEmailIgnoreMissing(newPrimaryEmail);
+
+            return ldapResult;
+        }
+
+        // Everything was a success, set the e-mail to active
+        newPrimaryEmail.setStatus(EmailAddressStatusEnum.ACTIVE);
+        newPrimaryEmail = await this.updateEmailIgnoreMissing(newPrimaryEmail);
+
+        return Ok(undefined);
     }
 
-    private async generateEmailAddress(params: {
+    /**
+     * Tries to match an existing email, if none can be found a new email will be generated and persisted (with priority = MAX_INT)
+     */
+    private async getOrCreateAvailableEmail(params: {
         spshPersonId: PersonID;
-        externalId: string;
         firstName: string;
         lastName: string;
         emailDomain: EmailDomain<true>;
-    }): Promise<EmailAddress<false>> {
+    }): Promise<Result<EmailAddress<true>>> {
+        // Try to match an existing email first
+        const existingAddresses: EmailAddress<true>[] =
+            await this.emailAddressRepo.findBySpshPersonIdSortedByPriorityAsc(params.spshPersonId);
+
+        const matchingEmail: Option<EmailAddress<true>> = existingAddresses.find(
+            (em: EmailAddress<true>) =>
+                // Exclude EXISTS_ONLY_IN_OX emails
+                em.getStatus() !== EmailAddressStatusEnum.EXISTS_ONLY_IN_OX &&
+                this.emailAddressGenerator.isEqualIgnoreCount(
+                    em.address,
+                    params.firstName,
+                    params.lastName,
+                    params.emailDomain.domain,
+                ),
+        );
+
+        if (matchingEmail) {
+            return Ok(matchingEmail);
+        }
+
+        // Use externalId from existing E-Mails if possible, otherwise use spsh person ID
+        const externalId: string =
+            existingAddresses.find((em: EmailAddress<true>) => !!em.externalId)?.externalId ?? params.spshPersonId;
+
+        // Find an existing ox user ID
+        const oxUserCounter: string | undefined = existingAddresses.find(
+            (em: EmailAddress<true>) => !!em.oxUserCounter,
+        )?.oxUserCounter;
+
+        // Generate a new email
         const generationResult: Result<string, Error> = await this.emailAddressGenerator.generateAvailableAddress(
             params.firstName,
             params.lastName,
@@ -283,18 +378,175 @@ export class SetEmailAddressForSpshPersonService {
             this.logger.error(
                 `GENERATE EMAIL ADDRESS FOR SPSH PERSON: ${params.spshPersonId} - Failed: ${generationResult.error.message}`,
             );
-            throw generationResult.error;
+            return generationResult;
         }
 
         const emailAddressToCreate: EmailAddress<false> = EmailAddress.createNew({
             address: generationResult.value,
-            priority: 0,
+            priority: MAX_EMAIL_PRIORITY, // Needs to be shifted into position
             spshPersonId: params.spshPersonId,
-            externalId: params.externalId,
-            oxUserCounter: undefined,
+            externalId,
+            oxUserCounter,
             markedForCron: undefined,
         });
 
-        return emailAddressToCreate;
+        return await this.emailAddressRepo.save(emailAddressToCreate);
+    }
+
+    /**
+     * Will create or update an user in OX, depending on wether the given address has an oxUserCounter.
+     *
+     * If the oxUserCounter is given, the user will be updated (if it can't be found in OX, an error will be returned).
+     * Otherwise a new user will be created.
+     *
+     * In both cases, the users groups will be updated.
+     *
+     * @returns the oxUserCounter of the user (if the user was newly created, this will be the generated value)
+     */
+    private async upsertOxUser(
+        spshUsername: PersonUsername,
+        firstname: string,
+        lastname: string,
+        primaryEmail: EmailAddress<true>,
+        alternativeEmail: EmailAddress<true> | undefined,
+        kennungen: string[],
+    ): Promise<Result<string>> {
+        const externalId: string = primaryEmail.externalId;
+        const oxUserCounter: string | undefined = primaryEmail.oxUserCounter;
+
+        if (oxUserCounter) {
+            // Check if OX User exists -> otherwise error
+
+            const exists: Result<GetDataForUserResponse, DomainError> = await this.oxSendService.send(
+                this.oxService.createGetDataForUserAction(oxUserCounter),
+            );
+
+            if (!exists.ok) {
+                this.logger.logUnknownAsError(`Could not find user in ox`, exists.error);
+                return exists;
+            }
+
+            if (!exists.value) {
+                this.logger.error(`Could not find user in ox`);
+                return Err(new OxError('User not found'));
+            }
+
+            // update OX user
+
+            const aliases: string[] = [primaryEmail.address, alternativeEmail?.address].filter(Boolean);
+
+            const changeResult: Result<void, DomainError> = await this.oxSendService.send(
+                this.oxService.createChangeUserAction(
+                    oxUserCounter,
+                    externalId,
+                    aliases,
+                    firstname,
+                    lastname,
+                    spshUsername,
+                    primaryEmail.address,
+                    primaryEmail.address,
+                ),
+            );
+
+            if (!changeResult.ok) {
+                this.logger.logUnknownAsError(`Could not create update in ox`, changeResult.error);
+                return changeResult;
+            }
+
+            await this.oxService.setUserOxGroups(oxUserCounter, kennungen);
+
+            return Ok(oxUserCounter);
+        } else {
+            // create ox user (returning ID!)
+            const createAction: CreateUserAction = this.oxService.createCreateUserAction({
+                username: externalId,
+                displayName: spshUsername,
+                firstname,
+                lastname,
+                primaryEmail: primaryEmail.address,
+            });
+
+            const createResult: Result<CreateUserResponse, DomainError> = await this.oxSendService.send(createAction);
+
+            if (!createResult.ok) {
+                this.logger.logUnknownAsError(`Could not create user in ox`, createResult.error);
+                return createResult;
+            }
+
+            await this.oxService.setUserOxGroups(createResult.value.id, kennungen);
+
+            return Ok(createResult.value.id);
+        }
+    }
+
+    /**
+     * Will create or update the user in LDAP, depending on wether it already exists.
+     */
+    private async upsertLdapUser(
+        uid: string,
+        username: string,
+        firstName: string,
+        lastName: string,
+
+        primaryEmail: string,
+        alternativeEmail: string | undefined,
+
+        domain: string,
+    ): Promise<Result<void>> {
+        const exists: Result<boolean> = await this.ldapClientService.isPersonExisting(uid, domain);
+
+        if (!exists.ok) {
+            return exists;
+        }
+
+        if (exists.value) {
+            // Update
+            const updateResult: Result<PersonData> = await this.ldapClientService.updatePerson(
+                {
+                    uid,
+                    username,
+                    firstName,
+                    lastName,
+                },
+                domain,
+                primaryEmail,
+                alternativeEmail,
+            );
+
+            if (!updateResult.ok) {
+                return updateResult;
+            }
+        } else {
+            // Create
+            const createResult: Result<PersonData> = await this.ldapClientService.createPerson(
+                {
+                    uid,
+                    username,
+                    firstName,
+                    lastName,
+                },
+                domain,
+                primaryEmail,
+                alternativeEmail,
+            );
+
+            if (!createResult.ok) {
+                return createResult;
+            }
+        }
+
+        return Ok(undefined);
+    }
+
+    private async updateEmailIgnoreMissing(emailAddress: EmailAddress<true>): Promise<EmailAddress<true>> {
+        const result: Result<EmailAddress<true>, DomainError> = await this.emailAddressRepo.save(emailAddress);
+
+        if (result.ok) {
+            return result.value;
+        }
+
+        this.logger.logUnknownAsError(`Saving of E-Mail-Address ${emailAddress.address} failed`, result.error);
+
+        return emailAddress;
     }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseFilters } from '@nestjs/common';
 import { ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
@@ -6,9 +6,11 @@ import { SetEmailAddressForSpshPersonParams } from '../dtos/params/set-email-add
 import { SetEmailAddressForSpshPersonService } from '../../domain/set-email-address-for-spsh-person.service.js';
 import { Public } from '../../decorator/public.decorator.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
+import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
 
 @ApiTags('email')
 @Controller({ path: 'write' })
+@UseFilters(new EmailExceptionFilter())
 export class EmailWriteController {
     public constructor(
         private readonly setEmailAddressForSpshPersonService: SetEmailAddressForSpshPersonService,

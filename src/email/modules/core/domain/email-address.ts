@@ -1,3 +1,10 @@
+import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity';
+
+export type EmailAddressStatus = {
+    id?: string;
+    status: EmailAddressStatusEnum;
+};
+
 export class EmailAddress<WasPersisted extends boolean> {
     public constructor(
         public id: Persisted<string, WasPersisted>,
@@ -5,10 +12,11 @@ export class EmailAddress<WasPersisted extends boolean> {
         public readonly updatedAt: Persisted<Date, WasPersisted>,
         public address: string,
         public priority: number,
-        public spshPersonId?: string,
-        public oxUserCounter?: string,
-        public externalId?: string,
-        public markedForCron?: Date,
+        public spshPersonId: string,
+        public oxUserCounter: string | undefined,
+        public externalId: string,
+        public markedForCron: Date | undefined,
+        public sortedStatuses: EmailAddressStatus[],
     ) {}
 
     public static construct(params: {
@@ -17,10 +25,11 @@ export class EmailAddress<WasPersisted extends boolean> {
         updatedAt: Date;
         address: string;
         priority: number;
-        spshPersonId?: string;
-        oxUserCounter?: string;
-        externalId?: string;
+        spshPersonId: string;
+        oxUserCounter: string | undefined;
+        externalId: string;
         markedForCron?: Date;
+        sortedStatuses: EmailAddressStatus[];
     }): EmailAddress<true> {
         return new EmailAddress(
             params.id,
@@ -32,16 +41,18 @@ export class EmailAddress<WasPersisted extends boolean> {
             params.oxUserCounter,
             params.externalId,
             params.markedForCron,
+            params.sortedStatuses,
         );
     }
 
     public static createNew(params: {
         address: string;
         priority: number;
-        spshPersonId?: string;
-        oxUserCounter?: string;
-        externalId?: string;
+        spshPersonId: string;
+        oxUserCounter: string | undefined;
+        externalId: string;
         markedForCron?: Date;
+        sortedStatuses?: EmailAddressStatus[];
     }): EmailAddress<false> {
         return new EmailAddress(
             undefined,
@@ -53,6 +64,19 @@ export class EmailAddress<WasPersisted extends boolean> {
             params.oxUserCounter,
             params.externalId,
             params.markedForCron,
+            params.sortedStatuses ?? [],
         );
+    }
+
+    public setStatus(status: EmailAddressStatusEnum): void {
+        if (status !== this.getStatus()) {
+            this.sortedStatuses.unshift({
+                status,
+            });
+        }
+    }
+
+    public getStatus(): EmailAddressStatusEnum | undefined {
+        return this.sortedStatuses[0]?.status;
     }
 }

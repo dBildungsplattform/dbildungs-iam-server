@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { EmailAddress } from './email-address.js';
+import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
 
 describe('EmailAddress', () => {
     describe('createNew', () => {
@@ -7,9 +8,10 @@ describe('EmailAddress', () => {
             const mailToCreate: EmailAddress<false> = EmailAddress.createNew({
                 address: faker.internet.email(),
                 priority: 1,
-                spshPersonId: undefined,
+                spshPersonId: faker.string.uuid(),
                 oxUserCounter: undefined,
                 markedForCron: undefined,
+                externalId: faker.string.uuid(),
             });
 
             expect(mailToCreate).toBeInstanceOf(EmailAddress);
@@ -30,15 +32,60 @@ describe('EmailAddress', () => {
                 updatedAt: updatedAt,
                 address: faker.internet.email(),
                 priority: 1,
-                spshPersonId: undefined,
+                spshPersonId: faker.string.uuid(),
                 oxUserCounter: undefined,
                 markedForCron: undefined,
+                externalId: faker.string.uuid(),
+                sortedStatuses: [],
             });
 
             expect(emailDomain).toBeInstanceOf(EmailAddress);
             expect(emailDomain.id).toBe(id);
             expect(emailDomain.createdAt).toBe(createdAt);
             expect(emailDomain.updatedAt).toBe(updatedAt);
+        });
+    });
+
+    describe('setStatus', () => {
+        it('should add status when it is different', () => {
+            const address: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                createdAt: faker.date.past(),
+                updatedAt: faker.date.recent(),
+                address: faker.internet.email(),
+                priority: 1,
+                spshPersonId: faker.string.uuid(),
+                oxUserCounter: undefined,
+                markedForCron: undefined,
+                externalId: faker.string.uuid(),
+                sortedStatuses: [],
+            });
+
+            address.setStatus(EmailAddressStatusEnum.ACTIVE);
+
+            expect(address.sortedStatuses).toHaveLength(1);
+            expect(address.getStatus()).toBe(EmailAddressStatusEnum.ACTIVE);
+        });
+
+        it('should not add status when it is the same', () => {
+            const address: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                createdAt: faker.date.past(),
+                updatedAt: faker.date.recent(),
+                address: faker.internet.email(),
+                priority: 1,
+                spshPersonId: faker.string.uuid(),
+                oxUserCounter: undefined,
+                markedForCron: undefined,
+                externalId: faker.string.uuid(),
+                sortedStatuses: [],
+            });
+
+            address.setStatus(EmailAddressStatusEnum.ACTIVE);
+            address.setStatus(EmailAddressStatusEnum.ACTIVE);
+
+            expect(address.sortedStatuses).toHaveLength(1);
+            expect(address.getStatus()).toBe(EmailAddressStatusEnum.ACTIVE);
         });
     });
 });

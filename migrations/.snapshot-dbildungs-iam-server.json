@@ -70,6 +70,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -349,6 +350,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -581,6 +583,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ],
@@ -621,6 +624,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -885,7 +889,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "mappedType": "string"
         },
         "spsh_person_id": {
@@ -894,7 +898,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "mappedType": "string"
         },
         "marked_for_cron": {
@@ -971,6 +975,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -1268,6 +1273,7 @@
             "id"
           ],
           "referencedTableName": "email.address",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       },
@@ -1288,6 +1294,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -1571,6 +1578,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -1871,6 +1879,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -2286,6 +2295,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -2578,6 +2588,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -3025,6 +3036,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -3371,6 +3383,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -3653,6 +3666,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -3974,6 +3988,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -4442,6 +4457,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -4830,6 +4846,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -5197,6 +5214,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -5480,6 +5498,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -5779,6 +5798,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -6172,6 +6192,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -6452,6 +6473,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -6826,6 +6848,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -7106,6 +7129,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -7389,6 +7413,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -7716,6 +7741,7 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
             "EMAIL_DOMAIN"
           ]
@@ -7934,6 +7960,7 @@
         "PERSON",
         "ORGANISATION",
         "ROLLE",
+        "ROLLENERWEITERUNG",
         "SERVICE_PROVIDER",
         "EMAIL_DOMAIN"
       ]

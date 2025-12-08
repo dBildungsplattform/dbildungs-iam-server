@@ -1,6 +1,7 @@
-import { Collection, DateTimeType, Entity, Index, OneToMany, Property } from '@mikro-orm/core';
+import { Collection, DateTimeType, Entity, Index, OneToMany, Property, QueryOrder } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../../persistence/timestamped.entity.js';
 import { EmailAddressStatusEntity } from './email-address-status.entity.js';
+import { PersonExternalID } from '../../../../shared/types/aggregate-ids.types.js';
 
 @Entity({ schema: 'email', tableName: 'address' })
 export class EmailAddrEntity extends TimestampedEntity {
@@ -14,21 +15,27 @@ export class EmailAddrEntity extends TimestampedEntity {
     @Property({ nullable: true })
     public oxUserCounter?: string;
 
-    @Property({ nullable: true })
+    @Property({ nullable: false })
     @Index({
         name: 'email_address_spsh_external_id_index',
     })
-    public externalId?: string; //used as ox username and ldap uid --> spshusername for all existing (stable, doesnt event change on rename) and spshpersonId for all new
+    public externalId!: PersonExternalID; //used as ox username and ldap uid --> spshusername for all existing (stable, doesnt event change on rename) and spshpersonId for all new
 
-    @Property({ nullable: true })
+    @Property({ nullable: false })
     @Index({
         name: 'email_address_spsh_person_id_index',
     })
-    public spshPersonId?: string;
+    public spshPersonId!: string;
 
     @Property({ nullable: true, type: DateTimeType })
     public markedForCron?: Date;
 
-    @OneToMany(() => EmailAddressStatusEntity, (status: EmailAddressStatusEntity) => status.emailAddress)
-    public statuses: Collection<EmailAddressStatusEntity, object> = new Collection<EmailAddressStatusEntity>(this);
+    @OneToMany({
+        entity: () => EmailAddressStatusEntity,
+        mappedBy: 'emailAddress',
+        eager: true,
+        orphanRemoval: true,
+        orderBy: { createdAt: QueryOrder.DESC },
+    })
+    public statuses: Collection<EmailAddressStatusEntity> = new Collection<EmailAddressStatusEntity>(this);
 }

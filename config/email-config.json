@@ -17,7 +17,9 @@
         "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
         "ADMIN_PASSWORD": "admin",
         "BASE_DN": "dc=schule-sh,dc=de",
-        "RETRY_WRAPPER_DEFAULT_RETRIES": 3
+        "RETRY_WRAPPER_DEFAULT_RETRIES": 3,
+        "OEFFENTLICHE_SCHULEN_DOMAIN": "qs.schule-sh.de",
+        "ERSATZSCHULEN_DOMAIN": "qs.ersatzschule-sh.de"
     },
     "OX": {
         "ENABLED": false,
@@ -29,5 +31,8 @@
         "NUMBER_OF_RETRIES": 3,
         "USER_PASSWORD_DEFAULT": "placeholder",
         "EMAIL_ADDRESS_DELETED_EVENT_DELAY": 0
+    },
+    "EMAIL": {
+        "NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS": 90
     }
 }
