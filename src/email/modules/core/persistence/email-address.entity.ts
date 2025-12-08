@@ -1,4 +1,4 @@
-import { Collection, DateTimeType, Entity, Index, OneToMany, Property } from '@mikro-orm/core';
+import { Collection, DateTimeType, Entity, Index, OneToMany, Property, QueryOrder } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../../persistence/timestamped.entity.js';
 import { EmailAddressStatusEntity } from './email-address-status.entity.js';
 import { PersonExternalID } from '../../../../shared/types/aggregate-ids.types.js';
@@ -30,6 +30,12 @@ export class EmailAddrEntity extends TimestampedEntity {
     @Property({ nullable: true, type: DateTimeType })
     public markedForCron?: Date;
 
-    @OneToMany(() => EmailAddressStatusEntity, (status: EmailAddressStatusEntity) => status.emailAddress)
-    public statuses: Collection<EmailAddressStatusEntity, object> = new Collection<EmailAddressStatusEntity>(this);
+    @OneToMany({
+        entity: () => EmailAddressStatusEntity,
+        mappedBy: 'emailAddress',
+        eager: true,
+        orphanRemoval: true,
+        orderBy: { createdAt: QueryOrder.DESC },
+    })
+    public statuses: Collection<EmailAddressStatusEntity> = new Collection<EmailAddressStatusEntity>(this);
 }
