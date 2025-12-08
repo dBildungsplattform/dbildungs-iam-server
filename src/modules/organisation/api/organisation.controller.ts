@@ -584,9 +584,7 @@ export class OrganisationController {
         );
         if (!organisation.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    organisation.error
-                ),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(organisation.error),
             );
         }
 
