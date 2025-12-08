@@ -562,7 +562,7 @@ export class OrganisationService {
     public async findOrganisationByIdAndMatchingPermissions(
         permissions: PersonPermissions,
         organisationId: OrganisationID,
-    ): Promise<Result<Organisation<true>, DomainError>> {
+    ): Promise<Result<Organisation<true>, EntityNotFoundError | MissingPermissionsError>> {
         const [organisations]: [Organisation<true>[], total: number, pageTotal: number] =
             await this.organisationRepo.findAuthorized(
                 permissions,
@@ -571,10 +571,10 @@ export class OrganisationService {
                     RollenSystemRecht.SCHULEN_VERWALTEN,
                     RollenSystemRecht.KLASSEN_VERWALTEN,
                 ],
-                { organisationIds: [organisationId] },
+                { organisationIds: [organisationId], limit: 1 },
             );
         const organisation: Option<Organisation<true>> = organisations[0];
-        if (!organisation) {
+        if (!organisation || organisation.id !== organisationId) {
             return { ok: false, error: new EntityNotFoundError('Organisation', organisationId) };
         }
 

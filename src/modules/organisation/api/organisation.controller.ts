@@ -577,13 +577,17 @@ export class OrganisationController {
     ): Promise<void> {
         const organisation: Result<
             Organisation<true>,
-            DomainError
+            EntityNotFoundError | MissingPermissionsError
         > = await this.organisationService.findOrganisationByIdAndMatchingPermissions(
             permissions,
             params.organisationId,
         );
         if (!organisation.ok) {
-            throw organisation.error;
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    organisation.error
+                ),
+            );
         }
 
         const result: DomainError | void = await this.organisationDeleteService.deleteOrganisation(
