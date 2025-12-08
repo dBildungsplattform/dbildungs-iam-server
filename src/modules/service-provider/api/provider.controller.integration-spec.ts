@@ -280,6 +280,7 @@ describe('ServiceProvider API', () => {
                 merkmale: serviceProvider.merkmale,
                 url: serviceProvider.url,
                 hasRollenerweiterung: true,
+                availableForRollenerweiterung: false,
                 rollen: [
                     {
                         id: rolle.id,
