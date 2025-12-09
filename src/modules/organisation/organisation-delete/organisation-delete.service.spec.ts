@@ -2,18 +2,20 @@ import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { DoFactory } from '../../../../test/utils';
+import { DomainError } from '../../../shared/error';
 import { OrganisationID } from '../../../shared/types';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo';
 import { RolleRepo } from '../../rolle/repo/rolle.repo';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo';
 import { OrganisationRepository } from '../persistence/organisation.repository';
-import { OrganisationDeleteService } from './organisation-delete.service';
-import { DoFactory } from '../../../../test/utils';
-import { DomainError } from '../../../shared/error';
 import { OrganisationHasChildrenError } from './errors/organisation-has-children.error';
-import { OrganisationHasRollenError } from './errors/organisation-has-rollen.error';
 import { OrganisationHasPersonenkontexteError } from './errors/organisation-has-personenkontexte.error';
+import { OrganisationHasRollenError } from './errors/organisation-has-rollen.error';
+import { OrganisationHasRollenerweiterungError } from './errors/organisation-has-rollenerweiterung.error';
 import { OrganisationHasServiceProvidersError } from './errors/organisation-has-service-provider.error';
+import { OrganisationDeleteService } from './organisation-delete.service';
 
 describe('OrganisationDeleteService', () => {
     let module: TestingModule;
@@ -21,6 +23,7 @@ describe('OrganisationDeleteService', () => {
     let rolleRepo: DeepMocked<RolleRepo>;
     let personenkontextRepo: DeepMocked<DBiamPersonenkontextRepo>;
     let serviceProviderRepoRepo: DeepMocked<ServiceProviderRepo>;
+    let rollenerweiterungRepo: DeepMocked<RollenerweiterungRepo>;
 
     let organisationDeleteService: OrganisationDeleteService;
 
@@ -44,6 +47,10 @@ describe('OrganisationDeleteService', () => {
                     provide: ServiceProviderRepo,
                     useValue: createMock<ServiceProviderRepo>(),
                 },
+                {
+                    provide: RollenerweiterungRepo,
+                    useValue: createMock<RollenerweiterungRepo>(),
+                },
             ],
         }).compile();
         organisationRepo = module.get(OrganisationRepository);
@@ -51,6 +58,7 @@ describe('OrganisationDeleteService', () => {
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
         serviceProviderRepoRepo = module.get(ServiceProviderRepo);
         organisationDeleteService = module.get(OrganisationDeleteService);
+        rollenerweiterungRepo = module.get(RollenerweiterungRepo);
     });
 
     afterAll(async () => {
@@ -67,6 +75,7 @@ describe('OrganisationDeleteService', () => {
             rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
             personenkontextRepo.findBy.mockResolvedValue([[], 0]);
             serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([]);
+            rollenerweiterungRepo.findManyByOrganisationId.mockResolvedValue([]);
 
             const organisationId: OrganisationID = faker.string.uuid();
 
@@ -134,6 +143,20 @@ describe('OrganisationDeleteService', () => {
             const result: void | DomainError = await organisationDeleteService.deleteOrganisation(organisationId);
 
             expect(result).toBeInstanceOf(OrganisationHasServiceProvidersError);
+            expect(organisationRepo.delete).toHaveBeenCalledTimes(0);
+        });
+
+        it('should return OrganisationHasRollenerweiterungError, if org has rollenerweiterungen', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            organisationRepo.findBy.mockResolvedValue([[], 0]);
+            rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
+            personenkontextRepo.findBy.mockResolvedValue([[], 0]);
+            serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([]);
+            rollenerweiterungRepo.findManyByOrganisationId.mockResolvedValue([DoFactory.createRollenerweiterung(true)]);
+
+            const result: void | DomainError = await organisationDeleteService.deleteOrganisation(organisationId);
+
+            expect(result).toBeInstanceOf(OrganisationHasRollenerweiterungError);
             expect(organisationRepo.delete).toHaveBeenCalledTimes(0);
         });
     });

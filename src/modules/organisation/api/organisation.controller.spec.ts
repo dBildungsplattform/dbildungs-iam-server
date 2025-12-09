@@ -1009,7 +1009,7 @@ describe('OrganisationController', () => {
                 });
                 await expect(
                     organisationController.deleteOrganisation({ organisationId: faker.string.uuid() }, permissionsMock),
-                ).rejects.toThrow(MissingPermissionsError);
+                ).rejects.toThrow(HttpException);
             });
         });
 
