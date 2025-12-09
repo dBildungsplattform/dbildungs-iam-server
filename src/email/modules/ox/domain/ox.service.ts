@@ -183,8 +183,8 @@ export class OxService {
     ): Promise<Result<OXGroupID>> {
         const oxGroupId: Result<OXGroupID> = await this.getOxGroupByName(oxGroupName);
 
-        if(oxGroupId.ok) {
-                return {
+        if (oxGroupId.ok) {
+            return {
                 ok: true,
                 value: oxGroupId.value,
             };
@@ -195,8 +195,7 @@ export class OxService {
 
             return createGroupResult;
         }
-        return oxGroupId
-
+        return oxGroupId;
     }
 
     public async createOxGroup(oxGroupName: OXGroupName, displayName: string): Promise<Result<OXGroupID>> {
@@ -285,7 +284,7 @@ export class OxService {
     }
 
     public async deleteUser(oxUserCounter: OXUserID): Promise<Result<void>> {
-        const action = this.createDeleteUserAction(oxUserCounter)
+        const action = this.createDeleteUserAction(oxUserCounter);
         const result: Result<unknown, DomainError> = await this.oxSendService.send(action);
 
         if (!result.ok) {
@@ -294,9 +293,7 @@ export class OxService {
             return result;
         }
 
-        this.logger.info(
-            `Successfully Deleted OxUser :${oxUserCounter}`,
-        );
+        this.logger.info(`Successfully Deleted OxUser :${oxUserCounter}`);
 
         return {
             ok: true,
