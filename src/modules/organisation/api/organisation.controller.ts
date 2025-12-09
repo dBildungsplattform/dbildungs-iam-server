@@ -564,7 +564,7 @@ export class OrganisationController {
     }
 
     @Delete(':organisationId')
-    // @UseGuards(StepUpGuard)
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete an organisation by id.' })
     @ApiNoContentResponse({ description: 'The organisation was deleted successfully.' })
