@@ -59,8 +59,8 @@ export class RollenerweiterungRepo {
 
     /**
      * WARNING: Requires manual checks for consistency!
-     * @param rollenerweiterung 
-     * @returns 
+     * @param rollenerweiterung
+     * @returns
      */
     public async create(rollenerweiterung: Rollenerweiterung<false>): Promise<Rollenerweiterung<true>> {
         const rollenerweiterungEntity: RollenerweiterungEntity = this.em.create(

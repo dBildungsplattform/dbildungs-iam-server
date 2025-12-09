@@ -63,7 +63,7 @@ export class OrganisationDeleteService {
         }
 
         const referencedRollenerweiterung: Array<Rollenerweiterung<true>> =
-            await this.rollenerweiterungRepo.findManyByOrganisationId(organisationId)
+            await this.rollenerweiterungRepo.findManyByOrganisationId(organisationId);
         if (referencedRollenerweiterung.length) {
             return { ok: false, error: new OrganisationHasRollenerweiterungError() };
         }
