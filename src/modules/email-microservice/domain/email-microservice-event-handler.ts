@@ -70,7 +70,7 @@ export class EmailMicroserviceEventHandler {
 
         if (!emailServiceProviderId) {
             // If also in the removedKontexte through this event is no serviceProviderId, set emails to suspended
-            if (await this.ExistsServiceProviderInRemovedKontexte(event.removedKontexte)) {
+            if (await this.ExistsEmailServiceProviderIdInRemovedKontexte(event.removedKontexte)) {
                 await this.emailResolverService.setEmailsSuspendedForSpshPerson({ spshPersonId: event.person.id });
                 return;
             } else {
@@ -197,7 +197,7 @@ export class EmailMicroserviceEventHandler {
             .filter((kennung: string | undefined): kennung is string => !!kennung);
     }
 
-    private async ExistsServiceProviderInRemovedKontexte(
+    private async ExistsEmailServiceProviderIdInRemovedKontexte(
         removedKontexte: PersonenkontextEventKontextData[],
     ): Promise<boolean> {
         const rolleIds: string[] = removedKontexte.map((k: PersonenkontextEventKontextData) => k.rolleId);
