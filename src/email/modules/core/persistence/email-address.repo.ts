@@ -228,6 +228,6 @@ export class EmailAddressRepo {
     }
 
     public async delete(emailAddress: EmailAddress<true>): Promise<void> {
-        await this.em.nativeDelete(EmailAddrEntity, emailAddress.id)
+        await this.em.nativeDelete(EmailAddrEntity, emailAddress.id);
     }
 }
