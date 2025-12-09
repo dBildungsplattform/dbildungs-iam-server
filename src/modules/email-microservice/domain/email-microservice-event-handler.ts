@@ -69,10 +69,16 @@ export class EmailMicroserviceEventHandler {
         );
 
         if (!emailServiceProviderId) {
-            this.logger.info(
-                `No email service provider found for personId:${event.person.id}, skipping email resolution.`,
-            );
-            return;
+            // If also in the removedKontexte through this event is no serviceProviderId, set emails to suspended
+            if (await this.noServiceProviderInRemovedKontexte(event.removedKontexte)) {
+                await this.emailResolverService.setEmailsSuspendedForSpshPerson({ spshPersonId: event.person.id });
+                return;
+            } else {
+                this.logger.info(
+                    `No email service provider found for personId:${event.person.id}, skipping email resolution.`,
+                );
+                return;
+            }
         }
 
         const uniqueKennungen: string[] = uniq(
@@ -189,5 +195,16 @@ export class EmailMicroserviceEventHandler {
             )
             .map((kontext: { orgaId: string; orgaKennung: string | undefined; rolleId: string }) => kontext.orgaKennung)
             .filter((kennung: string | undefined): kennung is string => !!kennung);
+    }
+
+    private async noServiceProviderInRemovedKontexte(
+        removedKontexte: PersonenkontextEventKontextData[],
+    ): Promise<boolean> {
+        const rolleIds: string[] = removedKontexte.map((k: PersonenkontextEventKontextData) => k.rolleId);
+        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rolleIds);
+        const emailServiceProviderId: string | undefined = this.getEmailServiceProviderId(
+            Array.from(rollenMap.values()),
+        );
+        return Boolean(emailServiceProviderId);
     }
 }
