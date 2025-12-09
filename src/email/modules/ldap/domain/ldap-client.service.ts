@@ -185,7 +185,7 @@ export class LdapClientService {
         }
 
         return this.mutex.runExclusive(async () => {
-            this.logger.info('LDAP: deletePerson by person');
+            this.logger.info(`LDAP: deletePerson by externalId ${externalId}`);
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) {
@@ -193,12 +193,11 @@ export class LdapClientService {
             }
             const personUid: string = this.getPersonUid(externalId, rootName.value);
             try {
-                const searchResultLehrer: SearchResult = await client.search(
-                    `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
-                    {
-                        filter: `(uid=${personUid})`,
-                    },
-                );
+                const ouBaseDn: string = `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`;
+                this.logger.debug(`LDAP: Trying to find person, uid:${personUid}, ouBaseDn:${ouBaseDn} for deletion`);
+                const searchResultLehrer: SearchResult = await client.search(ouBaseDn, {
+                    filter: `(uid=${externalId})`,
+                });
                 if (!searchResultLehrer.searchEntries[0]) {
                     this.logger.info(`LDAP: Person ${personUid} does not exist, nothing to delete`);
 
