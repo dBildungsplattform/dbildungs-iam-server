@@ -25,8 +25,6 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event';
 import { EventModule } from '../../../core/eventbus';
 
-type SetEmailParams = Parameters<EmailResolverService['setEmailForSpshPerson']>[0];
-
 describe('EmailMicroserviceEventHandler', () => {
     let app: INestApplication;
     let module: TestingModule;
@@ -85,8 +83,8 @@ describe('EmailMicroserviceEventHandler', () => {
     describe('handlePersonenkontextUpdatedEvent', () => {
         it('should log and call emailResolverService when microservice is enabled', async () => {
             const mockServiceProviderId: string = faker.string.uuid();
-            const params: SetEmailParams = {
-                spshPersonId: faker.string.uuid(),
+            const spshPersonId: string = faker.string.uuid();
+            const params: SetEmailAddressForSpshPersonBodyParams = {
                 spshUsername: faker.internet.userName(),
                 kennungen: ['0706054'],
                 firstName: faker.person.firstName(),
@@ -95,7 +93,7 @@ describe('EmailMicroserviceEventHandler', () => {
             } satisfies SetEmailAddressForSpshPersonBodyParams;
             const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
                 person: {
-                    id: params.spshPersonId,
+                    id: spshPersonId,
                     vorname: params.firstName,
                     familienname: params.lastName,
                     username: params.spshUsername,
@@ -133,13 +131,16 @@ describe('EmailMicroserviceEventHandler', () => {
             expect(loggerMock.info).toHaveBeenCalledWith(
                 expect.stringContaining('Received PersonenkontextUpdatedEvent'),
             );
-            expect(emailResolverServiceMock.setEmailForSpshPerson).toHaveBeenCalledWith(params);
+            expect(emailResolverServiceMock.setEmailForSpshPerson).toHaveBeenCalledWith({
+                spshPersonId: spshPersonId,
+                ...params,
+            });
         });
 
         it('should log and call emailResolverService when microservice is enabled and username is undefined (not in praxis)', async () => {
             const mockServiceProviderId: string = faker.string.uuid();
-            const params: SetEmailParams = {
-                spshPersonId: faker.string.uuid(),
+            const spshPersonId: string = faker.string.uuid();
+            const params: SetEmailAddressForSpshPersonBodyParams = {
                 spshUsername: '',
                 kennungen: ['0706054'],
                 firstName: faker.person.firstName(),
@@ -148,7 +149,7 @@ describe('EmailMicroserviceEventHandler', () => {
             } satisfies SetEmailAddressForSpshPersonBodyParams;
             const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
                 person: {
-                    id: params.spshPersonId,
+                    id: spshPersonId,
                     vorname: params.firstName,
                     familienname: params.lastName,
                     username: undefined,
@@ -183,7 +184,7 @@ describe('EmailMicroserviceEventHandler', () => {
             rolleRepoMock.findByIds.mockResolvedValue(new Map([['r1', mockRolle]]));
 
             await expect(sut.handlePersonenkontextUpdatedEvent(mockEvent)).rejects.toThrow(
-                `Person with id:${params.spshPersonId} has no username, cannot resolve email.`,
+                `Person with id:${spshPersonId} has no username, cannot resolve email.`,
             );
             expect(loggerMock.info).toHaveBeenCalledWith(
                 expect.stringContaining('Received PersonenkontextUpdatedEvent'),
@@ -283,16 +284,7 @@ describe('EmailMicroserviceEventHandler', () => {
                         serviceProviderExternalSystems: [],
                     },
                 ],
-                removedKontexte: [
-                    {
-                        id: 'pk1',
-                        rolleId: 'r1',
-                        rolle: RollenArt.LERN,
-                        orgaId: faker.string.uuid(),
-                        isItslearningOrga: false,
-                        serviceProviderExternalSystems: [],
-                    },
-                ],
+                removedKontexte: [],
                 newKontexte: [],
                 createdAt: new Date(),
                 eventID: '',
