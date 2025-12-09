@@ -69,7 +69,7 @@ export class EmailMicroserviceEventHandler {
         );
 
         if (!emailServiceProviderId) {
-            // If also in the removedKontexte through this event is no serviceProviderId, set emails to suspended
+            // If only in the removedKontexte through this event is a serviceProviderId, set emails to suspended
             if (await this.ExistsEmailServiceProviderIdInRemovedKontexte(event.removedKontexte)) {
                 await this.emailResolverService.setEmailsSuspendedForSpshPerson({ spshPersonId: event.person.id });
                 return;
