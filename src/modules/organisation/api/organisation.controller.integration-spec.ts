@@ -298,7 +298,7 @@ describe('Organisation API', () => {
             describe.each([
                 {
                     entityType: 'Organisation',
-                    setup: async () => {
+                    setup: async (): Promise<string> => {
                         const savedOrga: Organisation<true> = await organisationRepo.save(
                             DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                         );
@@ -314,7 +314,7 @@ describe('Organisation API', () => {
                 },
                 {
                     entityType: 'Rolle',
-                    setup: async () => {
+                    setup: async (): Promise<string> => {
                         const savedOrga: Organisation<true> = await organisationRepo.save(
                             DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                         );
@@ -329,16 +329,20 @@ describe('Organisation API', () => {
                 },
                 {
                     entityType: 'Personenkontext',
-                    setup: async () => {
+                    setup: async (): Promise<string> => {
                         const savedOrga: Organisation<true> = await organisationRepo.save(
                             DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                         );
 
                         const person: Person<true> | DomainError = await personRepo.save(DoFactory.createPerson(false));
-                        if (person instanceof DomainError) throw person;
+                        if (person instanceof DomainError) {
+                            throw person;
+                        }
 
                         const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                        if (rolle instanceof DomainError) throw rolle;
+                        if (rolle instanceof DomainError) {
+                            throw rolle;
+                        }
 
                         await dBiamPersonenkontextRepoInternal.save(
                             DoFactory.createPersonenkontext(false, {
@@ -353,7 +357,7 @@ describe('Organisation API', () => {
                 },
                 {
                     entityType: 'ServiceProvider',
-                    setup: async () => {
+                    setup: async (): Promise<string> => {
                         const savedOrga: Organisation<true> = await organisationRepo.save(
                             DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                         );
@@ -367,12 +371,14 @@ describe('Organisation API', () => {
                 },
                 {
                     entityType: 'Rollenerweiterung',
-                    setup: async () => {
+                    setup: async (): Promise<string> => {
                         const savedOrga: Organisation<true> = await organisationRepo.save(
                             DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                         );
                         const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                        if (rolle instanceof DomainError) throw rolle;
+                        if (rolle instanceof DomainError) {
+                            throw rolle;
+                        }
                         const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
                             DoFactory.createServiceProvider(false, {
                                 merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
