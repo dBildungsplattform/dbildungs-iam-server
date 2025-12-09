@@ -17,9 +17,7 @@ export class DeleteEmailsAddressesForSpshPersonService {
         private readonly ldapClientService: LdapClientService,
     ) {}
     public async deleteEmailAddressesForSpshPerson(params: { spshPersonId: string }): Promise<void> {
-        this.logger.info(
-            `Received request to delete all email addresses for spshPerson ${params.spshPersonId}.`,
-        );
+        this.logger.info(`Received request to delete all email addresses for spshPerson ${params.spshPersonId}.`);
         const addresses: EmailAddress<true>[] = await this.emailAddressRepo.findBySpshPersonIdSortedByPriorityAsc(
             params.spshPersonId,
         );
@@ -29,29 +27,29 @@ export class DeleteEmailsAddressesForSpshPersonService {
             return;
         }
         addresses.forEach((a: EmailAddress<true>) => {
-            a.setStatus(EmailAddressStatusEnum.TO_BE_DELETED)
+            a.setStatus(EmailAddressStatusEnum.TO_BE_DELETED);
             a.markedForCron = new Date();
         });
         await Promise.all(addresses.map((a: EmailAddress<true>) => this.emailAddressRepo.save(a)));
 
         //If any of the external deletion operations fail, we keep the email addresses in DB with status TO_BE_DELETED for retry by the cronjob
-        let canDbDeleteAllAdresses = true;
+        let canDbDeleteAllAdresses: boolean = true;
 
         const oxUserCounter: OXUserID | undefined = addresses.at(0)?.oxUserCounter;
         const externalId: string | undefined = addresses.at(0)?.externalId;
         const domain: string | undefined = addresses.at(0)?.getDomain();
         if (oxUserCounter) {
             //Deleting the Group Relations extra is not necessary as Ox deletes them automatically when deleting the user
-            const deleteUserResult = await this.oxService.deleteUser(oxUserCounter);
-            if(deleteUserResult.ok){
+            const deleteUserResult: Result<void, Error> = await this.oxService.deleteUser(oxUserCounter);
+            if (deleteUserResult.ok) {
                 this.logger.info(
                     `Successfully deleted for spshPerson ${params.spshPersonId} the corresponding Ox user ${oxUserCounter}.`,
                 );
-            }else if(deleteUserResult instanceof OxNoSuchUserError){
+            } else if (deleteUserResult instanceof OxNoSuchUserError) {
                 this.logger.info(
                     `User for spshPerson ${params.spshPersonId} with Ox user id ${oxUserCounter} does not exist in Ox anymore. Continuing deletion process.`,
                 );
-            }else {
+            } else {
                 canDbDeleteAllAdresses = false;
             }
         } else {
@@ -60,10 +58,13 @@ export class DeleteEmailsAddressesForSpshPersonService {
             );
         }
         if (externalId && domain) {
-            const deleteLdapPersonResult = await this.ldapClientService.deletePerson(externalId, domain);
-            if(!deleteLdapPersonResult.ok){
+            const deleteLdapPersonResult: Result<void, Error> = await this.ldapClientService.deletePerson(
+                externalId,
+                domain,
+            );
+            if (!deleteLdapPersonResult.ok) {
                 canDbDeleteAllAdresses = false;
-            }else{
+            } else {
                 this.logger.info(
                     `Successfully deleted for spshPerson ${params.spshPersonId} the LDAP user with uid: ${externalId} in domain ${domain}.`,
                 );
@@ -73,12 +74,10 @@ export class DeleteEmailsAddressesForSpshPersonService {
                 `No externalId or domain found for spshPerson ${params.spshPersonId} when deleting email addresses. Skipping LDAP deletion`,
             );
         }
-        if(canDbDeleteAllAdresses){
+        if (canDbDeleteAllAdresses) {
             await Promise.all(addresses.map((a: EmailAddress<true>) => this.emailAddressRepo.delete(a)));
-            this.logger.info(
-                `Successfully deleted all email addresses for spshPerson ${params.spshPersonId} from DB.`,
-            );
-        }else{
+            this.logger.info(`Successfully deleted all email addresses for spshPerson ${params.spshPersonId} from DB.`);
+        } else {
             this.logger.warning(
                 `Could not delete all external representations for spshPerson ${params.spshPersonId}. Keeping email addresses in DB with status TO_BE_DELETED for retry.`,
             );
