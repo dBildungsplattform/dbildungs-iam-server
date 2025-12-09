@@ -23,6 +23,7 @@
         "test:watch": "jest --maxWorkers=50% --watch",
         "test:unit": "jest --maxWorkers=50% --selectProjects unit",
         "test:integration": "jest --maxWorkers=50% --selectProjects integration",
+        "test:vitest": "vitest",
         "lint": "eslint --max-warnings=0",
         "lint:fix": "eslint --fix",
         "start:console": "nest start console --",
@@ -86,10 +87,12 @@
     },
     "devDependencies": {
         "@golevelup/ts-jest": "0.5.0",
+        "@golevelup/ts-vitest": "^0.5.2",
         "@mikro-orm/cli": "6.2.1",
         "@nestjs/cli": "^10.4.9",
         "@nestjs/schematics": "^10.2.3",
         "@nestjs/testing": "^10.4.15",
+        "@swc/core": "^1.15.3",
         "@testcontainers/postgresql": "^10.22.0",
         "@types/express": "^4.17.21",
         "@types/express-session": "^1.18.1",
@@ -117,6 +120,8 @@
         "ts-loader": "^9.5.2",
         "ts-node": "^10.9.2",
         "typescript": "^5.8.2",
-        "typescript-eslint": "^8.43.0"
+        "typescript-eslint": "^8.43.0",
+        "unplugin-swc": "^1.5.9",
+        "vitest": "^4.0.15"
     }
 }
