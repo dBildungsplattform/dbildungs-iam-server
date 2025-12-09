@@ -302,9 +302,21 @@ export class RolleRepo {
     }
 
     public async findBySchulstrukturknoten(administeredBySchulstrukturknoten: OrganisationID): Promise<Rolle<true>[]> {
-        return (await this.em.find(this.entityName, { administeredBySchulstrukturknoten })).map(
-            (rolleEntity: RolleEntity) => mapRolleEntityToAggregate(rolleEntity, this.rolleFactory),
-        );
+        return (
+            await this.em.find(
+                this.entityName,
+                { administeredBySchulstrukturknoten },
+                {
+                    populate: [
+                        'merkmale',
+                        'systemrechte',
+                        'serviceProvider.serviceProvider',
+                        'serviceProvider.serviceProvider.merkmale',
+                    ] as const,
+                    exclude: ['serviceProvider.serviceProvider.logo'] as const,
+                },
+            )
+        ).map((rolleEntity: RolleEntity) => mapRolleEntityToAggregate(rolleEntity, this.rolleFactory));
     }
 
     public async findByServiceProviderIds(
