@@ -182,7 +182,12 @@ export class RollenerweiterungRepo {
         );
     }
 
-    public async findByServiceProviderId(
+    /*
+    Neither the organizations nor the roles are loaded directly here because:
+    Otherwise, the organization and role would be included for every role extension (resulting in many duplicates).
+    For performance reasons, it makes sense to create a separate set of IDs and load each one only once in a subsequent query without a join.
+    */
+    public async findByServiceProviderIdPagedAndSortedByOrgaKennung(
         serviceProviderId: ServiceProviderID,
         offset?: number,
         limit?: number,
@@ -196,6 +201,9 @@ export class RollenerweiterungRepo {
                 limit,
                 offset,
                 orderBy: {
+                    organisationId: {
+                        kennung: 'ASC',
+                    },
                     id: 'ASC',
                 },
             },
