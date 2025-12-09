@@ -1065,6 +1065,20 @@ describe('OrganisationService', () => {
             expect(!result.ok && result.error).toBeInstanceOf(EntityNotFoundError);
         });
 
+        it('should return an error, if wrong orga is found', async () => {
+            const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            organisationRepositoryMock.findAuthorized.mockResolvedValue([[DoFactory.createOrganisation(true)], 1, 1]);
+            const result: Result<
+                Organisation<true>,
+                DomainError
+            > = await organisationService.findOrganisationByIdAndMatchingPermissions(
+                permissionsMock,
+                faker.string.uuid(),
+            );
+            expect(result.ok).toBeFalsy();
+            expect(!result.ok && result.error).toBeInstanceOf(EntityNotFoundError);
+        });
+
         it('should return an error, if orga has no type', async () => {
             const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             const mockOrganisation: Organisation<true> = DoFactory.createOrganisation(true, { typ: undefined });
