@@ -6,9 +6,9 @@ export class SetEmailSuspendedPathParams {
     @IsUUID()
     @IsNotEmpty()
     @ApiProperty({
-        description: 'The email to be set to suspended of the person.',
+        description: 'The spshPersonId of the person.',
         required: true,
         nullable: false,
     })
-    public readonly emailAddress!: string;
+    public readonly spshPersonId!: string;
 }

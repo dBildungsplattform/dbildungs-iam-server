@@ -65,7 +65,7 @@ export class EmailWriteController {
             });
     }
 
-    @Post(':emailAddress/set-suspended')
+    @Post(':spshPersonId/set-suspended')
     @Public()
     @ApiOperation({ description: 'Set email-address for a person to suspended.' })
     @ApiOkResponse({
@@ -74,10 +74,10 @@ export class EmailWriteController {
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while setting email-address for person to suspended.',
     })
-    public setEmailSuspended(@Param() params: SetEmailSuspendedPathParams): void {
+    public setEmailsSuspended(@Param() params: SetEmailSuspendedPathParams): void {
         // void the promise, we don't care about the result and the endpoint should instantly return
         void this.setEmailSuspendedService
-            .setEmailSuspended({ emailAddress: params.emailAddress })
+            .setEmailsSuspended({ spshPersonId: params.spshPersonId })
             .catch((err: Error) => {
                 this.logger.error(`Error in background email processing: ${err.message}`);
             });
