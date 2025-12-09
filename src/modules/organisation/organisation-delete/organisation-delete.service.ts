@@ -6,7 +6,9 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextScope } from '../../personenkontext/persistence/personenkontext.scope.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { Organisation } from '../domain/organisation.js';
@@ -15,6 +17,7 @@ import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { OrganisationHasChildrenError } from './errors/organisation-has-children.error.js';
 import { OrganisationHasPersonenkontexteError } from './errors/organisation-has-personenkontexte.error.js';
 import { OrganisationHasRollenError } from './errors/organisation-has-rollen.error.js';
+import { OrganisationHasRollenerweiterungError } from './errors/organisation-has-rollenerweiterung.error.js';
 import { OrganisationHasServiceProvidersError } from './errors/organisation-has-service-provider.error.js';
 
 @Injectable()
@@ -24,6 +27,7 @@ export class OrganisationDeleteService {
         private readonly rolleRepo: RolleRepo,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly rollenerweiterungRepo: RollenerweiterungRepo,
     ) {}
 
     public async deleteOrganisation(organisationId: OrganisationID): Promise<void | DomainError> {
@@ -56,6 +60,12 @@ export class OrganisationDeleteService {
             await this.serviceProviderRepo.findBySchulstrukturknoten(organisationId);
         if (referencedServiceProvider.length) {
             return { ok: false, error: new OrganisationHasServiceProvidersError() };
+        }
+
+        const referencedRollenerweiterung: Array<Rollenerweiterung<true>> =
+            await this.rollenerweiterungRepo.findManyByOrganisationId(organisationId)
+        if (referencedRollenerweiterung.length) {
+            return { ok: false, error: new OrganisationHasRollenerweiterungError() };
         }
 
         return { ok: true, value: undefined };

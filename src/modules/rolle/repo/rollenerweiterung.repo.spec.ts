@@ -29,6 +29,11 @@ import { NoRedundantRollenerweiterungError } from '../specification/error/no-red
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
 import { RolleRepo } from './rolle.repo.js';
 import { RollenerweiterungRepo } from './rollenerweiterung.repo.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+
+function makeN<T>(fn: () => T, n: number): Array<T> {
+    return Array.from({ length: n }, fn);
+}
 
 describe('RollenerweiterungRepo', () => {
     let module: TestingModule;
@@ -297,9 +302,6 @@ describe('RollenerweiterungRepo', () => {
     });
 
     describe('findManyByOrganisationAndRolle', () => {
-        function makeN<T>(fn: () => T, n: number): Array<T> {
-            return Array.from({ length: n }, fn);
-        }
         let organisations: Array<Organisation<true>>;
         let rollen: Array<Rolle<true>>;
         let serviceProviders: Array<ServiceProvider<true>>;
@@ -391,6 +393,92 @@ describe('RollenerweiterungRepo', () => {
                     ),
                 ).toHaveLength(3);
             });
+        });
+    });
+
+    describe('findManyByOrganisationId', () => {
+        let organisations: Array<Organisation<true>>;
+        let rollen: Array<Rolle<true>>;
+        let serviceProviders: Array<ServiceProvider<true>>;
+        let permissionMock: DeepMocked<PersonPermissions>;
+
+        beforeEach(async () => {
+            organisations = await Promise.all(
+                makeN(() => organisationRepo.save(DoFactory.createOrganisation(false)), 3),
+            );
+            rollen = (await Promise.all(makeN(() => rolleRepo.save(DoFactory.createRolle(false)), 3))).filter(
+                (rolle: Rolle<true> | DomainError): rolle is Rolle<true> => {
+                    if (rolle instanceof Rolle) {
+                        return true;
+                    } else {
+                        throw rolle;
+                    }
+                },
+            );
+            serviceProviders = await Promise.all(
+                makeN(
+                    () =>
+                        serviceProviderRepo.save(
+                            DoFactory.createServiceProvider(false, {
+                                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                            }),
+                        ),
+                    3,
+                ),
+            );
+            permissionMock = createMock<PersonPermissions>();
+            permissionMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            const unpersistedRollenerweiterungen: Array<Rollenerweiterung<false>> = [];
+            for (const organisation of organisations) {
+                for (const rolle of rollen) {
+                    for (const serviceProvider of serviceProviders) {
+                        unpersistedRollenerweiterungen.push(
+                            factory.createNew(organisation.id, rolle.id, serviceProvider.id),
+                        );
+                    }
+                }
+            }
+            const results: Array<Result<Rollenerweiterung<true>, DomainError>> = await Promise.all(
+                unpersistedRollenerweiterungen.map((re: Rollenerweiterung<false>) =>
+                    sut.createAuthorized(re, permissionMock),
+                ),
+            );
+            for (const result of results) {
+                if (!result.ok) {
+                    throw result.error;
+                }
+            }
+        });
+
+        test('should return all rollenerweiterungen for given organisation', async () => {
+            const organisationId: OrganisationID = organisations[0]!.id;
+            const result: Array<Rollenerweiterung<true>> = await sut.findManyByOrganisationId(organisationId);
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(9);
+            for (const erweiterung of result) {
+                expect(erweiterung).toEqual(expect.objectContaining({ organisationId }));
+            }
+        });
+
+        test('should return paged result', async () => {
+            const limit: number = 1;
+            const organisationId: OrganisationID = organisations[0]!.id;
+            const firstPage: Array<Rollenerweiterung<true>> = await sut.findManyByOrganisationId(
+                organisationId,
+                0,
+                limit,
+            );
+            expect(firstPage).toBeInstanceOf(Array);
+            expect(firstPage).toHaveLength(limit);
+
+            const secondPage: Array<Rollenerweiterung<true>> = await sut.findManyByOrganisationId(
+                organisationId,
+                1,
+                limit,
+            );
+            expect(secondPage).toBeInstanceOf(Array);
+            expect(secondPage).toHaveLength(limit);
+            expect(firstPage).not.toEqual(expect.arrayContaining(secondPage));
         });
     });
 
