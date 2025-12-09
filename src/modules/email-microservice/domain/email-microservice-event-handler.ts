@@ -17,7 +17,6 @@ import {
     DBiamPersonenkontextRepo,
     KontextWithOrgaAndRolle,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { uniq } from 'lodash-es';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
@@ -55,10 +54,6 @@ export class EmailMicroserviceEventHandler {
 
         //Current Kontexte can be used here because it includes also the new Kontexte
         let allKontexteForPerson: PersonenkontextEventKontextData[] = event.currentKontexte;
-        const kennungen: string[] = allKontexteForPerson
-            .map((kontext: PersonenkontextEventKontextData) => kontext.orgaKennung)
-            .filter((kennung: string | undefined): kennung is string => !!kennung);
-        const uniqueKennungen: string[] = Array.from(new Set(kennungen));
 
         if (event.removedKontexte) {
             allKontexteForPerson = allKontexteForPerson.filter((pk: PersonenkontextEventKontextData) =>
@@ -66,8 +61,11 @@ export class EmailMicroserviceEventHandler {
             );
         }
 
-        const emailServiceProviderId: string | undefined = await this.getEmailServiceProviderId(
-            allKontexteForPerson.map((k: PersonenkontextEventKontextData) => k.rolleId),
+        const allRolleIds: string[] = allKontexteForPerson.map((k: PersonenkontextEventKontextData) => k.rolleId);
+        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(allRolleIds);
+
+        const emailServiceProviderId: string | undefined = this.getEmailServiceProviderId(
+            Array.from(rollenMap.values()),
         );
 
         if (!emailServiceProviderId) {
@@ -76,6 +74,17 @@ export class EmailMicroserviceEventHandler {
             );
             return;
         }
+
+        const uniqueKennungen: string[] = uniq(
+            this.getKennungenWithEmailServiceProvider(
+                allKontexteForPerson.map((k: PersonenkontextEventKontextData) => ({
+                    orgaId: k.orgaId,
+                    orgaKennung: k.orgaKennung,
+                    rolleId: k.rolleId,
+                })),
+                rollenMap,
+            ),
+        );
 
         await this.emailResolverService.setEmailForSpshPerson({
             spshPersonId: event.person.id,
@@ -106,13 +115,11 @@ export class EmailMicroserviceEventHandler {
         const allKontexteForPerson: KontextWithOrgaAndRolle[] =
             await this.personenkontextRepo.findByPersonWithOrgaAndRolle(event.personId);
 
-        const kennungen: string[] = allKontexteForPerson
-            .map((kontext: KontextWithOrgaAndRolle) => kontext.organisation.kennung)
-            .filter((kennung: string | undefined): kennung is string => !!kennung);
-        const uniqueKennungen: string[] = uniq(kennungen);
+        const allRolleIds: string[] = allKontexteForPerson.map((k: KontextWithOrgaAndRolle) => k.rolle.id);
+        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(allRolleIds);
 
-        const emailServiceProviderId: string | undefined = await this.getEmailServiceProviderId(
-            allKontexteForPerson.map((k: KontextWithOrgaAndRolle) => k.rolle.id),
+        const emailServiceProviderId: string | undefined = this.getEmailServiceProviderId(
+            Array.from(rollenMap.values()),
         );
 
         if (!emailServiceProviderId) {
@@ -121,6 +128,17 @@ export class EmailMicroserviceEventHandler {
             );
             return;
         }
+
+        const uniqueKennungen: string[] = uniq(
+            this.getKennungenWithEmailServiceProvider(
+                allKontexteForPerson.map((k: KontextWithOrgaAndRolle) => ({
+                    orgaId: k.organisation.id,
+                    orgaKennung: k.organisation.kennung,
+                    rolleId: k.rolle.id,
+                })),
+                rollenMap,
+            ),
+        );
 
         await this.emailResolverService.setEmailForSpshPerson({
             spshPersonId: event.personId,
@@ -146,11 +164,7 @@ export class EmailMicroserviceEventHandler {
         await this.emailResolverService.deleteEmailsForSpshPerson({ spshPersonId: event.personId });
     }
 
-    private async getEmailServiceProviderId(rollenIds: RolleID[]): Promise<string | undefined> {
-        // Retrieve role details based on the role IDs
-        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
-        const rollen: Rolle<true>[] = Array.from(rollenMap.values());
-
+    private getEmailServiceProviderId(rollen: Rolle<true>[]): string | undefined {
         const spshServiceProviderId: string | undefined = rollen
             .flatMap((rolle: Rolle<true>) => rolle.serviceProviderData)
             .find(
@@ -159,5 +173,21 @@ export class EmailMicroserviceEventHandler {
             )?.id;
 
         return spshServiceProviderId;
+    }
+
+    private getKennungenWithEmailServiceProvider(
+        kontexte: { orgaId: string; orgaKennung: string | undefined; rolleId: string }[],
+        rollenMap: Map<string, Rolle<true>>,
+    ): string[] {
+        return kontexte
+            .filter((kontext: { orgaId: string; orgaKennung: string | undefined; rolleId: string }) =>
+                rollenMap
+                    .get(kontext.rolleId)
+                    ?.serviceProviderData.some(
+                        (sp: ServiceProvider<true>) => sp.externalSystem === ServiceProviderSystem.EMAIL,
+                    ),
+            )
+            .map((kontext: { orgaId: string; orgaKennung: string | undefined; rolleId: string }) => kontext.orgaKennung)
+            .filter((kennung: string | undefined): kennung is string => !!kennung);
     }
 }
