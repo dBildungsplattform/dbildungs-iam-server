@@ -37,6 +37,9 @@ export class ManageableServiceProviderResponse {
     @ApiProperty()
     public hasRollenerweiterung: boolean;
 
+    @ApiProperty({ description: 'Indicates whether the service provider is available for rollenerweiterung.' })
+    public availableForRollenerweiterung: boolean;
+
     @ApiProperty({ type: RolleRefResponse, isArray: true })
     public rollen: RolleRefResponse[];
 
@@ -58,6 +61,9 @@ export class ManageableServiceProviderResponse {
         this.merkmale = serviceProvider.merkmale;
         this.url = serviceProvider.url;
         this.hasRollenerweiterung = hasRollenerweiterung;
+        this.availableForRollenerweiterung = serviceProvider.merkmale.includes(
+            ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+        );
         this.rollen = rollen.map((r: Rolle<true>) => ({ id: r.id, name: r.name }));
     }
 }
