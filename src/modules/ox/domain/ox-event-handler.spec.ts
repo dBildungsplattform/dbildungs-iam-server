@@ -2150,14 +2150,16 @@ describe('OxEventHandler', () => {
         });
 
         describe('when action fails', () => {
-            it('should log error, when group can not be found', async () => {
+            it.each([
+                ['OxGroupNotFoundError', new OxGroupNotFoundError('not found')],
+                ['OxError', new OxError('generic error')],
+            ])('should log %s, when group can not be found', async (_label: string, error: OxError) => {
                 const oxLehrerGroupName: string = 'lehrer-' + event.kennung;
-                const mockError: OxGroupNotFoundError = new OxGroupNotFoundError('not found');
-                oxServiceMock.send.mockResolvedValueOnce(Err(mockError)); // getOxGroupByName
+                oxServiceMock.send.mockResolvedValueOnce(Err(error)); // getOxGroupByName
                 await sut.handleOrganisationDeletedEvent(event);
                 expect(loggerMock.logUnknownAsError).toHaveBeenLastCalledWith(
                     `Could Not Find OxGroup ${oxLehrerGroupName} for Deletion`,
-                    mockError,
+                    error,
                 );
             });
 

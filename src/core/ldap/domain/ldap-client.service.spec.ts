@@ -3171,10 +3171,25 @@ describe('LDAP Client Service', () => {
             });
         });
 
-        describe('when deletion fails', () => {
+        describe('when deletion of group fails', () => {
             it('should return an error', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
+                    clientMock.del.mockRejectedValueOnce(new Error());
+                    return clientMock;
+                });
+                const kennung: string = faker.string.numeric(7);
+
+                const promise: Promise<Result<string>> = ldapClientService.deleteOrganisation(kennung);
+                await expect(promise).resolves.toEqual(Err(new LdapDeleteOrganisationError({ kennung })));
+            });
+        });
+
+        describe('when deletion of orgUnit fails', () => {
+            it('should return an error', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.del.mockResolvedValueOnce();
                     clientMock.del.mockRejectedValueOnce(new Error());
                     return clientMock;
                 });
