@@ -15,8 +15,6 @@ import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailResolverService, PersonIdWithEmailResponse } from './email-resolver.service';
 import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams';
 
-type SetEmailParams = Parameters<EmailResolverService['setEmailForSpshPerson']>[0];
-
 describe('EmailResolverService', () => {
     let module: TestingModule;
     let sut: EmailResolverService;
@@ -318,8 +316,8 @@ describe('EmailResolverService', () => {
     });
 
     it('should send email data to microservice successfully', async () => {
-        const params: SetEmailParams = {
-            spshPersonId: faker.string.uuid(),
+        const spshPersonId: string = faker.string.uuid();
+        const params: SetEmailAddressForSpshPersonBodyParams = {
             spshUsername: 'mmustermann',
             kennungen: ['0706054'],
             firstName: 'Max',
@@ -337,20 +335,20 @@ describe('EmailResolverService', () => {
         };
         mockHttpService.post.mockReturnValue(of(mockAxiosResponse));
         const loggerSpy: jest.SpyInstance = jest.spyOn(sut['logger'], 'info');
-        await sut.setEmailForSpshPerson(params);
+        await sut.setEmailForSpshPerson({ spshPersonId: spshPersonId, ...params });
 
         expect(mockHttpService.post).toHaveBeenCalledWith(
-            expect.stringContaining('write/set-email-for-person'),
-            expect.objectContaining(params),
+            expect.stringContaining(`/api/write/${spshPersonId}/set-email`),
+            expect.objectContaining({ ...params }),
         );
         expect(loggerSpy).toHaveBeenCalledWith(
-            `Setting email for person ${params.spshPersonId} via email microservice with spId ${params.spshServiceProviderId}`,
+            `Setting email for person ${spshPersonId} via email microservice with spId ${params.spshServiceProviderId}`,
         );
     });
 
     it('should log error when microservice post call fails', async () => {
-        const params: SetEmailParams = {
-            spshPersonId: faker.string.uuid(),
+        const spshPersonId: string = faker.string.uuid();
+        const params: SetEmailAddressForSpshPersonBodyParams = {
             spshUsername: 'mmustermann',
             kennungen: ['0706054'],
             firstName: 'Max',
@@ -365,8 +363,8 @@ describe('EmailResolverService', () => {
 
         const errorLoggerSpy: jest.SpyInstance = jest.spyOn(sut['logger'], 'logUnknownAsError');
 
-        await sut.setEmailForSpshPerson(params);
-        expect(errorLoggerSpy).toHaveBeenCalledWith(`Failed to set email for person ${params.spshPersonId}`, error);
+        await sut.setEmailForSpshPerson({ spshPersonId: spshPersonId, ...params });
+        expect(errorLoggerSpy).toHaveBeenCalledWith(`Failed to set email for person ${spshPersonId}`, error);
     });
 
     it('should return true when USE_EMAIL_MICROSERVICE is true', () => {
@@ -395,20 +393,22 @@ describe('EmailResolverService', () => {
         configService.getOrThrow = jest.fn().mockReturnValue({
             ENDPOINT: mockEndpoint,
         });
-        const params: SetEmailParams = {
-            spshPersonId: faker.string.uuid(),
+        const spshPersonId: string = faker.string.uuid();
+        const params: SetEmailAddressForSpshPersonBodyParams = {
             spshUsername: 'mmustermann',
             kennungen: ['0706054'],
             firstName: 'Max',
             lastName: 'Mustermann',
             spshServiceProviderId: faker.string.uuid(),
         } satisfies SetEmailAddressForSpshPersonBodyParams;
-        const expectedUrl: string = `${mockEndpoint}api/write/set-email-for-person`;
 
         mockHttpService.post.mockReturnValueOnce(of({ status: 200 } as AxiosResponse));
 
-        await sut.setEmailForSpshPerson(params);
-        expect(mockHttpService.post).toHaveBeenCalledWith(expectedUrl, expect.objectContaining(params));
+        await sut.setEmailForSpshPerson({ spshPersonId: spshPersonId, ...params });
+        expect(mockHttpService.post).toHaveBeenCalledWith(
+            expect.stringMatching(/\/api\/write\/[a-f0-9-]+\/set-email$/),
+            expect.objectContaining({ ...params }),
+        );
     });
 
     it.each([

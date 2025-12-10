@@ -45,7 +45,7 @@ export class DeleteEmailsAddressesForSpshPersonService {
                 this.logger.info(
                     `Successfully deleted for spshPerson ${params.spshPersonId} the corresponding Ox user ${oxUserCounter}.`,
                 );
-            } else if (deleteUserResult instanceof OxNoSuchUserError) {
+            } else if (deleteUserResult.error instanceof OxNoSuchUserError) {
                 this.logger.info(
                     `User for spshPerson ${params.spshPersonId} with Ox user id ${oxUserCounter} does not exist in Ox anymore. Continuing deletion process.`,
                 );

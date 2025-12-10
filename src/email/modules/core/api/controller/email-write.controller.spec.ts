@@ -13,6 +13,7 @@ import { DeleteEmailsAddressesForSpshPersonService } from '../../domain/delete-e
 describe('Email Write Controller', () => {
     let emailWriteController: EmailWriteController;
     let setEmailAddressForSpshPersonServiceMock: DeepMocked<SetEmailAddressForSpshPersonService>;
+    let deleteEmailsAddressesForSpshPersonServiceMock: DeepMocked<DeleteEmailsAddressesForSpshPersonService>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -38,6 +39,7 @@ describe('Email Write Controller', () => {
 
         emailWriteController = module.get(EmailWriteController);
         setEmailAddressForSpshPersonServiceMock = module.get(SetEmailAddressForSpshPersonService);
+        deleteEmailsAddressesForSpshPersonServiceMock = module.get(DeleteEmailsAddressesForSpshPersonService);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
@@ -87,6 +89,33 @@ describe('Email Write Controller', () => {
                 spshPersonId: spshPersonId,
                 ...bodyParams,
             });
+        });
+    });
+
+    describe('deleteEmailsForPerson', () => {
+        it('should resolve immediately if deleteEmailAddressesForSpshPerson succeeds', () => {
+            const spshPersonId: string = faker.string.uuid();
+            deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson.mockResolvedValue();
+
+            const result: void = emailWriteController.deleteEmailsForPerson({ spshPersonId });
+            expect(result).toBeUndefined();
+            jest.runAllTimers();
+            expect(
+                deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
+            ).toHaveBeenCalledWith({ spshPersonId });
+        });
+
+        it('should log error if deleteEmailAddressesForSpshPerson fails', () => {
+            const spshPersonId: string = faker.string.uuid();
+            const error: Error = new Error('Delete failed');
+            deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson.mockRejectedValue(error);
+
+            const result: void = emailWriteController.deleteEmailsForPerson({ spshPersonId });
+            expect(result).toBeUndefined();
+            jest.runAllTimers();
+            expect(
+                deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
+            ).toHaveBeenCalledWith({ spshPersonId });
         });
     });
 });
