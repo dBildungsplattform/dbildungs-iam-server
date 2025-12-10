@@ -34,6 +34,6 @@ export class SetEmailSuspendedService {
             a.setStatus(EmailAddressStatusEnum.SUSPENDED);
             a.markedForCron = new Date(Date.now() + 8.64e7 * 90);
         });
-        await Promise.all(addresses.map((a: EmailAddress<true>) => this.emailAddressRepo.save(a)));
+        await Promise.all(eligibleAddresses.map((a: EmailAddress<true>) => this.emailAddressRepo.save(a)));
     }
 }
