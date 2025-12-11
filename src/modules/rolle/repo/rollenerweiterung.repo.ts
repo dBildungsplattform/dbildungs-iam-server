@@ -190,7 +190,8 @@ export class RollenerweiterungRepo {
             .count('re.organisationId', true) // true for DISTINCT
             .where({ serviceProviderId });
 
-        const totalUniqueOrgs: number = await countQb.execute('get', true); // true to get single value
+        const countResult: { count: string | number } = await countQb.execute('get', true);
+        const totalUniqueOrgs: number = Number(countResult.count);
 
         // If no organisations found, return empty result
         if (pagedOrgIds.length === 0) {
@@ -218,6 +219,6 @@ export class RollenerweiterungRepo {
             (entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity),
         );
 
-        return [rollenerweiterungen, totalUniqueOrgs];
+        return [rollenerweiterungen, Number(totalUniqueOrgs)];
     }
 }
