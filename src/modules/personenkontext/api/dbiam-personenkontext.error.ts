@@ -9,7 +9,6 @@ export enum PersonenkontextSpecificationErrorI18nTypes {
     PERSONENKONTEXT_ANLAGE_ERROR = 'PERSONENKONTEXT_ANLAGE_ERROR',
     ROLLE_NUR_AN_PASSENDE_ORGANISATION = 'ROLLE_NUR_AN_PASSENDE_ORGANISATION',
     PERSONALNUMMER_NICHT_EINDEUTIG = 'PERSONALNUMMER_NICHT_EINDEUTIG',
-    LERN_HAT_KEINE_KLASSE = 'LERN_HAT_KEINE_KLASSE',
 }
 export type DbiamPersonenkontextErrorProps = DbiamErrorProps & {
     i18nKey: PersonenkontextSpecificationErrorI18nTypes;
