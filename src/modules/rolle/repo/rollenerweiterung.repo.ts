@@ -221,6 +221,6 @@ export class RollenerweiterungRepo {
             (entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity),
         );
 
-        return [rollenerweiterungen, limit ?? totalUniqueOrgs];
+        return [rollenerweiterungen, totalUniqueOrgs];
     }
 }

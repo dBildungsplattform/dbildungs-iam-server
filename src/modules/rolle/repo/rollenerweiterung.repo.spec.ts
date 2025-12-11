@@ -458,7 +458,7 @@ describe('RollenerweiterungRepo', () => {
                 await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id, 1, 2);
             expect(result).toBeInstanceOf(Array);
             expect(result).toHaveLength(2);
-            expect(count).toBe(2);
+            expect(count).toBe(3);
         });
     });
 });
