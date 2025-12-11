@@ -32,7 +32,7 @@ import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-pe
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { DuplicateKlassenkontextError } from './error/update-invalid-duplicate-klassenkontext-for-same-rolle.js';
-import { LernHatKeineKlasseError } from '../specification/error/lern-hat-keine-klasse.error.js';
+import { UpdateLernNotAtSchuleAndKlasseError } from './error/update-lern-not-at-schule-and-klasse.error.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>({
@@ -977,7 +977,7 @@ describe('PersonenkontexteUpdate', () => {
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
-                expect(updateResult).toBeInstanceOf(LernHatKeineKlasseError);
+                expect(updateResult).toBeInstanceOf(UpdateLernNotAtSchuleAndKlasseError);
             });
 
             it('should return DuplicateKlassenkontextError when user has duplicate Klassenkontext with same Rolle under same administering organisation', async () => {

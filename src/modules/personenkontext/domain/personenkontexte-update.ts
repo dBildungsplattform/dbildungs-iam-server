@@ -28,7 +28,7 @@ import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { LernAnSchuleUndKlasse } from '../specification/lern-an-schule-und-klasse.js';
-import { LernHatKeineKlasseError } from '../specification/error/lern-hat-keine-klasse.error.js';
+import { UpdateLernNotAtSchuleAndKlasseError } from './error/update-lern-not-at-schule-and-klasse.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { CheckDuplicateKlassenkontextSpecification } from '../specification/check-duplicate-klassenkontext.js';
 import { DuplicateKlassenkontextError } from './error/update-invalid-duplicate-klassenkontext-for-same-rolle.js';
@@ -320,7 +320,7 @@ export class PersonenkontexteUpdate {
         ).isSatisfiedBy(sentPKs);
 
         if (!isSatisfied) {
-            return new LernHatKeineKlasseError();
+            return new UpdateLernNotAtSchuleAndKlasseError();
         }
 
         return undefined;
