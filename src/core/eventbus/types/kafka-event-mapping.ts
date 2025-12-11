@@ -36,6 +36,7 @@ import { KafkaLdapSyncCompletedEvent } from '../../../shared/events/ldap/kafka-l
 import { KafkaLdapSyncFailedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-failed.event.js';
 import { KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/kafka-email-address-generated-after-ldap-sync-failed.event.js';
 import { KafkaOxSyncUserCreatedEvent } from '../../../shared/events/ox/kafka-ox-sync-user-created.event.js';
+import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
 
 export type KafkaEventKey =
     | 'user.created.email'
@@ -71,9 +72,10 @@ export type KafkaEventKey =
     | 'klasse.updated'
     | 'rolle.updated'
     | 'schule.created'
-    | 'schule.itslearning_enabled';
+    | 'schule.itslearning_enabled'
+    | 'organisation.deleted';
 
-type TopicPrefixes = 'user' | 'import' | 'group-role' | 'klasse' | 'rolle' | 'schule';
+type TopicPrefixes = 'user' | 'import' | 'group-role' | 'rolle' | 'organisation';
 
 export type KafkaTopic = `${TopicPrefixes}-topic`;
 export type KafkaTopicDlq = `${TopicPrefixes}-dlq-topic`;
@@ -149,31 +151,37 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
         topicDlq: 'rolle-dlq-topic',
     },
 
+    'organisation.deleted': {
+        eventClass: KafkaOrganisationDeletedEvent,
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
+    },
+
     'klasse.created': {
         eventClass: KafkaKlasseCreatedEvent,
-        topic: 'klasse-topic',
-        topicDlq: 'klasse-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
     'klasse.deleted': {
         eventClass: KafkaKlasseDeletedEvent,
-        topic: 'klasse-topic',
-        topicDlq: 'klasse-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
     'klasse.updated': {
         eventClass: KafkaKlasseUpdatedEvent,
-        topic: 'klasse-topic',
-        topicDlq: 'klasse-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
 
     'schule.created': {
         eventClass: KafkaSchuleCreatedEvent,
-        topic: 'schule-topic',
-        topicDlq: 'schule-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
     'schule.itslearning_enabled': {
         eventClass: KafkaSchuleItslearningEnabledEvent,
-        topic: 'schule-topic',
-        topicDlq: 'schule-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
 
     'user.email.already_exists': {

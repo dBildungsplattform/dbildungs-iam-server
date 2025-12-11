@@ -4,9 +4,7 @@ import-topic
 import-dlq-topic
 group-role-topic
 group-role-dlq-topic
-klasse-topic
-klasse-dlq-topic
 rolle-topic
 rolle-dlq-topic
-schule-topic
-schule-dlq-topic
+organisation-topic
+organisation-dlq-topic

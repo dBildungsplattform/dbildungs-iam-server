@@ -36,6 +36,10 @@ import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/
 import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-email-address-generated.event.js';
+import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
+import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
+import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
+import { Ok } from '../../../shared/util/result.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -361,6 +365,22 @@ export class LdapEventHandler {
         }
 
         return deletionResult;
+    }
+
+    @KafkaEventHandler(KafkaOrganisationDeletedEvent)
+    @EventHandler(OrganisationDeletedEvent)
+    public async handleOrganisationDeletedEvent(event: OrganisationDeletedEvent): Promise<Result<unknown>> {
+        this.logger.info(
+            `Received OrganisationDeletedEvent, organisationId:${event.organisationId}, name:${event.name}, kennung:${event.kennung}, typ:${event.typ}`,
+        );
+        if (event?.typ !== OrganisationsTyp.SCHULE || !event.kennung) {
+            this.logger.info(
+                `Cannot delete organisation, since typ is not ${OrganisationsTyp.SCHULE} or kennung is UNDEFINED, organisationId:${event.organisationId}, kennung:${event.kennung}, typ:${event.typ}`,
+            );
+            return Ok(undefined);
+        }
+
+        return this.ldapClientService.deleteOrganisation(event.kennung);
     }
 
     public hatZuordnungZuOrganisationNachLoeschen(
