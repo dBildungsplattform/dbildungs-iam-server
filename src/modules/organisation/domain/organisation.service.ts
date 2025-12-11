@@ -574,7 +574,7 @@ export class OrganisationService {
                 { organisationIds: [organisationId], limit: 1 },
             );
         const organisation: Option<Organisation<true>> = organisations[0];
-        if (!organisation || organisation.id !== organisationId) {
+        if (organisation?.id !== organisationId) {
             return { ok: false, error: new EntityNotFoundError('Organisation', organisationId) };
         }
 

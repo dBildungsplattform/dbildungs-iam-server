@@ -374,7 +374,9 @@ export class LdapEventHandler {
             `Received OrganisationDeletedEvent, organisationId:${event.organisationId}, name:${event.name}, kennung:${event.kennung}, typ:${event.typ}`,
         );
         if (event?.typ !== OrganisationsTyp.SCHULE || !event.kennung) {
-            this.logger.info(`Cannot delete organisation, since typ is not ${OrganisationsTyp.SCHULE} or kennung is UNDEFINED, organisationId:${event.organisationId}, kennung:${event.kennung}, typ:${event.typ}`);
+            this.logger.info(
+                `Cannot delete organisation, since typ is not ${OrganisationsTyp.SCHULE} or kennung is UNDEFINED, organisationId:${event.organisationId}, kennung:${event.kennung}, typ:${event.typ}`,
+            );
             return Ok(undefined);
         }
 
