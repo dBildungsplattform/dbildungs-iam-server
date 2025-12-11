@@ -37,13 +37,7 @@ export class LernAnSchuleUndKlasse extends CompositeSpecification<Array<Personen
 
         const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(rolleIDs);
 
-        for (const [rolleID, rolle] of rollen) {
-            if (rolle.rollenart !== RollenArt.LERN) {
-                rollen.delete(rolleID);
-            }
-        }
-
-        return pks.filter((pk: Personenkontext<boolean>) => rollen.has(pk.rolleId));
+        return pks.filter((pk: Personenkontext<boolean>) => rollen.get(pk.rolleId)?.rollenart === RollenArt.LERN);
     }
 
     private async isEveryRolleAtMatchingSchuleAndKlasse(pks: Personenkontext<boolean>[]): Promise<boolean> {
