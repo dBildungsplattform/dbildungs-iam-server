@@ -301,20 +301,94 @@ describe('EmailMicroserviceEventHandler', () => {
 
             rolleRepoMock.findByIds.mockResolvedValue(new Map([['r1', mockRolle]]));
 
-            const setEmailSpy: jest.SpyInstance = jest
-                .spyOn(emailResolverServiceMock, 'setEmailForSpshPerson')
-                .mockResolvedValue();
-
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
 
             await sut.handlePersonenkontextUpdatedEvent(mockEvent);
-            expect(setEmailSpy).toHaveBeenCalledWith({
+            expect(emailResolverServiceMock.setEmailForSpshPerson).toHaveBeenCalledWith({
                 spshPersonId: mockPersonId,
                 spshUsername: 'testuser',
                 kennungen: ['0706054'],
                 firstName: 'Max',
                 lastName: 'Mustermann',
                 spshServiceProviderId: mockServiceProviderId,
+            });
+        });
+
+        it('should call setEmailsSuspendedForSpshPerson if currentKontexte has no email SpId but removedKontexte has one', async () => {
+            const mockPersonId: string = faker.string.uuid();
+            const orgaId: string = faker.string.uuid();
+            const rolleId1: string = faker.string.uuid();
+            const rolleId2: string = faker.string.uuid();
+            const mockServiceProviderId1: string = faker.string.uuid();
+            const mockServiceProviderId2: string = faker.string.uuid();
+            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
+                person: {
+                    id: mockPersonId,
+                    username: 'testuser',
+                    vorname: 'Max',
+                    familienname: 'Mustermann',
+                },
+                currentKontexte: [
+                    {
+                        id: 'pk1',
+                        rolleId: rolleId1,
+                        rolle: RollenArt.LERN,
+                        orgaId: orgaId,
+                        orgaKennung: '0706054',
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [ServiceProviderSystem.NONE],
+                    },
+                ],
+                removedKontexte: [
+                    {
+                        id: 'pk2',
+                        rolleId: rolleId2,
+                        rolle: RollenArt.LERN,
+                        orgaId: orgaId,
+                        orgaKennung: '0706054',
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
+                    },
+                ],
+                newKontexte: [],
+                createdAt: new Date(),
+                eventID: '',
+            });
+            const mockRolle1: Rolle<true> = createMock<Rolle<true>>({
+                id: rolleId1,
+                serviceProviderData: [
+                    createMock<ServiceProvider<true>>({
+                        id: mockServiceProviderId1,
+                        externalSystem: ServiceProviderSystem.NONE,
+                    }),
+                ],
+            });
+            const mockRolle2: Rolle<true> = createMock<Rolle<true>>({
+                id: rolleId2,
+                serviceProviderData: [
+                    createMock<ServiceProvider<true>>({
+                        id: mockServiceProviderId2,
+                        externalSystem: ServiceProviderSystem.EMAIL,
+                    }),
+                ],
+            });
+
+            rolleRepoMock.findByIds.mockImplementation((ids: string[]) => {
+                const map: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
+                if (ids.includes(rolleId1)) {
+                    map.set(rolleId1, mockRolle1);
+                }
+                if (ids.includes(rolleId2)) {
+                    map.set(rolleId2, mockRolle2);
+                }
+                return Promise.resolve(map);
+            });
+
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+
+            await sut.handlePersonenkontextUpdatedEvent(mockEvent);
+            expect(emailResolverServiceMock.setEmailsSuspendedForSpshPerson).toHaveBeenCalledWith({
+                spshPersonId: mockPersonId,
             });
         });
     });
