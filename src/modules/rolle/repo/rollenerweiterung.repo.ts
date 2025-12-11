@@ -1,5 +1,6 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { Loaded, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
+import { EntityManager } from '@mikro-orm/postgresql';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
@@ -167,14 +168,46 @@ export class RollenerweiterungRepo {
         offset?: number,
         limit?: number,
     ): Promise<Counted<Rollenerweiterung<true>>> {
-        const [rollenerweiterungEntities, count]: Counted<Loaded<RollenerweiterungEntity>> = await this.em.findAndCount(
+        // Step 1: Get paginated unique organisation IDs using raw SQL
+        const pagedOrgIdsResult: {
+            organisation_id: string;
+        }[] = await this.em.execute<{ organisation_id: string }[]>(
+            `SELECT DISTINCT re.organisation_id, o.kennung
+         FROM rollenerweiterung re
+         JOIN organisation o ON re.organisation_id = o.id
+         WHERE re.service_provider_id = ?
+         ORDER BY o.kennung ASC
+         LIMIT ? OFFSET ?`,
+            [serviceProviderId, limit ?? 999999, offset ?? 0],
+        );
+
+        const pagedOrgIds: string[] = pagedOrgIdsResult.map((row: { organisation_id: string }) => row.organisation_id);
+
+        // Step 2: Count total unique organisations
+        const countResult: {
+            count: number;
+        }[] = await this.em.execute<{ count: number }[]>(
+            `SELECT COUNT(DISTINCT organisation_id) as count
+         FROM rollenerweiterung
+         WHERE service_provider_id = ?`,
+            [serviceProviderId],
+        );
+
+        const totalUniqueOrgs: number = Number(countResult[0]?.count || 0);
+
+        // Step 3: If no organisations found, return empty result
+        if (pagedOrgIds.length === 0) {
+            return [[], totalUniqueOrgs];
+        }
+
+        // Step 4: Get all rollenerweiterungen for the paginated organisations
+        const [rollenerweiterungEntities]: Counted<Loaded<RollenerweiterungEntity>> = await this.em.findAndCount(
             RollenerweiterungEntity,
             {
-                serviceProviderId: serviceProviderId,
+                serviceProviderId,
+                organisationId: { $in: pagedOrgIds },
             },
             {
-                limit,
-                offset,
                 orderBy: {
                     organisationId: {
                         kennung: 'ASC',
@@ -183,9 +216,11 @@ export class RollenerweiterungRepo {
                 },
             },
         );
+
         const rollenerweiterungen: Rollenerweiterung<true>[] = rollenerweiterungEntities.map(
             (entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity),
         );
-        return [rollenerweiterungen, count];
+
+        return [rollenerweiterungen, limit ?? totalUniqueOrgs];
     }
 }

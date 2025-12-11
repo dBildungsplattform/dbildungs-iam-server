@@ -143,7 +143,7 @@ export class ProviderController {
     @ApiOperation({ description: 'Get rollenerweiterungen for service-provider with provided id.' })
     @ApiOkResponsePaginated(RollenerweiterungWithExtendedDataResponse, {
         description:
-            'The rollenerweiterungen were successfully returned, paginated by unique organizations. WARNING: This endpoint returns all rollenerweiterungen of the service-provider as default when no paging parameters were set.',
+            'The rollenerweiterungen were successfully returned. WARNING: This endpoint returns all rollenerweiterungen of the service-provider as default when no paging parameters were set.',
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get rollenerweiterungen.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollenerweiterungen.' })
@@ -162,48 +162,24 @@ export class ProviderController {
             throw new UnauthorizedException('NOT_AUTHORIZED');
         }
 
-        // Step 1: Get ALL rollenerweiterungen for this service provider (sorted by orga)
-        const [allRollenerweiterungen]: Counted<Rollenerweiterung<true>> =
+        const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
             await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrgaKennung(
                 pathParams.angebotId,
-                undefined, // No offset
-                undefined, // No limit - get all
+                queryParams.offset,
+                queryParams.limit,
             );
 
-        // Step 2: Extract unique organizations IN ORDER (preserving sort order)
-        const uniqueOrgaIds: OrganisationID[] = [];
-        const seenOrgaIds: Set<OrganisationID> = new Set<OrganisationID>();
-
-        for (const re of allRollenerweiterungen) {
-            if (!seenOrgaIds.has(re.organisationId)) {
-                uniqueOrgaIds.push(re.organisationId);
-                seenOrgaIds.add(re.organisationId);
-            }
-        }
-
-        const totalOrganisations: number = uniqueOrgaIds.length;
-
-        // Step 3: Apply pagination to organizations
-        const offset: number = queryParams.offset ?? 0;
-        const limit: number = queryParams.limit ?? totalOrganisations;
-        const pagedOrgaIds: OrganisationID[] = uniqueOrgaIds.slice(offset, offset + limit);
-
-        // Step 4: Filter rollenerweiterungen to only include the paged organizations
-        const pagedOrgaIdsSet: Set<OrganisationID> = new Set(pagedOrgaIds);
-        const rollenerweiterungen: Rollenerweiterung<true>[] = allRollenerweiterungen.filter(
-            (re: Rollenerweiterung<true>) => pagedOrgaIdsSet.has(re.organisationId),
-        );
-
-        // Step 5: Get related data
         const rolleIds: RolleID[] = uniq(rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.rolleId));
-        const organisationIds: OrganisationID[] = pagedOrgaIds; // We already have the unique IDs
+        const organisationIds: OrganisationID[] = uniq(
+            rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.organisationId),
+        );
 
         const [rollen, organisationen]: [Map<RolleID, Rolle<true>>, Map<OrganisationID, Organisation<true>>] =
             await Promise.all([this.rolleRepo.findByIds(rolleIds), this.organisationRepo.findByIds(organisationIds)]);
 
         /* The data is passed as option<> instead of mandatory with error checking,
-    because otherwise a single faulty relation in an extension
-    could cause all other extensions to fail to load */
+        because otherwise a single faulty relation in an extension
+        could cause all other extensions to fail to load */
         const rollenerweiterungResponses: RollenerweiterungWithExtendedDataResponse[] = rollenerweiterungen.map(
             (re: Rollenerweiterung<true>) =>
                 new RollenerweiterungWithExtendedDataResponse(
@@ -214,9 +190,9 @@ export class ProviderController {
         );
 
         return new RawPagedResponse({
-            offset: offset,
-            limit: limit,
-            total: totalOrganisations, // Total number of ORGANIZATIONS, not items
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? total,
+            total,
             items: rollenerweiterungResponses,
         });
     }
