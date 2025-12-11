@@ -988,11 +988,13 @@ describe('LdapEventHandler', () => {
 
     describe('handleOrganisationDeletedEvent', () => {
         let orga: Organisation<true>;
-        function expectLog(event: OrganisationDeletedEvent): void {
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received OrganisationDeletedEvent, organisationId:${event.organisationId}, name:${event.name}, kennung:${event.kennung}, typ:${event.typ}`,
-            );
-        }
+
+        const getReceivedLogMessage: (event: OrganisationDeletedEvent) => string = (event: OrganisationDeletedEvent) =>
+            `Received OrganisationDeletedEvent, organisationId:${event.organisationId}, name:${event.name}, kennung:${event.kennung}, typ:${event.typ}`;
+        const getCantDeleteLogMessage: (event: OrganisationDeletedEvent) => string = (
+            event: OrganisationDeletedEvent,
+        ) =>
+            `Cannot delete organisation, since typ is not ${OrganisationsTyp.SCHULE} or kennung is UNDEFINED, organisationId:${event.organisationId}, kennung:${event.kennung}, typ:${event.typ}`;
 
         beforeEach(() => {
             orga = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
@@ -1004,7 +1006,7 @@ describe('LdapEventHandler', () => {
                 const event: OrganisationDeletedEvent = OrganisationDeletedEvent.fromOrganisation(orga);
 
                 await expect(ldapEventHandler.handleOrganisationDeletedEvent(event)).resolves.toEqual(Ok(orga.kennung));
-                expectLog(event);
+                expect(loggerMock.info).toHaveBeenLastCalledWith(getReceivedLogMessage(event));
                 expect(ldapClientServiceMock.deleteOrganisation).toHaveBeenLastCalledWith(orga.kennung);
             });
         });
@@ -1019,7 +1021,8 @@ describe('LdapEventHandler', () => {
                     await expect(ldapEventHandler.handleOrganisationDeletedEvent(event)).resolves.toEqual(
                         Ok(undefined),
                     );
-                    expectLog(event);
+                    expect(loggerMock.info).toHaveBeenCalledWith(getReceivedLogMessage(event));
+                    expect(loggerMock.info).toHaveBeenLastCalledWith(getCantDeleteLogMessage(event));
                     expect(ldapClientServiceMock.deleteOrganisation).not.toHaveBeenCalled();
                 });
             },
@@ -1033,7 +1036,8 @@ describe('LdapEventHandler', () => {
                 });
 
                 await expect(ldapEventHandler.handleOrganisationDeletedEvent(event)).resolves.toEqual(Ok(undefined));
-                expectLog(event);
+                expect(loggerMock.info).toHaveBeenCalledWith(getReceivedLogMessage(event));
+                expect(loggerMock.info).toHaveBeenLastCalledWith(getCantDeleteLogMessage(event));
                 expect(ldapClientServiceMock.deleteOrganisation).not.toHaveBeenCalled();
             });
         });
