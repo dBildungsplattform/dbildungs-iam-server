@@ -193,7 +193,7 @@ export class RollenerweiterungRepo {
             [serviceProviderId],
         );
 
-        const totalUniqueOrgs: number = Number(countResult[0]?.count || 0);
+        const totalUniqueOrgs: number = Number(countResult[0]?.count);
 
         // Step 3: If no organisations found, return empty result
         if (pagedOrgIds.length === 0) {
