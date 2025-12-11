@@ -75,7 +75,7 @@ export type KafkaEventKey =
     | 'schule.itslearning_enabled'
     | 'organisation.deleted';
 
-type TopicPrefixes = 'user' | 'import' | 'group-role' | 'klasse' | 'rolle' | 'schule' | 'organisation';
+type TopicPrefixes = 'user' | 'import' | 'group-role' | 'rolle' | 'organisation';
 
 export type KafkaTopic = `${TopicPrefixes}-topic`;
 export type KafkaTopicDlq = `${TopicPrefixes}-dlq-topic`;
