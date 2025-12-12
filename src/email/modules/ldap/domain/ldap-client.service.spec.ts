@@ -58,13 +58,9 @@ describe('LDAP Client Service', () => {
     }
 
     function makeMockClient(cb: (client: DeepMocked<Client>) => void): void {
-        ldapClientMock.getClient.mockImplementationOnce(() => {
-            const client: DeepMocked<Client> = createMock<Client>();
-
-            cb(client);
-
-            return client;
-        });
+        clientMock = createMock<Client>(); // Always create a fresh mock
+        cb(clientMock);
+        ldapClientMock.getClient.mockReturnValue(clientMock);
     }
 
     function mockBind(error?: unknown): void {
@@ -127,6 +123,8 @@ describe('LDAP Client Service', () => {
 
     beforeEach(async () => {
         jest.resetAllMocks();
+        jest.restoreAllMocks();
+        clientMock = createMock<Client>();
         await DatabaseTestModule.clearDatabase(orm);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -634,9 +632,9 @@ describe('LDAP Client Service', () => {
 
         it('should return error if modify fails', async () => {
             makeMockClient((client: DeepMocked<Client>) => {
+                client.bind.mockResolvedValue();
                 client.modify.mockRejectedValueOnce(new Error('Modify failed'));
             });
-            mockBind();
 
             const personData: PersonData = getPersonData();
             const primaryMail: string = faker.internet.email();
@@ -650,6 +648,95 @@ describe('LDAP Client Service', () => {
 
             expectErrResult(result);
             expect(result.error).toEqual(new Error('LDAP error: Modifying lehrer FAILED'));
+        });
+    });
+
+    describe('deletePerson', () => {
+        const domain: string = 'schule-sh.de';
+        const rootName: string = 'oeffentlicheSchulen';
+        const baseDn: string = mockLdapInstanceConfig.BASE_DN;
+
+        it('should return ok if person does not exist', async () => {
+            const externalId: string = faker.string.uuid();
+            const personUid: string = `uid=${externalId},ou=${rootName},${baseDn}`;
+            makeMockClient((client: DeepMocked<Client>) => {
+                client.bind.mockResolvedValue();
+                client.search.mockResolvedValueOnce({
+                    searchEntries: [],
+                } as unknown as SearchResult);
+                client.del.mockResolvedValue();
+            });
+            const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
+            expectOkResult(result);
+            expect(loggerMock.info).toHaveBeenCalledWith(`LDAP: Person ${personUid} does not exist, nothing to delete`);
+        });
+
+        it('should delete person if exists and return ok', async () => {
+            const externalId: string = faker.string.uuid();
+            const personUid: string = `uid=${externalId},ou=${rootName},${baseDn}`;
+            makeMockClient((client: DeepMocked<Client>) => {
+                client.bind.mockResolvedValue();
+                client.search.mockResolvedValueOnce({
+                    searchEntries: [{ dn: personUid }],
+                } as SearchResult);
+                client.del.mockResolvedValue();
+            });
+            const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
+            expectOkResult(result);
+            expect(loggerMock.info).toHaveBeenCalledWith(`LDAP: Successfully deleted person ${personUid}`);
+        });
+
+        it('should return error if bind fails', async () => {
+            const externalId: string = faker.string.uuid();
+            makeMockClient((client: DeepMocked<Client>) => {
+                client.bind.mockRejectedValueOnce(new Error('bind failed'));
+            });
+            const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
+            expectErrResult(result);
+            expect(result.error).toEqual(new Error('LDAP bind FAILED'));
+        });
+
+        it('should return error if search throws', async () => {
+            const externalId: string = faker.string.uuid();
+            const personUid: string = `uid=${externalId},ou=${rootName},${baseDn}`;
+            makeMockClient((client: DeepMocked<Client>) => {
+                client.bind.mockResolvedValue();
+                client.search.mockRejectedValueOnce(new Error('search failed'));
+            });
+            const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
+            expectErrResult(result);
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                `LDAP: Deleting person FAILED, uid:${personUid}`,
+                expect.any(Error),
+            );
+        });
+
+        it('should return error if delete throws', async () => {
+            const externalId: string = faker.string.uuid();
+            const personUid: string = `uid=${externalId},ou=${rootName},${baseDn}`;
+            makeMockClient((client: DeepMocked<Client>) => {
+                client.bind.mockResolvedValue();
+                client.search.mockResolvedValueOnce({
+                    searchEntries: [{ dn: personUid }],
+                } as SearchResult);
+                client.del.mockRejectedValueOnce(new Error('delete failed'));
+            });
+            const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
+            expectErrResult(result);
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                `LDAP: Deleting person FAILED, uid:${personUid}`,
+                expect.any(Error),
+            );
+        });
+
+        it('should return error if domain is invalid', async () => {
+            const externalId: string = faker.string.uuid();
+            const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, 'invalid');
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(LdapEmailDomainError);
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                expect.stringContaining('Could not get root-name because email-domain is invalid'),
+            );
         });
     });
 });

@@ -162,8 +162,8 @@ export class LdapClientService {
         };
     }
 
-    private getLehrerUid(uid: PersonExternalID, rootName: string): string {
-        return `uid=${uid},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
+    private getPersonUid(externalId: PersonExternalID, rootName: string): string {
+        return `uid=${externalId},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
     }
 
     private getRootNameOrError(domain: string): Result<string> {
@@ -172,6 +172,47 @@ export class LdapClientService {
             this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
         }
         return rootName;
+    }
+
+    public async deletePerson(externalId: string, domain: string): Promise<Result<void>> {
+        return this.executeWithRetry(() => this.deletePersonInternal(externalId, domain), this.getNrOfRetries());
+    }
+
+    private async deletePersonInternal(externalId: string, domain: string): Promise<Result<void>> {
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) {
+            return rootName;
+        }
+
+        return this.mutex.runExclusive(async () => {
+            this.logger.info(`LDAP: deletePerson by externalId ${externalId}`);
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) {
+                return bindResult;
+            }
+            const personUid: string = this.getPersonUid(externalId, rootName.value);
+            try {
+                const ouBaseDn: string = `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`;
+                this.logger.debug(`LDAP: Trying to find person, uid:${personUid}, ouBaseDn:${ouBaseDn} for deletion`);
+                const searchResultLehrer: SearchResult = await client.search(ouBaseDn, {
+                    filter: `(uid=${externalId})`,
+                });
+                if (!searchResultLehrer.searchEntries[0]) {
+                    this.logger.info(`LDAP: Person ${personUid} does not exist, nothing to delete`);
+
+                    return { ok: true, value: undefined };
+                }
+                await client.del(personUid);
+                this.logger.info(`LDAP: Successfully deleted person ${personUid}`);
+
+                return { ok: true, value: undefined };
+            } catch (err) {
+                this.logger.logUnknownAsError(`LDAP: Deleting person FAILED, uid:${personUid}`, err);
+
+                return { ok: false, error: new Error() };
+            }
+        });
     }
 
     private async createPersonInternal(
@@ -185,23 +226,23 @@ export class LdapClientService {
             return rootName;
         }
 
-        const lehrerUid: string = this.getLehrerUid(person.uid, rootName.value);
+        const personUid: string = this.getPersonUid(person.uid, rootName.value);
         return this.mutex.runExclusive(async () => {
-            this.logger.info('LDAP: createLehrer');
+            this.logger.info('LDAP: createPerson');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) {
                 return bindResult;
             }
 
-            const searchResultLehrer: SearchResult = await client.search(
+            const searchResultPerson: SearchResult = await client.search(
                 `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
                     filter: `(uid=${person.uid})`,
                 },
             );
-            if (searchResultLehrer.searchEntries.length > 0) {
-                this.logger.info(`LDAP: Person ${lehrerUid} exists, nothing to create`);
+            if (searchResultPerson.searchEntries.length > 0) {
+                this.logger.info(`LDAP: Person ${personUid} exists, nothing to create`);
 
                 return { ok: true, value: person };
             }
@@ -219,11 +260,11 @@ export class LdapClientService {
             };
 
             try {
-                await client.add(lehrerUid, entry);
-                this.logger.info(`LDAP: Creating person succeeded, uid:${lehrerUid}`);
+                await client.add(personUid, entry);
+                this.logger.info(`LDAP: Creating person succeeded, uid:${personUid}`);
                 return { ok: true, value: person };
             } catch (err) {
-                this.logger.logUnknownAsError(`LDAP: Creating person FAILED, uid:${lehrerUid}`, err);
+                this.logger.logUnknownAsError(`LDAP: Creating person FAILED, uid:${personUid}`, err);
 
                 return { ok: false, error: new LdapCreatePersonError() };
             }
@@ -241,9 +282,9 @@ export class LdapClientService {
             return rootName;
         }
 
-        const lehrerUid: string = this.getLehrerUid(person.uid, rootName.value);
+        const personUid: string = this.getPersonUid(person.uid, rootName.value);
         return this.mutex.runExclusive(async () => {
-            this.logger.info('LDAP: updateLehrer');
+            this.logger.info('LDAP: updatePerson');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) {
@@ -281,17 +322,17 @@ export class LdapClientService {
             ];
 
             try {
-                await client.modify(lehrerUid, changes);
-                this.logger.info(`LDAP: Modify person succeeded, uid:${lehrerUid}, `);
+                await client.modify(personUid, changes);
+                this.logger.info(`LDAP: Modify person succeeded, uid:${personUid}, `);
                 this.logger.infoWithDetails('LDAP: Modify person succeeded', {
-                    uid: lehrerUid,
+                    uid: personUid,
                     username: person.username,
                     firstname: person.firstName,
                     lastname: person.lastName,
                 });
                 return { ok: true, value: person };
             } catch (err) {
-                this.logger.logUnknownAsError(`LDAP: Modify person FAILED, uid:${lehrerUid}`, err);
+                this.logger.logUnknownAsError(`LDAP: Modify person FAILED, uid:${personUid}`, err);
 
                 return { ok: false, error: new LdapModifyPersonError() };
             }

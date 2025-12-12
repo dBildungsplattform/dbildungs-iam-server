@@ -88,4 +88,54 @@ describe('EmailAddress', () => {
             expect(address.getStatus()).toBe(EmailAddressStatusEnum.ACTIVE);
         });
     });
+
+    describe('getDomain', () => {
+        it('should return the domain when address contains "@"', () => {
+            const address: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                createdAt: faker.date.past(),
+                updatedAt: faker.date.recent(),
+                address: 'testus@schule-sh.de',
+                priority: 1,
+                spshPersonId: faker.string.uuid(),
+                oxUserCounter: undefined,
+                markedForCron: undefined,
+                externalId: faker.string.uuid(),
+                sortedStatuses: [],
+            });
+            expect(address.getDomain()).toBe('schule-sh.de');
+        });
+
+        it('should return undefined when address does not contain "@"', () => {
+            const address: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                createdAt: faker.date.past(),
+                updatedAt: faker.date.recent(),
+                address: 'invalid',
+                priority: 1,
+                spshPersonId: faker.string.uuid(),
+                oxUserCounter: undefined,
+                markedForCron: undefined,
+                externalId: faker.string.uuid(),
+                sortedStatuses: [],
+            });
+            expect(address.getDomain()).toBeUndefined();
+        });
+
+        it('should return empty string if "@" is the last character', () => {
+            const address: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                createdAt: faker.date.past(),
+                updatedAt: faker.date.recent(),
+                address: 'xy@',
+                priority: 1,
+                spshPersonId: faker.string.uuid(),
+                oxUserCounter: undefined,
+                markedForCron: undefined,
+                externalId: faker.string.uuid(),
+                sortedStatuses: [],
+            });
+            expect(address.getDomain()).toBe('');
+        });
+    });
 });
