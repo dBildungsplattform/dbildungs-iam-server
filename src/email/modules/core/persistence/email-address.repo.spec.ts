@@ -438,6 +438,31 @@ describe('EmailRepo', () => {
             expect(emailsAfterwards[2]?.markedForCron).toBe(cronDate);
         });
 
+        it('should add active status to suspended mails with priority 1', async () => {
+            const personId: string = faker.string.uuid();
+            const oxUserCounter: string = faker.string.uuid();
+
+            const cronDate: Date = faker.date.future();
+
+            const mail1: EmailAddress<true> = await createAndSaveMail(
+                faker.internet.email(),
+                1,
+                personId,
+                oxUserCounter,
+                undefined,
+            );
+            await setStatus(mail1, EmailAddressStatusEnum.SUSPENDED);
+
+            await sut.ensureStatusesAndCronDateForPerson(personId, cronDate);
+
+            const emailsAfterwards: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(personId);
+
+            expect(emailsAfterwards[0]?.sortedStatuses).toEqual([
+                expect.objectContaining({ status: EmailAddressStatusEnum.ACTIVE }),
+                expect.objectContaining({ status: EmailAddressStatusEnum.SUSPENDED }),
+            ]);
+        });
+
         it('should add deactive status to active mails with high priority', async () => {
             const personId: string = faker.string.uuid();
             const oxUserCounter: string = faker.string.uuid();
@@ -452,6 +477,14 @@ describe('EmailRepo', () => {
                 undefined,
             );
             await setStatus(mail1, EmailAddressStatusEnum.ACTIVE);
+            const mail2: EmailAddress<true> = await createAndSaveMail(
+                faker.internet.email(),
+                2,
+                personId,
+                oxUserCounter,
+                undefined,
+            );
+            await setStatus(mail2, EmailAddressStatusEnum.SUSPENDED);
 
             await sut.ensureStatusesAndCronDateForPerson(personId, cronDate);
 
@@ -460,6 +493,10 @@ describe('EmailRepo', () => {
             expect(emailsAfterwards[0]?.sortedStatuses).toEqual([
                 expect.objectContaining({ status: EmailAddressStatusEnum.DEACTIVE }),
                 expect.objectContaining({ status: EmailAddressStatusEnum.ACTIVE }),
+            ]);
+            expect(emailsAfterwards[1]?.sortedStatuses).toEqual([
+                expect.objectContaining({ status: EmailAddressStatusEnum.DEACTIVE }),
+                expect.objectContaining({ status: EmailAddressStatusEnum.SUSPENDED }),
             ]);
         });
     });
