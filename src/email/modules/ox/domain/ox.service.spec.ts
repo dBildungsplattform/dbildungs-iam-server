@@ -6,7 +6,6 @@ import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../.
 import { OxSendService } from './ox-send.service';
 import { OxGroupNotFoundError } from '../error/ox-group-not-found.error';
 import { OxGroupNameAmbiguousError } from '../error/ox-group-name-ambiguous.error';
-import { DomainError } from '../../../../shared/error/index.js';
 import { OXGroupID } from '../../../../shared/types/ox-ids.types.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error';
 import { AddMemberToGroupAction } from '../actions/group/add-member-to-group.action';
@@ -20,6 +19,7 @@ import { CreateUserAction } from '../actions/user/create-user.action';
 import { Err, Ok } from '../../../../shared/util/result';
 import { OXGroup } from '../actions/group/ox-group.types';
 import { OxError } from '../../../../shared/error/ox.error';
+import { ListGroupsForUserResponse } from '../actions/group/list-groups-for-user.action';
 
 describe('OxService', () => {
     let module: TestingModule;
@@ -174,7 +174,7 @@ describe('OxService', () => {
         const displayName: string = faker.string.alphanumeric({ length: 6 });
 
         it('should return ok:true if group exists', async () => {
-            jest.spyOn(sut, 'getOxGroupByName').mockResolvedValueOnce('groupId');
+            jest.spyOn(sut, 'getOxGroupByName').mockResolvedValueOnce({ ok: true, value: 'groupId' });
 
             const result: Result<OXGroupID, Error> = await sut.getExistingOxGroupByNameOrCreateOxGroup(
                 oxGroupName,
@@ -184,7 +184,10 @@ describe('OxService', () => {
         });
 
         it('should create group if not found', async () => {
-            jest.spyOn(sut, 'getOxGroupByName').mockResolvedValueOnce(new OxGroupNotFoundError(oxGroupName));
+            jest.spyOn(sut, 'getOxGroupByName').mockResolvedValueOnce({
+                ok: false,
+                error: new OxGroupNotFoundError(oxGroupName),
+            });
             jest.spyOn(sut, 'createOxGroup').mockResolvedValueOnce({ ok: true, value: 'newGroupId' });
 
             const result: Result<OXGroupID, Error> = await sut.getExistingOxGroupByNameOrCreateOxGroup(
@@ -196,7 +199,7 @@ describe('OxService', () => {
 
         it('should return error if getOxGroupByName returns DomainError (not NotFound)', async () => {
             const error: OxGroupNameAmbiguousError = new OxGroupNameAmbiguousError(oxGroupName);
-            jest.spyOn(sut, 'getOxGroupByName').mockResolvedValueOnce(error);
+            jest.spyOn(sut, 'getOxGroupByName').mockResolvedValueOnce({ ok: false, error });
 
             const result: Result<OXGroupID, Error> = await sut.getExistingOxGroupByNameOrCreateOxGroup(
                 oxGroupName,
@@ -225,8 +228,12 @@ describe('OxService', () => {
                 },
             });
 
-            const result: DomainError | OXGroupID = await sut.getOxGroupByName(oxGroupName);
-            expect(result).toBe(groupId);
+            const result: Result<OXGroupID, Error> = await sut.getOxGroupByName(oxGroupName);
+            expect(result.ok).toBe(true);
+            if (!result.ok) {
+                return;
+            }
+            expect(result.value).toBe(groupId);
             expect(loggerMock.info).toHaveBeenCalledWith(
                 expect.stringContaining('Found existing oxGroup for oxGroupName:' + oxGroupName),
             );
@@ -238,8 +245,12 @@ describe('OxService', () => {
                 value: { groups: [] },
             });
 
-            const result: DomainError | OXGroupID = await sut.getOxGroupByName(oxGroupName);
-            expect(result).toBeInstanceOf(OxGroupNotFoundError);
+            const result: Result<OXGroupID, Error> = await sut.getOxGroupByName(oxGroupName);
+            expect(result.ok).toBe(false);
+            if (result.ok) {
+                return;
+            }
+            expect(result.error).toBeInstanceOf(OxGroupNotFoundError);
             expect(loggerMock.info).toHaveBeenCalledWith(
                 expect.stringContaining('Found No Matching OxGroup For OxGroupName:' + oxGroupName),
             );
@@ -266,8 +277,12 @@ describe('OxService', () => {
                 },
             });
 
-            const result: DomainError | OXGroupID = await sut.getOxGroupByName(oxGroupName);
-            expect(result).toBeInstanceOf(OxGroupNameAmbiguousError);
+            const result: Result<OXGroupID, Error> = await sut.getOxGroupByName(oxGroupName);
+            expect(result.ok).toBe(false);
+            if (result.ok) {
+                return;
+            }
+            expect(result.error).toBeInstanceOf(OxGroupNameAmbiguousError);
             expect(loggerMock.error).toHaveBeenCalledWith(
                 expect.stringContaining('Found multiple OX-groups For OxGroupName:' + oxGroupName),
             );
@@ -277,8 +292,8 @@ describe('OxService', () => {
             const error: OxGroupNotFoundError = new OxGroupNotFoundError('');
             oxSendService.send.mockResolvedValueOnce({ ok: false, error });
 
-            const result: DomainError | OXGroupID = await sut.getOxGroupByName(oxGroupName);
-            expect(result).toBe(error);
+            const result: Result<OXGroupID, Error> = await sut.getOxGroupByName(oxGroupName);
+            expect(result.ok).toBe(false);
             expect(loggerMock.error).toHaveBeenCalledWith(
                 expect.stringContaining('Could Not Retrieve Groups For Context'),
             );
@@ -350,16 +365,44 @@ describe('OxService', () => {
             };
         }
 
+        it('should return early if removeOxUserFromGroup fails for a group', async () => {
+            const oxUserId: string = faker.string.numeric(5);
+            const oldGroup: OXGroup = {
+                id: faker.string.uuid(),
+                displayname: faker.string.alphanumeric(10),
+                name: faker.string.alphanumeric(10),
+                memberIds: [],
+            };
+            const errorResult: Result<void, Error> = { ok: false, error: new Error('remove failed') };
+
+            // Only one group to remove, and it will fail
+            oxSendService.send.mockResolvedValueOnce(Ok({ groups: [oldGroup] }));
+            const addOxUserToGroupSpy: jest.SpyInstance = jest
+                .spyOn(sut, 'addOxUserToGroup')
+                .mockResolvedValue({ ok: true, value: undefined });
+            const removeOxUserFromGroupSpy: jest.SpyInstance = jest
+                .spyOn(sut, 'removeOxUserFromGroup')
+                .mockResolvedValueOnce(errorResult);
+
+            const result: Result<void, Error> = await sut.setUserOxGroups(oxUserId, []);
+
+            expect(addOxUserToGroupSpy).not.toHaveBeenCalled();
+            expect(removeOxUserFromGroupSpy).toHaveBeenCalledWith(oxUserId, oldGroup.id);
+            expect(result).toBe(errorResult);
+        });
+
         it('should do stuff', async () => {
             const oldGroup: OXGroup = makeOxGroup();
             const newGroup: OXGroup = makeOxGroup();
             const groups: OXGroup[] = [oldGroup];
             const oxUser: string = faker.string.numeric(5);
 
-            const addOxUserToGroupSpy: jest.SpyInstance = jest.spyOn(sut, 'addOxUserToGroup').mockResolvedValueOnce();
+            const addOxUserToGroupSpy: jest.SpyInstance = jest
+                .spyOn(sut, 'addOxUserToGroup')
+                .mockResolvedValueOnce({ ok: true, value: undefined });
             const removeOxUserFromGroupSpy: jest.SpyInstance = jest
                 .spyOn(sut, 'removeOxUserFromGroup')
-                .mockResolvedValueOnce();
+                .mockResolvedValueOnce({ ok: true, value: undefined });
 
             oxSendService.send.mockResolvedValueOnce(Ok({ groups }));
 
@@ -406,6 +449,81 @@ describe('OxService', () => {
                 `Could not remove oxUser from oxGroup, oxUserId:${oxUserId} oxGroupId:${oxGroupId}`,
                 error,
             );
+        });
+    });
+
+    describe('deleteUser', () => {
+        it('should log and return ok if deletion succeeds', async () => {
+            const oxUserCounter: string = faker.string.uuid();
+            oxSendService.send.mockResolvedValueOnce({ ok: true, value: undefined });
+
+            const result: Result<void, Error> = await sut.deleteUser(oxUserCounter);
+
+            expect(oxSendService.send).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    params: expect.objectContaining({ userId: oxUserCounter }),
+                }),
+            );
+            expect(loggerMock.info).toHaveBeenCalledWith(`Successfully Deleted OxUser :${oxUserCounter}`);
+            expect(result).toEqual({ ok: true, value: undefined });
+        });
+
+        it('should log error and return result if deletion fails', async () => {
+            const oxUserCounter: string = faker.string.uuid();
+            const error: OxError = new OxError('');
+            oxSendService.send.mockResolvedValueOnce({ ok: false, error: error });
+
+            const result: Result<void, Error> = await sut.deleteUser(oxUserCounter);
+
+            expect(oxSendService.send).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    params: expect.objectContaining({ userId: oxUserCounter }),
+                }),
+            );
+            expect(loggerMock.error).toHaveBeenCalledWith(`Could Not Delete OxUser :${oxUserCounter}`);
+            expect(result).toEqual({ ok: false, error });
+        });
+    });
+
+    describe('getOxGroupsForOxUserId', () => {
+        it('should log info and return result if retrieval succeeds', async () => {
+            const oxUserId: string = faker.string.uuid();
+            const response: unknown = { groups: [] };
+            oxSendService.send.mockResolvedValueOnce({ ok: true, value: response });
+
+            const result: Result<ListGroupsForUserResponse, Error> = await sut.getOxGroupsForOxUserId(oxUserId);
+
+            expect(oxSendService.send).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    params: expect.objectContaining({ userId: oxUserId }),
+                }),
+            );
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Successfully Retrieved OxGroups For OxUser, oxUserId:${oxUserId}`,
+            );
+            expect(result).toEqual({ ok: true, value: response });
+        });
+
+        it('should log error and return result if retrieval fails', async () => {
+            const oxUserId: string = faker.string.uuid();
+            const error: OxError = new OxError('fail');
+            oxSendService.send.mockResolvedValueOnce({ ok: false, error });
+
+            const result: Result<ListGroupsForUserResponse, Error> = await sut.getOxGroupsForOxUserId(oxUserId);
+
+            expect(oxSendService.send).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    params: expect.objectContaining({ userId: oxUserId }),
+                }),
+            );
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `Could Not Retrieve OxGroups For OxUser, oxUserId:${oxUserId}`,
+            );
+            expect(result).toEqual({ ok: false, error });
         });
     });
 });

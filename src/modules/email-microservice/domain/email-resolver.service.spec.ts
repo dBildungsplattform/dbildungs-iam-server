@@ -13,14 +13,13 @@ import { EmailAddressStatus } from '../../email/domain/email-address';
 import { PersonEmailResponse } from '../../person/api/person-email-response';
 import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailResolverService, PersonIdWithEmailResponse } from './email-resolver.service';
-import { SetEmailAddressForSpshPersonParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.params';
-
-type SetEmailParams = Parameters<EmailResolverService['setEmailForSpshPerson']>[0];
+import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams';
 
 describe('EmailResolverService', () => {
     let module: TestingModule;
     let sut: EmailResolverService;
     let mockHttpService: DeepMocked<HttpService>;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -39,6 +38,7 @@ describe('EmailResolverService', () => {
 
         sut = module.get(EmailResolverService);
         mockHttpService = module.get(HttpService);
+        loggerMock = module.get(ClassLogger);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
@@ -92,11 +92,12 @@ describe('EmailResolverService', () => {
                 throw error;
             });
 
-            const errorLoggerSpy: jest.SpyInstance = jest.spyOn(sut['logger'], 'logUnknownAsError');
-
             const result: Option<PersonEmailResponse> = await sut.findEmailBySpshPerson(mockPersonId);
             expect(result).toBeUndefined();
-            expect(errorLoggerSpy).toHaveBeenCalledWith(`Failed to fetch email for person ${mockPersonId}`, error);
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                `Failed to fetch email for person ${mockPersonId}`,
+                error,
+            );
         });
 
         it('should return PersonEmailResponse when get call returns valid data', async () => {
@@ -140,11 +141,12 @@ describe('EmailResolverService', () => {
                 throw error;
             });
 
-            const errorLoggerSpy: jest.SpyInstance = jest.spyOn(sut['logger'], 'logUnknownAsError');
-
             const result: Option<PersonEmailResponse> = await sut.findEmailBySpshPerson(mockPersonId);
             expect(result).toBeUndefined();
-            expect(errorLoggerSpy).toHaveBeenCalledWith(`Failed to fetch email for person ${mockPersonId}`, error);
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                `Failed to fetch email for person ${mockPersonId}`,
+                error,
+            );
         });
     });
 
@@ -253,11 +255,12 @@ describe('EmailResolverService', () => {
                 throw new Error('Network error');
             });
 
-            const errorLoggerSpy: jest.SpyInstance = jest.spyOn(sut['logger'], 'logUnknownAsError');
-
             const result: Option<PersonIdWithEmailResponse> = await sut.findByPrimaryAddress(address);
             expect(result).toEqual(undefined);
-            expect(errorLoggerSpy).toHaveBeenCalledWith(`Failed to fetch email for address ${address}`, error);
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                `Failed to fetch email for address ${address}`,
+                error,
+            );
         });
     });
 
@@ -308,24 +311,25 @@ describe('EmailResolverService', () => {
                 throw error;
             });
 
-            const errorLoggerSpy: jest.SpyInstance = jest.spyOn(sut['logger'], 'logUnknownAsError');
-
             const result: EmailAddressResponse | undefined =
                 await sut.findEmailBySpshPersonAsEmailAddressResponse(mockPersonId);
             expect(result).toBeUndefined();
-            expect(errorLoggerSpy).toHaveBeenCalledWith(`Failed to fetch email for person ${mockPersonId}`, error);
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                `Failed to fetch email for person ${mockPersonId}`,
+                error,
+            );
         });
     });
 
     it('should send email data to microservice successfully', async () => {
-        const params: SetEmailParams = {
-            spshPersonId: faker.string.uuid(),
+        const spshPersonId: string = faker.string.uuid();
+        const params: SetEmailAddressForSpshPersonBodyParams = {
             spshUsername: 'mmustermann',
             kennungen: ['0706054'],
             firstName: 'Max',
             lastName: 'Mustermann',
             spshServiceProviderId: faker.string.uuid(),
-        } satisfies SetEmailAddressForSpshPersonParams;
+        } satisfies SetEmailAddressForSpshPersonBodyParams;
         const mockAxiosResponse: AxiosResponse<EmailAddressResponse[]> = {
             data: [],
             status: 200,
@@ -336,37 +340,37 @@ describe('EmailResolverService', () => {
             },
         };
         mockHttpService.post.mockReturnValue(of(mockAxiosResponse));
-        const loggerSpy: jest.SpyInstance = jest.spyOn(sut['logger'], 'info');
-        await sut.setEmailForSpshPerson(params);
+        await sut.setEmailForSpshPerson({ spshPersonId: spshPersonId, ...params });
 
         expect(mockHttpService.post).toHaveBeenCalledWith(
-            expect.stringContaining('write/set-email-for-person'),
-            expect.objectContaining(params),
+            expect.stringContaining(`/api/write/${spshPersonId}/set-email`),
+            expect.objectContaining({ ...params }),
         );
-        expect(loggerSpy).toHaveBeenCalledWith(
-            `Setting email for person ${params.spshPersonId} via email microservice with spId ${params.spshServiceProviderId}`,
+        expect(loggerMock.info).toHaveBeenCalledWith(
+            `Setting email for person ${spshPersonId} via email microservice with spId ${params.spshServiceProviderId}`,
         );
     });
 
     it('should log error when microservice post call fails', async () => {
-        const params: SetEmailParams = {
-            spshPersonId: faker.string.uuid(),
+        const spshPersonId: string = faker.string.uuid();
+        const params: SetEmailAddressForSpshPersonBodyParams = {
             spshUsername: 'mmustermann',
             kennungen: ['0706054'],
             firstName: 'Max',
             lastName: 'Mustermann',
             spshServiceProviderId: faker.string.uuid(),
-        } satisfies SetEmailAddressForSpshPersonParams;
+        } satisfies SetEmailAddressForSpshPersonBodyParams;
         const error: Error = new Error('Microservice failure');
 
         mockHttpService.post.mockImplementation(() => {
             throw error;
         });
 
-        const errorLoggerSpy: jest.SpyInstance = jest.spyOn(sut['logger'], 'logUnknownAsError');
-
-        await sut.setEmailForSpshPerson(params);
-        expect(errorLoggerSpy).toHaveBeenCalledWith(`Failed to set email for person ${params.spshPersonId}`, error);
+        await sut.setEmailForSpshPerson({ spshPersonId: spshPersonId, ...params });
+        expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+            `Failed to set email for person ${spshPersonId}`,
+            error,
+        );
     });
 
     it('should return true when USE_EMAIL_MICROSERVICE is true', () => {
@@ -395,20 +399,22 @@ describe('EmailResolverService', () => {
         configService.getOrThrow = jest.fn().mockReturnValue({
             ENDPOINT: mockEndpoint,
         });
-        const params: SetEmailParams = {
-            spshPersonId: faker.string.uuid(),
+        const spshPersonId: string = faker.string.uuid();
+        const params: SetEmailAddressForSpshPersonBodyParams = {
             spshUsername: 'mmustermann',
             kennungen: ['0706054'],
             firstName: 'Max',
             lastName: 'Mustermann',
             spshServiceProviderId: faker.string.uuid(),
-        } satisfies SetEmailAddressForSpshPersonParams;
-        const expectedUrl: string = `${mockEndpoint}api/write/set-email-for-person`;
+        } satisfies SetEmailAddressForSpshPersonBodyParams;
 
         mockHttpService.post.mockReturnValueOnce(of({ status: 200 } as AxiosResponse));
 
-        await sut.setEmailForSpshPerson(params);
-        expect(mockHttpService.post).toHaveBeenCalledWith(expectedUrl, expect.objectContaining(params));
+        await sut.setEmailForSpshPerson({ spshPersonId: spshPersonId, ...params });
+        expect(mockHttpService.post).toHaveBeenCalledWith(
+            expect.stringMatching(/\/api\/write\/[a-f0-9-]+\/set-email$/),
+            expect.objectContaining({ ...params }),
+        );
     });
 
     it.each([
@@ -476,5 +482,42 @@ describe('EmailResolverService', () => {
 
         const result: Option<PersonEmailResponse> = await sut.findEmailBySpshPerson(mockPersonId);
         expect(result).toEqual(new PersonEmailResponse(EmailAddressStatus.DISABLED, mockEmail));
+    });
+
+    describe('deleteEmailsForSpshPerson', () => {
+        it('should call httpService.delete with correct URL and log info', async () => {
+            const spshPersonId: string = faker.string.uuid();
+            const mockEndpoint: string = 'https://email.microservice/';
+            const configService: ConfigService = module.get(ConfigService);
+            configService.getOrThrow = jest.fn().mockReturnValue({
+                ENDPOINT: mockEndpoint,
+            });
+
+            mockHttpService.delete.mockReturnValueOnce(of({ status: 200 } as AxiosResponse));
+
+            await sut.deleteEmailsForSpshPerson({ spshPersonId });
+
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Deleting email for person ${spshPersonId} via email microservice`,
+            );
+            expect(mockHttpService.delete).toHaveBeenCalledWith(
+                `${mockEndpoint}api/write/${spshPersonId}/delete-emails`,
+            );
+        });
+
+        it('should log error when httpService.delete throws', async () => {
+            const spshPersonId: string = faker.string.uuid();
+            const error: Error = new Error('Microservice failure');
+            mockHttpService.delete.mockImplementation(() => {
+                throw error;
+            });
+
+            await sut.deleteEmailsForSpshPerson({ spshPersonId });
+
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                `Failed to delete emails for person ${spshPersonId}`,
+                error,
+            );
+        });
     });
 });

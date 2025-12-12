@@ -226,4 +226,8 @@ export class EmailAddressRepo {
 
         return Ok(mapEntityToAggregate(emailAddressEntity));
     }
+
+    public async delete(emailAddress: EmailAddress<true>): Promise<void> {
+        await this.em.nativeDelete(EmailAddrEntity, emailAddress.id);
+    }
 }

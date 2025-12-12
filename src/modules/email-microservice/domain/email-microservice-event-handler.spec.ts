@@ -20,12 +20,11 @@ import { ServiceProviderSystem } from '../../service-provider/domain/service-pro
 import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailMicroserviceEventHandler } from './email-microservice-event-handler';
 import { EmailResolverService } from './email-resolver.service';
-import { SetEmailAddressForSpshPersonParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.params';
+import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event';
 import { EventModule } from '../../../core/eventbus';
-
-type SetEmailParams = Parameters<EmailResolverService['setEmailForSpshPerson']>[0];
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event';
 
 describe('EmailMicroserviceEventHandler', () => {
     let app: INestApplication;
@@ -85,17 +84,17 @@ describe('EmailMicroserviceEventHandler', () => {
     describe('handlePersonenkontextUpdatedEvent', () => {
         it('should log and call emailResolverService when microservice is enabled', async () => {
             const mockServiceProviderId: string = faker.string.uuid();
-            const params: SetEmailParams = {
-                spshPersonId: faker.string.uuid(),
+            const spshPersonId: string = faker.string.uuid();
+            const params: SetEmailAddressForSpshPersonBodyParams = {
                 spshUsername: faker.internet.userName(),
                 kennungen: ['0706054'],
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
                 spshServiceProviderId: mockServiceProviderId,
-            } satisfies SetEmailAddressForSpshPersonParams;
+            } satisfies SetEmailAddressForSpshPersonBodyParams;
             const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
                 person: {
-                    id: params.spshPersonId,
+                    id: spshPersonId,
                     vorname: params.firstName,
                     familienname: params.lastName,
                     username: params.spshUsername,
@@ -133,22 +132,25 @@ describe('EmailMicroserviceEventHandler', () => {
             expect(loggerMock.info).toHaveBeenCalledWith(
                 expect.stringContaining('Received PersonenkontextUpdatedEvent'),
             );
-            expect(emailResolverServiceMock.setEmailForSpshPerson).toHaveBeenCalledWith(params);
+            expect(emailResolverServiceMock.setEmailForSpshPerson).toHaveBeenCalledWith({
+                spshPersonId: spshPersonId,
+                ...params,
+            });
         });
 
         it('should log and call emailResolverService when microservice is enabled and username is undefined (not in praxis)', async () => {
             const mockServiceProviderId: string = faker.string.uuid();
-            const params: SetEmailParams = {
-                spshPersonId: faker.string.uuid(),
+            const spshPersonId: string = faker.string.uuid();
+            const params: SetEmailAddressForSpshPersonBodyParams = {
                 spshUsername: '',
                 kennungen: ['0706054'],
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
                 spshServiceProviderId: mockServiceProviderId,
-            } satisfies SetEmailAddressForSpshPersonParams;
+            } satisfies SetEmailAddressForSpshPersonBodyParams;
             const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
                 person: {
-                    id: params.spshPersonId,
+                    id: spshPersonId,
                     vorname: params.firstName,
                     familienname: params.lastName,
                     username: undefined,
@@ -183,7 +185,7 @@ describe('EmailMicroserviceEventHandler', () => {
             rolleRepoMock.findByIds.mockResolvedValue(new Map([['r1', mockRolle]]));
 
             await expect(sut.handlePersonenkontextUpdatedEvent(mockEvent)).rejects.toThrow(
-                `Person with id:${params.spshPersonId} has no username, cannot resolve email.`,
+                `Person with id:${spshPersonId} has no username, cannot resolve email.`,
             );
             expect(loggerMock.info).toHaveBeenCalledWith(
                 expect.stringContaining('Received PersonenkontextUpdatedEvent'),
@@ -283,16 +285,7 @@ describe('EmailMicroserviceEventHandler', () => {
                         serviceProviderExternalSystems: [],
                     },
                 ],
-                removedKontexte: [
-                    {
-                        id: 'pk1',
-                        rolleId: 'r1',
-                        rolle: RollenArt.LERN,
-                        orgaId: faker.string.uuid(),
-                        isItslearningOrga: false,
-                        serviceProviderExternalSystems: [],
-                    },
-                ],
+                removedKontexte: [],
                 newKontexte: [],
                 createdAt: new Date(),
                 eventID: '',
@@ -447,6 +440,47 @@ describe('EmailMicroserviceEventHandler', () => {
                 expect.stringContaining(`No email service provider found for personId:${mockEvent.personId}`),
             );
             expect(emailResolverServiceMock.setEmailForSpshPerson).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('handlePersonDeletedEvent', () => {
+        it('should log and call emailResolverService.deleteEmailsForSpshPerson when microservice is enabled', async () => {
+            const personId: string = faker.string.uuid();
+            const username: string = faker.internet.userName();
+            const event: PersonDeletedEvent = new PersonDeletedEvent(personId, username);
+
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+            await sut.handlePersonDeletedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining(
+                    `Received PersonenkontextDeletedEvent, personId:${personId}, username:${username}`,
+                ),
+            );
+            expect(emailResolverServiceMock.deleteEmailsForSpshPerson).toHaveBeenCalledWith({ spshPersonId: personId });
+        });
+
+        it('should log and return early when microservice is disabled', async () => {
+            const personId: string = faker.string.uuid();
+            const username: string = faker.internet.userName();
+            const event: PersonDeletedEvent = new PersonDeletedEvent(personId, username);
+
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+
+            await sut.handlePersonDeletedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining(
+                    `Received PersonenkontextDeletedEvent, personId:${personId}, username:${username}`,
+                ),
+            );
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining(
+                    `Ignoring Event for personId:${personId} because email microservice is disabled`,
+                ),
+            );
+            expect(emailResolverServiceMock.deleteEmailsForSpshPerson).not.toHaveBeenCalled();
         });
     });
 });

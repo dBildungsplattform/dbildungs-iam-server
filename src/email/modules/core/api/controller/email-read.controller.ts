@@ -8,13 +8,13 @@ import {
     ApiTags,
 } from '@nestjs/swagger';
 
-import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
+import { FindEmailAddressBySpshPersonIdPathParams } from '../dtos/params/find-email-address-by-spsh-person-id.pathparams.js';
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { Public } from '../../decorator/public.decorator.js';
 import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
 import { OxService } from '../../../ox/domain/ox.service.js';
-import { FindEmailAddressParams } from '../dtos/params/find-email-address.params.js';
+import { FindEmailAddressPathParams } from '../dtos/params/find-email-address.pathparams.js';
 import { EmailAddressNotFoundError } from '../../error/email-address-not-found.error.js';
 import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
 import { EmailAddressMissingStatusError } from '../../error/email-address-missing-status.error.js';
@@ -42,7 +42,7 @@ export class EmailReadController {
     })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting email-addresses by personId.' })
     public async findEmailAddressesByPersonId(
-        @Param() findEmailAddressByPersonIdParams: FindEmailAddressBySpshPersonIdParams,
+        @Param() findEmailAddressByPersonIdParams: FindEmailAddressBySpshPersonIdPathParams,
     ): Promise<EmailAddressResponse[]> {
         this.logger.info(`PersonId:${findEmailAddressByPersonIdParams.spshPersonId}`);
 
@@ -76,7 +76,7 @@ export class EmailReadController {
         description: 'Internal server error while getting email-address response by email-address.',
     })
     public async findEmailAddress(
-        @Param() findEmailAddressByPersonIdParams: FindEmailAddressParams,
+        @Param() findEmailAddressByPersonIdParams: FindEmailAddressPathParams,
     ): Promise<Option<EmailAddressResponse>> {
         this.logger.info(`EmailAddress:${findEmailAddressByPersonIdParams.emailAddress}`);
 

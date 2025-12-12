@@ -1,12 +1,14 @@
-import { Body, Controller, Post, UseFilters } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, UseFilters } from '@nestjs/common';
 import { ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
-import { SetEmailAddressForSpshPersonParams } from '../dtos/params/set-email-address-for-spsh-person.params.js';
+import { SetEmailAddressForSpshPersonBodyParams } from '../dtos/params/set-email-address-for-spsh-person.bodyparams.js';
 import { SetEmailAddressForSpshPersonService } from '../../domain/set-email-address-for-spsh-person.service.js';
 import { Public } from '../../decorator/public.decorator.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
+import { DeleteEmailAddressesForSpshPersonPathParams } from '../dtos/params/delete-email-addresses-for-spsh-person.pathparams.js';
+import { DeleteEmailsAddressesForSpshPersonService } from '../../domain/delete-email-adresses-for-spsh-person.service.js';
+import { SetEmailAddressForSpshPersonPathParams } from '../dtos/params/set-email-address-for-spsh-person.pathparams.js';
 
 @ApiTags('email')
 @Controller({ path: 'write' })
@@ -14,21 +16,49 @@ import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
 export class EmailWriteController {
     public constructor(
         private readonly setEmailAddressForSpshPersonService: SetEmailAddressForSpshPersonService,
+        private readonly deleteEmailsAddressesForSpshPersonService: DeleteEmailsAddressesForSpshPersonService,
         private readonly logger: ClassLogger,
     ) {}
 
-    @Post('set-email-for-person')
+    @Post(':spshPersonId/set-email')
     @Public()
     @ApiOperation({ description: 'Set email-address for a person.' })
     @ApiOkResponse({
         description: 'The email-address for the corresponding person was successfully set.',
-        type: [EmailAddressResponse],
     })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while setting email-address for person.' })
-    public setEmailForPerson(@Body() params: SetEmailAddressForSpshPersonParams): void {
+    public setEmailForPerson(
+        @Param() pathParams: SetEmailAddressForSpshPersonPathParams,
+        @Body() bodyParams: SetEmailAddressForSpshPersonBodyParams,
+    ): void {
         // void the promise, we don't care about the result and the endpoint should instantly return
-        void this.setEmailAddressForSpshPersonService.setEmailAddressForSpshPerson(params).catch((err: Error) => {
-            this.logger.error(`Error in background email processing: ${err.message}`);
-        });
+        void this.setEmailAddressForSpshPersonService
+            .setEmailAddressForSpshPerson({
+                spshPersonId: pathParams.spshPersonId,
+                spshUsername: bodyParams.spshUsername,
+                kennungen: bodyParams.kennungen,
+                firstName: bodyParams.firstName,
+                lastName: bodyParams.lastName,
+                spshServiceProviderId: bodyParams.spshServiceProviderId,
+            })
+            .catch((err: Error) => {
+                this.logger.error(`Error in background email processing: ${err.message}`);
+            });
+    }
+
+    @Delete(':spshPersonId/delete-emails')
+    @Public()
+    @ApiOperation({ description: 'Delete email-addresses for a person.' })
+    @ApiOkResponse({
+        description: 'All email-addresses for the corresponding person were successfully deleted.',
+    })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while setting email-address for person.' })
+    public deleteEmailsForPerson(@Param() params: DeleteEmailAddressesForSpshPersonPathParams): void {
+        // void the promise, we don't care about the result and the endpoint should instantly return
+        void this.deleteEmailsAddressesForSpshPersonService
+            .deleteEmailAddressesForSpshPerson({ spshPersonId: params.spshPersonId })
+            .catch((err: Error) => {
+                this.logger.error(`Error in background email processing: ${err.message}`);
+            });
     }
 }
