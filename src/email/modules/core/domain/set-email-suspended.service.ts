@@ -3,13 +3,22 @@ import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
 import { EmailAddress } from './email-address.js';
+import { EmailConfig } from '../../../../shared/config/email.config.js';
+import { ConfigService } from '@nestjs/config';
+import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
 
 @Injectable()
 export class SetEmailSuspendedService {
+    private NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: number;
+
     public constructor(
         private readonly emailAddressRepo: EmailAddressRepo,
         private readonly logger: ClassLogger,
-    ) {}
+        configService: ConfigService<EmailAppConfig>,
+    ) {
+        this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS =
+            configService.getOrThrow<EmailConfig>('EMAIL').NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS ?? 90;
+    }
 
     public async setEmailsSuspended(params: { spshPersonId: string }): Promise<void> {
         this.logger.info(`Received request to set email addresses to suspended for spshPerson ${params.spshPersonId}.`);
@@ -32,7 +41,8 @@ export class SetEmailSuspendedService {
         });
         eligibleAddresses.forEach((a: EmailAddress<true>) => {
             a.setStatus(EmailAddressStatusEnum.SUSPENDED);
-            a.markedForCron = new Date(Date.now() + 8.64e7 * 90);
+            const ONE_DAY: number = 86_400_000;
+            a.markedForCron ??= new Date(Date.now() + ONE_DAY * this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS);
         });
         await Promise.all(eligibleAddresses.map((a: EmailAddress<true>) => this.emailAddressRepo.save(a)));
     }

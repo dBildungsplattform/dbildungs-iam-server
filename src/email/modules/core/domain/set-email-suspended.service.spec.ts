@@ -53,6 +53,7 @@ describe('SetEmailSuspendedService', () => {
         address: string,
         priority: number,
         status: EmailAddressStatusEnum,
+        markedForCron?: Date,
     ): Promise<EmailAddress<true>> => {
         const emailAddress: EmailAddress<false> = EmailAddress.createNew({
             address,
@@ -62,7 +63,7 @@ describe('SetEmailSuspendedService', () => {
                     status: status,
                 },
             ],
-            markedForCron: undefined,
+            markedForCron: markedForCron,
             spshPersonId: spshPersonId,
             oxUserCounter: undefined,
             externalId: faker.string.uuid(),
@@ -127,6 +128,39 @@ describe('SetEmailSuspendedService', () => {
             );
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `Priority of email address ${inlegibleEmail} is not 0 or 1. Skipping setting suspended`,
+            );
+        });
+
+        it('should not update markedForCron if it already has a value', async () => {
+            const spshPersonId: string = faker.string.uuid();
+            await buildEmail(spshPersonId, faker.internet.email(), 0, EmailAddressStatusEnum.ACTIVE);
+            await buildEmail(
+                spshPersonId,
+                faker.internet.email(),
+                1,
+                EmailAddressStatusEnum.SUSPENDED,
+                new Date(Date.now()),
+            );
+
+            const before: number = Date.now();
+            await sut.setEmailsSuspended({ spshPersonId: spshPersonId });
+            const after: number = Date.now();
+
+            const refreshed: EmailAddress<true>[] =
+                await emailAddressRepo.findBySpshPersonIdSortedByPriorityAsc(spshPersonId);
+
+            expect(refreshed[0]!.sortedStatuses[0]?.status).toBe(EmailAddressStatusEnum.SUSPENDED);
+            expect(refreshed[1]!.sortedStatuses[0]?.status).toBe(EmailAddressStatusEnum.SUSPENDED);
+
+            const expectedMin: number = before - 2_000; // small tolerance
+            const expectedMax: number = after + 2_000;
+            expect(refreshed[1]!.markedForCron instanceof Date).toBe(true);
+            const t: number = refreshed[1]!.markedForCron!.getTime();
+            expect(t).toBeGreaterThanOrEqual(expectedMin);
+            expect(t).toBeLessThanOrEqual(expectedMax);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Received request to set email addresses to suspended for spshPerson ${spshPersonId}.`,
             );
         });
     });
