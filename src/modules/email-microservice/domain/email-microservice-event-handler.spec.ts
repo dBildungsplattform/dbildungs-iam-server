@@ -24,6 +24,7 @@ import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/c
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event';
 import { EventModule } from '../../../core/eventbus';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event';
 
 describe('EmailMicroserviceEventHandler', () => {
     let app: INestApplication;
@@ -439,6 +440,47 @@ describe('EmailMicroserviceEventHandler', () => {
                 expect.stringContaining(`No email service provider found for personId:${mockEvent.personId}`),
             );
             expect(emailResolverServiceMock.setEmailForSpshPerson).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('handlePersonDeletedEvent', () => {
+        it('should log and call emailResolverService.deleteEmailsForSpshPerson when microservice is enabled', async () => {
+            const personId: string = faker.string.uuid();
+            const username: string = faker.internet.userName();
+            const event: PersonDeletedEvent = new PersonDeletedEvent(personId, username);
+
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+            await sut.handlePersonDeletedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining(
+                    `Received PersonenkontextDeletedEvent, personId:${personId}, username:${username}`,
+                ),
+            );
+            expect(emailResolverServiceMock.deleteEmailsForSpshPerson).toHaveBeenCalledWith({ spshPersonId: personId });
+        });
+
+        it('should log and return early when microservice is disabled', async () => {
+            const personId: string = faker.string.uuid();
+            const username: string = faker.internet.userName();
+            const event: PersonDeletedEvent = new PersonDeletedEvent(personId, username);
+
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+
+            await sut.handlePersonDeletedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining(
+                    `Received PersonenkontextDeletedEvent, personId:${personId}, username:${username}`,
+                ),
+            );
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining(
+                    `Ignoring Event for personId:${personId} because email microservice is disabled`,
+                ),
+            );
+            expect(emailResolverServiceMock.deleteEmailsForSpshPerson).not.toHaveBeenCalled();
         });
     });
 });
