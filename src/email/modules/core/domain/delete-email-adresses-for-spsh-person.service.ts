@@ -35,9 +35,11 @@ export class DeleteEmailsAddressesForSpshPersonService {
         //If any of the external deletion operations fail, we keep the email addresses in DB with status TO_BE_DELETED for retry by the cronjob
         let canDbDeleteAllAdresses: boolean = true;
 
-        const oxUserCounter: OXUserID | undefined = addresses.at(0)?.oxUserCounter;
-        const externalId: string | undefined = addresses.at(0)?.externalId;
-        const domain: string | undefined = addresses.at(0)?.getDomain();
+        const oxUserCounter: OXUserID | undefined = addresses.find(
+            (a: EmailAddress<true>) => a.oxUserCounter,
+        )?.oxUserCounter;
+        const externalId: string | undefined = addresses.find((a: EmailAddress<true>) => a.externalId)?.externalId;
+        const domain: string | undefined = addresses.find((a: EmailAddress<true>) => a.getDomain())?.getDomain();
         if (oxUserCounter) {
             //Deleting the Group Relations extra is not necessary as Ox deletes them automatically when deleting the user
             const deleteUserResult: Result<void, Error> = await this.oxService.deleteUser(oxUserCounter);
