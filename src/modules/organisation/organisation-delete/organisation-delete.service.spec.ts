@@ -15,6 +15,7 @@ import { OrganisationHasPersonenkontexteError } from './errors/organisation-has-
 import { OrganisationHasRollenError } from './errors/organisation-has-rollen.error';
 import { OrganisationHasRollenerweiterungError } from './errors/organisation-has-rollenerweiterung.error';
 import { OrganisationHasServiceProvidersError } from './errors/organisation-has-service-provider.error';
+import { OrganisationHasZugehoerigeError } from './errors/organisation-has-zugehoerige.error';
 import { OrganisationDeleteService } from './organisation-delete.service';
 
 describe('OrganisationDeleteService', () => {
@@ -71,7 +72,9 @@ describe('OrganisationDeleteService', () => {
 
     describe('deleteOrganisation', () => {
         it('should call delete, if no references are found', async () => {
-            organisationRepo.findBy.mockResolvedValue([[], 0]);
+            organisationRepo.findBy
+                .mockResolvedValueOnce([[], 0]) // child orgs
+                .mockResolvedValueOnce([[], 0]); // zugehoerige orgs
             rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
             personenkontextRepo.findBy.mockResolvedValue([[], 0]);
             serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([]);
@@ -86,7 +89,7 @@ describe('OrganisationDeleteService', () => {
 
         it('should return OrganisationHasChildrenError, if org has children', async () => {
             const organisationId: OrganisationID = faker.string.uuid();
-            organisationRepo.findBy.mockResolvedValue([
+            organisationRepo.findBy.mockResolvedValueOnce([
                 [DoFactory.createOrganisation(true, { administriertVon: organisationId })],
                 1,
             ]);
@@ -100,8 +103,23 @@ describe('OrganisationDeleteService', () => {
             expect(organisationRepo.delete).toHaveBeenCalledTimes(0);
         });
 
+        it('should return OrganisationHasZugehoerigeError, if org has zugehoerige', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            organisationRepo.findBy
+                .mockResolvedValueOnce([[], 0])
+                .mockResolvedValueOnce([[DoFactory.createOrganisation(true, { zugehoerigZu: organisationId })], 1]);
+
+            const result: void | DomainError = await organisationDeleteService.deleteOrganisation(organisationId);
+
+            expect(result).toBeInstanceOf(OrganisationHasZugehoerigeError);
+            expect(rolleRepo.findBySchulstrukturknoten).toHaveBeenCalledTimes(0);
+            expect(personenkontextRepo.findBy).toHaveBeenCalledTimes(0);
+            expect(serviceProviderRepoRepo.findBySchulstrukturknoten).toHaveBeenCalledTimes(0);
+            expect(organisationRepo.delete).toHaveBeenCalledTimes(0);
+        });
+
         it('should return OrganisationHasRollenError, if rollen are administered by org', async () => {
-            organisationRepo.findBy.mockResolvedValue([[], 0]);
+            organisationRepo.findBy.mockResolvedValueOnce([[], 0]).mockResolvedValueOnce([[], 0]);
             const organisationId: OrganisationID = faker.string.uuid();
             rolleRepo.findBySchulstrukturknoten.mockResolvedValue([
                 DoFactory.createRolle(true, { administeredBySchulstrukturknoten: organisationId }),
@@ -116,8 +134,8 @@ describe('OrganisationDeleteService', () => {
         });
 
         it('should return OrganisationHasPersonenkontexteError, if org has personenkontexte', async () => {
+            organisationRepo.findBy.mockResolvedValueOnce([[], 0]).mockResolvedValueOnce([[], 0]);
             const organisationId: OrganisationID = faker.string.uuid();
-            organisationRepo.findBy.mockResolvedValue([[], 0]);
             rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
             personenkontextRepo.findBy.mockResolvedValue([
                 [DoFactory.createPersonenkontext(true, { organisationId })],
@@ -132,8 +150,8 @@ describe('OrganisationDeleteService', () => {
         });
 
         it('should return OrganisationHasServiceProvidersError, if org has serviceProviders', async () => {
+            organisationRepo.findBy.mockResolvedValueOnce([[], 0]).mockResolvedValueOnce([[], 0]);
             const organisationId: OrganisationID = faker.string.uuid();
-            organisationRepo.findBy.mockResolvedValue([[], 0]);
             rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
             personenkontextRepo.findBy.mockResolvedValue([[], 0]);
             serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([
@@ -147,8 +165,8 @@ describe('OrganisationDeleteService', () => {
         });
 
         it('should return OrganisationHasRollenerweiterungError, if org has rollenerweiterungen', async () => {
+            organisationRepo.findBy.mockResolvedValueOnce([[], 0]).mockResolvedValueOnce([[], 0]);
             const organisationId: OrganisationID = faker.string.uuid();
-            organisationRepo.findBy.mockResolvedValue([[], 0]);
             rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
             personenkontextRepo.findBy.mockResolvedValue([[], 0]);
             serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([]);

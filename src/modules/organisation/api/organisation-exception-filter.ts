@@ -27,6 +27,7 @@ import { TraegerInTraegerError } from '../specification/error/traeger-in-traeger
 import { ZyklusInOrganisationenError } from '../specification/error/zyklus-in-organisationen.error.js';
 import { DbiamOrganisationError, OrganisationSpecificationErrorI18nTypes } from './dbiam-organisation.error.js';
 import { OrganisationHasRollenerweiterungError } from '../organisation-delete/errors/organisation-has-rollenerweiterung.error.js';
+import { OrganisationHasZugehoerigeError } from '../organisation-delete/errors/organisation-has-zugehoerige.error.js';
 
 @Catch(OrganisationSpecificationError)
 export class OrganisationExceptionFilter implements ExceptionFilter<OrganisationSpecificationError> {
@@ -169,6 +170,13 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_HAT_KINDER,
+            }),
+        ],
+        [
+            OrganisationHasZugehoerigeError.name,
+            new DbiamOrganisationError({
+                code: 400,
+                i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_HAT_ZUGEHOERIGE,
             }),
         ],
         [
