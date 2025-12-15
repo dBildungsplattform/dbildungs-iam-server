@@ -114,7 +114,6 @@ export class EmailResolverService {
 
     public async deleteEmailsForSpshPerson(params: { spshPersonId: string }): Promise<void> {
         try {
-            // For now just mocking the post
             this.logger.info(`Deleting email for person ${params.spshPersonId} via email microservice`);
             await lastValueFrom(
                 this.httpService.delete(
@@ -122,7 +121,7 @@ export class EmailResolverService {
                 ),
             );
         } catch (error) {
-            this.logger.logUnknownAsError(`Failed to set email for person ${params.spshPersonId}`, error);
+            this.logger.logUnknownAsError(`Failed to delete emails for person ${params.spshPersonId}`, error);
         }
     }
 

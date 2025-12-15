@@ -108,7 +108,7 @@ export class OxService {
         // Sequential updating because OX doesn't like simultaneous updates to a single user
         for (const g of toRemove) {
             // eslint-disable-next-line no-await-in-loop
-            const result = await this.removeOxUserFromGroup(oxUserId, g.id);
+            const result: Result<void, Error> = await this.removeOxUserFromGroup(oxUserId, g.id);
             if (!result.ok) {
                 return result;
             }
@@ -284,7 +284,7 @@ export class OxService {
     }
 
     public async deleteUser(oxUserCounter: OXUserID): Promise<Result<void>> {
-        const action = this.createDeleteUserAction(oxUserCounter);
+        const action: DeleteUserAction = this.createDeleteUserAction(oxUserCounter);
         const result: Result<unknown, DomainError> = await this.oxSendService.send(action);
 
         if (!result.ok) {
