@@ -8,7 +8,7 @@ describe('UpdateLernNotAtSchuleAndKlasseError', () => {
         expect(error).toBeInstanceOf(UpdateLernNotAtSchuleAndKlasseError);
         expect(error).toBeInstanceOf(PersonenkontexteUpdateError);
         expect(error.message).toBe(
-            'Personenkontext could not be created/updates because not every LERN-PK has a corresponding Schule or Klasse',
+            'Personenkontext could not be created/updated because not every LERN-PK has a corresponding Schule or Klasse',
         );
     });
 });

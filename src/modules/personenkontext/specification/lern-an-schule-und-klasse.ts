@@ -53,7 +53,7 @@ export class LernAnSchuleUndKlasse extends CompositeSpecification<Array<Personen
             (pk: Personenkontext<boolean>) => organisationen.get(pk.organisationId)?.typ === OrganisationsTyp.KLASSE,
         );
 
-        const everySchoolPKHasKlassePK: boolean = pksAtSchulen.every((schulePk: Personenkontext<boolean>) =>
+        const everySchulePKHasKlassePK: boolean = pksAtSchulen.every((schulePk: Personenkontext<boolean>) =>
             pksAtKlassen.find(
                 (klassePk: Personenkontext<boolean>) =>
                     klassePk.rolleId === schulePk.rolleId &&
@@ -69,6 +69,6 @@ export class LernAnSchuleUndKlasse extends CompositeSpecification<Array<Personen
             ),
         );
 
-        return everySchoolPKHasKlassePK && everyKlassePKHasSchulePK;
+        return everySchulePKHasKlassePK && everyKlassePKHasSchulePK;
     }
 }
