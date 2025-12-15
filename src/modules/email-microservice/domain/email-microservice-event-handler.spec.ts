@@ -25,6 +25,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event';
 import { EventModule } from '../../../core/eventbus';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types';
 
 describe('EmailMicroserviceEventHandler', () => {
     let app: INestApplication;
@@ -317,6 +318,234 @@ describe('EmailMicroserviceEventHandler', () => {
                 lastName: 'Mustermann',
                 spshServiceProviderId: mockServiceProviderId,
             });
+        });
+
+        it('should filter out kontexte whose id is in removedKontexte', async () => {
+            const mockServiceProviderId: string = faker.string.uuid();
+            const spshPersonId: string = faker.string.uuid();
+
+            const kontextToKeep: PersonenkontextEventKontextData = {
+                id: 'pk1',
+                rolleId: 'r1',
+                rolle: RollenArt.LERN,
+                orgaId: faker.string.uuid(),
+                orgaKennung: 'K1',
+                isItslearningOrga: false,
+                serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
+            };
+            const kontextToRemove: PersonenkontextEventKontextData = {
+                id: 'pk2',
+                rolleId: 'r2',
+                rolle: RollenArt.LERN,
+                orgaId: faker.string.uuid(),
+                orgaKennung: 'K2',
+                isItslearningOrga: false,
+                serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
+            };
+
+            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
+                person: {
+                    id: spshPersonId,
+                    vorname: 'Max',
+                    familienname: 'Mustermann',
+                    username: 'testuser',
+                },
+                currentKontexte: [kontextToKeep, kontextToRemove],
+                removedKontexte: [kontextToRemove],
+                newKontexte: [],
+                createdAt: new Date(),
+                eventID: '',
+            });
+
+            const mockRolle: Rolle<true> = createMock<Rolle<true>>({
+                id: 'r1',
+                serviceProviderData: [
+                    createMock<ServiceProvider<true>>({
+                        id: mockServiceProviderId,
+                        externalSystem: ServiceProviderSystem.EMAIL,
+                    }),
+                ],
+            });
+
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+            rolleRepoMock.findByIds.mockResolvedValue(new Map([['r1', mockRolle]]));
+
+            await sut.handlePersonenkontextUpdatedEvent(mockEvent);
+
+            expect(emailResolverServiceMock.setEmailForSpshPerson).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    kennungen: ['K1'],
+                }),
+            );
+        });
+
+        it('should only include kennungen for kontexte with a rolle in rollenMap', async () => {
+            const mockServiceProviderId: string = faker.string.uuid();
+            const spshPersonId: string = faker.string.uuid();
+            const params: SetEmailAddressForSpshPersonBodyParams = {
+                spshUsername: faker.internet.userName(),
+                kennungen: ['K2'],
+                firstName: faker.person.firstName(),
+                lastName: faker.person.lastName(),
+                spshServiceProviderId: mockServiceProviderId,
+            } satisfies SetEmailAddressForSpshPersonBodyParams;
+
+            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
+                person: {
+                    id: spshPersonId,
+                    vorname: params.firstName,
+                    familienname: params.lastName,
+                    username: params.spshUsername,
+                },
+                currentKontexte: [
+                    {
+                        id: 'pk1',
+                        rolleId: 'r1',
+                        rolle: RollenArt.LERN,
+                        orgaId: faker.string.uuid(),
+                        orgaKennung: 'K1',
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
+                    },
+                    {
+                        id: 'pk2',
+                        rolleId: 'r2',
+                        rolle: RollenArt.LERN,
+                        orgaId: faker.string.uuid(),
+                        orgaKennung: 'K2',
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
+                    },
+                ],
+                removedKontexte: [],
+                newKontexte: [],
+                createdAt: new Date(),
+                eventID: '',
+            });
+
+            const mockRolle: Rolle<true> = createMock<Rolle<true>>({
+                id: 'r2',
+                serviceProviderData: [
+                    createMock<ServiceProvider<true>>({
+                        id: mockServiceProviderId,
+                        externalSystem: ServiceProviderSystem.EMAIL,
+                    }),
+                ],
+            });
+
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+            rolleRepoMock.findByIds.mockResolvedValue(new Map([['r2', mockRolle]]));
+
+            await sut.handlePersonenkontextUpdatedEvent(mockEvent);
+
+            expect(emailResolverServiceMock.setEmailForSpshPerson).toHaveBeenCalledWith({
+                spshPersonId: spshPersonId,
+                spshUsername: params.spshUsername,
+                kennungen: ['K2'],
+                firstName: params.firstName,
+                lastName: params.lastName,
+                spshServiceProviderId: mockServiceProviderId,
+            });
+        });
+
+        it('should not include kennung if rolle exists but has no EMAIL serviceProvider', async () => {
+            const mockServiceProviderId: string = faker.string.uuid();
+            const spshPersonId: string = faker.string.uuid();
+
+            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
+                person: {
+                    id: spshPersonId,
+                    vorname: 'Max',
+                    familienname: 'Mustermann',
+                    username: 'testuser',
+                },
+                currentKontexte: [
+                    {
+                        id: 'pk1',
+                        rolleId: 'r1',
+                        rolle: RollenArt.LERN,
+                        orgaId: faker.string.uuid(),
+                        orgaKennung: 'K1',
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                removedKontexte: [],
+                newKontexte: [],
+                createdAt: new Date(),
+                eventID: '',
+            });
+
+            const mockRolle: Rolle<true> = createMock<Rolle<true>>({
+                id: 'r1',
+                serviceProviderData: [
+                    createMock<ServiceProvider<true>>({
+                        id: mockServiceProviderId,
+                        externalSystem: ServiceProviderSystem.NONE,
+                    }),
+                ],
+            });
+
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+            rolleRepoMock.findByIds.mockResolvedValue(new Map([['r1', mockRolle]]));
+
+            await sut.handlePersonenkontextUpdatedEvent(mockEvent);
+
+            expect(emailResolverServiceMock.setEmailForSpshPerson).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    kennungen: [],
+                }),
+            );
+        });
+
+        it('should filter out kontexte with undefined orgaKennung', async () => {
+            const mockServiceProviderId: string = faker.string.uuid();
+            const spshPersonId: string = faker.string.uuid();
+
+            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
+                person: {
+                    id: spshPersonId,
+                    vorname: 'Max',
+                    familienname: 'Mustermann',
+                    username: 'testuser',
+                },
+                currentKontexte: [
+                    {
+                        id: 'pk1',
+                        rolleId: 'r1',
+                        rolle: RollenArt.LERN,
+                        orgaId: faker.string.uuid(),
+                        orgaKennung: undefined,
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
+                    },
+                ],
+                removedKontexte: [],
+                newKontexte: [],
+                createdAt: new Date(),
+                eventID: '',
+            });
+
+            const mockRolle: Rolle<true> = createMock<Rolle<true>>({
+                id: 'r1',
+                serviceProviderData: [
+                    createMock<ServiceProvider<true>>({
+                        id: mockServiceProviderId,
+                        externalSystem: ServiceProviderSystem.EMAIL,
+                    }),
+                ],
+            });
+
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+            rolleRepoMock.findByIds.mockResolvedValue(new Map([['r1', mockRolle]]));
+
+            await sut.handlePersonenkontextUpdatedEvent(mockEvent);
+
+            expect(emailResolverServiceMock.setEmailForSpshPerson).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    kennungen: [],
+                }),
+            );
         });
     });
 
