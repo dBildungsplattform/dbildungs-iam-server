@@ -101,7 +101,7 @@ When assigning a value to an expect, separate the function call from the expecta
 
 ## Mocking
 
-Using the utilities provided by NestJs, we can easily inject mocks into our testing module. The mocks themselves, we create using a [library](https://www.npmjs.com/package/@golevelup/ts-jest) by @golevelup.
+Using the utilities provided by NestJs, we can easily inject mocks into our testing module. The mocks themselves, we create using a [library](https://www.npmjs.com/package/@golevelup/ts-vitest) by @golevelup.
 
 You can create a mock using `createMock<Class>()`. As result you will recieved a `DeepMocked<Class>`
 
@@ -129,7 +129,7 @@ afterAll(async () => {
 });
 
 afterEach(() => {
- jest.resetAllMocks();
+ vi.resetAllMocks();
 })
 ```
 
@@ -137,11 +137,11 @@ The resulting mock has all the functions of the original `Class`, replaced with 
 
 `createTestingModule` should only be called in `beforeAll` and not in `beforeEach` to keep the setup and teardown for each test as simple as possible. Therefore `module.close` should only be called in `afterAll` and not in `afterEach`.
 
-To generally reset specific mock implementation after each test `jest.resetAllMocks` can be used in afterEach. Please be aware of the difference between [mockClear](https://jestjs.io/docs/mock-function-api#mockfnmockclear), [mockReset](https://jestjs.io/docs/mock-function-api#mockfnmockreset) and [mockRestore](https://jestjs.io/docs/mock-function-api#mockfnmockrestore).
+To generally reset specific mock implementation after each test `vi.resetAllMocks` can be used in afterEach. Please be aware of the difference between [mockClear](https://jestjs.io/docs/mock-function-api#mockfnmockclear), [mockReset](https://jestjs.io/docs/mock-function-api#mockfnmockreset) and [mockRestore](https://jestjs.io/docs/mock-function-api#mockfnmockrestore).
 
 For creating specific mock implementations the helper functions which only mock the implementation once, must be used (e.g. mockReturnValueOnce). With that approach more control over mocked functions can be achieved.
 
-If you want to mock a method that is not part of a dependency you can mock it with `jest.spyOn`. We strongly recommend the use of `jest.spyOn` and not `jest.fn`, because `jest.spyOn` can be restored a lot easier.
+If you want to mock a method that is not part of a dependency you can mock it with `vi.spyOn`. We strongly recommend the use of `vi.spyOn` and not `vi.fn`, because `vi.spyOn` can be restored a lot easier.
 
 ## Unit Tests vs Integration Tests
 

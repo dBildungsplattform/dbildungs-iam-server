@@ -5,12 +5,12 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
-    LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { MeldungRepo } from './meldung.repo.js';
 import { Meldung } from '../domain/meldung.js';
 import { faker } from '@faker-js/faker';
 import { MeldungStatus } from './meldung.entity.js';
+import { LoggingTestModule } from '../../../../test/utils/vitest/logging-test.module.js';
 
 describe('MeldungRepo', () => {
     let module: TestingModule;

@@ -13,7 +13,8 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'node',
-        include: ['**/organisation.service.spec.ts'],
+        // include: ['**/*.spec.ts'],
+        include: ['**/meldung/**/*.spec.ts'],
         coverage: {
             reporter: ['lcov', 'text'],
         },
