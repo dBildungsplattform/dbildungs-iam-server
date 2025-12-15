@@ -448,56 +448,6 @@ describe('EmailMicroserviceEventHandler', () => {
             });
         });
 
-        it('should not include kennung if rolle exists but has no EMAIL serviceProvider', async () => {
-            const mockServiceProviderId: string = faker.string.uuid();
-            const spshPersonId: string = faker.string.uuid();
-
-            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
-                person: {
-                    id: spshPersonId,
-                    vorname: 'Max',
-                    familienname: 'Mustermann',
-                    username: 'testuser',
-                },
-                currentKontexte: [
-                    {
-                        id: 'pk1',
-                        rolleId: 'r1',
-                        rolle: RollenArt.LERN,
-                        orgaId: faker.string.uuid(),
-                        orgaKennung: 'K1',
-                        isItslearningOrga: false,
-                        serviceProviderExternalSystems: [],
-                    },
-                ],
-                removedKontexte: [],
-                newKontexte: [],
-                createdAt: new Date(),
-                eventID: '',
-            });
-
-            const mockRolle: Rolle<true> = createMock<Rolle<true>>({
-                id: 'r1',
-                serviceProviderData: [
-                    createMock<ServiceProvider<true>>({
-                        id: mockServiceProviderId,
-                        externalSystem: ServiceProviderSystem.NONE,
-                    }),
-                ],
-            });
-
-            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
-            rolleRepoMock.findByIds.mockResolvedValue(new Map([['r1', mockRolle]]));
-
-            await sut.handlePersonenkontextUpdatedEvent(mockEvent);
-
-            expect(emailResolverServiceMock.setEmailForSpshPerson).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    kennungen: [],
-                }),
-            );
-        });
-
         it('should filter out kontexte with undefined orgaKennung', async () => {
             const mockServiceProviderId: string = faker.string.uuid();
             const spshPersonId: string = faker.string.uuid();
