@@ -1,11 +1,9 @@
-// import { describe, it, beforeEach, beforeAll, afterAll } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { vi } from 'vitest';
-import { createMock, DeepMocked } from '@golevelup/ts-vitest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { LoggingTestModule } from '../../../../test/utils/vitest/logging-test.module.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { PersonPermissionsMock } from '../../../../test/utils/person-permissions.mock.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -59,7 +57,7 @@ describe('OrganisationService', () => {
     });
 
     beforeEach(() => {
-        vi.resetAllMocks();
+        jest.resetAllMocks();
     });
 
     it('should be defined', () => {
