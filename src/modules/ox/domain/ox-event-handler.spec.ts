@@ -265,8 +265,8 @@ describe('OxEventHandler', () => {
         emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
     });
 
-    describe('Ignore event when new Microservice enabled', () => {
-        it('should log ignoring event', async () => {
+    describe('Ignore events when new Microservice enabled', () => {
+        it('should log ignoring PersonenkontextUpdatedEvent event', async () => {
             jest.resetAllMocks();
             emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
 
@@ -279,6 +279,19 @@ describe('OxEventHandler', () => {
             );
 
             await sut.handlePersonenkontextUpdatedEvent(event);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Ignoring Event for personId:${personId} because email microservice is enabled`,
+            );
+        });
+
+        it('should log ignoring PersonDeletedEvent event', async () => {
+            jest.resetAllMocks();
+            emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+            const personId: PersonID = faker.string.uuid();
+            const event: PersonDeletedEvent = new PersonDeletedEvent(personId, faker.internet.userName());
+
+            await sut.handlePersonDeletedEvent(event);
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `Ignoring Event for personId:${personId} because email microservice is enabled`,
             );

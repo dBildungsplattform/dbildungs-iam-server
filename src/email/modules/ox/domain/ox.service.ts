@@ -25,7 +25,11 @@ import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
 import { CreateUserAction, CreateUserParams } from '../actions/user/create-user.action.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 import { PersonUsername } from '../../../../shared/types/index.js';
-import { ListGroupsForUserAction, ListGroupsForUserResponse } from '../actions/group/list-groups-for-user.action.js';
+import {
+    ListGroupsForUserAction,
+    ListGroupsForUserParams,
+    ListGroupsForUserResponse,
+} from '../actions/group/list-groups-for-user.action.js';
 import { differenceWith } from 'lodash-es';
 import {
     RemoveMemberFromGroupAction,
@@ -64,7 +68,7 @@ export class OxService {
         this.emailAddressDeletedEventDelay = oxConfig.EMAIL_ADDRESS_DELETED_EVENT_DELAY ?? 0;
     }
 
-    public async setUserOxGroups(oxUserId: OXUserID, schuleDstrNrs: string[]): Promise<void> {
+    public async setUserOxGroups(oxUserId: OXUserID, schuleDstrNrs: string[]): Promise<Result<void>> {
         const groups: Result<ListGroupsForUserResponse, DomainError> = await this.oxSendService.send(
             new ListGroupsForUserAction({
                 userId: oxUserId,
@@ -75,7 +79,11 @@ export class OxService {
         );
 
         if (!groups.ok) {
-            return this.logger.error(`Could not get groups for ox user ${oxUserId}`);
+            this.logger.error(`Could not get groups for ox user ${oxUserId}`);
+            return {
+                ok: false,
+                error: groups.error,
+            };
         }
 
         const toRemove: OXGroup[] = differenceWith(
@@ -100,11 +108,18 @@ export class OxService {
         // Sequential updating because OX doesn't like simultaneous updates to a single user
         for (const g of toRemove) {
             // eslint-disable-next-line no-await-in-loop
-            await this.removeOxUserFromGroup(oxUserId, g.id);
+            const result: Result<void, Error> = await this.removeOxUserFromGroup(oxUserId, g.id);
+            if (!result.ok) {
+                return result;
+            }
         }
+        return {
+            ok: true,
+            value: undefined,
+        };
     }
 
-    public async addOxUserToGroup(oxUserId: OXUserID, schuleDstrNr: string): Promise<void> {
+    public async addOxUserToGroup(oxUserId: OXUserID, schuleDstrNr: string): Promise<Result<void>> {
         // Fetch or create the relevant OX group based on orgaKennung (group identifier)
         const oxGroupIdResult: Result<OXGroupID> = await this.getExistingOxGroupByNameOrCreateOxGroup(
             OxService.LEHRER_OX_GROUP_NAME_PREFIX + schuleDstrNr,
@@ -112,7 +127,11 @@ export class OxService {
         );
 
         if (!oxGroupIdResult.ok) {
-            return this.logger.error(`Could not get OxGroup for schulenDstNr:${schuleDstrNr}`);
+            this.logger.error(`Could not get OxGroup for schulenDstNr:${schuleDstrNr}`);
+            return {
+                ok: false,
+                error: oxGroupIdResult.error,
+            };
         }
 
         const addMemberToGroupAction: AddMemberToGroupAction = this.createAddMemberToGroupAction(
@@ -128,9 +147,13 @@ export class OxService {
         this.logger.info(
             `Successfully added oxUser to oxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupIdResult.value}`,
         );
+        return {
+            ok: true,
+            value: undefined,
+        };
     }
 
-    public async removeOxUserFromGroup(oxUserId: OXUserID, oxGroupId: string): Promise<void> {
+    public async removeOxUserFromGroup(oxUserId: OXUserID, oxGroupId: string): Promise<Result<void>> {
         const removeMemberFromGroupAction: RemoveMemberFromGroupAction = this.createRemoveMemberFromGroupAction(
             oxGroupId,
             oxUserId,
@@ -140,39 +163,39 @@ export class OxService {
             await this.oxSendService.send(removeMemberFromGroupAction);
 
         if (!result.ok) {
-            return this.logger.logUnknownAsError(
+            this.logger.logUnknownAsError(
                 `Could not remove oxUser from oxGroup, oxUserId:${oxUserId} oxGroupId:${oxGroupId}`,
                 result.error,
             );
+            return result;
         }
 
         this.logger.info(`Successfully removed oxUser from oxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+        return {
+            ok: true,
+            value: undefined,
+        };
     }
 
     public async getExistingOxGroupByNameOrCreateOxGroup(
         oxGroupName: OXGroupName,
         displayName: string,
     ): Promise<Result<OXGroupID>> {
-        const oxGroupId: OXGroupID | DomainError = await this.getOxGroupByName(oxGroupName);
+        const oxGroupId: Result<OXGroupID> = await this.getOxGroupByName(oxGroupName);
 
-        if (oxGroupId instanceof OxGroupNotFoundError) {
+        if (oxGroupId.ok) {
+            return {
+                ok: true,
+                value: oxGroupId.value,
+            };
+        }
+
+        if (oxGroupId.error instanceof OxGroupNotFoundError) {
             const createGroupResult: Result<OXGroupID> = await this.createOxGroup(oxGroupName, displayName);
 
             return createGroupResult;
         }
-
-        //return if OxGroupNameAmbiguousError or any other error
-        if (oxGroupId instanceof DomainError) {
-            return {
-                ok: false,
-                error: oxGroupId,
-            };
-        }
-
-        return {
-            ok: true,
-            value: oxGroupId,
-        };
+        return oxGroupId;
     }
 
     public async createOxGroup(oxGroupName: OXGroupName, displayName: string): Promise<Result<OXGroupID>> {
@@ -203,7 +226,7 @@ export class OxService {
         };
     }
 
-    public async getOxGroupByName(oxGroupName: OXGroupName): Promise<OXGroupID | DomainError> {
+    public async getOxGroupByName(oxGroupName: OXGroupName): Promise<Result<OXGroupID>> {
         const params: ListGroupsParams = {
             contextId: this.contextID,
             pattern: `${oxGroupName}`,
@@ -215,20 +238,67 @@ export class OxService {
 
         if (!result.ok) {
             this.logger.error(`Could Not Retrieve Groups For Context, contextId:${this.contextID}`);
-            return result.error;
+            return {
+                ok: false,
+                error: result.error,
+            };
         }
         if (!result.value.groups[0] || result.value.groups.length === 0) {
             this.logger.info(`Found No Matching OxGroup For OxGroupName:${oxGroupName}`);
-            return new OxGroupNotFoundError(oxGroupName);
+            return {
+                ok: false,
+                error: new OxGroupNotFoundError(oxGroupName),
+            };
         }
         if (result.value.groups.length > 1) {
             this.logger.error(`Found multiple OX-groups For OxGroupName:${oxGroupName}, Cannot Proceed`);
-            return new OxGroupNameAmbiguousError(oxGroupName);
+            return {
+                ok: false,
+                error: new OxGroupNameAmbiguousError(oxGroupName),
+            };
         }
 
         this.logger.info(`Found existing oxGroup for oxGroupName:${oxGroupName}`);
 
-        return result.value.groups[0].id;
+        return {
+            ok: true,
+            value: result.value.groups[0].id,
+        };
+    }
+
+    public async getOxGroupsForOxUserId(oxUserId: OXUserID): Promise<Result<ListGroupsForUserResponse>> {
+        const params: ListGroupsForUserParams = {
+            contextId: this.contextID,
+            userId: oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+        const action: ListGroupsForUserAction = new ListGroupsForUserAction(params);
+        const result: Result<ListGroupsForUserResponse, DomainError> = await this.oxSendService.send(action);
+        if (!result.ok) {
+            this.logger.error(`Could Not Retrieve OxGroups For OxUser, oxUserId:${oxUserId}`);
+        } else {
+            this.logger.info(`Successfully Retrieved OxGroups For OxUser, oxUserId:${oxUserId}`);
+        }
+        return result;
+    }
+
+    public async deleteUser(oxUserCounter: OXUserID): Promise<Result<void>> {
+        const action: DeleteUserAction = this.createDeleteUserAction(oxUserCounter);
+        const result: Result<unknown, DomainError> = await this.oxSendService.send(action);
+
+        if (!result.ok) {
+            this.logger.error(`Could Not Delete OxUser :${oxUserCounter}`);
+
+            return result;
+        }
+
+        this.logger.info(`Successfully Deleted OxUser :${oxUserCounter}`);
+
+        return {
+            ok: true,
+            value: undefined,
+        };
     }
 
     public createChangeUserAction(

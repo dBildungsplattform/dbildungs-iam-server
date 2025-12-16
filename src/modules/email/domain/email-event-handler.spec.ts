@@ -873,7 +873,7 @@ describe('EmailEventHandler', () => {
             organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>());
         });
 
-        describe('when emsilMicroservice is enabled', () => {
+        describe('when email microservice is enabled', () => {
             it('should not call handlePerson when microservice is disabled', async () => {
                 const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
                     person: {
@@ -1720,6 +1720,21 @@ describe('EmailEventHandler', () => {
             username = faker.string.alpha();
             emailAddress = faker.internet.email();
             event = new PersonDeletedEvent(personId, username, emailAddress);
+        });
+
+        describe('when email microservice is enabled', () => {
+            it('should not call deactivateEmailAddress when microservice is enabled', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+                await emailEventHandler.handlePersonDeletedEvent(event);
+                expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Received PersonDeletedEvent'));
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect.stringContaining(
+                        `Ignoring Event for personId:${event.personId} because email microservice is enabled`,
+                    ),
+                );
+                expect(emailRepoMock.deactivateEmailAddress).not.toHaveBeenCalled();
+            });
         });
 
         describe('when deletion is successful', () => {
