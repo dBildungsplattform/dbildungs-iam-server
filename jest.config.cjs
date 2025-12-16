@@ -1,6 +1,6 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 const commonConfig = {
-    testPathIgnorePatterns: ['**/meldung/**'],
+    testPathIgnorePatterns: ['/node_modules/', '/meldung/'],
     testEnvironment: 'node',
     rootDir: './src',
     preset: 'ts-jest/presets/default-esm',
