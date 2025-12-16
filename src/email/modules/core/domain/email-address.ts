@@ -79,4 +79,12 @@ export class EmailAddress<WasPersisted extends boolean> {
     public getStatus(): EmailAddressStatusEnum | undefined {
         return this.sortedStatuses[0]?.status;
     }
+
+    public getDomain(): string | undefined {
+        const atIndex: number = this.address.indexOf('@');
+        if (atIndex === -1) {
+            return undefined;
+        }
+        return this.address.substring(atIndex + 1);
+    }
 }

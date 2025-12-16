@@ -7,32 +7,38 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
-import { LernHatKlasse } from './lern-hat-klasse.js';
+import { LernAnSchuleUndKlasse } from './lern-an-schule-und-klasse.js';
 
-describe('LernHatKlasse specification', () => {
+describe('LernAnSchuleUndKlasse specification', () => {
     const organisationRepoMock: DeepMocked<OrganisationRepository> = createMock();
     const rolleRepoMock: DeepMocked<RolleRepo> = createMock();
-    const sut: LernHatKlasse = new LernHatKlasse(organisationRepoMock, rolleRepoMock);
+    const sut: LernAnSchuleUndKlasse = new LernAnSchuleUndKlasse(organisationRepoMock, rolleRepoMock);
 
-    afterEach(() => {
+    beforeEach(() => {
         jest.resetAllMocks();
     });
 
-    it('should return true, if spec does not apply', async () => {
+    it('should return true, if there are no personenkontexte with rollenart LERN', async () => {
         const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEHR });
         const pks: Array<Personenkontext<true>> = [DoFactory.createPersonenkontext(true, { rolleId: rolle.id })];
         rolleRepoMock.findByIds.mockResolvedValueOnce(new Map([[rolle.id, rolle]]));
-        expect(await sut.isSatisfiedBy(pks)).toBe(true);
+
+        await expect(sut.isSatisfiedBy(pks)).resolves.toBe(true);
     });
 
-    it('should return true, if lern rolle has at least one klasse', async () => {
+    it('should return true, if every pk has a matching pk at the correct schule/klasse', async () => {
         const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LERN });
+
         const schule: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
         const klasse: Organisation<true> = DoFactory.createOrganisation(true, {
             typ: OrganisationsTyp.KLASSE,
             administriertVon: schule.id,
         });
-        const pks: Array<Personenkontext<true>> = [DoFactory.createPersonenkontext(true, { rolleId: rolle.id })];
+
+        const pks: Array<Personenkontext<true>> = [
+            DoFactory.createPersonenkontext(true, { organisationId: schule.id, rolleId: rolle.id }),
+            DoFactory.createPersonenkontext(true, { organisationId: klasse.id, rolleId: rolle.id }),
+        ];
         rolleRepoMock.findByIds.mockResolvedValueOnce(new Map([[rolle.id, rolle]]));
         organisationRepoMock.findByIds.mockResolvedValueOnce(
             new Map([
@@ -40,15 +46,35 @@ describe('LernHatKlasse specification', () => {
                 [klasse.id, klasse],
             ]),
         );
-        expect(await sut.isSatisfiedBy(pks)).toBe(true);
+
+        await expect(sut.isSatisfiedBy(pks)).resolves.toBe(true);
     });
 
-    it('should return false, if lern rolle has no klasse', async () => {
+    it('should return false, if a pk at a schule has no matching klasse', async () => {
         const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LERN });
+
         const schule: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
-        const pks: Array<Personenkontext<true>> = [DoFactory.createPersonenkontext(true, { rolleId: rolle.id })];
+
+        const pks: Array<Personenkontext<true>> = [
+            DoFactory.createPersonenkontext(true, { organisationId: schule.id, rolleId: rolle.id }),
+        ];
         rolleRepoMock.findByIds.mockResolvedValueOnce(new Map([[rolle.id, rolle]]));
         organisationRepoMock.findByIds.mockResolvedValueOnce(new Map([[schule.id, schule]]));
-        expect(await sut.isSatisfiedBy(pks)).toBe(false);
+
+        await expect(sut.isSatisfiedBy(pks)).resolves.toBe(false);
+    });
+
+    it('should return false, if a pk at a klasse has no matching schule', async () => {
+        const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LERN });
+
+        const klasse: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE });
+
+        const pks: Array<Personenkontext<true>> = [
+            DoFactory.createPersonenkontext(true, { organisationId: klasse.id, rolleId: rolle.id }),
+        ];
+        rolleRepoMock.findByIds.mockResolvedValueOnce(new Map([[rolle.id, rolle]]));
+        organisationRepoMock.findByIds.mockResolvedValueOnce(new Map([[klasse.id, klasse]]));
+
+        await expect(sut.isSatisfiedBy(pks)).resolves.toBe(false);
     });
 });

@@ -9,7 +9,6 @@ import { GetDataForUserResponse } from '../../ox/actions/user/get-data-user.acti
 import { OxSendService } from '../../ox/domain/ox-send.service.js';
 import { OxService } from '../../ox/domain/ox.service.js';
 import { OxPrimaryMailAlreadyExistsError } from '../../ox/error/ox-primary-mail-already-exists.error.js';
-import { SetEmailAddressForSpshPersonParams } from '../api/dtos/params/set-email-address-for-spsh-person.params.js';
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
@@ -67,7 +66,14 @@ export class SetEmailAddressForSpshPersonService {
      *
      * The whole process will be retried 5 times on errors
      */
-    public async setEmailAddressForSpshPerson(params: SetEmailAddressForSpshPersonParams): Promise<void> {
+    public async setEmailAddressForSpshPerson(params: {
+        spshPersonId: string;
+        spshUsername: string;
+        kennungen: string[];
+        firstName: string;
+        lastName: string;
+        spshServiceProviderId: string;
+    }): Promise<void> {
         this.logger.info(`SET EMAIL FOR SPSHPERSONID: ${params.spshPersonId} - Request Received`);
 
         const emailDomain: Option<EmailDomain<true>> = await this.emailDomainRepo.findBySpshServiceProviderId(

@@ -8,10 +8,17 @@ import { EmailWriteController } from './api/controller/email-write.controller.js
 import { EmailAddressGenerator } from './domain/email-address-generator.js';
 import { EmailOxModule } from '../ox/email-ox.module.js';
 import { EmailLdapModule } from '../ldap/email-ldap.module.js';
+import { DeleteEmailsAddressesForSpshPersonService } from './domain/delete-email-adresses-for-spsh-person.service.js';
 
 @Module({
     imports: [LoggerModule.register(EmailCoreModule.name), EmailOxModule, EmailLdapModule],
-    providers: [SetEmailAddressForSpshPersonService, EmailAddressRepo, EmailDomainRepo, EmailAddressGenerator],
+    providers: [
+        SetEmailAddressForSpshPersonService,
+        DeleteEmailsAddressesForSpshPersonService,
+        EmailAddressRepo,
+        EmailDomainRepo,
+        EmailAddressGenerator,
+    ],
     exports: [EmailAddressRepo, EmailDomainRepo],
     controllers: [EmailReadController, EmailWriteController],
 })
