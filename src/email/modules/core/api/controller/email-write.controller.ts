@@ -9,7 +9,7 @@ import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
 import { DeleteEmailAddressesForSpshPersonPathParams } from '../dtos/params/delete-email-addresses-for-spsh-person.pathparams.js';
 import { DeleteEmailsAddressesForSpshPersonService } from '../../domain/delete-email-adresses-for-spsh-person.service.js';
 import { SetEmailAddressForSpshPersonPathParams } from '../dtos/params/set-email-address-for-spsh-person.pathparams.js';
-import { SetEmailSuspendedPathParams } from '../dtos/params/set-email-suspended.pathparams.js';
+import { SetEmailAddressesSuspendedPathParams } from '../dtos/params/set-email-addresses-suspended.pathparams.js';
 import { SetEmailSuspendedService } from '../../domain/set-email-suspended.service.js';
 
 @ApiTags('email')
@@ -74,7 +74,7 @@ export class EmailWriteController {
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while setting email-address for person to suspended.',
     })
-    public setEmailsSuspended(@Param() params: SetEmailSuspendedPathParams): void {
+    public setEmailsSuspended(@Param() params: SetEmailAddressesSuspendedPathParams): void {
         // void the promise, we don't care about the result and the endpoint should instantly return
         void this.setEmailSuspendedService
             .setEmailsSuspended({ spshPersonId: params.spshPersonId })

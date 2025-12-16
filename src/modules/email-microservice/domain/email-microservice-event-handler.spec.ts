@@ -259,8 +259,8 @@ describe('EmailMicroserviceEventHandler', () => {
             expect(loggerMock.info).toHaveBeenCalledWith(
                 expect.stringContaining('Received PersonenkontextUpdatedEvent'),
             );
-            expect(loggerMock.info).toHaveBeenCalledWith(
-                expect.stringContaining(`No email service provider found for personId:${mockPersonId}`),
+            expect(loggerMock.debug).toHaveBeenCalledWith(
+                expect.stringContaining(`No email service provider found or removed for personId:${mockPersonId}`),
             );
             expect(emailResolverServiceMock.setEmailForSpshPerson).not.toHaveBeenCalled();
         });

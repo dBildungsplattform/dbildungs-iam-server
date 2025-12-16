@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
-export class SetEmailSuspendedPathParams {
+export class SetEmailAddressesSuspendedPathParams {
     @IsString()
     @IsUUID()
     @IsNotEmpty()

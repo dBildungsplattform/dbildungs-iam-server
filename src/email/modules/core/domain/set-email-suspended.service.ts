@@ -10,6 +10,7 @@ import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
 @Injectable()
 export class SetEmailSuspendedService {
     private NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: number;
+    private ONE_DAY_MS: number = 86_400_000;
 
     public constructor(
         private readonly emailAddressRepo: EmailAddressRepo,
@@ -41,8 +42,9 @@ export class SetEmailSuspendedService {
         });
         eligibleAddresses.forEach((a: EmailAddress<true>) => {
             a.setStatus(EmailAddressStatusEnum.SUSPENDED);
-            const ONE_DAY: number = 86_400_000;
-            a.markedForCron ??= new Date(Date.now() + ONE_DAY * this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS);
+            a.markedForCron ??= new Date(
+                Date.now() + this.ONE_DAY_MS * this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS,
+            );
         });
         await Promise.all(eligibleAddresses.map((a: EmailAddress<true>) => this.emailAddressRepo.save(a)));
     }

@@ -125,7 +125,7 @@ describe('Email Write Controller', () => {
         });
     });
 
-    describe('setEmailsSUspendedForSpshPerson', () => {
+    describe('setEmailsSuspendedForSpshPerson', () => {
         it('should resolve immediatly if setEmailsSuspended succeeds', () => {
             const spshPersonId: string = faker.string.uuid();
             setEmailSuspendedServiceMock.setEmailsSuspended.mockResolvedValue();
