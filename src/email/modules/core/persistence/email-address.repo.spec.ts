@@ -513,4 +513,17 @@ describe('EmailRepo', () => {
             expect(afterDelete).toBeUndefined();
         });
     });
+
+    describe('delete', () => {
+        it('should delete the email address by id', async () => {
+            const mail: EmailAddress<true> = await createAndSaveMail();
+            const found: Option<EmailAddress<true>> = await sut.findEmailAddress(mail.address);
+            expect(found).toBeDefined();
+
+            await sut.delete(mail);
+
+            const afterDelete: Option<EmailAddress<true>> = await sut.findEmailAddress(mail.address);
+            expect(afterDelete).toBeUndefined();
+        });
+    });
 });

@@ -1723,7 +1723,7 @@ describe('EmailEventHandler', () => {
         });
 
         describe('when email microservice is enabled', () => {
-            it('should not call deactivateEmailAddress when microservice is disabled', async () => {
+            it('should not call deactivateEmailAddress when microservice is enabled', async () => {
                 emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
 
                 await emailEventHandler.handlePersonDeletedEvent(event);
