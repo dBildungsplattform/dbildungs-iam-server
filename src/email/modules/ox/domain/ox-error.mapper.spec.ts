@@ -73,7 +73,7 @@ describe('OXErrorMapper', () => {
         });
 
         it('when faultString contains info that no such user could be found', () => {
-            oxErrorResponse.Envelope.Body.Fault.faultstring = `No such user 21061985 in context 10; exceptionId -483860422-666`;
+            oxErrorResponse.Envelope.Body.Fault.faultstring = `No such user(s) 21061985 in context 10; exceptionId -483860422-666`;
 
             const oxError: OxError = OxErrorMapper.mapOxErrorResponseToOxError(oxErrorResponse);
             expect(oxError.code).toStrictEqual('OX_NO_SUCH_USER_ERROR');
