@@ -558,4 +558,54 @@ export class OrganisationService {
             pageTotal: organisations.length,
         };
     }
+
+    public async findOrganisationByIdAndMatchingPermissions(
+        permissions: PersonPermissions,
+        organisationId: OrganisationID,
+    ): Promise<Result<Organisation<true>, EntityNotFoundError | MissingPermissionsError>> {
+        const [organisations]: [Organisation<true>[], total: number, pageTotal: number] =
+            await this.organisationRepo.findAuthorized(
+                permissions,
+                [
+                    RollenSystemRecht.SCHULTRAEGER_VERWALTEN,
+                    RollenSystemRecht.SCHULEN_VERWALTEN,
+                    RollenSystemRecht.KLASSEN_VERWALTEN,
+                ],
+                { organisationIds: [organisationId], limit: 1 },
+            );
+        const organisation: Option<Organisation<true>> = organisations[0];
+        if (organisation?.id !== organisationId) {
+            return { ok: false, error: new EntityNotFoundError('Organisation', organisationId) };
+        }
+
+        const systemrecht: Option<RollenSystemRecht> = this.findSystemRechtForOrganisationsTyp(organisation.typ);
+        if (!systemrecht) {
+            return {
+                ok: false,
+                error: new MissingPermissionsError('Permission to manage organisation does not exist'),
+            };
+        }
+
+        if (await permissions.hasSystemrechtAtOrganisation(organisationId, systemrecht)) {
+            return {
+                ok: true,
+                value: organisation,
+            };
+        } else {
+            return { ok: false, error: new MissingPermissionsError('Not permitted to manage organisation') };
+        }
+    }
+
+    private findSystemRechtForOrganisationsTyp(typ?: OrganisationsTyp): Option<RollenSystemRecht> {
+        switch (typ) {
+            case OrganisationsTyp.TRAEGER:
+                return RollenSystemRecht.SCHULTRAEGER_VERWALTEN;
+            case OrganisationsTyp.SCHULE:
+                return RollenSystemRecht.SCHULEN_VERWALTEN;
+            case OrganisationsTyp.KLASSE:
+                return RollenSystemRecht.KLASSEN_VERWALTEN;
+            default:
+                return;
+        }
+    }
 }

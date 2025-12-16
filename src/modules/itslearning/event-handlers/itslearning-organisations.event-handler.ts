@@ -1,28 +1,30 @@
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ItsLearningConfig } from '../../../shared/config/itslearning.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/index.js';
+import { KafkaKlasseCreatedEvent } from '../../../shared/events/kafka-klasse-created.event.js';
+import { KafkaKlasseDeletedEvent } from '../../../shared/events/kafka-klasse-deleted.event.js';
+import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-updated.event.js';
+import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
+import { KafkaSchuleItslearningEnabledEvent } from '../../../shared/events/kafka-schule-itslearning-enabled.event.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
+import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
+import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
 import { OrganisationsTyp, RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { CreateGroupParams } from '../actions/create-group.params.js';
 import { UpdateGroupParams } from '../actions/update-group.action.js';
 import { ItslearningGroupRepo } from '../repo/itslearning-group.repo.js';
-import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
 import { ItslearningGroupLengthLimits } from '../types/groups.enum.js';
-import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
-import { KafkaSchuleItslearningEnabledEvent } from '../../../shared/events/kafka-schule-itslearning-enabled.event.js';
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
-import { KafkaKlasseDeletedEvent } from '../../../shared/events/kafka-klasse-deleted.event.js';
-import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-updated.event.js';
-import { KafkaKlasseCreatedEvent } from '../../../shared/events/kafka-klasse-created.event.js';
 
 const SAFE_NAME_LIMIT: number = Math.floor(ItslearningGroupLengthLimits.SHORT_DESC * 0.75);
 
@@ -238,6 +240,42 @@ export class ItsLearningOrganisationsEventHandler {
         this.logger.info(
             `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} and its ${klassen.length} Klassen were created.`,
         );
+    }
+
+    @KafkaEventHandler(KafkaOrganisationDeletedEvent)
+    @EventHandler(OrganisationDeletedEvent)
+    public async organisationDeletedEventHandler(event: OrganisationDeletedEvent): Promise<void> {
+        this.logger.info(`[EventID: ${event.eventID}] Received OrganisationDeletedEvent, ID: ${event.organisationId}`);
+
+        if (!this.ENABLED) {
+            this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
+            return;
+        }
+
+        if (event.typ !== OrganisationsTyp.SCHULE) {
+            this.logger.error(
+                `[EventID: ${event.eventID}] The organisation with ID ${event.organisationId} is not of type "SCHULE"!`,
+            );
+            return;
+        }
+
+        const rootType: RootDirectChildrenType =
+            await this.organisationRepo.findOrganisationZuordnungErsatzOderOeffentlich(event.organisationId);
+
+        if (rootType === RootDirectChildrenType.ERSATZ) {
+            this.logger.error(`[EventID: ${event.eventID}] Ersatzschule, ignoring.`);
+            return;
+        }
+
+        const deleteError: Option<DomainError> = await this.itslearningGroupRepo.deleteGroup(event.organisationId);
+
+        if (deleteError) {
+            return this.logger.error(
+                `[EventID: ${event.eventID}] Could not delete Schule (ID ${event.organisationId}) in itsLearning: ${deleteError.message}`,
+            );
+        }
+
+        this.logger.info(`[EventID: ${event.eventID}] Schule with ID ${event.organisationId} was deleted.`);
     }
 
     private makeSchulName(dienststellennummer: string | undefined, name: string | undefined): string {

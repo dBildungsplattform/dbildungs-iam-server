@@ -29,6 +29,11 @@ import { NoRedundantRollenerweiterungError } from '../specification/error/no-red
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
 import { RolleRepo } from './rolle.repo.js';
 import { RollenerweiterungRepo } from './rollenerweiterung.repo.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+
+function makeN<T>(fn: () => T, n: number): Array<T> {
+    return Array.from({ length: n }, fn);
+}
 
 describe('RollenerweiterungRepo', () => {
     let module: TestingModule;
@@ -297,9 +302,6 @@ describe('RollenerweiterungRepo', () => {
     });
 
     describe('findManyByOrganisationAndRolle', () => {
-        function makeN<T>(fn: () => T, n: number): Array<T> {
-            return Array.from({ length: n }, fn);
-        }
         let organisations: Array<Organisation<true>>;
         let rollen: Array<Rolle<true>>;
         let serviceProviders: Array<ServiceProvider<true>>;
@@ -394,7 +396,93 @@ describe('RollenerweiterungRepo', () => {
         });
     });
 
-    describe('findByServiceProviderId', () => {
+    describe('findManyByOrganisationId', () => {
+        let organisations: Array<Organisation<true>>;
+        let rollen: Array<Rolle<true>>;
+        let serviceProviders: Array<ServiceProvider<true>>;
+        let permissionMock: DeepMocked<PersonPermissions>;
+
+        beforeEach(async () => {
+            organisations = await Promise.all(
+                makeN(() => organisationRepo.save(DoFactory.createOrganisation(false)), 3),
+            );
+            rollen = (await Promise.all(makeN(() => rolleRepo.save(DoFactory.createRolle(false)), 3))).filter(
+                (rolle: Rolle<true> | DomainError): rolle is Rolle<true> => {
+                    if (rolle instanceof Rolle) {
+                        return true;
+                    } else {
+                        throw rolle;
+                    }
+                },
+            );
+            serviceProviders = await Promise.all(
+                makeN(
+                    () =>
+                        serviceProviderRepo.save(
+                            DoFactory.createServiceProvider(false, {
+                                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                            }),
+                        ),
+                    3,
+                ),
+            );
+            permissionMock = createMock<PersonPermissions>();
+            permissionMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            const unpersistedRollenerweiterungen: Array<Rollenerweiterung<false>> = [];
+            for (const organisation of organisations) {
+                for (const rolle of rollen) {
+                    for (const serviceProvider of serviceProviders) {
+                        unpersistedRollenerweiterungen.push(
+                            factory.createNew(organisation.id, rolle.id, serviceProvider.id),
+                        );
+                    }
+                }
+            }
+            const results: Array<Result<Rollenerweiterung<true>, DomainError>> = await Promise.all(
+                unpersistedRollenerweiterungen.map((re: Rollenerweiterung<false>) =>
+                    sut.createAuthorized(re, permissionMock),
+                ),
+            );
+            for (const result of results) {
+                if (!result.ok) {
+                    throw result.error;
+                }
+            }
+        });
+
+        test('should return all rollenerweiterungen for given organisation', async () => {
+            const organisationId: OrganisationID = organisations[0]!.id;
+            const result: Array<Rollenerweiterung<true>> = await sut.findManyByOrganisationId(organisationId);
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(9);
+            for (const erweiterung of result) {
+                expect(erweiterung).toEqual(expect.objectContaining({ organisationId }));
+            }
+        });
+
+        test('should return paged result', async () => {
+            const limit: number = 1;
+            const organisationId: OrganisationID = organisations[0]!.id;
+            const firstPage: Array<Rollenerweiterung<true>> = await sut.findManyByOrganisationId(
+                organisationId,
+                0,
+                limit,
+            );
+            expect(firstPage).toBeInstanceOf(Array);
+            expect(firstPage).toHaveLength(limit);
+
+            const secondPage: Array<Rollenerweiterung<true>> = await sut.findManyByOrganisationId(
+                organisationId,
+                1,
+                limit,
+            );
+            expect(secondPage).toBeInstanceOf(Array);
+            expect(secondPage).toHaveLength(limit);
+            expect(firstPage).not.toEqual(expect.arrayContaining(secondPage));
+        });
+    });
+
+    describe('findByServiceProviderIdPagedAndSortedByOrgaKennung', () => {
         let organisation1: Organisation<true>;
         let organisation2: Organisation<true>;
         let organisation3: Organisation<true>;
@@ -402,9 +490,9 @@ describe('RollenerweiterungRepo', () => {
         let serviceProvider: ServiceProvider<true>;
 
         beforeEach(async () => {
-            organisation1 = await organisationRepo.save(DoFactory.createOrganisation(false));
-            organisation2 = await organisationRepo.save(DoFactory.createOrganisation(false));
-            organisation3 = await organisationRepo.save(DoFactory.createOrganisation(false));
+            organisation1 = await organisationRepo.save(DoFactory.createOrganisation(false, { kennung: 'A' }));
+            organisation2 = await organisationRepo.save(DoFactory.createOrganisation(false, { kennung: 'C' }));
+            organisation3 = await organisationRepo.save(DoFactory.createOrganisation(false, { kennung: 'B' }));
             const rolleOrError: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
             if (rolleOrError instanceof DomainError) {
                 throw new Error('Failed to create Rolle');
@@ -418,30 +506,32 @@ describe('RollenerweiterungRepo', () => {
         });
 
         it('should return empty array and count 0 if no rollenerweiterung exists for serviceProviderId', async () => {
-            const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderId(
-                serviceProvider.id,
-            );
+            const [result, count]: Counted<Rollenerweiterung<true>> =
+                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id);
             expect(result).toBeInstanceOf(Array);
             expect(result).toHaveLength(0);
             expect(count).toBe(0);
         });
 
-        it('should return all rollenerweiterungen and correct count for serviceProviderId', async () => {
+        it('should return all sorted rollenerweiterungen and correct count for serviceProviderId', async () => {
             const erweiterungen: Rollenerweiterung<false>[] = [
                 factory.createNew(organisation1.id, rolle.id, serviceProvider.id),
                 factory.createNew(organisation2.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation3.id, rolle.id, serviceProvider.id),
             ];
             await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
 
-            const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderId(
-                serviceProvider.id,
-            );
+            const [result, count]: Counted<Rollenerweiterung<true>> =
+                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id);
             expect(result).toBeInstanceOf(Array);
             expect(result).toHaveLength(erweiterungen.length);
             expect(count).toBe(erweiterungen.length);
             for (const erweiterung of result) {
                 expect(erweiterung.serviceProviderId).toBe(serviceProvider.id);
             }
+            expect(result[0]!.organisationId).toBe(organisation1.id);
+            expect(result[1]!.organisationId).toBe(organisation3.id);
+            expect(result[2]!.organisationId).toBe(organisation2.id);
         });
 
         it('should respect limit and offset parameters', async () => {
@@ -452,11 +542,8 @@ describe('RollenerweiterungRepo', () => {
             ];
             await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
 
-            const [result, count]: Counted<Rollenerweiterung<true>> = await sut.findByServiceProviderId(
-                serviceProvider.id,
-                1,
-                2,
-            );
+            const [result, count]: Counted<Rollenerweiterung<true>> =
+                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id, 1, 2);
             expect(result).toBeInstanceOf(Array);
             expect(result).toHaveLength(2);
             expect(count).toBe(3);

@@ -19,7 +19,8 @@ export class OxErrorMapper {
     private static readonly PRIMARY_MAIL_ADDRESS_HAS_TO_EQUAL_EMAIL1_REGEX: RegExp =
         /^primarymail must have the same value as email1;[.]*/;
 
-    private static readonly NO_SUCH_USER_REGEX: RegExp = /^No such user [\d]* in context [\d]*; exceptionId [\w\d-]*/;
+    private static readonly NO_SUCH_USER_REGEX: RegExp =
+        /^No such user\(s\)? [\d]+ in context [\d]+; exceptionId [\w\d-]+/;
 
     private static readonly MEMBER_ALREADY_IN_GROUP_REGEX: RegExp =
         /^Member already exists in group; exceptionId [\w\d-]*/;

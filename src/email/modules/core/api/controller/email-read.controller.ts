@@ -8,18 +8,18 @@ import {
     ApiTags,
 } from '@nestjs/swagger';
 
-import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
+import { FindEmailAddressBySpshPersonIdPathParams } from '../dtos/params/find-email-address-by-spsh-person-id.pathparams.js';
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { Public } from '../../decorator/public.decorator.js';
-import { AddressWithStatusesDescDto } from '../dtos/address-with-statuses/address-with-statuses-desc.dto.js';
-import { EmailAddressStatus } from '../../domain/email-address-status.js';
 import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
 import { OxService } from '../../../ox/domain/ox.service.js';
-import { FindEmailAddressParams } from '../dtos/params/find-email-address.params.js';
+import { FindEmailAddressPathParams } from '../dtos/params/find-email-address.pathparams.js';
 import { EmailAddressNotFoundError } from '../../error/email-address-not-found.error.js';
 import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
 import { EmailAddressMissingStatusError } from '../../error/email-address-missing-status.error.js';
+import { EmailAddress } from '../../domain/email-address.js';
+import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
@@ -42,25 +42,23 @@ export class EmailReadController {
     })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting email-addresses by personId.' })
     public async findEmailAddressesByPersonId(
-        @Param() findEmailAddressByPersonIdParams: FindEmailAddressBySpshPersonIdParams,
+        @Param() findEmailAddressByPersonIdParams: FindEmailAddressBySpshPersonIdPathParams,
     ): Promise<EmailAddressResponse[]> {
         this.logger.info(`PersonId:${findEmailAddressByPersonIdParams.spshPersonId}`);
 
-        const addresses: AddressWithStatusesDescDto[] =
-            await this.emailAddressRepo.findAllEmailAddressesWithStatusesDescBySpshPersonId(
-                findEmailAddressByPersonIdParams.spshPersonId,
-            );
+        const addresses: EmailAddress<true>[] = await this.emailAddressRepo.findBySpshPersonIdSortedByPriorityAsc(
+            findEmailAddressByPersonIdParams.spshPersonId,
+        );
 
         if (addresses.length === 0) {
             return [];
         }
 
         return addresses
-            .filter((address: AddressWithStatusesDescDto) => address.statuses.length > 0)
-            .map((address: AddressWithStatusesDescDto) => {
-                const status: EmailAddressStatus<true> | undefined = address.statuses.at(0);
+            .map((address: EmailAddress<true>) => {
+                const status: EmailAddressStatusEnum | undefined = address.getStatus();
                 if (status) {
-                    return new EmailAddressResponse(address.emailAddress, status, this.oxService.contextID);
+                    return new EmailAddressResponse(address, status, this.oxService.contextID);
                 }
                 return undefined;
             })
@@ -78,23 +76,23 @@ export class EmailReadController {
         description: 'Internal server error while getting email-address response by email-address.',
     })
     public async findEmailAddress(
-        @Param() findEmailAddressByPersonIdParams: FindEmailAddressParams,
+        @Param() findEmailAddressByPersonIdParams: FindEmailAddressPathParams,
     ): Promise<Option<EmailAddressResponse>> {
         this.logger.info(`EmailAddress:${findEmailAddressByPersonIdParams.emailAddress}`);
 
-        const emailAddressWithStatusDesc: Option<AddressWithStatusesDescDto> =
-            await this.emailAddressRepo.findEmailAddressWithStatusDesc(findEmailAddressByPersonIdParams.emailAddress);
-        if (!emailAddressWithStatusDesc) {
+        const emailAddress: Option<EmailAddress<true>> = await this.emailAddressRepo.findEmailAddress(
+            findEmailAddressByPersonIdParams.emailAddress,
+        );
+
+        if (!emailAddress) {
             throw new EmailAddressNotFoundError(findEmailAddressByPersonIdParams.emailAddress);
         }
-        const latestStatus: EmailAddressStatus<true> | undefined = emailAddressWithStatusDesc.statuses.at(0);
+
+        const latestStatus: EmailAddressStatusEnum | undefined = emailAddress.getStatus();
         if (!latestStatus) {
-            throw new EmailAddressMissingStatusError(emailAddressWithStatusDesc.emailAddress.address);
+            throw new EmailAddressMissingStatusError(emailAddress.address);
         }
-        return new EmailAddressResponse(
-            emailAddressWithStatusDesc.emailAddress,
-            latestStatus,
-            this.oxService.contextID,
-        );
+
+        return new EmailAddressResponse(emailAddress, latestStatus, this.oxService.contextID);
     }
 }
