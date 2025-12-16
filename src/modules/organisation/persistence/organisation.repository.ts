@@ -35,6 +35,8 @@ import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-upd
 import { KafkaSchuleItslearningEnabledEvent } from '../../../shared/events/kafka-schule-itslearning-enabled.event.js';
 import { KafkaSchuleCreatedEvent } from '../../../shared/events/kafka-schule-created.event.js';
 import { KafkaKlasseCreatedEvent } from '../../../shared/events/kafka-klasse-created.event.js';
+import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
+import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
 
 export function mapOrgaAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -755,5 +757,21 @@ export class OrganisationRepository {
         }
 
         return RootDirectChildrenType.OEFFENTLICH;
+    }
+
+    public async delete(organisationId: OrganisationID): Promise<void | DomainError> {
+        const entity: OrganisationEntity | null = await this.em.findOne(OrganisationEntity, { id: organisationId });
+        if (!entity) {
+            return new EntityNotFoundError('Organisation', organisationId);
+        }
+
+        this.eventService.publish(
+            OrganisationDeletedEvent.fromOrganisation(entity),
+            KafkaOrganisationDeletedEvent.fromOrganisation(entity),
+        );
+
+        await this.em.removeAndFlush(entity);
+
+        this.logger.info(`Organisation ${entity.name} vom Typ ${entity.typ} entfernt.`);
     }
 }

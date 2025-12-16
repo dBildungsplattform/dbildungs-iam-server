@@ -58,6 +58,11 @@ export class RollenerweiterungRepo {
         return count > 0;
     }
 
+    /**
+     * WARNING: Requires manual checks for consistency!
+     * @param rollenerweiterung
+     * @returns
+     */
     public async create(rollenerweiterung: Rollenerweiterung<false>): Promise<Rollenerweiterung<true>> {
         const rollenerweiterungEntity: RollenerweiterungEntity = this.em.create(
             RollenerweiterungEntity,
@@ -134,6 +139,26 @@ export class RollenerweiterungRepo {
             $or: query,
         });
         return rollenerweiterungen.map((entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity));
+    }
+
+    public async findManyByOrganisationId(
+        organisationId: OrganisationID,
+        offset?: number,
+        limit?: number,
+    ): Promise<Array<Rollenerweiterung<true>>> {
+        const rollenerweiterungEntities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
+            RollenerweiterungEntity,
+            {
+                organisationId,
+            },
+            {
+                offset,
+                limit,
+            },
+        );
+        return rollenerweiterungEntities.map((entity: Loaded<RollenerweiterungEntity>) =>
+            this.mapEntityToAggregate(entity),
+        );
     }
 
     public async findByServiceProviderIds(
