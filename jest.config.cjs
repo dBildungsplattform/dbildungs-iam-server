@@ -1,7 +1,7 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 const commonConfig = {
-    testPathIgnorePatterns: ['/node_modules/', '/meldung/', 'meldung.*.ts'],
-    coveragePathIgnorePatterns: ['/node_modules/', '/meldung/', 'meldung.*.ts'],
+    testPathIgnorePatterns: ['/node_modules/', '/meldung/', 'meldung.*.ts', '/rolle/'],
+    coveragePathIgnorePatterns: ['/node_modules/', '/meldung/', 'meldung.*.ts', '/rolle/'],
     testEnvironment: 'node',
     rootDir: './src',
     preset: 'ts-jest/presets/default-esm',

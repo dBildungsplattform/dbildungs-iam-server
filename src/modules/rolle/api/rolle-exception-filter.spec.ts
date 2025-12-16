@@ -1,5 +1,5 @@
 import { ArgumentsHost } from '@nestjs/common';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { DeepMocked, createMock } from '@golevelup/ts-vitest';
 import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';

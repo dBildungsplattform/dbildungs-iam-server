@@ -1,4 +1,5 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { MockedObject } from 'vitest';
+import { createMock } from '@golevelup/ts-vitest';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
@@ -20,7 +21,7 @@ describe('ServiceProviderVerfuegbarFuerRollenerweiterung', () => {
         ])(
             'should return %s if the service provider is %s',
             async (expected: boolean, _label: string, sp: Option<ServiceProvider<boolean>>) => {
-                const rollenerweiterungMock: DeepMocked<Rollenerweiterung<boolean>> =
+                const rollenerweiterungMock: MockedObject<Rollenerweiterung<boolean>> =
                     createMock<Rollenerweiterung<boolean>>();
                 rollenerweiterungMock.getServiceProvider.mockResolvedValue(sp);
 

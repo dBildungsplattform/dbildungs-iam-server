@@ -1,9 +1,10 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock } from '@golevelup/ts-vitest';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { NoRedundantRollenerweiterung } from './no-redundant-rollenerweiterung.specification.js';
+import { MockedObject } from 'vitest';
 
 describe('NoRedundantRollenerweiterung', () => {
     describe('isSatisfiedBy', () => {
@@ -22,7 +23,7 @@ describe('NoRedundantRollenerweiterung', () => {
         ])(
             'should return %s if the rolle %s',
             async (expected: boolean, _label: string, rolle: Option<Rolle<boolean>>) => {
-                const rollenerweiterungMock: DeepMocked<Rollenerweiterung<boolean>> = createMock<
+                const rollenerweiterungMock: MockedObject<Rollenerweiterung<boolean>> = createMock<
                     Rollenerweiterung<boolean>
                 >({
                     serviceProviderId: serviceProviderId,

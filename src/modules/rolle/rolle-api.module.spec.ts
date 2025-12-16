@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
 import { RolleController } from './api/rolle.controller.js';
 import { RolleApiModule } from './rolle-api.module.js';
+import { ConfigTestModule } from '../../../test/utils/config-test.module.js';
+import { DatabaseTestModule } from '../../../test/utils/database-test.module.js';
 
 describe('RolleApiModule', () => {
     let module: TestingModule;

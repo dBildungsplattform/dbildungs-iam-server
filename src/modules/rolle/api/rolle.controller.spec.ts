@@ -1,8 +1,8 @@
+import { MockedObject, vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock } from '@golevelup/ts-vitest';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -26,13 +26,16 @@ import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
+import { LoggingTestModule } from '../../../../test/utils/vitest/logging-test.module.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
-    let rolleRepoMock: DeepMocked<RolleRepo>;
-    let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
+    let rolleRepoMock: MockedObject<RolleRepo>;
+    let serviceProviderRepoMock: MockedObject<ServiceProviderRepo>;
     let rolleController: RolleController;
-    let organisationServiceMock: DeepMocked<OrganisationService>;
-    let rollenerweiterungRepoMock: DeepMocked<RollenerweiterungRepo>;
+    let organisationServiceMock: MockedObject<OrganisationService>;
+    let rollenerweiterungRepoMock: MockedObject<RollenerweiterungRepo>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -84,7 +87,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('/PUT rolleId/serviceProviders mocked SP-repo', () => {

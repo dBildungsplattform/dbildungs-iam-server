@@ -1,15 +1,9 @@
+import { MockedObject } from 'vitest';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    DoFactory,
-    LoggingTestModule,
-} from '../../../../test/utils/index.js';
+import { createMock } from '@golevelup/ts-vitest';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -30,6 +24,11 @@ import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../spe
 import { RolleRepo } from './rolle.repo.js';
 import { RollenerweiterungRepo } from './rollenerweiterung.repo.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { LoggingTestModule } from '../../../../test/utils/vitest/logging-test.module.js';
+import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 
 function makeN<T>(fn: () => T, n: number): Array<T> {
     return Array.from({ length: n }, fn);
@@ -161,7 +160,7 @@ describe('RollenerweiterungRepo', () => {
         let organisation: Organisation<true>;
         let rolle: Rolle<true>;
         let serviceProvider: ServiceProvider<true>;
-        let permissionMock: DeepMocked<PersonPermissions>;
+        let permissionMock: MockedObject<PersonPermissions>;
 
         beforeEach(async () => {
             organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
@@ -305,7 +304,7 @@ describe('RollenerweiterungRepo', () => {
         let organisations: Array<Organisation<true>>;
         let rollen: Array<Rolle<true>>;
         let serviceProviders: Array<ServiceProvider<true>>;
-        let permissionMock: DeepMocked<PersonPermissions>;
+        let permissionMock: MockedObject<PersonPermissions>;
 
         beforeEach(async () => {
             organisations = await Promise.all(
@@ -400,7 +399,7 @@ describe('RollenerweiterungRepo', () => {
         let organisations: Array<Organisation<true>>;
         let rollen: Array<Rolle<true>>;
         let serviceProviders: Array<ServiceProvider<true>>;
-        let permissionMock: DeepMocked<PersonPermissions>;
+        let permissionMock: MockedObject<PersonPermissions>;
 
         beforeEach(async () => {
             organisations = await Promise.all(

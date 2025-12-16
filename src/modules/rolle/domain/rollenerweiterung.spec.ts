@@ -1,7 +1,8 @@
+import { MockedObject, vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock } from '@golevelup/ts-vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory } from '../../../../test/utils/index.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
@@ -12,9 +13,9 @@ import { Rollenerweiterung } from './rollenerweiterung.js';
 describe('Rollenerweiterung Aggregate', () => {
     let module: TestingModule;
     let rollenerweiterungFactory: RollenerweiterungFactory;
-    let organisationRepo: DeepMocked<OrganisationRepository>;
-    let rolleRepo: DeepMocked<RolleRepo>;
-    let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
+    let organisationRepo: MockedObject<OrganisationRepository>;
+    let rolleRepo: MockedObject<RolleRepo>;
+    let serviceProviderRepoMock: MockedObject<ServiceProviderRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -45,7 +46,7 @@ describe('Rollenerweiterung Aggregate', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('checkReferences', () => {
