@@ -11,7 +11,7 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     LoggingTestModule,
 } from '../../../../../../test/utils/index.js';
-import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
+import { FindEmailAddressBySpshPersonIdPathParams } from '../dtos/params/find-email-address-by-spsh-person-id.pathparams.js';
 import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
 import { EmailOxModule } from '../../../ox/email-ox.module.js';
 import { EmailAddressNotFoundError } from '../../error/email-address-not-found.error.js';
@@ -113,7 +113,7 @@ describe('EmailReadController', () => {
     describe('findEmailAddressesForSpshPerson', () => {
         it('should return EmailAddressResponse[] for person with addresses and statuses', async () => {
             const spshPersonId: string = faker.string.uuid();
-            const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
+            const params: FindEmailAddressBySpshPersonIdPathParams = { spshPersonId };
             const address: EmailAddress<true> = EmailAddress.construct({
                 id: faker.string.uuid(),
                 address: 'test@example.com',
@@ -144,7 +144,7 @@ describe('EmailReadController', () => {
         // Maybe this test is now useless when we already test the right order in repo
         it('should return EmailAddressResponse[] using the latest status if multiple statuses exist', async () => {
             const spshPersonId: string = faker.string.uuid();
-            const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
+            const params: FindEmailAddressBySpshPersonIdPathParams = { spshPersonId };
             const now: Date = new Date();
             const earlier: Date = new Date(now.getTime() - 10000);
             const address: EmailAddress<true> = EmailAddress.construct({
@@ -190,7 +190,7 @@ describe('EmailReadController', () => {
 
         it('should filter out addresses with no statuses', async () => {
             const spshPersonId: string = faker.string.uuid();
-            const params: FindEmailAddressBySpshPersonIdParams = { spshPersonId };
+            const params: FindEmailAddressBySpshPersonIdPathParams = { spshPersonId };
             const address: EmailAddress<true> = EmailAddress.construct({
                 id: faker.string.uuid(),
                 address: 'no-status@example.com',

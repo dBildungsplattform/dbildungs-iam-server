@@ -360,6 +360,11 @@ export class EmailEventHandler {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}, username:${event.username}`);
         //Setting person_id to null in Email table is done via deleteRule, not necessary here
 
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Ignoring Event for personId:${event.personId} because email microservice is enabled`);
+            return;
+        }
+
         if (!event.emailAddress) {
             return this.logger.info(
                 `Cannot deactivate email-address, personId:${event.personId}, username:${event.username}, person did not have an email-address`,

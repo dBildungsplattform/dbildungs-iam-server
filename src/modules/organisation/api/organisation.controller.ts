@@ -63,6 +63,7 @@ import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-id
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
+import { OrganisationDeleteService } from '../organisation-delete/organisation-delete.service.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -79,6 +80,7 @@ export class OrganisationController {
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly config: ConfigService<ServerConfig>,
         private readonly organisationService: OrganisationService,
+        private readonly organisationDeleteService: OrganisationDeleteService,
     ) {}
 
     @Post()
@@ -559,5 +561,38 @@ export class OrganisationController {
         }
 
         return new OrganisationResponse(result);
+    }
+
+    @Delete(':organisationId')
+    @UseGuards(StepUpGuard)
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiOperation({ description: 'Delete an organisation by id.' })
+    @ApiNoContentResponse({ description: 'The organisation was deleted successfully.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamOrganisationError })
+    @ApiNotFoundResponse({ description: 'The organisation that should be deleted does not exist.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to delete the organisation.' })
+    public async deleteOrganisation(
+        @Param() params: OrganisationByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        const organisation: Result<
+            Organisation<true>,
+            EntityNotFoundError | MissingPermissionsError
+        > = await this.organisationService.findOrganisationByIdAndMatchingPermissions(
+            permissions,
+            params.organisationId,
+        );
+        if (!organisation.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(organisation.error),
+            );
+        }
+
+        const result: DomainError | void = await this.organisationDeleteService.deleteOrganisation(
+            params.organisationId,
+        );
+        if (result instanceof DomainError) {
+            throw result;
+        }
     }
 }

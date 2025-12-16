@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ArrayUnique, IsBoolean, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
-import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
-import { OrganisationsTyp, OrganisationsTypName, SortFieldOrganisation } from '../domain/organisation.enums.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../../rolle/domain/systemrecht.js';
+import { OrganisationsTyp, OrganisationsTypName, SortFieldOrganisation } from '../domain/organisation.enums.js';
+import { TransformToBoolean } from '../../../shared/util/boolean-transform.validator.js';
 
 export class FindOrganisationQueryParams extends PagedQueryParams {
     @IsString()
@@ -123,4 +124,13 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
         description: 'Field to sort by.',
     })
     public readonly sortField?: SortFieldOrganisation;
+
+    @IsOptional()
+    @IsBoolean()
+    @TransformToBoolean()
+    @ApiProperty({
+        required: false,
+        nullable: true,
+    })
+    public readonly getChildrenRecursively?: boolean;
 }

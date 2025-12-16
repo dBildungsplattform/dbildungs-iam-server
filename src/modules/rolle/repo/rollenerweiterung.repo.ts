@@ -1,5 +1,6 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { Loaded, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
+import { EntityManager, QueryBuilder } from '@mikro-orm/postgresql';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
@@ -57,6 +58,11 @@ export class RollenerweiterungRepo {
         return count > 0;
     }
 
+    /**
+     * WARNING: Requires manual checks for consistency!
+     * @param rollenerweiterung
+     * @returns
+     */
     public async create(rollenerweiterung: Rollenerweiterung<false>): Promise<Rollenerweiterung<true>> {
         const rollenerweiterungEntity: RollenerweiterungEntity = this.em.create(
             RollenerweiterungEntity,
@@ -135,6 +141,26 @@ export class RollenerweiterungRepo {
         return rollenerweiterungen.map((entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity));
     }
 
+    public async findManyByOrganisationId(
+        organisationId: OrganisationID,
+        offset?: number,
+        limit?: number,
+    ): Promise<Array<Rollenerweiterung<true>>> {
+        const rollenerweiterungEntities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
+            RollenerweiterungEntity,
+            {
+                organisationId,
+            },
+            {
+                offset,
+                limit,
+            },
+        );
+        return rollenerweiterungEntities.map((entity: Loaded<RollenerweiterungEntity>) =>
+            this.mapEntityToAggregate(entity),
+        );
+    }
+
     public async findByServiceProviderIds(
         serviceProviderIds: ServiceProviderID[],
     ): Promise<Map<ServiceProviderID, Rollenerweiterung<true>[]>> {
@@ -157,27 +183,67 @@ export class RollenerweiterungRepo {
         );
     }
 
-    public async findByServiceProviderId(
+    /*
+    Neither the organizations nor the roles are loaded directly here because:
+    Otherwise, the organization and role would be included for every role extension (resulting in many duplicates).
+    For performance reasons, it makes sense to create a separate set of IDs and load each one only once in a subsequent query without a join.
+    */
+    public async findByServiceProviderIdPagedAndSortedByOrgaKennung(
         serviceProviderId: ServiceProviderID,
         offset?: number,
         limit?: number,
     ): Promise<Counted<Rollenerweiterung<true>>> {
-        const [rollenerweiterungEntities, count]: Counted<Loaded<RollenerweiterungEntity>> = await this.em.findAndCount(
+        // Get paginated unique organisation IDs using QueryBuilder
+        const qb: QueryBuilder<RollenerweiterungEntity> = this.em.createQueryBuilder(RollenerweiterungEntity, 're');
+        qb.select(['re.organisation_id', 'o.kennung'])
+            .distinct()
+            .innerJoin('re.organisationId', 'o')
+            .where({ serviceProviderId })
+            .orderBy({ 'o.kennung': 'ASC' })
+            .limit(limit ?? 999999)
+            .offset(offset ?? 0);
+
+        const pagedOrgIdsResult: Array<{ organisationId: string; kennung: string }> = await qb.execute();
+        const pagedOrgIds: string[] = pagedOrgIdsResult.map((row: { organisationId: string }) => row.organisationId);
+
+        // Count total unique organisations
+        const countQb: QueryBuilder<RollenerweiterungEntity> = this.em.createQueryBuilder(
+            RollenerweiterungEntity,
+            're',
+        );
+        countQb
+            .count('re.organisationId', true) // true for DISTINCT
+            .where({ serviceProviderId });
+
+        const countResult: { count: string | number } = await countQb.execute('get', true);
+        const totalUniqueOrgs: number = Number(countResult.count);
+
+        // If no organisations found, return empty result
+        if (pagedOrgIds.length === 0) {
+            return [[], totalUniqueOrgs];
+        }
+
+        // Get all rollenerweiterungen for the paginated organisations
+        const [rollenerweiterungEntities]: Counted<Loaded<RollenerweiterungEntity>> = await this.em.findAndCount(
             RollenerweiterungEntity,
             {
-                serviceProviderId: serviceProviderId,
+                serviceProviderId,
+                organisationId: { $in: pagedOrgIds },
             },
             {
-                limit,
-                offset,
                 orderBy: {
+                    organisationId: {
+                        kennung: 'ASC',
+                    },
                     id: 'ASC',
                 },
             },
         );
+
         const rollenerweiterungen: Rollenerweiterung<true>[] = rollenerweiterungEntities.map(
             (entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity),
         );
-        return [rollenerweiterungen, count];
+
+        return [rollenerweiterungen, Number(totalUniqueOrgs)];
     }
 }

@@ -37,8 +37,14 @@ import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweite
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { RollenerweiterungResponse } from '../../rolle/api/rollenerweiterung.response.js';
 import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
+import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationID, RolleID } from '../../../shared/types/index.js';
+import { uniq } from 'lodash-es';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
@@ -51,6 +57,8 @@ export class ProviderController {
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
+        private readonly rolleRepo: RolleRepo,
+        private readonly organisationRepo: OrganisationRepository,
     ) {}
 
     @Get('all')
@@ -133,7 +141,7 @@ export class ProviderController {
 
     @Get(':angebotId/rollenerweiterung')
     @ApiOperation({ description: 'Get rollenerweiterungen for service-provider with provided id.' })
-    @ApiOkResponsePaginated(RollenerweiterungResponse, {
+    @ApiOkResponsePaginated(RollenerweiterungWithExtendedDataResponse, {
         description:
             'The rollenerweiterungen were successfully returned. WARNING: This endpoint returns all rollenerweiterungen of the service-provider as default when no paging parameters were set.',
     })
@@ -144,7 +152,7 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Param() pathParams: RollenerweiterungByServiceProvidersIdPathParams,
         @Query() queryParams: RollenerweiterungByServiceProvidersIdQueryParams,
-    ): Promise<RawPagedResponse<RollenerweiterungResponse>> {
+    ): Promise<RawPagedResponse<RollenerweiterungWithExtendedDataResponse>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ROLLEN_ERWEITERN, RollenSystemRecht.ANGEBOTE_VERWALTEN],
             false,
@@ -155,14 +163,30 @@ export class ProviderController {
         }
 
         const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
-            await this.rollenerweiterungRepo.findByServiceProviderId(
+            await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrgaKennung(
                 pathParams.angebotId,
                 queryParams.offset,
                 queryParams.limit,
             );
 
-        const rollenerweiterungResponses: RollenerweiterungResponse[] = rollenerweiterungen.map(
-            (re: Rollenerweiterung<true>) => new RollenerweiterungResponse(re),
+        const rolleIds: RolleID[] = uniq(rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.rolleId));
+        const organisationIds: OrganisationID[] = uniq(
+            rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.organisationId),
+        );
+
+        const [rollen, organisationen]: [Map<RolleID, Rolle<true>>, Map<OrganisationID, Organisation<true>>] =
+            await Promise.all([this.rolleRepo.findByIds(rolleIds), this.organisationRepo.findByIds(organisationIds)]);
+
+        /* The data is passed as option<> instead of mandatory with error checking,
+        because otherwise a single faulty relation in an extension
+        could cause all other extensions to fail to load */
+        const rollenerweiterungResponses: RollenerweiterungWithExtendedDataResponse[] = rollenerweiterungen.map(
+            (re: Rollenerweiterung<true>) =>
+                new RollenerweiterungWithExtendedDataResponse(
+                    re,
+                    rollen.get(re.rolleId),
+                    organisationen.get(re.organisationId),
+                ),
         );
 
         return new RawPagedResponse({
