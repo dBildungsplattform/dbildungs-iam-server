@@ -170,20 +170,6 @@ export class EmailAddressRepo {
                     email.markedForCron = undefined;
                 }
 
-                // Ensure alternative email has status active
-                if (email.priority === 1) {
-                    const newestStatus: EmailAddressStatusEntity | undefined = email.statuses.getItems()[0];
-
-                    if (!newestStatus || newestStatus.status === EmailAddressStatusEnum.SUSPENDED) {
-                        email.statuses.add(
-                            em.create(EmailAddressStatusEntity, {
-                                emailAddress: email,
-                                status: EmailAddressStatusEnum.ACTIVE,
-                            }),
-                        );
-                    }
-                }
-
                 // Ensure all emails with priority 1 or higher have a cron date
                 if (email.priority >= 1) {
                     email.markedForCron ??= cronDate;
