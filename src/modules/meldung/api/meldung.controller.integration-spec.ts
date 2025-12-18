@@ -2,8 +2,9 @@ import { MockedObject, vi } from 'vitest';
 import { createMock } from '@golevelup/ts-vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
-import { DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
+import { LoggingTestModule } from '../../../../test/utils/vitest/logging-test.module.js';
+import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { MikroORM } from '@mikro-orm/core';
 import { MeldungController } from './meldung.controller.js';
 import { MeldungRepo } from '../persistence/meldung.repo.js';
@@ -77,7 +78,7 @@ describe('Meldung Controller', () => {
     });
 
     describe('get current Meldung', () => {
-        it('should return current veroffentlich meldung', async () => {
+        it('should return current veroffentlicht meldung', async () => {
             const personpermissions: MockedObject<PersonPermissions> = createMock();
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
             const meldung: Meldung<true> = DoFactory.createMeldung(true);
@@ -87,12 +88,10 @@ describe('Meldung Controller', () => {
             expect(response).toBeInstanceOf(MeldungResponse);
         });
 
-        it('should return nothing if no current veroeffntlich meldung exists', async () => {
+        it('should return nothing if no current veroeffentlicht meldung exists', async () => {
             const personpermissions: MockedObject<PersonPermissions> = createMock();
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
-            const meldung: Meldung<true> = DoFactory.createMeldung(true);
-            meldung.status = MeldungStatus.NICHT_VEROEFFENTLICHT;
-            meldungRepo.findAll.mockResolvedValueOnce([meldung]);
+            meldungRepo.getRecentVeroeffentlichtMeldung.mockResolvedValueOnce(null);
             const response: MeldungResponse | null = await meldungController.getCurrentMeldung();
             expect(response).toBeNull();
         });

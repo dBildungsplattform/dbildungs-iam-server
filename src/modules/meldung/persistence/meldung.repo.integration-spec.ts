@@ -1,16 +1,14 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    DatabaseTestModule,
-    DoFactory,
-} from '../../../../test/utils/index.js';
+import { LoggingTestModule } from '../../../../test/utils/vitest/logging-test.module.js';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { MeldungRepo } from './meldung.repo.js';
 import { Meldung } from '../domain/meldung.js';
 import { faker } from '@faker-js/faker';
 import { MeldungStatus } from './meldung.entity.js';
-import { LoggingTestModule } from '../../../../test/utils/vitest/logging-test.module.js';
 
 describe('MeldungRepo', () => {
     let module: TestingModule;
