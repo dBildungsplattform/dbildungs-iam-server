@@ -258,7 +258,7 @@ export class SetEmailAddressForSpshPersonService {
             newPrimaryEmail = emailsAfter.find((em: EmailAddress<true>) => em.priority === 0)!;
 
             // Find the email which is not at priority 1 to use as an alternative mail
-            alternativeEmail = updatedEmailsResult.value.find((em: EmailAddress<true>) => em.priority === 1);
+            alternativeEmail = emailsAfter.find((em: EmailAddress<true>) => em.priority === 1);
         } else {
             const mails: EmailAddress<true>[] =
                 await this.emailAddressRepo.findBySpshPersonIdSortedByPriorityAsc(spshPersonId);
