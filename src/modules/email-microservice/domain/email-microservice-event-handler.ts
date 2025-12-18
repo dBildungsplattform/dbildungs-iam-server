@@ -187,7 +187,10 @@ export class EmailMicroserviceEventHandler {
         }
 
         const person: Option<Person<true>> = await this.personenRepo.findById(event.personId);
-        if (!person?.username) {
+        if (!person) {
+            throw new Error(`Person with id:${event.personId} was not found, cannot resolve email.`);
+        }
+        if (!person.username) {
             throw new Error(`Person with id:${event.personId} has no username, cannot resolve email.`);
         }
 
