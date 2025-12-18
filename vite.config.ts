@@ -14,7 +14,7 @@ export default defineConfig({
         globals: true,
         environment: 'node',
         // include: ['**/*.spec.ts'],
-        include: ['**/meldung/**/*.spec.ts'],
+        include: ['**/meldung/**/*spec.ts'],
         coverage: {
             reporter: ['lcov', 'text'],
         },
