@@ -331,7 +331,10 @@ export class SetEmailAddressForSpshPersonService {
         // Everything was a success, set the e-mail to active
         newPrimaryEmail.setStatus(EmailAddressStatusEnum.ACTIVE);
         newPrimaryEmail = await this.updateEmailIgnoreMissing(newPrimaryEmail);
-        alternativeEmail?.setStatus(EmailAddressStatusEnum.ACTIVE);
+        if (alternativeEmail) {
+            alternativeEmail.setStatus(EmailAddressStatusEnum.ACTIVE);
+            alternativeEmail = await this.updateEmailIgnoreMissing(alternativeEmail);
+        }
 
         return Ok(undefined);
     }
