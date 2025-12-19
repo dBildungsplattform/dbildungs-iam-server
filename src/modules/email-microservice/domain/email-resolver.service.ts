@@ -125,6 +125,19 @@ export class EmailResolverService {
         }
     }
 
+    public async setEmailsSuspendedForSpshPerson(params: { spshPersonId: string }): Promise<void> {
+        try {
+            this.logger.info(`Setting emails for person ${params.spshPersonId} to suspended`);
+            await lastValueFrom(
+                this.httpService.post(
+                    this.getEndpoint() + `${EmailResolverService.writePath}/${params.spshPersonId}/set-suspended`,
+                ),
+            );
+        } catch (error) {
+            this.logger.logUnknownAsError(`Failed to set emails for person ${params.spshPersonId} to suspended`, error);
+        }
+    }
+
     public shouldUseEmailMicroservice(): boolean {
         const emailMicroserviceConfig: EmailMicroserviceConfig =
             this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
