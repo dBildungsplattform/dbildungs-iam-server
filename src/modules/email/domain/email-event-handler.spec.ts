@@ -123,6 +123,8 @@ describe('EmailEventHandler', () => {
         personRepositoryMock = module.get(PersonRepository);
         emailResolverService = module.get(EmailResolverService);
 
+        emailResolverService.shouldUseEmailMicroservice.mockReturnValue(false);
+
         app = module.createNestApplication();
         await app.init();
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -984,6 +986,40 @@ describe('EmailEventHandler', () => {
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Enabled PRIMARY email address:${persistedEmail.address}, personId:${fakePersonId}, username:${fakeUsername}`,
+                );
+            });
+        });
+
+        describe('with Rolle referencing SP, but no matching Personenkontext', () => {
+            it('should log error that no matching Personenkontext was found', async () => {
+                const pks: Personenkontext<true>[] = [
+                    createMock<Personenkontext<true>>({ rolleId: faker.string.uuid() }),
+                ];
+                mockRepositoryFindMethods(pks, rolleMap, spMap);
+
+                personRepositoryMock.findById.mockResolvedValueOnce(
+                    createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
+                );
+
+                // eslint-disable-next-line @typescript-eslint/require-await
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockImplementationOnce(async (personId: PersonID) => [
+                    new EmailAddress<true>(
+                        faker.string.uuid(),
+                        faker.date.past(),
+                        faker.date.recent(),
+                        personId,
+                        faker.internet.email(),
+                        EmailAddressStatus.DISABLED,
+                    ),
+                ]);
+
+                const persistedEmail: EmailAddress<true> = getEmail();
+                emailRepoMock.save.mockResolvedValueOnce(persistedEmail);
+
+                await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Rolle with id:${fakeRolleId} references SP, but no matching Personenkontext was found`,
                 );
             });
         });
