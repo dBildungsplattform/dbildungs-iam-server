@@ -54,7 +54,7 @@ export class PersonenkontextEntity extends TimestampedEntity {
     @Enum({ nullable: true, items: () => Jahrgangsstufe, nativeEnumName: 'jahrgangsstufe_enum' })
     public jahrgangsstufe?: Jahrgangsstufe;
 
-    @Property({ nullable: true, default: SichtfreigabeType.NEIN })
+    @Property({ nullable: true, default: SichtfreigabeType.NEIN, type: 'string' })
     public sichtfreigabe?: SichtfreigabeType;
 
     @Property({ nullable: true, type: DateTimeType })

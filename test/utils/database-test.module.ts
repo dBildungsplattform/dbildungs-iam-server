@@ -37,6 +37,7 @@ export class DatabaseTestModule implements OnModuleDestroy {
                                 this.postgres?.getConnectionUri() ||
                                 configService.getOrThrow<DbConfig>('DB').CLIENT_URL,
                             dbName,
+                            dynamicImportProvider: (id: string) => import(id),
                             entities: ['./dist/**/*.entity.js'],
                             entitiesTs: ['./src/**/*.entity.ts'],
                             allowGlobalContext: true,
