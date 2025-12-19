@@ -18,7 +18,6 @@ import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-pe
 import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { PersonenkontextID, PersonID, PersonUsername, RolleID } from '../../../shared/types/index.js';
 import { OXContextID, OXContextName, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
@@ -1766,66 +1765,6 @@ describe('EmailEventHandler', () => {
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Deactivation of email-address:${event.emailAddress} failed, personId:${event.personId}, username:${event.username}`,
                 );
-            });
-        });
-    });
-
-    describe('handleRolleUpdatedEvent', () => {
-        let fakeRolleId: string;
-        let fakePersonId: string;
-        let personenkontexte: Personenkontext<true>[] = [];
-        let event: RolleUpdatedEvent;
-        let sp: ServiceProvider<true>;
-        let spMap: Map<string, ServiceProvider<true>>;
-        let rolle: Rolle<true>;
-        let rolleMap: Map<string, Rolle<true>>;
-
-        beforeEach(() => {
-            fakeRolleId = faker.string.uuid();
-            fakePersonId = faker.string.uuid();
-            personenkontexte = [
-                createMock<Personenkontext<true>>({ personId: fakePersonId }),
-                createMock<Personenkontext<true>>({ personId: fakePersonId }),
-                createMock<Personenkontext<true>>({ personId: faker.string.uuid() }),
-            ];
-            rolle = createMock<Rolle<true>>({ serviceProviderIds: [] });
-            event = RolleUpdatedEvent.fromRollen(rolle, rolle);
-            rolleMap = new Map<string, Rolle<true>>();
-            rolleMap.set(fakeRolleId, rolle);
-            sp = createMock<ServiceProvider<true>>({
-                kategorie: ServiceProviderKategorie.EMAIL,
-            });
-            spMap = new Map<string, ServiceProvider<true>>();
-            spMap.set(sp.id, sp);
-        });
-
-        describe('when rolle is updated', () => {
-            it('should log info', async () => {
-                dbiamPersonenkontextRepoMock.findByRolle.mockResolvedValueOnce(personenkontexte);
-
-                //in the following enabling, persisting and so on is mocked for all PKs, testing handlePerson-method is done in other test cases
-                dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValue(personenkontexte);
-                rolleRepoMock.findByIds.mockResolvedValue(rolleMap);
-                serviceProviderRepoMock.findByIds.mockResolvedValue(spMap);
-
-                // eslint-disable-next-line @typescript-eslint/require-await
-                emailRepoMock.findEnabledByPerson.mockImplementation(async (personId: PersonID) => {
-                    return new EmailAddress<true>(
-                        faker.string.uuid(),
-                        faker.date.past(),
-                        faker.date.recent(),
-                        personId,
-                        faker.internet.email(),
-                        EmailAddressStatus.DISABLED,
-                    );
-                });
-
-                const persistedEmail: EmailAddress<true> = getEmail();
-                emailRepoMock.save.mockResolvedValue(persistedEmail);
-
-                await emailEventHandler.handleRolleUpdatedEvent(event);
-
-                expect(loggerMock.info).toHaveBeenCalledWith(`RolleUpdatedEvent affects:2 persons`);
             });
         });
     });
