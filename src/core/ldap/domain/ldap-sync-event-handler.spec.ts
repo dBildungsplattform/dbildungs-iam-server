@@ -732,8 +732,8 @@ describe('LdapSyncEventHandler', () => {
             });
         });
 
-        describe('when email microservice is disabled', () => {
-            it('should return when email microservice is desabled', async () => {
+        describe('when email microservice is enabled', () => {
+            it('should return when email microservice is enabled', async () => {
                 emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
 
                 //mock: email-addresses are equal -> no processing for mismatching emails necessary
