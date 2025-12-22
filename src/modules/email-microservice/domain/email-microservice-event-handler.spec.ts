@@ -26,6 +26,9 @@ import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event'
 import { EventModule } from '../../../core/eventbus';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types';
+import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event';
+import { PersonRepository } from '../../person/persistence/person.repository';
+import { Person } from '../../person/domain/person';
 
 describe('EmailMicroserviceEventHandler', () => {
     let app: INestApplication;
@@ -36,6 +39,7 @@ describe('EmailMicroserviceEventHandler', () => {
     let emailResolverServiceMock: DeepMocked<EmailResolverService>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
+    let personenRepoMock: DeepMocked<PersonRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -58,6 +62,8 @@ describe('EmailMicroserviceEventHandler', () => {
             .useValue(createMock<RolleRepo>())
             .overrideProvider(DBiamPersonenkontextRepo)
             .useValue(createMock<DBiamPersonenkontextRepo>())
+            .overrideProvider(PersonRepository)
+            .useValue(createMock<PersonRepository>())
             .compile();
 
         sut = module.get(EmailMicroserviceEventHandler);
@@ -65,6 +71,7 @@ describe('EmailMicroserviceEventHandler', () => {
         emailResolverServiceMock = module.get(EmailResolverService);
         rolleRepoMock = module.get(RolleRepo);
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        personenRepoMock = module.get(PersonRepository);
 
         app = module.createNestApplication();
         await app.init();
@@ -734,6 +741,132 @@ describe('EmailMicroserviceEventHandler', () => {
                 ),
             );
             expect(emailResolverServiceMock.deleteEmailsForSpshPerson).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('personLdapSyncEventHandler', () => {
+        it('should log and call emailResolverService when microservice is enabled', async () => {
+            const kennung: string = faker.string.numeric(7);
+            const spshServiceProviderId: string = faker.string.uuid();
+            const personId: string = faker.string.uuid();
+            const mockPerson: Person<true> = DoFactory.createPerson(true, {
+                id: personId,
+                vorname: faker.person.firstName(),
+                familienname: faker.person.lastName(),
+                username: faker.internet.userName(),
+            });
+            personenRepoMock.findById.mockResolvedValueOnce(mockPerson);
+            const mockEvent: PersonLdapSyncEvent = new PersonLdapSyncEvent(personId);
+            const mockRolle: Rolle<true> = DoFactory.createRolle(true, {
+                serviceProviderData: [
+                    DoFactory.createServiceProvider(true, {
+                        id: spshServiceProviderId,
+                        externalSystem: ServiceProviderSystem.EMAIL,
+                    }),
+                ],
+            });
+            personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                {
+                    personenkontext: DoFactory.createPersonenkontext(true),
+                    organisation: DoFactory.createOrganisation(true, { kennung }),
+                    rolle: mockRolle,
+                },
+            ]);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+            rolleRepoMock.findByIds.mockResolvedValue(new Map([[mockRolle.id, mockRolle]]));
+
+            await sut.personLdapSyncEventHandler(mockEvent);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Received PersonLdapSyncEvent'));
+            expect(emailResolverServiceMock.setEmailForSpshPerson).toHaveBeenCalledWith({
+                spshPersonId: mockEvent.personId,
+                spshUsername: mockPerson.username,
+                kennungen: [kennung],
+                firstName: mockPerson.vorname,
+                lastName: mockPerson.familienname,
+                spshServiceProviderId,
+            });
+        });
+
+        it('should not call when disabled', async () => {
+            const mockEvent: PersonLdapSyncEvent = new PersonLdapSyncEvent(faker.string.uuid());
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+
+            await sut.personLdapSyncEventHandler(mockEvent);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Received PersonLdapSyncEvent'));
+            expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Ignoring Event for'));
+            expect(emailResolverServiceMock.setEmailForSpshPerson).not.toHaveBeenCalled();
+        });
+
+        it('should fail when microservice is enabled and user is not found', async () => {
+            const mockEvent: PersonLdapSyncEvent = new PersonLdapSyncEvent(faker.string.uuid());
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+            personenRepoMock.findById.mockResolvedValueOnce(undefined);
+
+            await expect(sut.personLdapSyncEventHandler(mockEvent)).rejects.toEqual(
+                new Error(`Person with id:${mockEvent.personId} was not found, cannot resolve email.`),
+            );
+
+            expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Received PersonLdapSyncEvent'));
+            expect(emailResolverServiceMock.setEmailForSpshPerson).not.toHaveBeenCalled();
+        });
+
+        it('should fail when microservice is enabled and username is undefined', async () => {
+            const mockEvent: PersonLdapSyncEvent = new PersonLdapSyncEvent(faker.string.uuid());
+            const mockPerson: Person<true> = DoFactory.createPerson(true, {
+                id: faker.string.uuid(),
+                username: undefined,
+            });
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+            personenRepoMock.findById.mockResolvedValueOnce(mockPerson);
+
+            await expect(sut.personLdapSyncEventHandler(mockEvent)).rejects.toEqual(
+                new Error(`Person with id:${mockEvent.personId} has no username, cannot resolve email.`),
+            );
+
+            expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Received PersonLdapSyncEvent'));
+            expect(emailResolverServiceMock.setEmailForSpshPerson).not.toHaveBeenCalled();
+        });
+
+        it('should return early when no email service provider', async () => {
+            const kennung: string = faker.string.numeric(7);
+            const spshServiceProviderId: string = faker.string.uuid();
+            const personId: string = faker.string.uuid();
+            const mockPerson: Person<true> = DoFactory.createPerson(true, {
+                id: personId,
+                vorname: faker.person.firstName(),
+                familienname: faker.person.lastName(),
+                username: faker.internet.userName(),
+            });
+            personenRepoMock.findById.mockResolvedValueOnce(mockPerson);
+            const mockEvent: PersonLdapSyncEvent = new PersonLdapSyncEvent(personId);
+            const mockRolle: Rolle<true> = DoFactory.createRolle(true, {
+                serviceProviderData: [
+                    DoFactory.createServiceProvider(true, {
+                        id: spshServiceProviderId,
+                        externalSystem: ServiceProviderSystem.NONE,
+                    }),
+                ],
+            });
+            personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                {
+                    personenkontext: DoFactory.createPersonenkontext(true),
+                    organisation: DoFactory.createOrganisation(true, { kennung }),
+                    rolle: mockRolle,
+                },
+            ]);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+            rolleRepoMock.findByIds.mockResolvedValue(new Map([[mockRolle.id, mockRolle]]));
+
+            await sut.personLdapSyncEventHandler(mockEvent);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Received PersonLdapSyncEvent'));
+            expect(loggerMock.debug).toHaveBeenCalledWith(
+                expect.stringContaining(`No email service provider found for personId:${mockEvent.personId}`),
+            );
+            expect(emailResolverServiceMock.setEmailForSpshPerson).not.toHaveBeenCalled();
+            expect(emailResolverServiceMock.setEmailsSuspendedForSpshPerson).toHaveBeenCalled();
         });
     });
 });
