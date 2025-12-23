@@ -32,6 +32,7 @@ import { Injectable } from '@nestjs/common';
 import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/group/add-member-to-group.action.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 @Injectable()
 export class OxSyncEventHandler {
@@ -45,6 +46,7 @@ export class OxSyncEventHandler {
         protected readonly personRepository: PersonRepository,
         protected readonly eventService: EventRoutingLegacyKafkaService,
         protected configService: ConfigService<ServerConfig>,
+        protected readonly emailResolverService: EmailResolverService,
 
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly rolleRepo: RolleRepo,
@@ -64,6 +66,10 @@ export class OxSyncEventHandler {
     public async ldapSyncCompletedEventHandler(event: LdapSyncCompletedEvent): Promise<void> {
         this.logger.info(`[EventID: ${event.eventID}] Received LdapSyncCompletedEvent, personId:${event.personId}`);
 
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Ignoring Event for personId:${event.personId} because email microservice is enabled`);
+            return;
+        }
         await this.sync(event.personId, event.username);
     }
 
