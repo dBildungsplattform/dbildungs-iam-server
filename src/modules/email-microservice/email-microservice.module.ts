@@ -12,7 +12,7 @@ import { PersonModule } from '../person/person.module.js';
         HttpModule,
         RolleModule,
         forwardRef(() => PersonenKontextModule),
-        PersonModule,
+        forwardRef(() => PersonModule),
         LoggerModule.register(EmailMicroserviceModule.name),
     ],
     providers: [EmailResolverService, EmailMicroserviceEventHandler],
