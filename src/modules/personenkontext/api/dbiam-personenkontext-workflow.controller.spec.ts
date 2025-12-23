@@ -5,7 +5,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
@@ -37,23 +37,23 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                 DbiamPersonenkontextWorkflowController,
                 {
                     provide: PersonPermissionsRepo,
-                    useValue: createMock<PersonPermissionsRepo>(),
+                    useValue: createMock(PersonPermissionsRepo),
                 },
                 {
                     provide: PersonenkontextWorkflowFactory,
-                    useValue: createMock<PersonenkontextWorkflowFactory>(),
+                    useValue: createMock(PersonenkontextWorkflowFactory),
                 },
                 {
                     provide: PersonenkontextWorkflowAggregate,
-                    useValue: createMock<PersonenkontextWorkflowAggregate>(),
+                    useValue: createMock(PersonenkontextWorkflowAggregate),
                 },
                 {
                     provide: PersonenkontextCreationService,
-                    useValue: createMock<PersonenkontextCreationService>(),
+                    useValue: createMock(PersonenkontextCreationService),
                 },
                 {
                     provide: ConfigService,
-                    useValue: createMock<ConfigService>(),
+                    useValue: createMock(ConfigService),
                 },
             ],
         }).compile();
@@ -69,7 +69,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {

@@ -14,7 +14,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -92,7 +92,7 @@ describe('Schulconnex Repo', () => {
                 KeycloakUserService,
                 {
                     provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
+                    useValue: createMock(UserLockRepository),
                 },
             ],
         })

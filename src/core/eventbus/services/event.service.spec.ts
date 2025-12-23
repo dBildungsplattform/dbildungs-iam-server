@@ -1,4 +1,4 @@
-import { DeepMocked } from '@golevelup/ts-jest';
+import { Mock, DeepMocked, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { LoggingTestModule } from '../../../../test/utils/index.js';
@@ -46,7 +46,7 @@ describe('EventService', () => {
 
     describe('subscribe', () => {
         it('should subscribe', () => {
-            const handler: EventHandlerType<BaseEvent> = jest.fn();
+            const handler: EventHandlerType<BaseEvent> = vi.fn();
 
             sut.subscribe(TestEvent, handler);
 
@@ -58,7 +58,7 @@ describe('EventService', () => {
 
     describe('unsubscribe', () => {
         it('should unsubscribe the handler', () => {
-            const handler: jest.Mock = jest.fn();
+            const handler: Mock = vi.fn();
 
             sut.subscribe(TestEvent, handler);
             sut.publish(new TestEvent());
@@ -73,7 +73,7 @@ describe('EventService', () => {
 
     describe('publish', () => {
         it('should log warning when handler calls keepAlive', () => {
-            const handler: EventHandlerType<BaseEvent> = jest.fn((_event: BaseEvent, keepAlive: () => void) => {
+            const handler: EventHandlerType<BaseEvent> = vi.fn((_event: BaseEvent, keepAlive: () => void) => {
                 keepAlive();
             });
             const event: TestEvent = new TestEvent();
@@ -86,7 +86,7 @@ describe('EventService', () => {
         });
 
         it('should call handler with event', () => {
-            const handler: EventHandlerType<BaseEvent> = jest.fn();
+            const handler: EventHandlerType<BaseEvent> = vi.fn();
             const event: TestEvent = new TestEvent();
             sut.subscribe(TestEvent, handler);
 
@@ -96,8 +96,8 @@ describe('EventService', () => {
         });
 
         it('should call multiple handlers', () => {
-            const handler1: EventHandlerType<BaseEvent> = jest.fn();
-            const handler2: EventHandlerType<BaseEvent> = jest.fn();
+            const handler1: EventHandlerType<BaseEvent> = vi.fn();
+            const handler2: EventHandlerType<BaseEvent> = vi.fn();
             const event: TestEvent = new TestEvent();
 
             sut.subscribe(TestEvent, handler1);
@@ -117,7 +117,7 @@ describe('EventService', () => {
 
         it('should log errors with stack-trace in event handler', () => {
             const error: Error = new Error();
-            const handler: jest.Mock = jest.fn(() => {
+            const handler: Mock = vi.fn(() => {
                 throw error;
             });
             sut.subscribe(TestEvent, handler);
@@ -129,7 +129,7 @@ describe('EventService', () => {
 
         it('should log errors with stack-trace in async event handler', async () => {
             const error: Error = new Error();
-            const handler: jest.Mock = jest.fn();
+            const handler: Mock = vi.fn();
             handler.mockRejectedValueOnce(error);
             sut.subscribe(TestEvent, handler);
 
@@ -141,7 +141,7 @@ describe('EventService', () => {
 
         it('should log errors without stack-trace in event handler', async () => {
             const error: string = 'Not a real error';
-            const handler: jest.Mock = jest.fn();
+            const handler: Mock = vi.fn();
             handler.mockRejectedValueOnce(error);
             sut.subscribe(TestEvent, handler);
 

@@ -73,11 +73,11 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 },
                 {
                     provide: PersonPermissionsRepo,
-                    useValue: createMock<PersonPermissionsRepo>(),
+                    useValue: createMock(PersonPermissionsRepo),
                 },
                 {
                     provide: PersonenkontextWorkflowFactory,
-                    useValue: createMock<PersonenkontextWorkflowFactory>(),
+                    useValue: createMock(PersonenkontextWorkflowFactory),
                 },
                 {
                     provide: APP_INTERCEPTOR,
@@ -232,7 +232,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 throw Error();
             }
 
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
             permissions.canModifyPerson.mockResolvedValueOnce(true);
@@ -630,7 +630,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
                 const mockWorkflow: DeepMocked<PersonenkontextWorkflowAggregate> =
-                    createMock<PersonenkontextWorkflowAggregate>();
+                    createMock(PersonenkontextWorkflowAggregate);
                 mockWorkflow.commit.mockResolvedValueOnce(new DuplicatePersonalnummerError('12345'));
 
                 jest.spyOn(personenkontextWorkflowFactoryMock, 'createNew').mockReturnValueOnce(mockWorkflow);

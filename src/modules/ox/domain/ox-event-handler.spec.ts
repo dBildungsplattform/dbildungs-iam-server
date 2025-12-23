@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
@@ -67,39 +67,39 @@ describe('OxEventHandler', () => {
                 OxEventService,
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: ServiceProviderRepo,
-                    useValue: createMock<ServiceProviderRepo>(),
+                    useValue: createMock(ServiceProviderRepo),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: EmailRepo,
-                    useValue: createMock<EmailRepo>(),
+                    useValue: createMock(EmailRepo),
                 },
                 {
                     provide: OxService,
-                    useValue: createMock<OxService>(),
+                    useValue: createMock(OxService),
                 },
                 {
                     provide: OxSyncEventHandler,
-                    useValue: createMock<OxSyncEventHandler>(),
+                    useValue: createMock(OxSyncEventHandler),
                 },
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 {
                     provide: EmailResolverService,
-                    useValue: createMock<EmailResolverService>(),
+                    useValue: createMock(EmailResolverService),
                 },
             ],
         }).compile();
@@ -113,7 +113,7 @@ describe('OxEventHandler', () => {
         emailRepoMock = module.get(EmailRepo);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         emailResolverService = module.get(EmailResolverService);
-        jest.useFakeTimers();
+        vi.useFakeTimers();
     });
 
     function getRequestedEmailAddresses(address?: string): EmailAddress<true>[] {
@@ -267,13 +267,13 @@ describe('OxEventHandler', () => {
 
     beforeEach(() => {
         sut.ENABLED = true;
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
     });
 
     describe('Ignore events when new Microservice enabled', () => {
         it('should log ignoring PersonenkontextUpdatedEvent event', async () => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
 
             const personId: PersonID = faker.string.uuid();
@@ -291,7 +291,7 @@ describe('OxEventHandler', () => {
         });
 
         it('should log ignoring PersonDeletedEvent event', async () => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
 
             const personId: PersonID = faker.string.uuid();
@@ -311,7 +311,7 @@ describe('OxEventHandler', () => {
         let person: Person<true>;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             fakeDstNr = faker.string.numeric();
             event = new EmailAddressGeneratedEvent(
@@ -329,7 +329,7 @@ describe('OxEventHandler', () => {
             it('should log error about failing oxGroup-creation', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock<EmailAddress<true>>(),
+                    createMock(EmailAddress<true>),
                 ]);
 
                 //mock exists-oxUser-request
@@ -368,7 +368,7 @@ describe('OxEventHandler', () => {
         let person: Person<true>;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             fakeDstNr = faker.string.numeric();
             event = new EmailAddressGeneratedEvent(
@@ -386,7 +386,7 @@ describe('OxEventHandler', () => {
             it('should return the existing groups id', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock<EmailAddress<true>>(),
+                    createMock(EmailAddress<true>),
                 ]);
 
                 //mock exists-oxUser-request
@@ -439,7 +439,7 @@ describe('OxEventHandler', () => {
             it('should log error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock<EmailAddress<true>>(),
+                    createMock(EmailAddress<true>),
                 ]);
 
                 //mock exists-oxUser-request
@@ -467,7 +467,7 @@ describe('OxEventHandler', () => {
             it('should log error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock<EmailAddress<true>>(),
+                    createMock(EmailAddress<true>),
                 ]);
 
                 //mock exists-oxUser-request
@@ -522,7 +522,7 @@ describe('OxEventHandler', () => {
             it('should log error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock<EmailAddress<true>>(),
+                    createMock(EmailAddress<true>),
                 ]);
 
                 //mock exists-oxUser-request
@@ -573,7 +573,7 @@ describe('OxEventHandler', () => {
         let person: Person<true>;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             personIdentifier = {
@@ -596,7 +596,7 @@ describe('OxEventHandler', () => {
             it('should log info about that intentional error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock<EmailAddress<true>>(),
+                    createMock(EmailAddress<true>),
                 ]);
 
                 //mock exists-oxUser-request
@@ -640,7 +640,7 @@ describe('OxEventHandler', () => {
             it('should log error about failing addition to group', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock<EmailAddress<true>>(),
+                    createMock(EmailAddress<true>),
                 ]);
 
                 //mock exists-oxUser-request
@@ -689,7 +689,7 @@ describe('OxEventHandler', () => {
         let person: Person<true>;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             personIdentifier = {
@@ -717,7 +717,7 @@ describe('OxEventHandler', () => {
 
         it('should log error when person already exists in OX', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
             //mock exists-oxUser-request
             mockExistsUserRequest(true);
 
@@ -780,7 +780,7 @@ describe('OxEventHandler', () => {
 
         it('should log info and publish OxUserCreatedEvent on success', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
 
             //mock exists-oxUser-request
             mockExistsUserRequest(false);
@@ -834,7 +834,7 @@ describe('OxEventHandler', () => {
 
         it('should log error but still publish OxUserCreatedEvent when changeByModuleAccess request fails', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
 
             //mock exists-oxUser-request
             mockExistsUserRequest(false);
@@ -884,7 +884,7 @@ describe('OxEventHandler', () => {
 
         it('should log error when persisting oxUserId fails', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
 
             //mock exists-oxUser-request
             mockExistsUserRequest(false);
@@ -948,7 +948,7 @@ describe('OxEventHandler', () => {
 
         it('should log error on failure', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
 
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
@@ -979,7 +979,7 @@ describe('OxEventHandler', () => {
         let person: Person<true>;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             personIdentifier = {
@@ -1007,7 +1007,7 @@ describe('OxEventHandler', () => {
 
         it('should log info and publish OxUserCreatedEvent on success', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
 
             //mock exists-oxUser-request
             mockExistsUserRequest(false);
@@ -1073,7 +1073,7 @@ describe('OxEventHandler', () => {
         let contextName: string;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             personIdentifier = {
@@ -1271,7 +1271,7 @@ describe('OxEventHandler', () => {
         let contextName: string;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             personIdentifier = {
@@ -1353,7 +1353,7 @@ describe('OxEventHandler', () => {
         let person: Person<true>;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             event = new EmailAddressAlreadyExistsEvent(personId, faker.string.uuid());
             person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
@@ -1425,7 +1425,7 @@ describe('OxEventHandler', () => {
         let event: PersonDeletedEvent;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             personIdentifier = {
@@ -1587,7 +1587,7 @@ describe('OxEventHandler', () => {
         let event: EmailAddressMarkedForDeletionEvent;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             oxUserId = faker.string.numeric();
@@ -1666,7 +1666,7 @@ describe('OxEventHandler', () => {
                     value: undefined,
                 });
                 await sut.handleEmailAddressMarkedForDeletionEvent(event);
-                await jest.runAllTimersAsync();
+                await vi.runAllTimersAsync();
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Found Current aliases:${JSON.stringify(aliases)}, personId:${event.personId}, username:${event.username}`,
@@ -1729,7 +1729,7 @@ describe('OxEventHandler', () => {
         let event: EmailAddressesPurgedEvent;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             personIdentifier = {
@@ -1836,7 +1836,7 @@ describe('OxEventHandler', () => {
         let event: EmailAddressDisabledEvent;
         let person: Person<true>;
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             personIdentifier = {
@@ -1951,7 +1951,7 @@ describe('OxEventHandler', () => {
         let event: PersonenkontextUpdatedEvent;
         let person: Person<true>;
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             personIdentifier = {
@@ -2036,7 +2036,7 @@ describe('OxEventHandler', () => {
         let event: PersonDeletedAfterDeadlineExceededEvent;
         let person: Person<true>;
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             oxUserId = faker.string.numeric();
@@ -2100,7 +2100,7 @@ describe('OxEventHandler', () => {
         let event: OrganisationDeletedEvent;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             organisation = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
             event = OrganisationDeletedEvent.fromOrganisation(organisation);
         });

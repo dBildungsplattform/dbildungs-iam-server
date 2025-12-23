@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
@@ -51,7 +52,7 @@ describe('LDAP Client', () => {
     });
 
     beforeEach(async () => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         await DatabaseTestModule.clearDatabase(orm);
     });
 

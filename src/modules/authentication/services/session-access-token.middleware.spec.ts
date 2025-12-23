@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Request } from 'express';
 import { PassportUser } from '../types/user.js';
 import { SessionAccessTokenMiddleware } from './session-access-token.middleware.js';
@@ -12,15 +12,15 @@ import { SystemConfig } from '../../../shared/config/system.config.js';
 describe('sessionAccessTokenMiddleware', () => {
     let passportUser: PassportUser;
     let request: Request & Express.Request;
-    let configService: jest.Mocked<ConfigService>;
+    let configService: Mocked<ConfigService>;
 
     beforeEach(() => {
-        passportUser = createMock<PassportUser>();
+        passportUser = createMock(PassportUser);
         request = createMock<Express.Request & Request & { passportUser: PassportUser; headers: object }>({
             passportUser,
             headers: {},
         });
-        configService = createMock<ConfigService>();
+        configService = createMock(ConfigService);
         configService.getOrThrow.mockImplementation((key: keyof SystemConfig) => {
             if (key === ('SYSTEM' as keyof SystemConfig)) {
                 return {
@@ -33,7 +33,7 @@ describe('sessionAccessTokenMiddleware', () => {
     });
 
     it('should call next middleware', async () => {
-        const nextMock: jest.Mock = jest.fn();
+        const nextMock: Mock = vi.fn();
         await new SessionAccessTokenMiddleware(createMock(), createMock(), configService).use(
             createMock(),
             createMock(),
@@ -51,7 +51,7 @@ describe('sessionAccessTokenMiddleware', () => {
             await new SessionAccessTokenMiddleware(createMock(), createMock(), configService).use(
                 request,
                 createMock(),
-                jest.fn(),
+                vi.fn(),
             );
 
             expect(request.headers.authorization).toBeUndefined();
@@ -65,7 +65,7 @@ describe('sessionAccessTokenMiddleware', () => {
             await new SessionAccessTokenMiddleware(createMock(), createMock(), configService).use(
                 request,
                 createMock(),
-                jest.fn(),
+                vi.fn(),
             );
 
             expect(request.headers.authorization).toBeUndefined();
@@ -78,7 +78,7 @@ describe('sessionAccessTokenMiddleware', () => {
         let client: DeepMocked<Client>;
 
         beforeEach(() => {
-            client = createMock<Client>();
+            client = createMock(Client);
             originalAccessToken = 'originalAccess';
             originalRefreshToken = 'originalRefresh';
 
@@ -87,7 +87,7 @@ describe('sessionAccessTokenMiddleware', () => {
                 refresh_token: originalRefreshToken,
                 userinfo: createMock(),
                 personPermissions(): Promise<PersonPermissions> {
-                    return Promise.resolve(createMock<PersonPermissions>());
+                    return Promise.resolve(createMock(PersonPermissions));
                 },
             };
         });
@@ -101,7 +101,7 @@ describe('sessionAccessTokenMiddleware', () => {
                 await new SessionAccessTokenMiddleware(client, createMock(), configService).use(
                     request,
                     createMock(),
-                    jest.fn(),
+                    vi.fn(),
                 );
                 expect(client.introspect).toHaveBeenCalledWith(originalAccessToken);
 
@@ -135,7 +135,7 @@ describe('sessionAccessTokenMiddleware', () => {
                     await new SessionAccessTokenMiddleware(client, createMock(), configService).use(
                         request,
                         createMock(),
-                        jest.fn(),
+                        vi.fn(),
                     );
                     expect(client.introspect).toHaveBeenCalledTimes(2);
                     expect(client.introspect).toHaveBeenNthCalledWith(1, originalAccessToken);
@@ -164,7 +164,7 @@ describe('sessionAccessTokenMiddleware', () => {
                 await new SessionAccessTokenMiddleware(client, createMock(), configService).use(
                     request,
                     createMock(),
-                    jest.fn(),
+                    vi.fn(),
                 );
                 expect(client.introspect).toHaveBeenCalledTimes(2);
                 expect(client.introspect).toHaveBeenNthCalledWith(1, originalAccessToken);
@@ -179,14 +179,14 @@ describe('sessionAccessTokenMiddleware', () => {
                 await new SessionAccessTokenMiddleware(client, createMock(), configService).use(
                     request,
                     createMock(),
-                    jest.fn(),
+                    vi.fn(),
                 );
 
                 expect(request.logout).toHaveBeenCalled();
             });
 
             it('should log exceptions which have been thrown', async () => {
-                const logger: ClassLogger = createMock<ClassLogger>();
+                const logger: ClassLogger = createMock(ClassLogger);
 
                 request.logout = (done: ((err: unknown) => void) | LogOutOptions): void => {
                     if (typeof done === 'function') {
@@ -197,7 +197,7 @@ describe('sessionAccessTokenMiddleware', () => {
                 await new SessionAccessTokenMiddleware(client, logger, configService).use(
                     request,
                     createMock(),
-                    jest.fn(),
+                    vi.fn(),
                 );
                 expect(logger.logUnknownAsError).toHaveBeenCalled();
             });
@@ -209,11 +209,11 @@ describe('sessionAccessTokenMiddleware', () => {
                 client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: true }));
 
                 client.refresh.mockRejectedValue(new Error('Something went wrong'));
-                const loggerMock: ClassLogger = createMock<ClassLogger>();
+                const loggerMock: ClassLogger = createMock(ClassLogger);
                 await new SessionAccessTokenMiddleware(client, loggerMock, configService).use(
                     request,
                     createMock(),
-                    jest.fn(),
+                    vi.fn(),
                 );
 
                 expect(loggerMock.warning).toHaveBeenCalledWith('Something went wrong');
@@ -224,11 +224,11 @@ describe('sessionAccessTokenMiddleware', () => {
                 client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: true }));
 
                 client.refresh.mockRejectedValue('Something went seriously wrong');
-                const loggerMock: ClassLogger = createMock<ClassLogger>();
+                const loggerMock: ClassLogger = createMock(ClassLogger);
                 await new SessionAccessTokenMiddleware(client, loggerMock, createMock()).use(
                     request,
                     createMock(),
-                    jest.fn(),
+                    vi.fn(),
                 );
 
                 expect(loggerMock.warning).toHaveBeenCalledWith(

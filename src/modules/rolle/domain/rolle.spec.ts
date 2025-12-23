@@ -1,4 +1,4 @@
-import { MockedObject, vi } from 'vitest';
+import { DeepMocked, vi } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { RollenArt, RollenMerkmal } from './rolle.enums.js';
@@ -7,7 +7,7 @@ import { Rolle } from './rolle.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
-import { createMock } from '@golevelup/ts-vitest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RolleFactory } from './rolle.factory.js';
@@ -21,8 +21,8 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 describe('Rolle Aggregate', () => {
     let module: TestingModule;
     let rolleFactory: RolleFactory;
-    let serviceProviderRepoMock: MockedObject<ServiceProviderRepo>;
-    let organisationRepo: MockedObject<OrganisationRepository>;
+    let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
+    let organisationRepo: DeepMocked<OrganisationRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -31,23 +31,23 @@ describe('Rolle Aggregate', () => {
                 PersonenkontextFactory,
                 {
                     provide: ServiceProviderRepo,
-                    useValue: createMock<ServiceProviderRepo>(),
+                    useValue: createMock(ServiceProviderRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
             ],
         }).compile();

@@ -1,18 +1,18 @@
 import { AccessGuard, DISABLE_ACCESS_GUARD_FLAG } from './access.guard.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Reflector } from '@nestjs/core';
 import { ExecutionContext } from '@nestjs/common';
 import express from 'express';
 import { AuthGuard, IAuthGuard } from '@nestjs/passport';
 
-const canActivateSpy: jest.SpyInstance = jest.spyOn(AuthGuard('jwt').prototype as IAuthGuard, 'canActivate');
+const canActivateSpy: Mock = vi.spyOn(AuthGuard('jwt').prototype as IAuthGuard, 'canActivate');
 
 describe('The access guard', () => {
     let reflector: DeepMocked<Reflector>;
     let sut: AccessGuard;
 
     beforeEach(() => {
-        reflector = createMock<Reflector>();
+        reflector = createMock(Reflector);
         sut = new AccessGuard(reflector);
     });
 

@@ -3,7 +3,7 @@ import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 
 import { ImportController } from './import.controller.js';
 import { ImportWorkflowFactory } from '../domain/import-workflow.factory.js';
@@ -33,19 +33,19 @@ describe('Import API with mocked ImportWorkflow', () => {
                 },
                 {
                     provide: ImportWorkflowFactory,
-                    useValue: createMock<ImportWorkflowFactory>(),
+                    useValue: createMock(ImportWorkflowFactory),
                 },
                 {
                     provide: ImportWorkflow,
-                    useValue: createMock<ImportWorkflow>(),
+                    useValue: createMock(ImportWorkflow),
                 },
                 {
                     provide: ImportVorgangRepository,
-                    useValue: createMock<ImportVorgangRepository>(),
+                    useValue: createMock(ImportVorgangRepository),
                 },
                 {
                     provide: ImportDataRepository,
-                    useValue: createMock<ImportDataRepository>(),
+                    useValue: createMock(ImportDataRepository),
                 },
                 ImportController,
             ],
@@ -57,7 +57,7 @@ describe('Import API with mocked ImportWorkflow', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('/POST download the import result', () => {

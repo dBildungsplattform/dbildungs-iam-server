@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -51,20 +51,20 @@ describe('Provider Controller Test', () => {
                 },
                 {
                     provide: OIDC_CLIENT,
-                    useValue: createMock<Client>(),
+                    useValue: createMock(Client),
                 },
             ],
         })
             .overrideProvider(ServiceProviderService)
-            .useValue(createMock<ServiceProviderService>())
+            .useValue(createMock(ServiceProviderService))
             .overrideProvider(ServiceProviderRepo)
-            .useValue(createMock<ServiceProviderRepo>())
+            .useValue(createMock(ServiceProviderRepo))
             .compile();
 
         serviceProviderServiceMock = module.get<DeepMocked<ServiceProviderService>>(ServiceProviderService);
         serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         providerController = module.get(ProviderController);
-        personPermissionsMock = createMock<PersonPermissions>();
+        personPermissionsMock = createMock(PersonPermissions);
 
         app = module.createNestApplication();
         await app.init();
@@ -82,14 +82,14 @@ describe('Provider Controller Test', () => {
         let providerController: ProviderController;
 
         beforeEach(() => {
-            permissionsMock = createMock<PersonPermissions>();
-            rollenerweiterungRepoMock = createMock<RollenerweiterungRepo>();
-            rolleRepoMock = createMock<RolleRepo>();
-            organisationRepositoryMock = createMock<OrganisationRepository>();
+            permissionsMock = createMock(PersonPermissions);
+            rollenerweiterungRepoMock = createMock(RollenerweiterungRepo);
+            rolleRepoMock = createMock(RolleRepo);
+            organisationRepositoryMock = createMock(OrganisationRepository);
             providerController = new ProviderController(
-                createMock<StreamableFileFactory>(),
-                createMock<ServiceProviderRepo>(),
-                createMock<ServiceProviderService>(),
+                createMock(StreamableFileFactory),
+                createMock(ServiceProviderRepo),
+                createMock(ServiceProviderService),
                 rollenerweiterungRepoMock,
                 rolleRepoMock,
                 organisationRepositoryMock,

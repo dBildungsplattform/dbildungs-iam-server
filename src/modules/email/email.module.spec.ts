@@ -3,7 +3,7 @@ import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../.
 import { EmailModule } from './email.module.js';
 import { EmailRepo } from './persistence/email.repo.js';
 import { EmailFactory } from './domain/email.factory.js';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock } from '../../../test/utils/createMock.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 
 describe('EmailModule', () => {
@@ -15,7 +15,7 @@ describe('EmailModule', () => {
             providers: [],
         })
             .overrideProvider(PersonRepository)
-            .useValue(createMock<PersonRepository>())
+            .useValue(createMock(PersonRepository))
             .compile();
     });
 

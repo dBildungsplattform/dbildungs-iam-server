@@ -14,7 +14,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { Observable } from 'rxjs';
 import { Request } from 'express';
@@ -107,7 +107,7 @@ describe('Import API', () => {
             ],
         })
             .overrideProvider(PersonPermissionsRepo)
-            .useValue(createMock<PersonPermissionsRepo>())
+            .useValue(createMock(PersonPermissionsRepo))
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
             .compile();
@@ -122,7 +122,7 @@ describe('Import API', () => {
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
         importVorgangRepository = module.get(ImportVorgangRepository);
 
-        personPermissionsMock = createMock<PersonPermissions>();
+        personPermissionsMock = createMock(PersonPermissions);
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
         personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
         personPermissionsMock.personFields.username = faker.internet.userName();

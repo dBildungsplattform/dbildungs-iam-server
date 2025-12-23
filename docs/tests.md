@@ -103,7 +103,7 @@ When assigning a value to an expect, separate the function call from the expecta
 
 Using the utilities provided by NestJs, we can easily inject mocks into our testing module. The mocks themselves, we create using a [library](https://www.npmjs.com/package/@golevelup/ts-vitest) by @golevelup.
 
-You can create a mock using `createMock<Class>()`. As result you will recieved a `DeepMocked<Class>`
+You can create a mock using `createMock(Class)`. As result you will recieved a `DeepMocked<Class>`
 
 ```Typescript
 let fut: FeatureUnderTest;
@@ -115,7 +115,7 @@ beforeAll(async () => {
    FeatureUnderTest,
    {
     provide: MockService,
-    useValue: createMock<MockService>(),
+    useValue: createMock(MockService),
    },
   ],
  }).compile();

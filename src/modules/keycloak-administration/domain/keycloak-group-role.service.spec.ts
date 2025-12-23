@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 
@@ -17,8 +17,8 @@ describe('KeycloakGroupRoleService', () => {
     let kcRolesMock: DeepMocked<KeycloakAdminClient['roles']>;
 
     beforeAll(async () => {
-        kcGroupsMock = createMock<KeycloakAdminClient['groups']>();
-        kcRolesMock = createMock<KeycloakAdminClient['roles']>();
+        kcGroupsMock = createMock(KeycloakAdminClient['groups']);
+        kcRolesMock = createMock(KeycloakAdminClient['roles']);
 
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, LoggingTestModule],
@@ -40,7 +40,7 @@ describe('KeycloakGroupRoleService', () => {
                 },
                 {
                     provide: PersonService,
-                    useValue: createMock<PersonService>(),
+                    useValue: createMock(PersonService),
                 },
             ],
         }).compile();
@@ -49,7 +49,7 @@ describe('KeycloakGroupRoleService', () => {
     });
 
     beforeEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     afterAll(async () => {
@@ -209,7 +209,7 @@ describe('KeycloakGroupRoleService', () => {
                     ok: true,
                     value: createMock<KeycloakAdminClient>({
                         roles: {
-                            findOneByName: jest.fn().mockResolvedValueOnce(undefined),
+                            findOneByName: vi.fn().mockResolvedValueOnce(undefined),
                         },
                     }),
                 });
@@ -229,10 +229,10 @@ describe('KeycloakGroupRoleService', () => {
                     ok: true,
                     value: createMock<KeycloakAdminClient>({
                         roles: {
-                            findOneByName: jest.fn().mockResolvedValueOnce({ id: faker.string.uuid(), name: roleName }),
+                            findOneByName: vi.fn().mockResolvedValueOnce({ id: faker.string.uuid(), name: roleName }),
                         },
                         groups: {
-                            addRealmRoleMappings: jest.fn().mockResolvedValueOnce(undefined),
+                            addRealmRoleMappings: vi.fn().mockResolvedValueOnce(undefined),
                         },
                     }),
                 });
@@ -252,7 +252,7 @@ describe('KeycloakGroupRoleService', () => {
                     ok: true,
                     value: createMock<KeycloakAdminClient>({
                         roles: {
-                            findOneByName: jest.fn().mockResolvedValueOnce({ id: faker.string.uuid(), name: roleName }),
+                            findOneByName: vi.fn().mockResolvedValueOnce({ id: faker.string.uuid(), name: roleName }),
                         },
                         groups: {
                             addRealmRoleMappings: jest

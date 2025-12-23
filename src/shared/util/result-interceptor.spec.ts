@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { ResultInterceptor } from './result-interceptor.js';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { Observable, of } from 'rxjs';
@@ -23,7 +23,7 @@ describe('ResultInterceptor', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -33,7 +33,7 @@ describe('ResultInterceptor', () => {
     describe('intercept', () => {
         describe('when result of intercepted method is ok:true, value:string', () => {
             it('should be defined', () => {
-                const executionContext: ExecutionContext = createMock<ExecutionContext>();
+                const executionContext: ExecutionContext = createMock(ExecutionContext);
                 const callHandler: CallHandler<Result<string>> = {
                     handle(): Observable<Result<string>> {
                         return of({
@@ -52,7 +52,7 @@ describe('ResultInterceptor', () => {
         describe('when result of intercepted method is ok:false, error', () => {
             describe('when error is EntityNotFoundError', () => {
                 it('should be defined', () => {
-                    const executionContext: ExecutionContext = createMock<ExecutionContext>();
+                    const executionContext: ExecutionContext = createMock(ExecutionContext);
                     const callHandler: CallHandler<Result<string>> = {
                         handle(): Observable<Result<string>> {
                             return of({
@@ -73,7 +73,7 @@ describe('ResultInterceptor', () => {
             });
             describe('when error is other error', () => {
                 it('should be defined', () => {
-                    const executionContext: ExecutionContext = createMock<ExecutionContext>();
+                    const executionContext: ExecutionContext = createMock(ExecutionContext);
                     const callHandler: CallHandler<Result<string>> = {
                         handle(): Observable<Result<string>> {
                             return of({

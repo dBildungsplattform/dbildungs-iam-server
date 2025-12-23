@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker/';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
@@ -40,9 +40,9 @@ describe('AuthenticationController', () => {
     let authController: AuthenticationController;
     let oidcClient: DeepMocked<Client>;
     let frontendConfig: FrontendConfig;
-    const keycloakUserServiceMock: DeepMocked<KeycloakUserService> = createMock<KeycloakUserService>();
+    const keycloakUserServiceMock: DeepMocked<KeycloakUserService> = createMock(KeycloakUserService);
     let keyCloakConfig: KeycloakConfig;
-    const personTimeLimitServiceMock: DeepMocked<PersonTimeLimitService> = createMock<PersonTimeLimitService>();
+    const personTimeLimitServiceMock: DeepMocked<PersonTimeLimitService> = createMock(PersonTimeLimitService);
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
@@ -60,19 +60,19 @@ describe('AuthenticationController', () => {
                 UserExternaldataWorkflowFactory,
                 {
                     provide: PersonPermissionsRepo,
-                    useValue: createMock<PersonPermissionsRepo>(),
+                    useValue: createMock(PersonPermissionsRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: OIDC_CLIENT,
-                    useValue: createMock<Client>(),
+                    useValue: createMock(Client),
                 },
                 {
                     provide: KeycloakUserService,
@@ -85,9 +85,9 @@ describe('AuthenticationController', () => {
             ],
         })
             .overrideProvider(PersonRepository)
-            .useValue(createMock<PersonRepository>())
+            .useValue(createMock(PersonRepository))
             .overrideProvider(DBiamPersonenkontextRepo)
-            .useValue(createMock<DBiamPersonenkontextRepo>())
+            .useValue(createMock(DBiamPersonenkontextRepo))
             .compile();
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
@@ -113,7 +113,7 @@ describe('AuthenticationController', () => {
 
     describe('Login', () => {
         it('should redirect', () => {
-            const responseMock: Response = createMock<Response>();
+            const responseMock: Response = createMock(Response);
             const session: SessionData = { cookie: { originalMaxAge: 0 } };
 
             authController.login(responseMock, session);
@@ -122,7 +122,7 @@ describe('AuthenticationController', () => {
         });
 
         it('should redirect to saved redirectUrl', () => {
-            const responseMock: Response = createMock<Response>();
+            const responseMock: Response = createMock(Response);
             const user: { redirect_uri: string } = { redirect_uri: faker.internet.url() };
             const passport: { user: { redirect_uri: string } } = { user: user };
             const sessionMock: SessionData = createMock<SessionData>({
@@ -138,7 +138,7 @@ describe('AuthenticationController', () => {
 
     describe('Logout', () => {
         function setupRequest(passportUser?: PassportUser, logoutErr?: Error, destroyErr?: Error): Request {
-            const sessionMock: DeepMocked<Session> = createMock<Session>();
+            const sessionMock: DeepMocked<Session> = createMock(Session);
             const requestMock: DeepMocked<Request> = createMock<Request>({
                 session: sessionMock,
                 passportUser,
@@ -190,7 +190,7 @@ describe('AuthenticationController', () => {
             it('should redirect to return value of endSessionUrl', () => {
                 const user: PassportUser = createMock<PassportUser>({ id_token: faker.string.alphanumeric(32) });
                 const requestMock: Request = setupRequest(user);
-                const responseMock: Response = createMock<Response>();
+                const responseMock: Response = createMock(Response);
                 oidcClient.issuer.metadata = createMock<IssuerMetadata>({ end_session_endpoint: faker.internet.url() });
                 const endSessionUrl: string = faker.internet.url();
                 oidcClient.endSessionUrl.mockReturnValueOnce(endSessionUrl);
@@ -204,7 +204,7 @@ describe('AuthenticationController', () => {
         describe('when end_session_endpoint is not defined', () => {
             it('should return to redirectUrl param', () => {
                 const requestMock: Request = setupRequest();
-                const responseMock: Response = createMock<Response>();
+                const responseMock: Response = createMock(Response);
                 oidcClient.issuer.metadata = createMock<IssuerMetadata>({ end_session_endpoint: undefined });
 
                 authController.logout(requestMock, responseMock);
@@ -232,7 +232,7 @@ describe('AuthenticationController', () => {
 
     describe('info', () => {
         function setupRequest(passportUser?: PassportUser): Request {
-            const sessionMock: DeepMocked<Session> = createMock<Session>();
+            const sessionMock: DeepMocked<Session> = createMock(Session);
             const requestMock: DeepMocked<Request> = createMock<Request>({
                 session: sessionMock,
                 passportUser,
@@ -250,7 +250,7 @@ describe('AuthenticationController', () => {
                 getPersonenkontexteWithRolesAndOrgs: (): Promise<PersonenkontextRolleWithOrganisation[]> =>
                     Promise.resolve([
                         {
-                            organisation: createMock<Organisation<true>>(),
+                            organisation: createMock(Organisation<true>),
                             rolle: { systemrechte: [RollenSystemRecht.PERSONEN_VERWALTEN], serviceProviderIds: [] },
                         },
                     ]),
@@ -276,7 +276,7 @@ describe('AuthenticationController', () => {
 
     describe('ResetPassword', () => {
         it('should redirect to the correct Keycloak URL', () => {
-            const responseMock: Response = createMock<Response>();
+            const responseMock: Response = createMock(Response);
             const redirectUrl: string = faker.internet.url();
             const loginHint: string = faker.internet.userName();
             authController.resetPassword(redirectUrl, loginHint, responseMock);

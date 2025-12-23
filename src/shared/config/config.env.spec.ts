@@ -2,7 +2,7 @@ import configEnv, { Config } from './config.env.js';
 
 describe('Config Loader', () => {
     beforeEach(() => {
-        jest.resetModules();
+        vi.resetModules();
         process.env = {};
     });
 

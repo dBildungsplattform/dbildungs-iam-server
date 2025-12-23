@@ -1,5 +1,5 @@
 import { ArgumentsHost } from '@nestjs/common';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { AuthenticationDomainError } from '../domain/authentication-domain.error.js';
@@ -19,7 +19,7 @@ describe('AuthenticationExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new AuthenticationExceptionFilter();
-        responseMock = createMock<Response>();
+        responseMock = createMock(Response);
         argumentsHost = createMock<ArgumentsHost>({
             switchToHttp: () =>
                 createMock<HttpArgumentsHost>({

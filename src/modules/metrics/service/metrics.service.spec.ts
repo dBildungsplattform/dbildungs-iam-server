@@ -1,18 +1,18 @@
 // Mocks for Counter and Gauge
-let incMock: jest.Mock;
-let setMock: jest.Mock;
+let incMock: Mock;
+let setMock: Mock;
 
-jest.mock('prom-client', () => {
-    const originalModule: typeof import('prom-client') = jest.requireActual('prom-client');
+Mock('prom-client', () => {
+    const originalModule: typeof import('prom-client') = vi.requireActual('prom-client');
 
     return {
         ...originalModule,
-        Counter: jest.fn().mockImplementation(() => {
+        Counter: vi.fn().mockImplementation(() => {
             return {
                 inc: incMock,
             };
         }),
-        Gauge: jest.fn().mockImplementation(() => {
+        Gauge: vi.fn().mockImplementation(() => {
             return {
                 set: setMock,
             };
@@ -29,8 +29,8 @@ describe('MetricsService', () => {
 
     beforeEach(async () => {
         // Initialize mocks before each test
-        incMock = jest.fn();
-        setMock = jest.fn();
+        incMock = vi.fn();
+        setMock = vi.fn();
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [

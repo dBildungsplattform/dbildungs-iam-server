@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { ArgumentsHost } from '@nestjs/common';
 
 import { HttpArgumentsHost } from '@nestjs/common/interfaces';
@@ -13,7 +13,7 @@ describe('LandesbediensteterExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new LandesbediensteterExceptionFilter();
-        responseMock = createMock<Response>();
+        responseMock = createMock(Response);
         argumentsHost = createMock<ArgumentsHost>({
             switchToHttp: () =>
                 createMock<HttpArgumentsHost>({

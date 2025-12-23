@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
@@ -45,7 +45,7 @@ describe('LandesbediensteterController', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         landesbediensteteWorkflowFactoryMock.createNew.mockReturnValueOnce(workflowMock);
     });
 

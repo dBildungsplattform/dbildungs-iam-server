@@ -1,5 +1,5 @@
 import { Observable, from, lastValueFrom } from 'rxjs';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { DISABLE_PAGING_INTERCEPTOR, GlobalPagingHeadersInterceptor } from './global-paging-headers.interceptor.js';
 import { Response } from 'express';
@@ -16,7 +16,7 @@ describe('GlobalPagingHeadersInterceptor', () => {
     describe('intercept', () => {
         describe('when intercepting a paged response', () => {
             beforeEach(() => {
-                responseMock = createMock<Response>();
+                responseMock = createMock(Response);
                 contextMock = createMock<ExecutionContext>({
                     switchToHttp: () =>
                         createMock<HttpArgumentsHost>({
@@ -49,7 +49,7 @@ describe('GlobalPagingHeadersInterceptor', () => {
 
         describe('when intercepting a non paged response', () => {
             beforeEach(() => {
-                responseMock = createMock<Response>();
+                responseMock = createMock(Response);
                 contextMock = createMock<ExecutionContext>({
                     switchToHttp: () =>
                         createMock<HttpArgumentsHost>({
@@ -79,8 +79,8 @@ describe('GlobalPagingHeadersInterceptor', () => {
 
         describe('when endpoint should be ignored', () => {
             beforeEach(() => {
-                responseMock = createMock<Response>();
-                const handlerMock: jest.Mock = jest.fn();
+                responseMock = createMock(Response);
+                const handlerMock: Mock = vi.fn();
                 Reflect.defineMetadata(DISABLE_PAGING_INTERCEPTOR, true, handlerMock);
                 contextMock = createMock<ExecutionContext>({
                     getHandler: () => handlerMock,

@@ -1,5 +1,5 @@
 import { JwtStrategy } from './jwt.strategy.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { BaseClient, Client } from 'openid-client';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
@@ -11,7 +11,7 @@ describe('JWT Strategy', () => {
         const client: DeepMocked<BaseClient> = createMock<Client>({
             issuer: { metadata: { jwks_uri: 'https://nowhere.example.com' } },
         });
-        const personRepositoryMock: DeepMocked<PersonRepository> = createMock<PersonRepository>();
+        const personRepositoryMock: DeepMocked<PersonRepository> = createMock(PersonRepository);
         const sut: JwtStrategy = new JwtStrategy(client, personRepositoryMock);
         const request: Request = createMock<Request & { headers: { authorization: string } }>({
             headers: { authorization: 'Bearer 12345' },
@@ -25,7 +25,7 @@ describe('JWT Strategy', () => {
         const client: DeepMocked<BaseClient> = createMock<Client>({
             issuer: { metadata: { jwks_uri: 'https://nowhere.example.com' } },
         });
-        const personRepositoryMock: DeepMocked<PersonRepository> = createMock<PersonRepository>();
+        const personRepositoryMock: DeepMocked<PersonRepository> = createMock(PersonRepository);
         const sut: JwtStrategy = new JwtStrategy(client, personRepositoryMock);
         const request: Request = createMock<Request & { headers: { authorization: string } }>({
             headers: { authorization: '' },
@@ -39,11 +39,11 @@ describe('JWT Strategy', () => {
         const client: DeepMocked<BaseClient> = createMock<Client>({
             issuer: { metadata: { jwks_uri: 'https://nowhere.example.com' } },
         });
-        const personRepositoryMock: DeepMocked<PersonRepository> = createMock<PersonRepository>();
+        const personRepositoryMock: DeepMocked<PersonRepository> = createMock(PersonRepository);
         personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
         const sut: JwtStrategy = new JwtStrategy(client, personRepositoryMock);
 
-        jest.spyOn(jwt, 'decode').mockReturnValue({
+        vi.spyOn(jwt, 'decode').mockReturnValue({
             sub: faker.string.uuid().toString(),
         });
         const request: Request = createMock<Request & { headers: { authorization: string } }>({

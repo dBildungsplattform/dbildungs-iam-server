@@ -126,7 +126,7 @@ describe('dbiam Personenkontext Repo', () => {
                 },
                 {
                     provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
+                    useValue: createMock(UserLockRepository),
                 },
             ],
         }).compile();

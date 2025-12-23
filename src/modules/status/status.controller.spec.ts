@@ -14,7 +14,7 @@ describe('StatusController', () => {
                 {
                     provide: ConfigService,
                     useValue: {
-                        getOrThrow: jest.fn().mockReturnValue({ STATUS_REDIRECT_URL: 'http://example.com/status' }),
+                        getOrThrow: vi.fn().mockReturnValue({ STATUS_REDIRECT_URL: 'http://example.com/status' }),
                     },
                 },
             ],

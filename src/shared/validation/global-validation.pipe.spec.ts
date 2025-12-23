@@ -39,7 +39,7 @@ describe('GlobalValidationPipe', () => {
                 type: 'body',
                 metatype: CreatedOrganisationDto,
             })
-            .then(() => fail('should have thrown DetailedValidationError'))
+            .then(() => throw new Error('should have thrown DetailedValidationError'))
             .catch((error: Error) => {
                 expect(error.name).toBe(DetailedValidationError.name);
             });

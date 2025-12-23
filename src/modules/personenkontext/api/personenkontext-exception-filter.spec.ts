@@ -1,5 +1,5 @@
 import { ArgumentsHost } from '@nestjs/common';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
@@ -22,7 +22,7 @@ describe('PersonenkontextExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new PersonenkontextExceptionFilter();
-        responseMock = createMock<Response>();
+        responseMock = createMock(Response);
         argumentsHost = createMock<ArgumentsHost>({
             switchToHttp: () =>
                 createMock<HttpArgumentsHost>({

@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { faker } from '@faker-js/faker';
 import { PersonDeleteService } from './person-delete.service.js';
@@ -26,15 +26,15 @@ describe('PersonDeleteService', () => {
                 PersonDeleteService,
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock(ClassLogger),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
             ],
         }).compile();
@@ -50,7 +50,7 @@ describe('PersonDeleteService', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -64,7 +64,7 @@ describe('PersonDeleteService', () => {
 
                 const res: Result<void, DomainError> = await sut.deletePerson(
                     faker.string.uuid(),
-                    createMock<PersonPermissions>(),
+                    createMock(PersonPermissions),
                 );
 
                 expect(res.ok).toBeFalsy();
@@ -157,7 +157,7 @@ describe('PersonDeleteService', () => {
 
                 const res: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
                     faker.string.uuid(),
-                    createMock<PersonPermissions>(),
+                    createMock(PersonPermissions),
                 );
 
                 expect(res.ok).toBeFalsy();

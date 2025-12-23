@@ -1,5 +1,5 @@
 import { ArgumentsHost } from '@nestjs/common';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
@@ -19,7 +19,7 @@ describe('OrganisationExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new OrganisationExceptionFilter();
-        responseMock = createMock<Response>();
+        responseMock = createMock(Response);
         argumentsHost = createMock<ArgumentsHost>({
             switchToHttp: () =>
                 createMock<HttpArgumentsHost>({

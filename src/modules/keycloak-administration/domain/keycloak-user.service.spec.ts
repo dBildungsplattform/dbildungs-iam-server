@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     CredentialRepresentation,
@@ -31,8 +31,8 @@ describe('KeycloakUserService', () => {
     let userLockRepository: DeepMocked<UserLockRepository>;
 
     beforeAll(async () => {
-        kcUsersMock = createMock<KeycloakAdminClient['users']>();
-        kcGroupsMock = createMock<KeycloakAdminClient['groups']>();
+        kcUsersMock = createMock(KeycloakAdminClient['users']);
+        kcGroupsMock = createMock(KeycloakAdminClient['groups']);
 
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, LoggingTestModule],
@@ -54,11 +54,11 @@ describe('KeycloakUserService', () => {
                 },
                 {
                     provide: PersonService,
-                    useValue: createMock<PersonService>(),
+                    useValue: createMock(PersonService),
                 },
                 {
                     provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
+                    useValue: createMock(UserLockRepository),
                 },
             ],
         }).compile();
@@ -69,7 +69,7 @@ describe('KeycloakUserService', () => {
     });
 
     beforeEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     afterAll(async () => {
@@ -1090,7 +1090,7 @@ describe('KeycloakUserService', () => {
             };
             it('should create user lock successfully', async () => {
                 const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
-                    users: { update: jest.fn().mockResolvedValueOnce(undefined) },
+                    users: { update: vi.fn().mockResolvedValueOnce(undefined) },
                 });
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
                     ok: true,
@@ -1110,7 +1110,7 @@ describe('KeycloakUserService', () => {
             });
             it('should update existing user lock successfully', async () => {
                 const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
-                    users: { update: jest.fn().mockResolvedValueOnce(undefined) },
+                    users: { update: vi.fn().mockResolvedValueOnce(undefined) },
                 });
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
                     ok: true,
@@ -1132,7 +1132,7 @@ describe('KeycloakUserService', () => {
             });
             it('should unlock user successfully', async () => {
                 const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
-                    users: { update: jest.fn().mockResolvedValueOnce(undefined) },
+                    users: { update: vi.fn().mockResolvedValueOnce(undefined) },
                 });
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
                     ok: true,
@@ -1153,7 +1153,7 @@ describe('KeycloakUserService', () => {
             it('should return error if update fails', async () => {
                 kcUsersMock.update.mockRejectedValueOnce(new Error('Update failed'));
 
-                const lockMock: UserLock = createMock<UserLock>();
+                const lockMock: UserLock = createMock(UserLock);
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'person-id',
                     'user-id',
@@ -1173,7 +1173,7 @@ describe('KeycloakUserService', () => {
                     error: new KeycloakClientError('Could not authenticate'),
                 });
 
-                const lockMock: UserLock = createMock<UserLock>();
+                const lockMock: UserLock = createMock(UserLock);
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'person-id',
                     'user-id',
@@ -1218,7 +1218,7 @@ describe('KeycloakUserService', () => {
                 it('should return', async () => {
                     const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
                         users: {
-                            findOne: jest.fn().mockRejectedValueOnce(new Error('Retrieval failed')),
+                            findOne: vi.fn().mockRejectedValueOnce(new Error('Retrieval failed')),
                         },
                     });
                     adminService.getAuthedKcAdminClient.mockResolvedValueOnce({

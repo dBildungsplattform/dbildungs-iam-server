@@ -42,11 +42,11 @@ describe('ServiceProviderRepo', () => {
                 RolleFactory,
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 {
                     provide: RolleFactory,
-                    useValue: createMock<RolleFactory>(),
+                    useValue: createMock(RolleFactory),
                 },
             ],
         }).compile();

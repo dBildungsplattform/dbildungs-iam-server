@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
@@ -47,11 +47,11 @@ describe('PrivacyIdeaAdministrationController', () => {
             providers: [
                 {
                     provide: PrivacyIdeaAdministrationService,
-                    useValue: createMock<PrivacyIdeaAdministrationService>(),
+                    useValue: createMock(PrivacyIdeaAdministrationService),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
             ],
         }).compile();
@@ -78,7 +78,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: true,
                 value: person,
             });
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createMock(PersonPermissions);
 
             serviceMock.initializeSoftwareToken.mockResolvedValue('token123');
             const response: string = await sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock);
@@ -90,7 +90,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: false,
                 error: new Error('Forbidden access'),
             });
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createMock(PersonPermissions);
             await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
                 new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
             );
@@ -101,7 +101,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: true,
                 value: person,
             });
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createMock(PersonPermissions);
             serviceMock.initializeSoftwareToken.mockRejectedValueOnce(
                 new SoftwareTokenInitializationError('SoftwareToken Error'),
             );
@@ -152,7 +152,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 user_realm: '',
                 username: '',
             };
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createMock(PersonPermissions);
 
             serviceMock.getTwoAuthState.mockResolvedValue(mockTokenState);
             const response: TokenStateResponse = await sut.getTwoAuthState('user1', personPermissionsMock);
@@ -168,7 +168,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 value: person,
             });
 
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createMock(PersonPermissions);
 
             serviceMock.getTwoAuthState.mockResolvedValue(undefined);
             serviceMock.requires2fa.mockResolvedValue(twoFaRequired);
@@ -294,7 +294,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             });
 
             const personId: string = 'user1';
-            const entityCouldNotBeUpdatedError: EntityCouldNotBeUpdated = createMock<EntityCouldNotBeUpdated>();
+            const entityCouldNotBeUpdatedError: EntityCouldNotBeUpdated = createMock(EntityCouldNotBeUpdated);
             serviceMock.resetToken.mockRejectedValue(entityCouldNotBeUpdatedError);
 
             await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(
@@ -309,12 +309,12 @@ describe('PrivacyIdeaAdministrationController', () => {
 
     describe('PrivacyIdeaAdministrationController assignHardwareToken', () => {
         beforeEach(() => {
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createMock(PersonPermissions);
         });
 
         it('should successfully assign a hardware token', async () => {
-            const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
-            const mockAssignTokenResponse: AssignTokenResponse = createMock<AssignTokenResponse>();
+            const mockParams: AssignHardwareTokenBodyParams = createMock(AssignHardwareTokenBodyParams);
+            const mockAssignTokenResponse: AssignTokenResponse = createMock(AssignTokenResponse);
             const person: Person<true> = getPerson();
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
@@ -342,7 +342,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return forbidden if permissions are insufficient', async () => {
-            const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
+            const mockParams: AssignHardwareTokenBodyParams = createMock(AssignHardwareTokenBodyParams);
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: false,
@@ -355,7 +355,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return user not found if username is undefined', async () => {
-            const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
+            const mockParams: AssignHardwareTokenBodyParams = createMock(AssignHardwareTokenBodyParams);
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
@@ -368,7 +368,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should throw TokenError if service throws it', async () => {
-            const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
+            const mockParams: AssignHardwareTokenBodyParams = createMock(AssignHardwareTokenBodyParams);
             const tokenError: TokenError = new TokenError('Something went wrong', 'Error');
             const person: Person<true> = getPerson();
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
@@ -382,9 +382,9 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return mapped internal server error for unexpected error', async () => {
-            const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
+            const mockParams: AssignHardwareTokenBodyParams = createMock(AssignHardwareTokenBodyParams);
             const unexpectedError: Error = new Error('Unexpected error');
-            const entityCouldNotBeCreatedError: EntityCouldNotBeCreated = createMock<EntityCouldNotBeCreated>();
+            const entityCouldNotBeCreatedError: EntityCouldNotBeCreated = createMock(EntityCouldNotBeCreated);
             const person: Person<true> = getPerson();
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
@@ -403,10 +403,10 @@ describe('PrivacyIdeaAdministrationController', () => {
 
     describe('PrivacyIdeaAdministrationController verify', () => {
         it('should successfully verify token', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createMock(PersonPermissions);
             const person: Person<true> = getPerson();
 
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            vi.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
                 ok: true,
                 value: person,
             });
@@ -414,7 +414,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             await sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock);
         });
         it('should throw an error when trying to verify', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createMock(PersonPermissions);
             const person: Person<true> = getPerson();
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
@@ -430,9 +430,9 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return forbidden insufficient permissions', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createMock(PersonPermissions);
 
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            vi.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
                 ok: false,
                 error: new Error('Forbidden access'),
             });
@@ -443,9 +443,9 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return user not found if username is undefined', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createMock(PersonPermissions);
 
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            vi.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
                 ok: true,
                 value: getPerson(true),
             });
@@ -458,7 +458,7 @@ describe('PrivacyIdeaAdministrationController', () => {
 
     describe('requires2fa', () => {
         beforeEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: getPerson() });
         });
 

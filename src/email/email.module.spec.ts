@@ -1,11 +1,13 @@
+import { vi } from 'vitest';
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../test/utils/createMock.js';
 import { RedisClientType } from 'redis';
 import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../test/utils/index.js';
 import { EmailModule } from './email.module.js';
 
-jest.mock('redis', () => ({
-    createClient: (): RedisClientType => createMock<RedisClientType>(),
+vi.mock('redis', () => ({
+    createClient: (): RedisClientType => createMock(RedisClientType),
 }));
 
 describe('EmailModule', () => {

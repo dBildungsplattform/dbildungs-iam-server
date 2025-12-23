@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -22,7 +22,7 @@ describe('Permission Interceptor', () => {
                 PermissionsInterceptor,
                 {
                     provide: PersonPermissionsRepo,
-                    useValue: createMock<PersonPermissionsRepo>(),
+                    useValue: createMock(PersonPermissionsRepo),
                 },
             ],
         }).compile();
@@ -36,7 +36,7 @@ describe('Permission Interceptor', () => {
     });
 
     it('should call next middleware', () => {
-        const nextMock: DeepMocked<CallHandler> = createMock<CallHandler>();
+        const nextMock: DeepMocked<CallHandler> = createMock(CallHandler);
 
         sut.intercept(createMock(), nextMock);
 
@@ -54,7 +54,7 @@ describe('Permission Interceptor', () => {
             const context: DeepMocked<ExecutionContext> = createMock<ExecutionContext>({
                 switchToHttp: () => createMock<HttpArgumentsHost>({ getRequest: () => request }),
             });
-            permissionRepoMock.loadPersonPermissions.mockResolvedValueOnce(createMock<PersonPermissions>());
+            permissionRepoMock.loadPersonPermissions.mockResolvedValueOnce(createMock(PersonPermissions));
 
             sut.intercept(context, createMock());
             await expect(request.passportUser?.personPermissions()).resolves.toBeDefined();

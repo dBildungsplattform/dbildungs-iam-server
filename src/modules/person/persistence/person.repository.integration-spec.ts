@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Collection, EntityManager, MikroORM, ref, RequiredEntityData } from '@mikro-orm/core';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -103,19 +103,19 @@ describe('PersonRepository Integration', () => {
                 ConfigService,
                 {
                     provide: EmailRepo,
-                    useValue: createMock<EmailRepo>(),
+                    useValue: createMock(EmailRepo),
                 },
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 {
                     provide: UsernameGeneratorService,
-                    useValue: createMock<UsernameGeneratorService>(),
+                    useValue: createMock(UsernameGeneratorService),
                 },
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>(),
+                    useValue: createMock(KeycloakUserService),
                 },
                 // the following are required to prepare the test for findByIds()
                 OrganisationRepository,
@@ -128,12 +128,12 @@ describe('PersonRepository Integration', () => {
             ],
         })
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .compile();
         sut = module.get(PersonRepository);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        personPermissionsMock = createMock<PersonPermissions>();
+        personPermissionsMock = createMock(PersonPermissions);
 
         kcUserServiceMock = module.get(KeycloakUserService);
         usernameGeneratorService = module.get(UsernameGeneratorService);

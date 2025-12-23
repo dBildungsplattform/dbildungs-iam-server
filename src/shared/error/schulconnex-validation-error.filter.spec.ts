@@ -1,7 +1,7 @@
 import { DetailedValidationError } from '../validation/detailed-validation.error.js';
 import { SchulConnexValidationErrorFilter } from './schulconnex-validation-error.filter.js';
 import { ArgumentsHost } from '@nestjs/common';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { ValidationError } from 'class-validator';
@@ -72,7 +72,7 @@ describe('SchulconnexValidationErrorFilter', () => {
 
     beforeEach(() => {
         filter = new SchulConnexValidationErrorFilter();
-        responseMock = createMock<Response>();
+        responseMock = createMock(Response);
         argumentsHost = createMock<ArgumentsHost>({
             switchToHttp: () =>
                 createMock<HttpArgumentsHost>({

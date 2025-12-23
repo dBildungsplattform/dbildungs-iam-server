@@ -19,7 +19,7 @@ describe('RolleExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new RolleExceptionFilter();
-        responseMock = createMock<Response>();
+        responseMock = createMock(Response);
         argumentsHost = createMock<ArgumentsHost>({
             switchToHttp: () =>
                 createMock<HttpArgumentsHost>({

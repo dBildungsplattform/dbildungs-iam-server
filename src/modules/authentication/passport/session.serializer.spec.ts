@@ -1,4 +1,4 @@
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { SessionSerializer } from './session.serializer.js';
@@ -25,7 +25,7 @@ describe('SessionSerializer', () => {
 
     describe('serializeUser', () => {
         it('should pass user to callback', () => {
-            const done: jest.Mock = jest.fn();
+            const done: Mock = vi.fn();
             const user: object = createMock();
 
             sut.serializeUser(user, done);
@@ -36,7 +36,7 @@ describe('SessionSerializer', () => {
 
     describe('deserializeUser', () => {
         it('should pass payload to callback', () => {
-            const done: jest.Mock = jest.fn();
+            const done: Mock = vi.fn();
             const payload: object = createMock();
 
             sut.deserializeUser(payload, done);

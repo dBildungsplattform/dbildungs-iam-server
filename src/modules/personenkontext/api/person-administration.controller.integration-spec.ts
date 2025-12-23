@@ -46,7 +46,7 @@ describe('PersonAdministrationController Integration Test', () => {
                 },
                 {
                     provide: PersonPermissionsRepo,
-                    useValue: createMock<PersonPermissionsRepo>(),
+                    useValue: createMock(PersonPermissionsRepo),
                 },
                 {
                     provide: APP_INTERCEPTOR,

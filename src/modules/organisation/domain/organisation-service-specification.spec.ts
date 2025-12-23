@@ -14,7 +14,7 @@ import { EventModule } from '../../../core/eventbus/index.js';
 import { Organisation } from './organisation.js';
 import { OrganisationsTyp } from './organisation.enums.js';
 import { mapOrgaAggregateToData, OrganisationRepository } from '../persistence/organisation.repository.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationsOnDifferentSubtreesError } from '../specification/error/organisations-on-different-subtrees.error.js';
@@ -62,7 +62,7 @@ describe('OrganisationServiceSpecificationTest', () => {
     });
 
     beforeEach(async () => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         await DatabaseTestModule.clearDatabase(orm);
         root = DoFactory.createOrganisation(true, {
             name: 'Root',
@@ -102,7 +102,7 @@ describe('OrganisationServiceSpecificationTest', () => {
     });
 
     describe('create', () => {
-        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+        const permissionsMock: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
         it('should return DomainError, when KlasseNurVonSchuleAdministriert specificaton is not satisfied and type is KLASSE', async () => {
             const klasseDo: Organisation<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Klasse',
@@ -156,7 +156,7 @@ describe('OrganisationServiceSpecificationTest', () => {
     });
 
     describe('update', () => {
-        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+        const permissionsMock: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
         it('should return DomainError, when klasse specifications are not satisfied and type is klasse', async () => {
             const klasse: Organisation<boolean> = DoFactory.createOrganisation(false, {
                 name: 'klasse',

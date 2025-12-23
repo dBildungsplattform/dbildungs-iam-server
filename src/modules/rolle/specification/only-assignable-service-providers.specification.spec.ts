@@ -1,5 +1,5 @@
-import { MockedObject, vi } from 'vitest';
-import { createMock } from '@golevelup/ts-vitest';
+import { DeepMocked, vi } from 'vitest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { xorBy } from 'lodash-es';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
@@ -52,7 +52,7 @@ type TestData = {
 };
 
 describe('OnlyAssignableServiceProviders', () => {
-    const serviceProviderRepoMock: MockedObject<ServiceProviderRepo> = createMock<ServiceProviderRepo>();
+    const serviceProviderRepoMock: DeepMocked<ServiceProviderRepo> = createMock(ServiceProviderRepo);
     beforeEach(() => {
         vi.restoreAllMocks();
     });

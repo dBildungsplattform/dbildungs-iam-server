@@ -26,7 +26,8 @@ export class NestLogger implements LoggerService {
     }
 
     public debug?(message: unknown): void {
-        this.moduleLogger.getLogger().debug(this.stringifiedMessage(message));
+        const logger = this.moduleLogger.getLogger();
+        logger.debug(this.stringifiedMessage(message));
     }
 
     private stringifiedMessage(message: unknown): string {

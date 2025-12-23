@@ -1,17 +1,17 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Reflector } from '@nestjs/core';
 import { ExecutionContext } from '@nestjs/common';
 import express from 'express';
 import { AccessApiKeyGuard } from './access.apikey.guard.js';
 
-const canActivateSpy: jest.SpyInstance = jest.spyOn(AccessApiKeyGuard.prototype, 'canActivate');
+const canActivateSpy: Mock = vi.spyOn(AccessApiKeyGuard.prototype, 'canActivate');
 
 describe('The access apikey guard', () => {
     let reflector: DeepMocked<Reflector>;
     let sut: AccessApiKeyGuard;
 
     beforeEach(() => {
-        reflector = createMock<Reflector>();
+        reflector = createMock(Reflector);
         sut = new AccessApiKeyGuard(reflector);
     });
 

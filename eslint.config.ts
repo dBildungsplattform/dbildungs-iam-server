@@ -1,7 +1,6 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import tseslint from 'typescript-eslint';
 import importPlugin from 'eslint-plugin-import';
-import jest from "eslint-plugin-jest";
 import { ESLint, Linter } from "eslint";
 import prettier from 'eslint-plugin-prettier';
 
@@ -91,7 +90,7 @@ export default defineConfig(
         extends: [
             tseslint.configs.recommendedTypeChecked,
         ],
-        plugins: { ...plugins, jest: jest },
+        plugins: { ...plugins },
         languageOptions: languageOptions,
         files: ['**/*spec.ts'],
         rules: {

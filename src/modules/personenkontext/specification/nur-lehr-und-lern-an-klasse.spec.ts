@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -12,7 +12,7 @@ describe('NurLehrUndLernAnKlasse specification', () => {
     const rolleRepoMock: DeepMocked<RolleRepo> = createMock();
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should return true, if organisation is klasse and rolle is LEHR', async () => {

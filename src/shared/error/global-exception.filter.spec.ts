@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { AbstractHttpAdapter, HttpAdapterHost } from '@nestjs/core';
@@ -19,14 +19,14 @@ describe('GlobalExceptionFilter', () => {
 
     beforeEach(() => {
         loggerMock = createMock<ClassLogger>({});
-        adapterImplMock = createMock<AbstractHttpAdapter>();
+        adapterImplMock = createMock(AbstractHttpAdapter);
         adapterHostMock = createMock<HttpAdapterHost>({
             get httpAdapter() {
                 return adapterImplMock;
             },
         });
         sut = new GlobalExceptionFilter(adapterHostMock, loggerMock);
-        responseMock = createMock<Response>();
+        responseMock = createMock(Response);
         argumentsHost = createMock<ArgumentsHost>({
             switchToHttp: () =>
                 createMock<HttpArgumentsHost>({

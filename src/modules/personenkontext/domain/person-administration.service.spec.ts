@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -23,15 +23,15 @@ describe('PersonAdministrationService', () => {
                 PersonAdministrationService,
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: PersonPermissions,
-                    useValue: createMock<PersonPermissions>(),
+                    useValue: createMock(PersonPermissions),
                 },
             ],
         }).compile();
@@ -46,7 +46,7 @@ describe('PersonAdministrationService', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {

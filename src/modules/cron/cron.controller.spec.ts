@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../test/utils/config-test.module.js';
@@ -53,39 +53,39 @@ describe('CronController', () => {
             providers: [
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>(),
+                    useValue: createMock(KeycloakUserService),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: PersonDeleteService,
-                    useValue: createMock<PersonDeleteService>(),
+                    useValue: createMock(PersonDeleteService),
                 },
                 {
                     provide: EmailAddressDeletionService,
-                    useValue: createMock<EmailAddressDeletionService>(),
+                    useValue: createMock(EmailAddressDeletionService),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: PersonenkontextWorkflowFactory,
-                    useValue: createMock<PersonenkontextWorkflowFactory>(),
+                    useValue: createMock(PersonenkontextWorkflowFactory),
                 },
                 {
                     provide: PersonenkontextWorkflowAggregate,
-                    useValue: createMock<PersonenkontextWorkflowAggregate>(),
+                    useValue: createMock(PersonenkontextWorkflowAggregate),
                 },
                 {
                     provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
+                    useValue: createMock(UserLockRepository),
                 },
                 {
                     provide: ServiceProviderService,
-                    useValue: createMock<ServiceProviderService>(),
+                    useValue: createMock(ServiceProviderService),
                 },
             ],
             controllers: [CronController],
@@ -99,13 +99,13 @@ describe('CronController', () => {
         personenkontextWorkflowFactoryMock = module.get(PersonenkontextWorkflowFactory);
         personenkontextWorkflowMock = module.get(PersonenkontextWorkflowAggregate);
         userLockRepositoryMock = module.get(UserLockRepository);
-        permissionsMock = createMock<PersonPermissions>();
+        permissionsMock = createMock(PersonPermissions);
         serviceProviderServiceMock = module.get(ServiceProviderService);
         emailAddressDeletionServiceMock = module.get(EmailAddressDeletionService);
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('/PUT cron/kopers-lock', () => {
@@ -376,7 +376,7 @@ describe('CronController', () => {
                     value: undefined,
                 });
 
-                const personPermissionsMock: PersonPermissions = createMock<PersonPermissions>();
+                const personPermissionsMock: PersonPermissions = createMock(PersonPermissions);
                 const result: boolean = await cronController.personWithoutOrgDelete(personPermissionsMock);
 
                 expect(result).toBe(true);
@@ -395,7 +395,7 @@ describe('CronController', () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce({ ids: [], total: 0 });
 
-                const personPermissionsMock: PersonPermissions = createMock<PersonPermissions>();
+                const personPermissionsMock: PersonPermissions = createMock(PersonPermissions);
                 const result: boolean = await cronController.personWithoutOrgDelete(personPermissionsMock);
 
                 expect(result).toBe(true);
@@ -427,7 +427,7 @@ describe('CronController', () => {
                     error: new MissingPermissionsError(''),
                 });
 
-                const personPermissionsMock: PersonPermissions = createMock<PersonPermissions>();
+                const personPermissionsMock: PersonPermissions = createMock(PersonPermissions);
                 const result: boolean = await cronController.personWithoutOrgDelete(personPermissionsMock);
 
                 expect(result).toBe(false);
@@ -445,7 +445,7 @@ describe('CronController', () => {
                     throw new Error('Some internal error');
                 });
 
-                const personPermissionsMock: PersonPermissions = createMock<PersonPermissions>();
+                const personPermissionsMock: PersonPermissions = createMock(PersonPermissions);
                 await expect(cronController.personWithoutOrgDelete(personPermissionsMock)).rejects.toThrow(
                     'Failed to remove users due to an internal server error.',
                 );
@@ -461,9 +461,9 @@ describe('CronController', () => {
     describe('/PUT cron/unlock', () => {
         describe('when there are users to unlock', () => {
             it('should return true when all users are successfully locked', async () => {
-                const mockPerson1: Person<true> = createMock<Person<true>>();
-                const mockPerson2: Person<true> = createMock<Person<true>>();
-                const mockPerson3: Person<true> = createMock<Person<true>>();
+                const mockPerson1: Person<true> = createMock(Person<true>);
+                const mockPerson2: Person<true> = createMock(Person<true>);
+                const mockPerson3: Person<true> = createMock(Person<true>);
                 const mockUserLock1: UserLock = {
                     person: mockPerson1.id,
                     created_at: new Date(),
@@ -517,7 +517,7 @@ describe('CronController', () => {
             it('should return false', async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 userLockRepositoryMock.getLocksToUnlock.mockResolvedValueOnce([]);
-                const personPermissionsMock: PersonPermissions = createMock<PersonPermissions>();
+                const personPermissionsMock: PersonPermissions = createMock(PersonPermissions);
 
                 const result: boolean = await cronController.unlockUsersWithExpiredLocks(personPermissionsMock);
 
@@ -528,9 +528,9 @@ describe('CronController', () => {
 
         describe('when unlocking users fails', () => {
             it('should return false when at least one user fails to unlock', async () => {
-                const mockPerson1: Person<true> = createMock<Person<true>>();
-                const mockPerson2: Person<true> = createMock<Person<true>>();
-                const mockPerson3: Person<true> = createMock<Person<true>>();
+                const mockPerson1: Person<true> = createMock(Person<true>);
+                const mockPerson2: Person<true> = createMock(Person<true>);
+                const mockPerson3: Person<true> = createMock(Person<true>);
                 const mockUserLock1: UserLock = {
                     person: mockPerson1.id,
                     created_at: new Date(),
@@ -605,8 +605,8 @@ describe('CronController', () => {
             });
 
             it('should return false if permission check for a user fails', async () => {
-                const mockPerson1: Person<true> = createMock<Person<true>>();
-                const mockPerson2: Person<true> = createMock<Person<true>>();
+                const mockPerson1: Person<true> = createMock(Person<true>);
+                const mockPerson2: Person<true> = createMock(Person<true>);
                 const mockUserLock1: UserLock = {
                     person: mockPerson1.id,
                     created_at: new Date(),

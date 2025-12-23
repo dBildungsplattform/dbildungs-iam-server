@@ -11,7 +11,7 @@ import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 import { GleicheRolleAnKlasseWieSchule } from './gleiche-rolle-an-klasse-wie-schule.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
@@ -79,34 +79,34 @@ describe('PersonenkontextSpecifications Integration', () => {
                 PersonenkontextFactory,
                 {
                     provide: EmailRepo,
-                    useValue: createMock<EmailRepo>(),
+                    useValue: createMock(EmailRepo),
                 },
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: DBiamPersonenkontextRepoInternal,
-                    useValue: createMock<DBiamPersonenkontextRepoInternal>(),
+                    useValue: createMock(DBiamPersonenkontextRepoInternal),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
             ],
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
             .overrideProvider(DBiamPersonenkontextRepo)
-            .useValue(createMock<DBiamPersonenkontextRepo>())
+            .useValue(createMock(DBiamPersonenkontextRepo))
             .compile();
         organisationRepoMock = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);
@@ -137,9 +137,9 @@ describe('PersonenkontextSpecifications Integration', () => {
 
     describe('Gleiche Rolle An Klasse Wie Schule', () => {
         it('should not be satisfied when rolle could not be found', async () => {
-            const klasse: Organisation<true> = createMock<Organisation<true>>();
+            const klasse: Organisation<true> = createMock(Organisation<true>);
             klasse.typ = OrganisationsTyp.KLASSE;
-            const schule: Organisation<true> = createMock<Organisation<true>>();
+            const schule: Organisation<true> = createMock(Organisation<true>);
             schule.typ = OrganisationsTyp.SCHULE;
             schule.id = faker.string.uuid();
             klasse.administriertVon = schule.id;

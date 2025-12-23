@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/index.js';
 import { RolleID } from '../../../shared/types/index.js';
@@ -55,19 +55,19 @@ describe('PersonPermissions', () => {
                 PersonenkontextFactory,
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 PersonenkontextFactory,
             ],
@@ -84,7 +84,7 @@ describe('PersonPermissions', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     function createPersonenkontext(): Personenkontext<true> {
@@ -207,7 +207,7 @@ describe('PersonPermissions', () => {
             );
 
             if (permittedOrgas.all) {
-                fail('permittedOrgas.all should be false');
+                throw new Error('permittedOrgas.all should be false');
             }
             expect(permittedOrgas.orgaIds).toContain('1');
             expect(permittedOrgas.orgaIds).toContain('2');
@@ -242,7 +242,7 @@ describe('PersonPermissions', () => {
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
             if (permittedOrgas.all) {
-                fail('permittedOrgas.all should be false');
+                throw new Error('permittedOrgas.all should be false');
             }
             expect(permittedOrgas.orgaIds).toContain('1');
             expect(permittedOrgas.orgaIds).not.toContain('2');
@@ -265,7 +265,7 @@ describe('PersonPermissions', () => {
 
             const personenkontexte: Personenkontext<true>[] = [createPersonenkontext()];
             dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
-            const rolle: Rolle<true> = createMock<Rolle<true>>();
+            const rolle: Rolle<true> = createMock(Rolle<true>);
             rolle.systemrechte = [RollenSystemRecht.PERSONEN_LESEN];
             rolleRepoMock.findByIds.mockResolvedValueOnce(new Map<string, Rolle<true>>([['1', rolle]]));
 
@@ -282,7 +282,7 @@ describe('PersonPermissions', () => {
                 false,
             );
             if (permittedOrgas.all) {
-                fail('permittedOrgas.all should be false');
+                throw new Error('permittedOrgas.all should be false');
             }
             expect(permittedOrgas.orgaIds).toContain('1');
             expect(permittedOrgas.orgaIds).not.toContain('2');
@@ -454,7 +454,7 @@ describe('PersonPermissions', () => {
                 rolleRepoMock,
                 person,
             );
-            jest.spyOn(personPermissions, 'hasSystemrechteAtRootOrganisation').mockResolvedValueOnce(true);
+            vi.spyOn(personPermissions, 'hasSystemrechteAtRootOrganisation').mockResolvedValueOnce(true);
 
             const result: boolean = await personPermissions.canModifyPerson('2');
 
@@ -479,7 +479,7 @@ describe('PersonPermissions', () => {
                 rolleRepoMock,
                 person,
             );
-            jest.spyOn(personPermissions, 'hasSystemrechteAtRootOrganisation').mockResolvedValueOnce(false);
+            vi.spyOn(personPermissions, 'hasSystemrechteAtRootOrganisation').mockResolvedValueOnce(false);
             dbiamPersonenkontextRepoMock.hasPersonASystemrechtAtAnyKontextOfPersonB.mockResolvedValueOnce(false);
 
             const result: boolean = await personPermissions.canModifyPerson('2');
@@ -505,7 +505,7 @@ describe('PersonPermissions', () => {
                 rolleRepoMock,
                 person,
             );
-            jest.spyOn(personPermissions, 'hasSystemrechteAtRootOrganisation').mockResolvedValueOnce(false);
+            vi.spyOn(personPermissions, 'hasSystemrechteAtRootOrganisation').mockResolvedValueOnce(false);
             dbiamPersonenkontextRepoMock.hasPersonASystemrechtAtAnyKontextOfPersonB.mockResolvedValueOnce(true);
 
             const result: boolean = await personPermissions.canModifyPerson('2');

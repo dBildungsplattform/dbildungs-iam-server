@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { OxService } from './ox.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -50,31 +50,31 @@ describe('OxSyncEventHandler', () => {
                 OxEventService,
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: EmailRepo,
-                    useValue: createMock<EmailRepo>(),
+                    useValue: createMock(EmailRepo),
                 },
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 {
                     provide: OxService,
-                    useValue: createMock<OxService>(),
+                    useValue: createMock(OxService),
                 },
             ],
         }).compile();
@@ -248,7 +248,7 @@ describe('OxSyncEventHandler', () => {
 
     beforeEach(() => {
         sut.ENABLED = true;
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('changeOxUser', () => {
@@ -261,7 +261,7 @@ describe('OxSyncEventHandler', () => {
         let address: string;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             oxUserId = faker.string.numeric({ length: 5 });
@@ -545,7 +545,7 @@ describe('OxSyncEventHandler', () => {
         let address: string;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             oxUserId = faker.string.numeric({ length: 5 });
@@ -584,7 +584,7 @@ describe('OxSyncEventHandler', () => {
             // hence kontexte are filtered by organisations.has, removing one organisation from map here, would not create a coverage case
             // therefore a mocked map is used
             const mockedMap: DeepMocked<Map<OrganisationID, Organisation<true>>> =
-                createMock<Map<OrganisationID, Organisation<true>>>();
+                createMock(Map<OrganisationID, Organisation<true>>);
             mockedMap.entries.mockImplementationOnce(() => {
                 return orgaMap.entries();
             });

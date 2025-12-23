@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     DomainError,
@@ -49,39 +49,39 @@ describe('PersonenkontextCreationService', () => {
                 PersonenkontextWorkflowFactory,
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: PersonFactory,
-                    useValue: createMock<PersonFactory>(),
+                    useValue: createMock(PersonFactory),
                 },
                 {
                     provide: PersonenkontextFactory,
-                    useValue: createMock<PersonenkontextFactory>(),
+                    useValue: createMock(PersonenkontextFactory),
                 },
                 {
                     provide: PersonPermissions,
-                    useValue: createMock<PersonPermissions>(),
+                    useValue: createMock(PersonPermissions),
                 },
                 {
                     provide: DbiamPersonenkontextFactory,
-                    useValue: createMock<DbiamPersonenkontextFactory>(),
+                    useValue: createMock(DbiamPersonenkontextFactory),
                 },
                 {
                     provide: PersonenkontextWorkflowSharedKernel,
-                    useValue: createMock<PersonenkontextWorkflowSharedKernel>(),
+                    useValue: createMock(PersonenkontextWorkflowSharedKernel),
                 },
             ],
         }).compile();
@@ -100,7 +100,7 @@ describe('PersonenkontextCreationService', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -111,7 +111,7 @@ describe('PersonenkontextCreationService', () => {
         it('should return DomainError if Person Aggregate ist invalid ', async () => {
             personFactoryMock.createNew.mockResolvedValueOnce(new InvalidAttributeLengthError('name.vorname'));
             rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
-            organisationRepositoryMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>());
+            organisationRepositoryMock.findById.mockResolvedValueOnce(createMock(Organisation<true>));
 
             const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
@@ -128,7 +128,7 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return EntityNotFoundError if Organisation is not found', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
+            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
             personenkontextWorkflowSharedKernel.checkReferences.mockResolvedValueOnce(new EntityNotFoundError());
 
             const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
@@ -146,7 +146,7 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return EntityNotFoundError if Rolle is not found', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
+            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
             personenkontextWorkflowSharedKernel.checkReferences.mockResolvedValueOnce(new EntityNotFoundError());
 
             const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
@@ -164,7 +164,7 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return EntityNotFoundError if Rolle can NOT be assigned to organisation', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
+            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
             personenkontextWorkflowSharedKernel.checkReferences.mockResolvedValueOnce(new EntityNotFoundError());
 
             const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
@@ -182,7 +182,7 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return RolleNurAnPassendeOrganisationError if Rolle does NOT match organisation', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
+            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
             personenkontextWorkflowSharedKernel.checkReferences.mockResolvedValueOnce(
                 new RolleNurAnPassendeOrganisationError(),
             );
@@ -202,7 +202,7 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return MissingPermissionsError if user does NOT have permissions', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
+            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({ rollenart: RollenArt.SYSADMIN });
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
@@ -230,7 +230,7 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return DomainError if Person cannot be saved in the DB', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
+            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({ rollenart: RollenArt.SYSADMIN });
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
@@ -257,7 +257,7 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return errors from update', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
+            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({ rollenart: RollenArt.SYSADMIN });
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
@@ -288,7 +288,7 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return errors if more or less than 1 personenkontext was updated', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
+            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({ rollenart: RollenArt.SYSADMIN });
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);

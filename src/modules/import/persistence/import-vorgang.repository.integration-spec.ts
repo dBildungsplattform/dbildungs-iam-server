@@ -16,7 +16,7 @@ import {
 import { ImportVorgang } from '../domain/import-vorgang.js';
 import { ImportVorgangEntity } from './import-vorgang.entity.js';
 import { ImportStatus } from '../domain/import.enums.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -61,11 +61,11 @@ describe('ImportVorgangRepository', () => {
                 UsernameGeneratorService,
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock(ClassLogger),
                 },
                 {
                     provide: KeycloakUserService,
@@ -84,11 +84,11 @@ describe('ImportVorgangRepository', () => {
                 },
                 {
                     provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
+                    useValue: createMock(UserLockRepository),
                 },
                 {
                     provide: OxUserBlacklistRepo,
-                    useValue: createMock<OxUserBlacklistRepo>(),
+                    useValue: createMock(OxUserBlacklistRepo),
                 },
             ],
         }).compile();
@@ -320,7 +320,7 @@ describe('ImportVorgangRepository', () => {
             });
 
             it('when search by importByPersonId', async () => {
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                 permissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(permissions, {
@@ -332,7 +332,7 @@ describe('ImportVorgangRepository', () => {
             });
 
             it('when search by rolleIds', async () => {
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                 permissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(permissions, {
@@ -344,7 +344,7 @@ describe('ImportVorgangRepository', () => {
             });
 
             it('when search by organisationIds', async () => {
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                 permissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(permissions, {
@@ -356,7 +356,7 @@ describe('ImportVorgangRepository', () => {
             });
 
             it('should return import history when search by status', async () => {
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                 permissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(permissions, {
@@ -370,12 +370,12 @@ describe('ImportVorgangRepository', () => {
 
         describe('Should return empty array', () => {
             it('when admin des not have IMPORT_DURCHFUEHREN rights', async () => {
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                 permissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
 
                 const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(
                     permissions,
-                    createMock<ImportQueryOptions>(),
+                    createMock(ImportQueryOptions),
                 );
 
                 expect(result).toEqual([]);
@@ -383,7 +383,7 @@ describe('ImportVorgangRepository', () => {
             });
 
             it('if no import transaction was found', async () => {
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                 permissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(permissions, {

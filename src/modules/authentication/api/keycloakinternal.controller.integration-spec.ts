@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { Loaded, LoadedReference, MikroORM } from '@mikro-orm/core';
@@ -53,11 +53,11 @@ describe('KeycloakInternalController', () => {
             providers: [KeycloakInternalController, UserExternaldataWorkflowFactory],
         })
             .overrideProvider(PersonRepository)
-            .useValue(createMock<PersonRepository>())
+            .useValue(createMock(PersonRepository))
             .overrideProvider(DBiamPersonenkontextRepo)
-            .useValue(createMock<DBiamPersonenkontextRepo>())
+            .useValue(createMock(DBiamPersonenkontextRepo))
             .overrideProvider(EmailResolverService)
-            .useValue(createMock<EmailResolverService>())
+            .useValue(createMock(EmailResolverService))
             .compile();
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
@@ -276,7 +276,7 @@ describe('KeycloakInternalController', () => {
                 },
             ];
 
-            personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(createMock<Person<true>>());
+            personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(createMock(Person<true>));
             personRepoMock.findById.mockResolvedValueOnce(undefined);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
 

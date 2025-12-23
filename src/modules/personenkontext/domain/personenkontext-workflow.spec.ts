@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/index.js';
@@ -42,35 +42,35 @@ describe('PersonenkontextWorkflow', () => {
                 PersonenkontextFactory,
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: PersonPermissions,
-                    useValue: createMock<PersonPermissions>(),
+                    useValue: createMock(PersonPermissions),
                 },
                 {
                     provide: DbiamPersonenkontextFactory,
-                    useValue: createMock<DbiamPersonenkontextFactory>(),
+                    useValue: createMock(DbiamPersonenkontextFactory),
                 },
                 {
                     provide: ConfigService,
-                    useValue: createMock<ConfigService>(),
+                    useValue: createMock(ConfigService),
                 },
                 {
                     provide: PersonenkontextWorkflowSharedKernel,
-                    useValue: createMock<PersonenkontextWorkflowSharedKernel>(),
+                    useValue: createMock(PersonenkontextWorkflowSharedKernel),
                 },
             ],
         }).compile();
@@ -90,7 +90,7 @@ describe('PersonenkontextWorkflow', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -500,11 +500,11 @@ describe('PersonenkontextWorkflow', () => {
         it('should return an empty array if no roles are found by name', async () => {
             anlage.initialize(undefined, 'organisation-id');
             rolleRepoMock.findByName.mockResolvedValue([]);
-            const organisation: Organisation<true> = createMock<Organisation<true>>();
+            const organisation: Organisation<true> = createMock(Organisation<true>);
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(
-                createMock<PersonPermissions>(),
+                createMock(PersonPermissions),
                 'rolle-name',
                 [],
                 10,
@@ -514,7 +514,7 @@ describe('PersonenkontextWorkflow', () => {
         });
 
         it('should return an empty array if no personId is set but permissions are missing', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.canModifyPerson.mockResolvedValue(false);
 
             anlage.initialize('person-id', 'organisation-id');
@@ -525,8 +525,8 @@ describe('PersonenkontextWorkflow', () => {
         });
 
         it('should return an empty array if no organisations with system rights are found', async () => {
-            rolleRepoMock.find.mockResolvedValue([createMock<Rolle<true>>()]);
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            rolleRepoMock.find.mockResolvedValue([createMock(Rolle<true>)]);
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             anlage.initialize(undefined, 'organisation-id');
@@ -537,11 +537,11 @@ describe('PersonenkontextWorkflow', () => {
         });
 
         it('should return an empty array if the organisation is not found', async () => {
-            const rolle: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
-            rolleRepoMock.find.mockResolvedValue([createMock<Rolle<true>>()]);
+            const rolle: DeepMocked<Rolle<true>> = createMock(Rolle<true>);
+            rolleRepoMock.find.mockResolvedValue([createMock(Rolle<true>)]);
             rolleRepoMock.find.mockResolvedValue([rolle]);
 
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             organisationRepoMock.findById.mockResolvedValue(undefined);
@@ -554,12 +554,12 @@ describe('PersonenkontextWorkflow', () => {
         });
 
         it('should return an empty array if user does not have permission to view roles for the organisation', async () => {
-            const rolle: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
-            const organisation: DeepMocked<Organisation<true>> = createMock<Organisation<true>>();
+            const rolle: DeepMocked<Rolle<true>> = createMock(Rolle<true>);
+            const organisation: DeepMocked<Organisation<true>> = createMock(Organisation<true>);
             rolleRepoMock.find.mockResolvedValue([rolle]);
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.hasSystemrechteAtOrganisation.mockResolvedValue(false);
 
             anlage.initialize(undefined, 'organisation-id');
@@ -594,7 +594,7 @@ describe('PersonenkontextWorkflow', () => {
             );
             rolleRepoMock.find.mockResolvedValue(rollen);
 
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.hasSystemrechteAtOrganisation.mockResolvedValue(true);
 
             personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValue(undefined);
@@ -612,7 +612,7 @@ describe('PersonenkontextWorkflow', () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
             permissions.canModifyPerson.mockResolvedValueOnce(true);
 
@@ -634,7 +634,7 @@ describe('PersonenkontextWorkflow', () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
             permissions.canModifyPerson.mockResolvedValueOnce(true);
 
@@ -662,7 +662,7 @@ describe('PersonenkontextWorkflow', () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             anlage.initialize(undefined, organisation.id);
@@ -705,7 +705,7 @@ describe('PersonenkontextWorkflow', () => {
             );
             rolleRepoMock.find.mockResolvedValue(rollen);
 
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             organisationRepoMock.findById.mockResolvedValue(organisation);
@@ -713,7 +713,7 @@ describe('PersonenkontextWorkflow', () => {
 
             anlage.initialize(undefined, organisation.id);
 
-            jest.spyOn(anlage, 'checkReferences').mockResolvedValue(undefined);
+            vi.spyOn(anlage, 'checkReferences').mockResolvedValue(undefined);
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, undefined, [], 2);
 
@@ -745,7 +745,7 @@ describe('PersonenkontextWorkflow', () => {
             );
             rolleRepoMock.find.mockResolvedValue(rollen);
 
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             organisationRepoMock.findById.mockResolvedValue(organisation);
@@ -760,7 +760,7 @@ describe('PersonenkontextWorkflow', () => {
             };
 
             // Mock checkReferences to return the mockDomainError for the first call (for rolle1)
-            jest.spyOn(anlage, 'checkReferences')
+            vi.spyOn(anlage, 'checkReferences')
                 .mockResolvedValueOnce(mockDomainError) // For rolle1
                 .mockResolvedValueOnce(undefined); // For rolle2
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
@@ -797,10 +797,10 @@ describe('PersonenkontextWorkflow', () => {
             rolleRepoMock.find.mockResolvedValue(rollen);
             rolleRepoMock.findByIds.mockResolvedValue(rolleMap); // simulate lookup of passed rollenIds
 
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.hasSystemrechteAtOrganisation.mockResolvedValue(true);
 
-            jest.spyOn(anlage, 'checkReferences').mockResolvedValue(undefined);
+            vi.spyOn(anlage, 'checkReferences').mockResolvedValue(undefined);
 
             anlage.initialize(undefined, organisation.id);
 
@@ -818,11 +818,11 @@ describe('PersonenkontextWorkflow', () => {
             const count: number = 1;
             const personenkontexte: DbiamPersonenkontextBodyParams[] = [];
 
-            const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
+            const personenkontext: Personenkontext<true> = createMock(Personenkontext<true>);
             const updateResult: Personenkontext<true>[] = [personenkontext];
 
             dbiamPersonenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValue({
-                update: jest.fn().mockResolvedValue(updateResult),
+                update: vi.fn().mockResolvedValue(updateResult),
             } as never);
 
             const result: Personenkontext<true>[] | PersonenkontexteUpdateError = await anlage.commit(
@@ -844,7 +844,7 @@ describe('PersonenkontextWorkflow', () => {
 
             const updateError: PersonenkontexteUpdateError = new PersonenkontexteUpdateError('Error message');
             dbiamPersonenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValue({
-                update: jest.fn().mockResolvedValue(updateError),
+                update: vi.fn().mockResolvedValue(updateError),
             } as never);
 
             const result: PersonenkontexteUpdateError | Personenkontext<true>[] = await anlage.commit(
@@ -864,7 +864,7 @@ describe('PersonenkontextWorkflow', () => {
             configMock.getOrThrow.mockReturnValueOnce({
                 LIMITED_ROLLENART_ALLOWLIST: [RollenArt.LERN],
             });
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
@@ -888,7 +888,7 @@ describe('PersonenkontextWorkflow', () => {
         });
 
         it('should return undefined if context is PERSON_BEARBEITEN and user has systemrecht PERSONEN_VERWALTEN', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
             const result: Option<DomainError> = await anlage.checkPermissions(
@@ -906,7 +906,7 @@ describe('PersonenkontextWorkflow', () => {
             'when context is %s',
             (operationContext: OperationContext) => {
                 it('should return error if user does not have the correct rights', async () => {
-                    const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                    const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                     if (operationContext === OperationContext.PERSON_ANLEGEN) {
                         permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
                         permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
@@ -944,7 +944,7 @@ describe('PersonenkontextWorkflow', () => {
                 it('should return error if config is not set for limited rollenarten', async () => {
                     configMock.getOrThrow.mockReturnValueOnce({ LIMITED_ROLLENART_ALLOWLIST: undefined });
 
-                    const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                    const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                     permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
                     permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
@@ -968,7 +968,7 @@ describe('PersonenkontextWorkflow', () => {
                 });
 
                 it('should return error if personid is set but user is not allowed to modify', async () => {
-                    const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                    const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                     permissions.canModifyPerson.mockResolvedValueOnce(false);
 
                     const result: Option<DomainError> = await anlage.checkPermissions(
@@ -992,7 +992,7 @@ describe('PersonenkontextWorkflow', () => {
         const personenkontexte: DbiamPersonenkontextBodyParams[] = [];
 
         dbiamPersonenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValue({
-            update: jest.fn().mockResolvedValue([]),
+            update: vi.fn().mockResolvedValue([]),
         } as never);
 
         const result: Personenkontext<true>[] | PersonenkontexteUpdateError = await anlage.commit(

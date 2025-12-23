@@ -4,9 +4,9 @@ import { Client } from 'openid-client';
 import { ConfigTestModule, KeycloakConfigTestModule } from '../../../../test/utils/index.js';
 import { OIDCClientProvider, OIDC_CLIENT } from './oidc-client.service.js';
 
-jest.mock('openid-client', () => ({
+Mock('openid-client', () => ({
     Issuer: {
-        discover: jest.fn(() => Promise.resolve({ Client: Object })),
+        discover: vi.fn(() => Promise.resolve({ Client: Object })),
     },
 }));
 
@@ -28,7 +28,7 @@ describe('OIDCClientProvider', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {

@@ -1,9 +1,8 @@
-import { MockedObject } from 'vitest';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { faker } from '@faker-js/faker';
-import { createMock } from '@golevelup/ts-vitest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -25,7 +24,7 @@ import { RolleRepo } from './rolle.repo.js';
 import { RollenerweiterungRepo } from './rollenerweiterung.repo.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { LoggingTestModule } from '../../../../test/utils/vitest/logging-test.module.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
@@ -58,7 +57,7 @@ describe('RollenerweiterungRepo', () => {
             ],
         })
             .overrideProvider(EventRoutingLegacyKafkaService)
-            .useValue(createMock<EventRoutingLegacyKafkaService>())
+            .useValue(createMock(EventRoutingLegacyKafkaService))
             .compile();
 
         sut = module.get(RollenerweiterungRepo);
@@ -160,7 +159,7 @@ describe('RollenerweiterungRepo', () => {
         let organisation: Organisation<true>;
         let rolle: Rolle<true>;
         let serviceProvider: ServiceProvider<true>;
-        let permissionMock: MockedObject<PersonPermissions>;
+        let permissionMock: DeepMocked<PersonPermissions>;
 
         beforeEach(async () => {
             organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
@@ -174,7 +173,7 @@ describe('RollenerweiterungRepo', () => {
                     merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
                 }),
             );
-            permissionMock = createMock<PersonPermissions>();
+            permissionMock = createMock(PersonPermissions);
         });
 
         it.each([['root' as TestCase], ['schuladmin' as TestCase]])(
@@ -273,6 +272,7 @@ describe('RollenerweiterungRepo', () => {
         });
 
         it('should return an error if service provider is not available for rollenerweiterung', async () => {
+            permissionMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
             const updatedServiceProvider: Option<ServiceProvider<true>> = await serviceProviderRepo.findById(
                 serviceProvider.id,
             );
@@ -304,7 +304,7 @@ describe('RollenerweiterungRepo', () => {
         let organisations: Array<Organisation<true>>;
         let rollen: Array<Rolle<true>>;
         let serviceProviders: Array<ServiceProvider<true>>;
-        let permissionMock: MockedObject<PersonPermissions>;
+        let permissionMock: DeepMocked<PersonPermissions>;
 
         beforeEach(async () => {
             organisations = await Promise.all(
@@ -330,7 +330,7 @@ describe('RollenerweiterungRepo', () => {
                     3,
                 ),
             );
-            permissionMock = createMock<PersonPermissions>();
+            permissionMock = createMock(PersonPermissions);
             permissionMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
             const unpersistedRollenerweiterungen: Array<Rollenerweiterung<false>> = [];
             for (const organisation of organisations) {
@@ -399,7 +399,7 @@ describe('RollenerweiterungRepo', () => {
         let organisations: Array<Organisation<true>>;
         let rollen: Array<Rolle<true>>;
         let serviceProviders: Array<ServiceProvider<true>>;
-        let permissionMock: MockedObject<PersonPermissions>;
+        let permissionMock: DeepMocked<PersonPermissions>;
 
         beforeEach(async () => {
             organisations = await Promise.all(
@@ -425,7 +425,7 @@ describe('RollenerweiterungRepo', () => {
                     3,
                 ),
             );
-            permissionMock = createMock<PersonPermissions>();
+            permissionMock = createMock(PersonPermissions);
             permissionMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
             const unpersistedRollenerweiterungen: Array<Rollenerweiterung<false>> = [];
             for (const organisation of organisations) {

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 
@@ -18,7 +18,7 @@ describe('KeycloakClientService', () => {
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
-        kcClientsMock = createMock<KeycloakAdminClient['clients']>();
+        kcClientsMock = createMock(KeycloakAdminClient['clients']);
 
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, LoggingTestModule, KeycloakConfigTestModule.forRoot()],
@@ -40,7 +40,7 @@ describe('KeycloakClientService', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('updateClient', () => {

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
@@ -45,7 +45,7 @@ describe('OrganisationService', () => {
                 OrganisationService,
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
             ],
         }).compile();
@@ -58,7 +58,7 @@ describe('OrganisationService', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -66,7 +66,7 @@ describe('OrganisationService', () => {
     });
 
     describe('createOrganisation', () => {
-        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+        const permissionsMock: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
         const organisationUser: Organisation<true> = DoFactory.createOrganisation(true);
         const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
             {
@@ -458,7 +458,7 @@ describe('OrganisationService', () => {
     });
 
     describe('updateOrganisation', () => {
-        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+        const permissionsMock: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
         const organisationUser: Organisation<true> = DoFactory.createOrganisation(true);
         const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
             {
@@ -824,7 +824,7 @@ describe('OrganisationService', () => {
         it("should return a domain error if the user doesn't have permissions for both parents", async () => {
             const parentId: string = faker.string.uuid();
             const childId: string = faker.string.uuid();
-            const permissions: DeepMocked<IPersonPermissions> = createMock<IPersonPermissions>();
+            const permissions: DeepMocked<IPersonPermissions> = createMock(IPersonPermissions);
             organisationRepositoryMock.findByIds.mockResolvedValueOnce(
                 new Map([
                     [childId, DoFactory.createOrganisation(true, { id: childId, zugehoerigZu: faker.string.uuid() })],
@@ -1052,7 +1052,7 @@ describe('OrganisationService', () => {
 
     describe('findOrganisationByIdAndMatchingPermissions', () => {
         it('should return an error, if orga can not be found', async () => {
-            const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissionsMock: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             organisationRepositoryMock.findAuthorized.mockResolvedValue([[], 0, 0]);
             const result: Result<
                 Organisation<true>,
@@ -1066,7 +1066,7 @@ describe('OrganisationService', () => {
         });
 
         it('should return an error, if wrong orga is found', async () => {
-            const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissionsMock: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             organisationRepositoryMock.findAuthorized.mockResolvedValue([[DoFactory.createOrganisation(true)], 1, 1]);
             const result: Result<
                 Organisation<true>,
@@ -1080,7 +1080,7 @@ describe('OrganisationService', () => {
         });
 
         it('should return an error, if orga has no type', async () => {
-            const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissionsMock: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             const mockOrganisation: Organisation<true> = DoFactory.createOrganisation(true, { typ: undefined });
             organisationRepositoryMock.findAuthorized.mockResolvedValue([[mockOrganisation], 1, 1]);
             const result: Result<
@@ -1095,7 +1095,7 @@ describe('OrganisationService', () => {
         });
 
         it('should return an error, if permissions are not defined for OrganisationsTyp', async () => {
-            const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissionsMock: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
             const mockOrganisation: Organisation<true> = DoFactory.createOrganisation(true, {
                 typ: OrganisationsTyp.ROOT,
@@ -1136,7 +1136,7 @@ describe('OrganisationService', () => {
             }) => {
                 it(`it should use ${expectedSystemrecht.name} for permissions check`, async () => {
                     organisationRepositoryMock.findAuthorized.mockResolvedValue([[organisation], 1, 1]);
-                    const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                    const permissionsMock: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                     permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
                     await organisationService.findOrganisationByIdAndMatchingPermissions(
                         permissionsMock,
@@ -1151,7 +1151,7 @@ describe('OrganisationService', () => {
 
                 it('should return an error, if permissions are missing', async () => {
                     organisationRepositoryMock.findAuthorized.mockResolvedValue([[organisation], 1, 1]);
-                    const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                    const permissionsMock: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                     permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
                     const result: Result<
                         Organisation<true>,

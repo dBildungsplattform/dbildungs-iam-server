@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { ArgumentsHost } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import {
@@ -28,7 +28,7 @@ describe('PrivacyIdeaAdministrationExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new PrivacyIdeaAdministrationExceptionFilter();
-        responseMock = createMock<Response>();
+        responseMock = createMock(Response);
         argumentsHost = createMock<ArgumentsHost>({
             switchToHttp: () =>
                 createMock<HttpArgumentsHost>({

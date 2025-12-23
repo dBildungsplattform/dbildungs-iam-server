@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { KeycloackServiceProviderHandler } from './keycloack-service-provider.event-handler.js';
 import { KeycloakUserService } from '../keycloak-administration/index.js';
@@ -27,11 +27,11 @@ describe('KeycloackServiceProviderHandler', () => {
                 KeycloackServiceProviderHandler,
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>(),
+                    useValue: createMock(KeycloakUserService),
                 },
             ],
         }).compile();
@@ -46,7 +46,7 @@ describe('KeycloackServiceProviderHandler', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should update user roles when new roles are added', async () => {

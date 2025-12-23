@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { LoggingTestModule } from '../../../../test/utils/index.js';
@@ -28,7 +28,7 @@ describe('Itslearning Person Repo', () => {
                 ItslearningPersonRepo,
                 {
                     provide: ItsLearningIMSESService,
-                    useValue: createMock<ItsLearningIMSESService>(),
+                    useValue: createMock(ItsLearningIMSESService),
                 },
             ],
         }).compile();
@@ -38,7 +38,7 @@ describe('Itslearning Person Repo', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     afterAll(async () => {

@@ -1,5 +1,6 @@
+import { vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -7,6 +8,7 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DoFactory,
 } from '../../../../test/utils/index.js';
 import { EventModule } from '../../../core/eventbus/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
@@ -22,9 +24,7 @@ import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js
 import { PersonenkontextID, PersonID, PersonUsername, RolleID } from '../../../shared/types/index.js';
 import { OXContextID, OXContextName, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -43,6 +43,7 @@ import { LdapSyncFailedEvent } from '../../../shared/events/ldap/ldap-sync-faile
 import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
 import { OxSyncUserCreatedEvent } from '../../../shared/events/ox/ox-sync-user-created.event.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { PersonenkontextEventKontextData, PersonenkontextEventPersonData } from '../../../shared/events/personenkontext-event.types.js';
 
 function getEmail(address?: string, status?: EmailAddressStatus): EmailAddress<true> {
     const fakePersonId: PersonID = faker.string.uuid();
@@ -87,29 +88,31 @@ describe('EmailEventHandler', () => {
             ],
         })
             .overrideProvider(OrganisationRepository)
-            .useValue(createMock<OrganisationRepository>())
+            .useValue(createMock(OrganisationRepository))
             .overrideProvider(EmailFactory)
-            .useValue(createMock<EmailFactory>())
+            .useValue(createMock(EmailFactory))
             .overrideProvider(EmailRepo)
-            .useValue(createMock<EmailRepo>())
+            .useValue(createMock(EmailRepo))
             .overrideProvider(ServiceProviderRepo)
-            .useValue(createMock<ServiceProviderRepo>())
+            .useValue(createMock(ServiceProviderRepo))
             .overrideProvider(RolleRepo)
-            .useValue(createMock<RolleRepo>())
+            .useValue(createMock(RolleRepo))
             .overrideProvider(DBiamPersonenkontextRepo)
-            .useValue(createMock<DBiamPersonenkontextRepo>())
+            .useValue(createMock(DBiamPersonenkontextRepo))
             .overrideProvider(PersonRepository)
-            .useValue(createMock<PersonRepository>())
+            .useValue(createMock(PersonRepository))
             .overrideProvider(DBiamPersonenkontextRepo)
-            .useValue(createMock<DBiamPersonenkontextRepo>())
+            .useValue(createMock(DBiamPersonenkontextRepo))
             .overrideProvider(EmailEventHandler)
             .useClass(EmailEventHandler)
             .overrideProvider(EventRoutingLegacyKafkaService)
             .useClass(EventRoutingLegacyKafkaService)
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .overrideProvider(EmailResolverService)
-            .useValue(createMock<EmailResolverService>())
+            .useValue(createMock(EmailResolverService))
+            // .useValue(createViMock(EmailResolverService))
+            // .useValue(vi.mockObject<EmailResolverService>(Object.create(EmailResolverService.prototype)))
             .compile();
 
         emailEventHandler = module.get(EmailEventHandler);
@@ -133,7 +136,7 @@ describe('EmailEventHandler', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         emailEventHandler.OX_ENABLED = true;
     });
 
@@ -188,7 +191,7 @@ describe('EmailEventHandler', () => {
         let emailAddress: EmailAddress<true>;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             fakePersonId = faker.string.uuid();
             fakeUsername = faker.internet.userName();
             fakeOldUsername = faker.internet.userName();
@@ -196,8 +199,8 @@ describe('EmailEventHandler', () => {
             fakeOrgaId = faker.string.uuid();
             fakeEmailAddress = faker.internet.email();
             fakeNewEmailAddress = faker.internet.email();
-            event = createMock<PersonenkontextUpdatedEvent>({
-                person: { id: fakePersonId },
+            event = createMock<PersonenkontextUpdatedEvent>(PersonenkontextUpdatedEvent, {
+                person: { id: fakePersonId } as PersonenkontextEventPersonData,
                 removedKontexte: [],
                 newKontexte: [],
             });
@@ -210,14 +213,14 @@ describe('EmailEventHandler', () => {
                 faker.person.lastName(),
                 fakeOldUsername,
             );
-            personenkontext = createMock<Personenkontext<true>>({ rolleId: fakeRolleId, organisationId: fakeOrgaId });
+            personenkontext =  { rolleId: fakeRolleId, organisationId: fakeOrgaId } as Personenkontext<true>;
             personenkontexte = [personenkontext];
-            rolle = createMock<Rolle<true>>({ id: fakeRolleId, serviceProviderIds: [] });
+            rolle = { id: fakeRolleId, serviceProviderIds: [] } as unknown as Rolle<true>;
             rolleMap = new Map<string, Rolle<true>>();
             rolleMap.set(fakeRolleId, rolle);
-            sp = createMock<ServiceProvider<true>>({
+            sp = {
                 kategorie: ServiceProviderKategorie.EMAIL,
-            });
+                } as ServiceProvider<true>;
             spMap = new Map<string, ServiceProvider<true>>();
             spMap.set(sp.id, sp);
             emailAddress = EmailAddress.construct(
@@ -228,6 +231,10 @@ describe('EmailEventHandler', () => {
                 fakeEmailAddress,
                 EmailAddressStatus.ENABLED,
             );
+
+            const emailResolverServiceMock: DeepMocked<EmailResolverService> = vi.mockObject<EmailResolverService>(Object.create(EmailResolverService.prototype));
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+            emailResolverServiceMock.shouldUseEmailMicroservice();
 
             emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
         });
@@ -323,10 +330,10 @@ describe('EmailEventHandler', () => {
                 it('should log matching error', async () => {
                     mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(undefined); //no existing email is found
-                    organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>());
+                    organisationRepositoryMock.findById.mockResolvedValue(DoFactory.createOrganisation<true>(true));
                     //mock person without username is found
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: fakePersonId, username: undefined }),
+                        DoFactory.createPerson<true>(true, { id: fakePersonId, username: undefined })
                     );
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(personRenamedEvent);
 
@@ -367,20 +374,20 @@ describe('EmailEventHandler', () => {
 
                     //mock person with username is found in getPersonUsernameOrError
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: fakePersonId, username: fakeUsername }),
+                        DoFactory.createPerson<true>(true,{ id: fakePersonId, username: fakeUsername })
                     );
 
                     const fakeErrorMessage: string = 'Lise Meitner kann nichts dafuer';
                     const factoryResult: Result<EmailAddress<false>> = {
                         ok: false,
-                        error: createMock<EntityCouldNotBeCreated>({ message: fakeErrorMessage }),
+                        error: { name: 'Error', message: fakeErrorMessage },
                     };
 
                     //mock failure in factory
                     emailFactoryMock.createNewFromPersonIdAndDomain.mockResolvedValueOnce(factoryResult);
 
                     //mock all calls to save since FAILED email-addresses are also persisted -> multiple calls to save
-                    emailRepoMock.save.mockResolvedValue(createMock<EmailAddress<true>>());
+                    emailRepoMock.save.mockResolvedValue(createMock(EmailAddress<true>));
 
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(personRenamedEvent);
 
@@ -402,16 +409,12 @@ describe('EmailEventHandler', () => {
 
                     //mock person with username is found in getPersonUsernameOrError
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: fakePersonId, username: fakeUsername }),
+                        DoFactory.createPerson<true>(true,{ id: fakePersonId, username: fakeUsername })
                     );
 
                     const factoryResult: Result<EmailAddress<false>> = {
                         ok: true,
-                        value: createMock<EmailAddress<false>>({
-                            get address(): string {
-                                return fakeNewEmailAddress;
-                            },
-                        }),
+                        value: DoFactory.createEmailAddress<false>(false, fakeNewEmailAddress)
                     };
 
                     //mock creation in factory succeeds
@@ -492,14 +495,10 @@ describe('EmailEventHandler', () => {
                 it('should log error', async () => {
                     const emailAddress: string = faker.internet.email();
                     emailRepoMock.findRequestedByPerson.mockResolvedValueOnce(
-                        createMock<EmailAddress<true>>({
-                            get address(): string {
-                                return emailAddress;
-                            },
-                        }),
+                        DoFactory.createEmailAddress<true>(true, emailAddress)
                     );
 
-                    emailRepoMock.save.mockResolvedValueOnce(createMock<EmailAddress<true>>({}));
+                    emailRepoMock.save.mockResolvedValueOnce(DoFactory.createEmailAddress<true>(true));
 
                     await emailEventHandler.handleOxSyncUserCreatedEvent(event);
 
@@ -515,11 +514,7 @@ describe('EmailEventHandler', () => {
             describe('when persisting changes to email-address fails', () => {
                 it('should log error', async () => {
                     emailRepoMock.findRequestedByPerson.mockResolvedValueOnce(
-                        createMock<EmailAddress<true>>({
-                            get address(): string {
-                                return fakeEmail;
-                            },
-                        }),
+                        DoFactory.createEmailAddress<true>(true, fakeEmail)
                     );
 
                     emailRepoMock.save.mockResolvedValueOnce(new EntityCouldNotBeUpdated('EmailAddress', '1'));
@@ -534,11 +529,7 @@ describe('EmailEventHandler', () => {
 
             describe('when changing email status is successful', () => {
                 it('should log info', async () => {
-                    const emailMock: EmailAddress<true> = createMock<EmailAddress<true>>({
-                        get address(): string {
-                            return fakeEmail;
-                        },
-                    });
+                    const emailMock: EmailAddress<true> = DoFactory.createEmailAddress<true>(true, fakeEmail);
                     emailRepoMock.findRequestedByPerson.mockResolvedValueOnce(emailMock);
 
                     emailRepoMock.save.mockResolvedValueOnce(emailMock);
@@ -581,14 +572,10 @@ describe('EmailEventHandler', () => {
                 it('should log error', async () => {
                     const emailAddress: string = faker.internet.email();
                     emailRepoMock.findRequestedByPerson.mockResolvedValueOnce(
-                        createMock<EmailAddress<true>>({
-                            get address(): string {
-                                return emailAddress;
-                            },
-                        }),
+                        DoFactory.createEmailAddress<true>(true, emailAddress)
                     );
 
-                    emailRepoMock.save.mockResolvedValueOnce(createMock<EmailAddress<true>>({}));
+                    emailRepoMock.save.mockResolvedValueOnce(DoFactory.createEmailAddress<true>(true));
 
                     await emailEventHandler.handleOxUserChangedEvent(event);
 
@@ -604,11 +591,7 @@ describe('EmailEventHandler', () => {
             describe('when persisting changes to email-address fails', () => {
                 it('should log error', async () => {
                     emailRepoMock.findRequestedByPerson.mockResolvedValueOnce(
-                        createMock<EmailAddress<true>>({
-                            get address(): string {
-                                return fakeEmail;
-                            },
-                        }),
+                        DoFactory.createEmailAddress<true>(true, fakeEmail)
                     );
 
                     emailRepoMock.save.mockResolvedValueOnce(new EntityCouldNotBeUpdated('EmailAddress', '1'));
@@ -623,11 +606,7 @@ describe('EmailEventHandler', () => {
 
             describe('when changing email status is successful', () => {
                 it('should log info', async () => {
-                    const emailMock: EmailAddress<true> = createMock<EmailAddress<true>>({
-                        get address(): string {
-                            return fakeEmail;
-                        },
-                    });
+                    const emailMock: EmailAddress<true> = DoFactory.createEmailAddress<true>(true, fakeEmail);
                     emailRepoMock.findRequestedByPerson.mockResolvedValueOnce(emailMock);
 
                     emailRepoMock.save.mockResolvedValueOnce(emailMock);
@@ -655,25 +634,25 @@ describe('EmailEventHandler', () => {
         let spMap: Map<string, ServiceProvider<true>>;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             fakePersonId = faker.string.uuid();
             fakeUsername = faker.internet.userName();
             fakeRolleId = faker.string.uuid();
             fakeEmailAddress = faker.internet.email();
-            event = createMock<LdapSyncFailedEvent>({
-                personId: fakePersonId,
-                username: fakeUsername,
-            });
-            personenkontexte = [createMock<Personenkontext<true>>({ rolleId: fakeRolleId })];
-            rolle = createMock<Rolle<true>>({ id: fakeRolleId, serviceProviderIds: [] });
+            event = new LdapSyncFailedEvent(
+                fakePersonId,
+                fakeUsername,
+            );
+            personenkontexte = [DoFactory.createPersonenkontext<true>(true, { rolleId: fakeRolleId })];
+            rolle = DoFactory.createRolle<true>(true, { id: fakeRolleId, serviceProviderIds: [] });
             rolleMap = new Map<string, Rolle<true>>();
             rolleMap.set(fakeRolleId, rolle);
-            sp = createMock<ServiceProvider<true>>({
+            sp = DoFactory.createServiceProvider<true>(true, {
                 kategorie: ServiceProviderKategorie.EMAIL,
             });
             spMap = new Map<string, ServiceProvider<true>>();
             spMap.set(sp.id, sp);
-            organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>());
+            organisationRepositoryMock.findById.mockResolvedValue(DoFactory.createOrganisation<true>(true));
         });
 
         describe('when LdapSyncFailedEvent is received', () => {
@@ -694,7 +673,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ username: fakeUsername }),
+                    DoFactory.createPerson<true>(true, { username: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -724,7 +703,7 @@ describe('EmailEventHandler', () => {
 
         describe('when LdapSyncFailedEvent is received but no PK references role with reference to SP Email', () => {
             it('should log warning', async () => {
-                sp = createMock<ServiceProvider<true>>({
+                sp = DoFactory.createServiceProvider<true>(true, {
                     kategorie: ServiceProviderKategorie.ANGEBOTE, //mock that no EMAIL SP can be found
                 });
                 spMap = new Map<string, ServiceProvider<true>>();
@@ -748,7 +727,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ username: fakeUsername }),
+                    DoFactory.createPerson<true>(true, { username: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -781,7 +760,8 @@ describe('EmailEventHandler', () => {
 
         describe('when LdapSyncFailedEvent is received and pkOfRolleWithSPReferenceList is empty in handlePersonWithEmailSPReferenceAfterLdapSyncFailed', () => {
             it('should log error', async () => {
-                personenkontexte = [createMock<Personenkontext<true>>({ rolleId: faker.string.uuid() })];
+                personenkontexte = [
+                    DoFactory.createPersonenkontext<true>(true, { rolleId: faker.string.uuid() })];
 
                 dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
@@ -801,7 +781,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ username: fakeUsername }),
+                    DoFactory.createPerson<true>(true, { username: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -847,44 +827,43 @@ describe('EmailEventHandler', () => {
         let spMap: Map<string, ServiceProvider<true>>;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             fakePersonId = faker.string.uuid();
             fakeUsername = faker.internet.userName();
             fakeRolleId = faker.string.uuid();
             fakePKId = faker.string.uuid();
             fakeEmailAddressString = faker.internet.email();
 
-            event = createMock<PersonenkontextUpdatedEvent>({
-                person: { id: fakePersonId, username: fakeUsername },
+            event = createMock<PersonenkontextUpdatedEvent>(PersonenkontextUpdatedEvent,{
+                person: { id: fakePersonId, username: fakeUsername, vorname: faker.person.firstName(), familienname: faker.person.lastName() },
                 removedKontexte: [],
                 newKontexte: [],
             });
-            personenkontexte = [createMock<Personenkontext<true>>({ rolleId: fakeRolleId })];
-
-            rolle = createMock<Rolle<true>>({ id: fakeRolleId, serviceProviderIds: [] });
+            personenkontexte = [DoFactory.createPersonenkontext<true>(true, { rolleId: fakeRolleId })];
+            rolle = DoFactory.createRolle<true>(true, { id: fakeRolleId, serviceProviderIds: [] });
             rolleMap = new Map<string, Rolle<true>>();
             rolleMap.set(fakeRolleId, rolle);
-            sp = createMock<ServiceProvider<true>>({
+            sp = DoFactory.createServiceProvider<true>(true, {
                 kategorie: ServiceProviderKategorie.EMAIL,
             });
             spMap = new Map<string, ServiceProvider<true>>();
             spMap.set(sp.id, sp);
 
-            organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>());
+            organisationRepositoryMock.findById.mockResolvedValue(DoFactory.createOrganisation<true>(true));
         });
 
         describe('when email microservice is enabled', () => {
             it('should not call handlePerson when microservice is disabled', async () => {
-                const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
+                const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>(PersonenkontextUpdatedEvent, {
                     person: {
                         id: faker.string.uuid(),
                         vorname: faker.person.firstName(),
                         familienname: faker.person.lastName(),
                         username: faker.internet.userName(),
                     },
-                    newKontexte: [{}, {}],
-                    removedKontexte: [{}],
-                    currentKontexte: [{}],
+                    newKontexte: [{}, {}] as PersonenkontextEventKontextData[],
+                    removedKontexte: [{}] as PersonenkontextEventKontextData[],
+                    currentKontexte: [{}] as PersonenkontextEventKontextData[],
                 });
                 emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
 
@@ -915,7 +894,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ username: fakeUsername }),
+                    DoFactory.createPerson<true>(true, { username: fakeUsername }),
                 );
 
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
@@ -944,7 +923,7 @@ describe('EmailEventHandler', () => {
                 ]);
 
                 //mock person with username is found
-                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>({ username: undefined }));
+                personRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createPerson<true>(true, { username: undefined }));
 
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
 
@@ -963,7 +942,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
+                    DoFactory.createPerson<true>(true, { id: faker.string.uuid(), username: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -995,7 +974,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
+                    DoFactory.createPerson<true>(true, { id: faker.string.uuid(), username: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -1026,7 +1005,7 @@ describe('EmailEventHandler', () => {
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]); //no existing email is found
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValue(
-                    createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
+                    DoFactory.createPerson<true>(true, { id: faker.string.uuid(), username: fakeUsername }),
                 );
 
                 const persistenceResult: EmailAddress<true> = getEmail();
@@ -1062,7 +1041,7 @@ describe('EmailEventHandler', () => {
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]); //no existing email is found
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValue(
-                    createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
+                    DoFactory.createPerson<true>(true, { id: faker.string.uuid(), username: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -1099,14 +1078,14 @@ describe('EmailEventHandler', () => {
                 it('should log matching info', async () => {
                     //mock getting username (used for logging)
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ username: fakeUsername }),
+                        DoFactory.createPerson<true>(true, { username: fakeUsername }),
                     );
                     mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
 
                     emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]); //no existing email is found
                     //mock person with username is found
                     personRepositoryMock.findById.mockResolvedValue(
-                        createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
+                        DoFactory.createPerson<true>(true, { id: faker.string.uuid(), username: fakeUsername }),
                     );
 
                     // eslint-disable-next-line @typescript-eslint/require-await
@@ -1133,13 +1112,13 @@ describe('EmailEventHandler', () => {
             it('should log matching info', async () => {
                 //mock getting username (used for logging)
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ username: fakeUsername }),
+                    DoFactory.createPerson<true>(true, { username: fakeUsername }),
                 );
                 mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]); //no existing email is found
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValue(
-                    createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
+                    DoFactory.createPerson<true>(true, { id: faker.string.uuid(), username: fakeUsername }),
                 );
 
                 emailRepoMock.save.mockResolvedValueOnce(new EmailAddressNotFoundError(fakeEmailAddressString)); //mock: error during saving the entity
@@ -1171,7 +1150,7 @@ describe('EmailEventHandler', () => {
 
                         // Mock person with username is found
                         personRepositoryMock.findById.mockResolvedValueOnce(
-                            createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
+                            DoFactory.createPerson<true>(true, { id: faker.string.uuid(), username: fakeUsername }),
                         );
 
                         // Create multiple disabled emails
@@ -1230,7 +1209,7 @@ describe('EmailEventHandler', () => {
             it('should log matching info', async () => {
                 //mock getting username (used for logging)
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ username: fakeUsername }),
+                    DoFactory.createPerson<true>(true, { username: fakeUsername }),
                 );
                 mockRepositoryFindMethods(personenkontexte, rolleMap, new Map<string, ServiceProvider<true>>());
 
@@ -1257,12 +1236,12 @@ describe('EmailEventHandler', () => {
                 it('should log matching info', async () => {
                     //mock getting username (used for logging)
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ username: fakeUsername }),
+                        DoFactory.createPerson<true>(true, { username: fakeUsername }),
                     );
                     mockRepositoryFindMethods(personenkontexte, rolleMap, new Map<string, ServiceProvider<true>>());
 
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ username: fakeUsername }),
+                        DoFactory.createPerson<true>(true, { username: fakeUsername }),
                     );
 
                     const emailAddress: EmailAddress<true> = EmailAddress.construct(
@@ -1327,7 +1306,7 @@ describe('EmailEventHandler', () => {
             it('should log matching error', async () => {
                 mockRepositoryFindMethods(personenkontexte, rolleMap, new Map<string, ServiceProvider<true>>());
 
-                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>({ username: undefined }));
+                personRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createPerson<true>(true, { username: undefined }));
 
                 const emailAddress: EmailAddress<true> = EmailAddress.construct(
                     faker.string.uuid(),
@@ -1366,13 +1345,15 @@ describe('EmailEventHandler', () => {
 
         describe(`when removedPersonenkontexte are not undefined`, () => {
             it('should filter PKs of person to exclude the ones which will be removed', async () => {
-                event = createMock<PersonenkontextUpdatedEvent>({
-                    person: { id: fakePersonId },
+                event = createMock<PersonenkontextUpdatedEvent>(PersonenkontextUpdatedEvent, {
+                    person: { id: fakePersonId, username: fakeUsername, vorname: faker.person.firstName(), familienname: faker.person.lastName() },
                     removedKontexte: [
                         {
                             id: fakePKId,
-                        },
+                        } as PersonenkontextEventKontextData,
                     ],
+                    newKontexte: [],
+                    currentKontexte: [],
                 });
 
                 dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
@@ -1382,7 +1363,7 @@ describe('EmailEventHandler', () => {
 
                 //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ id: faker.string.uuid(), username: faker.internet.userName() }),
+                    DoFactory.createPerson<true>(true, { id: faker.string.uuid(), username: faker.internet.userName() }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -1440,11 +1421,11 @@ describe('EmailEventHandler', () => {
                 faker.person.lastName(),
                 fakeOldUsername,
             );
-            personenkontext = createMock<Personenkontext<true>>({ rolleId: fakeRolleId });
-            rolle = createMock<Rolle<true>>({ id: fakeRolleId });
+            personenkontext = DoFactory.createPersonenkontext<true>(true, { rolleId: fakeRolleId });
+            rolle = DoFactory.createRolle<true>(true, { id: fakeRolleId });
             rollenMap = new Map<string, Rolle<true>>();
             rollenMap.set(fakeRolleId, rolle);
-            sp = createMock<ServiceProvider<true>>({
+            sp = DoFactory.createServiceProvider<true>(true, {
                 kategorie: ServiceProviderKategorie.EMAIL,
             });
             spMap = new Map<string, ServiceProvider<true>>();
@@ -1459,7 +1440,7 @@ describe('EmailEventHandler', () => {
                 EmailAddressStatus.ENABLED,
             );
 
-            organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>());
+            organisationRepositoryMock.findById.mockResolvedValue(DoFactory.createOrganisation<true>(true));
         });
 
         describe('when emailMicroservice is enabled', () => {
@@ -1483,7 +1464,7 @@ describe('EmailEventHandler', () => {
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(emailAddress);
                     //mock person with username is found
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: faker.string.uuid(), username: faker.internet.userName() }),
+                        DoFactory.createPerson<true>(true, { id: faker.string.uuid(), username: faker.internet.userName() }),
                     );
 
                     emailRepoMock.save.mockResolvedValueOnce(emailAddress);
@@ -1511,7 +1492,7 @@ describe('EmailEventHandler', () => {
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(emailAddress);
                     //mock person with username is found
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
+                        DoFactory.createPerson<true>(true, { id: faker.string.uuid(), username: fakeUsername }),
                     );
 
                     emailRepoMock.save.mockResolvedValueOnce(emailAddress);
@@ -1545,7 +1526,7 @@ describe('EmailEventHandler', () => {
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(emailAddress);
                     //mock person with username is found
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: faker.string.uuid(), username: fakeUsername }),
+                        DoFactory.createPerson<true>(true, { id: faker.string.uuid(), username: fakeUsername }),
                     );
 
                     emailRepoMock.save.mockResolvedValueOnce(emailAddress);
@@ -1622,11 +1603,7 @@ describe('EmailEventHandler', () => {
                                 rollenMap,
                                 new Map<string, ServiceProvider<true>>(),
                             );
-                            const corruptedEmailAddress: EmailAddress<true> = createMock<EmailAddress<true>>({
-                                get address(): string {
-                                    return 'addressCannotBeSplittedOnAtSymbol';
-                                },
-                            });
+                            const corruptedEmailAddress: EmailAddress<true> = DoFactory.createEmailAddress<true>(true, 'addressCannotBeSplittedOnAtSymbol');
                             emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
                                 corruptedEmailAddress,
                             ]); //mock: deactivated email-address found
@@ -1654,18 +1631,14 @@ describe('EmailEventHandler', () => {
 
                             const factoryResult: Result<EmailAddress<false>> = {
                                 ok: true,
-                                value: createMock<EmailAddress<false>>({
-                                    get address(): string {
-                                        return fakeNewEmailAddress;
-                                    },
-                                }),
+                                value: DoFactory.createEmailAddress<false>(false, fakeNewEmailAddress),
                             };
 
                             emailFactoryMock.createNewFromPersonIdAndDomain.mockResolvedValue(factoryResult);
                             emailRepoMock.save.mockResolvedValue(getEmail(fakeNewEmailAddress));
                             //mock person with username is found in getPersonUsernameOrError
                             personRepositoryMock.findById.mockResolvedValueOnce(
-                                createMock<Person<true>>({ id: fakePersonId, username: fakeUsername }),
+                                DoFactory.createPerson<true>(true, { id: fakePersonId, username: fakeUsername }),
                             );
 
                             await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
@@ -1784,15 +1757,15 @@ describe('EmailEventHandler', () => {
             fakeRolleId = faker.string.uuid();
             fakePersonId = faker.string.uuid();
             personenkontexte = [
-                createMock<Personenkontext<true>>({ personId: fakePersonId }),
-                createMock<Personenkontext<true>>({ personId: fakePersonId }),
-                createMock<Personenkontext<true>>({ personId: faker.string.uuid() }),
+                DoFactory.createPersonenkontext<true>(true, { personId: fakePersonId }),
+                DoFactory.createPersonenkontext<true>(true, { personId: fakePersonId }),
+                DoFactory.createPersonenkontext<true>(true, { personId: faker.string.uuid() }),
             ];
-            rolle = createMock<Rolle<true>>({ serviceProviderIds: [] });
+            rolle = DoFactory.createRolle<true>(true, { serviceProviderIds: [] });
             event = RolleUpdatedEvent.fromRollen(rolle, rolle);
             rolleMap = new Map<string, Rolle<true>>();
             rolleMap.set(fakeRolleId, rolle);
-            sp = createMock<ServiceProvider<true>>({
+            sp = DoFactory.createServiceProvider<true>(true, {
                 kategorie: ServiceProviderKategorie.EMAIL,
             });
             spMap = new Map<string, ServiceProvider<true>>();
@@ -1874,11 +1847,7 @@ describe('EmailEventHandler', () => {
         describe('when persisting changes to email-address fails', () => {
             it('should log error', async () => {
                 emailRepoMock.findRequestedByPerson.mockResolvedValueOnce(
-                    createMock<EmailAddress<true>>({
-                        get address(): string {
-                            return fakeEmail;
-                        },
-                    }),
+                    DoFactory.createEmailAddress<true>(true, fakeEmail),
                 );
 
                 emailRepoMock.save.mockResolvedValueOnce(new EntityCouldNotBeUpdated('EmailAddress', '1'));
@@ -1894,11 +1863,7 @@ describe('EmailEventHandler', () => {
         describe('when creation and persisting succeeds', () => {
             it('should log info', async () => {
                 emailRepoMock.findRequestedByPerson.mockResolvedValueOnce(
-                    createMock<EmailAddress<true>>({
-                        get address(): string {
-                            return fakeEmail;
-                        },
-                    }),
+                    DoFactory.createEmailAddress<true>(true, fakeEmail),
                 );
 
                 emailRepoMock.save.mockResolvedValueOnce(getEmail(fakeEmail, EmailAddressStatus.DISABLED));

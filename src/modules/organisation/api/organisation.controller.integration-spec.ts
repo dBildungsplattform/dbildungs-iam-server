@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
@@ -108,7 +108,7 @@ describe('Organisation API', () => {
                 },
                 {
                     provide: PersonPermissionsRepo,
-                    useValue: createMock<PersonPermissionsRepo>(),
+                    useValue: createMock(PersonPermissionsRepo),
                 },
                 {
                     provide: KeycloakUserService,
@@ -157,7 +157,7 @@ describe('Organisation API', () => {
     });
 
     beforeEach(async () => {
-        permissionsMock = createMock<PersonPermissions>();
+        permissionsMock = createMock(PersonPermissions);
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
         await DatabaseTestModule.clearDatabase(orm);
     });

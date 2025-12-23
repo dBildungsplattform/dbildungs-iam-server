@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { HttpService } from '@nestjs/axios';
 import { TestingModule, Test } from '@nestjs/testing';
 import { VidisService } from './vidis.service.js';
@@ -79,7 +79,7 @@ describe(`VidisService`, () => {
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [ConfigTestModule, LoggingTestModule],
-            providers: [VidisService, { provide: HttpService, useValue: createMock<HttpService>() }],
+            providers: [VidisService, { provide: HttpService, useValue: createMock(HttpService) }],
         }).compile();
 
         sut = module.get<VidisService>(VidisService);

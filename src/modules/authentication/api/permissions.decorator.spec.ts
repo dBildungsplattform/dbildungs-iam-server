@@ -2,7 +2,7 @@ import { Permissions } from './permissions.decorator.js';
 import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants.js';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import { ExecutionContext } from '@nestjs/common';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import express from 'express';
 import { PassportUser } from '../types/user.js';
 

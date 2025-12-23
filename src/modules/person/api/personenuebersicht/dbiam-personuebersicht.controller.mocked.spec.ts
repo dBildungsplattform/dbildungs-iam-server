@@ -10,7 +10,7 @@ import {
 import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
 import { PersonApiModule } from '../../person-api.module.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { faker } from '@faker-js/faker';
 import { RolleFactory } from '../../../rolle/domain/rolle.factory.js';
 import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
@@ -88,15 +88,15 @@ describe('Personenuebersicht API Mocked', () => {
             providers: [ServiceProviderRepo, RolleFactory, OrganisationRepository],
         })
             .overrideProvider(DBiamPersonenkontextRepo)
-            .useValue(createMock<DBiamPersonenkontextRepo>())
+            .useValue(createMock(DBiamPersonenkontextRepo))
             .overrideProvider(RolleRepo)
-            .useValue(createMock<RolleRepo>())
+            .useValue(createMock(RolleRepo))
             .overrideProvider(OrganisationRepository)
-            .useValue(createMock<OrganisationRepository>())
+            .useValue(createMock(OrganisationRepository))
             .overrideProvider(PersonRepository)
-            .useValue(createMock<PersonRepository>())
+            .useValue(createMock(PersonRepository))
             .overrideProvider(PersonLandesbediensteterSearchService)
-            .useValue(createMock<PersonLandesbediensteterSearchService>())
+            .useValue(createMock(PersonLandesbediensteterSearchService))
             .compile();
 
         sut = module.get(DBiamPersonenuebersichtController);
@@ -104,11 +104,11 @@ describe('Personenuebersicht API Mocked', () => {
         organisationRepositoryMock = module.get(OrganisationRepository);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personRepositoryMock = module.get(PersonRepository);
-        personPermissionsMock = createMock<PersonPermissions>();
+        personPermissionsMock = createMock(PersonPermissions);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('/GET personenuebersicht', () => {
@@ -258,7 +258,7 @@ describe('Personenuebersicht API Mocked', () => {
                 },
             );
 
-            jest.spyOn(DbiamPersonenuebersicht.prototype, 'createZuordnungenForKontexte').mockImplementation(() => {
+            vi.spyOn(DbiamPersonenuebersicht.prototype, 'createZuordnungenForKontexte').mockImplementation(() => {
                 return Promise.resolve(new EntityNotFoundError('Some message here'));
             });
 

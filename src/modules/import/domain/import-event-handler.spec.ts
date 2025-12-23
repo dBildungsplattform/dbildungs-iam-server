@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
@@ -46,27 +46,27 @@ describe('ImportEventHandler', () => {
                 ImportEventHandler,
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: ImportDataRepository,
-                    useValue: createMock<ImportDataRepository>(),
+                    useValue: createMock(ImportDataRepository),
                 },
                 {
                     provide: PersonenkontextCreationService,
-                    useValue: createMock<PersonenkontextCreationService>(),
+                    useValue: createMock(PersonenkontextCreationService),
                 },
                 {
                     provide: ImportVorgangRepository,
-                    useValue: createMock<ImportVorgangRepository>(),
+                    useValue: createMock(ImportVorgangRepository),
                 },
                 {
                     provide: ImportPasswordEncryptor,
-                    useValue: createMock<ImportPasswordEncryptor>(),
+                    useValue: createMock(ImportPasswordEncryptor),
                 },
                 {
                     provide: PersonPermissionsRepo,
-                    useValue: createMock<PersonPermissionsRepo>(),
+                    useValue: createMock(PersonPermissionsRepo),
                 },
             ],
         }).compile();
@@ -85,8 +85,8 @@ describe('ImportEventHandler', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
-        permissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(createMock<PersonPermissions>());
+        vi.resetAllMocks();
+        permissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(createMock(PersonPermissions));
     });
 
     it('should be defined', () => {

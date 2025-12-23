@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -15,7 +15,7 @@ describe('LernAnSchuleUndKlasse specification', () => {
     const sut: LernAnSchuleUndKlasse = new LernAnSchuleUndKlasse(organisationRepoMock, rolleRepoMock);
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should return true, if there are no personenkontexte with rollenart LERN', async () => {

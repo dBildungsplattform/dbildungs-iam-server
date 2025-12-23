@@ -1,5 +1,5 @@
 import { ArgumentsHost } from '@nestjs/common';
-import { MockedObject } from 'vitest';
+import { DeepMocked } from 'vitest';
 import { createMock, DeepMocked } from '@golevelup/ts-vitest';
 import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
@@ -11,7 +11,7 @@ describe('MeldungExceptionFilter', () => {
     let filter: MeldungExceptionFilter;
     const statusCode: number = 500;
     let responseMock: DeepMocked<Response>;
-    let argumentsHost: MockedObject<ArgumentsHost>;
+    let argumentsHost: DeepMocked<ArgumentsHost>;
 
     const generalBadRequestError: DbiamMeldungError = new DbiamMeldungError({
         code: 500,
@@ -20,7 +20,7 @@ describe('MeldungExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new MeldungExceptionFilter();
-        responseMock = createMock<Response>();
+        responseMock = createMock(Response);
         argumentsHost = createMock<ArgumentsHost>({
             switchToHttp: () =>
                 createMock<HttpArgumentsHost>({

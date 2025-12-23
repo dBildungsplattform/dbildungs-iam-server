@@ -25,6 +25,7 @@ import {
 import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
 import { Rollenerweiterung } from '../../src/modules/rolle/domain/rollenerweiterung.js';
+import { EmailAddress, EmailAddressStatus } from '../../src/modules/email/domain/email-address.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -269,5 +270,31 @@ export class DoFactory {
             rollenerweiterung,
             props,
         );
+    }
+
+    public static createEmailAddress<WasPersisted extends boolean>(
+        withId: WasPersisted,
+        address?: string,
+        props?: Partial<EmailAddress<WasPersisted>>,
+    ): EmailAddress<WasPersisted> {
+        let emailAddress: EmailAddress<WasPersisted>;
+        if (withId) {
+            emailAddress = new EmailAddress(
+                props?.id ?? faker.string.uuid(),
+                props?.createdAt ?? faker.date.past(),
+                props?.updatedAt ?? faker.date.recent(),
+                props?.personId ?? faker.string.uuid(),
+                address ?? faker.internet.email(),
+                props?.status ?? faker.helpers.enumValue(EmailAddressStatus),
+                props?.oxUserID ?? faker.string.uuid(),
+        );
+        } else {
+            emailAddress = EmailAddress.createNew(
+                props?.personId ?? faker.string.uuid(),
+                address ?? faker.internet.email(),
+                props?.status ?? faker.helpers.enumValue(EmailAddressStatus),
+            ) as EmailAddress<WasPersisted>;
+        }
+        return emailAddress;
     }
 }

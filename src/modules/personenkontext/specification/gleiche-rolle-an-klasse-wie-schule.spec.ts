@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 
 import { DoFactory } from '../../../../test/utils/index.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
@@ -15,7 +15,7 @@ describe('GleicheRolleAnKlasseWieSchule specification', () => {
     const rolleRepoMock: DeepMocked<RolleRepo> = createMock();
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should return true, if all checks pass', async () => {

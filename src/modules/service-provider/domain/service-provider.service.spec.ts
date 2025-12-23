@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { zip } from 'lodash-es';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
@@ -208,12 +208,12 @@ describe('ServiceProviderService', () => {
             imports: [LoggingTestModule, ConfigTestModule],
             providers: [
                 ServiceProviderService,
-                { provide: RolleRepo, useValue: createMock<RolleRepo>() },
-                { provide: RollenerweiterungRepo, useValue: createMock<RollenerweiterungRepo>() },
-                { provide: ServiceProviderRepo, useValue: createMock<ServiceProviderRepo>() },
-                { provide: OrganisationRepository, useValue: createMock<OrganisationRepository>() },
-                { provide: VidisService, useValue: createMock<VidisService>() },
-                { provide: OrganisationServiceProviderRepo, useValue: createMock<OrganisationServiceProviderRepo>() },
+                { provide: RolleRepo, useValue: createMock(RolleRepo) },
+                { provide: RollenerweiterungRepo, useValue: createMock(RollenerweiterungRepo) },
+                { provide: ServiceProviderRepo, useValue: createMock(ServiceProviderRepo) },
+                { provide: OrganisationRepository, useValue: createMock(OrganisationRepository) },
+                { provide: VidisService, useValue: createMock(VidisService) },
+                { provide: OrganisationServiceProviderRepo, useValue: createMock(OrganisationServiceProviderRepo) },
             ],
         }).compile();
         service = module.get<ServiceProviderService>(ServiceProviderService);
@@ -261,7 +261,7 @@ describe('ServiceProviderService', () => {
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('returns serviceProviders', async () => {
@@ -328,7 +328,7 @@ describe('ServiceProviderService', () => {
                 });
             });
             afterEach(() => {
-                jest.restoreAllMocks();
+                vi.restoreAllMocks();
             });
             it('returns a list of service providers', async () => {
                 const result: Array<ServiceProvider<true>> = await service.getServiceProvidersByOrganisationenAndRollen(
@@ -364,7 +364,7 @@ describe('ServiceProviderService', () => {
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should return referenced objects for serviceProviders', async () => {
@@ -408,7 +408,7 @@ describe('ServiceProviderService', () => {
 
     describe('getRollenerweiterungenForManageableServiceProvider', () => {
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should return rollenerweiterungen for display', async () => {
@@ -435,7 +435,7 @@ describe('ServiceProviderService', () => {
 
     describe('updateServiceProvidersForVidis', () => {
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should update ServiceProvider for VIDIS Angebote if ServiceProvider in VIDIS Angebot response already exists in SPSH.', async () => {

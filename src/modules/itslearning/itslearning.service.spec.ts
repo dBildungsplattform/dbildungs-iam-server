@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosResponse } from 'axios';
@@ -23,7 +23,7 @@ describe('ItsLearningIMSESService', () => {
                 ItsLearningIMSESService,
                 {
                     provide: HttpService,
-                    useValue: createMock<HttpService>(),
+                    useValue: createMock(HttpService),
                 },
             ],
         }).compile();
@@ -43,7 +43,7 @@ describe('ItsLearningIMSESService', () => {
 
     describe('send', () => {
         it('should call HttpService.post', async () => {
-            const mockAction: DeepMocked<IMSESAction<unknown, unknown>> = createMock<IMSESAction<unknown, unknown>>();
+            const mockAction: DeepMocked<IMSESAction<unknown, unknown>> = createMock(IMSESAction<unknown, unknown>);
             mockAction.buildRequest.mockReturnValueOnce({});
             mockAction.action = 'testAction';
             httpServiceMock.post.mockReturnValueOnce(of({} as AxiosResponse));
@@ -63,7 +63,7 @@ describe('ItsLearningIMSESService', () => {
         });
 
         it('should include syncID if given', async () => {
-            const mockAction: DeepMocked<IMSESAction<unknown, unknown>> = createMock<IMSESAction<unknown, unknown>>();
+            const mockAction: DeepMocked<IMSESAction<unknown, unknown>> = createMock(IMSESAction<unknown, unknown>);
             mockAction.buildRequest.mockReturnValueOnce({});
             mockAction.action = 'testAction';
             httpServiceMock.post.mockReturnValueOnce(of({} as AxiosResponse));
@@ -84,7 +84,7 @@ describe('ItsLearningIMSESService', () => {
         });
 
         it('should call parseResponse of action and return result', async () => {
-            const mockAction: DeepMocked<IMSESAction<unknown, string>> = createMock<IMSESAction<unknown, string>>();
+            const mockAction: DeepMocked<IMSESAction<unknown, string>> = createMock(IMSESAction<unknown, string>);
             mockAction.buildRequest.mockReturnValueOnce({});
             mockAction.parseResponse.mockReturnValueOnce({ ok: true, value: 'TestResult' });
             mockAction.action = 'testAction';
@@ -101,7 +101,7 @@ describe('ItsLearningIMSESService', () => {
         describe('when an unexpected error occurs', () => {
             it('should retry the request and return the successfull result', async () => {
                 const error: Error = new Error('AxiosError');
-                const mockAction: DeepMocked<IMSESAction<unknown, string>> = createMock<IMSESAction<unknown, string>>();
+                const mockAction: DeepMocked<IMSESAction<unknown, string>> = createMock(IMSESAction<unknown, string>);
                 mockAction.parseResponse.mockReturnValueOnce({ ok: true, value: 'TestResult' });
                 httpServiceMock.post.mockReturnValueOnce(throwError(() => error));
                 httpServiceMock.post.mockReturnValueOnce(of({} as AxiosResponse));
@@ -120,7 +120,7 @@ describe('ItsLearningIMSESService', () => {
 
             it('should retry the request and return the error if it still does not work', async () => {
                 const error: Error = new Error('AxiosError');
-                const mockAction: DeepMocked<IMSESAction<unknown, string>> = createMock<IMSESAction<unknown, string>>();
+                const mockAction: DeepMocked<IMSESAction<unknown, string>> = createMock(IMSESAction<unknown, string>);
                 httpServiceMock.post.mockReturnValueOnce(throwError(() => error));
                 httpServiceMock.post.mockReturnValueOnce(throwError(() => error));
 

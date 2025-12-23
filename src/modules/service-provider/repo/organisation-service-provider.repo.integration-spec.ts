@@ -33,7 +33,7 @@ describe('OrganisationServiceProviderRepo', () => {
                 ServiceProviderRepo,
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
             ],
         }).compile();

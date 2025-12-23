@@ -1,10 +1,9 @@
 import { faker } from '@faker-js/faker';
-import { createMock } from '@golevelup/ts-vitest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { NoRedundantRollenerweiterung } from './no-redundant-rollenerweiterung.specification.js';
-import { MockedObject } from 'vitest';
 
 describe('NoRedundantRollenerweiterung', () => {
     describe('isSatisfiedBy', () => {
@@ -23,12 +22,10 @@ describe('NoRedundantRollenerweiterung', () => {
         ])(
             'should return %s if the rolle %s',
             async (expected: boolean, _label: string, rolle: Option<Rolle<boolean>>) => {
-                const rollenerweiterungMock: MockedObject<Rollenerweiterung<boolean>> = createMock<
-                    Rollenerweiterung<boolean>
-                >({
+                const rollenerweiterungMock: Rollenerweiterung<boolean> = DoFactory.createRollenerweiterung(true, {
                     serviceProviderId: serviceProviderId,
-                });
-                rollenerweiterungMock.getRolle.mockResolvedValue(rolle);
+                })
+                vi.spyOn(rollenerweiterungMock, 'getRolle').mockResolvedValue(rolle);
 
                 const specification: NoRedundantRollenerweiterung = new NoRedundantRollenerweiterung();
                 await expect(specification.isSatisfiedBy(rollenerweiterungMock)).resolves.toBe(expected);

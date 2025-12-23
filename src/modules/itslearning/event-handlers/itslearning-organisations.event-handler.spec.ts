@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
@@ -33,11 +33,11 @@ describe('ItsLearning Organisations Event Handler', () => {
                 ItsLearningOrganisationsEventHandler,
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: ItslearningGroupRepo,
-                    useValue: createMock<ItslearningGroupRepo>(),
+                    useValue: createMock(ItslearningGroupRepo),
                 },
             ],
         }).compile();
@@ -54,7 +54,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
     beforeEach(() => {
         sut.ENABLED = true;
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('createKlasseEventHandler', () => {
@@ -64,7 +64,7 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.alphanumeric(),
                 faker.string.uuid(),
             );
-            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(createMock<GroupResponse>()); // ReadGroupAction
+            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(createMock(GroupResponse)); // ReadGroupAction
             orgaRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>({ itslearningEnabled: true }));
             itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined); // CreateGroupAction
 
@@ -90,7 +90,7 @@ describe('ItsLearning Organisations Event Handler', () => {
                 'Klasse with a name that is way too long should be truncated',
                 faker.string.uuid(),
             );
-            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(createMock<GroupResponse>()); // ReadGroupAction
+            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(createMock(GroupResponse)); // ReadGroupAction
             orgaRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>({ itslearningEnabled: true }));
             itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined); // CreateGroupAction
 

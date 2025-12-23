@@ -1,6 +1,6 @@
-import { MockedObject, vi } from 'vitest';
+import { DeepMocked, vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { createMock } from '@golevelup/ts-vitest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -13,9 +13,9 @@ import { Rollenerweiterung } from './rollenerweiterung.js';
 describe('Rollenerweiterung Aggregate', () => {
     let module: TestingModule;
     let rollenerweiterungFactory: RollenerweiterungFactory;
-    let organisationRepo: MockedObject<OrganisationRepository>;
-    let rolleRepo: MockedObject<RolleRepo>;
-    let serviceProviderRepoMock: MockedObject<ServiceProviderRepo>;
+    let organisationRepo: DeepMocked<OrganisationRepository>;
+    let rolleRepo: DeepMocked<RolleRepo>;
+    let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -23,15 +23,15 @@ describe('Rollenerweiterung Aggregate', () => {
                 RollenerweiterungFactory,
                 {
                     provide: ServiceProviderRepo,
-                    useValue: createMock<ServiceProviderRepo>(),
+                    useValue: createMock(ServiceProviderRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
             ],
         }).compile();

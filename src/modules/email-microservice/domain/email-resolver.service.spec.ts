@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -31,9 +31,9 @@ describe('EmailResolverService', () => {
             providers: [],
         })
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .overrideProvider(HttpService)
-            .useValue(createMock<HttpService>())
+            .useValue(createMock(HttpService))
             .compile();
 
         sut = module.get(EmailResolverService);
@@ -375,7 +375,7 @@ describe('EmailResolverService', () => {
 
     it('should return true when USE_EMAIL_MICROSERVICE is true', () => {
         const configService: ConfigService = module.get(ConfigService);
-        jest.spyOn(configService, 'getOrThrow').mockReturnValueOnce({
+        vi.spyOn(configService, 'getOrThrow').mockReturnValueOnce({
             USE_EMAIL_MICROSERVICE: true,
             ENDPOINT: 'http://email-service/',
         });
@@ -385,7 +385,7 @@ describe('EmailResolverService', () => {
 
     it('should return false when USE_EMAIL_MICROSERVICE is false', () => {
         const configService: ConfigService = module.get(ConfigService);
-        jest.spyOn(configService, 'getOrThrow').mockReturnValueOnce({
+        vi.spyOn(configService, 'getOrThrow').mockReturnValueOnce({
             USE_EMAIL_MICROSERVICE: false,
             ENDPOINT: 'http://email-service/',
         });
@@ -396,7 +396,7 @@ describe('EmailResolverService', () => {
     it('should use correct endpoint from config in post call', async () => {
         const mockEndpoint: string = 'https://email.microservice/';
         const configService: ConfigService = module.get(ConfigService);
-        configService.getOrThrow = jest.fn().mockReturnValue({
+        configService.getOrThrow = vi.fn().mockReturnValue({
             ENDPOINT: mockEndpoint,
         });
         const spshPersonId: string = faker.string.uuid();
@@ -489,7 +489,7 @@ describe('EmailResolverService', () => {
             const spshPersonId: string = faker.string.uuid();
             const mockEndpoint: string = 'https://email.microservice/';
             const configService: ConfigService = module.get(ConfigService);
-            configService.getOrThrow = jest.fn().mockReturnValue({
+            configService.getOrThrow = vi.fn().mockReturnValue({
                 ENDPOINT: mockEndpoint,
             });
 

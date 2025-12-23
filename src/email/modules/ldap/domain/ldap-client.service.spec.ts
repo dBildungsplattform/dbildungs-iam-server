@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
@@ -6,9 +7,9 @@ import { EmailLdapConfigModule } from '../ldap-config.module.js';
 import { EmailLdapModule } from '../email-ldap.module.js';
 import { faker } from '@faker-js/faker';
 import { LdapClientService, PersonData } from './ldap-client.service.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../../test/utils/createMock.js';
 import { LdapClient } from './ldap-client.js';
-import { Client, Entry, SearchResult } from 'ldapts';
+import { Client, DN, SearchResult } from 'ldapts';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapCreatePersonError } from '../error/ldap-create-person.error.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
@@ -22,6 +23,17 @@ import {
     expectErrResult,
     expectOkResult,
 } from '../../../../../test/utils/index.js';
+import { LdapModifyPersonError } from '../error/ldap-modify-person.error.js';
+
+class PublicExecuteWithRetry {
+    public async executeWithRetry<T>(
+        _func: () => Promise<Result<T>>,
+        _retries: number,
+        _delay: number = 15000,
+    ): Promise<Result<T>> {
+        return _func();
+    }
+}
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -57,21 +69,21 @@ describe('LDAP Client Service', () => {
         };
     }
 
-    function makeMockClient(cb: (client: DeepMocked<Client>) => void): void {
-        clientMock = createMock<Client>(); // Always create a fresh mock
-        cb(clientMock);
-        ldapClientMock.getClient.mockReturnValue(clientMock);
-    }
+    // function makeMockClient(cb: (client: DeepMocked<Client>) => void): void {
+    //     clientMock = createMock(Client); // Always create a fresh mock
+    //     cb(clientMock);
+    //     ldapClientMock.getClient.mockReturnValue(clientMock);
+    // }
 
-    function mockBind(error?: unknown): void {
-        makeMockClient((client: DeepMocked<Client>) => {
-            if (error) {
-                client.bind.mockRejectedValueOnce(error);
-            } else {
-                client.bind.mockResolvedValueOnce();
-            }
-        });
-    }
+    // function mockBind(error?: unknown): void {
+    //     makeMockClient((client: DeepMocked<Client>) => {
+    //         if (error) {
+    //             client.bind.mockRejectedValueOnce(error);
+    //         } else {
+    //             client.bind.mockResolvedValueOnce();
+    //         }
+    //     });
+    // }
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -93,9 +105,9 @@ describe('LDAP Client Service', () => {
             ],
         })
             .overrideProvider(LdapClient)
-            .useValue(createMock<LdapClient>())
+            .useValue(createMock(LdapClient))
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .overrideProvider(LdapInstanceConfig)
             .useValue(mockLdapInstanceConfig)
             .compile();
@@ -105,7 +117,7 @@ describe('LDAP Client Service', () => {
         ldapClientService = module.get(LdapClientService);
         ldapClientMock = module.get(LdapClient);
         loggerMock = module.get(ClassLogger);
-        clientMock = createMock<Client>();
+        clientMock = createMock(Client);
         instanceConfig = module.get(LdapInstanceConfig);
 
         //currently only used to wait for the LDAP container, because setupDatabase() is blocking
@@ -118,22 +130,23 @@ describe('LDAP Client Service', () => {
         await DatabaseTestModule.clearDatabase(orm);
         await orm.close();
         await app.close();
-        jest.clearAllTimers();
+        vi.clearAllTimers();
     });
 
     beforeEach(async () => {
-        jest.resetAllMocks();
-        jest.restoreAllMocks();
-        clientMock = createMock<Client>();
+        vi.resetAllMocks();
+        vi.restoreAllMocks();
+        clientMock = createMock(Client);
         await DatabaseTestModule.clearDatabase(orm);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        jest.spyOn(ldapClientService as any, 'executeWithRetry').mockImplementation((...args: unknown[]) => {
-            //Needed To globally mock the private executeWithRetry function (otherwise test run too long)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const func: () => Promise<Result<any>> = args[0] as () => Promise<Result<any>>;
-            return func();
-        });
+        vi.spyOn(ldapClientService as unknown as PublicExecuteWithRetry, 'executeWithRetry').mockImplementation(
+            (...args: unknown[]) => {
+                //Needed To globally mock the private executeWithRetry function (otherwise test run too long)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const func: () => Promise<Result<any>> = args[0] as () => Promise<Result<any>>;
+                return func();
+            },
+        );
     });
 
     it('should be defined', () => {
@@ -145,7 +158,7 @@ describe('LDAP Client Service', () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValue();
                 clientMock.add.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                clientMock.search.mockResolvedValueOnce( { searchEntries: [], searchReferences: [] } );
                 return clientMock;
             });
             const result: Result<boolean> = await ldapClientService.isPersonExisting('user123', 'wrong-domain.de');
@@ -158,7 +171,7 @@ describe('LDAP Client Service', () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValue();
                 clientMock.add.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                clientMock.search.mockResolvedValueOnce({ searchEntries: [], searchReferences: [] });
                 return clientMock;
             });
 
@@ -244,9 +257,9 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            jest.spyOn(ldapClientService as unknown as any, 'bind').mockResolvedValue({
+            vi.spyOn(ldapClientService as unknown as any, 'bind').mockResolvedValue({
                 ok: false,
                 error: new Error('bind failed'),
             });
@@ -262,7 +275,7 @@ describe('LDAP Client Service', () => {
 
     describe('executeWithRetry', () => {
         beforeEach(() => {
-            jest.restoreAllMocks(); //Needed To Reset the global executeWithRetry Mock
+            vi.restoreAllMocks(); //Needed To Reset the global executeWithRetry Mock
         });
 
         it('when operation succeeds should return value', async () => {
@@ -283,12 +296,12 @@ describe('LDAP Client Service', () => {
         });
 
         it('should throw an error when the function returns a Result with ok=false and handle it with retry', async () => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
             ldapClientMock.getClient.mockReturnValue(clientMock);
             clientMock.bind.mockResolvedValue(undefined);
             const customError: Error = new Error('custom error');
 
-            const failingFunc: () => Promise<Result<unknown, Error>> = jest
+            const failingFunc: () => Promise<Result<unknown, Error>> = vi
                 .fn()
                 .mockResolvedValue({ ok: false, error: customError });
 
@@ -360,26 +373,28 @@ describe('LDAP Client Service', () => {
 
         describe('lehrer', () => {
             it('when called with extra entryUUID should return truthy result', async () => {
-                makeMockClient((client: DeepMocked<Client>) => {
-                    mockBind();
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValue();
 
                     // exists check
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    clientMock.search.mockResolvedValueOnce({ searchEntries: [], searchReferences: [] });
 
                     // Add
-                    client.add.mockResolvedValueOnce();
+                    clientMock.add.mockResolvedValueOnce();
 
                     // Get EntryUUID
-                    client.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [
-                                createMock<Entry>({
-                                    entryUUID: faker.string.uuid(),
-                                }),
-                            ],
-                        }),
+                    clientMock.search.mockResolvedValueOnce(
+                        {
+                            searchEntries: [{
+                                entryUUID: faker.string.uuid(),
+                                dn: ''
+                            }],
+                            searchReferences: []
+                        }
                     );
+                    return clientMock;
                 });
+
 
                 const testLehrer: PersonData = getPersonData();
                 const lehrerUid: string =
@@ -396,25 +411,26 @@ describe('LDAP Client Service', () => {
             });
 
             it('when called WITHOUT entryUUID should use person.id and return truthy result', async () => {
-                makeMockClient((client: DeepMocked<Client>) => {
-                    mockBind();
+                 ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValue();
 
-                    // exists check
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                   // exists check
+                    clientMock.search.mockResolvedValueOnce({ searchEntries: [], searchReferences: [] });
 
                     // Add
-                    client.add.mockResolvedValueOnce();
+                    clientMock.add.mockResolvedValueOnce();
 
                     // Get EntryUUID
-                    client.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [
-                                createMock<Entry>({
-                                    entryUUID: faker.string.uuid(),
-                                }),
-                            ],
-                        }),
+                    clientMock.search.mockResolvedValueOnce(
+                        {
+                            searchEntries: [{
+                                entryUUID: faker.string.uuid(),
+                                dn: ''
+                            }],
+                            searchReferences: []
+                        }
                     );
+                    return clientMock;
                 });
 
                 const testLehrer: PersonData = getPersonData();
@@ -436,9 +452,9 @@ describe('LDAP Client Service', () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.bind.mockResolvedValue();
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    clientMock.search.mockResolvedValueOnce({ searchEntries: [], searchReferences: [] });
+                    clientMock.search.mockResolvedValueOnce({ searchEntries: [], searchReferences: [] });
+                    clientMock.search.mockResolvedValueOnce({ searchEntries: [], searchReferences: [] });
                     clientMock.add.mockRejectedValueOnce(error);
 
                     return clientMock;
@@ -462,25 +478,25 @@ describe('LDAP Client Service', () => {
             });
 
             it('when called with explicit domain "ersatzschule-sh.de" should return truthy result', async () => {
-                makeMockClient((client: DeepMocked<Client>) => {
-                    mockBind();
+                ldapClientMock.getClient.mockImplementation(() => {
 
                     // exists check
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    clientMock.search.mockResolvedValueOnce({ searchEntries: [], searchReferences: [] });
 
                     // Add
-                    client.add.mockResolvedValueOnce();
+                    clientMock.add.mockResolvedValueOnce();
 
                     // Get EntryUUID
-                    client.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [
-                                createMock<Entry>({
-                                    entryUUID: faker.string.uuid(),
-                                }),
-                            ],
-                        }),
+                    clientMock.search.mockResolvedValueOnce(
+                        {
+                            searchEntries: [{
+                                entryUUID: faker.string.uuid(),
+                                dn: ''
+                            }],
+                            searchReferences: []
+                        }
                     );
+                    return clientMock;
                 });
 
                 const testLehrer: PersonData = getPersonData();
@@ -506,13 +522,12 @@ describe('LDAP Client Service', () => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
                     clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [
-                                createMock<Entry>({
+                        {
+                            searchEntries: [{
                                     dn: lehrerUid,
-                                }),
-                            ],
-                        }),
+                                }],
+                            searchReferences: []
+                        }
                     ); //mock: lehrer already exists
 
                     return clientMock;
@@ -564,10 +579,10 @@ describe('LDAP Client Service', () => {
         const fakeEmailDomain: string = 'schule-sh.de';
 
         it('should modify person in ldap', async () => {
-            makeMockClient((client: DeepMocked<Client>) => {
-                client.modify.mockResolvedValueOnce();
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.modify.mockResolvedValueOnce();
+                return clientMock;
             });
-            mockBind();
 
             const personData: PersonData = getPersonData();
             const primaryMail: string = faker.internet.email();
@@ -612,9 +627,12 @@ describe('LDAP Client Service', () => {
 
         it('should return error if bind fails', async () => {
             const bindError: Error = new Error('LDAP bind FAILED');
-            // Mock multiple times to exhaust the retries
-            mockBind(bindError);
-            mockBind(bindError);
+            ldapClientMock.getClient.mockImplementation(() => {
+                // Mock multiple times to exhaust the retries
+                clientMock.bind.mockRejectedValueOnce(bindError);
+                clientMock.bind.mockRejectedValueOnce(bindError);
+                return clientMock;
+            });
 
             const personData: PersonData = getPersonData();
             const primaryMail: string = faker.internet.email();
@@ -631,9 +649,10 @@ describe('LDAP Client Service', () => {
         });
 
         it('should return error if modify fails', async () => {
-            makeMockClient((client: DeepMocked<Client>) => {
-                client.bind.mockResolvedValue();
-                client.modify.mockRejectedValueOnce(new Error('Modify failed'));
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.modify.mockRejectedValueOnce(new Error('Modify failed'));
+                return clientMock;
             });
 
             const personData: PersonData = getPersonData();
@@ -647,7 +666,7 @@ describe('LDAP Client Service', () => {
             );
 
             expectErrResult(result);
-            expect(result.error).toEqual(new Error('LDAP error: Modifying lehrer FAILED'));
+            expect(result.error).toEqual(new LdapModifyPersonError());
         });
     });
 
@@ -659,12 +678,13 @@ describe('LDAP Client Service', () => {
         it('should return ok if person does not exist', async () => {
             const externalId: string = faker.string.uuid();
             const personUid: string = `uid=${externalId},ou=${rootName},${baseDn}`;
-            makeMockClient((client: DeepMocked<Client>) => {
-                client.bind.mockResolvedValue();
-                client.search.mockResolvedValueOnce({
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockResolvedValueOnce({
                     searchEntries: [],
                 } as unknown as SearchResult);
-                client.del.mockResolvedValue();
+                clientMock.del.mockResolvedValue();
+                return clientMock;
             });
             const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
             expectOkResult(result);
@@ -674,12 +694,13 @@ describe('LDAP Client Service', () => {
         it('should delete person if exists and return ok', async () => {
             const externalId: string = faker.string.uuid();
             const personUid: string = `uid=${externalId},ou=${rootName},${baseDn}`;
-            makeMockClient((client: DeepMocked<Client>) => {
-                client.bind.mockResolvedValue();
-                client.search.mockResolvedValueOnce({
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockResolvedValueOnce({
                     searchEntries: [{ dn: personUid }],
                 } as SearchResult);
-                client.del.mockResolvedValue();
+                clientMock.del.mockResolvedValue();
+                return clientMock;
             });
             const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
             expectOkResult(result);
@@ -688,8 +709,9 @@ describe('LDAP Client Service', () => {
 
         it('should return error if bind fails', async () => {
             const externalId: string = faker.string.uuid();
-            makeMockClient((client: DeepMocked<Client>) => {
-                client.bind.mockRejectedValueOnce(new Error('bind failed'));
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockRejectedValueOnce(new Error('bind failed'));
+                return clientMock;
             });
             const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
             expectErrResult(result);
@@ -699,9 +721,10 @@ describe('LDAP Client Service', () => {
         it('should return error if search throws', async () => {
             const externalId: string = faker.string.uuid();
             const personUid: string = `uid=${externalId},ou=${rootName},${baseDn}`;
-            makeMockClient((client: DeepMocked<Client>) => {
-                client.bind.mockResolvedValue();
-                client.search.mockRejectedValueOnce(new Error('search failed'));
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockRejectedValueOnce(new Error('search failed'));
+                return clientMock;
             });
             const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
             expectErrResult(result);
@@ -714,12 +737,13 @@ describe('LDAP Client Service', () => {
         it('should return error if delete throws', async () => {
             const externalId: string = faker.string.uuid();
             const personUid: string = `uid=${externalId},ou=${rootName},${baseDn}`;
-            makeMockClient((client: DeepMocked<Client>) => {
-                client.bind.mockResolvedValue();
-                client.search.mockResolvedValueOnce({
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockResolvedValueOnce({
                     searchEntries: [{ dn: personUid }],
                 } as SearchResult);
-                client.del.mockRejectedValueOnce(new Error('delete failed'));
+                clientMock.del.mockRejectedValueOnce(new Error('delete failed'));
+                return clientMock;
             });
             const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
             expectErrResult(result);

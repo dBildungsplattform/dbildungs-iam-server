@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { BaseClient } from 'openid-client';
 import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';
 import { HealthIndicatorResult, HealthIndicatorStatus } from '@nestjs/terminus';
@@ -9,11 +9,11 @@ import { ConfigTestModule, KeycloakConfigTestModule } from '../../../test/utils/
 
 let error: Error | string | undefined = undefined;
 
-jest.mock('../authentication/services/oidc-client.service.js', () => {
+Mock('../authentication/services/oidc-client.service.js', () => {
     return {
         tryGetClient: function (): Promise<BaseClient> {
             if (error === undefined) {
-                return Promise.resolve(createMock<BaseClient>());
+                return Promise.resolve(createMock(BaseClient));
             } else {
                 // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                 return Promise.reject(error);
@@ -31,7 +31,7 @@ describe('Keycloak health indicator', () => {
                 KeycloakHealthIndicator,
                 {
                     provide: ConfigService<ServerConfig>,
-                    useValue: createMock<ConfigService<ServerConfig>>(),
+                    useValue: createMock(ConfigService<ServerConfig>),
                 },
             ],
         }).compile();

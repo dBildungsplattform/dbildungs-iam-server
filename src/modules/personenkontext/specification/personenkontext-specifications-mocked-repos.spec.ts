@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { ConfigTestModule, DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { NurLehrUndLernAnKlasse } from './nur-lehr-und-lern-an-klasse.js';
@@ -52,19 +52,19 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 PersonenkontextFactory,
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 PersonenkontextFactory,
             ],
@@ -76,7 +76,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
     }, 100000);
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     afterAll(async () => {
@@ -89,7 +89,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
 
     describe('Nur LEHR Und LERN An Klasse', () => {
         it('should be satisfied when organisation typ is not KLASSE', async () => {
-            const organisation: Organisation<true> = createMock<Organisation<true>>();
+            const organisation: Organisation<true> = createMock(Organisation<true>);
             organisation.typ = OrganisationsTyp.SCHULE;
             const specification: NurLehrUndLernAnKlasse = new NurLehrUndLernAnKlasse(
                 organisationRepoMock,
@@ -112,7 +112,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
         });
 
         it('should not be satisfied when rolle could not be found', async () => {
-            const organisation: Organisation<true> = createMock<Organisation<true>>();
+            const organisation: Organisation<true> = createMock(Organisation<true>);
             organisation.typ = OrganisationsTyp.KLASSE;
             const specification: NurLehrUndLernAnKlasse = new NurLehrUndLernAnKlasse(
                 organisationRepoMock,
@@ -129,7 +129,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
 
     describe('Gleiche Rolle An Klasse Wie Schule', () => {
         it('should be satisfied when organisation type is not KLASSE', async () => {
-            const organisation: Organisation<true> = createMock<Organisation<true>>();
+            const organisation: Organisation<true> = createMock(Organisation<true>);
             organisation.typ = OrganisationsTyp.SCHULE;
             const specification: GleicheRolleAnKlasseWieSchule = new GleicheRolleAnKlasseWieSchule(
                 organisationRepoMock,
@@ -154,7 +154,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
         });
 
         it('should not be satisfied when organisation type is KLASSE but not administriertVon', async () => {
-            const organisation: Organisation<true> = createMock<Organisation<true>>();
+            const organisation: Organisation<true> = createMock(Organisation<true>);
             organisation.typ = OrganisationsTyp.KLASSE;
             organisation.administriertVon = undefined;
             const specification: GleicheRolleAnKlasseWieSchule = new GleicheRolleAnKlasseWieSchule(
@@ -169,9 +169,9 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
         });
 
         it('should not be satisfied when rolle could not be found', async () => {
-            const klasse: Organisation<true> = createMock<Organisation<true>>();
+            const klasse: Organisation<true> = createMock(Organisation<true>);
             klasse.typ = OrganisationsTyp.KLASSE;
-            const schule: Organisation<true> = createMock<Organisation<true>>();
+            const schule: Organisation<true> = createMock(Organisation<true>);
             schule.typ = OrganisationsTyp.SCHULE;
             klasse.administriertVon = schule.id;
             const specification: GleicheRolleAnKlasseWieSchule = new GleicheRolleAnKlasseWieSchule(
@@ -180,7 +180,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 rolleRepoMock,
             );
             const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false);
-            const foundPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
+            const foundPersonenkontext: Personenkontext<true> = createMock(Personenkontext<true>);
             schule.id = foundPersonenkontext.organisationId;
             const foundPersonenkontexte: Personenkontext<true>[] = [foundPersonenkontext];
 
@@ -194,9 +194,9 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
         });
 
         it('should not be satisfied when rolle objects are not identical', async () => {
-            const organisation: Organisation<true> = createMock<Organisation<true>>();
+            const organisation: Organisation<true> = createMock(Organisation<true>);
             organisation.typ = OrganisationsTyp.KLASSE;
-            const rolle: Rolle<true> = createMock<Rolle<true>>();
+            const rolle: Rolle<true> = createMock(Rolle<true>);
             const specification: GleicheRolleAnKlasseWieSchule = new GleicheRolleAnKlasseWieSchule(
                 organisationRepoMock,
                 personenkontextRepoMock,
@@ -216,7 +216,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 personenkontextRepoMock,
                 rolleRepoMock,
             );
-            const personenkontext: Personenkontext<false> = createMock<Personenkontext<false>>();
+            const personenkontext: Personenkontext<false> = createMock(Personenkontext<false>);
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([]);
 
             const mapRollen: Map<string, Rolle<true>> = new Map();
@@ -233,8 +233,8 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 personenkontextRepoMock,
                 rolleRepoMock,
             );
-            const personenkontext: Personenkontext<false> = createMock<Personenkontext<false>>();
-            const existingPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
+            const personenkontext: Personenkontext<false> = createMock(Personenkontext<false>);
+            const existingPersonenkontext: Personenkontext<true> = createMock(Personenkontext<true>);
 
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([existingPersonenkontext]);
 
@@ -256,8 +256,8 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 personenkontextRepoMock,
                 rolleRepoMock,
             );
-            const personenkontext: Personenkontext<false> = createMock<Personenkontext<false>>();
-            const existingPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
+            const personenkontext: Personenkontext<false> = createMock(Personenkontext<false>);
+            const existingPersonenkontext: Personenkontext<true> = createMock(Personenkontext<true>);
 
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([existingPersonenkontext]);
 
@@ -279,9 +279,9 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 personenkontextRepoMock,
                 rolleRepoMock,
             );
-            const personenkontext1: Personenkontext<false> = createMock<Personenkontext<false>>();
-            const personenkontext2: Personenkontext<false> = createMock<Personenkontext<false>>();
-            const existingPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
+            const personenkontext1: Personenkontext<false> = createMock(Personenkontext<false>);
+            const personenkontext2: Personenkontext<false> = createMock(Personenkontext<false>);
+            const existingPersonenkontext: Personenkontext<true> = createMock(Personenkontext<true>);
 
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([existingPersonenkontext]);
 
@@ -305,9 +305,9 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 rolleRepoMock,
             );
 
-            const personenkontext1: Personenkontext<false> = createMock<Personenkontext<false>>();
-            const personenkontext2: Personenkontext<false> = createMock<Personenkontext<false>>();
-            const existingPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
+            const personenkontext1: Personenkontext<false> = createMock(Personenkontext<false>);
+            const personenkontext2: Personenkontext<false> = createMock(Personenkontext<false>);
+            const existingPersonenkontext: Personenkontext<true> = createMock(Personenkontext<true>);
 
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([existingPersonenkontext]);
 
@@ -330,8 +330,8 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 rolleRepoMock,
             );
 
-            const personenkontext1: Personenkontext<false> = createMock<Personenkontext<false>>();
-            const personenkontext2: Personenkontext<false> = createMock<Personenkontext<false>>();
+            const personenkontext1: Personenkontext<false> = createMock(Personenkontext<false>);
+            const personenkontext2: Personenkontext<false> = createMock(Personenkontext<false>);
 
             // Mock to return an empty array for existing person contexts
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([]);
@@ -357,8 +357,8 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 rolleRepoMock,
             );
 
-            const personenkontext1: Personenkontext<false> = createMock<Personenkontext<false>>();
-            const personenkontext2: Personenkontext<false> = createMock<Personenkontext<false>>();
+            const personenkontext1: Personenkontext<false> = createMock(Personenkontext<false>);
+            const personenkontext2: Personenkontext<false> = createMock(Personenkontext<false>);
 
             // Mock to return an empty array for existing person contexts
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([]);

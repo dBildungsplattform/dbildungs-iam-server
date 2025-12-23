@@ -60,7 +60,7 @@ describe('DbMigrateConsole', () => {
 
         describe('when migration-apply is executed', () => {
             it('should not throw an error', async () => {
-                jest.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve([]));
+                vi.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve([]));
                 await expect(dbMigrationApply.run([])).resolves.not.toThrow();
             });
         });
@@ -68,33 +68,33 @@ describe('DbMigrateConsole', () => {
 
     describe('DbApplyMigrationConsole', () => {
         beforeEach(() => {
-            jest.spyOn(migrator, 'up').mockResolvedValueOnce(Promise.resolve([]));
+            vi.spyOn(migrator, 'up').mockResolvedValueOnce(Promise.resolve([]));
         });
 
         it('should apply all pending migrations', async () => {
             const migrations: UmzugMigration[] = [{ name: '20210101_initialS' }, { name: '20210202_dataD' }];
-            jest.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve(migrations));
+            vi.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve(migrations));
             await dbMigrationApply.run([]);
             expect(migrator.up).toHaveBeenCalledWith(migrations.map((m: UmzugMigration) => m.name));
         });
 
         it('should filter and apply only structural migrations', async () => {
             const migrations: UmzugMigration[] = [{ name: '20210101_initialS' }, { name: '20210202_dataD' }];
-            jest.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve(migrations));
+            vi.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve(migrations));
             await dbMigrationApply.run([], { migration: 'structural' });
             expect(migrator.up).toHaveBeenCalledWith(['20210101_initialS']);
         });
 
         it('should filter and apply only data migrations', async () => {
             const migrations: UmzugMigration[] = [{ name: '20210101_initialS' }, { name: '20210202_dataD' }];
-            jest.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve(migrations));
+            vi.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve(migrations));
             await dbMigrationApply.run([], { migration: 'data' });
             expect(migrator.up).toHaveBeenCalledWith(['20210202_dataD']);
         });
 
         it('should throw an error if any migration does not end with S or D', async () => {
             const migrations: UmzugMigration[] = [{ name: '20210101_initial' }];
-            jest.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve(migrations));
+            vi.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve(migrations));
             await expect(dbMigrationApply.run([])).rejects.toThrow('Not all migrations end with a S or D');
         });
     });

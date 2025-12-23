@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { ExecutionContext } from '@nestjs/common';
 import { AuthGuard, IAuthGuard } from '@nestjs/passport';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -14,8 +14,8 @@ import { HttpFoundException } from '../../../shared/error/http.found.exception.j
 import { AuthenticationErrorI18nTypes } from './dbiam-authentication.error.js';
 import { StepUpLevel } from '../passport/oidc.strategy.js';
 
-const canActivateSpy: jest.SpyInstance = jest.spyOn(AuthGuard(['jwt', 'oidc']).prototype as IAuthGuard, 'canActivate');
-const logInSpy: jest.SpyInstance = jest.spyOn(AuthGuard(['jwt', 'oidc']).prototype as IAuthGuard, 'logIn');
+const canActivateSpy: Mock = vi.spyOn(AuthGuard(['jwt', 'oidc']).prototype as IAuthGuard, 'canActivate');
+const logInSpy: Mock = vi.spyOn(AuthGuard(['jwt', 'oidc']).prototype as IAuthGuard, 'logIn');
 
 describe('LoginGuard', () => {
     let module: TestingModule;
@@ -29,11 +29,11 @@ describe('LoginGuard', () => {
                 LoginGuard,
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock(ClassLogger),
                 },
                 {
                     provide: ConfigService<ServerConfig>,
-                    useValue: createMock<ConfigService<ServerConfig>>(),
+                    useValue: createMock(ConfigService<ServerConfig>),
                 },
             ],
         }).compile();
@@ -48,7 +48,7 @@ describe('LoginGuard', () => {
     }, 30 * 1_000);
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -64,7 +64,7 @@ describe('LoginGuard', () => {
                 query: {
                     requiredStepUpLevel: StepUpLevel.GOLD,
                 },
-                isAuthenticated: jest.fn().mockReturnValue(false),
+                isAuthenticated: vi.fn().mockReturnValue(false),
                 passportUser: {
                     userinfo: {
                         preferred_username: 'test',
@@ -110,7 +110,7 @@ describe('LoginGuard', () => {
                 query: {
                     requiredStepUpLevel: StepUpLevel.GOLD,
                 },
-                isAuthenticated: jest.fn().mockReturnValue(false),
+                isAuthenticated: vi.fn().mockReturnValue(false),
                 passportUser: {
                     userinfo: {
                         preferred_username: 'test',
@@ -135,7 +135,7 @@ describe('LoginGuard', () => {
                 query: {
                     redirectUrl,
                 },
-                isAuthenticated: jest.fn().mockReturnValue(false),
+                isAuthenticated: vi.fn().mockReturnValue(false),
                 passportUser: {
                     userinfo: {
                         preferred_username: 'test',
@@ -159,7 +159,7 @@ describe('LoginGuard', () => {
                 query: {
                     requiredStepUpLevel: StepUpLevel.GOLD,
                 },
-                isAuthenticated: jest.fn().mockReturnValue(true),
+                isAuthenticated: vi.fn().mockReturnValue(true),
                 passportUser: {
                     stepUpLevel: StepUpLevel.GOLD,
                 },
@@ -177,7 +177,7 @@ describe('LoginGuard', () => {
                 query: {
                     requiredStepUpLevel: StepUpLevel.GOLD,
                 },
-                isAuthenticated: jest.fn().mockReturnValue(true),
+                isAuthenticated: vi.fn().mockReturnValue(true),
                 passportUser: {
                     stepUpLevel: StepUpLevel.GOLD,
                 },
@@ -215,7 +215,7 @@ describe('LoginGuard', () => {
                 query: {
                     requiredStepUpLevel: 'gold',
                 },
-                isAuthenticated: jest.fn().mockReturnValue(true),
+                isAuthenticated: vi.fn().mockReturnValue(true),
                 passportUser: {
                     userinfo: {
                         preferred_username: 'test',

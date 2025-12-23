@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
@@ -51,13 +51,13 @@ describe('EmailMicroserviceEventHandler', () => {
             .overrideModule(EventModule)
             .useModule(EventSystemTestModule)
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .overrideProvider(EmailResolverService)
-            .useValue(createMock<EmailResolverService>())
+            .useValue(createMock(EmailResolverService))
             .overrideProvider(RolleRepo)
-            .useValue(createMock<RolleRepo>())
+            .useValue(createMock(RolleRepo))
             .overrideProvider(DBiamPersonenkontextRepo)
-            .useValue(createMock<DBiamPersonenkontextRepo>())
+            .useValue(createMock(DBiamPersonenkontextRepo))
             .compile();
 
         sut = module.get(EmailMicroserviceEventHandler);
@@ -75,7 +75,7 @@ describe('EmailMicroserviceEventHandler', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -303,7 +303,7 @@ describe('EmailMicroserviceEventHandler', () => {
 
             rolleRepoMock.findByIds.mockResolvedValue(new Map([['r1', mockRolle]]));
 
-            const setEmailSpy: jest.SpyInstance = jest
+            const setEmailSpy: Mock = jest
                 .spyOn(emailResolverServiceMock, 'setEmailForSpshPerson')
                 .mockResolvedValue();
 
