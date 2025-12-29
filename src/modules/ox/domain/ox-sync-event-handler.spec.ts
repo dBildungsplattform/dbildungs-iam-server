@@ -295,6 +295,18 @@ describe('OxSyncEventHandler', () => {
             mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
         });
 
+        describe('when email microservice is enabled', () => {
+            it('should log info and stop execution', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+                await sut.ldapSyncCompletedEventHandler(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Ignoring Event for personId:${event.personId} because email microservice is enabled`,
+                );
+            });
+        });
+
         describe('when person CANNOT be found', () => {
             it('should log error and return without proceeding', async () => {
                 //mock person CANNOT be found in changeUser
