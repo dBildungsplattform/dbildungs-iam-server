@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../test/utils/config-test.module.js';
@@ -25,6 +25,12 @@ import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
 import { CronController } from './cron.controller.js';
+import { RolleRepo } from '../rolle/repo/rolle.repo.js';
+import { PersonenkontextWorkflowSharedKernel } from '../personenkontext/domain/personenkontext-workflow-shared-kernel.js';
+import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
+import { DbiamPersonenkontextFactory } from '../personenkontext/domain/dbiam-personenkontext.factory.js';
+import { ConfigService } from '@nestjs/config';
+import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
 
 class UnknownError extends DomainError {
     public constructor(message: string) {
@@ -77,7 +83,16 @@ describe('CronController', () => {
                 },
                 {
                     provide: PersonenkontextWorkflowAggregate,
-                    useValue: createMock(PersonenkontextWorkflowAggregate),
+                    useValue: vi.mockObject(
+                        PersonenkontextWorkflowAggregate.createNew(
+                            null as unknown as RolleRepo,
+                            null as unknown as OrganisationRepository,
+                            null as unknown as DBiamPersonenkontextRepo,
+                            null as unknown as DbiamPersonenkontextFactory,
+                            null as unknown as ConfigService,
+                            null as unknown as PersonenkontextWorkflowSharedKernel,
+                        ),
+                    ),
                 },
                 {
                     provide: UserLockRepository,
@@ -243,6 +258,10 @@ describe('CronController', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person1);
                 personRepositoryMock.findById.mockResolvedValueOnce(person2);
                 personRepositoryMock.findById.mockResolvedValueOnce(person3);
+                personenkontextWorkflowFactoryMock.createNew.mockReturnValue(personenkontextWorkflowMock);
+                personenkontextWorkflowMock.commit.mockResolvedValueOnce([]);
+                personenkontextWorkflowMock.commit.mockResolvedValueOnce([]);
+                personenkontextWorkflowMock.commit.mockResolvedValueOnce([]);
 
                 const result: boolean =
                     await cronController.removePersonenKontexteWithExpiredBefristungFromUsers(permissionsMock);
@@ -375,8 +394,13 @@ describe('CronController', () => {
                     ok: true,
                     value: undefined,
                 });
+                personenkontextWorkflowMock.commit.mockResolvedValueOnce([]);
+                personenkontextWorkflowMock.commit.mockResolvedValueOnce([]);
+                personenkontextWorkflowMock.commit.mockResolvedValueOnce([]);
+                personenkontextWorkflowFactoryMock.createNew.mockReturnValue(personenkontextWorkflowMock);
 
-                const personPermissionsMock: PersonPermissions = createMock(PersonPermissions);
+                const personPermissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
                 const result: boolean = await cronController.personWithoutOrgDelete(personPermissionsMock);
 
                 expect(result).toBe(true);
@@ -395,7 +419,8 @@ describe('CronController', () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce({ ids: [], total: 0 });
 
-                const personPermissionsMock: PersonPermissions = createMock(PersonPermissions);
+                const personPermissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
                 const result: boolean = await cronController.personWithoutOrgDelete(personPermissionsMock);
 
                 expect(result).toBe(true);
@@ -427,7 +452,8 @@ describe('CronController', () => {
                     error: new MissingPermissionsError(''),
                 });
 
-                const personPermissionsMock: PersonPermissions = createMock(PersonPermissions);
+                const personPermissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
                 const result: boolean = await cronController.personWithoutOrgDelete(personPermissionsMock);
 
                 expect(result).toBe(false);
@@ -461,9 +487,9 @@ describe('CronController', () => {
     describe('/PUT cron/unlock', () => {
         describe('when there are users to unlock', () => {
             it('should return true when all users are successfully locked', async () => {
-                const mockPerson1: Person<true> = createMock(Person<true>);
-                const mockPerson2: Person<true> = createMock(Person<true>);
-                const mockPerson3: Person<true> = createMock(Person<true>);
+                const mockPerson1: Person<true> = DoFactory.createPerson(true);
+                const mockPerson2: Person<true> = DoFactory.createPerson(true);
+                const mockPerson3: Person<true> = DoFactory.createPerson(true);
                 const mockUserLock1: UserLock = {
                     person: mockPerson1.id,
                     created_at: new Date(),
@@ -517,7 +543,8 @@ describe('CronController', () => {
             it('should return false', async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 userLockRepositoryMock.getLocksToUnlock.mockResolvedValueOnce([]);
-                const personPermissionsMock: PersonPermissions = createMock(PersonPermissions);
+                const personPermissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
 
                 const result: boolean = await cronController.unlockUsersWithExpiredLocks(personPermissionsMock);
 
@@ -528,9 +555,9 @@ describe('CronController', () => {
 
         describe('when unlocking users fails', () => {
             it('should return false when at least one user fails to unlock', async () => {
-                const mockPerson1: Person<true> = createMock(Person<true>);
-                const mockPerson2: Person<true> = createMock(Person<true>);
-                const mockPerson3: Person<true> = createMock(Person<true>);
+                const mockPerson1: Person<true> = DoFactory.createPerson(true);
+                const mockPerson2: Person<true> = DoFactory.createPerson(true);
+                const mockPerson3: Person<true> = DoFactory.createPerson(true);
                 const mockUserLock1: UserLock = {
                     person: mockPerson1.id,
                     created_at: new Date(),
@@ -605,8 +632,8 @@ describe('CronController', () => {
             });
 
             it('should return false if permission check for a user fails', async () => {
-                const mockPerson1: Person<true> = createMock(Person<true>);
-                const mockPerson2: Person<true> = createMock(Person<true>);
+                const mockPerson1: Person<true> = DoFactory.createPerson(true);
+                const mockPerson2: Person<true> = DoFactory.createPerson(true);
                 const mockUserLock1: UserLock = {
                     person: mockPerson1.id,
                     created_at: new Date(),

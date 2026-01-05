@@ -1,5 +1,6 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Mock } from 'vitest';
+import { createMock } from '../../../../test/utils/createMock.js';
 
 import { SessionSerializer } from './session.serializer.js';
 
@@ -26,7 +27,7 @@ describe('SessionSerializer', () => {
     describe('serializeUser', () => {
         it('should pass user to callback', () => {
             const done: Mock = vi.fn();
-            const user: object = createMock();
+            const user: object = {};
 
             sut.serializeUser(user, done);
 
@@ -37,7 +38,7 @@ describe('SessionSerializer', () => {
     describe('deserializeUser', () => {
         it('should pass payload to callback', () => {
             const done: Mock = vi.fn();
-            const payload: object = createMock();
+            const payload: object = {};
 
             sut.deserializeUser(payload, done);
 

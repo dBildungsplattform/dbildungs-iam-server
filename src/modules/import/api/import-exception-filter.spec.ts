@@ -1,5 +1,5 @@
-import { ArgumentsHost } from '@nestjs/common';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { ArgumentsHost, Res } from '@nestjs/common';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { ImportExceptionFilter } from './import-exception-filter.js';
@@ -19,13 +19,14 @@ describe('ImportExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new ImportExceptionFilter();
-        responseMock = createMock(Response);
-        argumentsHost = createMock<ArgumentsHost>({
-            switchToHttp: () =>
-                createMock<HttpArgumentsHost>({
-                    getResponse: () => responseMock,
-                }),
-        });
+        responseMock = { status: vi.fn(), json: vi.fn() } as unknown as DeepMocked<Response>;
+        argumentsHost = {
+            switchToHttp: () => ({
+                getRequest: vi.fn(),
+                getResponse: vi.fn().mockReturnValue(responseMock),
+                getNext: vi.fn(),
+            }),
+        } as unknown as DeepMocked<ArgumentsHost>;
     });
 
     describe('catch', () => {

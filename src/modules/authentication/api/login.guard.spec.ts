@@ -1,3 +1,4 @@
+import { Mock } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { ExecutionContext } from '@nestjs/common';

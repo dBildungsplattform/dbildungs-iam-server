@@ -98,7 +98,12 @@ describe('ImportEventHandler', () => {
         let event: ImportExecutedEvent;
 
         beforeEach(() => {
-            event = createMock<ImportExecutedEvent>({ importVorgangId: importvorgangId });
+            event = new ImportExecutedEvent(
+                importvorgangId,
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+            );
         });
 
         it('should return EntityNotFoundError if a ImportVorgang does not exist', async () => {

@@ -15,18 +15,22 @@ export default defineConfig({
         environment: 'node',
         // include: ['**/*.spec.ts'],
         include: [
+            // '**/authentication/**/*.spec.ts',
             '**/meldung/**/*spec.ts',
             '**/rolle/**/*spec.ts',
             '**/eventbus/**/*.spec.ts',
             '**/ldap/**/*.spec.ts',
             '**/logging/**/*.spec.ts',
             '**/email/**/*.spec.ts',
+            '**/health/**/*.spec.ts',
+            '**/import/**/*.spec.ts',
+            '**/cron/**/*.spec.ts',
         ],
         coverage: {
             reporter: ['lcov', 'text'],
         },
         outputFile: 'coverage/sonar-report.xml',
-        testTimeout: 1000000
+        testTimeout: 1000000,
     },
     resolve: {
         alias: {

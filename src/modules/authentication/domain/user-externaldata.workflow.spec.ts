@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
@@ -12,7 +12,6 @@ import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import {
     DBiamPersonenkontextRepo,
-    ExternalPkData,
     PersonenkontextErweitertVirtualEntityLoaded,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
@@ -33,15 +32,15 @@ describe('UserExternaldataWorkflow', () => {
             providers: [
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock(DBiamPersonenkontextRepo),
+                    useValue: createMock<DBiamPersonenkontextRepo>(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock(PersonRepository),
+                    useValue: createMock<PersonRepository>(PersonRepository),
                 },
                 {
                     provide: EmailResolverService,
-                    useValue: createMock(EmailResolverService),
+                    useValue: createMock<EmailResolverService>(EmailResolverService),
                 },
             ],
         }).compile();
@@ -84,10 +83,8 @@ describe('UserExternaldataWorkflow', () => {
             );
 
             personRepositoryMock.findById.mockResolvedValue(person);
-            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock(ExternalPkData[]));
-            dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue(
-                createMock(PersonenkontextErweitertVirtualEntityLoaded[]),
-            );
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
+            dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue([]);
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
 
             await sut.initialize(person.id);
@@ -111,10 +108,8 @@ describe('UserExternaldataWorkflow', () => {
             const oxLoginId: string = faker.string.uuid();
 
             personRepositoryMock.findById.mockResolvedValue(person);
-            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock(ExternalPkData[]));
-            dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue(
-                createMock(PersonenkontextErweitertVirtualEntityLoaded[]),
-            );
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
+            dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue([]);
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
             emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValue(
                 createMock<EmailAddressResponse>({ oxLoginId: oxLoginId }),
@@ -128,10 +123,8 @@ describe('UserExternaldataWorkflow', () => {
 
         it('should return entity Not found error when person not found', async () => {
             personRepositoryMock.findById.mockResolvedValue(undefined);
-            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock(ExternalPkData[]));
-            dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue(
-                createMock(PersonenkontextErweitertVirtualEntityLoaded[]),
-            );
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
+            dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue([]);
 
             const response: void | DomainError = await sut.initialize(faker.string.uuid());
             expect(response).toBeInstanceOf(DomainError);
@@ -152,7 +145,7 @@ describe('UserExternaldataWorkflow', () => {
             );
 
             personRepositoryMock.findById.mockResolvedValue(person);
-            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(createMock(ExternalPkData[]));
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
             emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValue(undefined);
 

@@ -10,7 +10,7 @@ import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
-    createPersonPermissions,
+    createPersonPermissionsMock,
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
@@ -144,7 +144,7 @@ describe('Rolle API', () => {
     });
 
     beforeEach(async () => {
-        permissionsMock = createPersonPermissions();
+        permissionsMock = createPersonPermissionsMock();
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
         permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
         await DatabaseTestModule.clearDatabase(orm);

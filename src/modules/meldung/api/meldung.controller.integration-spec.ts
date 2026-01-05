@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
@@ -18,7 +18,7 @@ import { CreateOrUpdateMeldungBodyParams } from './create-or-update-meldung.body
 import { faker } from '@faker-js/faker';
 import { MeldungInhaltError } from '../domain/meldung-inhalt.error.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
-import { createPersonPermissions } from '../../../../test/utils/person-permissions.mock.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('Meldung Controller', () => {
     let module: TestingModule;
@@ -60,7 +60,7 @@ describe('Meldung Controller', () => {
 
     describe('get All Meldungen', () => {
         it('should return all meldungen if user has right permissions', async () => {
-            const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissions();
+            const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
             const meldung: Meldung<true> = DoFactory.createMeldung(true);
             meldungRepo.findAll.mockResolvedValueOnce([meldung, meldung]);
@@ -70,7 +70,7 @@ describe('Meldung Controller', () => {
         });
 
         it('should return all meldungen if user has right permissions', async () => {
-            const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissions();
+            const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
             const meldung: Meldung<true> = DoFactory.createMeldung(true);
             meldungRepo.findAll.mockResolvedValueOnce([meldung]);
@@ -80,7 +80,7 @@ describe('Meldung Controller', () => {
 
     describe('get current Meldung', () => {
         it('should return current veroffentlicht meldung', async () => {
-            const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissions();
+            const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
             const meldung: Meldung<true> = DoFactory.createMeldung(true);
             meldung.status = MeldungStatus.VEROEFFENTLICHT;
@@ -90,7 +90,7 @@ describe('Meldung Controller', () => {
         });
 
         it('should return nothing if no current veroeffentlicht meldung exists', async () => {
-            const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissions();
+            const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
             meldungRepo.getRecentVeroeffentlichtMeldung.mockResolvedValueOnce(null);
             const response: MeldungResponse | null = await meldungController.getCurrentMeldung();
@@ -101,7 +101,7 @@ describe('Meldung Controller', () => {
     describe('createOrUpdateMeldung', () => {
         describe('create', () => {
             it('should create meldung of id is empty', async () => {
-                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissions();
+                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 const body: CreateOrUpdateMeldungBodyParams = {
                     inhalt: faker.string.alphanumeric(100),
@@ -128,7 +128,7 @@ describe('Meldung Controller', () => {
             });
 
             it('should fail if invalid inhalt', async () => {
-                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissions();
+                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 const body: CreateOrUpdateMeldungBodyParams = {
                     inhalt: faker.string.alphanumeric(2001),
@@ -142,7 +142,7 @@ describe('Meldung Controller', () => {
             });
 
             it('should fail if systemrechte are missing', async () => {
-                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissions();
+                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
                 const body: CreateOrUpdateMeldungBodyParams = {
                     inhalt: faker.string.alphanumeric(100),
@@ -157,7 +157,7 @@ describe('Meldung Controller', () => {
         });
         describe('update', () => {
             it('should update meldung of id is provided', async () => {
-                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissions();
+                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 const id: string = faker.string.uuid();
                 const body: CreateOrUpdateMeldungBodyParams = {
@@ -189,7 +189,7 @@ describe('Meldung Controller', () => {
             });
 
             it('should fail if invalid inhalt', async () => {
-                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissions();
+                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const id: string = faker.string.uuid();
@@ -214,7 +214,7 @@ describe('Meldung Controller', () => {
             });
 
             it('should fail if mismatched revision', async () => {
-                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissions();
+                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const id: string = faker.string.uuid();
@@ -239,7 +239,7 @@ describe('Meldung Controller', () => {
             });
 
             it('should fail if existing merkmal not found', async () => {
-                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissions();
+                const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const id: string = faker.string.uuid();

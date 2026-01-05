@@ -7,13 +7,15 @@ import { KafkaEventService } from './kafka-event.service.js';
 import { KafkaEvent } from '../../../shared/events/kafka-event.js';
 import { ConfigService } from '@nestjs/config';
 import { KafkaConfig } from '../../../shared/config/kafka.config.js';
-import { KafkaConsumer, KafkaJS, Producer } from '@confluentinc/kafka-javascript';
+import { KafkaJS } from '@confluentinc/kafka-javascript';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KAFKA_INSTANCE } from '../kafka-client-provider.js';
 import { inspect } from 'util';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { Kafka } from '@confluentinc/kafka-javascript/types/kafkajs.js';
 
+type Kafka = KafkaJS.Kafka;
+type Consumer = KafkaJS.Consumer;
+type Producer = KafkaJS.Producer;
 type KafkaMessage = KafkaJS.KafkaMessage;
 type EachMessageHandler = KafkaJS.EachMessageHandler;
 type ConsumerRunConfig = KafkaJS.ConsumerRunConfig;
@@ -29,13 +31,13 @@ class TestEvent extends BaseEvent implements KafkaEvent {
     }
 }
 
-describe.skip('KafkaEventService', () => {
+describe('KafkaEventService', () => {
     let module: TestingModule;
     let sut: KafkaEventService;
     let logger: DeepMocked<ClassLogger>;
     let configService: DeepMocked<ConfigService>;
     let kafka: DeepMocked<Kafka>;
-    let consumer: DeepMocked<KafkaConsumer>;
+    let consumer: DeepMocked<Consumer>;
     let producer: DeepMocked<Producer>;
 
     const defaultKafkaConfig: KafkaConfig = {
@@ -57,12 +59,17 @@ describe.skip('KafkaEventService', () => {
         configService = createMock(ConfigService);
         configService.getOrThrow.mockReturnValue({ ...defaultKafkaConfig } satisfies KafkaConfig);
 
-        producer = createMock<Producer>(Producer);
-        consumer = createMock<KafkaConsumer>(KafkaConsumer, {});
-        kafka = createMock<Kafka>(Kafka, {
+        producer = { connect: vi.fn(), disconnect: vi.fn(), send: vi.fn() } as unknown as DeepMocked<Producer>;
+        consumer = {
+            connect: vi.fn(),
+            disconnect: vi.fn(),
+            subscribe: vi.fn(),
+            run: vi.fn(),
+        } as unknown as DeepMocked<Consumer>;
+        kafka = {
             producer: vi.fn(() => producer),
             consumer: vi.fn(() => consumer),
-        });
+        } as unknown as DeepMocked<Kafka>;
 
         module = await Test.createTestingModule({
             imports: [LoggingTestModule],
@@ -110,11 +117,11 @@ describe.skip('KafkaEventService', () => {
 
     it('should log crit and resolve with timeout error if handler times out', async () => {
         vi.useFakeTimers();
-        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+        const message: DeepMocked<KafkaMessage> = vi.mockObject<KafkaMessage>({
             key: Buffer.from('test'),
             value: Buffer.from(JSON.stringify(new TestEvent())),
             headers: { eventKey: 'user.deleted' },
-        });
+        } as unknown as KafkaMessage);
         const handler: Mock = vi.fn(() => new Promise(() => {}));
         sut.subscribe(KafkaPersonDeletedEvent, handler);
 
@@ -129,11 +136,11 @@ describe.skip('KafkaEventService', () => {
     });
 
     it('should handle message correctly', async () => {
-        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+        const message: DeepMocked<KafkaMessage> = vi.mockObject<KafkaMessage>({
             key: Buffer.from('test'),
             value: Buffer.from(JSON.stringify(new TestEvent())),
             headers: { eventKey: 'user.deleted' },
-        });
+        } as unknown as KafkaMessage);
 
         const handler: Mock = vi.fn();
         sut.subscribe(KafkaPersonDeletedEvent, handler);
@@ -151,11 +158,11 @@ describe.skip('KafkaEventService', () => {
     });
 
     it('should log error if event type header is missing', async () => {
-        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+        const message: DeepMocked<KafkaMessage> = vi.mockObject<KafkaMessage>({
             key: Buffer.from('test'),
             value: Buffer.from(JSON.stringify(new TestEvent())),
             headers: {},
-        });
+        } as unknown as KafkaMessage);
 
         await sut.handleMessage(message, () => Promise.resolve());
 
@@ -163,11 +170,11 @@ describe.skip('KafkaEventService', () => {
     });
 
     it('should log error if event type is unknown', async () => {
-        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+        const message: DeepMocked<KafkaMessage> = vi.mockObject<KafkaMessage>({
             key: Buffer.from('test'),
             value: Buffer.from(JSON.stringify(new TestEvent())),
             headers: { eventKey: 'UnknownEvent' },
-        });
+        } as unknown as KafkaMessage);
 
         await sut.handleMessage(message, () => Promise.resolve());
 
@@ -175,11 +182,11 @@ describe.skip('KafkaEventService', () => {
     });
 
     it('should log error if parsed kafka message is not valid', async () => {
-        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+        const message: DeepMocked<KafkaMessage> = vi.mockObject<KafkaMessage>({
             key: Buffer.from('test'),
             value: Buffer.from(JSON.stringify([{ invalid: 'invalid' }])),
             headers: { eventKey: 'user.deleted' },
-        });
+        } as unknown as KafkaMessage);
 
         await sut.handleMessage(message, () => Promise.resolve());
 
@@ -187,12 +194,11 @@ describe.skip('KafkaEventService', () => {
     });
 
     it('should log error if parsing kafka message throws error', async () => {
-        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+        const message: DeepMocked<KafkaMessage> = vi.mockObject<KafkaMessage>({
             key: Buffer.from('test'),
             value: Buffer.from('{ invalidJson: '),
             headers: { eventKey: 'user.deleted' },
-        });
-
+        } as unknown as KafkaMessage);
         await sut.handleMessage(message, () => Promise.resolve());
 
         expect(logger.error).toHaveBeenCalledWith(
@@ -202,12 +208,11 @@ describe.skip('KafkaEventService', () => {
     });
 
     it('should log error if handler throws an exception', async () => {
-        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+        const message: DeepMocked<KafkaMessage> = vi.mockObject<KafkaMessage>({
             key: Buffer.from('test'),
             value: Buffer.from(JSON.stringify(new TestEvent())),
             headers: { eventKey: 'user.deleted' },
-        });
-
+        } as unknown as KafkaMessage);
         const handler: Mock = vi.fn().mockRejectedValue(new Error('Handler error'));
         sut.subscribe(KafkaPersonDeletedEvent, handler);
 
@@ -217,11 +222,11 @@ describe.skip('KafkaEventService', () => {
     });
 
     it('should log error if handler throws an sync exception', async () => {
-        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+        const message: DeepMocked<KafkaMessage> = vi.mockObject<KafkaMessage>({
             key: Buffer.from('test'),
             value: Buffer.from(JSON.stringify(new TestEvent())),
             headers: { eventKey: 'user.deleted' },
-        });
+        } as unknown as KafkaMessage);
         const handler: Mock = vi.fn().mockImplementation(() => {
             throw new Error('Handler error');
         });
@@ -234,12 +239,11 @@ describe.skip('KafkaEventService', () => {
     });
 
     it('should log error if message value is invalid JSON', async () => {
-        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+        const message: DeepMocked<KafkaMessage> = vi.mockObject<KafkaMessage>({
             key: Buffer.from('test'),
             value: undefined,
             headers: { eventKey: 'user.deleted' },
-        });
-
+        } as unknown as KafkaMessage);
         const handler: Mock = vi.fn();
         sut.subscribe(KafkaPersonDeletedEvent, handler);
 
@@ -251,11 +255,11 @@ describe.skip('KafkaEventService', () => {
     it('should publish to DLQ if handler returns an error', async () => {
         const deleteEvent: KafkaPersonDeletedEvent = new KafkaPersonDeletedEvent('test', 'test');
 
-        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+        const message: DeepMocked<KafkaMessage> = vi.mockObject<KafkaMessage>({
             key: Buffer.from('test'),
             value: Buffer.from(JSON.stringify(deleteEvent)),
             headers: { eventKey: 'user.deleted' },
-        });
+        } as unknown as KafkaMessage);
         const error: Error = new Error('Handler error');
         const handler: Mock = vi.fn().mockReturnValue({ ok: false, error: error });
         sut.subscribe(KafkaPersonDeletedEvent, handler);
@@ -326,7 +330,17 @@ describe.skip('KafkaEventService', () => {
             return Promise.resolve();
         });
 
-        const payload: DeepMocked<EachMessagePayload> = createMock<EachMessagePayload>({});
+        const payload: DeepMocked<EachMessagePayload> = {
+            heartbeat: vi.fn(),
+            message: {
+                key: Buffer.from('test'),
+                value: Buffer.from(JSON.stringify(new TestEvent())),
+                headers: { eventKey: 'user.deleted' },
+                offset: '0',
+            } as unknown as KafkaMessage,
+            partition: 0,
+            topic: 'topic',
+        } as unknown as DeepMocked<EachMessagePayload>;
 
         const handleMessageSpy: Mock = vi.spyOn(sut, 'handleMessage').mockResolvedValue(undefined);
 

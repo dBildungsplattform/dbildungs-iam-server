@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -15,7 +15,6 @@ import Papa from 'papaparse';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import internal from 'stream';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
 import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
@@ -35,6 +34,8 @@ import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { ImportCSVFileMaxUsersError } from './import-csv-file-max-users.error.js';
 import { ImportCSVFileContainsNoUsersError } from './import-csv-file-contains-no-users.error.js';
 import { ImportDataItemStatus } from './importDataItem.enum.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { Mock } from 'vitest';
 
 describe('ImportWorkflow', () => {
     let module: TestingModule;
@@ -50,7 +51,7 @@ describe('ImportWorkflow', () => {
 
     const SELECTED_ORGANISATION_ID: string = faker.string.uuid();
     const SELECTED_ROLLE_ID: string = faker.string.uuid();
-    const FILE_MOCK: Express.Multer.File = createMock(Express.Multer.File);
+    const FILE_MOCK: Express.Multer.File = {} as Express.Multer.File;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -79,7 +80,7 @@ describe('ImportWorkflow', () => {
                 },
                 {
                     provide: PersonPermissions,
-                    useValue: createMock(PersonPermissions),
+                    useValue: createPersonPermissionsMock(),
                 },
             ],
         }).compile();
@@ -132,7 +133,7 @@ describe('ImportWorkflow', () => {
 
         it('should return EntityNotFoundError if the rolle can not be assigned to organisation', async () => {
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
-            const rolleMock: DeepMocked<Rolle<true>> = createMock(Rolle<true>);
+            const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(false);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
@@ -150,7 +151,7 @@ describe('ImportWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
             );
-            const rolleMock: DeepMocked<Rolle<true>> = createMock(Rolle<true>);
+            const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LEHR;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
@@ -169,7 +170,7 @@ describe('ImportWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND }),
             );
-            const rolleMock: DeepMocked<Rolle<true>> = createMock(Rolle<true>);
+            const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
@@ -188,7 +189,7 @@ describe('ImportWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
             );
-            const rolleMock: DeepMocked<Rolle<true>> = createMock(Rolle<true>);
+            const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
@@ -205,10 +206,9 @@ describe('ImportWorkflow', () => {
         });
 
         it('should return ImportCSVFileEmptyError if the csv file is empty', async () => {
-            const file: Express.Multer.File = createMock(Express.Multer.File);
-            file.buffer = Buffer.from('');
+            const file: Express.Multer.File = { buffer: Buffer.from('') } as Express.Multer.File;
 
-            const rolleMock: DeepMocked<Rolle<true>> = createMock(Rolle<true>);
+            const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(
@@ -229,10 +229,11 @@ describe('ImportWorkflow', () => {
         });
 
         it('should return ImportCSVFileMaxUsersError if the csv file exceeds the number of maximum allowed users', async () => {
-            const file: Express.Multer.File = createMock(Express.Multer.File);
-            file.buffer = Buffer.from('Nachname;Vorname;Klasse\r\nTest;Hans;1A\r\nTest;Marie;1B\r\n');
+            const file: Express.Multer.File = {
+                buffer: Buffer.from('Nachname;Vorname;Klasse\r\nTest;Hans;1A\r\nTest;Marie;1B\r\n'),
+            } as Express.Multer.File;
 
-            const rolleMock: DeepMocked<Rolle<true>> = createMock(Rolle<true>);
+            const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(
@@ -253,10 +254,9 @@ describe('ImportWorkflow', () => {
         });
 
         it('should return ImportCSVFileContainsNoUsersError if the csv file contains no data items', async () => {
-            const file: Express.Multer.File = createMock(Express.Multer.File);
-            file.buffer = Buffer.from('Nachname;Vorname;Klasse');
+            const file: Express.Multer.File = { buffer: Buffer.from('Nachname;Vorname;Klasse') } as Express.Multer.File;
 
-            const rolleMock: DeepMocked<Rolle<true>> = createMock(Rolle<true>);
+            const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(
@@ -277,7 +277,8 @@ describe('ImportWorkflow', () => {
         });
 
         it('should return ImportCSVFileParsingError if the parser cannot parse', async () => {
-            const rolleMock: DeepMocked<Rolle<true>> = createMock(Rolle<true>);
+            const file: Express.Multer.File = { buffer: Buffer.from('Nachname;Vorname;Klasse') } as Express.Multer.File;
+            const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(
@@ -286,17 +287,13 @@ describe('ImportWorkflow', () => {
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
 
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-            const spyParse: Mock<
-                internal.Duplex,
-                [stream: typeof Papa.NODE_STREAM_INPUT, config?: Papa.ParseConfig<unknown, undefined> | undefined],
-                unknown
-            > = vi.spyOn(Papa, 'parse');
+            const spyParse: Mock = vi.spyOn(Papa, 'parse');
             spyParse.mockImplementationOnce(() => {
                 throw new Error('Error details');
             });
 
             const result: DomainError | ImportUploadResultFields = await sut.validateImport(
-                FILE_MOCK,
+                file,
                 SELECTED_ORGANISATION_ID,
                 SELECTED_ROLLE_ID,
                 personpermissionsMock,
@@ -306,7 +303,8 @@ describe('ImportWorkflow', () => {
         });
 
         it('should return ImportCSVFileInvalidHeaderError if the parser cannot parse headers', async () => {
-            const rolleMock: DeepMocked<Rolle<true>> = createMock(Rolle<true>);
+            const file: Express.Multer.File = { buffer: Buffer.from('asdfe') } as Express.Multer.File;
+            const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(
@@ -315,17 +313,13 @@ describe('ImportWorkflow', () => {
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
 
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-            const spyParse: Mock<
-                internal.Duplex,
-                [stream: typeof Papa.NODE_STREAM_INPUT, config?: Papa.ParseConfig<unknown, undefined> | undefined],
-                unknown
-            > = vi.spyOn(Papa, 'parse');
+            const spyParse: Mock = vi.spyOn(Papa, 'parse');
             spyParse.mockImplementationOnce(() => {
                 throw new ImportCSVFileInvalidHeaderError([`Invalid header: klaße`]);
             });
 
             const result: DomainError | ImportUploadResultFields = await sut.validateImport(
-                FILE_MOCK,
+                file,
                 SELECTED_ORGANISATION_ID,
                 SELECTED_ROLLE_ID,
                 personpermissionsMock,
@@ -627,7 +621,7 @@ describe('ImportWorkflow', () => {
 
             expect(result).toEqual({
                 ok: false,
-                error: new ImportTextFileCreationError([String('Error details')]),
+                error: new ImportTextFileCreationError([String('Error: Error details')]),
             });
         });
     });

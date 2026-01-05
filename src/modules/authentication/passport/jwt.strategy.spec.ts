@@ -1,10 +1,11 @@
 import { JwtStrategy } from './jwt.strategy.js';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
-import { BaseClient, Client } from 'openid-client';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { BaseClient, Client, Issuer } from 'openid-client';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
 import jwt from 'jsonwebtoken';
 import { faker } from '@faker-js/faker';
+import { createOidcClientMock } from '../../../../test/utils/auth.mock.js';
 
 describe('JWT Strategy', () => {
     it('should extract a bearer token from the header and return it for session storage', async () => {
@@ -22,8 +23,10 @@ describe('JWT Strategy', () => {
     });
 
     it('should return empty string if no accessToken can be extracted', async () => {
-        const client: DeepMocked<BaseClient> = createMock<Client>({
-            issuer: { metadata: { jwks_uri: 'https://nowhere.example.com' } },
+        const client: DeepMocked<BaseClient> = createOidcClientMock({
+            issuer: {
+                metadata: { jwks_uri: 'https://nowhere.example.com', issuer: 'https://anyhere.example.com' },
+            } as Issuer,
         });
         const personRepositoryMock: DeepMocked<PersonRepository> = createMock(PersonRepository);
         const sut: JwtStrategy = new JwtStrategy(client, personRepositoryMock);
@@ -36,8 +39,10 @@ describe('JWT Strategy', () => {
     });
 
     it('should throw KeycloakUserNotFoundError if the kc user does not exist', async () => {
-        const client: DeepMocked<BaseClient> = createMock<Client>({
-            issuer: { metadata: { jwks_uri: 'https://nowhere.example.com' } },
+        const client: DeepMocked<BaseClient> = createOidcClientMock({
+            issuer: {
+                metadata: { jwks_uri: 'https://nowhere.example.com', issuer: 'https://anyhere.example.com' },
+            } as Issuer,
         });
         const personRepositoryMock: DeepMocked<PersonRepository> = createMock(PersonRepository);
         personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);

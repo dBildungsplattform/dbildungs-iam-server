@@ -27,7 +27,7 @@ import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { createPersonPermissions } from '../../../../test/utils/person-permissions.mock.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -115,7 +115,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
 
     describe('/GET rolle mocked Rolle-repo', () => {
         describe('createRolle', () => {
-            const permissionsMock: PersonPermissions = createPersonPermissions();
+            const permissionsMock: PersonPermissions = createPersonPermissionsMock();
             it('should throw an HTTP exception when rolleFactory.createNew returns DomainError', async () => {
                 const createRolleParams: CreateRolleBodyParams = {
                     name: ' SuS',
@@ -148,7 +148,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     rolleId: faker.string.uuid(),
                     serviceProviderId: faker.string.uuid(),
                 };
-                permissions  = createPersonPermissions();
+                permissions  = createPersonPermissionsMock();
             });
 
             it('should return the response', async () => {

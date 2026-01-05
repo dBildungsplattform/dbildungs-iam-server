@@ -1,25 +1,33 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
-import { Request } from 'express';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { Request, Response } from 'express';
 import { PassportUser } from '../types/user.js';
 import { SessionAccessTokenMiddleware } from './session-access-token.middleware.js';
-import { Client, IntrospectionResponse, TokenSet, UserinfoResponse } from 'openid-client';
+import { Client, TokenSet } from 'openid-client';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { LogOutOptions } from 'passport';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
 import { SystemConfig } from '../../../shared/config/system.config.js';
+import {
+    createOidcClientMock,
+    createPassportUserMock,
+    createUserinfoResponseMock,
+} from '../../../../test/utils/auth.mock.js';
+import { Mock } from 'vitest';
+import { faker } from '@faker-js/faker';
 
 describe('sessionAccessTokenMiddleware', () => {
     let passportUser: PassportUser;
     let request: Request & Express.Request;
-    let configService: Mocked<ConfigService>;
+    let configService: DeepMocked<ConfigService>;
 
     beforeEach(() => {
-        passportUser = createMock(PassportUser);
-        request = createMock<Express.Request & Request & { passportUser: PassportUser; headers: object }>({
+        passportUser = createPassportUserMock();
+        request = {
             passportUser,
             headers: {},
-        });
+            session: { lastRouteChangeTime: faker.date.recent().getTime() },
+        } as Request & Express.Request;
         configService = createMock(ConfigService);
         configService.getOrThrow.mockImplementation((key: keyof SystemConfig) => {
             if (key === ('SYSTEM' as keyof SystemConfig)) {
@@ -34,10 +42,10 @@ describe('sessionAccessTokenMiddleware', () => {
 
     it('should call next middleware', async () => {
         const nextMock: Mock = vi.fn();
-        await new SessionAccessTokenMiddleware(createMock(), createMock(), configService).use(
-            createMock(),
-            createMock(),
-            nextMock,
+        await new SessionAccessTokenMiddleware(createOidcClientMock(), createMock(ClassLogger), configService).use(
+            request,
+            {} as Response,
+            vi.fn(),
         );
 
         expect(nextMock).toHaveBeenCalledTimes(1);
@@ -45,12 +53,13 @@ describe('sessionAccessTokenMiddleware', () => {
 
     describe('when the request does not contain a session with access token', () => {
         it('should not set authorization header', async () => {
-            passportUser = createMock<PassportUser>({ access_token: undefined });
+            passportUser = createPassportUserMock();
+            delete passportUser.access_token;
             request = { passportUser, headers: {}, session: { lastRouteChangeTime: Date.now() } } as Request;
 
-            await new SessionAccessTokenMiddleware(createMock(), createMock(), configService).use(
+            await new SessionAccessTokenMiddleware(createOidcClientMock(), createMock(ClassLogger), configService).use(
                 request,
-                createMock(),
+                {} as Response,
                 vi.fn(),
             );
 
@@ -62,9 +71,9 @@ describe('sessionAccessTokenMiddleware', () => {
         it('should not set authorization header', async () => {
             request = { headers: {}, session: { lastRouteChangeTime: Date.now() } } as Request;
 
-            await new SessionAccessTokenMiddleware(createMock(), createMock(), configService).use(
+            await new SessionAccessTokenMiddleware(createOidcClientMock(), createMock(ClassLogger), configService).use(
                 request,
-                createMock(),
+                {} as Response,
                 vi.fn(),
             );
 
@@ -78,14 +87,14 @@ describe('sessionAccessTokenMiddleware', () => {
         let client: DeepMocked<Client>;
 
         beforeEach(() => {
-            client = createMock(Client);
+            client = createOidcClientMock();
             originalAccessToken = 'originalAccess';
             originalRefreshToken = 'originalRefresh';
 
             request.passportUser = {
                 access_token: originalAccessToken,
                 refresh_token: originalRefreshToken,
-                userinfo: createMock(),
+                userinfo: createUserinfoResponseMock(),
                 personPermissions(): Promise<PersonPermissions> {
                     return Promise.resolve(createMock(PersonPermissions));
                 },
@@ -94,15 +103,15 @@ describe('sessionAccessTokenMiddleware', () => {
 
         describe('when the access token is still active', () => {
             beforeEach(() => {
-                client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: true }));
+                client.introspect.mockResolvedValueOnce({ scope: 'openid', active: true });
             });
 
             it('should not try to refresh it', async () => {
-                await new SessionAccessTokenMiddleware(client, createMock(), configService).use(
-                    request,
-                    createMock(),
-                    vi.fn(),
-                );
+                await new SessionAccessTokenMiddleware(
+                    createOidcClientMock(),
+                    createMock(ClassLogger),
+                    configService,
+                ).use(request, {} as Response, vi.fn());
                 expect(client.introspect).toHaveBeenCalledWith(originalAccessToken);
 
                 expect(request.passportUser?.access_token).toStrictEqual(originalAccessToken);
@@ -120,23 +129,23 @@ describe('sessionAccessTokenMiddleware', () => {
                     const newRefreshToken: string = 'newRefresh';
                     const newIdToken: string = 'newId';
 
-                    client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: false }));
-                    client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: true }));
+                    client.introspect.mockResolvedValueOnce({ scope: 'openid', active: false });
+                    client.introspect.mockResolvedValueOnce({ scope: 'openid', active: true });
                     client.refresh.mockResolvedValueOnce(
-                        createMock<TokenSet>({
+                        createMock<TokenSet>(TokenSet, {
                             access_token: newAccessToken,
                             refresh_token: newRefreshToken,
                             id_token: newIdToken,
                         }),
                     );
 
-                    client.userinfo.mockResolvedValueOnce(createMock<UserinfoResponse>({ sub: 'newSubjectId' }));
+                    client.userinfo.mockResolvedValueOnce({ sub: 'newSubjectId' });
 
-                    await new SessionAccessTokenMiddleware(client, createMock(), configService).use(
-                        request,
-                        createMock(),
-                        vi.fn(),
-                    );
+                    await new SessionAccessTokenMiddleware(
+                        createOidcClientMock(),
+                        createMock(ClassLogger),
+                        configService,
+                    ).use(request, {} as Response, vi.fn());
                     expect(client.introspect).toHaveBeenCalledTimes(2);
                     expect(client.introspect).toHaveBeenNthCalledWith(1, originalAccessToken);
                     expect(client.introspect).toHaveBeenNthCalledWith(2, originalRefreshToken);
@@ -152,8 +161,8 @@ describe('sessionAccessTokenMiddleware', () => {
 
         describe('when the refresh token is no longer active', () => {
             beforeEach(() => {
-                client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: false }));
-                client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: false }));
+                client.introspect.mockResolvedValueOnce({ scope: 'openid', active: false });
+                client.introspect.mockResolvedValueOnce({ scope: 'openid', active: false });
             });
 
             afterEach(() => {
@@ -161,11 +170,11 @@ describe('sessionAccessTokenMiddleware', () => {
             });
 
             it('Should keep headers as they are', async () => {
-                await new SessionAccessTokenMiddleware(client, createMock(), configService).use(
-                    request,
-                    createMock(),
-                    vi.fn(),
-                );
+                await new SessionAccessTokenMiddleware(
+                    createOidcClientMock(),
+                    createMock(ClassLogger),
+                    configService,
+                ).use(request, {} as Response, vi.fn());
                 expect(client.introspect).toHaveBeenCalledTimes(2);
                 expect(client.introspect).toHaveBeenNthCalledWith(1, originalAccessToken);
                 expect(client.introspect).toHaveBeenNthCalledWith(2, originalRefreshToken);
@@ -176,11 +185,11 @@ describe('sessionAccessTokenMiddleware', () => {
             });
 
             it('should logout', async () => {
-                await new SessionAccessTokenMiddleware(client, createMock(), configService).use(
-                    request,
-                    createMock(),
-                    vi.fn(),
-                );
+                await new SessionAccessTokenMiddleware(
+                    createOidcClientMock(),
+                    createMock(ClassLogger),
+                    configService,
+                ).use(request, {} as Response, vi.fn());
 
                 expect(request.logout).toHaveBeenCalled();
             });
@@ -194,42 +203,42 @@ describe('sessionAccessTokenMiddleware', () => {
                     }
                 };
 
-                await new SessionAccessTokenMiddleware(client, logger, configService).use(
-                    request,
-                    createMock(),
-                    vi.fn(),
-                );
+                await new SessionAccessTokenMiddleware(
+                    createOidcClientMock(),
+                    createMock(ClassLogger),
+                    configService,
+                ).use(request, {} as Response, vi.fn());
                 expect(logger.logUnknownAsError).toHaveBeenCalled();
             });
         });
 
         describe('when an exception is thrown on refresh', () => {
             it('will log the message of an error', async () => {
-                client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: false }));
-                client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: true }));
+                client.introspect.mockResolvedValueOnce({ scope: 'openid', active: false });
+                client.introspect.mockResolvedValueOnce({ scope: 'openid', active: true });
 
                 client.refresh.mockRejectedValue(new Error('Something went wrong'));
                 const loggerMock: ClassLogger = createMock(ClassLogger);
-                await new SessionAccessTokenMiddleware(client, loggerMock, configService).use(
-                    request,
-                    createMock(),
-                    vi.fn(),
-                );
+                await new SessionAccessTokenMiddleware(
+                    createOidcClientMock(),
+                    createMock(ClassLogger),
+                    configService,
+                ).use(request, {} as Response, vi.fn());
 
                 expect(loggerMock.warning).toHaveBeenCalledWith('Something went wrong');
             });
 
             it('will log everything else as is', async () => {
-                client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: false }));
-                client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: true }));
+                client.introspect.mockResolvedValueOnce({ scope: 'openid', active: false });
+                client.introspect.mockResolvedValueOnce({ scope: 'openid', active: true });
 
                 client.refresh.mockRejectedValue('Something went seriously wrong');
                 const loggerMock: ClassLogger = createMock(ClassLogger);
-                await new SessionAccessTokenMiddleware(client, loggerMock, createMock()).use(
-                    request,
-                    createMock(),
-                    vi.fn(),
-                );
+                await new SessionAccessTokenMiddleware(
+                    createOidcClientMock(),
+                    createMock(ClassLogger),
+                    configService,
+                ).use(request, {} as Response, vi.fn());
 
                 expect(loggerMock.warning).toHaveBeenCalledWith(
                     'Refreshing Token Failed With Unknown Catch',
