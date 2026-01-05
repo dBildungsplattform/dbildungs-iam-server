@@ -126,12 +126,8 @@ export class EmailMicroserviceEventHandler {
         const allKontexteForPerson: KontextWithOrgaAndRolle[] =
             await this.personenkontextRepo.findByPersonWithOrgaAndRolle(event.personId);
 
-        const allRolleIds: string[] = allKontexteForPerson.map((k: KontextWithOrgaAndRolle) => k.rolle.id);
-        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(allRolleIds);
-
-        const emailServiceProviderId: string | undefined = this.getEmailServiceProviderId(
-            Array.from(rollenMap.values()),
-        );
+        const [emailServiceProviderId, rollenMap]: [string | undefined, Map<string, Rolle<true>>] =
+            await this.getEmailServiceProviderIdAndRollenForKontexte(allKontexteForPerson);
 
         if (!emailServiceProviderId) {
             this.logger.info(
@@ -197,12 +193,8 @@ export class EmailMicroserviceEventHandler {
         const allKontexteForPerson: KontextWithOrgaAndRolle[] =
             await this.personenkontextRepo.findByPersonWithOrgaAndRolle(event.personId);
 
-        const allRolleIds: string[] = allKontexteForPerson.map((k: KontextWithOrgaAndRolle) => k.rolle.id);
-        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(allRolleIds);
-
-        const emailServiceProviderId: string | undefined = this.getEmailServiceProviderId(
-            Array.from(rollenMap.values()),
-        );
+        const [emailServiceProviderId, rollenMap]: [string | undefined, Map<string, Rolle<true>>] =
+            await this.getEmailServiceProviderIdAndRollenForKontexte(allKontexteForPerson);
 
         if (!emailServiceProviderId) {
             this.logger.debug(
@@ -231,6 +223,17 @@ export class EmailMicroserviceEventHandler {
             lastName: person.familienname,
             spshServiceProviderId: emailServiceProviderId,
         });
+    }
+
+    private async getEmailServiceProviderIdAndRollenForKontexte(
+        allKontexteForPerson: KontextWithOrgaAndRolle[],
+    ): Promise<[string | undefined, Map<string, Rolle<true>>]> {
+        const allRolleIds: string[] = allKontexteForPerson.map((k: KontextWithOrgaAndRolle) => k.rolle.id);
+        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(allRolleIds);
+        const emailServiceProviderId: string | undefined = this.getEmailServiceProviderId(
+            Array.from(rollenMap.values()),
+        );
+        return [emailServiceProviderId, rollenMap];
     }
 
     private getEmailServiceProviderId(rollen: Rolle<true>[]): string | undefined {
