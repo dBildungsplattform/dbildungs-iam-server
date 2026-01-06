@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, createPersonPermissionsMock } from '../../../../test/utils/index.js';
 import { SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
 import { PersonFrontendController } from './person.frontend.controller.js';
 import { PersonenQueryParams } from './personen-query.param.js';
@@ -94,7 +94,7 @@ describe('PersonFrontendController', () => {
         };
 
         it('should get all persons', async () => {
-            const personPermissions: DeepMocked<PersonPermissions> = createMock();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                 all: true,
             });
@@ -115,7 +115,7 @@ describe('PersonFrontendController', () => {
 
         it('should filter persons by suchFilter', async () => {
             const suchFilter: string = 'Max';
-            const personPermissions: DeepMocked<PersonPermissions> = createMock();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                 all: true,
@@ -136,7 +136,7 @@ describe('PersonFrontendController', () => {
         });
 
         it('should filter person with the given rolle id', async () => {
-            const personPermissions: DeepMocked<PersonPermissions> = createMock();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                 all: true,
             });
@@ -158,7 +158,7 @@ describe('PersonFrontendController', () => {
         });
 
         it('should filter person rolleID undefined', async () => {
-            const personPermissions: DeepMocked<PersonPermissions> = createMock();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                 all: true,
             });
@@ -180,7 +180,7 @@ describe('PersonFrontendController', () => {
         });
 
         it('should filter person with the given orgnisation id', async () => {
-            const personPermissions: DeepMocked<PersonPermissions> = createMock();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             const organisationID: string = personenkontext1.organisationId;
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                 all: false,
@@ -204,7 +204,7 @@ describe('PersonFrontendController', () => {
         });
 
         it('should throw an error when organisationID is not in the permissions', async () => {
-            const personPermissions: DeepMocked<PersonPermissions> = createMock();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                 all: false,
                 orgaIds: [],

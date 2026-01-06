@@ -22,6 +22,10 @@ export class PersonPermissionsMock implements IPersonPermissions {
 
 export function createPersonPermissionsMock(personFields?: Partial<PersonFields>): DeepMocked<PersonPermissions> {
     const personPermissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+    personPermissions.hasSystemrechteAtOrganisation = vi.fn().mockResolvedValue(true);
+    personPermissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(true);
+    personPermissions.canModifyPerson = vi.fn().mockResolvedValue(true);
+
     const personFieldsWithDefaults: PersonFields = {
         id: personFields?.id ?? faker.string.uuid(),
         keycloakUserId: personFields?.keycloakUserId ?? faker.string.uuid(),
@@ -41,10 +45,10 @@ export function createUserinfoResponseMock(): DeepMocked<OidcUserinfoResponse> {
     return createMock(UserinfoResponse) as unknown as DeepMocked<OidcUserinfoResponse>;
 }
 
-export function createPassportUserMock(): PassportUser {
+export function createPassportUserMock(personPermissions?: PersonPermissions): PassportUser {
     return {
         userinfo: createUserinfoResponseMock(),
-        personPermissions: () => Promise.resolve(createPersonPermissionsMock()),
+        personPermissions: () => Promise.resolve(personPermissions ?? createPersonPermissionsMock()),
         id_token: faker.string.uuid(),
         access_token: faker.string.uuid(),
         refresh_token: faker.string.uuid(),

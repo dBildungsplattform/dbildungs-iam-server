@@ -1,9 +1,9 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { HttpException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DoFactory, ConfigTestModule } from '../../../../test/utils/index.js';
+import { DoFactory, ConfigTestModule, createPersonPermissionsMock } from '../../../../test/utils/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
@@ -51,7 +51,7 @@ describe('OrganisationController', () => {
     let organisationServiceMock: DeepMocked<OrganisationService>;
     let organisationDeleteServiceMock: DeepMocked<OrganisationDeleteService>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
-    const permissionsMock: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+    const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -327,6 +327,10 @@ describe('OrganisationController', () => {
                 const returnedValue: Organisation<true> = DoFactory.createOrganisation(true);
 
                 organisationServiceMock.updateOrganisation.mockResolvedValue({ ok: true, value: returnedValue });
+                organisationRepositoryMock.findById.mockResolvedValueOnce(
+                    DoFactory.createOrganisation(true, { id: returnedValue.id }),
+                );
+
                 await expect(
                     organisationController.updateOrganisation(params, body, permissionsMock),
                 ).resolves.not.toThrow();

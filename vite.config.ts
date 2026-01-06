@@ -16,6 +16,7 @@ export default defineConfig({
         // include: ['**/*.spec.ts'],
         include: [
             // '**/authentication/**/*.spec.ts',
+            // '**/itslearning/**/*.spec.ts',
             '**/meldung/**/*spec.ts',
             '**/rolle/**/*spec.ts',
             '**/eventbus/**/*.spec.ts',
@@ -25,6 +26,8 @@ export default defineConfig({
             '**/health/**/*.spec.ts',
             '**/import/**/*.spec.ts',
             '**/cron/**/*.spec.ts',
+            '**/organisation/**/*.spec.ts',
+            '**/person/**/*.spec.ts',
         ],
         coverage: {
             reporter: ['lcov', 'text'],
