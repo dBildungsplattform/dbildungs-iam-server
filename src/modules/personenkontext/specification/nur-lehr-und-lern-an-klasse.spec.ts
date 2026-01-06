@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -8,8 +8,8 @@ import { Personenkontext } from '../domain/personenkontext.js';
 import { NurLehrUndLernAnKlasse } from './nur-lehr-und-lern-an-klasse.js';
 
 describe('NurLehrUndLernAnKlasse specification', () => {
-    const organisationRepoMock: DeepMocked<OrganisationRepository> = createMock();
-    const rolleRepoMock: DeepMocked<RolleRepo> = createMock();
+    const organisationRepoMock: DeepMocked<OrganisationRepository> = createMock(OrganisationRepository);
+    const rolleRepoMock: DeepMocked<RolleRepo> = createMock(RolleRepo);
 
     afterEach(() => {
         vi.resetAllMocks();

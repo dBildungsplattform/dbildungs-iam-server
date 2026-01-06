@@ -40,19 +40,19 @@ describe('PersonenInfoController', () => {
     });
 
     it('should parse offset and limit as integers', async () => {
-        const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+        const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
         await controller.infoV1(permissions, '5', '15');
         expect(service.findPersonsForPersonenInfo).toHaveBeenCalledWith(permissions, 5, 15);
     });
 
     it('should handle invalid offset and limit with fallback of page 1', async () => {
-        const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+        const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
         await controller.infoV1(permissions, 'invalid', 'invalid');
         expect(service.findPersonsForPersonenInfo).toHaveBeenCalledWith(permissions, 0, 2500);
     });
 
     it('should handle limit that exceeds maximum limit', async () => {
-        const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+        const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
         try {
             await controller.infoV1(permissions, '0', '1000000');
             throw new Error('Expected exception was not thrown');

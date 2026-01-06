@@ -9,6 +9,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { PersonAdministrationService } from './person-administration.service.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('PersonAdministrationService', () => {
     let module: TestingModule;
@@ -31,7 +32,7 @@ describe('PersonAdministrationService', () => {
                 },
                 {
                     provide: PersonPermissions,
-                    useValue: createMock(PersonPermissions),
+                    useValue: createPersonPermissionsMock(),
                 },
             ],
         }).compile();

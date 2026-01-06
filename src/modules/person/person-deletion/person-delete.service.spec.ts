@@ -63,7 +63,7 @@ describe('PersonDeleteService', () => {
 
                 const res: Result<void, DomainError> = await sut.deletePerson(
                     faker.string.uuid(),
-                    createMock(PersonPermissions),
+                    createPersonPermissionsMock(),
                 );
 
                 expect(res.ok).toBeFalsy();
@@ -148,7 +148,7 @@ describe('PersonDeleteService', () => {
 
                 const res: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
                     faker.string.uuid(),
-                    createMock(PersonPermissions),
+                    createPersonPermissionsMock(),
                 );
 
                 expect(res.ok).toBeFalsy();

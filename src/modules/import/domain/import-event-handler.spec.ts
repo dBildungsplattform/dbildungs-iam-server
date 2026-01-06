@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
 import {
     PersonenkontextCreationService,
@@ -27,6 +26,7 @@ import { ImportDataItemStatus } from './importDataItem.enum.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('ImportEventHandler', () => {
     let module: TestingModule;
@@ -86,7 +86,7 @@ describe('ImportEventHandler', () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
-        permissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(createMock(PersonPermissions));
+        permissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(createPersonPermissionsMock());
     });
 
     it('should be defined', () => {

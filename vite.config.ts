@@ -28,6 +28,7 @@ export default defineConfig({
             '**/cron/**/*.spec.ts',
             '**/organisation/**/*.spec.ts',
             '**/person/**/*.spec.ts',
+            '**/personenkontext/**/*.spec.ts',
         ],
         coverage: {
             reporter: ['lcov', 'text'],

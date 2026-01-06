@@ -130,7 +130,7 @@ export class DoFactory {
             name: faker.person.jobTitle(),
             administeredBySchulstrukturknoten: faker.string.uuid(),
             rollenart: faker.helpers.enumValue(RollenArt),
-            merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+            merkmale: [],
             systemrechte: [RollenSystemRecht.PERSONEN_VERWALTEN],
             serviceProviderIds: [],
             id: withId ? faker.string.uuid() : undefined,

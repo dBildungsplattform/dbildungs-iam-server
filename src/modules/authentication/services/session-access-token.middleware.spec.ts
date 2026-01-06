@@ -11,6 +11,7 @@ import { SystemConfig } from '../../../shared/config/system.config.js';
 import {
     createOidcClientMock,
     createPassportUserMock,
+    createPersonPermissionsMock,
     createUserinfoResponseMock,
 } from '../../../../test/utils/auth.mock.js';
 import { Mock } from 'vitest';
@@ -96,7 +97,7 @@ describe('sessionAccessTokenMiddleware', () => {
                 refresh_token: originalRefreshToken,
                 userinfo: createUserinfoResponseMock(),
                 personPermissions(): Promise<PersonPermissions> {
-                    return Promise.resolve(createMock(PersonPermissions));
+                    return Promise.resolve(createPersonPermissionsMock());
                 },
             };
         });

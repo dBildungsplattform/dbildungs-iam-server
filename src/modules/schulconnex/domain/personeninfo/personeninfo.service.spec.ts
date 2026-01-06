@@ -92,14 +92,14 @@ describe('PersonInfoService', () => {
 
     describe('when caller has 0 organisations with systemrecht PERSONEN_LESEN', () => {
         it('should return empty array', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
                 orgaIds: [],
             });
             dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([]);
             const res: PersonInfoResponseV1[] = await sut.findPersonsForPersonenInfo(
-                createMock(PersonPermissions),
+                createPersonPermissionsMock(),
                 0,
                 10,
             );
@@ -112,7 +112,7 @@ describe('PersonInfoService', () => {
 
     describe('when caller has organisations with systemrecht PERSONEN_LESEN', () => {
         it('should return persons with specific permissions', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             const orga1: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
             const orga2: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
             const rolle: Rolle<true> = DoFactory.createRolle(true, {
@@ -211,7 +211,7 @@ describe('PersonInfoService', () => {
         });
 
         it('should return persons with all permissions', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             const orga1: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
             const orga2: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
             const rolle: Rolle<true> = DoFactory.createRolle(true, {
@@ -310,7 +310,7 @@ describe('PersonInfoService', () => {
         });
 
         it('should return persons and default to empty kontext and userlock array', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             const orga1: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
             const orga2: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
             const rolle: Rolle<true> = DoFactory.createRolle(true, {

@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -10,8 +10,8 @@ import { Personenkontext } from '../domain/personenkontext.js';
 import { LernAnSchuleUndKlasse } from './lern-an-schule-und-klasse.js';
 
 describe('LernAnSchuleUndKlasse specification', () => {
-    const organisationRepoMock: DeepMocked<OrganisationRepository> = createMock();
-    const rolleRepoMock: DeepMocked<RolleRepo> = createMock();
+    const organisationRepoMock: DeepMocked<OrganisationRepository> = createMock(OrganisationRepository);
+    const rolleRepoMock: DeepMocked<RolleRepo> = createMock(RolleRepo);
     const sut: LernAnSchuleUndKlasse = new LernAnSchuleUndKlasse(organisationRepoMock, rolleRepoMock);
 
     beforeEach(() => {

@@ -7,7 +7,7 @@ import { PersonRepository } from '../../../person/persistence/person.repository.
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
 import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../../test/utils/do-factory.js';
 import { PersonApiMapper } from '../../../person/mapper/person-api.mapper.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';

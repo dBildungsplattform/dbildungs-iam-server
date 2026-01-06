@@ -9,6 +9,7 @@ import { sign } from 'jsonwebtoken';
 import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import { PermissionsInterceptor } from './permissions.interceptor.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('Permission Interceptor', () => {
     let module: TestingModule;
@@ -54,7 +55,7 @@ describe('Permission Interceptor', () => {
             const context: DeepMocked<ExecutionContext> = createMock<ExecutionContext>({
                 switchToHttp: () => createMock<HttpArgumentsHost>({ getRequest: () => request }),
             });
-            permissionRepoMock.loadPersonPermissions.mockResolvedValueOnce(createMock(PersonPermissions));
+            permissionRepoMock.loadPersonPermissions.mockResolvedValueOnce(createPersonPermissionsMock());
 
             sut.intercept(context, createMock());
             await expect(request.passportUser?.personPermissions()).resolves.toBeDefined();

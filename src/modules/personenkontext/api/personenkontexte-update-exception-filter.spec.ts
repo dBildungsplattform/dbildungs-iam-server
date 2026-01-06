@@ -8,12 +8,14 @@ import {
     PersonenkontexteUpdateErrorI18nTypes,
 } from './dbiam-personenkontexte-update.error.js';
 import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
+import { createArgumentsHostMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
+import { MockedObject } from 'vitest';
 
 describe('PersonenkontexteUpdateExceptionFilter', () => {
     let filter: PersonenkontexteUpdateExceptionFilter;
     const statusCode: number = 400;
-    let responseMock: DeepMocked<Response>;
-    let argumentsHost: DeepMocked<ArgumentsHost>;
+    let responseMock: MockedObject<Response>;
+    let argumentsHost: MockedObject<ArgumentsHost>;
 
     const generalBadRequestError: DbiamPersonenkontexteUpdateError = new DbiamPersonenkontexteUpdateError({
         code: 500,
@@ -22,13 +24,8 @@ describe('PersonenkontexteUpdateExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new PersonenkontexteUpdateExceptionFilter();
-        responseMock = createMock(Response);
-        argumentsHost = createMock<ArgumentsHost>({
-            switchToHttp: () =>
-                createMock<HttpArgumentsHost>({
-                    getResponse: () => responseMock,
-                }),
-        });
+        responseMock = createResponseMock();
+        argumentsHost = createArgumentsHostMock({ response: responseMock });
     });
 
     describe('catch', () => {

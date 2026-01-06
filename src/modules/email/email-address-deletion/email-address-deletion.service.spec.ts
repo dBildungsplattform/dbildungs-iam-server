@@ -13,6 +13,7 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import assert from 'assert';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 const EMAIL_ADDRESSES_DELETE_LIMIT: number = 10;
 
@@ -139,7 +140,7 @@ describe('EmailAddressDeletionService', () => {
             it('should log error about that', async () => {
                 const [persons, emailAddresses]: [Person<true>[], EmailAddress<true>[]] =
                     createPersonsAndEmailAddresses();
-                const permissionsMock: PersonPermissions = createMock(PersonPermissions);
+                const permissionsMock: PersonPermissions = createPersonPermissionsMock();
                 const emailAddressWithUnknownPersonId: EmailAddress<true> = EmailAddress.construct(
                     faker.string.uuid(),
                     faker.date.past(),
@@ -169,7 +170,7 @@ describe('EmailAddressDeletionService', () => {
             it('should log error about that', async () => {
                 const [persons, emailAddresses]: [Person<true>[], EmailAddress<true>[]] =
                     createPersonsAndEmailAddresses();
-                const permissionsMock: PersonPermissions = createMock(PersonPermissions);
+                const permissionsMock: PersonPermissions = createPersonPermissionsMock();
                 emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline.mockResolvedValueOnce([
                     emailAddresses,
                     emailAddresses.length,
@@ -192,7 +193,7 @@ describe('EmailAddressDeletionService', () => {
             it('should log error about that', async () => {
                 const [persons, emailAddresses]: [Person<true>[], EmailAddress<true>[]] =
                     createPersonsAndEmailAddresses();
-                const permissionsMock: PersonPermissions = createMock(PersonPermissions);
+                const permissionsMock: PersonPermissions = createPersonPermissionsMock();
                 assert(persons[0]);
                 const emailAddressWithoutOxUserId: EmailAddress<true> = EmailAddress.construct(
                     faker.string.uuid(),

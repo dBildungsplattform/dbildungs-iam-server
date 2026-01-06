@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     DomainError,
@@ -12,7 +12,6 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { faker } from '@faker-js/faker';
-import { Organisation } from '../../organisation/domain/organisation.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -24,11 +23,38 @@ import { RolleNurAnPassendeOrganisationError } from '../specification/error/roll
 import { PersonenkontextCreationService, PersonPersonenkontext } from './personenkontext-creation.service.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
-import { Person } from '../../person/domain/person.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { PersonenkontextWorkflowSharedKernel } from './personenkontext-workflow-shared-kernel.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { MockedObject } from 'vitest';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
+import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
+
+function createPersonenkontexteUpdateMock(): MockedObject<PersonenkontexteUpdate> {
+    const personenkontexteUpdate: PersonenkontexteUpdate = PersonenkontexteUpdate.createNew(
+        null as unknown as EventRoutingLegacyKafkaService,
+        null as unknown as ClassLogger,
+        null as unknown as DBiamPersonenkontextRepo,
+        null as unknown as DBiamPersonenkontextRepoInternal,
+        null as unknown as PersonRepository,
+        null as unknown as RolleRepo,
+        null as unknown as OrganisationRepository,
+        null as unknown as PersonenkontextFactory,
+        null as unknown as PersonID,
+        null as unknown as Date | undefined,
+        null as unknown as number,
+        null as unknown as DbiamPersonenkontextBodyParams[],
+        null as unknown as IPersonPermissions,
+        null as unknown as string,
+    );
+    return vi.mockObject(personenkontexteUpdate);
+}
 
 describe('PersonenkontextCreationService', () => {
     let module: TestingModule;
@@ -73,7 +99,7 @@ describe('PersonenkontextCreationService', () => {
                 },
                 {
                     provide: PersonPermissions,
-                    useValue: createMock(PersonPermissions),
+                    useValue: createPersonPermissionsMock(),
                 },
                 {
                     provide: DbiamPersonenkontextFactory,
@@ -111,7 +137,7 @@ describe('PersonenkontextCreationService', () => {
         it('should return DomainError if Person Aggregate ist invalid ', async () => {
             personFactoryMock.createNew.mockResolvedValueOnce(new InvalidAttributeLengthError('name.vorname'));
             rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
-            organisationRepositoryMock.findById.mockResolvedValueOnce(createMock(Organisation<true>));
+            organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
 
             const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
@@ -128,7 +154,7 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return EntityNotFoundError if Organisation is not found', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
+            personFactoryMock.createNew.mockResolvedValueOnce(DoFactory.createPerson(false));
             personenkontextWorkflowSharedKernel.checkReferences.mockResolvedValueOnce(new EntityNotFoundError());
 
             const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
@@ -146,7 +172,7 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return EntityNotFoundError if Rolle is not found', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
+            personFactoryMock.createNew.mockResolvedValueOnce(DoFactory.createPerson(false));
             personenkontextWorkflowSharedKernel.checkReferences.mockResolvedValueOnce(new EntityNotFoundError());
 
             const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
@@ -164,7 +190,7 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return EntityNotFoundError if Rolle can NOT be assigned to organisation', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
+            personFactoryMock.createNew.mockResolvedValueOnce(DoFactory.createPerson(false));
             personenkontextWorkflowSharedKernel.checkReferences.mockResolvedValueOnce(new EntityNotFoundError());
 
             const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
@@ -182,7 +208,7 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return RolleNurAnPassendeOrganisationError if Rolle does NOT match organisation', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
+            personFactoryMock.createNew.mockResolvedValueOnce(DoFactory.createPerson(false));
             personenkontextWorkflowSharedKernel.checkReferences.mockResolvedValueOnce(
                 new RolleNurAnPassendeOrganisationError(),
             );
@@ -202,15 +228,17 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return MissingPermissionsError if user does NOT have permissions', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({ rollenart: RollenArt.SYSADMIN });
+            personFactoryMock.createNew.mockResolvedValueOnce(DoFactory.createPerson(false));
+            const rolleMock: MockedObject<Rolle<true>> = vi.mockObject(
+                DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
+            );
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             rolleRepoMock.findByIds.mockResolvedValueOnce(
                 new Map<string, Rolle<true>>([[faker.string.uuid(), rolleMock]]),
             );
             organisationRepositoryMock.findById.mockResolvedValueOnce(
-                createMock<Organisation<true>>({ typ: OrganisationsTyp.LAND }),
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND }),
             );
             personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
             personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
@@ -230,12 +258,14 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return DomainError if Person cannot be saved in the DB', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({ rollenart: RollenArt.SYSADMIN });
+            personFactoryMock.createNew.mockResolvedValueOnce(DoFactory.createPerson(false));
+            const rolleMock: MockedObject<Rolle<true>> = vi.mockObject(
+                DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
+            );
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             organisationRepositoryMock.findById.mockResolvedValueOnce(
-                createMock<Organisation<true>>({ typ: OrganisationsTyp.LAND }),
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND }),
             );
             personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             personRepositoryMock.create.mockResolvedValueOnce(
@@ -257,17 +287,19 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return errors from update', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({ rollenart: RollenArt.SYSADMIN });
+            personFactoryMock.createNew.mockResolvedValueOnce(DoFactory.createPerson(false));
+            const rolleMock: MockedObject<Rolle<true>> = vi.mockObject(
+                DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
+            );
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             organisationRepositoryMock.findById.mockResolvedValueOnce(
-                createMock<Organisation<true>>({ typ: OrganisationsTyp.LAND }),
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND }),
             );
             personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-            personRepositoryMock.create.mockResolvedValueOnce(createMock<Person<true>>({ id: faker.string.uuid() }));
+            personRepositoryMock.create.mockResolvedValueOnce(DoFactory.createPerson(true));
 
-            const personenkontextUpdateMock: DeepMocked<PersonenkontexteUpdate> = createMock();
+            const personenkontextUpdateMock: MockedObject<PersonenkontexteUpdate> = createPersonenkontexteUpdateMock();
             personenkontextUpdateMock.update.mockResolvedValueOnce(new PersonenkontexteUpdateError('Error'));
             dbiamPersonenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValueOnce(
                 personenkontextUpdateMock,
@@ -288,17 +320,19 @@ describe('PersonenkontextCreationService', () => {
         });
 
         it('should return errors if more or less than 1 personenkontext was updated', async () => {
-            personFactoryMock.createNew.mockResolvedValueOnce(createMock(Person<false>));
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({ rollenart: RollenArt.SYSADMIN });
+            personFactoryMock.createNew.mockResolvedValueOnce(DoFactory.createPerson(false));
+            const rolleMock: MockedObject<Rolle<true>> = vi.mockObject(
+                DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
+            );
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             organisationRepositoryMock.findById.mockResolvedValueOnce(
-                createMock<Organisation<true>>({ typ: OrganisationsTyp.LAND }),
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND }),
             );
             personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-            personRepositoryMock.create.mockResolvedValueOnce(createMock<Person<true>>({ id: faker.string.uuid() }));
+            personRepositoryMock.create.mockResolvedValueOnce(DoFactory.createPerson(true));
 
-            const personenkontextUpdateMock: DeepMocked<PersonenkontexteUpdate> = createMock();
+            const personenkontextUpdateMock: MockedObject<PersonenkontexteUpdate> = createPersonenkontexteUpdateMock();
             personenkontextUpdateMock.update.mockResolvedValueOnce([]);
             dbiamPersonenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValueOnce(
                 personenkontextUpdateMock,

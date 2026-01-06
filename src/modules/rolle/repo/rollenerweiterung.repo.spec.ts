@@ -2,7 +2,7 @@ import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -28,6 +28,7 @@ import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 function makeN<T>(fn: () => T, n: number): Array<T> {
     return Array.from({ length: n }, fn);
@@ -173,7 +174,7 @@ describe('RollenerweiterungRepo', () => {
                     merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
                 }),
             );
-            permissionMock = createMock(PersonPermissions);
+            permissionMock = createPersonPermissionsMock();
         });
 
         it.each([['root' as TestCase], ['schuladmin' as TestCase]])(
@@ -330,7 +331,7 @@ describe('RollenerweiterungRepo', () => {
                     3,
                 ),
             );
-            permissionMock = createMock(PersonPermissions);
+            permissionMock = createPersonPermissionsMock();
             permissionMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
             const unpersistedRollenerweiterungen: Array<Rollenerweiterung<false>> = [];
             for (const organisation of organisations) {
@@ -425,7 +426,7 @@ describe('RollenerweiterungRepo', () => {
                     3,
                 ),
             );
-            permissionMock = createMock(PersonPermissions);
+            permissionMock = createPersonPermissionsMock();
             permissionMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
             const unpersistedRollenerweiterungen: Array<Rollenerweiterung<false>> = [];
             for (const organisation of organisations) {

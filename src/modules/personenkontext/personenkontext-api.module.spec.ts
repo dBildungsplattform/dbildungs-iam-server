@@ -4,7 +4,7 @@ import { PersonenKontextApiModule } from './personenkontext-api.module.js';
 import { PersonenkontextController } from './api/personenkontext.controller.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock } from '../../../test/utils/createMock.js';
 import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
 
 describe('PersonenKontextApiModule', () => {

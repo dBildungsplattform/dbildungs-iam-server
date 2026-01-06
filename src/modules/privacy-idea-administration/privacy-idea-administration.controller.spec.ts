@@ -78,7 +78,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: true,
                 value: person,
             });
-            personPermissionsMock = createMock(PersonPermissions);
+            personPermissionsMock = createPersonPermissionsMock();
 
             serviceMock.initializeSoftwareToken.mockResolvedValue('token123');
             const response: string = await sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock);
@@ -90,7 +90,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: false,
                 error: new Error('Forbidden access'),
             });
-            personPermissionsMock = createMock(PersonPermissions);
+            personPermissionsMock = createPersonPermissionsMock();
             await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
                 new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
             );
@@ -101,7 +101,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: true,
                 value: person,
             });
-            personPermissionsMock = createMock(PersonPermissions);
+            personPermissionsMock = createPersonPermissionsMock();
             serviceMock.initializeSoftwareToken.mockRejectedValueOnce(
                 new SoftwareTokenInitializationError('SoftwareToken Error'),
             );
@@ -152,7 +152,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 user_realm: '',
                 username: '',
             };
-            personPermissionsMock = createMock(PersonPermissions);
+            personPermissionsMock = createPersonPermissionsMock();
 
             serviceMock.getTwoAuthState.mockResolvedValue(mockTokenState);
             const response: TokenStateResponse = await sut.getTwoAuthState('user1', personPermissionsMock);
@@ -168,7 +168,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 value: person,
             });
 
-            personPermissionsMock = createMock(PersonPermissions);
+            personPermissionsMock = createPersonPermissionsMock();
 
             serviceMock.getTwoAuthState.mockResolvedValue(undefined);
             serviceMock.requires2fa.mockResolvedValue(twoFaRequired);
@@ -309,7 +309,7 @@ describe('PrivacyIdeaAdministrationController', () => {
 
     describe('PrivacyIdeaAdministrationController assignHardwareToken', () => {
         beforeEach(() => {
-            personPermissionsMock = createMock(PersonPermissions);
+            personPermissionsMock = createPersonPermissionsMock();
         });
 
         it('should successfully assign a hardware token', async () => {
@@ -403,7 +403,7 @@ describe('PrivacyIdeaAdministrationController', () => {
 
     describe('PrivacyIdeaAdministrationController verify', () => {
         it('should successfully verify token', async () => {
-            personPermissionsMock = createMock(PersonPermissions);
+            personPermissionsMock = createPersonPermissionsMock();
             const person: Person<true> = getPerson();
 
             vi.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
@@ -414,7 +414,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             await sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock);
         });
         it('should throw an error when trying to verify', async () => {
-            personPermissionsMock = createMock(PersonPermissions);
+            personPermissionsMock = createPersonPermissionsMock();
             const person: Person<true> = getPerson();
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
@@ -430,7 +430,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return forbidden insufficient permissions', async () => {
-            personPermissionsMock = createMock(PersonPermissions);
+            personPermissionsMock = createPersonPermissionsMock();
 
             vi.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
                 ok: false,
@@ -443,7 +443,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return user not found if username is undefined', async () => {
-            personPermissionsMock = createMock(PersonPermissions);
+            personPermissionsMock = createPersonPermissionsMock();
 
             vi.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
                 ok: true,

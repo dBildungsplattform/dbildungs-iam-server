@@ -64,7 +64,7 @@ describe('Provider Controller Test', () => {
         serviceProviderServiceMock = module.get<DeepMocked<ServiceProviderService>>(ServiceProviderService);
         serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         providerController = module.get(ProviderController);
-        personPermissionsMock = createMock(PersonPermissions);
+        personPermissionsMock = createPersonPermissionsMock();
 
         app = module.createNestApplication();
         await app.init();
@@ -82,7 +82,7 @@ describe('Provider Controller Test', () => {
         let providerController: ProviderController;
 
         beforeEach(() => {
-            permissionsMock = createMock(PersonPermissions);
+            permissionsMock = createPersonPermissionsMock();
             rollenerweiterungRepoMock = createMock(RollenerweiterungRepo);
             rolleRepoMock = createMock(RolleRepo);
             organisationRepositoryMock = createMock(OrganisationRepository);

@@ -114,7 +114,7 @@ describe('CronController', () => {
         personenkontextWorkflowFactoryMock = module.get(PersonenkontextWorkflowFactory);
         personenkontextWorkflowMock = module.get(PersonenkontextWorkflowAggregate);
         userLockRepositoryMock = module.get(UserLockRepository);
-        permissionsMock = createMock(PersonPermissions);
+        permissionsMock = createPersonPermissionsMock();
         serviceProviderServiceMock = module.get(ServiceProviderService);
         emailAddressDeletionServiceMock = module.get(EmailAddressDeletionService);
     });
@@ -471,7 +471,7 @@ describe('CronController', () => {
                     throw new Error('Some internal error');
                 });
 
-                const personPermissionsMock: PersonPermissions = createMock(PersonPermissions);
+                const personPermissionsMock: PersonPermissions = createPersonPermissionsMock();
                 await expect(cronController.personWithoutOrgDelete(personPermissionsMock)).rejects.toThrow(
                     'Failed to remove users due to an internal server error.',
                 );
