@@ -31,6 +31,7 @@ import { KafkaLdapSyncCompletedEvent } from '../../../shared/events/ldap/kafka-l
 import { LdapSyncFailedEvent } from '../../../shared/events/ldap/ldap-sync-failed.event.js';
 import { KafkaLdapSyncFailedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-failed.event.js';
 import { PersonIdentifier } from '../../logging/person-identifier.js';
+import { EmailResolverService } from '../../../modules/email-microservice/domain/email-resolver.service.js';
 
 export type LdapSyncData = {
     givenName: string;
@@ -57,6 +58,7 @@ export class LdapSyncEventHandler {
 
     public constructor(
         private readonly logger: ClassLogger,
+        private readonly emailResolverService: EmailResolverService,
         private readonly ldapInstanceConfig: LdapInstanceConfig,
         private readonly ldapClientService: LdapClientService,
         private readonly personRepository: PersonRepository,
@@ -280,6 +282,13 @@ export class LdapSyncEventHandler {
     }
 
     private async syncDataToLdap(ldapSyncData: LdapSyncData, personAttributes: LdapPersonAttributes): Promise<void> {
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(
+                `Ignoring Event for personId:${ldapSyncData.personId} because email microservice is enabled`,
+            );
+            return;
+        }
+
         this.logger.info(
             `Syncing data to LDAP for personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
         );

@@ -328,6 +328,12 @@ export class EmailEventHandler {
     public async handleLdapSyncFailedEvent(event: LdapSyncFailedEvent | KafkaLdapSyncFailedEvent): Promise<void> {
         this.logger.info(`Received LdapSyncFailedEvent, personId:${event.personId}, username:${event.username}`);
 
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Ignoring Event for personId:${event.personId} because email microservice is enabled`);
+            return;
+        }
+
+        this.logger.debug(`Handle LdapSyncFailedEvent in old way`);
         await this.handlePersonDueToLdapSyncFailed(event.personId, event.username);
     }
 
