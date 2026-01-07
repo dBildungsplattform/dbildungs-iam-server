@@ -168,7 +168,7 @@ describe('Organisation API', () => {
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisationen/${faker.string.uuid()}/klasse`)
+                    .delete(`/organisationen/${faker.string.uuid()}`)
                     .send();
 
                 expect(response.status).toBe(404);
@@ -178,7 +178,7 @@ describe('Organisation API', () => {
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisationen/${faker.string.uuid()}/klasse`)
+                    .delete(`/organisationen/${faker.string.uuid()}`)
                     .send();
 
                 expect(response.status).toBe(404);
@@ -193,7 +193,7 @@ describe('Organisation API', () => {
                 await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisationen/${faker.string.uuid()}/klasse`)
+                    .delete(`/organisationen/${faker.string.uuid()}`)
                     .send();
 
                 expect(response.status).toBe(404);
@@ -240,7 +240,7 @@ describe('Organisation API', () => {
                 );
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisationen/${organisation.id}/klasse`)
+                    .delete(`/organisationen/${organisation.id}`)
                     .send();
 
                 expect(response.status).toBe(400);
@@ -265,7 +265,7 @@ describe('Organisation API', () => {
                 await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisationen/${organisation.id}/klasse`)
+                    .delete(`/organisationen/${organisation.id}`)
                     .send();
 
                 expect(response.status).toBe(204);
