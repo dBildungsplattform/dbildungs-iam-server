@@ -535,7 +535,7 @@ export class OrganisationController {
         const organisation: Result<
             Organisation<true>,
             EntityNotFoundError | MissingPermissionsError
-        > = await this.organisationService.findOrganisationByIdAndMatchingPermissions(
+        > = await this.organisationService.findOrganisationByIdAndAnyMatchingPermissions(
             permissions,
             params.organisationId,
         );

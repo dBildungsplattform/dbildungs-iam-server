@@ -73,7 +73,7 @@ export function mapOrgaEntityToAggregate(entity: OrganisationEntity): Organisati
     );
 }
 
-export type OrganisationSeachOptions = {
+export type OrganisationSearchOptions = {
     readonly kennung?: string;
     readonly name?: string;
     readonly searchString?: string;
@@ -87,6 +87,7 @@ export type OrganisationSeachOptions = {
     readonly sortField?: SortFieldOrganisation;
     readonly sortOrder?: ScopeOrder;
     readonly getChildrenRecursively?: boolean;
+    readonly matchAllSystemrechte?: boolean;
 };
 
 @Injectable()
@@ -337,9 +338,13 @@ export class OrganisationRepository {
     public async findAuthorized(
         personPermissions: PersonPermissions,
         systemrechte: RollenSystemRecht[],
-        searchOptions: OrganisationSeachOptions,
+        searchOptions: OrganisationSearchOptions,
     ): Promise<[Organisation<true>[], total: number, pageTotal: number]> {
-        const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(systemrechte, true);
+        const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(
+            systemrechte,
+            true,
+            searchOptions.matchAllSystemrechte,
+        );
         if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
             return [[], 0, 0];
         }

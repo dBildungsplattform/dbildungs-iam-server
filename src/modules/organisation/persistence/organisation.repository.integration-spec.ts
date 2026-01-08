@@ -1508,38 +1508,45 @@ describe('OrganisationRepository', () => {
             expect(result[1]).toBe(0);
         });
 
-        it('should return all authorized organisations according to list', async () => {
-            const orgas: OrganisationEntity[] = [];
-            for (let i: number = 0; i < 5; i++) {
-                const orga: Organisation<false> | DomainError = Organisation.createNew(
-                    sut.ROOT_ORGANISATION_ID,
-                    sut.ROOT_ORGANISATION_ID,
-                    faker.string.numeric(6),
-                    faker.company.name(),
-                );
-                if (orga instanceof DomainError) {
-                    return;
+        describe.each([[true], [false]])('with matchAllSystemrechte = %s', (matchAllSystemrechte: boolean) => {
+            it('should return all authorized organisations according to list', async () => {
+                const orgas: OrganisationEntity[] = [];
+                for (let i: number = 0; i < 5; i++) {
+                    const orga: Organisation<false> | DomainError = Organisation.createNew(
+                        sut.ROOT_ORGANISATION_ID,
+                        sut.ROOT_ORGANISATION_ID,
+                        faker.string.numeric(6),
+                        faker.company.name(),
+                    );
+                    if (orga instanceof DomainError) {
+                        return;
+                    }
+                    const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
+                    await em.persistAndFlush(mappedOrga);
+                    orgas.push(mappedOrga);
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
-                orgas.push(mappedOrga);
-            }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
-                all: false,
-                orgaIds: [orgas[0]!.id, orgas[3]!.id, orgas[4]!.id],
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [orgas[0]!.id, orgas[3]!.id, orgas[4]!.id],
+                });
+
+                const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                    personPermissions,
+                    [RollenSystemRecht.SCHULEN_VERWALTEN],
+                    { matchAllSystemrechte },
+                );
+
+                expect(personPermissions.getOrgIdsWithSystemrecht).toHaveBeenLastCalledWith(
+                    [RollenSystemRecht.SCHULEN_VERWALTEN],
+                    true,
+                    matchAllSystemrechte,
+                );
+                expect(result[1]).toBe(3);
+                expect(result[0].some((org: Organisation<true>) => org.id === orgas[0]!.id)).toBeTruthy();
+                expect(result[0].some((org: Organisation<true>) => org.id === orgas[3]!.id)).toBeTruthy();
+                expect(result[0].some((org: Organisation<true>) => org.id === orgas[4]!.id)).toBeTruthy();
             });
-
-            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
-                personPermissions,
-                [RollenSystemRecht.SCHULEN_VERWALTEN],
-                {},
-            );
-
-            expect(result[1]).toBe(3);
-            expect(result[0].some((org: Organisation<true>) => org.id === orgas[0]!.id)).toBeTruthy();
-            expect(result[0].some((org: Organisation<true>) => org.id === orgas[3]!.id)).toBeTruthy();
-            expect(result[0].some((org: Organisation<true>) => org.id === orgas[4]!.id)).toBeTruthy();
         });
 
         it('should return all authorized organisations for searchString in name', async () => {
