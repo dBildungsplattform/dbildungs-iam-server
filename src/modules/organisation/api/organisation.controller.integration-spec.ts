@@ -223,7 +223,6 @@ describe('Organisation API', () => {
 
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LERN,
                     }),
                 );
