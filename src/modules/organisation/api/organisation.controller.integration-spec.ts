@@ -245,7 +245,7 @@ describe('Organisation API', () => {
                 expect(response.status).toBe(400);
                 expect(response.body).toEqual({
                     code: 400,
-                    i18nKey: 'ORGANISATION_IST_BEREITS_ZUGEWIESEN_ERROR',
+                    i18nKey: 'ORGANISATION_HAT_PERSONENKONTEXTE',
                 });
             });
         });
