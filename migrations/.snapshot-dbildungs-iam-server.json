@@ -248,6 +248,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -528,6 +529,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -802,6 +804,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -1153,6 +1156,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -1472,6 +1476,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -1756,6 +1761,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -2057,6 +2063,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -2473,6 +2480,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -2766,6 +2774,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -3214,6 +3223,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -3561,6 +3571,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -3844,6 +3855,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -4166,6 +4178,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -4635,6 +4648,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -5024,6 +5038,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -5392,6 +5407,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -5676,6 +5692,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -5976,6 +5993,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -6084,6 +6102,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ],
@@ -6370,6 +6389,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -6651,6 +6671,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -7026,6 +7047,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -7307,6 +7329,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -7591,6 +7614,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -7919,6 +7943,7 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
+            "SCHULISCH",
             "HINWEISE",
             "ANGEBOTE"
           ]
@@ -8138,6 +8163,7 @@
         "EMAIL",
         "UNTERRICHT",
         "VERWALTUNG",
+        "SCHULISCH",
         "HINWEISE",
         "ANGEBOTE"
       ]
