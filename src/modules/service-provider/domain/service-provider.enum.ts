@@ -6,6 +6,7 @@ export enum ServiceProviderKategorie {
     EMAIL = 'EMAIL',
     UNTERRICHT = 'UNTERRICHT',
     VERWALTUNG = 'VERWALTUNG',
+    SCHULISCH = 'SCHULISCH',
     HINWEISE = 'HINWEISE',
     ANGEBOTE = 'ANGEBOTE',
 }
