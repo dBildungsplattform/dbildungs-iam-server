@@ -29,6 +29,7 @@ export class ServiceProviderEntity extends TimestampedEntity {
             ServiceProviderKategorie.EMAIL,
             ServiceProviderKategorie.UNTERRICHT,
             ServiceProviderKategorie.VERWALTUNG,
+            ServiceProviderKategorie.COSTOM_ORDER,
             ServiceProviderKategorie.HINWEISE,
             ServiceProviderKategorie.ANGEBOTE,
         ],
