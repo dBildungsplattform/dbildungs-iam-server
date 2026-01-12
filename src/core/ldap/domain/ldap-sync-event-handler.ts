@@ -172,6 +172,8 @@ export class LdapSyncEventHandler {
             if (disabledEmailAddressesSorted.length === 0) {
                 this.logger.info(`No DISABLED EmailAddress(es) for Person with ID ${personId}`);
             }
+        } else {
+            this.logger.info(`skipping email resolution for personId:${personId} since email microservice is active`);
         }
 
         // Get all PKs
@@ -367,6 +369,10 @@ export class LdapSyncEventHandler {
                     }
                 }
             }
+        } else {
+            this.logger.info(
+                `skipping email setting in ldap for :${ldapSyncData.personId} since email microservice is active`,
+            );
         }
 
         // Check and sync PersonAttributes

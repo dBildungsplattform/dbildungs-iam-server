@@ -693,6 +693,32 @@ describe('LdapSyncEventHandler', () => {
             createDataFetchedByRepositoriesAndLDAP();
         });
 
+        describe('when email microservice is enabled', () => {
+            it('should ignore email data completly', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                // create PKs, orgaMap and rolleMap
+                const [kontexte, orgaMap, rolleMap]: [
+                    Personenkontext<true>[],
+                    Map<OrganisationID, Organisation<true>>,
+                    Map<RolleID, Rolle<true>>,
+                ] = getPkArrayOrgaMapAndRolleMap(person);
+                mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+
+                mockPersonAttributesFoundGroupsNotFound();
+
+                await sut.personExternalSystemSyncEventHandler(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `skipping email resolution for personId:${personId} since email microservice is active`,
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `skipping email setting in ldap for :${personId} since email microservice is active`,
+                );
+            });
+        });
+
         describe('when vorname and givenName, familienname and surName, username and cn DO NOT match', () => {
             it('should log info', async () => {
                 //mock: email-addresses are equal -> no processing for mismatching emails necessary
