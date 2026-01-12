@@ -37,6 +37,7 @@ import { OrganisationsTyp } from '../../../modules/organisation/domain/organisat
 import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
 import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { PersonIdentifier } from '../../logging/person-identifier.js';
+import { EmailResolverService } from '../../../modules/email-microservice/domain/email-resolver.service.js';
 
 describe('LdapSyncEventHandler', () => {
     const oeffentlicheSchulenDomain: string = 'schule-sh.de';
@@ -53,6 +54,7 @@ describe('LdapSyncEventHandler', () => {
     let emailRepoMock: DeepMocked<EmailRepo>;
     let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
     let loggerMock: DeepMocked<ClassLogger>;
+    let emailResolverServiceMock: DeepMocked<EmailResolverService>;
 
     let personId: PersonID;
     let username: PersonUsername;
@@ -97,6 +99,8 @@ describe('LdapSyncEventHandler', () => {
             .useValue(createMock<EventRoutingLegacyKafkaService>())
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
+            .overrideProvider(EmailResolverService)
+            .useValue(createMock<EmailResolverService>())
             .compile();
 
         orm = module.get(MikroORM);
@@ -112,6 +116,10 @@ describe('LdapSyncEventHandler', () => {
         emailRepoMock = module.get(EmailRepo);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         loggerMock = module.get(ClassLogger);
+
+        emailResolverServiceMock = module.get(EmailResolverService);
+
+        emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
