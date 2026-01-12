@@ -16,8 +16,8 @@ import {
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { RequiredExternalPkData } from '../api/authentication.controller.js';
-import { EmailAddressNotFoundError } from '../../email/error/email-address-not-found.error.js';
 import { OXContextID } from '../../../shared/types/ox-ids.types.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 export class UserExternaldataWorkflowAggregate {
     public contextID: OXContextID;
@@ -54,7 +54,7 @@ export class UserExternaldataWorkflowAggregate {
         );
     }
 
-    public async initialize(personId: string): Promise<void | DomainError> {
+    public async initialize(personId: string): Promise<Option<DomainError>> {
         const person: Option<Person<true>> = await this.personRepo.findById(personId);
         const externalPkData: ExternalPkData[] = await this.personenkontextRepo.findExternalPkData(personId);
         const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] =
@@ -66,12 +66,17 @@ export class UserExternaldataWorkflowAggregate {
         this.person = person;
 
         if (this.emailResolverService.shouldUseEmailMicroservice()) {
-            const personEmailResponse: Option<EmailAddressResponse> =
-                await this.emailResolverService.findEmailBySpshPersonAsEmailAddressResponse(personId);
-            if (personEmailResponse) {
-                this.oxLoginId = personEmailResponse.oxLoginId;
+            const personEmailResponse: Result<
+                Option<EmailAddressResponse>,
+                DomainError
+            > = await this.emailResolverService.findEmailBySpshPersonAsEmailAddressResponse(personId);
+
+            if (personEmailResponse.ok) {
+                if (personEmailResponse.value?.status[0] !== EmailAddressStatus.REQUESTED) {
+                    this.oxLoginId = personEmailResponse.value?.oxLoginId;
+                }
             } else {
-                return new EmailAddressNotFoundError(personId);
+                return personEmailResponse.error;
             }
         }
 
@@ -96,6 +101,8 @@ export class UserExternaldataWorkflowAggregate {
                 pkErw: PersonenkontextErweitertVirtualEntityLoaded | undefined,
             ): pkErw is PersonenkontextErweitertVirtualEntityLoaded => pkErw !== undefined,
         );
+
+        return undefined;
     }
 
     public static mergeServiceProviders(

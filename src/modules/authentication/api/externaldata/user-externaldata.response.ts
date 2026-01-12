@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { uniq } from 'lodash-es';
 import { Person } from '../../../person/domain/person.js';
 import { RequiredExternalPkData } from '../authentication.controller.js';
@@ -12,8 +12,8 @@ import { UserExternaldataWorkflowAggregate } from '../../domain/user-extenaldata
 import { PersonenkontextErweitertVirtualEntityLoaded } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 export class UserExternalDataResponse {
-    @ApiProperty({ type: UserExternalDataResponseOx })
-    public ox: UserExternalDataResponseOx;
+    @ApiPropertyOptional({ type: UserExternalDataResponseOx })
+    public ox?: UserExternalDataResponseOx;
 
     @ApiProperty({ type: UserExeternalDataResponseItslearning })
     public itslearning: UserExeternalDataResponseItslearning;
@@ -28,7 +28,7 @@ export class UserExternalDataResponse {
     public onlineDateiablage: UserExeternalDataResponseOnlineDateiablage;
 
     private constructor(
-        ox: UserExternalDataResponseOx,
+        ox: UserExternalDataResponseOx | undefined,
         itslearning: UserExeternalDataResponseItslearning,
         vidis: UserExeternalDataResponseVidis,
         opsh: UserExeternalDataResponseOpsh,
@@ -45,9 +45,10 @@ export class UserExternalDataResponse {
         person: Person<true>,
         externalPkData: RequiredExternalPkData[],
         personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[],
-        contextParams: OldOxParams | NewOxParams,
+        contextParams: OldOxParams | NewOxParams | undefined,
     ): UserExternalDataResponse {
-        const ox: UserExternalDataResponseOx = UserExternalDataResponseOx.createNew(contextParams);
+        const ox: Option<UserExternalDataResponseOx> =
+            contextParams && UserExternalDataResponseOx.createNew(contextParams);
         const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(person.id);
         const mergedExternalPkData: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
             externalPkData,

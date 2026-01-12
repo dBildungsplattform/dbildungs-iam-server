@@ -10,6 +10,9 @@ import { EmailMicroserviceConfig } from '../../../shared/config/email-microservi
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
 export interface PersonIdWithEmailResponse {
     personId: string;
@@ -45,15 +48,15 @@ export class EmailResolverService {
 
     public async findEmailBySpshPersonAsEmailAddressResponse(
         personId: string,
-    ): Promise<EmailAddressResponse | undefined> {
+    ): Promise<Result<EmailAddressResponse | undefined, DomainError>> {
         try {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
                 this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`),
             );
-            return response.data[0];
+            return Ok(response.data[0]);
         } catch (error) {
             this.logger.logUnknownAsError(`Failed to fetch email for person ${personId}`, error);
-            return undefined;
+            return Err(new EntityNotFoundError('email-address', personId));
         }
     }
 
