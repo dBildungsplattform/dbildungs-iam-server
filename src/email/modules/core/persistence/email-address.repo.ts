@@ -179,7 +179,11 @@ export class EmailAddressRepo {
                 if (email.priority >= 2) {
                     const newestStatus: EmailAddressStatusEntity | undefined = email.statuses.getItems()[0];
 
-                    if (!newestStatus || newestStatus.status === EmailAddressStatusEnum.ACTIVE) {
+                    if (
+                        !newestStatus ||
+                        newestStatus.status === EmailAddressStatusEnum.ACTIVE ||
+                        newestStatus.status === EmailAddressStatusEnum.SUSPENDED
+                    ) {
                         email.statuses.add(
                             em.create(EmailAddressStatusEntity, {
                                 emailAddress: email,
