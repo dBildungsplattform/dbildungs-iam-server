@@ -183,6 +183,33 @@ describe('KeycloakInternalController', () => {
             expect(result.onlineDateiablage.personId).toEqual(person.id);
         });
 
+        it('should omit ox response if user has no email', async () => {
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+            const keycloakSub: string = faker.string.uuid();
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                keycloakSub,
+                faker.string.uuid(),
+            );
+
+            personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
+            personRepoMock.findById.mockResolvedValueOnce(person);
+            dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce([]);
+
+            const result: UserExternalDataResponse = await keycloakinternalController.getExternalData({
+                sub: keycloakSub,
+            });
+
+            expect(result).toBeInstanceOf(UserExternalDataResponse);
+            expect(result.ox).toBeUndefined();
+        });
+
         it('should return user external data new Microservice', async () => {
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
             const keycloakSub: string = faker.string.uuid();
