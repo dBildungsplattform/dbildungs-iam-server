@@ -201,6 +201,7 @@ describe('KeycloakInternalController', () => {
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
             personRepoMock.findById.mockResolvedValueOnce(person);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce([]);
+            dbiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValueOnce([]);
 
             const result: UserExternalDataResponse = await keycloakinternalController.getExternalData({
                 sub: keycloakSub,
