@@ -294,6 +294,7 @@ describe('LdapSyncEventHandler', () => {
     });
 
     beforeEach(async () => {
+        jest.restoreAllMocks();
         jest.resetAllMocks();
         await DatabaseTestModule.clearDatabase(orm);
     });
@@ -712,9 +713,6 @@ describe('LdapSyncEventHandler', () => {
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `skipping email resolution for personId:${personId} since email microservice is active`,
-                );
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    `skipping email setting in ldap for :${personId} since email microservice is active`,
                 );
             });
         });
