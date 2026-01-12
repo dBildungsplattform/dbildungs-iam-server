@@ -80,7 +80,7 @@ export class KeycloakInternalController {
             const mergedExternalPkData: RequiredExternalPkData[] =
                 UserExternaldataWorkflowAggregate.mergeServiceProviders(
                     workflow.checkedExternalPkData,
-                    workflow.personenKontextErweiterungen ?? [],
+                    workflow.personenKontextErweiterungen!,
                 );
 
             const hasEmail: boolean = mergedExternalPkData.some((pkData: RequiredExternalPkData) =>
