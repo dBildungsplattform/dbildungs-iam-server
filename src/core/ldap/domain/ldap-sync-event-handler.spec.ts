@@ -37,6 +37,7 @@ import { OrganisationsTyp } from '../../../modules/organisation/domain/organisat
 import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
 import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { PersonIdentifier } from '../../logging/person-identifier.js';
+import { EmailResolverService } from '../../../modules/email-microservice/domain/email-resolver.service.js';
 
 describe('LdapSyncEventHandler', () => {
     const oeffentlicheSchulenDomain: string = 'schule-sh.de';
@@ -45,6 +46,7 @@ describe('LdapSyncEventHandler', () => {
     let orm: MikroORM;
 
     let sut: LdapSyncEventHandler;
+    let emailResolverServiceMock: DeepMocked<EmailResolverService>;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
@@ -81,6 +83,8 @@ describe('LdapSyncEventHandler', () => {
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
+            .overrideProvider(EmailResolverService)
+            .useValue(createMock<EmailResolverService>())
             .overrideProvider(LdapClientService)
             .useValue(createMock<LdapClientService>())
             .overrideProvider(PersonRepository)
@@ -104,6 +108,7 @@ describe('LdapSyncEventHandler', () => {
         loggerMock = module.get(ClassLogger);
 
         sut = module.get(LdapSyncEventHandler);
+        emailResolverServiceMock = module.get(EmailResolverService);
         ldapClientServiceMock = module.get(LdapClientService);
         personRepositoryMock = module.get(PersonRepository);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
@@ -687,6 +692,8 @@ describe('LdapSyncEventHandler', () => {
 
         describe('when vorname and givenName, familienname and surName, username and cn DO NOT match', () => {
             it('should log info', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+
                 //mock: email-addresses are equal -> no processing for mismatching emails necessary
                 enabledEmailAddress = createMock<EmailAddress<true>>({
                     get address(): string {
@@ -721,6 +728,39 @@ describe('LdapSyncEventHandler', () => {
                 );
                 expect(loggerMock.warning).toHaveBeenCalledWith(
                     `Mismatch for cn, person:${person.username}, LDAP:${cn}, personId:${personId}, username:${username}`,
+                );
+            });
+        });
+
+        describe('when email microservice is enabled', () => {
+            it('should return when email microservice is enabled', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+                //mock: email-addresses are equal -> no processing for mismatching emails necessary
+                enabledEmailAddress = createMock<EmailAddress<true>>({
+                    get address(): string {
+                        return mailPrimaryAddress;
+                    },
+                });
+                mockPersonFoundEnabledAddressFoundDisabledAddressNotFound();
+
+                // create PKs, orgaMap and rolleMap
+                const [kontexte, orgaMap, rolleMap]: [
+                    Personenkontext<true>[],
+                    Map<OrganisationID, Organisation<true>>,
+                    Map<RolleID, Rolle<true>>,
+                ] = getPkArrayOrgaMapAndRolleMap(person);
+                mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
+                    oeffentlicheSchulenDomain,
+                );
+
+                mockPersonAttributesFoundGroupsNotFound();
+
+                await sut.personExternalSystemSyncEventHandler(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Ignoring Event for personId:${person.id} because email microservice is enabled`,
                 );
             });
         });

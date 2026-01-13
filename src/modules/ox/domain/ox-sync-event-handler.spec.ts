@@ -27,6 +27,8 @@ import { OxError } from '../../../shared/error/ox.error.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import assert from 'assert';
 import { OxEventService } from './ox-event.service.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 describe('OxSyncEventHandler', () => {
     let app: INestApplication;
@@ -35,6 +37,7 @@ describe('OxSyncEventHandler', () => {
     let sut: OxSyncEventHandler;
     let loggerMock: DeepMocked<ClassLogger>;
 
+    let emailResolverServiceMock: DeepMocked<EmailResolverService>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let emailRepoMock: DeepMocked<EmailRepo>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -44,7 +47,12 @@ describe('OxSyncEventHandler', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
+            imports: [
+                LoggingTestModule,
+                ConfigTestModule,
+                EmailMicroserviceModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+            ],
             providers: [
                 OxSyncEventHandler,
                 OxEventService,
@@ -77,11 +85,25 @@ describe('OxSyncEventHandler', () => {
                     useValue: createMock<OxService>(),
                 },
             ],
-        }).compile();
+        })
+            .overrideProvider(ClassLogger)
+            .useValue(createMock<ClassLogger>())
+            .overrideProvider(EmailResolverService)
+            .useValue(createMock<EmailResolverService>())
+            .overrideProvider(DBiamPersonenkontextRepo)
+            .useValue(createMock<DBiamPersonenkontextRepo>())
+            .overrideProvider(OrganisationRepository)
+            .useValue(createMock<OrganisationRepository>())
+            .overrideProvider(RolleRepo)
+            .useValue(createMock<RolleRepo>())
+            .overrideProvider(PersonRepository)
+            .useValue(createMock<PersonRepository>())
+            .compile();
 
         sut = module.get(OxSyncEventHandler);
         loggerMock = module.get(ClassLogger);
 
+        emailResolverServiceMock = module.get(EmailResolverService);
         personRepositoryMock = module.get(PersonRepository);
         emailRepoMock = module.get(EmailRepo);
 
@@ -288,6 +310,7 @@ describe('OxSyncEventHandler', () => {
 
         describe('when person CANNOT be found', () => {
             it('should log error and return without proceeding', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
                 //mock person CANNOT be found in changeUser
                 personRepositoryMock.findById.mockResolvedValueOnce(undefined);
                 //mock person CANNOT be found in changeUserGroups
@@ -296,6 +319,20 @@ describe('OxSyncEventHandler', () => {
                 await sut.ldapSyncCompletedEventHandler(event);
 
                 expect(loggerMock.errorPersonalized).toHaveBeenCalledWith(`Person not found`, personIdentifier);
+            });
+        });
+
+        describe('skipping when Email Microservice is enabled', () => {
+            it('should log error and return without proceeding', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+                //mock person CANNOT be found in changeUser
+                personRepositoryMock.findById.mockResolvedValueOnce(undefined);
+                //mock person CANNOT be found in changeUserGroups
+                personRepositoryMock.findById.mockResolvedValueOnce(undefined);
+
+                await sut.ldapSyncCompletedEventHandler(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining(`Ignoring Event for personId`));
             });
         });
 

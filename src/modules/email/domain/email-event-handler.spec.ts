@@ -679,6 +679,8 @@ describe('EmailEventHandler', () => {
 
         describe('when LdapSyncFailedEvent is received', () => {
             it('should log info and call handlePersonDueToLdapSyncFailed', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValue(false);
+
                 mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -719,6 +721,57 @@ describe('EmailEventHandler', () => {
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Received LdapSyncFailedEvent, personId:${fakePersonId}, username:${fakeUsername}`,
+                );
+            });
+        });
+
+        describe('when email microservice is enabled', () => {
+            it('should return when email microservice is enabled', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+                mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
+
+                // eslint-disable-next-line @typescript-eslint/require-await
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockImplementationOnce(async (personId: PersonID) => [
+                    new EmailAddress<true>(
+                        faker.string.uuid(),
+                        faker.date.past(),
+                        faker.date.recent(),
+                        personId,
+                        faker.internet.email(),
+                        EmailAddressStatus.ENABLED,
+                    ),
+                ]);
+
+                //mock person with username is found
+                personRepositoryMock.findById.mockResolvedValueOnce(
+                    createMock<Person<true>>({ username: fakeUsername }),
+                );
+
+                // eslint-disable-next-line @typescript-eslint/require-await
+                emailFactoryMock.createNew.mockImplementationOnce(async (personId: PersonID) => {
+                    const ea: EmailAddress<false> = EmailAddress.createNew(
+                        personId,
+                        fakeEmailAddress,
+                        EmailAddressStatus.ENABLED,
+                    );
+                    return {
+                        ok: true,
+                        value: ea,
+                    };
+                });
+
+                //mock save is successful
+                const persistedEmail: EmailAddress<true> = getEmail();
+                emailRepoMock.save.mockResolvedValueOnce(persistedEmail);
+
+                await emailEventHandler.handleLdapSyncFailedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Received LdapSyncFailedEvent, personId:${fakePersonId}, username:${fakeUsername}`,
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Ignoring Event for personId:${fakePersonId} because email microservice is enabled`,
                 );
             });
         });
