@@ -63,6 +63,17 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
         },
     );
 
+    it('when ersatz has the same name as traeger, it should return false', async () => {
+        const ersatz: Organisation<true> = DoFactory.createOrganisationAggregate(true, { typ: OrganisationsTyp.LAND });
+        const traeger: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+            typ: OrganisationsTyp.TRAEGER,
+            name: ersatz.name,
+        });
+        orgaRepoMock.findById.mockResolvedValueOnce(undefined);
+        orgaRepoMock.findRootDirectChildren.mockResolvedValueOnce([undefined, ersatz]);
+        await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(false);
+    });
+
     it('when no traeger with same name exists, it should return true', async () => {
         const traeger: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.TRAEGER });
         orgaRepoMock.findBy.mockResolvedValueOnce([[], 0]);
