@@ -1003,7 +1003,7 @@ describe('OrganisationController', () => {
     describe('deleteOrganisation', () => {
         describe("when id or permissions don't match", () => {
             it('should throw an error', async () => {
-                organisationServiceMock.findOrganisationByIdAndMatchingPermissions.mockResolvedValue({
+                organisationServiceMock.findOrganisationByIdAndAnyMatchingPermissions.mockResolvedValue({
                     ok: false,
                     error: new MissingPermissionsError('Missing permissions'),
                 });
@@ -1016,7 +1016,7 @@ describe('OrganisationController', () => {
         describe('when deletion fails', () => {
             it('should throw an error', async () => {
                 const orga: Organisation<true> = DoFactory.createOrganisation(true);
-                organisationServiceMock.findOrganisationByIdAndMatchingPermissions.mockResolvedValue({
+                organisationServiceMock.findOrganisationByIdAndAnyMatchingPermissions.mockResolvedValue({
                     ok: true,
                     value: orga,
                 });
