@@ -706,6 +706,9 @@ describe('LdapSyncEventHandler', () => {
                     Map<RolleID, Rolle<true>>,
                 ] = getPkArrayOrgaMapAndRolleMap(person);
                 mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
+                    oeffentlicheSchulenDomain,
+                );
 
                 mockPersonAttributesFoundGroupsNotFound();
 
@@ -713,6 +716,10 @@ describe('LdapSyncEventHandler', () => {
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `skipping email resolution for personId:${personId} since email microservice is active`,
+                );
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `skipping email setting in ldap for :${personId} since email microservice is active`,
                 );
             });
         });
