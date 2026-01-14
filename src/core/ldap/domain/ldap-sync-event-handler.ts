@@ -31,12 +31,13 @@ import { KafkaLdapSyncCompletedEvent } from '../../../shared/events/ldap/kafka-l
 import { LdapSyncFailedEvent } from '../../../shared/events/ldap/ldap-sync-failed.event.js';
 import { KafkaLdapSyncFailedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-failed.event.js';
 import { PersonIdentifier } from '../../logging/person-identifier.js';
+import { EmailResolverService } from '../../../modules/email-microservice/domain/email-resolver.service.js';
 
 export type LdapSyncData = {
     givenName: string;
     surName: string;
     cn: string;
-    enabledEmailAddress: string;
+    enabledEmailAddress: string | null;
     disabledEmailAddresses: string[];
 
     personId: PersonID;
@@ -65,6 +66,7 @@ export class LdapSyncEventHandler {
         private readonly organisationRepository: OrganisationRepository,
         private readonly emailRepo: EmailRepo,
         private readonly eventService: EventRoutingLegacyKafkaService,
+        private readonly emailResolverService: EmailResolverService,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
         // to create the request-bound EntityManager context. Removing it would break context creation.
@@ -115,47 +117,63 @@ export class LdapSyncEventHandler {
             personId: personId,
             username: username,
         };
-        // Check person has active, primary EmailAddress
-        const enabledEmailAddress: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
-        if (!enabledEmailAddress) {
-            this.logger.warningPersonalized(
-                `Could not find ENABLED EmailAddress, searching for FAILED EmailAddress`,
-                personInfo,
-            );
-            const failedEmailAddresses: EmailAddress<true>[] = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(
-                personId,
-                EmailAddressStatus.FAILED,
-            );
-            //only publish LdapSyncFailedEvent when oxUserId is UNDEFINED, because creation of OxUser-account should be avoided, when oxUserId is already present
-            if (failedEmailAddresses && failedEmailAddresses[0]) {
-                if (!failedEmailAddresses[0].oxUserID) {
-                    this.eventService.publish(
-                        new LdapSyncFailedEvent(personId, person.username),
-                        new KafkaLdapSyncFailedEvent(personId, person.username),
-                    );
-                    return this.logger.infoPersonalized(
-                        `Published LdapSyncFailed-event for FAILED EmailAddress, ABORTING LDAP-Sync, address:${failedEmailAddresses[0].address}`,
-                        personInfo,
-                    );
+
+        let enabledEmailAddress: Option<EmailAddress<true>> = null;
+        let failedEmailAddresses: EmailAddress<true>[] = [];
+        let disabledEmailAddressesSorted: EmailAddress<true>[] = [];
+
+        //ONLY IF email-microservice is NOT used
+        if (!this.emailResolverService.shouldUseEmailMicroservice()) {
+            // Check person has active, primary EmailAddress
+            enabledEmailAddress = await this.emailRepo.findEnabledByPerson(personId);
+            if (!enabledEmailAddress) {
+                this.logger.warningPersonalized(
+                    `Could not find ENABLED EmailAddress, searching for FAILED EmailAddress`,
+                    personInfo,
+                );
+                failedEmailAddresses = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(
+                    personId,
+                    EmailAddressStatus.FAILED,
+                );
+                //only publish LdapSyncFailedEvent when oxUserId is UNDEFINED, because creation of OxUser-account should be avoided, when oxUserId is already present
+                if (
+                    !this.emailResolverService.shouldUseEmailMicroservice() &&
+                    failedEmailAddresses &&
+                    failedEmailAddresses[0]
+                ) {
+                    if (!failedEmailAddresses[0].oxUserID) {
+                        this.eventService.publish(
+                            new LdapSyncFailedEvent(personId, person.username),
+                            new KafkaLdapSyncFailedEvent(personId, person.username),
+                        );
+                        return this.logger.infoPersonalized(
+                            `Published LdapSyncFailed-event for FAILED EmailAddress, ABORTING LDAP-Sync, address:${failedEmailAddresses[0].address}`,
+                            personInfo,
+                        );
+                    } else {
+                        return this.logger.errorPersonalized(
+                            `Most recent FAILED EmailAddress already has an oxUserId, ABORTING LDAP-Sync`,
+                            personInfo,
+                        );
+                    }
                 } else {
                     return this.logger.errorPersonalized(
-                        `Most recent FAILED EmailAddress already has an oxUserId, ABORTING LDAP-Sync`,
+                        `Could not find any FAILED EmailAddress after no ENABLED EmaiLAddress could be found, ABORTING LDAP-Sync`,
                         personInfo,
                     );
                 }
-            } else {
-                return this.logger.errorPersonalized(
-                    `Could not find any FAILED EmailAddress after no ENABLED EmaiLAddress could be found, ABORTING LDAP-Sync`,
-                    personInfo,
-                );
             }
-        }
 
-        // Search for most recent deactivated EmailAddress
-        const disabledEmailAddressesSorted: EmailAddress<true>[] =
-            await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId, EmailAddressStatus.DISABLED);
-        if (disabledEmailAddressesSorted.length === 0) {
-            this.logger.info(`No DISABLED EmailAddress(es) for Person with ID ${personId}`);
+            // Search for most recent deactivated EmailAddress
+            disabledEmailAddressesSorted = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(
+                personId,
+                EmailAddressStatus.DISABLED,
+            );
+            if (disabledEmailAddressesSorted.length === 0) {
+                this.logger.info(`No DISABLED EmailAddress(es) for Person with ID ${personId}`);
+            }
+        } else {
+            this.logger.info(`skipping email resolution for personId:${personId} since email microservice is active`);
         }
 
         // Get all PKs
@@ -241,7 +259,7 @@ export class LdapSyncEventHandler {
         const givenName: string = person.vorname;
         const surName: string = person.familienname;
         const cn: string = person.username;
-        const mailPrimaryAddress: string = enabledEmailAddress.address;
+        const mailPrimaryAddress: string | null = enabledEmailAddress?.address ?? null;
         const mailAlternativeAddresses: string[] = disabledEmailAddressesSorted.map(
             (ea: EmailAddress<true>) => ea.address,
         );
@@ -284,66 +302,77 @@ export class LdapSyncEventHandler {
             `Syncing data to LDAP for personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
         );
 
-        // Check and sync EmailAddress
-        const currentMailPrimaryAddress: string | undefined = personAttributes.mailPrimaryAddress;
-        if (ldapSyncData.enabledEmailAddress !== currentMailPrimaryAddress) {
-            this.logger.warning(
-                `Mismatch mailPrimaryAddress, person:${ldapSyncData.enabledEmailAddress}, LDAP:${currentMailPrimaryAddress}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
-            );
-            if (!currentMailPrimaryAddress) {
+        if (!this.emailResolverService.shouldUseEmailMicroservice() && ldapSyncData.enabledEmailAddress) {
+            // Check and sync EmailAddress
+            const currentMailPrimaryAddress: string | undefined = personAttributes.mailPrimaryAddress;
+            if (ldapSyncData.enabledEmailAddress !== currentMailPrimaryAddress) {
                 this.logger.warning(
-                    `MailPrimaryAddress undefined for personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
+                    `Mismatch mailPrimaryAddress, person:${ldapSyncData.enabledEmailAddress}, LDAP:${currentMailPrimaryAddress}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
                 );
-                await this.ldapClientService.changeEmailAddressByPersonId(
-                    ldapSyncData.personId,
-                    ldapSyncData.username,
-                    ldapSyncData.enabledEmailAddress,
-                );
-            } else {
-                if (this.isAddressInDisabledAddresses(currentMailPrimaryAddress, ldapSyncData.disabledEmailAddresses)) {
-                    this.logger.info(
-                        `Found ${currentMailPrimaryAddress} in DISABLED addresses, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
-                    );
-                    this.logger.info(
-                        `Overwriting LDAP:${currentMailPrimaryAddress} with person:${ldapSyncData.enabledEmailAddress}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
+                if (!currentMailPrimaryAddress) {
+                    this.logger.warning(
+                        `MailPrimaryAddress undefined for personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
                     );
                     await this.ldapClientService.changeEmailAddressByPersonId(
                         ldapSyncData.personId,
                         ldapSyncData.username,
                         ldapSyncData.enabledEmailAddress,
                     );
-                    if (personAttributes.mailAlternativeAddress) {
-                        await this.createDisabledEmailAddress(
+                } else {
+                    if (
+                        this.isAddressInDisabledAddresses(
+                            currentMailPrimaryAddress,
+                            ldapSyncData.disabledEmailAddresses,
+                        )
+                    ) {
+                        this.logger.info(
+                            `Found ${currentMailPrimaryAddress} in DISABLED addresses, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
+                        );
+                        this.logger.info(
+                            `Overwriting LDAP:${currentMailPrimaryAddress} with person:${ldapSyncData.enabledEmailAddress}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
+                        );
+                        await this.ldapClientService.changeEmailAddressByPersonId(
                             ldapSyncData.personId,
                             ldapSyncData.username,
-                            personAttributes.mailAlternativeAddress,
+                            ldapSyncData.enabledEmailAddress,
+                        );
+                        if (personAttributes.mailAlternativeAddress) {
+                            await this.createDisabledEmailAddress(
+                                ldapSyncData.personId,
+                                ldapSyncData.username,
+                                personAttributes.mailAlternativeAddress,
+                            );
+                        }
+                    } else {
+                        return this.logger.crit(
+                            `COULD NOT find ${currentMailPrimaryAddress} in DISABLED addresses, Overwriting ABORTED, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
                         );
                     }
-                } else {
-                    return this.logger.crit(
-                        `COULD NOT find ${currentMailPrimaryAddress} in DISABLED addresses, Overwriting ABORTED, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
-                    );
                 }
             }
-        }
 
-        const currentMailAlternativeAddress: string | undefined = personAttributes.mailAlternativeAddress;
+            const currentMailAlternativeAddress: string | undefined = personAttributes.mailAlternativeAddress;
 
-        // if mailPrimaryAddress also is overwritten in LDAP before, the async writing process may also overwrite mailAlternativeAddress
-        // but a second executing can successfully set mailAlternativeAddress
-        if (ldapSyncData.disabledEmailAddresses[0]) {
-            if (ldapSyncData.disabledEmailAddresses[0] !== currentMailAlternativeAddress) {
-                this.logger.info(
-                    `Mismatch mailAlternativeAddress, person:${ldapSyncData.enabledEmailAddress}, LDAP:${currentMailAlternativeAddress}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
-                );
-                if (ldapSyncData.disabledEmailAddresses[0]) {
-                    await this.ldapClientService.setMailAlternativeAddress(
-                        ldapSyncData.personId,
-                        ldapSyncData.username,
-                        ldapSyncData.disabledEmailAddresses[0],
+            // if mailPrimaryAddress also is overwritten in LDAP before, the async writing process may also overwrite mailAlternativeAddress
+            // but a second executing can successfully set mailAlternativeAddress
+            if (ldapSyncData.disabledEmailAddresses[0]) {
+                if (ldapSyncData.disabledEmailAddresses[0] !== currentMailAlternativeAddress) {
+                    this.logger.info(
+                        `Mismatch mailAlternativeAddress, person:${ldapSyncData.enabledEmailAddress}, LDAP:${currentMailAlternativeAddress}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
                     );
+                    if (ldapSyncData.disabledEmailAddresses[0]) {
+                        await this.ldapClientService.setMailAlternativeAddress(
+                            ldapSyncData.personId,
+                            ldapSyncData.username,
+                            ldapSyncData.disabledEmailAddresses[0],
+                        );
+                    }
                 }
             }
+        } else {
+            this.logger.info(
+                `skipping email setting in ldap for :${ldapSyncData.personId} since email microservice is active`,
+            );
         }
 
         // Check and sync PersonAttributes
