@@ -54,8 +54,8 @@ export class KeycloakInternalController {
         }
 
         const workflow: UserExternaldataWorkflowAggregate = this.userExternaldataWorkflowFactory.createNew();
-        const workflowResult: Option<DomainError> = await workflow.initialize(person.id);
-        if (workflowResult || !workflow.person || !workflow.checkedExternalPkData) {
+        const workflowInitializeError: Option<DomainError> = await workflow.initialize(person.id);
+        if (workflowInitializeError || !workflow.person || !workflow.checkedExternalPkData) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new UserExternalDataWorkflowError(
