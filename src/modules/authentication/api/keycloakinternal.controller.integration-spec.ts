@@ -30,6 +30,8 @@ import { KeycloakInternalController } from './keycloakinternal.controller.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
+import { Ok } from '../../../shared/util/result.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 
 describe('KeycloakInternalController', () => {
     let module: TestingModule;
@@ -115,6 +117,17 @@ describe('KeycloakInternalController', () => {
                 {
                     pkId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
+                    kennung: faker.lorem.word(),
+                    serviceProvider: [
+                        createMock<ServiceProviderEntity>({
+                            externalSystem: ServiceProviderSystem.EMAIL,
+                            vidisAngebotId: undefined,
+                        }),
+                    ],
+                },
+                {
+                    pkId: faker.string.uuid(),
+                    rollenart: RollenArt.LEHR,
                     kennung: undefined, //To Be Filtered Out
                     serviceProvider: [],
                 },
@@ -155,7 +168,7 @@ describe('KeycloakInternalController', () => {
                 sub: keycloakSub,
             });
             expect(result).toBeInstanceOf(UserExternalDataResponse);
-            expect(result.ox.id).toContain(`${person.username}@`);
+            expect(result.ox?.id).toContain(`${person.username}@`);
             expect(result.itslearning.personId).toEqual(person.id);
             expect(result.vidis.personId).toEqual(person.id);
             expect(result.vidis.vorname).toEqual(person.vorname);
@@ -166,8 +179,36 @@ describe('KeycloakInternalController', () => {
             expect(result.opsh.vorname).toEqual(person.vorname);
             expect(result.opsh.nachname).toEqual(person.familienname);
             expect(result.opsh.emailAdresse).toEqual(person.email);
-            expect(result.opsh.personenkontexte.length).toEqual(2);
+            expect(result.opsh.personenkontexte.length).toEqual(3);
             expect(result.onlineDateiablage.personId).toEqual(person.id);
+        });
+
+        it('should omit ox response if user has no email', async () => {
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+            const keycloakSub: string = faker.string.uuid();
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                keycloakSub,
+                faker.string.uuid(),
+            );
+
+            personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
+            personRepoMock.findById.mockResolvedValueOnce(person);
+            dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce([]);
+            dbiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValueOnce([]);
+
+            const result: UserExternalDataResponse = await keycloakinternalController.getExternalData({
+                sub: keycloakSub,
+            });
+
+            expect(result).toBeInstanceOf(UserExternalDataResponse);
+            expect(result.ox).toBeUndefined();
         });
 
         it('should return user external data new Microservice', async () => {
@@ -233,9 +274,11 @@ describe('KeycloakInternalController', () => {
             ];
 
             emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValueOnce(
-                createMock<EmailAddressResponse>({
-                    oxLoginId: `${faker.string.uuid()}@${faker.number.int({ min: 1000, max: 9999 })}`,
-                }),
+                Ok(
+                    createMock<EmailAddressResponse>({
+                        oxLoginId: `${faker.string.uuid()}@${faker.number.int({ min: 1000, max: 9999 })}`,
+                    }),
+                ),
             );
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
             personRepoMock.findById.mockResolvedValueOnce(person);
@@ -246,7 +289,7 @@ describe('KeycloakInternalController', () => {
                 sub: keycloakSub,
             });
             expect(result).toBeInstanceOf(UserExternalDataResponse);
-            expect(result.ox.id).toContain(`@`);
+            expect(result.ox?.id).toContain(`@`);
             expect(result.itslearning.personId).toEqual(person.id);
             expect(result.vidis.personId).toEqual(person.id);
             expect(result.vidis.vorname).toEqual(person.vorname);

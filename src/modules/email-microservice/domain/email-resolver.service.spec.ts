@@ -5,15 +5,22 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosHeaders, AxiosResponse } from 'axios';
 import { of } from 'rxjs';
-import { ConfigTestModule, DatabaseTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils';
+import {
+    ConfigTestModule,
+    DatabaseTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    expectErrResult,
+    expectOkResult,
+} from '../../../../test/utils';
 import { ClassLogger } from '../../../core/logging/class-logger';
+import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams';
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity';
+import { EntityNotFoundError } from '../../../shared/error';
 import { EmailAddressStatus } from '../../email/domain/email-address';
 import { PersonEmailResponse } from '../../person/api/person-email-response';
 import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailResolverService, PersonIdWithEmailResponse } from './email-resolver.service';
-import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams';
 
 describe('EmailResolverService', () => {
     let module: TestingModule;
@@ -289,9 +296,10 @@ describe('EmailResolverService', () => {
 
             mockHttpService.get.mockReturnValueOnce(of(mockAxiosResponse));
 
-            const result: EmailAddressResponse | undefined =
+            const result: Result<Option<EmailAddressResponse>> =
                 await sut.findEmailBySpshPersonAsEmailAddressResponse(mockPersonId);
-            expect(result).toEqual(mockResponseData[0]);
+            expectOkResult(result);
+            expect(result.value).toEqual(mockResponseData[0]);
         });
 
         it('should return undefined when get call returns empty data', async () => {
@@ -299,9 +307,10 @@ describe('EmailResolverService', () => {
 
             mockHttpService.get.mockReturnValueOnce(of({ data: [] } as AxiosResponse));
 
-            const result: EmailAddressResponse | undefined =
+            const result: Result<Option<EmailAddressResponse>> =
                 await sut.findEmailBySpshPersonAsEmailAddressResponse(mockPersonId);
-            expect(result).toBeUndefined();
+            expectOkResult(result);
+            expect(result.value).toBeUndefined();
         });
 
         it('should log error and return undefined when get call fails', async () => {
@@ -311,9 +320,10 @@ describe('EmailResolverService', () => {
                 throw error;
             });
 
-            const result: EmailAddressResponse | undefined =
+            const result: Result<Option<EmailAddressResponse>> =
                 await sut.findEmailBySpshPersonAsEmailAddressResponse(mockPersonId);
-            expect(result).toBeUndefined();
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(EntityNotFoundError);
             expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
                 `Failed to fetch email for person ${mockPersonId}`,
                 error,
