@@ -2,9 +2,11 @@ import { Permissions } from './permissions.decorator.js';
 import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants.js';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import { ExecutionContext } from '@nestjs/common';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import express from 'express';
 import { PassportUser } from '../types/user.js';
+import { createExecutionContextMock, createRequestMock } from '../../../../test/utils/http.mocks.js';
+import { MockedObject } from 'vitest';
+import { createPersonPermissionsMock, createUserinfoResponseMock } from '../../../../test/utils/auth.mock.js';
 
 describe('The Permissions-Decorator', () => {
     let factory: (data: unknown, context: ExecutionContext) => Promise<PersonPermissions | undefined>;
@@ -32,13 +34,12 @@ describe('The Permissions-Decorator', () => {
     });
 
     it('should inject a PersonPermissions object if one is in the request', async () => {
-        const executionContext: DeepMocked<ExecutionContext> = createMock();
-        const request: DeepMocked<express.Request> = createMock();
-        executionContext.switchToHttp().getRequest.mockReturnValue(request);
-        const personPermissions: PersonPermissions = createMock();
+        const request: MockedObject<express.Request> = createRequestMock();
+        const executionContext: MockedObject<ExecutionContext> = createExecutionContextMock({ request });
+        const personPermissions: PersonPermissions = createPersonPermissionsMock();
 
         request.passportUser = {
-            userinfo: createMock(),
+            userinfo: createUserinfoResponseMock(),
             personPermissions: (): Promise<PersonPermissions> => {
                 return Promise.resolve(personPermissions);
             },
@@ -48,15 +49,15 @@ describe('The Permissions-Decorator', () => {
     });
 
     it('should reject if passport user is set without personPermission function', async () => {
-        const context: ExecutionContext = createMock();
-        context.switchToHttp().getRequest<DeepMocked<express.Request>>().passportUser = {} as PassportUser;
+        const context: ExecutionContext = createExecutionContextMock();
+        context.switchToHttp().getRequest<MockedObject<express.Request>>().passportUser = {} as PassportUser;
 
         await expect(factory(null, context)).rejects.toThrow('No personPermissions function found on PassportUser');
     });
 
     it('should reject if there is no passport user', async () => {
-        const context: ExecutionContext = createMock();
-        context.switchToHttp().getRequest<DeepMocked<express.Request>>().passportUser = undefined;
+        const context: ExecutionContext = createExecutionContextMock();
+        context.switchToHttp().getRequest<MockedObject<express.Request>>().passportUser = undefined;
 
         await expect(factory(null, context)).rejects.toThrow('No PassportUser found on request');
     });

@@ -1,7 +1,14 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { AuthorizationParameters, Client, Strategy, StrategyOptions, TokenSet, UserinfoResponse } from 'openid-client';
+import {
+    AuthorizationParameters,
+    type Client,
+    Strategy,
+    StrategyOptions,
+    TokenSet,
+    UserinfoResponse,
+} from 'openid-client';
 
 import { FrontendConfig, ServerConfig } from '../../../shared/config/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';

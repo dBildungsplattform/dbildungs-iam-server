@@ -57,7 +57,7 @@ export function createPassportUserMock(personPermissions?: PersonPermissions): P
 
 export function createOidcClientMock(clientFields?: Partial<BaseClient>): DeepMocked<BaseClient> {
     const client: DeepMocked<BaseClient> = {
-        introspect: vi.fn(),
+        introspect: vi.fn().mockResolvedValue({ scope: 'openid', active: true }),
         refresh: vi.fn(),
         userinfo: vi.fn(),
     } as unknown as DeepMocked<BaseClient>;

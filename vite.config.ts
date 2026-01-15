@@ -15,8 +15,7 @@ export default defineConfig({
         environment: 'node',
         // include: ['**/*.spec.ts'],
         include: [
-            // '**/authentication/**/*.spec.ts',
-            // '**/itslearning/**/*.spec.ts',
+            '**/authentication/**/*.spec.ts',
             '**/meldung/**/*spec.ts',
             '**/rolle/**/*spec.ts',
             '**/eventbus/**/*.spec.ts',

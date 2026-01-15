@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, DoFactory } from '../../../../test/utils/index.js';
 import { RolleID } from '../../../shared/types/index.js';
 import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
@@ -24,20 +24,6 @@ import {
     PersonFields,
     PersonPermissions,
 } from './person-permissions.js';
-
-function createPerson(): Person<true> {
-    return Person.construct(
-        faker.string.uuid(),
-        faker.date.past(),
-        faker.date.recent(),
-        faker.person.lastName(),
-        faker.person.firstName(),
-        '1',
-        faker.lorem.word(),
-        undefined,
-        faker.string.uuid(),
-    );
-}
 
 describe('PersonPermissions', () => {
     let module: TestingModule;
@@ -108,7 +94,7 @@ describe('PersonPermissions', () => {
     describe('getRoleIds', () => {
         describe('when person can be found', () => {
             it('should load PersonPermissions', async () => {
-                const person: Person<true> = createPerson();
+                const person: Person<true> = DoFactory.createPerson(true);
                 const personenkontexte: Personenkontext<true>[] = [createPersonenkontext()];
                 dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
                 const personPermissions: PersonPermissions = new PersonPermissions(
@@ -126,7 +112,7 @@ describe('PersonPermissions', () => {
     describe('personFields', () => {
         describe('when person can be found', () => {
             it('should return cached person fields', () => {
-                const person: Person<true> = createPerson();
+                const person: Person<true> = DoFactory.createPerson(true);
                 const personenkontexte: Personenkontext<true>[] = [createPersonenkontext()];
                 dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
                 const personPermissions: PersonPermissions = new PersonPermissions(
@@ -189,10 +175,10 @@ describe('PersonPermissions', () => {
             dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
             rolleRepoMock.findByIds.mockResolvedValueOnce(
-                new Map([['1', createMock<Rolle<true>>({ hasSystemRecht: () => true })]]),
+                new Map([['1', DoFactory.createRolle(true, { hasSystemRecht: () => true })]]),
             );
             organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([
-                createMock<Organisation<true>>({ id: '2' }),
+                DoFactory.createOrganisation(true, { id: '2' }),
             ]);
 
             const personPermissions: PersonPermissions = new PersonPermissions(
@@ -228,7 +214,7 @@ describe('PersonPermissions', () => {
             const personenkontexte: Personenkontext<true>[] = [createPersonenkontext()];
             dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
             rolleRepoMock.findByIds.mockResolvedValueOnce(
-                new Map<string, Rolle<true>>([['1', createMock<Rolle<true>>({ hasSystemRecht: () => true })]]),
+                new Map<string, Rolle<true>>([['1', DoFactory.createRolle(true, { hasSystemRecht: () => true })]]),
             );
 
             const personPermissions: PersonPermissions = new PersonPermissions(
@@ -265,7 +251,7 @@ describe('PersonPermissions', () => {
 
             const personenkontexte: Personenkontext<true>[] = [createPersonenkontext()];
             dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
-            const rolle: Rolle<true> = createMock(Rolle<true>);
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
             rolle.systemrechte = [RollenSystemRecht.PERSONEN_LESEN];
             rolleRepoMock.findByIds.mockResolvedValueOnce(new Map<string, Rolle<true>>([['1', rolle]]));
 
@@ -291,12 +277,12 @@ describe('PersonPermissions', () => {
 
     describe('getPersonenkontexteWithRoles', () => {
         it('should return person context with system rights and service provider ids in an object roles', async () => {
-            const person: Person<true> = createPerson();
+            const person: Person<true> = DoFactory.createPerson(true);
             const personenkontexte: Personenkontext<true>[] = [createPersonenkontext()];
-            const expectedOrganisation: Organisation<true> = createMock<Organisation<true>>({
+            const expectedOrganisation: Organisation<true> = DoFactory.createOrganisation(true, {
                 id: personenkontexte[0]!.organisationId,
             });
-            const expectedRolle: Rolle<true> = createMock<Rolle<true>>({ hasSystemRecht: () => true });
+            const expectedRolle: Rolle<true> = DoFactory.createRolle(true, { hasSystemRecht: () => true });
             dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
             rolleRepoMock.findByIds.mockResolvedValueOnce(new Map([['1', expectedRolle]]));
             organisationRepoMock.findByIds.mockResolvedValueOnce(
@@ -331,7 +317,7 @@ describe('PersonPermissions', () => {
             const rollenSystemRechtServiceProviderID: RollenSystemRechtServiceProviderIDResponse =
                 new RollenSystemRechtServiceProviderIDResponse(['right1', 'right2'], ['service1', 'service2']);
             const organisationResponse: OrganisationResponse = new OrganisationResponse(
-                createMock<Organisation<true>>({ id: 'testOrgId' }),
+                DoFactory.createOrganisation(true, { id: 'testOrgId' }),
             );
             const response: PersonenkontextRolleFieldsResponse = new PersonenkontextRolleFieldsResponse(
                 organisationResponse,
@@ -515,8 +501,8 @@ describe('PersonPermissions', () => {
     });
     describe('hasOrgVerwaltenRechtAtOrga', () => {
         it('should return true if person has KLASSEN_VERWALTEN Recht at the administriertVon organisation', async () => {
-            const person: Person<true> = createPerson();
-            const oeffentlich: Organisation<true> = createMock<Organisation<true>>({ id: 'oeffentlichId' });
+            const person: Person<true> = DoFactory.createPerson(true);
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisation(true, { id: 'oeffentlichId' });
             organisationRepoMock.findRootDirectChildren.mockResolvedValueOnce([oeffentlich, undefined]);
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
@@ -541,8 +527,8 @@ describe('PersonPermissions', () => {
         });
 
         it('should return true if person has KLASSEN_VERWALTEN Recht at the oeffentlich organisation', async () => {
-            const person: Person<true> = createPerson();
-            const oeffentlich: Organisation<true> = createMock<Organisation<true>>({ id: 'oeffentlichId' });
+            const person: Person<true> = DoFactory.createPerson(true);
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisation(true, { id: 'oeffentlichId' });
             organisationRepoMock.findRootDirectChildren.mockResolvedValueOnce([oeffentlich, undefined]);
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
@@ -564,7 +550,7 @@ describe('PersonPermissions', () => {
         });
 
         it('should return true if person has KLASSEN_VERWALTEN Recht at the root organisation', async () => {
-            const person: Person<true> = createPerson();
+            const person: Person<true> = DoFactory.createPerson(true);
             organisationRepoMock.findRootDirectChildren.mockResolvedValueOnce([undefined, undefined]);
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             const personPermissions: PersonPermissions = new PersonPermissions(
@@ -585,7 +571,7 @@ describe('PersonPermissions', () => {
         });
 
         it('should return true if person has SCHULEN_VERWALTEN Recht at the root organisation', async () => {
-            const person: Person<true> = createPerson();
+            const person: Person<true> = DoFactory.createPerson(true);
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
             const personPermissions: PersonPermissions = new PersonPermissions(
@@ -606,7 +592,7 @@ describe('PersonPermissions', () => {
         });
 
         it('should return true if person has SCHULTRAEGER_VERWALTEN Recht at the root organisation', async () => {
-            const person: Person<true> = createPerson();
+            const person: Person<true> = DoFactory.createPerson(true);
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
             const personPermissions: PersonPermissions = new PersonPermissions(
@@ -627,7 +613,7 @@ describe('PersonPermissions', () => {
         });
 
         it('should return false if organisation type is not KLASSE or SCHULE', async () => {
-            const person: Person<true> = createPerson();
+            const person: Person<true> = DoFactory.createPerson(true);
 
             const personPermissions: PersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
@@ -648,7 +634,7 @@ describe('PersonPermissions', () => {
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
-                createPerson(),
+                DoFactory.createPerson(true),
             );
             const pk: Personenkontext<true> = createPersonenkontext();
             dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);

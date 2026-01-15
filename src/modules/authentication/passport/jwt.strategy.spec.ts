@@ -1,22 +1,35 @@
 import { JwtStrategy } from './jwt.strategy.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { BaseClient, Client, Issuer } from 'openid-client';
+import { BaseClient, Issuer } from 'openid-client';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
-import jwt from 'jsonwebtoken';
 import { faker } from '@faker-js/faker';
 import { createOidcClientMock } from '../../../../test/utils/auth.mock.js';
+import { createRequestMock } from '../../../../test/utils/http.mocks.js';
+import { decode } from 'jsonwebtoken';
+import { Mock } from 'vitest';
+
+type importType = typeof import('jsonwebtoken');
+vi.mock<importType>(import('jsonwebtoken'), async (importOriginal: () => Promise<importType>) => {
+    const originalModule: importType = await importOriginal();
+    return {
+        ...originalModule,
+        decode: vi.fn().mockReturnValue(null),
+    };
+});
 
 describe('JWT Strategy', () => {
     it('should extract a bearer token from the header and return it for session storage', async () => {
-        const client: DeepMocked<BaseClient> = createMock<Client>({
-            issuer: { metadata: { jwks_uri: 'https://nowhere.example.com' } },
+        const client: DeepMocked<BaseClient> = createOidcClientMock({
+            issuer: {
+                metadata: { jwks_uri: 'https://nowhere.example.com', issuer: 'https://anyhere.example.com' },
+            } as Issuer,
         });
         const personRepositoryMock: DeepMocked<PersonRepository> = createMock(PersonRepository);
         const sut: JwtStrategy = new JwtStrategy(client, personRepositoryMock);
-        const request: Request = createMock<Request & { headers: { authorization: string } }>({
+        const request: Request = createRequestMock({
             headers: { authorization: 'Bearer 12345' },
-        });
+        }) as unknown as Request;
         const sessionContent: { access_token: string } = await sut.validate(request, '');
 
         expect(sessionContent.access_token).toEqual('12345');
@@ -30,9 +43,9 @@ describe('JWT Strategy', () => {
         });
         const personRepositoryMock: DeepMocked<PersonRepository> = createMock(PersonRepository);
         const sut: JwtStrategy = new JwtStrategy(client, personRepositoryMock);
-        const request: Request = createMock<Request & { headers: { authorization: string } }>({
+        const request: Request = createRequestMock({
             headers: { authorization: '' },
-        });
+        }) as unknown as Request;
         const sessionContent: { access_token: string } = await sut.validate(request, '');
 
         expect(sessionContent.access_token).toEqual('');
@@ -48,12 +61,12 @@ describe('JWT Strategy', () => {
         personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
         const sut: JwtStrategy = new JwtStrategy(client, personRepositoryMock);
 
-        vi.spyOn(jwt, 'decode').mockReturnValue({
+        (decode as Mock).mockReturnValue({
             sub: faker.string.uuid().toString(),
         });
-        const request: Request = createMock<Request & { headers: { authorization: string } }>({
+        const request: Request = createRequestMock({
             headers: { authorization: 'Bearer 12345' },
-        });
+        }) as unknown as Request;
 
         await expect(sut.validate(request, '')).rejects.toThrow(KeycloakUserNotFoundError);
     });

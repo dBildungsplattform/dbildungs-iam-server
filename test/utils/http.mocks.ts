@@ -1,5 +1,6 @@
-import { ArgumentsHost } from '@nestjs/common';
-import { Response } from 'express';
+import { faker } from '@faker-js/faker/locale/af_ZA';
+import { ArgumentsHost, ExecutionContext } from '@nestjs/common';
+import { Response, Request } from 'express';
 import { MockedObject } from 'vitest';
 
 export function createResponseMock(): MockedObject<Response> {
@@ -7,18 +8,62 @@ export function createResponseMock(): MockedObject<Response> {
         status: vi.fn().mockReturnThis(),
         json: vi.fn().mockReturnThis(),
         send: vi.fn().mockReturnThis(),
+        setHeader: vi.fn().mockReturnThis(),
         // Add other methods and properties of Response as needed
-    } as unknown as MockedObject<Response>;
+    } as MockedObject<Response>;
+}
+
+export interface RequestMockOptions {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    user?: any;
+    accessTokenJWT?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    passportUser?: any;
+    headers?: Record<string, string>;
+}
+
+export function createRequestMock(options?: RequestMockOptions): MockedObject<Request> {
+    // const requestStub: Request = {
+    //     user: undefined,
+    //     accessTokenJWT: faker.string.uuid(),
+    //     passportUser: undefined,
+    //     isAuthenticated: function (): this is AuthenticatedRequest {
+    //         return false;
+    //     },
+    //     logout: vi.fn(),
+    //     // Add other methods and properties of Response as needed
+    // } as Request;
+    return {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        user: options?.user,
+        accessTokenJWT: options?.accessTokenJWT ?? faker.string.uuid(),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        passportUser: options?.passportUser,
+        isAuthenticated: vi.fn().mockReturnValue(false),
+        logout: vi.fn(),
+        query: {},
+        session: {},
+        headers: options?.headers ?? {},
+        // Add other methods and properties of Response as needed
+    } as unknown as MockedObject<Request>;
 }
 
 interface ArgumentsHostMockOptions {
     response?: MockedObject<Response>;
+    request?: MockedObject<Request>;
 }
 
-export function createArgumentsHostMock(options?: ArgumentsHostMockOptions): MockedObject<ArgumentsHost> {
+export function createExecutionContextMock(options?: ArgumentsHostMockOptions): MockedObject<ExecutionContext> {
     return {
         switchToHttp: vi.fn().mockReturnValue({
             getResponse: vi.fn().mockReturnValue(options?.response ?? createResponseMock()),
+            getRequest: vi.fn().mockReturnValue(options?.request ?? createRequestMock()),
         }),
-    } as unknown as MockedObject<ArgumentsHost>;
+        getClass: vi.fn(),
+        getHandler: vi.fn(),
+    } as MockedObject<ExecutionContext>;
+}
+
+export function createArgumentsHostMock(options?: ArgumentsHostMockOptions): MockedObject<ArgumentsHost> {
+    return createExecutionContextMock(options) as MockedObject<ArgumentsHost>;
 }

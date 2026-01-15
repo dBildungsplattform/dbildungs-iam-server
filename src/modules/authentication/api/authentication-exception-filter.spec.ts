@@ -1,16 +1,16 @@
 import { ArgumentsHost } from '@nestjs/common';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { Response } from 'express';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { AuthenticationDomainError } from '../domain/authentication-domain.error.js';
 import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
 import { AuthenticationErrorI18nTypes, DbiamAuthenticationError } from './dbiam-authentication.error.js';
+import { createArgumentsHostMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
+import { MockedObject } from 'vitest';
 
 describe('AuthenticationExceptionFilter', () => {
     let filter: AuthenticationExceptionFilter;
     const statusCode: number = 403;
-    let responseMock: DeepMocked<Response>;
-    let argumentsHost: DeepMocked<ArgumentsHost>;
+    let responseMock: MockedObject<Response>;
+    let argumentsHost: MockedObject<ArgumentsHost>;
 
     const generalBadRequestError: DbiamAuthenticationError = new DbiamAuthenticationError({
         code: 403,
@@ -19,13 +19,8 @@ describe('AuthenticationExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new AuthenticationExceptionFilter();
-        responseMock = createMock(Response);
-        argumentsHost = createMock<ArgumentsHost>({
-            switchToHttp: () =>
-                createMock<HttpArgumentsHost>({
-                    getResponse: () => responseMock,
-                }),
-        });
+        responseMock = createResponseMock();
+        argumentsHost = createArgumentsHostMock({ response: responseMock });
     });
 
     describe('catch', () => {

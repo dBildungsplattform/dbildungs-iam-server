@@ -1,10 +1,15 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthorizationParameters, Client, Issuer, Strategy, TokenSet, UserinfoResponse } from 'openid-client';
 
-import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    createUserinfoResponseMock,
+    DoFactory,
+    LoggingTestModule,
+} from '../../../../test/utils/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
 import {
     extractStepUpLevelFromJWT,
@@ -19,6 +24,8 @@ import { Person } from '../../person/domain/person.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
 import { Request } from 'express';
 import { sign } from 'jsonwebtoken';
+import { createRequestMock } from '../../../../test/utils/http.mocks.js';
+import { Mock } from 'vitest';
 
 describe('OpenIdConnectStrategy', () => {
     let module: TestingModule;
@@ -79,8 +86,9 @@ describe('OpenIdConnectStrategy', () => {
 
     describe('validate', () => {
         it('should call client.userinfo', async () => {
-            vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createMock(UserinfoResponse));
-            const request: Request = createMock(Request);
+            vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createUserinfoResponseMock());
+            const request: Request = createRequestMock();
+            personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(DoFactory.createPerson(true));
             await sut.validate(request, new TokenSet());
 
             expect(openIdClient.userinfo).toHaveBeenCalled();
@@ -92,9 +100,9 @@ describe('OpenIdConnectStrategy', () => {
                 access_token: faker.string.alpha(32),
                 refresh_token: faker.string.alpha(32),
             });
-            const userinfo: UserinfoResponse = createMock(UserinfoResponse);
+            const userinfo: UserinfoResponse = createUserinfoResponseMock();
             vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(userinfo);
-            const request: Request = createMock(Request);
+            const request: Request = createRequestMock();
             personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(createPerson());
 
             const result: AuthorizationParameters = await sut.validate(request, tokenSet);
@@ -104,31 +112,31 @@ describe('OpenIdConnectStrategy', () => {
 
         it('should throw UnauthorizedException if userinfo fails', async () => {
             vi.spyOn(openIdClient, 'userinfo').mockRejectedValueOnce(new Error());
-            const request: Request = createMock(Request);
+            const request: Request = createRequestMock();
             await expect(sut.validate(request, new TokenSet())).rejects.toThrow(UnauthorizedException);
         });
 
         it('should set personPermissions to return rejected promise', async () => {
-            vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createMock(UserinfoResponse));
+            vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createUserinfoResponseMock());
             personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(createPerson());
-            const request: Request = createMock(Request);
+            const request: Request = createRequestMock();
             const user: AuthorizationParameters & PassportUser = await sut.validate(request, new TokenSet());
 
             await expect(user.personPermissions()).rejects.toThrow('Permissions not loaded');
         });
 
         it('should throw KeycloakUserNotFoundError if keycloak-user does not exist', async () => {
-            vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createMock(UserinfoResponse));
+            vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createUserinfoResponseMock());
             personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
-            const request: Request = createMock(Request);
+            const request: Request = createRequestMock();
             await expect(sut.validate(request, new TokenSet())).rejects.toThrow(KeycloakUserNotFoundError);
         });
 
         it('should revoke token if keycloak-user does not exist', async () => {
-            vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createMock(UserinfoResponse));
+            vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createUserinfoResponseMock());
             vi.spyOn(openIdClient, 'revoke').mockResolvedValueOnce(undefined);
             personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
-            const request: Request = createMock(Request);
+            const request: Request = createRequestMock();
             await expect(sut.validate(request, new TokenSet({ access_token: faker.string.alpha(32) }))).rejects.toThrow(
                 KeycloakUserNotFoundError,
             );
@@ -144,14 +152,14 @@ describe('OpenIdConnectStrategy', () => {
         });
 
         it('should call super.authenticate with options', () => {
-            const request: Request = createMock(Request);
+            const request: Request = createRequestMock();
             sut.authenticate(request);
 
             expect(superPassportSpy).toHaveBeenCalledWith(request, { acr_values: 'silver' });
         });
 
         it('should call super.authenticate with options', () => {
-            const request: Request = createMock(Request);
+            const request: Request = createRequestMock();
             request.session.requiredStepupLevel = StepUpLevel.GOLD;
             sut.authenticate(request);
 

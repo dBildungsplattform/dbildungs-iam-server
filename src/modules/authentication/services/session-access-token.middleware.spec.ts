@@ -1,5 +1,5 @@
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { PassportUser } from '../types/user.js';
 import { SessionAccessTokenMiddleware } from './session-access-token.middleware.js';
 import { Client, TokenSet } from 'openid-client';
@@ -16,11 +16,13 @@ import {
 } from '../../../../test/utils/auth.mock.js';
 import { Mock } from 'vitest';
 import { faker } from '@faker-js/faker';
+import { createResponseMock } from '../../../../test/utils/http.mocks.js';
 
 describe('sessionAccessTokenMiddleware', () => {
     let passportUser: PassportUser;
     let request: Request & Express.Request;
     let configService: DeepMocked<ConfigService>;
+    let clientMock: DeepMocked<Client>;
 
     beforeEach(() => {
         passportUser = createPassportUserMock();
@@ -28,7 +30,8 @@ describe('sessionAccessTokenMiddleware', () => {
             passportUser,
             headers: {},
             session: { lastRouteChangeTime: faker.date.recent().getTime() },
-        } as Request & Express.Request;
+            logout: vi.fn(),
+        } as unknown as Request & Express.Request;
         configService = createMock(ConfigService);
         configService.getOrThrow.mockImplementation((key: keyof SystemConfig) => {
             if (key === ('SYSTEM' as keyof SystemConfig)) {
@@ -39,14 +42,16 @@ describe('sessionAccessTokenMiddleware', () => {
             }
             throw new Error(`Unexpected config key: ${key}`);
         });
+        clientMock = createOidcClientMock();
+        // clientMock.introspect.mockResolvedValue({ scope: 'openid', active: true });
     });
 
     it('should call next middleware', async () => {
         const nextMock: Mock = vi.fn();
-        await new SessionAccessTokenMiddleware(createOidcClientMock(), createMock(ClassLogger), configService).use(
+        await new SessionAccessTokenMiddleware(clientMock, createMock(ClassLogger), configService).use(
             request,
-            {} as Response,
-            vi.fn(),
+            createResponseMock(),
+            nextMock,
         );
 
         expect(nextMock).toHaveBeenCalledTimes(1);
@@ -60,7 +65,7 @@ describe('sessionAccessTokenMiddleware', () => {
 
             await new SessionAccessTokenMiddleware(createOidcClientMock(), createMock(ClassLogger), configService).use(
                 request,
-                {} as Response,
+                createResponseMock(),
                 vi.fn(),
             );
 
@@ -74,7 +79,7 @@ describe('sessionAccessTokenMiddleware', () => {
 
             await new SessionAccessTokenMiddleware(createOidcClientMock(), createMock(ClassLogger), configService).use(
                 request,
-                {} as Response,
+                createResponseMock(),
                 vi.fn(),
             );
 
@@ -108,11 +113,11 @@ describe('sessionAccessTokenMiddleware', () => {
             });
 
             it('should not try to refresh it', async () => {
-                await new SessionAccessTokenMiddleware(
-                    createOidcClientMock(),
-                    createMock(ClassLogger),
-                    configService,
-                ).use(request, {} as Response, vi.fn());
+                await new SessionAccessTokenMiddleware(client, createMock(ClassLogger), configService).use(
+                    request,
+                    createResponseMock(),
+                    vi.fn(),
+                );
                 expect(client.introspect).toHaveBeenCalledWith(originalAccessToken);
 
                 expect(request.passportUser?.access_token).toStrictEqual(originalAccessToken);
@@ -142,11 +147,11 @@ describe('sessionAccessTokenMiddleware', () => {
 
                     client.userinfo.mockResolvedValueOnce({ sub: 'newSubjectId' });
 
-                    await new SessionAccessTokenMiddleware(
-                        createOidcClientMock(),
-                        createMock(ClassLogger),
-                        configService,
-                    ).use(request, {} as Response, vi.fn());
+                    await new SessionAccessTokenMiddleware(client, createMock(ClassLogger), configService).use(
+                        request,
+                        createResponseMock(),
+                        vi.fn(),
+                    );
                     expect(client.introspect).toHaveBeenCalledTimes(2);
                     expect(client.introspect).toHaveBeenNthCalledWith(1, originalAccessToken);
                     expect(client.introspect).toHaveBeenNthCalledWith(2, originalRefreshToken);
@@ -171,11 +176,11 @@ describe('sessionAccessTokenMiddleware', () => {
             });
 
             it('Should keep headers as they are', async () => {
-                await new SessionAccessTokenMiddleware(
-                    createOidcClientMock(),
-                    createMock(ClassLogger),
-                    configService,
-                ).use(request, {} as Response, vi.fn());
+                await new SessionAccessTokenMiddleware(client, createMock(ClassLogger), configService).use(
+                    request,
+                    createResponseMock(),
+                    vi.fn(),
+                );
                 expect(client.introspect).toHaveBeenCalledTimes(2);
                 expect(client.introspect).toHaveBeenNthCalledWith(1, originalAccessToken);
                 expect(client.introspect).toHaveBeenNthCalledWith(2, originalRefreshToken);
@@ -186,11 +191,11 @@ describe('sessionAccessTokenMiddleware', () => {
             });
 
             it('should logout', async () => {
-                await new SessionAccessTokenMiddleware(
-                    createOidcClientMock(),
-                    createMock(ClassLogger),
-                    configService,
-                ).use(request, {} as Response, vi.fn());
+                await new SessionAccessTokenMiddleware(client, createMock(ClassLogger), configService).use(
+                    request,
+                    createResponseMock(),
+                    vi.fn(),
+                );
 
                 expect(request.logout).toHaveBeenCalled();
             });
@@ -204,11 +209,11 @@ describe('sessionAccessTokenMiddleware', () => {
                     }
                 };
 
-                await new SessionAccessTokenMiddleware(
-                    createOidcClientMock(),
-                    createMock(ClassLogger),
-                    configService,
-                ).use(request, {} as Response, vi.fn());
+                await new SessionAccessTokenMiddleware(client, logger, configService).use(
+                    request,
+                    createResponseMock(),
+                    vi.fn(),
+                );
                 expect(logger.logUnknownAsError).toHaveBeenCalled();
             });
         });
@@ -220,11 +225,11 @@ describe('sessionAccessTokenMiddleware', () => {
 
                 client.refresh.mockRejectedValue(new Error('Something went wrong'));
                 const loggerMock: ClassLogger = createMock(ClassLogger);
-                await new SessionAccessTokenMiddleware(
-                    createOidcClientMock(),
-                    createMock(ClassLogger),
-                    configService,
-                ).use(request, {} as Response, vi.fn());
+                await new SessionAccessTokenMiddleware(client, loggerMock, configService).use(
+                    request,
+                    createResponseMock(),
+                    vi.fn(),
+                );
 
                 expect(loggerMock.warning).toHaveBeenCalledWith('Something went wrong');
             });
@@ -235,11 +240,11 @@ describe('sessionAccessTokenMiddleware', () => {
 
                 client.refresh.mockRejectedValue('Something went seriously wrong');
                 const loggerMock: ClassLogger = createMock(ClassLogger);
-                await new SessionAccessTokenMiddleware(
-                    createOidcClientMock(),
-                    createMock(ClassLogger),
-                    configService,
-                ).use(request, {} as Response, vi.fn());
+                await new SessionAccessTokenMiddleware(client, loggerMock, configService).use(
+                    request,
+                    createResponseMock(),
+                    vi.fn(),
+                );
 
                 expect(loggerMock.warning).toHaveBeenCalledWith(
                     'Refreshing Token Failed With Unknown Catch',

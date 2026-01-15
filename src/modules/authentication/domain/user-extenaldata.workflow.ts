@@ -18,6 +18,7 @@ import { ServiceProviderEntity } from '../../service-provider/repo/service-provi
 import { RequiredExternalPkData } from '../api/authentication.controller.js';
 import { EmailAddressNotFoundError } from '../../email/error/email-address-not-found.error.js';
 import { OXContextID } from '../../../shared/types/ox-ids.types.js';
+import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 
 export class UserExternaldataWorkflowAggregate {
     public contextID: OXContextID;
@@ -104,7 +105,8 @@ export class UserExternaldataWorkflowAggregate {
     ): RequiredExternalPkData[] {
         const erweiterungenMap: Map<string, ServiceProviderEntity[]> = new Map<string, ServiceProviderEntity[]>();
         for (const erweiterung of personenKontextErweiterungen) {
-            const pkId: string = erweiterung.personenkontext.unwrap().id;
+            const tmp: PersonenkontextEntity = erweiterung.personenkontext.unwrap();
+            const pkId: string = tmp.id;
             const sp: Loaded<ServiceProviderEntity> = erweiterung.serviceProvider.unwrap();
             if (!erweiterungenMap.has(pkId)) {
                 erweiterungenMap.set(pkId, []);
