@@ -16,6 +16,7 @@ export default defineConfig({
         // include: ['**/*.spec.ts'],
         include: [
             '**/authentication/**/*.spec.ts',
+            '**/itslearning/**/*.spec.ts',
             '**/meldung/**/*spec.ts',
             '**/rolle/**/*spec.ts',
             '**/eventbus/**/*.spec.ts',

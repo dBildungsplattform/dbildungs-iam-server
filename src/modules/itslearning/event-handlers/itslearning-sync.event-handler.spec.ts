@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
@@ -166,6 +166,10 @@ describe('ItsLearning Persons Event Handler', () => {
 
             it('should create or update user', async () => {
                 itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined);
+                itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
+                    ok: true,
+                    value: { deleted: 0, updated: 0 },
+                });
 
                 const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
                 await sut.personExternalSystemSyncEventHandler(event);

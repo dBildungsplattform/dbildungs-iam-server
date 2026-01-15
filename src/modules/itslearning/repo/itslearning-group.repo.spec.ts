@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { LoggingTestModule } from '../../../../test/utils/index.js';
@@ -13,6 +13,7 @@ import { DeleteGroupAction } from '../actions/delete-group.action.js';
 import { GroupResponse, ReadGroupAction } from '../actions/read-group.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
 import { ItslearningGroupRepo } from './itslearning-group.repo.js';
+import { DomainErrorMock } from '../../../../test/utils/error.mock.js';
 
 describe('Itslearning Group Repo', () => {
     let module: TestingModule;
@@ -48,6 +49,10 @@ describe('Itslearning Group Repo', () => {
         it('should call the itslearning API', async () => {
             const organisationId: string = faker.string.uuid();
             const syncID: string = faker.string.uuid();
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {},
+            });
 
             await sut.readGroup(organisationId, syncID);
 
@@ -77,7 +82,7 @@ describe('Itslearning Group Repo', () => {
         it('should return undefined, if the group could not be found', async () => {
             itsLearningServiceMock.send.mockResolvedValueOnce({
                 ok: false,
-                error: createMock(),
+                error: new DomainErrorMock(),
             });
 
             const result: Option<GroupResponse> = await sut.readGroup(faker.string.uuid());

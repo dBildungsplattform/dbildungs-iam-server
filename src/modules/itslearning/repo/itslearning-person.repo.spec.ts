@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { LoggingTestModule } from '../../../../test/utils/index.js';
+import { DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ItsLearningError } from '../../../shared/error/its-learning.error.js';
 import { CreatePersonAction, CreatePersonParams } from '../actions/create-person.action.js';
@@ -14,6 +14,7 @@ import { ItslearningPersonRepo } from './itslearning-person.repo.js';
 import { CreatePersonsAction } from '../actions/create-persons.action.js';
 import { MassResult } from '../actions/base-mass-action.js';
 import { DeletePersonsAction } from '../actions/delete-persons.action.js';
+import { DomainErrorMock } from '../../../../test/utils/error.mock.js';
 
 describe('Itslearning Person Repo', () => {
     let module: TestingModule;
@@ -49,6 +50,10 @@ describe('Itslearning Person Repo', () => {
         it('should call the itslearning API', async () => {
             const personId: string = faker.string.uuid();
             const syncID: string = faker.string.uuid();
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: DoFactory.createPerson(true),
+            });
 
             await sut.readPerson(personId, syncID);
 
@@ -77,7 +82,7 @@ describe('Itslearning Person Repo', () => {
         it('should return undefined, if the person could not be found', async () => {
             itsLearningServiceMock.send.mockResolvedValueOnce({
                 ok: false,
-                error: createMock(),
+                error: new DomainErrorMock(),
             });
 
             const result: Option<PersonResponse> = await sut.readPerson(faker.string.uuid());

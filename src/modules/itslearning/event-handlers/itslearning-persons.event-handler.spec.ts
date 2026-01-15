@@ -1,5 +1,6 @@
+import { vi, Mock } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
@@ -310,7 +311,7 @@ describe('ItsLearning Persons Event Handler', () => {
                 const { username, ...personWithoutUsername }: PersonenkontextUpdatedPersonData = person;
                 const eventID: string = faker.string.uuid();
 
-                await sut.updatePerson(personWithoutUsername, [createMock()], eventID);
+                await sut.updatePerson(personWithoutUsername, [], eventID);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `[EventID: ${eventID}] Person with ID ${person.id} has no username!`,
@@ -421,9 +422,7 @@ describe('ItsLearning Persons Event Handler', () => {
             );
 
             vi.spyOn(sut, 'updatePerson').mockResolvedValueOnce(undefined);
-            const updateMembershipsSpy: Mock = jest
-                .spyOn(sut, 'updateMemberships')
-                .mockResolvedValueOnce(undefined);
+            const updateMembershipsSpy: Mock = vi.spyOn(sut, 'updateMemberships').mockResolvedValueOnce(undefined);
             vi.spyOn(sut, 'deletePerson').mockResolvedValueOnce(undefined);
 
             await sut.updatePersonenkontexteEventHandler(event);
