@@ -257,6 +257,28 @@ services:
       - LDAP_REMOVE_CONFIG_AFTER_SETUP=true
       - LDAP_TLS_VERIFY_CLIENT=never
 
+  openldap-uem:
+    image: osixia/openldap:1.5.0
+    container_name: openldap-uem
+    profiles:
+      - third-party
+    command: --loglevel debug
+    ports:
+      - 1389:389
+      - 1636:636
+    volumes:
+      - ldap_uem_data:/var/lib/ldap
+      - ldap_uem_config:/etc/ldap/slapd.d
+    environment:
+      - LDAP_ORGANISATION=schule-sh-de
+      - LDAP_DOMAIN=schule-sh.de
+      - LDAP_BASE_DN=dc=schule-sh,dc=de
+      - LDAP_ADMIN_PASSWORD=admin
+      - LDAP_CONFIG_PASSWORD=config
+      - LDAP_RFC2307BIS_SCHEMA=true
+      - LDAP_REMOVE_CONFIG_AFTER_SETUP=true
+      - LDAP_TLS_VERIFY_CLIENT=never
+
   openldap-admin:
     image: osixia/phpldapadmin:0.9.0
     container_name: ldap-admin
@@ -378,3 +400,5 @@ volumes:
   db-data:
   mariadb:
   kafka:
+  ldap_uem_data:
+  ldap_uem_config:
