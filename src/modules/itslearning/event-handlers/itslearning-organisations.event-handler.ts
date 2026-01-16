@@ -232,14 +232,6 @@ export class ItsLearningOrganisationsEventHandler {
             return;
         }
 
-        const rootType: RootDirectChildrenType =
-            await this.organisationRepo.findOrganisationZuordnungErsatzOderOeffentlich(event.organisationId);
-
-        if (rootType === RootDirectChildrenType.ERSATZ) {
-            this.logger.error(`[EventID: ${event.eventID}] Ersatzschule, ignoring.`);
-            return;
-        }
-
         const deleteError: Option<DomainError> = await this.itslearningGroupRepo.deleteGroup(
             event.organisationId,
             `${event.eventID}-ORGANISATION-DELETED`,

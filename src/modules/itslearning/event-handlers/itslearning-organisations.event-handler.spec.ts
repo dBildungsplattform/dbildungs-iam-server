@@ -523,32 +523,12 @@ describe('ItsLearning Organisations Event Handler', () => {
             expect(itslearningGroupRepoMock.createOrUpdateGroups).not.toHaveBeenCalled();
         });
 
-        it('should skip event, when schule is ersatzschule', async () => {
-            const event: OrganisationDeletedEvent = new OrganisationDeletedEvent(
-                faker.string.uuid(),
-                faker.word.noun(),
-                faker.string.numeric(7),
-                OrganisationsTyp.SCHULE,
-            );
-            orgaRepoMock.findOrganisationZuordnungErsatzOderOeffentlich.mockResolvedValueOnce(
-                RootDirectChildrenType.ERSATZ,
-            );
-
-            await sut.organisationDeletedEventHandler(event);
-
-            expect(loggerMock.error).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Ersatzschule, ignoring.`);
-            expect(itslearningGroupRepoMock.deleteGroup).not.toHaveBeenCalled();
-        });
-
         it('should log error, if deletion failed', async () => {
             const event: OrganisationDeletedEvent = new OrganisationDeletedEvent(
                 faker.string.uuid(),
                 faker.word.noun(),
                 faker.string.numeric(7),
                 OrganisationsTyp.SCHULE,
-            );
-            orgaRepoMock.findOrganisationZuordnungErsatzOderOeffentlich.mockResolvedValueOnce(
-                RootDirectChildrenType.OEFFENTLICH,
             );
             orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
             itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(createMock<DomainError>({ message: 'Error' }));
@@ -566,9 +546,6 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.word.noun(),
                 faker.string.numeric(7),
                 OrganisationsTyp.SCHULE,
-            );
-            orgaRepoMock.findOrganisationZuordnungErsatzOderOeffentlich.mockResolvedValueOnce(
-                RootDirectChildrenType.OEFFENTLICH,
             );
             itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(undefined);
 
