@@ -302,7 +302,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                 })
                 .catch((error: Error) => {
                     if (!completed) {
-                        this.logger.error(
+                        this.logger.logUnknownAsError(
                             `Handler for event ${event.constructor.name} with EventID: ${event.eventID} failed`,
                             error,
                         );
