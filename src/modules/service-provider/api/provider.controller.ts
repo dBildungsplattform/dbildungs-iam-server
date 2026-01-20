@@ -1,4 +1,14 @@
-import { Controller, Get, Param, Query, StreamableFile, UnauthorizedException, UseFilters } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Param,
+    Post,
+    Query,
+    StreamableFile,
+    UnauthorizedException,
+    UseFilters,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -45,6 +55,10 @@ import { uniq } from 'lodash-es';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { MissingPermissionsError } from '../../../shared/error/index.js';
+import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
+import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
+import { ServiceProviderSystem } from '../domain/service-provider.enum.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
@@ -54,6 +68,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 export class ProviderController {
     public constructor(
         private readonly streamableFileFactory: StreamableFileFactory,
+        private readonly serviceProviderFactory: ServiceProviderFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
@@ -278,5 +293,49 @@ export class ProviderController {
             serviceProviderWithOrganisationRollenAndErweiterungen.rollen,
             rollenerweiterungenWithNames.length > 0,
         );
+    }
+
+    @Post()
+    @ApiOperation({ description: 'Create a new service-provider (Angebot).' })
+    @ApiOkResponse({
+        description: 'The service-provider was successfully created.',
+        type: ServiceProviderResponse,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions.' })
+    @ApiBadRequestResponse({ description: 'Invalid request body.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+    public async createServiceProvider(
+        @Permissions() permissions: PersonPermissions,
+        @Body() body: CreateServiceProviderBodyParams,
+    ): Promise<ServiceProviderResponse> {
+        if (
+            !(await permissions.hasSystemrechtAtOrganisation(body.organisationId, RollenSystemRecht.ANGEBOTE_VERWALTEN))
+        ) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Not authorized to manage Service Providers at this organisation!'),
+                ),
+            );
+        }
+        const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
+            body.name,
+            body.target,
+            body.url,
+            body.kategorie,
+            body.providedOnSchulstrukturknoten,
+            undefined, // logo
+            undefined, // logoMimeType
+            undefined, // keycloakGroup
+            undefined, // keycloakRole
+            ServiceProviderSystem.NONE,
+            body.requires2fa,
+            body.vidisAngebotId,
+            body.merkmale,
+        );
+
+        const result: ServiceProvider<true> = await this.serviceProviderRepo.save(serviceProvider);
+
+        return new ServiceProviderResponse(result);
     }
 }
