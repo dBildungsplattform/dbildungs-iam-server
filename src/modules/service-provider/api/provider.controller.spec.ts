@@ -397,5 +397,24 @@ describe('Provider Controller Test', () => {
             expect(serviceProviderRepoMock.save).toHaveBeenCalledWith(createdDomainSp);
             expect(result).toBeInstanceOf(ServiceProviderResponse);
         });
+
+        it('should throw forbidden error when user lacks permission', async () => {
+            const body: CreateServiceProviderBodyParams = {
+                name: 'Test Angebot',
+                target: ServiceProviderTarget.EMAIL,
+                url: undefined,
+                kategorie: ServiceProviderKategorie.ANGEBOTE,
+                providedOnSchulstrukturknoten: 'orga-id-1',
+                requires2fa: false,
+                vidisAngebotId: undefined,
+                merkmale: [],
+                organisationId: 'orga-id-1',
+            };
+
+            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+            await expect(providerController.createServiceProvider(personPermissionsMock, body)).rejects.toBeDefined();
+            expect(serviceProviderRepoMock.save).not.toHaveBeenCalled();
+        });
     });
 });
