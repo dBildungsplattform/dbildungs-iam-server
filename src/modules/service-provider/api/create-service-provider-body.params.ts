@@ -4,41 +4,45 @@ import {
     ServiceProviderMerkmal,
     ServiceProviderTarget,
 } from '../domain/service-provider.enum.js';
-
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 export class CreateServiceProviderBodyParams {
-    @ApiProperty()
+    @IsUUID()
+    @ApiProperty({
+        description: 'The id of an organization',
+        required: true,
+        nullable: false,
+    })
     public organisationId!: string;
 
     @ApiProperty()
+    @IsString()
     public name!: string;
 
     @ApiProperty({ enum: ServiceProviderTarget })
     public target!: ServiceProviderTarget;
 
     @ApiProperty({ required: false })
+    @IsOptional()
     public url?: string;
-
-    @ApiProperty({
-        description: 'Organisation (Schulstrukturknoten) where the Angebot is provided',
-        format: 'uuid',
-    })
-    public providedOnSchulstrukturknoten!: string;
 
     @ApiProperty({
         required: false,
         description: 'Optional logo as base64-encoded string',
     })
+    @IsOptional()
     public logoBase64?: string;
 
     @ApiProperty({ enum: ServiceProviderKategorie })
     public kategorie!: ServiceProviderKategorie;
 
-    @ApiProperty()
+    @ApiProperty({ required: true })
     public requires2fa!: boolean;
 
     @ApiProperty({ required: false })
+    @IsOptional()
     public vidisAngebotId?: string;
 
     @ApiProperty({ enum: ServiceProviderMerkmal, isArray: true })
+    @IsEnum(ServiceProviderMerkmal, { each: true })
     public merkmale!: ServiceProviderMerkmal[];
 }

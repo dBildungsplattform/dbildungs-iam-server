@@ -327,7 +327,7 @@ export class ProviderController {
             body.target,
             body.url,
             body.kategorie,
-            body.providedOnSchulstrukturknoten,
+            body.organisationId,
             logoBuffer,
             undefined, // logoMimeType
             undefined, // keycloakGroup
