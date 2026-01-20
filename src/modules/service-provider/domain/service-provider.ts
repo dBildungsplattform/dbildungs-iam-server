@@ -1,7 +1,12 @@
-import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
+import {
+    ServiceProviderKategorie,
+    ServiceProviderMerkmal,
+    ServiceProviderSystem,
+    ServiceProviderTarget,
+} from './service-provider.enum.js';
 
 export class ServiceProvider<WasPersisted extends boolean> {
-    private constructor(
+    protected constructor(
         public id: Persisted<string, WasPersisted>,
         public createdAt: Persisted<Date, WasPersisted>,
         public updatedAt: Persisted<Date, WasPersisted>,
@@ -17,6 +22,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         public externalSystem: ServiceProviderSystem,
         public requires2fa: boolean,
         public vidisAngebotId: string | undefined,
+        public merkmale: ServiceProviderMerkmal[],
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
@@ -35,6 +41,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         externalSystem: ServiceProviderSystem,
         requires2fa: boolean,
         vidisAngebotId: string | undefined,
+        merkmale: ServiceProviderMerkmal[],
     ): ServiceProvider<WasPersisted> {
         return new ServiceProvider(
             id,
@@ -52,6 +59,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
             externalSystem,
             requires2fa,
             vidisAngebotId,
+            merkmale,
         );
     }
 
@@ -68,6 +76,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         externalSystem: ServiceProviderSystem,
         requires2fa: boolean,
         vidisAngebotId: string | undefined,
+        merkmale: ServiceProviderMerkmal[],
     ): ServiceProvider<false> {
         return new ServiceProvider(
             undefined,
@@ -85,6 +94,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
             externalSystem,
             requires2fa,
             vidisAngebotId,
+            merkmale,
         );
     }
 }

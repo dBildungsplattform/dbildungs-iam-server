@@ -23,7 +23,7 @@ import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
 import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { ItsLearningPersonsEventHandler } from './itslearning-persons.event-handler.js';
 
-function makeKontextEventData(props?: Partial<PersonenkontextUpdatedData> | undefined): PersonenkontextUpdatedData {
+function makeKontextEventData(props?: Partial<PersonenkontextUpdatedData>): PersonenkontextUpdatedData {
     return {
         id: props?.id ?? faker.string.uuid(),
         orgaId: props?.orgaId ?? faker.string.uuid(),
@@ -147,8 +147,8 @@ describe('ItsLearning Persons Event Handler', () => {
         const oldLastname: string = faker.person.lastName();
 
         function createPersonAndResponse(params: Partial<Person<true>> = {}): [Person<true>, PersonResponse] {
-            if (!('referrer' in params)) {
-                params.referrer = faker.internet.userName();
+            if (!('username' in params)) {
+                params.username = faker.internet.userName();
             }
 
             const person: Person<true> = DoFactory.createPerson(true, params);
@@ -182,7 +182,7 @@ describe('ItsLearning Persons Event Handler', () => {
                     id: person.id,
                     firstName: person.vorname,
                     lastName: person.familienname,
-                    username: person.referrer,
+                    username: person.username,
                     institutionRoleType: personResponse.institutionRole,
                 },
                 `${event.eventID}-PERSON-RENAMED-UPDATE`,
@@ -211,8 +211,8 @@ describe('ItsLearning Persons Event Handler', () => {
         });
 
         describe('when person is invalid', () => {
-            it('should log error, if person has no referrer', async () => {
-                const [person]: [Person<true>, PersonResponse] = createPersonAndResponse({ referrer: undefined });
+            it('should log error, if person has no username', async () => {
+                const [person]: [Person<true>, PersonResponse] = createPersonAndResponse({ username: undefined });
                 const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(
                     person,
                     faker.internet.userName(),
@@ -306,12 +306,11 @@ describe('ItsLearning Persons Event Handler', () => {
         });
 
         describe('when person is invalid', () => {
-            it('should log error, if person has no referrer', async () => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { username, ...personWithoutReferrer }: PersonenkontextUpdatedPersonData = person;
+            it('should log error, if person has no username', async () => {
+                const { username, ...personWithoutUsername }: PersonenkontextUpdatedPersonData = person;
                 const eventID: string = faker.string.uuid();
 
-                await sut.updatePerson(personWithoutReferrer, [createMock()], eventID);
+                await sut.updatePerson(personWithoutUsername, [createMock()], eventID);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `[EventID: ${eventID}] Person with ID ${person.id} has no username!`,

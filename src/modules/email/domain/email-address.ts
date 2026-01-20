@@ -127,11 +127,14 @@ export class EmailAddress<WasPersisted extends boolean> {
     }
 
     public setAddress(address: string): string {
-        return (this.addressAddress = address);
+        this.addressAddress = address;
+        return this.addressAddress;
     }
 
     public get currentAddress(): Option<string> {
-        if (!this.enabled) return undefined;
+        if (!this.enabled) {
+            return undefined;
+        }
 
         return this.addressAddress;
     }

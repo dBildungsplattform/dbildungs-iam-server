@@ -1,6 +1,6 @@
+import { MockedObject, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { createMock } from '@golevelup/ts-vitest';
 import { EventModule } from '../../../core/eventbus/event.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MeldungRepo } from '../persistence/meldung.repo.js';
@@ -9,10 +9,11 @@ import { MeldungStatus } from '../persistence/meldung.entity.js';
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { MeldungInhaltError } from './meldung-inhalt.error.js';
 import { faker } from '@faker-js/faker';
+import { LoggingTestModule } from '../../../../test/utils/vitest/logging-test.module.js';
 
 describe('Meldung Aggregate', () => {
     let module: TestingModule;
-    let meldungRepoMock: DeepMocked<MeldungRepo>;
+    let meldungRepoMock: MockedObject<MeldungRepo>;
 
     beforeEach(async () => {
         module = await Test.createTestingModule({
@@ -32,7 +33,7 @@ describe('Meldung Aggregate', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {

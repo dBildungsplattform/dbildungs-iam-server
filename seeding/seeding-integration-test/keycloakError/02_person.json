@@ -2,27 +2,11 @@
     "entityName": "Person",
     "entities": [
         {
-            "referrer": null,
+            "username": null,
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
             "stammorganisation": null,
             "vorname": "Max",
             "familienname": "Mustermann",
-            "initialenfamilienname": null,
-            "initialenvorname": null,
-            "rufname": null,
-            "titel": null,
-            "anrede": null,
-            "namenssuffix": null,
-            "namenspraefix": null,
-            "sortierindex": null,
-            "geburt": {
-                "datum": null,
-                "geburtsort": "Hamburg"
-            },
-            "geschlecht": "m",
-            "loaklisierung": null,
-            "vertrauensstufe": null,
-            "auskunftssperre": null,
             "dataProvider": "431d8433-759c-4dbe-aaab-00b9a781f467"
         }
     ]

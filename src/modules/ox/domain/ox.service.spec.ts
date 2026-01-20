@@ -12,6 +12,8 @@ import { faker } from '@faker-js/faker';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { OxPrimaryMailNotEqualEmail1Error } from '../error/ox-primary-mail-not-equal-email1.error.js';
 import { ConfigService } from '@nestjs/config';
+import assert from 'assert';
+import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 
 describe('OxServiceConstructor', () => {
     it('should set default retries', () => {
@@ -202,6 +204,37 @@ describe('OxService', () => {
                 ok: false,
                 error: new OxError('OX-Response Could Not Be Parsed'),
             });
+        });
+
+        it('should skip retry for non-retryable errors', async () => {
+            const faultString: string = 'Member already exists in group; exceptionId -483860422-666';
+            const error: OxErrorType = {
+                message: faker.string.alphanumeric(),
+                code: faker.string.numeric(),
+                response: {
+                    status: 500,
+                    statusText: 'statusText',
+                    data:
+                        '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
+                        '<soap:Body>' +
+                        '<soap:Fault>' +
+                        '<faultcode>soap:Server</faultcode>' +
+                        '<faultstring>' +
+                        faultString +
+                        '</faultstring>' +
+                        '</soap:Fault>' +
+                        '</soap:Body>' +
+                        '</soap:Envelope>',
+                },
+            };
+            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock<OxBaseAction<unknown, string>>();
+            httpServiceMock.post.mockReturnValueOnce(throwError(() => error));
+
+            const result: Result<string, DomainError> = await sut.send(mockAction);
+
+            assert(!result.ok);
+            expect(result.error).toBeInstanceOf(OxMemberAlreadyInGroupError);
+            expect(result.error.message).toContain(faultString);
         });
     });
 });

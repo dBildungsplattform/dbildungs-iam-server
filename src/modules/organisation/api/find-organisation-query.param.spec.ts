@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
 
 describe('FindOrganisationQueryParams', () => {

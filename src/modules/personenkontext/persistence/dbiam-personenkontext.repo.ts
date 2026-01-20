@@ -1,28 +1,40 @@
-import { Cursor, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
+import { Cursor, FilterQuery, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { OrganisationID, PersonID, PersonenkontextID, RolleID } from '../../../shared/types/index.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import {
+    OrganisationID,
+    PersonID,
+    PersonenkontextID,
+    RolleID,
+    ServiceProviderID,
+} from '../../../shared/types/index.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
+import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Personenkontext } from '../domain/personenkontext.js';
+import { PersonenkontextErweitertVirtualEntity } from './personenkontext-erweitert.virtual.entity.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
-import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
-import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
-import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 
 export type RollenCount = { rollenart: string; count: string };
 
 export type ExternalPkData = {
+    pkId: string;
     rollenart?: RollenArt;
     kennung?: string;
+    serviceProvider?: ServiceProviderEntity[];
 };
 
 export type KontextWithOrgaAndRolle = {
@@ -33,8 +45,15 @@ export type KontextWithOrgaAndRolle = {
 
 export type ExternalPkDataLoaded = Loaded<
     PersonenkontextEntity,
-    'organisationId' | 'rolleId',
-    'organisationId.kennung' | 'rolleId.rollenart',
+    'organisationId' | 'rolleId.serviceProvider.serviceProvider',
+    'organisationId.kennung' | 'rolleId.rollenart' | 'rolleId.serviceProvider',
+    never
+>;
+
+export type PersonenkontextErweitertVirtualEntityLoaded = Loaded<
+    PersonenkontextErweitertVirtualEntity,
+    'serviceProvider' | 'personenkontext',
+    'serviceProvider' | 'personenkontext',
     never
 >;
 
@@ -50,7 +69,7 @@ function mapEntityToAggregate(
         entity.personId.id,
         entity.organisationId.id,
         entity.rolleId.id,
-        entity.referrer,
+        entity.username,
         entity.mandant,
         entity.personenstatus,
         entity.jahrgangsstufe,
@@ -127,6 +146,7 @@ export class DBiamPersonenkontextRepo {
                     'rolleId.merkmale',
                     'rolleId.systemrechte',
                     'rolleId.serviceProvider',
+                    'rolleId.serviceProvider.serviceProvider.merkmale',
                 ],
             },
         );
@@ -142,14 +162,74 @@ export class DBiamPersonenkontextRepo {
         });
     }
 
-    public async findByPersonIdsWithOrgaAndRolle(
+    public async findByPersonIdsAndServiceprovidersWithOrgaAndRolle(
         personIds: PersonID[],
+        serviceProviderIds: ServiceProviderID[],
+        permittedOrgas: PermittedOrgas,
     ): Promise<Map<PersonID, KontextWithOrgaAndRolle[]>> {
         const result: Map<PersonID, KontextWithOrgaAndRolle[]> = new Map<PersonID, KontextWithOrgaAndRolle[]>();
 
+        // Find all Personenkontexte where the serviceprovider is available through an erweiterung
+        const erweiterungFilter: FilterQuery<PersonenkontextErweitertVirtualEntity>[] = [
+            {
+                personenkontext: {
+                    personId: {
+                        $in: personIds,
+                    },
+                },
+            },
+            {
+                serviceProvider: {
+                    $in: serviceProviderIds,
+                },
+            },
+        ];
+
+        if (!permittedOrgas.all) {
+            erweiterungFilter.push({
+                personenkontext: {
+                    organisationId: {
+                        $in: permittedOrgas.orgaIds,
+                    },
+                },
+            });
+        }
+
+        const erweiterungen: PersonenkontextErweitertVirtualEntity[] = await this.em.find(
+            PersonenkontextErweitertVirtualEntity,
+            { $and: erweiterungFilter },
+        );
+
+        const filter: FilterQuery<NoInfer<PersonenkontextEntity>> = {
+            personId: { $in: personIds },
+            rolleId: {
+                serviceProvider: {
+                    serviceProvider: {
+                        $in: serviceProviderIds,
+                    },
+                },
+            },
+        };
+
+        if (!permittedOrgas.all) {
+            filter.organisationId = {
+                $in: permittedOrgas.orgaIds,
+            };
+        }
+
         const personenKontexte: PersonenkontextEntity[] = await this.em.find(
             PersonenkontextEntity,
-            { personId: { $in: personIds } },
+            {
+                $or: [
+                    {
+                        // Use found erweiterungen to fetch additional kontexte
+                        id: {
+                            $in: erweiterungen.map((e: PersonenkontextErweitertVirtualEntity) => e.personenkontext.id),
+                        },
+                    },
+                    filter,
+                ],
+            },
             {
                 populate: [
                     'organisationId',
@@ -157,6 +237,7 @@ export class DBiamPersonenkontextRepo {
                     'rolleId.merkmale',
                     'rolleId.systemrechte',
                     'rolleId.serviceProvider',
+                    'rolleId.serviceProvider.serviceProvider.merkmale',
                 ],
             },
         );
@@ -178,6 +259,7 @@ export class DBiamPersonenkontextRepo {
 
             result.get(personId)!.push(kontext);
         }
+
         return result;
     }
 
@@ -300,14 +382,26 @@ export class DBiamPersonenkontextRepo {
             PersonenkontextEntity,
             { personId },
             {
-                populate: ['rolleId', 'organisationId'],
-                fields: ['rolleId.rollenart', 'organisationId.kennung'],
+                populate: ['rolleId.serviceProvider.serviceProvider', 'organisationId'],
+                exclude: [
+                    'rolleId.serviceProvider.serviceProvider.logo',
+                    'rolleId.serviceProvider.serviceProvider.logoMimeType',
+                ],
             },
         );
-        return personenkontextEntities.map((pk: ExternalPkDataLoaded) => ({
-            rollenart: pk.rolleId.unwrap().rollenart,
-            kennung: pk.organisationId.unwrap().kennung,
-        }));
+        return personenkontextEntities.map((pk: ExternalPkDataLoaded) => {
+            const serviceProvider: ServiceProviderEntity[] = pk.rolleId
+                .unwrap()
+                .serviceProvider.getItems()
+                .map((rsp: RolleServiceProviderEntity) => rsp.serviceProvider);
+
+            return {
+                pkId: pk.id,
+                rollenart: pk.rolleId.unwrap().rollenart,
+                kennung: pk.organisationId.unwrap().kennung,
+                serviceProvider: serviceProvider,
+            };
+        });
     }
 
     public async hasSystemrechtAtOrganisation(
@@ -339,7 +433,7 @@ export class DBiamPersonenkontextRepo {
                         `;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result: any[] = await this.em.execute(query, [organisationId, personId, systemrecht]);
+        const result: any[] = await this.em.execute(query, [organisationId, personId, systemrecht.name]);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         return result[0].has_systemrecht_at_orga as boolean;
     }
@@ -382,7 +476,7 @@ export class DBiamPersonenkontextRepo {
         const result: [{ has_persona_systemrecht_at_any_kontext_of_personb: boolean }] = await this.em.execute(query, [
             personIdB,
             personIdA,
-            systemrecht,
+            systemrecht.name,
         ]);
         return result[0].has_persona_systemrecht_at_any_kontext_of_personb;
     }
@@ -441,5 +535,21 @@ export class DBiamPersonenkontextRepo {
 
         const result: RollenCount[] = await this.em.execute(query, []);
         return result;
+    }
+
+    public async findPKErweiterungen(personId: string): Promise<PersonenkontextErweitertVirtualEntityLoaded[]> {
+        const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = await this.em.find(
+            PersonenkontextErweitertVirtualEntity,
+            {
+                personenkontext: {
+                    personId,
+                },
+            },
+            {
+                populate: ['serviceProvider', 'personenkontext'],
+                exclude: ['serviceProvider.logo', 'serviceProvider.logoMimeType'],
+            },
+        );
+        return personenKontextErweiterungen;
     }
 }

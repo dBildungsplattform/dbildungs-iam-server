@@ -8,7 +8,7 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 type FindProps = {
     personId: string;
-    referrer: string;
+    username: string;
     personenstatus: Personenstatus;
     sichtfreigabe: SichtfreigabeType;
     rolleart: RollenArt;
@@ -23,7 +23,7 @@ export class PersonenkontextScope extends ScopeBase<PersonenkontextEntity> {
         this.findByInternal(
             {
                 personId: findProps.personId,
-                referrer: findProps.referrer,
+                username: findProps.username,
                 personenstatus: findProps.personenstatus,
                 sichtfreigabe: findProps.sichtfreigabe,
             },

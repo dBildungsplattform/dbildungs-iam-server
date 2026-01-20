@@ -58,7 +58,9 @@ jobs:
   codeql_analyze:
     name: "CodeQL"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@8
+    with:
+      codeql_languages: javascript
     permissions:
       actions: read
       contents: read
@@ -67,7 +69,7 @@ jobs:
   nest_lint:
     name: "Linting"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@8
     with:
       node_version: '18'
     permissions:
@@ -76,11 +78,11 @@ jobs:
   tests_and_sonarcloud:
     name: "Tests and Sonarcloud"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@8
     with:
       node_version: '18'
       deploy_stage: 'dev'
-      timeout_minutes: 20
+      timeout_minutes: 30
     permissions:
       contents: read
     secrets: inherit
@@ -95,7 +97,7 @@ jobs:
       packages: write
       security-events: write
       contents: read
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@7
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@8
     with:
       image_name: "dbildungs-iam-server"
       run_trivy_scan: true
@@ -108,7 +110,7 @@ jobs:
 
   scan_helm:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@8
     permissions:
       contents: read
 
@@ -137,7 +139,7 @@ jobs:
     needs:
       - create_branch_identifier
       - select_helm_version_generation_and_image_tag_generation
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@7
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@8
     secrets: inherit
     with:
       chart_name: dbildungs-iam-server
@@ -240,7 +242,7 @@ jobs:
     permissions:
       packages: read
       security-events: write
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@7
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@8
     with:
       image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
       fail_on_vulnerabilites: true
@@ -253,9 +255,14 @@ jobs:
     - scheduled_trivy_scan
     runs-on: 'ubuntu-latest'
     steps:
-    - name: Send Notification to Rocket Chat
-      uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
-      with:
-        type: failure
-        job_name: 'Daily nightly image check failed - CVEs found so check'
-        url: ${{ secrets.RC_WEBHOOK_SPSH_DEVELOPER_CHANNEL }}
+      - name: Check if today is Monday
+        id: check_monday
+        run: |
+          echo "date=$(date +%u)" >> $GITHUB_OUTPUT
+      - name: Send Notification to Rocket Chat
+        uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
+        if: ${{ steps.check_monday.outputs.date == '1' }}
+        with:
+          type: failure
+          job_name: 'Daily nightly image check failed. This notification will be sent only on Mondays, so the check may have been failing for several days. CVE scan results: https://github.com/dBildungsplattform/dbildungs-iam-server/security/code-scanning'
+          url: ${{ secrets.RC_WEBHOOK_SPSH_DEVELOPER_CHANNEL }}

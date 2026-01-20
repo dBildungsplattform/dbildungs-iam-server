@@ -1,7 +1,7 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { LandesbediensteterWorkflowFactory } from '../domain/landesbediensteter-workflow.factory.js';
 import { LandesbediensteterWorkflowAggregate } from '../domain/landesbediensteter-workflow.js';
 import { LandesbediensteterController } from './landesbediensteter.controller.js';
@@ -27,7 +27,7 @@ describe('LandesbediensteterController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [MapperTestModule, LoggingTestModule],
+            imports: [LoggingTestModule],
             providers: [
                 LandesbediensteterController,
                 {

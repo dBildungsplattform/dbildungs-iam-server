@@ -1,12 +1,12 @@
-nameOverride: ''
-fullnameOverride: ''
-namespaceOverride: ''
+nameOverride: ""
+fullnameOverride: ""
+namespaceOverride: ""
 
-backendHostname: ''
-keycloakHostname: 'http://dbildungs-iam-keycloak'
-keycloak2ndHostname: ''
-keycloakExternalHostname: 'spsh-xxx-keycloak.dev.spsh.dbildungsplattform.de'
-backend2ndHostname: ''
+backendHostname: ""
+keycloakHostname: "http://dbildungs-iam-keycloak"
+keycloak2ndHostname: ""
+keycloakExternalHostname: "spsh-xxx-keycloak.dev.spsh.dbildungsplattform.de"
+backend2ndHostname: ""
 
 containerSecurityContext:
   enabled: true
@@ -16,18 +16,18 @@ containerSecurityContext:
   readOnlyRootFilesystem: false
   allowPrivilegeEscalation: false
   capabilities:
-    drop: ['ALL']
+    drop: ["ALL"]
   seccompProfile:
-    type: 'RuntimeDefault'
+    type: "RuntimeDefault"
 
 restartPolicy: Always
 environment: dev
 
 database:
-  name: 'dbildungs_iam_server'
-  host: ''
-  password: ''
-  username: 'dbildungs_iam_server'
+  name: "dbildungs_iam_server"
+  host: ""
+  password: ""
+  username: "dbildungs_iam_server"
 
 ldap:
   url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
@@ -56,53 +56,53 @@ system:
 
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
-  existingSecret: ''
+  existingSecret: ""
   secretName: dbildungs-iam-server
-  keycloak_adminSecret: ''
-  keycloak_clientSecret: ''
-  service_account_private_jwks: ''
-  frontend_sessionSecret: ''
-  ldap_bind_dn: ''
-  ldap_admin_password: ''
-  secrets_json: ''
-  itslearning_username: ''
-  itslearning_password: ''
-  pi_admin_user: ''
-  pi_admin_password: ''
-  redis_password: ''
-  vidis_username: ''
-  vidis_password: ''
-  import_passphrase_secret: ''
-  import_passphrase_salt: ''
-  ox_password: ''
-  basic_auth_password: ''
-  kafka_username: ''
-  kafka_password: ''
+  keycloak_adminSecret: ""
+  keycloak_clientSecret: ""
+  service_account_private_jwks: ""
+  frontend_sessionSecret: ""
+  ldap_bind_dn: ""
+  ldap_admin_password: ""
+  secrets_json: ""
+  itslearning_username: ""
+  itslearning_password: ""
+  pi_admin_user: ""
+  pi_admin_password: ""
+  redis_password: ""
+  vidis_username: ""
+  vidis_password: ""
+  import_passphrase_secret: ""
+  import_passphrase_salt: ""
+  ox_password: ""
+  basic_auth_password: ""
 
 ox:
   enabled: false
-  username: 'oxadmin'
-  endpoint: 'https://webmail.example.com'
-  contextId: '10'
-  contextName: '10'
+  username: "oxadmin"
+  endpoint: "https://webmail.example.com"
+  contextId: "10"
+  contextName: "10"
   numberOfRetries: 3
+  userPasswordDefault: "placeholder"
+  emailAddressDeletedEventDelay: 0
 
 email:
   nonEnabledEmailAddressesDeadlineInDays: 180
 
 vidis:
-  url: 'https://service-stage.vidis.schule'
-  regionName: 'test-region'
-  keycloakGroup: 'VIDIS-service'
-  keycloakRole: 'VIDIS-user'
+  url: "https://service-stage.vidis.schule"
+  regionName: "test-region"
+  keycloakGroup: "VIDIS-service"
+  keycloakRole: "VIDIS-user"
 
 backend:
   replicaCount: 1
-  maxUnavailable: '50%'
-  maxSurge: '50%'
+  maxUnavailable: "50%"
+  maxSurge: "50%"
   image:
     repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
-    tag: ''
+    tag: ""
     pullPolicy: Always
   containerPorts:
     http: 8080
@@ -117,34 +117,40 @@ backend:
     enabled: true
     initialDelaySeconds: 10
     periodSeconds: 10
-    failureThreshold: 5
+    failureThreshold: 10
     httpGet:
-      scheme: 'HTTP'
+      scheme: "HTTP"
       port: 8080
-      path: '/health'
+      path: "/health"
   livenessProbe:
     enabled: true
     initialDelaySeconds: 10
+    timeoutSeconds: 30
+    periodSeconds: 10
+    successThreshold: 1
+    failureThreshold: 3    
     httpGet:
-      scheme: 'HTTP'
+      scheme: "HTTP"
       port: 8080
-      path: '/health'
+      path: "/health"
   readinessProbe:
     enabled: true
     initialDelaySeconds: 10
+    timeoutSeconds: 30
     httpGet:
-      scheme: 'HTTP'
+      scheme: "HTTP"
       port: 8080
-      path: '/health'
+      path: "/health"
   dbseeding:
     enabled: true
-    command: ['node', 'dist/src/console/main.js', 'db', 'seed', 'dev']
+    command: ["node", "dist/src/console/main.js", "db", "seed", "dev"]
   dbmigration:
     enabled: true
-    command: ['node', 'dist/src/console/main.js', 'db', 'migration-apply']
+    command: ["node", "dist/src/console/main.js", "db", "migration-apply"]
   keycloakdatamigration:
     enabled: true
-    command: ['node', 'dist/src/console/main.js', 'keycloak', 'update-clients', 'dev']
+    command:
+      ["node", "dist/src/console/main.js", "keycloak", "update-clients", "dev"]
   ingress:
     # Only enable if 2nd host name is defined
     enabled2nd: false
@@ -167,11 +173,9 @@ backend:
   serviceMonitor:
     enabled: true
     path: '/metrics'
-    interval: 30m
+    interval: 1m
     endpoints:
-      - port: 'web'
-  extraEnvVars: []
-  extraVolumes: []
+      - port: "web"
   volumeMounts:
     - mountPath: /app/config/config.json
       subPath: config-json
@@ -180,25 +184,101 @@ backend:
     - mountPath: /app/config/secrets.json
       subPath: secrets-json
       name: secret-volume
-  extraVolumeMounts: []
+    - mountPath: /tls
+      name: dbildungs-iam-kafka-tls
+      readOnly: true
   env:
     renameWaitingTimeInSeconds: 3
     stepUpTimeoutInSeconds: 900
-    stepUpTimeoutEnabled: 'false'
+    stepUpTimeoutEnabled: "false"
+    maxOldSpaceSize: 3584
+  extraVolumeMounts: []
+  extraVolumes: []
+  extraEnvVars: []
+
+emailBackend:
+  replicaCount: 1
+  maxUnavailable: "50%"
+  maxSurge: "50%"
+  image:
+    repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    tag: ""
+    pullPolicy: Always
+  containerPorts:
+    http: 9095
+  resources:
+    limits:
+      cpu: 2
+      memory: 4G
+    requests:
+      cpu: 200m
+      memory: 200Mi
+  startupProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 5
+    httpGet:
+      scheme: "HTTP"
+      port: 9095
+      path: "/health"
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    httpGet:
+      scheme: "HTTP"
+      port: 9095
+      path: "/health"
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    httpGet:
+      scheme: "HTTP"
+      port: 9095
+      path: "/health"
+  service:
+    type: ClusterIP
+    ports:
+      http: 80
+  serviceMonitor:
+    enabled: false # No Metrics yet?
+    path: "/metrics"
+    interval: 30m
+    endpoints:
+      - port: "web"
+  extraEnvVars: []
+  extraVolumes: []
+  volumeMounts:
+    - mountPath: /app/config/email-config.json
+      subPath: config-json
+      name: config-volume
+      readOnly: true
+    - mountPath: /app/config/email-secrets.json
+      subPath: secrets-json
+      name: secret-volume
+  extraVolumeMounts: []
+  env:
     maxOldSpaceSize: 3584
 
 redis:
   host: dbildungs-iam-redis-master.spsh.svc.cluster.local
 
 kafka:
-  url: 'dbildungs-iam-kafka.spsh.svc.cluster.local:9092'
   enabled: true
-  saslEnabled: true
+  sslEnabled: true
+  sslCaPath: /tls/ca.pem
+  sslCertPath: /tls/client-cert.pem
+  sslKeyPath: /tls/client-key.pem
   initEnabled: true
+  sessionTimeout: 8000
+  heartbeatInterval: 1000
+  topicPartitions: 3
+  topicReplications: 3
   initImage:
-    repository: docker.io/bitnami/kafka
-    tag: '3.9.0'
+    repository: docker.io/apache/kafka
+    tag: "3.9.0"
     pullPolicy: Always
+  existingSecret: dbildungs-iam-kafka-tls
 
 autoscaling:
   enabled: false
@@ -211,46 +291,51 @@ podDisruptionBudget:
   minAvailable: "60%"
 
 status:
-  url: 'https://status.dev.spsh.dbildungsplattform.de/'
+  url: "https://status.dev.spsh.dbildungsplattform.de/"
 
 cronjobs:
   enabled: true
   image:
-    tag: '1.1.0'
+    tag: "1.1.0"
     repository: docker.io/schulcloud/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
-  keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'
+  keycloakTokenUrl: "/realms/SPSH/protocol/openid-connect/token"
   keycloakClientId: spsh-service
   jwksFilePath: /keys/jwks.json
-  backendHostname: '{{ $.Values.frontendHostname }}'
+  backendHostname: "{{ $.Values.frontendHostname }}"
   scriptDir: scripts
   jobs:
     cron-trigger-1:
       schedule: 20 0 * * *
-      endpoint: '/api/cron/kopers-lock'
-      httpMethod: 'PUT'
-      script: 'cron_trigger.sh'
+      endpoint: "/api/cron/kopers-lock"
+      httpMethod: "PUT"
+      script: "cron_trigger.sh"
     cron-trigger-2:
       schedule: 40 0 * * *
-      endpoint: '/api/cron/kontext-expired'
-      httpMethod: 'PUT'
-      script: 'cron_trigger.sh'
+      endpoint: "/api/cron/kontext-expired"
+      httpMethod: "PUT"
+      script: "cron_trigger.sh"
     cron-trigger-3:
-      schedule: 50 0 * * *
-      endpoint: '/api/cron/person-without-org'
-      httpMethod: 'PUT'
-      script: 'cron_trigger.sh'
+      schedule: "*/15 0-3,22-23 * * *"
+      endpoint: "/api/cron/person-without-org"
+      httpMethod: "PUT"
+      script: "cron_trigger.sh"
     cron-trigger-4:
       schedule: 10 0 * * *
-      endpoint: '/api/cron/unlock'
-      httpMethod: 'PUT'
-      script: 'cron_trigger.sh'
+      endpoint: "/api/cron/unlock"
+      httpMethod: "PUT"
+      script: "cron_trigger.sh"
     cron-trigger-5:
-      schedule: 30 0 * * *
-      endpoint: '/api/cron/vidis-angebote'
-      httpMethod: 'PUT'
+      schedule: "0 0 30 9 *" #Should never run automatically status: 15.10.2025. --> Setting to 30.09 so we have 1 Year to manually enable it fo the first time and define running interval
+      endpoint: '/api/cron/email-addresses-delete'
+      httpMethod: 'DELETE'
       script: 'cron_trigger.sh'
+#    cron-trigger-6:
+#      schedule: 30 0 * * *
+#      endpoint: '/api/cron/vidis-angebote'
+#      httpMethod: 'PUT'
+#      script: 'cron_trigger.sh'
 
 import:
   csvFileMaxSizeInMB: 10
@@ -258,3 +343,8 @@ import:
 
 featureFlags:
   befristungBearbeiten: true
+  rolleErweitern: true
+
+cron:
+  personWithoutOrgLimit: 30
+  emailAddressesDeleteLimit: 10

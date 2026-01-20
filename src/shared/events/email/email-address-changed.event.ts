@@ -1,5 +1,5 @@
 import { BaseEvent } from '../base-event.js';
-import { EmailAddressID, PersonID, PersonReferrer } from '../../types/aggregate-ids.types.js';
+import { EmailAddressID, PersonID, PersonUsername } from '../../types/aggregate-ids.types.js';
 
 /**
  * This event should be triggered when an existing email-address is deactivated for a user and persisted successfully in the database and
@@ -10,7 +10,7 @@ import { EmailAddressID, PersonID, PersonReferrer } from '../../types/aggregate-
 export class EmailAddressChangedEvent extends BaseEvent {
     public constructor(
         public readonly personId: PersonID,
-        public readonly username: PersonReferrer,
+        public readonly username: PersonUsername,
         public readonly oldEmailAddressId: EmailAddressID,
         public readonly oldAddress: string,
         public readonly newEmailAddressId: EmailAddressID,

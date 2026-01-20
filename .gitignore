@@ -87,6 +87,7 @@ web_modules/
 
 # config files
 config/secrets.json
+config/email-secrets.json
 
 # migration files only used for (integration-)tests
 test-migrations/

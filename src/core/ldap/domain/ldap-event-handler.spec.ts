@@ -1,41 +1,44 @@
+import { faker } from '@faker-js/faker';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
+
 import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
-
-import { LdapModule } from '../ldap.module.js';
-import { LdapEventHandler } from './ldap-event-handler.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { LdapClientService, PersonData } from './ldap-client.service.js';
-import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
-import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
-import { faker } from '@faker-js/faker';
-import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
-import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
-import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { ClassLogger } from '../../logging/class-logger.js';
-import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import { LdapSearchError } from '../error/ldap-search.error.js';
-import { LdapEntityType } from './ldap.types.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
-import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
-import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
-import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
-import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
 import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
-import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
+import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
+import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
+import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
+import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
+import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
+import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
+import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
+import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
 import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
+import { Ok } from '../../../shared/util/result.js';
+import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
+import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../logging/class-logger.js';
+import { LdapSearchError } from '../error/ldap-search.error.js';
+import { LdapModule } from '../ldap.module.js';
+import { LdapClientService, PersonData } from './ldap-client.service.js';
+import { LdapEventHandler } from './ldap-event-handler.js';
+import { LdapEntityType } from './ldap.types.js';
 
 describe('LdapEventHandler', () => {
     let app: INestApplication;
@@ -50,12 +53,7 @@ describe('LdapEventHandler', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [
-                ConfigTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                LdapModule,
-                MapperTestModule,
-            ],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), LdapModule],
             providers: [
                 {
                     provide: APP_PIPE,
@@ -176,7 +174,7 @@ describe('LdapEventHandler', () => {
     describe('handlePersonRenamedEvent', () => {
         describe('when calling LdapClientService.modifyPersonAttributes is successful', () => {
             it('should NOT log errors', async () => {
-                const modifyResult: Result<PersonReferrer> = {
+                const modifyResult: Result<PersonUsername> = {
                     ok: true,
                     value: faker.internet.userName(),
                 };
@@ -840,7 +838,7 @@ describe('LdapEventHandler', () => {
 
     describe('handleEmailAddressMarkedForDeletionEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let address: string;
 
         beforeEach(() => {
@@ -918,7 +916,7 @@ describe('LdapEventHandler', () => {
 
     describe('handleEmailAddressesPurgedEvent', () => {
         const personId: PersonID = faker.string.uuid();
-        const username: PersonReferrer = faker.internet.userName();
+        const username: PersonUsername = faker.internet.userName();
 
         it('should log error when username is UNDEFINED in event', async () => {
             const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
@@ -938,7 +936,7 @@ describe('LdapEventHandler', () => {
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
         });
 
-        it('should call LdapClientService deleteLehrerByReferrer', async () => {
+        it('should call LdapClientService deleteLehrerByUsername', async () => {
             const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
                 personId,
                 username,
@@ -966,7 +964,7 @@ describe('LdapEventHandler', () => {
             );
         });
 
-        it('should call LdapClientService deleteLehrerByReferrer and log error if result is NOT ok', async () => {
+        it('should call LdapClientService deleteLehrerByUsername and log error if result is NOT ok', async () => {
             const error: LdapSearchError = new LdapSearchError(LdapEntityType.LEHRER);
             const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
                 personId,
@@ -985,6 +983,63 @@ describe('LdapEventHandler', () => {
             expect(ldapClientServiceMock.deleteLehrerByUsername).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenLastCalledWith(error.message);
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+        });
+    });
+
+    describe('handleOrganisationDeletedEvent', () => {
+        let orga: Organisation<true>;
+
+        const getReceivedLogMessage: (event: OrganisationDeletedEvent) => string = (event: OrganisationDeletedEvent) =>
+            `Received OrganisationDeletedEvent, organisationId:${event.organisationId}, name:${event.name}, kennung:${event.kennung}, typ:${event.typ}`;
+        const getCantDeleteLogMessage: (event: OrganisationDeletedEvent) => string = (
+            event: OrganisationDeletedEvent,
+        ) =>
+            `Cannot delete organisation, since typ is not ${OrganisationsTyp.SCHULE} or kennung is UNDEFINED, organisationId:${event.organisationId}, kennung:${event.kennung}, typ:${event.typ}`;
+
+        beforeEach(() => {
+            orga = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
+            ldapClientServiceMock.deleteOrganisation.mockResolvedValue(Ok(orga.kennung!));
+        });
+
+        describe('when event is complete', () => {
+            it('should log and return true', async () => {
+                const event: OrganisationDeletedEvent = OrganisationDeletedEvent.fromOrganisation(orga);
+
+                await expect(ldapEventHandler.handleOrganisationDeletedEvent(event)).resolves.toEqual(Ok(orga.kennung));
+                expect(loggerMock.info).toHaveBeenLastCalledWith(getReceivedLogMessage(event));
+                expect(ldapClientServiceMock.deleteOrganisation).toHaveBeenLastCalledWith(orga.kennung);
+            });
+        });
+
+        describe.each([['typ'], ['kennung']] as Array<Array<keyof OrganisationDeletedEvent>>)(
+            'when event is missing %s',
+            (missingPropertyKey: keyof OrganisationDeletedEvent) => {
+                it('should return without calling the service', async () => {
+                    const event: OrganisationDeletedEvent = OrganisationDeletedEvent.fromOrganisation(orga);
+                    delete event[missingPropertyKey];
+
+                    await expect(ldapEventHandler.handleOrganisationDeletedEvent(event)).resolves.toEqual(
+                        Ok(undefined),
+                    );
+                    expect(loggerMock.info).toHaveBeenCalledWith(getReceivedLogMessage(event));
+                    expect(loggerMock.info).toHaveBeenLastCalledWith(getCantDeleteLogMessage(event));
+                    expect(ldapClientServiceMock.deleteOrganisation).not.toHaveBeenCalled();
+                });
+            },
+        );
+
+        describe(`when orga.typ is not ${OrganisationsTyp.SCHULE}`, () => {
+            it('should return without calling the service', async () => {
+                const event: OrganisationDeletedEvent = OrganisationDeletedEvent.fromOrganisation({
+                    ...orga,
+                    typ: OrganisationsTyp.LAND,
+                });
+
+                await expect(ldapEventHandler.handleOrganisationDeletedEvent(event)).resolves.toEqual(Ok(undefined));
+                expect(loggerMock.info).toHaveBeenCalledWith(getReceivedLogMessage(event));
+                expect(loggerMock.info).toHaveBeenLastCalledWith(getCantDeleteLogMessage(event));
+                expect(ldapClientServiceMock.deleteOrganisation).not.toHaveBeenCalled();
+            });
         });
     });
 });

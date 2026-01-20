@@ -28,7 +28,7 @@ import { DeleteUserError } from './api/error/delete-user.error.js';
 import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
 import { TokenStateError } from './api/error/token-state.error.js';
 import { PIUnavailableError } from './api/error/pi-unavailable.error.js';
-import { PersonReferrer } from '../../shared/types/aggregate-ids.types.js';
+import { PersonUsername } from '../../shared/types/aggregate-ids.types.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -139,7 +139,7 @@ const mockErrorResponse = (): never => {
 };
 
 const mockNonErrorThrow = (): never => {
-    // eslint-disable-next-line @typescript-eslint/no-throw-literal
+    // eslint-disable-next-line @typescript-eslint/only-throw-error
     throw { message: mockErrorMsg };
 };
 
@@ -456,7 +456,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                 service as unknown as { getJWTToken: () => Promise<string> },
                 'getJWTToken',
             ).mockImplementationOnce(() => {
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                // eslint-disable-next-line @typescript-eslint/only-throw-error
                 throw 'This is a non-Error throw';
             });
 
@@ -509,7 +509,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                 service as unknown as { getUserTokens: () => Promise<string> },
                 'getUserTokens',
             ).mockImplementationOnce(() => {
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                // eslint-disable-next-line @typescript-eslint/only-throw-error
                 throw 'This is a non-Error throw';
             });
 
@@ -932,7 +932,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
     });
 
     describe('deleteUser', () => {
-        const referrer: PersonReferrer = faker.string.alpha();
+        const username: PersonUsername = faker.string.alpha();
         let mockJWTToken: string;
         beforeEach(() => {
             mockJWTToken = faker.string.alpha();
@@ -947,7 +947,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValue(mockTokenResponse());
             httpServiceMock.delete.mockReturnValue(mockEmptyPostResponse());
 
-            await expect(service.deleteUserWrapper(referrer)).resolves.toEqual({ ok: true, value: undefined });
+            await expect(service.deleteUserWrapper(username)).resolves.toEqual({ ok: true, value: undefined });
             expect(httpServiceMock.delete).toHaveBeenCalledTimes(1);
         });
 
@@ -956,7 +956,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValue(mockTokenResponse());
             httpServiceMock.delete.mockImplementationOnce(mockErrorResponse);
 
-            await expect(service.deleteUserWrapper(referrer)).resolves.toEqual({
+            await expect(service.deleteUserWrapper(username)).resolves.toEqual({
                 ok: false,
                 error: new DeleteUserError(),
             });
@@ -967,7 +967,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValue(mockTokenResponse());
             httpServiceMock.delete.mockImplementationOnce(mockNonErrorThrow);
 
-            await expect(service.deleteUserWrapper(referrer)).resolves.toEqual({
+            await expect(service.deleteUserWrapper(username)).resolves.toEqual({
                 ok: false,
                 error: new DeleteUserError(),
             });
@@ -1014,9 +1014,9 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             ).mockResolvedValueOnce({ ok: true, value: undefined });
             const result: Result<void, DomainError> = await service.updateUsername(oldUserName, newUserName);
             expect(result.ok).toBe(true);
-            // eslint-disable-next-line @typescript-eslint/dot-notation
+
             expect(service['deleteUser']).toHaveBeenCalledWith(oldUserName, mockJWTToken);
-            // eslint-disable-next-line @typescript-eslint/dot-notation
+
             expect(service['addUser']).toHaveBeenCalledWith(newUserName);
         });
 

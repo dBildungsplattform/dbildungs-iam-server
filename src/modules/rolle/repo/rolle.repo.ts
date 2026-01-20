@@ -8,27 +8,32 @@ import {
 } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
-import { Rolle } from '../domain/rolle.js';
-import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
-import { RolleEntity } from '../entity/rolle.entity.js';
-import { RolleFactory } from '../domain/rolle.factory.js';
-import { RolleServiceProviderEntity } from '../entity/rolle-service-provider.entity.js';
-import { OrganisationID, RolleID } from '../../../shared/types/index.js';
-import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
-import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
+import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
+import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
+import { RollenSystemRecht } from '../domain/systemrecht.js';
+import { RolleFactory } from '../domain/rolle.factory.js';
+import { Rolle } from '../domain/rolle.js';
+import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
+import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
+import { RolleServiceProviderEntity } from '../entity/rolle-service-provider.entity.js';
+import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
+import { RolleEntity } from '../entity/rolle.entity.js';
 
+import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderMerkmalEntity } from '../../service-provider/repo/service-provider-merkmal.entity.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
-import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
-import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
+import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
+import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-service-providers.specification.js';
+import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
 export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
     const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
@@ -39,7 +44,7 @@ export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityDa
     const systemrechte: EntityData<RolleSystemrechtEntity>[] = rolle.systemrechte.map(
         (systemrecht: RollenSystemRecht) => ({
             rolle: rolle.id,
-            systemrecht,
+            systemrecht: systemrecht.name,
         }),
     );
 
@@ -64,8 +69,8 @@ export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityDa
 
 export function mapRolleEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFactory): Rolle<boolean> {
     const merkmale: RollenMerkmal[] = entity.merkmale.map((merkmalEntity: RolleMerkmalEntity) => merkmalEntity.merkmal);
-    const systemrechte: RollenSystemRecht[] = entity.systemrechte.map(
-        (systemRechtEntity: RolleSystemrechtEntity) => systemRechtEntity.systemrecht,
+    const systemrechte: RollenSystemRecht[] = entity.systemrechte.map((systemRechtEntity: RolleSystemrechtEntity) =>
+        RollenSystemRecht.getByName(systemRechtEntity.systemrecht),
     );
 
     const serviceProviderIds: string[] = entity.serviceProvider.map(
@@ -91,6 +96,7 @@ export function mapRolleEntityToAggregate(entity: RolleEntity, rolleFactory: Rol
                 sp.externalSystem,
                 sp.requires2fa,
                 sp.vidisAngebotId,
+                sp.merkmale.map((merkmalEntity: ServiceProviderMerkmalEntity) => merkmalEntity.merkmal),
             );
         },
     );
@@ -119,6 +125,7 @@ export class RolleRepo {
         protected readonly rolleFactory: RolleFactory,
         private readonly eventService: EventRoutingLegacyKafkaService,
         protected readonly em: EntityManager,
+        private readonly serviceProviderRepo: ServiceProviderRepo,
     ) {}
 
     public get entityName(): EntityName<RolleEntity> {
@@ -129,7 +136,12 @@ export class RolleRepo {
         const query: { id: RolleID; istTechnisch?: boolean } = includeTechnical ? { id } : { id, istTechnisch: false };
 
         const rolle: Option<RolleEntity> = await this.em.findOne(this.entityName, query, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            populate: [
+                'merkmale',
+                'systemrechte',
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+            ] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
 
@@ -170,7 +182,12 @@ export class RolleRepo {
             RolleEntity,
             { id: { $in: ids } },
             {
-                populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                populate: [
+                    'merkmale',
+                    'systemrechte',
+                    'serviceProvider.serviceProvider',
+                    'serviceProvider.serviceProvider.merkmale',
+                ] as const,
                 exclude: ['serviceProvider.serviceProvider.logo'] as const,
             },
         );
@@ -199,7 +216,12 @@ export class RolleRepo {
             this.entityName,
             { name: { $ilike: '%' + searchStr + '%' }, ...rollenartQuery, ...technischeQuery },
             {
-                populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                populate: [
+                    'merkmale',
+                    'systemrechte',
+                    'serviceProvider.serviceProvider',
+                    'serviceProvider.serviceProvider.merkmale',
+                ] as const,
                 exclude: ['serviceProvider.serviceProvider.logo'] as const,
                 limit: limit,
                 offset: offset,
@@ -219,7 +241,12 @@ export class RolleRepo {
             rollenarten && rollenarten.length > 0 ? { rollenart: { $in: rollenarten } } : {};
 
         const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            populate: [
+                'merkmale',
+                'systemrechte',
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+            ] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
             where: { ...technischeQuery, ...rollenartQuery },
             limit: limit,
@@ -241,7 +268,7 @@ export class RolleRepo {
             true,
         );
 
-        if (!orgIdsWithRecht.all && orgIdsWithRecht.orgaIds.length == 0) {
+        if (!orgIdsWithRecht.all && orgIdsWithRecht.orgaIds.length === 0) {
             return [[], 0];
         }
 
@@ -255,7 +282,12 @@ export class RolleRepo {
                 ...(orgIdsWithRecht.all ? {} : { administeredBySchulstrukturknoten: { $in: orgIdsWithRecht.orgaIds } }),
             },
             {
-                populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                populate: [
+                    'merkmale',
+                    'systemrechte',
+                    'serviceProvider.serviceProvider',
+                    'serviceProvider.serviceProvider.merkmale',
+                ] as const,
                 exclude: ['serviceProvider.serviceProvider.logo'] as const,
                 limit: limit,
                 offset: offset,
@@ -267,6 +299,57 @@ export class RolleRepo {
         }
 
         return [rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory)), total];
+    }
+
+    public async findBySchulstrukturknoten(administeredBySchulstrukturknoten: OrganisationID): Promise<Rolle<true>[]> {
+        return (
+            await this.em.find(
+                this.entityName,
+                { administeredBySchulstrukturknoten },
+                {
+                    populate: [
+                        'merkmale',
+                        'systemrechte',
+                        'serviceProvider.serviceProvider',
+                        'serviceProvider.serviceProvider.merkmale',
+                    ] as const,
+                    exclude: ['serviceProvider.serviceProvider.logo'] as const,
+                },
+            )
+        ).map((rolleEntity: RolleEntity) => mapRolleEntityToAggregate(rolleEntity, this.rolleFactory));
+    }
+
+    public async findByServiceProviderIds(
+        serviceProviderIds: string[],
+    ): Promise<Map<ServiceProviderID, Rolle<true>[]>> {
+        const rollen: Rolle<true>[] = (
+            await this.em.find(
+                RolleEntity,
+                {
+                    serviceProvider: {
+                        serviceProvider: {
+                            id: { $in: serviceProviderIds },
+                        },
+                    },
+                },
+                {
+                    populate: [
+                        'merkmale',
+                        'systemrechte',
+                        'serviceProvider.serviceProvider',
+                        'serviceProvider.serviceProvider.merkmale',
+                    ] as const,
+                    exclude: ['serviceProvider.serviceProvider.logo'] as const,
+                },
+            )
+        ).map((rolleEntity: RolleEntity) => mapRolleEntityToAggregate(rolleEntity, this.rolleFactory));
+
+        return new Map(
+            serviceProviderIds.map((spId: ServiceProviderID) => [
+                spId,
+                rollen.filter((rolle: Rolle<true>) => rolle.serviceProviderIds.includes(spId)),
+            ]),
+        );
     }
 
     public async exists(id: RolleID): Promise<boolean> {
@@ -281,7 +364,9 @@ export class RolleRepo {
 
     public async save(rolle: Rolle<boolean>): Promise<Rolle<true> | DomainError> {
         const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this, rolle.name);
-        if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(rolle))) return new RolleNameNotUniqueOnSskError();
+        if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(rolle))) {
+            return new RolleNameNotUniqueOnSskError();
+        }
 
         if (rolle.id) {
             return this.update(rolle);
@@ -306,11 +391,16 @@ export class RolleRepo {
             return authorizedRoleResult.error;
         }
         //Specifications
-        if (
-            isAlreadyAssigned &&
-            (merkmale.length > 0 || merkmale.length < authorizedRoleResult.value.merkmale.length)
-        ) {
-            return new UpdateMerkmaleError();
+
+        if (isAlreadyAssigned) {
+            const willMerkmaleChange: boolean = !(
+                merkmale.length === authorizedRoleResult.value.merkmale.length &&
+                merkmale.every((m: RollenMerkmal) => authorizedRoleResult.value.merkmale.includes(m)) &&
+                authorizedRoleResult.value.merkmale.every((m: RollenMerkmal) => merkmale.includes(m))
+            );
+            if (willMerkmaleChange) {
+                return new UpdateMerkmaleError();
+            }
         }
 
         const authorizedRole: Rolle<true> = authorizedRoleResult.value;
@@ -332,6 +422,17 @@ export class RolleRepo {
         if (updatedRolle instanceof DomainError) {
             return updatedRolle;
         }
+
+        if (isAlreadyAssigned) {
+            const spec: NurNachtraeglichZuweisbareServiceProvider = new NurNachtraeglichZuweisbareServiceProvider(
+                this.serviceProviderRepo,
+                authorizedRole,
+            );
+            if (!(await spec.isSatisfiedBy(updatedRolle))) {
+                return new ServiceProviderNichtNachtraeglichZuweisbarError();
+            }
+        }
+
         const result: Rolle<true> | DomainError = await this.save(updatedRolle);
         if (result instanceof DomainError) {
             return result;
@@ -348,7 +449,12 @@ export class RolleRepo {
         }
 
         const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, id, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            populate: [
+                'merkmale',
+                'systemrechte',
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+            ] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
 
@@ -374,7 +480,12 @@ export class RolleRepo {
 
     private async update(rolle: Rolle<true>): Promise<Rolle<true>> {
         const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, rolle.id, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            populate: [
+                'merkmale',
+                'systemrechte',
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+            ] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
 

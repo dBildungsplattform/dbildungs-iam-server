@@ -39,7 +39,6 @@ import { AuthenticationExceptionFilter } from '../../authentication/api/authenti
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -50,10 +49,14 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { RolleDomainError } from '../domain/rolle-domain.error.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
+import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
+import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { AddSystemrechtError } from './add-systemrecht.error.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
+import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
@@ -62,7 +65,11 @@ import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.pa
 import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 import { RolleResponse } from './rolle.response.js';
+import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
+import { SystemRechtResponse } from './systemrecht.response.js';
+import { Public } from '../../authentication/api/public.decorator.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -78,6 +85,8 @@ export class RolleController {
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly logger: ClassLogger,
+        private readonly rollenerweiterungRepo: RollenerweiterungRepo,
+        private readonly rollenerweiterungFactory: RollenerweiterungFactory,
     ) {}
 
     @Get()
@@ -122,7 +131,7 @@ export class RolleController {
             (r: Rolle<true>) => {
                 const sps: ServiceProvider<true>[] = r.serviceProviderIds
                     .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
-                    .filter(Boolean) as ServiceProvider<true>[];
+                    .filter(Boolean);
 
                 const administeredBySchulstrukturknoten: Organisation<true> | undefined = administeredOrganisations.get(
                     r.administeredBySchulstrukturknoten,
@@ -144,6 +153,20 @@ export class RolleController {
         };
 
         return new PagedResponse(pagedRolleWithServiceProvidersResponse);
+    }
+
+    @Get('systemrechte')
+    @ApiOperation({ description: 'Get all systemrechte for rollen.' })
+    @Public()
+    @ApiOkResponse({
+        description: 'Returns all systemrechte for rollen.',
+        type: [SystemRechtResponse],
+    })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error',
+    })
+    public getAllSystemrechte(): SystemRechtResponse[] {
+        return RollenSystemRecht.ALL.map((systemRecht: RollenSystemRecht) => new SystemRechtResponse(systemRecht));
     }
 
     @Get(':rolleId')
@@ -187,7 +210,7 @@ export class RolleController {
         @Body() params: CreateRolleBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<RolleResponse> {
-        const orgResult: Result<OrganisationDo<true>, DomainError> = await this.orgService.findOrganisationById(
+        const orgResult: Result<Organisation<true>, DomainError> = await this.orgService.findOrganisationById(
             params.administeredBySchulstrukturknoten,
         );
         if (!orgResult.ok) {
@@ -203,7 +226,7 @@ export class RolleController {
             params.administeredBySchulstrukturknoten,
             params.rollenart,
             params.merkmale,
-            params.systemrechte,
+            params.systemrechte.map((s: RollenSystemRechtEnum) => RollenSystemRecht.getByName(s)),
             [],
             [],
             false,
@@ -244,7 +267,7 @@ export class RolleController {
     ): Promise<void> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (rolle) {
-            rolle.addSystemRecht(addSystemrechtBodyParams.systemRecht);
+            rolle.addSystemRecht(RollenSystemRecht.getByName(addSystemrechtBodyParams.systemRecht));
             await this.rolleRepo.save(rolle);
         } else {
             throw new AddSystemrechtError(); //hide that rolle is not found
@@ -393,7 +416,7 @@ export class RolleController {
             findRolleByIdParams.rolleId,
             params.name,
             params.merkmale,
-            params.systemrechte,
+            params.systemrechte.map((s: RollenSystemRechtEnum) => RollenSystemRecht.getByName(s)),
             params.serviceProviderIds,
             params.version,
             isAlreadyAssigned,
@@ -466,6 +489,45 @@ export class RolleController {
         this.logger.info(`Admin: ${permissions.personFields.id}) hat eine Rolle entfernt: ${rolleName}.`);
     }
 
+    @Post('erweiterung')
+    @UseGuards(StepUpGuard)
+    @HttpCode(HttpStatus.CREATED)
+    @ApiOperation({ description: 'Create a new rollenerweiterung.' })
+    @ApiCreatedResponse({
+        description: 'The rollenerweiterung was successfully created.',
+        type: RollenerweiterungResponse,
+    })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamRolleError })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to create the rollenerweiterung.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rollenerweiterung.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the rollenerweiterung.' })
+    public async createRollenerweiterung(
+        @Body() params: CreateRollenerweiterungBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<RollenerweiterungResponse> {
+        const rollenerweiterung: Rollenerweiterung<false> = this.rollenerweiterungFactory.createNew(
+            params.organisationId,
+            params.rolleId,
+            params.serviceProviderId,
+        );
+
+        const result: Result<Rollenerweiterung<true>, DomainError> = await this.rollenerweiterungRepo.createAuthorized(
+            rollenerweiterung,
+            permissions,
+        );
+        if (!result.ok) {
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht eine Rolle ${params.rolleId} zu erweitern. Fehler: ${result.error.message}.`,
+            );
+            throw result.error;
+        }
+        this.logger.info(
+            `Admin: ${permissions.personFields.id}) hat eine Rolle erweitert. organisationId: ${result.value.organisationId} rolleId: ${result.value.rolleId} serviceProviderId: ${result.value.serviceProviderId}.`,
+        );
+
+        return new RollenerweiterungResponse(result.value);
+    }
+
     private async returnRolleWithServiceProvidersResponse(
         rolle: Rolle<true>,
     ): Promise<RolleWithServiceProvidersResponse> {
@@ -473,7 +535,7 @@ export class RolleController {
 
         const rolleServiceProviders: ServiceProvider<true>[] = rolle.serviceProviderIds
             .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
-            .filter(Boolean) as ServiceProvider<true>[];
+            .filter(Boolean);
 
         return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
     }

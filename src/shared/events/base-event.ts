@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-declare const EVENT_MARKER: unique symbol;
+const EVENT_MARKER: unique symbol = Symbol();
 
 export abstract class BaseEvent {
     // Is used to brand the class, this property will never exist on the created instances.

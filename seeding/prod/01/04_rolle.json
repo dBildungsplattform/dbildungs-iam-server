@@ -17,7 +17,10 @@
                 "PERSON_SYNCHRONISIEREN",
                 "IMPORT_DURCHFUEHREN",
                 "PERSONEN_ANLEGEN",
-                "BULK_VERWALTEN"
+                "BULK_VERWALTEN",
+                "SCHULPORTAL_VERWALTEN",
+                "HINWEISE_BEARBEITEN",
+                "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN"
             ],
             "serviceProviderIds": [5, 8, 9, 10, 11]
         },
@@ -37,7 +40,7 @@
             "rollenart": "LEHR",
             "merkmale": ["KOPERS_PFLICHT"],
             "systemrechte": [],
-            "serviceProviderIds": [0, 1, 2, 4, 6, 7, 8, 9, 10, 11]
+            "serviceProviderIds": [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]
         },
         {
             "id": 3,
@@ -54,7 +57,13 @@
             "name": "Schuladministrator öffentlich",
             "rollenart": "LEIT",
             "merkmale": [],
-            "systemrechte": ["PERSONEN_VERWALTEN", "KLASSEN_VERWALTEN"],
+            "systemrechte": [
+                "PERSONEN_VERWALTEN",
+                "KLASSEN_VERWALTEN",
+                "BULK_VERWALTEN",
+                "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+                "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN"
+            ],
             "serviceProviderIds": [5, 8, 9, 10, 11]
         },
         {
@@ -137,15 +146,6 @@
             "merkmale": ["KOPERS_PFLICHT"],
             "systemrechte": [],
             "serviceProviderIds": [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]
-        },
-        {
-            "id": 15,
-            "administeredBySchulstrukturknoten": 0,
-            "name": "itslearning-Lehrkraft",
-            "rollenart": "LEHR",
-            "merkmale": [],
-            "systemrechte": [],
-            "serviceProviderIds": [3]
         },
         {
             "id": 16,

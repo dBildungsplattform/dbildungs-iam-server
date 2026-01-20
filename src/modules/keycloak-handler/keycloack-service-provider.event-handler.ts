@@ -77,7 +77,6 @@ export class KeycloackServiceProviderHandler {
         const currentRolleIDs: RolleID[] = currentKontexte
             .map((kontext: PersonenkontextUpdatedData) => kontext.rolleId)
             .filter((id: RolleID) => id && !newRolleIDs.includes(id));
-        /* eslint-disable no-await-in-loop */
         if (person.keycloakUserId) {
             const promises: Promise<void>[] = [];
 
@@ -99,7 +98,6 @@ export class KeycloackServiceProviderHandler {
 
             await Promise.all(promises);
         }
-        /* eslint-disable no-await-in-loop */
     }
 
     private async updateUserGroups(

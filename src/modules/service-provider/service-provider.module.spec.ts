@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
 import { ServiceProviderModule } from './service-provider.module.js';
 import { EventModule } from '../../core/eventbus/index.js';
 
@@ -8,13 +8,7 @@ describe('ServiceProviderModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                ConfigTestModule,
-                DatabaseTestModule.forRoot(),
-                ServiceProviderModule,
-                MapperTestModule,
-                EventModule,
-            ],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), ServiceProviderModule, EventModule],
         }).compile();
     });
 

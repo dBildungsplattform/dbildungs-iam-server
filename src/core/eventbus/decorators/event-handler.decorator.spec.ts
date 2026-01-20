@@ -24,7 +24,6 @@ class TestClass {
 
 describe('EventHandler decorator', () => {
     it('should set metadata', () => {
-        // eslint-disable-next-line jest/unbound-method
         const meta: unknown = Reflect.getMetadata(EVENT_HANDLER_META, TestClass.prototype.handler);
 
         expect(meta).toBe(TestEvent);

@@ -33,6 +33,8 @@ data:
   OX_CONTEXT_ID: "{{ .Values.ox.contextId }}"
   OX_CONTEXT_NAME: "{{ .Values.ox.contextName }}"
   OX_NUMBER_OF_RETRIES: "{{ .Values.ox.numberOfRetries }}"
+  OX_USER_PASSWORD_DEFAULT: "{{ .Values.ox.userPasswordDefault }}"
+  OX_EMAIL_ADDRESS_DELETED_EVENT_DELAY: "{{ .Values.ox.emailAddressDeletedEventDelay }}"
   NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: "{{ .Values.email.nonEnabledEmailAddressesDeadlineInDays }}"
   SYSTEM_RENAME_WAITING_TIME_IN_SECONDS: "{{ .Values.backend.env.renameWaitingTimeInSeconds }}"
   SYSTEM_STEP_UP_TIMEOUT_ENABLED: "{{ .Values.backend.env.stepUpTimeoutEnabled }}"
@@ -51,10 +53,15 @@ data:
   IMPORT_CSV_MAX_NUMBER_OF_USERS: '{{ .Values.import.csvMaxNumberOfUsers }}'
   FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: '{{ .Values.featureFlags.befristungBearbeiten }}'
   KAFKA_ENABLED: '{{ .Values.kafka.enabled }}'
-  KAFKA_SASL_ENABLED: '{{ .Values.kafka.saslEnabled }}'
+  KAFKA_SSL_ENABLED: '{{ .Values.kafka.sslEnabled }}'
+  KAFKA_SSL_CA_PATH: '{{ .Values.kafka.sslCaPath }}'
+  KAFKA_SSL_CERT_PATH: '{{ .Values.kafka.sslCertPath }}'
+  KAFKA_SSL_KEY_PATH: '{{ .Values.kafka.sslKeyPath }}'
   KAFKA_TOPIC_PREFIX: '{{ .Release.Namespace }}-'
-  KAFKA_BROKER: '{{ .Values.kafka.url }}'
   KAFKA_GROUP_ID: '{{ .Release.Namespace }}-group'
   KAFKA_SESSION_TIMEOUT: '{{ .Values.kafka.sessionTimeout }}'
   KAFKA_HEARTBEAT_INTERVAL: '{{ .Values.kafka.heartbeatInterval }}'
   REDIS_HOST: '{{ .Values.redis.host }}'
+  CRON_PERSON_WITHOUT_ORG_LIMIT: '{{ .Values.cron.personWithoutOrgLimit }}'
+  CRON_EMAIL_ADDRESSES_DELETE_LIMIT: '{{ .Values.cron.emailAddressesDeleteLimit }}'
+  FEATURE_FLAG_ROLLE_ERWEITERN: '{{ .Values.featureFlags.rolleErweitern }}'

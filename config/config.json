@@ -19,7 +19,7 @@
         "CLIENT_URL": "postgres://localhost:5432",
         "DB_NAME": "dbildungs-iam-server",
         "USERNAME": "admin",
-        "PASSWORD": "password",
+        "SECRET": "password",
         "USE_SSL": false
     },
     "KEYCLOAK": {
@@ -84,7 +84,9 @@
         "CONTEXT_NAME": "contextname",
         "USERNAME": "username",
         "PASSWORD": "password",
-        "NUMBER_OF_RETRIES": 3
+        "NUMBER_OF_RETRIES": 3,
+        "USER_PASSWORD_DEFAULT": "placeholder",
+        "EMAIL_ADDRESS_DELETED_EVENT_DELAY": 0
     },
     "EMAIL": {
         "NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS": 180
@@ -120,7 +122,8 @@
     },
     "FEATUREFLAG": {
         "FEATURE_FLAG_ROLLE_BEARBEITEN": false,
-        "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": true
+        "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": true,
+        "FEATURE_FLAG_ROLLE_ERWEITERN": true
     },
     "KAFKA": {
         "BROKER": "localhost:9094",
@@ -131,11 +134,20 @@
         "SESSION_TIMEOUT": 300000,
         "HEARTBEAT_INTERVAL": 10000,
         "ENABLED": true,
-        "SASL_ENABLED": false,
-        "USERNAME": "",
-        "PASSWORD": ""
+        "SSL_ENABLED": false
     },
     "PORTAL": {
         "LIMITED_ROLLENART_ALLOWLIST": ["LERN", "EXTERN"]
+    },
+    "CRON": {
+        "PERSON_WITHOUT_ORG_LIMIT": 30,
+        "EMAIL_ADDRESSES_DELETE_LIMIT": 10
+    },
+    "EMAIL_MICROSERVICE": {
+        "USE_EMAIL_MICROSERVICE": false,
+        "ENDPOINT": "http://localhost:9091/"
+    },
+    "SCHULCONNEX": {
+        "LIMIT_PERSONENINFO": 2500
     }
 }

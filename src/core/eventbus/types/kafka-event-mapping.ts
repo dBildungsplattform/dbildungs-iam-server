@@ -6,7 +6,6 @@ import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/ka
 import { KafkaImportExecutedEvent } from '../../../shared/events/kafka-import-executed.event.js';
 import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
 import { KafkaKlasseCreatedEvent } from '../../../shared/events/kafka-klasse-created.event.js';
-import { KafkaKlasseDeletedEvent } from '../../../shared/events/kafka-klasse-deleted.event.js';
 import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-updated.event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
@@ -31,11 +30,16 @@ import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ka
 import { KafkaOxAccountDeletedEvent } from '../../../shared/events/ox/kafka-ox-account-deleted.event.js';
 import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
 import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
-import { KafkaOxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/kafka-ox-metadata-in-keycloak-changed.event.js';
 import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
+import { KafkaLdapSyncCompletedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-completed.event.js';
+import { KafkaLdapSyncFailedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-failed.event.js';
+import { KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/kafka-email-address-generated-after-ldap-sync-failed.event.js';
+import { KafkaOxSyncUserCreatedEvent } from '../../../shared/events/ox/kafka-ox-sync-user-created.event.js';
+import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
 
 export type KafkaEventKey =
     | 'user.created.email'
+    | 'user.created.email.after.ldap.sync.failed'
     | 'user.deleted'
     | 'user.deleted_deadline'
     | 'user.modified.name'
@@ -49,6 +53,8 @@ export type KafkaEventKey =
     | 'user.email.disabled'
     | 'user.email.purged'
     | 'user.ldap.synced'
+    | 'user.ldap.sync.completed'
+    | 'user.ldap.sync.failed'
     | 'user.ldap.entry_deleted'
     | 'user.ldap.entry_changed'
     | 'user.ldap.entry_renamed'
@@ -56,18 +62,18 @@ export type KafkaEventKey =
     | 'user.ox.disabled_changed'
     | 'user.ox.deleted'
     | 'user.ox.email_deleted'
-    | 'user.ox.kc_metadata_changed'
     | 'user.ox.user_changed'
+    | 'user.ox.sync.user_created'
     | 'import.executed'
     | 'group_role.created'
     | 'klasse.created'
-    | 'klasse.deleted'
     | 'klasse.updated'
     | 'rolle.updated'
     | 'schule.created'
-    | 'schule.itslearning_enabled';
+    | 'schule.itslearning_enabled'
+    | 'organisation.deleted';
 
-type TopicPrefixes = 'user' | 'import' | 'group-role' | 'klasse' | 'rolle' | 'schule';
+type TopicPrefixes = 'user' | 'import' | 'group-role' | 'rolle' | 'organisation';
 
 export type KafkaTopic = `${TopicPrefixes}-topic`;
 export type KafkaTopicDlq = `${TopicPrefixes}-dlq-topic`;
@@ -81,6 +87,11 @@ export interface KafkaEventMappingEntry {
 export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = {
     'user.created.email': {
         eventClass: KafkaEmailAddressGeneratedEvent,
+        topic: 'user-topic',
+        topicDlq: 'user-dlq-topic',
+    },
+    'user.created.email.after.ldap.sync.failed': {
+        eventClass: KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent,
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
@@ -138,31 +149,32 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
         topicDlq: 'rolle-dlq-topic',
     },
 
+    'organisation.deleted': {
+        eventClass: KafkaOrganisationDeletedEvent,
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
+    },
+
     'klasse.created': {
         eventClass: KafkaKlasseCreatedEvent,
-        topic: 'klasse-topic',
-        topicDlq: 'klasse-dlq-topic',
-    },
-    'klasse.deleted': {
-        eventClass: KafkaKlasseDeletedEvent,
-        topic: 'klasse-topic',
-        topicDlq: 'klasse-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
     'klasse.updated': {
         eventClass: KafkaKlasseUpdatedEvent,
-        topic: 'klasse-topic',
-        topicDlq: 'klasse-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
 
     'schule.created': {
         eventClass: KafkaSchuleCreatedEvent,
-        topic: 'schule-topic',
-        topicDlq: 'schule-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
     'schule.itslearning_enabled': {
         eventClass: KafkaSchuleItslearningEnabledEvent,
-        topic: 'schule-topic',
-        topicDlq: 'schule-dlq-topic',
+        topic: 'organisation-topic',
+        topicDlq: 'organisation-dlq-topic',
     },
 
     'user.email.already_exists': {
@@ -216,7 +228,16 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
-
+    'user.ldap.sync.completed': {
+        eventClass: KafkaLdapSyncCompletedEvent,
+        topic: 'user-topic',
+        topicDlq: 'user-dlq-topic',
+    },
+    'user.ldap.sync.failed': {
+        eventClass: KafkaLdapSyncFailedEvent,
+        topic: 'user-topic',
+        topicDlq: 'user-dlq-topic',
+    },
     'user.ox.deleted': {
         eventClass: KafkaOxAccountDeletedEvent,
         topic: 'user-topic',
@@ -232,8 +253,8 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
-    'user.ox.kc_metadata_changed': {
-        eventClass: KafkaOxMetadataInKeycloakChangedEvent,
+    'user.ox.sync.user_created': {
+        eventClass: KafkaOxSyncUserCreatedEvent,
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },

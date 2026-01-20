@@ -1,12 +1,12 @@
-import { Request, Response } from 'express';
 import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
-import { OIDC_CLIENT } from './oidc-client.service.js';
+import { ConfigService } from '@nestjs/config';
+import { Request, Response } from 'express';
 import { Client, TokenSet } from 'openid-client';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { SystemConfig } from '../../../shared/config/system.config.js';
-import { ConfigService } from '@nestjs/config';
 import { updateAndGetStepUpLevel } from '../passport/oidc.strategy.js';
+import { OIDC_CLIENT } from './oidc-client.service.js';
 
 /**
  * Checks the Access Token and refreshes it if need be.
@@ -38,9 +38,12 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
         }
 
         if (accessToken) {
-            if (!(await this.client.introspect(accessToken)).active)
-                if (refreshToken && (await this.client.introspect(refreshToken)).active && req.passportUser) {
-                    // Do we have a refresh token and somewhere to store the result of the refresh?
+            const isAccessTokenActive: boolean = (await this.client.introspect(accessToken)).active;
+            if (!isAccessTokenActive) {
+                // Do we have a refresh token and somewhere to store the result of the refresh?
+                const isRefreshTokenActive: boolean =
+                    refreshToken !== undefined && (await this.client.introspect(refreshToken)).active;
+                if (refreshToken && isRefreshTokenActive && req.passportUser) {
                     try {
                         const tokens: TokenSet = await this.client.refresh(refreshToken);
                         if (tokens) {
@@ -57,10 +60,17 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                         }
                     }
                 } else {
+                    this.logger.info(
+                        `Attempting to logout user ${req.passportUser?.userinfo.sub}. refreshToken:${!!refreshToken}, isRefreshTokenActive:${isRefreshTokenActive}, passportUser:${!!req.passportUser}`,
+                    );
                     req.logout((err: unknown) => {
-                        this.logger.logUnknownAsError('Logout Failed', err, false);
+                        if (err) {
+                            this.logger.logUnknownAsError('Logout Failed', err, false);
+                            this.logger.error(`Logout of user ${req.passportUser?.userinfo.sub} failed`);
+                        }
                     });
                 }
+            }
         }
         next();
     }

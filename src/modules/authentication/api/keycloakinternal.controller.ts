@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UserExeternalDataResponse } from './externaldata/user-externaldata.response.js';
+import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { UserExternaldataWorkflowAggregate } from '../domain/user-extenaldata.workflow.js';
@@ -8,9 +8,13 @@ import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error
 import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { AccessApiKeyGuard } from './access.apikey.guard.js';
 import { Public } from './public.decorator.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { NewOxParams, OldOxParams } from './externaldata/user-externaldata-ox.response.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -24,6 +28,7 @@ export class KeycloakInternalController {
     public constructor(
         private readonly userExternaldataWorkflowFactory: UserExternaldataWorkflowFactory,
         private readonly personRepository: PersonRepository,
+        private readonly emailResolverService: EmailResolverService,
     ) {}
 
     /*
@@ -37,8 +42,8 @@ export class KeycloakInternalController {
     @Public()
     @UseGuards(AccessApiKeyGuard)
     @ApiOperation({ summary: 'External Data about requested in user.' })
-    @ApiOkResponse({ description: 'Returns external Data about the requested user.', type: UserExeternalDataResponse })
-    public async getExternalData(@Body() params: { sub: string }): Promise<UserExeternalDataResponse> {
+    @ApiOkResponse({ description: 'Returns external Data about the requested user.', type: UserExternalDataResponse })
+    public async getExternalData(@Body() params: { sub: string }): Promise<UserExternalDataResponse> {
         const person: Option<Person<true>> = await this.personRepository.findByKeycloakUserId(params.sub);
         if (!person) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -49,8 +54,8 @@ export class KeycloakInternalController {
         }
 
         const workflow: UserExternaldataWorkflowAggregate = this.userExternaldataWorkflowFactory.createNew();
-        await workflow.initialize(person.id);
-        if (!workflow.person || !workflow.checkedExternalPkData) {
+        const workflowInitializeError: Option<DomainError> = await workflow.initialize(person.id);
+        if (workflowInitializeError || !workflow.person || !workflow.checkedExternalPkData) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new UserExternalDataWorkflowError(
@@ -60,6 +65,44 @@ export class KeycloakInternalController {
             );
         }
 
-        return UserExeternalDataResponse.createNew(workflow.person, workflow.checkedExternalPkData, workflow.contextID);
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            const oxParams: NewOxParams = {
+                oxLoginId: workflow.oxLoginId!,
+            };
+            return UserExternalDataResponse.createNew(
+                workflow.person,
+                workflow.checkedExternalPkData,
+                workflow.personenKontextErweiterungen!,
+                oxParams,
+            );
+        } else {
+            // Check if user has email sp
+            const mergedExternalPkData: RequiredExternalPkData[] =
+                UserExternaldataWorkflowAggregate.mergeServiceProviders(
+                    workflow.checkedExternalPkData,
+                    workflow.personenKontextErweiterungen!,
+                );
+
+            const hasEmail: boolean = mergedExternalPkData.some((pkData: RequiredExternalPkData) =>
+                pkData.serviceProvider.some(
+                    (sp: ServiceProviderEntity) => sp.externalSystem === ServiceProviderSystem.EMAIL,
+                ),
+            );
+
+            let oxParams: OldOxParams | undefined;
+            if (hasEmail) {
+                oxParams = {
+                    contextId: workflow.contextID,
+                    username: workflow.person.username!,
+                };
+            }
+
+            return UserExternalDataResponse.createNew(
+                workflow.person,
+                workflow.checkedExternalPkData,
+                workflow.personenKontextErweiterungen!,
+                oxParams,
+            );
+        }
     }
 }

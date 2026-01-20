@@ -13,7 +13,7 @@ import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { EmailAdressOnOrganisationTyp } from '../specification/email-on-organisation-type.js';
@@ -99,7 +99,11 @@ export class OrganisationService {
                     organisation.zugehoerigZu,
                 );
                 let schoolName: string = 'SCHOOL_NOT_FOUND';
-                if (school) if (school.name) schoolName = school.name;
+                if (school) {
+                    if (school.name) {
+                        schoolName = school.name;
+                    }
+                }
 
                 if (error) {
                     this.logger.error(
@@ -406,6 +410,7 @@ export class OrganisationService {
             await this.organisationRepo.save(childOrga);
             return { ok: true, value: undefined };
         } catch (e) {
+            this.logger.logUnknownAsError('Could not update organisation', e);
             return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
         }
     }
@@ -429,7 +434,9 @@ export class OrganisationService {
 
         const validateStructureSpecifications: Result<boolean, OrganisationSpecificationError> =
             await this.validateStructureSpecifications(childOrganisation);
-        if (!validateStructureSpecifications.ok) return { ok: false, error: validateStructureSpecifications.error };
+        if (!validateStructureSpecifications.ok) {
+            return { ok: false, error: validateStructureSpecifications.error };
+        }
 
         return { ok: true, value: true };
     }
@@ -550,5 +557,55 @@ export class OrganisationService {
             items: organisations,
             pageTotal: organisations.length,
         };
+    }
+
+    public async findOrganisationByIdAndAnyMatchingPermissions(
+        permissions: PersonPermissions,
+        organisationId: OrganisationID,
+    ): Promise<Result<Organisation<true>, EntityNotFoundError | MissingPermissionsError>> {
+        const [organisations]: [Organisation<true>[], total: number, pageTotal: number] =
+            await this.organisationRepo.findAuthorized(
+                permissions,
+                [
+                    RollenSystemRecht.SCHULTRAEGER_VERWALTEN,
+                    RollenSystemRecht.SCHULEN_VERWALTEN,
+                    RollenSystemRecht.KLASSEN_VERWALTEN,
+                ],
+                { organisationIds: [organisationId], limit: 1, matchAllSystemrechte: false },
+            );
+        const organisation: Option<Organisation<true>> = organisations[0];
+        if (organisation?.id !== organisationId) {
+            return { ok: false, error: new EntityNotFoundError('Organisation', organisationId) };
+        }
+
+        const systemrecht: Option<RollenSystemRecht> = this.findSystemRechtForOrganisationsTyp(organisation.typ);
+        if (!systemrecht) {
+            return {
+                ok: false,
+                error: new MissingPermissionsError('Permission to manage organisation does not exist'),
+            };
+        }
+
+        if (await permissions.hasSystemrechtAtOrganisation(organisationId, systemrecht)) {
+            return {
+                ok: true,
+                value: organisation,
+            };
+        } else {
+            return { ok: false, error: new MissingPermissionsError('Not permitted to manage organisation') };
+        }
+    }
+
+    private findSystemRechtForOrganisationsTyp(typ?: OrganisationsTyp): Option<RollenSystemRecht> {
+        switch (typ) {
+            case OrganisationsTyp.TRAEGER:
+                return RollenSystemRecht.SCHULTRAEGER_VERWALTEN;
+            case OrganisationsTyp.SCHULE:
+                return RollenSystemRecht.SCHULEN_VERWALTEN;
+            case OrganisationsTyp.KLASSE:
+                return RollenSystemRecht.KLASSEN_VERWALTEN;
+            default:
+                return;
+        }
     }
 }

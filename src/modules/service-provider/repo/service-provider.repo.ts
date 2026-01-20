@@ -1,14 +1,18 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { EntityData, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 
-import { ServiceProvider } from '../domain/service-provider.js';
-import { ServiceProviderEntity } from './service-provider.entity.js';
-import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-
-import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
-import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
+import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
+import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { ServiceProvider } from '../domain/service-provider.js';
+import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
+import { ServiceProviderEntity } from './service-provider.entity.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -16,6 +20,13 @@ import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-g
 export function mapAggregateToData(
     serviceProvider: ServiceProvider<boolean>,
 ): RequiredEntityData<ServiceProviderEntity> {
+    const merkmale: EntityData<ServiceProviderMerkmalEntity>[] = serviceProvider.merkmale.map(
+        (merkmal: ServiceProviderMerkmal) => ({
+            serviceProvider: serviceProvider.id,
+            merkmal,
+        }),
+    );
+
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: serviceProvider.id,
@@ -31,10 +42,15 @@ export function mapAggregateToData(
         externalSystem: serviceProvider.externalSystem,
         requires2fa: serviceProvider.requires2fa,
         vidisAngebotId: serviceProvider.vidisAngebotId,
+        merkmale,
     };
 }
 
 function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<boolean> {
+    const merkmale: ServiceProviderMerkmal[] = entity.merkmale.map(
+        (merkmalEntity: ServiceProviderMerkmalEntity) => merkmalEntity.merkmal,
+    );
+
     return ServiceProvider.construct(
         entity.id,
         entity.createdAt,
@@ -51,6 +67,7 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
         entity.externalSystem,
         entity.requires2fa,
         entity.vidisAngebotId,
+        merkmale,
     );
 }
 
@@ -71,16 +88,20 @@ export class ServiceProviderRepo {
         const serviceProvider: Option<ServiceProviderEntity> = (await this.em.findOne(
             ServiceProviderEntity,
             { id },
-            { exclude },
+            { exclude, populate: ['merkmale'] },
         )) as Option<ServiceProviderEntity>;
 
         return serviceProvider && mapEntityToAggregate(serviceProvider);
     }
 
     public async findByName(name: string): Promise<Option<ServiceProvider<true>>> {
-        const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(ServiceProviderEntity, {
-            name: name,
-        });
+        const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(
+            ServiceProviderEntity,
+            {
+                name: name,
+            },
+            { populate: ['merkmale'] },
+        );
         if (serviceProvider) {
             return mapEntityToAggregate(serviceProvider);
         }
@@ -89,9 +110,13 @@ export class ServiceProviderRepo {
     }
 
     public async findByVidisAngebotId(vidisAngebotId: string): Promise<Option<ServiceProvider<true>>> {
-        const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(ServiceProviderEntity, {
-            vidisAngebotId: vidisAngebotId,
-        });
+        const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(
+            ServiceProviderEntity,
+            {
+                vidisAngebotId: vidisAngebotId,
+            },
+            { populate: ['merkmale'] },
+        );
         if (serviceProvider) {
             return mapEntityToAggregate(serviceProvider);
         }
@@ -100,9 +125,13 @@ export class ServiceProviderRepo {
     }
 
     public async findByKeycloakGroup(groupname: string): Promise<ServiceProvider<true>[]> {
-        const serviceProviders: ServiceProviderEntity[] = await this.em.find(ServiceProviderEntity, {
-            keycloakGroup: groupname,
-        });
+        const serviceProviders: ServiceProviderEntity[] = await this.em.find(
+            ServiceProviderEntity,
+            {
+                keycloakGroup: groupname,
+            },
+            { populate: ['merkmale'] },
+        );
         return serviceProviders.map(mapEntityToAggregate);
     }
 
@@ -111,6 +140,7 @@ export class ServiceProviderRepo {
 
         const serviceProviders: ServiceProviderEntity[] = (await this.em.findAll(ServiceProviderEntity, {
             exclude,
+            populate: ['merkmale'],
         })) as ServiceProviderEntity[];
 
         return serviceProviders.map(mapEntityToAggregate);
@@ -120,7 +150,9 @@ export class ServiceProviderRepo {
         const serviceProviderEntities: ServiceProviderEntity[] = await this.em.find(
             ServiceProviderEntity,
             { id: { $in: ids } },
-            {},
+            {
+                populate: ['merkmale'],
+            },
         );
 
         const serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
@@ -130,6 +162,72 @@ export class ServiceProviderRepo {
         });
 
         return serviceProviderMap;
+    }
+
+    public async findAuthorized(
+        permissions: PersonPermissions,
+        limit?: number,
+        offset?: number,
+    ): Promise<Counted<ServiceProvider<true>>> {
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN],
+            true,
+        );
+        const [entities, count]: Counted<ServiceProviderEntity> = await this.em.findAndCount(
+            ServiceProviderEntity,
+            permittedOrgas.all
+                ? {}
+                : {
+                      providedOnSchulstrukturknoten: { $in: permittedOrgas.orgaIds },
+                  },
+            {
+                populate: ['merkmale'],
+                limit,
+                offset,
+                orderBy: {
+                    kategorie: 'ASC', // kategorie defines a custom order
+                },
+            },
+        );
+
+        return [entities.map(mapEntityToAggregate), count];
+    }
+
+    public async findAuthorizedById(
+        permissions: PersonPermissions,
+        id: string,
+    ): Promise<Option<ServiceProvider<true>>> {
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN],
+            true,
+        );
+        const entity: Option<ServiceProviderEntity> = await this.em.findOne(
+            ServiceProviderEntity,
+            permittedOrgas.all
+                ? { id }
+                : {
+                      id,
+                      providedOnSchulstrukturknoten: { $in: permittedOrgas.orgaIds },
+                  },
+            {
+                populate: ['merkmale'],
+            },
+        );
+        return entity ? mapEntityToAggregate(entity) : entity;
+    }
+
+    public async findBySchulstrukturknoten(organisationsId: string): Promise<Array<ServiceProvider<true>>> {
+        const exclude: readonly ['logo'] | undefined = ['logo'];
+        return (
+            await this.em.find(
+                ServiceProviderEntity,
+                { providedOnSchulstrukturknoten: organisationsId },
+                {
+                    populate: ['merkmale'],
+                    exclude,
+                },
+            )
+        ).map(mapEntityToAggregate);
     }
 
     public async save(serviceProvider: ServiceProvider<boolean>): Promise<ServiceProvider<true>> {
@@ -184,7 +282,7 @@ export class ServiceProviderRepo {
                 },
             },
             {
-                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
+                populate: ['serviceProvider', 'serviceProvider.merkmale', 'rolle', 'rolle.personenKontexte'],
             },
         );
 

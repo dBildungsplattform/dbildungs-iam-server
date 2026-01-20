@@ -1,0 +1,38 @@
+{
+    "HOST": {
+        "PORT": 9091
+    },
+    "LOGGING": {
+        "DEFAULT_LOG_LEVEL": "info"
+    },
+    "DB": {
+        "CLIENT_URL": "postgres://localhost:5432",
+        "DB_NAME": "dbildungs-iam-server",
+        "USERNAME": "admin",
+        "SECRET": "password",
+        "USE_SSL": false
+    },
+    "LDAP": {
+        "URL": "ldap://localhost",
+        "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
+        "ADMIN_PASSWORD": "admin",
+        "BASE_DN": "dc=schule-sh,dc=de",
+        "RETRY_WRAPPER_DEFAULT_RETRIES": 3,
+        "OEFFENTLICHE_SCHULEN_DOMAIN": "qs.schule-sh.de",
+        "ERSATZSCHULEN_DOMAIN": "qs.ersatzschule-sh.de"
+    },
+    "OX": {
+        "ENABLED": false,
+        "ENDPOINT": "http://ox.dev.spsh.dbildungsplattform.de/webservices/",
+        "CONTEXT_ID": "1337",
+        "CONTEXT_NAME": "contextname",
+        "USERNAME": "username",
+        "PASSWORD": "password",
+        "NUMBER_OF_RETRIES": 3,
+        "USER_PASSWORD_DEFAULT": "placeholder",
+        "EMAIL_ADDRESS_DELETED_EVENT_DELAY": 0
+    },
+    "EMAIL": {
+        "NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS": 90
+    }
+}

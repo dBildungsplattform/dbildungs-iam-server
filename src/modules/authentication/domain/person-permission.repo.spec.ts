@@ -1,20 +1,20 @@
 import { faker } from '@faker-js/faker';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
-    MapperTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
 } from '../../../../test/utils/index.js';
-import { PersonPermissionsRepo } from './person-permission.repo.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Person } from '../../person/domain/person.js';
-import { PersonPermissions } from './person-permissions.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { KeycloakUserNotFoundError } from './keycloak-user-not-found.error.js';
+import { PersonPermissionsRepo } from './person-permission.repo.js';
+import { PersonPermissions } from './person-permissions.js';
 
 describe('PersonPermissionRepo', () => {
     let module: TestingModule;
@@ -23,7 +23,7 @@ describe('PersonPermissionRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, MapperTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [
                 PersonPermissionsRepo,
                 {
@@ -33,6 +33,10 @@ describe('PersonPermissionRepo', () => {
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: RollenerweiterungRepo,
+                    useValue: createMock<RollenerweiterungRepo>(),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,

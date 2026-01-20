@@ -1,27 +1,39 @@
 import { Injectable } from '@nestjs/common';
-import { uniq } from 'lodash-es';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
-import { ServiceProvider } from './service-provider.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { VidisService } from '../../vidis/vidis.service.js';
-import { ServiceProviderTarget, ServiceProviderKategorie, ServiceProviderSystem } from './service-provider.enum.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ConfigService } from '@nestjs/config';
+import { uniq } from 'lodash-es';
+
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { FeatureFlagConfig } from '../../../shared/config/featureflag.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { VidisConfig } from '../../../shared/config/vidis.config.js';
+import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
+import { VidisService } from '../../vidis/vidis.service.js';
+import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
+import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
+import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
+import { ServiceProvider } from './service-provider.js';
+import {
+    ManageableServiceProviderWithReferencedObjects,
+    RollenerweiterungForManageableServiceProvider,
+} from './types.js';
 
 @Injectable()
 export class ServiceProviderService {
     private readonly vidisConfig: VidisConfig;
 
+    private readonly isFeatureRolleErweiternEnabled: boolean;
+
     public constructor(
         private readonly logger: ClassLogger,
         private readonly rolleRepo: RolleRepo,
+        private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly organisationRepo: OrganisationRepository,
         private readonly vidisService: VidisService,
@@ -29,10 +41,12 @@ export class ServiceProviderService {
         configService: ConfigService<ServerConfig>,
     ) {
         this.vidisConfig = configService.getOrThrow<VidisConfig>('VIDIS');
+        const featureFlags: FeatureFlagConfig = configService.getOrThrow<FeatureFlagConfig>('FEATUREFLAG');
+        this.isFeatureRolleErweiternEnabled = featureFlags.FEATURE_FLAG_ROLLE_ERWEITERN;
     }
 
     public async getServiceProvidersByRolleIds(rolleIds: string[]): Promise<ServiceProvider<true>[]> {
-        const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rolleIds);
+        const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(uniq(rolleIds));
         const serviceProviderIds: Array<string> = uniq(
             Array.from(rollen.values()).flatMap((rolle: Rolle<true>) => rolle.serviceProviderIds),
         );
@@ -41,6 +55,71 @@ export class ServiceProviderService {
         );
 
         return Array.from(serviceProviders.values());
+    }
+
+    public async getServiceProvidersByOrganisationenAndRollen(
+        ids: Array<{ organisationId: string; rolleId: string }>,
+    ): Promise<ServiceProvider<true>[]> {
+        const uniqueRollenIds: RolleID[] = uniq(
+            ids.map((idTuple: { organisationId: string; rolleId: string }) => idTuple.rolleId),
+        );
+        const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(uniqueRollenIds);
+        const serviceProviderIds: Set<ServiceProviderID> = new Set();
+        for (const rolle of rollen.values()) {
+            for (const id of rolle.serviceProviderIds) {
+                serviceProviderIds.add(id);
+            }
+        }
+
+        if (this.isFeatureRolleErweiternEnabled) {
+            const rollenerweiterungen: Array<Rollenerweiterung<true>> =
+                await this.rollenerweiterungRepo.findManyByOrganisationAndRolle(ids);
+            for (const rollenerweiterung of rollenerweiterungen) {
+                serviceProviderIds.add(rollenerweiterung.serviceProviderId);
+            }
+        }
+
+        const serviceProviders: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
+            Array.from(serviceProviderIds),
+        );
+
+        return Array.from(serviceProviders.values());
+    }
+
+    public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(
+        serviceProviders: ServiceProvider<true>[],
+    ): Promise<ManageableServiceProviderWithReferencedObjects[]> {
+        const serviceProvidersIds: ServiceProviderID[] = serviceProviders.map((sp: ServiceProvider<true>) => sp.id);
+        const rollen: Map<ServiceProviderID, Rolle<true>[]> =
+            await this.rolleRepo.findByServiceProviderIds(serviceProvidersIds);
+        const rollenerweiterungen: Map<ServiceProviderID, Rollenerweiterung<true>[]> =
+            await this.rollenerweiterungRepo.findByServiceProviderIds(serviceProvidersIds);
+        const organisationen: Map<ServiceProviderID, Organisation<true>> = await this.organisationRepo.findByIds(
+            serviceProviders.map((sp: ServiceProvider<true>) => sp.providedOnSchulstrukturknoten),
+        );
+
+        return serviceProviders.map((serviceProvider: ServiceProvider<true>) => ({
+            serviceProvider,
+            organisation: organisationen.get(serviceProvider.providedOnSchulstrukturknoten)!,
+            rollen: rollen.get(serviceProvider.id) ?? [],
+            rollenerweiterungen: rollenerweiterungen.get(serviceProvider.id) ?? [],
+        }));
+    }
+
+    public async getRollenerweiterungenForManageableServiceProvider(
+        rollenerweiterungen: Rollenerweiterung<true>[],
+    ): Promise<RollenerweiterungForManageableServiceProvider[]> {
+        const organisationen: Map<OrganisationID, Organisation<true>> = await this.organisationRepo.findByIds(
+            rollenerweiterungen.map((rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.organisationId),
+        );
+        const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(
+            rollenerweiterungen.map((rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.rolleId),
+        );
+
+        return rollenerweiterungen.map((rollenerweiterung: Rollenerweiterung<true>) => ({
+            organisation: organisationen.get(rollenerweiterung.organisationId)!,
+            rolle: rollen.get(rollenerweiterung.rolleId)!,
+        }));
     }
 
     public async updateServiceProvidersForVidis(): Promise<void> {
@@ -54,8 +133,9 @@ export class ServiceProviderService {
         const vidisAngebote: VidisAngebot[] = await this.vidisService.getActivatedAngeboteByRegion(vidisRegionName);
 
         const allMappingsBeenDeleted: boolean = await this.organisationServiceProviderRepo.deleteAll();
-        if (allMappingsBeenDeleted)
+        if (allMappingsBeenDeleted) {
             this.logger.info('All mappings between Organisation and ServiceProvider were deleted.');
+        }
 
         await Promise.allSettled(
             vidisAngebote.map(async (angebot: VidisAngebot) => {
@@ -82,6 +162,7 @@ export class ServiceProviderService {
                         ServiceProviderSystem.NONE,
                         false,
                         angebot.angebotId,
+                        existingServiceProvider.merkmale,
                     );
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' already exists.`);
                 } else {
@@ -98,6 +179,7 @@ export class ServiceProviderService {
                         ServiceProviderSystem.NONE,
                         false,
                         angebot.angebotId,
+                        [],
                     );
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' was created.`);
                 }
@@ -150,10 +232,14 @@ export class ServiceProviderService {
         const logoBuffer: Buffer = Buffer.from(base64EncodedLogo, 'base64');
 
         const first8Bytes: Buffer = logoBuffer.subarray(0, 8);
-        if (first8Bytes.equals(MEDIA_SIGNATURES.PNG)) return 'image/png';
+        if (first8Bytes.equals(MEDIA_SIGNATURES.PNG)) {
+            return 'image/png';
+        }
 
         const first3Bytes: Buffer = logoBuffer.subarray(0, 3);
-        if (first3Bytes.equals(MEDIA_SIGNATURES.JPG)) return 'image/jpeg';
+        if (first3Bytes.equals(MEDIA_SIGNATURES.JPG)) {
+            return 'image/jpeg';
+        }
 
         return 'image/svg+xml';
     }

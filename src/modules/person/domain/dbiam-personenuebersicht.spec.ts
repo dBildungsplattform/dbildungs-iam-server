@@ -12,7 +12,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { DBiamPersonenzuordnungResponse } from '../api/personenuebersicht/dbiam-personenzuordnung.response.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule } from '../../../../test/utils/index.js';
 import { faker } from '@faker-js/faker';
 
 describe('DbiamPersonenUebersicht', () => {
@@ -26,7 +26,7 @@ describe('DbiamPersonenUebersicht', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, MapperTestModule, DatabaseTestModule],
+            imports: [ConfigTestModule, DatabaseTestModule],
             providers: [
                 {
                     provide: PersonService,
@@ -147,7 +147,9 @@ describe('DbiamPersonenUebersicht', () => {
                 const res: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
                     await sut.createZuordnungenForKontexte(personenkontexte, rolleMap, orgaMap, undefined);
 
-                if (res instanceof EntityNotFoundError) throw res;
+                if (res instanceof EntityNotFoundError) {
+                    throw res;
+                }
                 const [responses, lastModified]: [DBiamPersonenzuordnungResponse[], Date?] = res;
 
                 expect(responses).toBeDefined();
@@ -162,7 +164,9 @@ describe('DbiamPersonenUebersicht', () => {
 
                 const res: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
                     await sut.createZuordnungenForKontexte(personenkontexte, rolleMap, orgaMap, undefined);
-                if (res instanceof EntityNotFoundError) throw res;
+                if (res instanceof EntityNotFoundError) {
+                    throw res;
+                }
                 const [responses, lastModified]: [DBiamPersonenzuordnungResponse[], Date?] = res;
 
                 expect(responses).toBeDefined();

@@ -1,24 +1,27 @@
 import { Type } from 'class-transformer';
 import { ValidateNested } from 'class-validator';
-import { DbConfig } from './db.config.js';
-import { FrontendConfig } from './frontend.config.js';
-import { HostConfig } from './host.config.js';
+import { CronConfig } from './cron.config.js';
 import { DataConfig } from './data.config.js';
-import { KeycloakConfig } from './keycloak.config.js';
-import { LoggingConfig } from './logging.config.js';
-import { RedisConfig } from './redis.config.js';
-import { LdapConfig } from './ldap.config.js';
-import { ItsLearningConfig } from './itslearning.config.js';
-import { PrivacyIdeaConfig } from './privacyidea.config.js';
-import { SystemConfig } from './system.config.js';
-import { OxConfig } from './ox.config.js';
-import { ImportConfig } from './import.config.js';
-import { FeatureFlagConfig } from './featureflag.config.js';
-import { VidisConfig } from './vidis.config.js';
-import { HeaderApiKeyConfig } from './headerapikey.config.js';
-import { KafkaConfig } from './kafka.config.js';
+import { DbConfig } from './db.config.js';
 import { EmailConfig } from './email.config.js';
+import { FeatureFlagConfig } from './featureflag.config.js';
+import { FrontendConfig } from './frontend.config.js';
+import { HeaderApiKeyConfig } from './headerapikey.config.js';
+import { HostConfig } from './host.config.js';
+import { ImportConfig } from './import.config.js';
+import { ItsLearningConfig } from './itslearning.config.js';
+import { KafkaConfig } from './kafka.config.js';
+import { KeycloakConfig } from './keycloak.config.js';
+import { LdapConfig } from './ldap.config.js';
+import { LoggingConfig } from './logging.config.js';
+import { OxConfig } from './ox.config.js';
 import { PortalConfig } from './portal.config.js';
+import { PrivacyIdeaConfig } from './privacyidea.config.js';
+import { RedisConfig } from './redis.config.js';
+import { SystemConfig } from './system.config.js';
+import { VidisConfig } from './vidis.config.js';
+import { EmailMicroserviceConfig } from './email-microservice.config.js';
+import { SchulconnexConfig } from './schulconnex.config.js';
 
 export class JsonConfig {
     @ValidateNested()
@@ -96,4 +99,16 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => PortalConfig)
     public readonly PORTAL!: PortalConfig;
+
+    @ValidateNested()
+    @Type(() => CronConfig)
+    public readonly CRON!: CronConfig;
+
+    @ValidateNested()
+    @Type(() => EmailMicroserviceConfig)
+    public readonly EMAIL_MICROSERVICE!: EmailMicroserviceConfig;
+
+    @ValidateNested()
+    @Type(() => SchulconnexConfig)
+    public readonly SCHULCONNEX!: SchulconnexConfig;
 }

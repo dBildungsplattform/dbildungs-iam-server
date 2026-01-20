@@ -14,6 +14,7 @@ import { PersonDeleteModule } from './person-deletion/person-delete.module.js';
 import { EmailModule } from '../email/email.module.js';
 import { LdapModule } from '../../core/ldap/ldap.module.js';
 import { PersonLandesbediensteterSearchModule } from './person-landesbedienstete-search/person-landesbediensteter-search.module.js';
+import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
 
 @Module({
     imports: [
@@ -26,6 +27,7 @@ import { PersonLandesbediensteterSearchModule } from './person-landesbedienstete
         PersonDeleteModule,
         PersonLandesbediensteterSearchModule,
         KeycloakAdministrationModule,
+        EmailMicroserviceModule,
         LoggerModule.register(PersonApiModule.name),
     ],
     providers: [PersonApiMapper],

@@ -1,4 +1,4 @@
-import { uniq } from 'lodash-es';
+import { cloneDeep, uniq } from 'lodash-es';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
@@ -7,21 +7,13 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { Person } from '../../person/domain/person.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
 export type PersonFields = Pick<
     Person<true>,
-    | 'id'
-    | 'keycloakUserId'
-    | 'vorname'
-    | 'familienname'
-    | 'rufname'
-    | 'username'
-    | 'geschlecht'
-    | 'geburtsdatum'
-    | 'updatedAt'
+    'id' | 'keycloakUserId' | 'vorname' | 'familienname' | 'username' | 'updatedAt'
 >;
 type PersonKontextFields = Pick<Personenkontext<true>, 'rolleId' | 'organisationId'>;
 type RolleFields = Pick<Rolle<true>, 'systemrechte' | 'serviceProviderIds'>;
@@ -35,14 +27,14 @@ export type PermittedOrgas = { all: true } | { all: false; orgaIds: Organisation
 export class PersonPermissions implements IPersonPermissions {
     private cachedPersonenkontextsFields?: PersonKontextFields[];
 
-    private cachedPersonFields: PersonFields;
+    private readonly cachedPersonFields: PersonFields;
 
     private cachedRollenFields?: PersonenkontextRolleWithOrganisation[];
 
     public constructor(
-        private personenkontextRepo: DBiamPersonenkontextRepo,
-        private organisationRepo: OrganisationRepository,
-        private rolleRepo: RolleRepo,
+        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly organisationRepo: OrganisationRepository,
+        private readonly rolleRepo: RolleRepo,
         person: Person<true>,
     ) {
         this.cachedPersonFields = {
@@ -50,10 +42,7 @@ export class PersonPermissions implements IPersonPermissions {
             keycloakUserId: person.keycloakUserId,
             vorname: person.vorname,
             familienname: person.familienname,
-            rufname: person.rufname,
-            username: person.username ?? person.referrer,
-            geschlecht: person.geschlecht,
-            geburtsdatum: person.geburtsdatum,
+            username: person.username,
             updatedAt: person.updatedAt,
         };
     }
@@ -142,19 +131,14 @@ export class PersonPermissions implements IPersonPermissions {
     }
 
     public async canModifyPerson(personId: PersonID): Promise<boolean> {
-        {
-            const hasModifyRechtAtRoot: boolean = await this.hasSystemrechteAtRootOrganisation([
-                RollenSystemRecht.PERSONEN_VERWALTEN,
-            ]);
+        const hasModifyRechtAtRoot: boolean = await this.hasSystemrechteAtRootOrganisation([
+            RollenSystemRecht.PERSONEN_VERWALTEN,
+        ]);
 
-            if (hasModifyRechtAtRoot) {
-                return true;
-            }
+        if (hasModifyRechtAtRoot) {
+            return true;
         }
-
-        {
-            return this.hasSystemrechtAtAnyKontextOfTargetPerson(personId, RollenSystemRecht.PERSONEN_VERWALTEN);
-        }
+        return this.hasSystemrechtAtAnyKontextOfTargetPerson(personId, RollenSystemRecht.PERSONEN_VERWALTEN);
     }
 
     private async getPersonenkontextsFields(): Promise<PersonKontextFields[]> {
@@ -169,6 +153,10 @@ export class PersonPermissions implements IPersonPermissions {
         }
 
         return this.cachedPersonenkontextsFields;
+    }
+
+    public async getPersonenkontextIds(): Promise<Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[]> {
+        return cloneDeep(await this.getPersonenkontextsFields());
     }
 
     public async getPersonenkontexteWithRolesAndOrgs(): Promise<PersonenkontextRolleWithOrganisation[]> {

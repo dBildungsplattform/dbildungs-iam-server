@@ -90,7 +90,7 @@ describe('ItsLearning Persons Event Handler', () => {
     });
 
     describe('personExternalSystemSyncEventHandler', () => {
-        const person: Person<true> = DoFactory.createPerson(true, { referrer: faker.internet.userName() });
+        const person: Person<true> = DoFactory.createPerson(true, { username: faker.internet.userName() });
 
         const schuleWithItslearning: Organisation<true> = DoFactory.createOrganisation(true, {
             typ: OrganisationsTyp.SCHULE,
@@ -175,7 +175,7 @@ describe('ItsLearning Persons Event Handler', () => {
                         id: person.id,
                         firstName: person.vorname,
                         lastName: person.familienname,
-                        username: person.referrer,
+                        username: person.username,
                         institutionRoleType: rollenartToIMSESInstitutionRole(rolleWithItslearning.rollenart),
                     },
                     `${event.eventID}-SYNC-PERSON`,
@@ -304,7 +304,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
             it('should log error, if person has no username', async () => {
                 const personId: string = faker.string.uuid();
-                personRepoMock.findById.mockResolvedValueOnce(DoFactory.createPerson(true, { referrer: undefined }));
+                personRepoMock.findById.mockResolvedValueOnce(DoFactory.createPerson(true, { username: undefined }));
 
                 const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(personId);
                 await sut.personExternalSystemSyncEventHandler(event);

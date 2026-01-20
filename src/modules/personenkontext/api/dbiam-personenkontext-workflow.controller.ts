@@ -55,7 +55,8 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DbiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/index.js';
 import { PortalConfig } from '../../../shared/config/portal.config.js';
@@ -112,7 +113,7 @@ export class DbiamPersonenkontextWorkflowController {
 
         // filter rollenarten
         let rollenarten: RollenArt[] | undefined = undefined;
-        if (params.requestedWithSystemrecht === RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN) {
+        if (params.requestedWithSystemrecht === RollenSystemRechtEnum.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN) {
             const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
 
             rollenarten = mapStringsToRollenArt(portalConfig.LIMITED_ROLLENART_ALLOWLIST || []);
@@ -190,6 +191,10 @@ export class DbiamPersonenkontextWorkflowController {
         if (updateResult instanceof PersonenkontexteUpdateError) {
             throw updateResult;
         }
+
+        if (updateResult instanceof DuplicatePersonalnummerError) {
+            throw updateResult;
+        }
         return new PersonenkontexteUpdateResponse(updateResult);
     }
 
@@ -258,14 +263,14 @@ export class DbiamPersonenkontextWorkflowController {
         }
 
         this.logger.info(
-            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat neuen Benutzer ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
+            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat neuen Benutzer ${savedPersonWithPersonenkontext.person.username} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
         );
         await Promise.all(
             savedPersonWithPersonenkontext.personenkontexte.map(async (personenKontext: Personenkontext<true>) => {
                 const rolle: Option<Rolle<true>> = await personenKontext.getRolle();
                 const organisation: Option<Organisation<true>> = await personenKontext.getOrganisation();
                 this.logger.info(
-                    `Benutzer ${savedPersonWithPersonenkontext.person.referrer} angelegt mit Rolle: ${rolle?.name} (${rolle?.id}), und Organisation: ${organisation?.name} (${organisation?.id}).`,
+                    `Benutzer ${savedPersonWithPersonenkontext.person.username} angelegt mit Rolle: ${rolle?.name} (${rolle?.id}), und Organisation: ${organisation?.name} (${organisation?.id}).`,
                 );
             }),
         );

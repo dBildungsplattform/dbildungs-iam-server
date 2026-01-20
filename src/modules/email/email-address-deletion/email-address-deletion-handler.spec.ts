@@ -3,7 +3,6 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
@@ -11,7 +10,7 @@ import { EventModule } from '../../../core/eventbus/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailRepo } from '../persistence/email.repo.js';
-import { PersonID, PersonReferrer } from '../../../shared/types/index.js';
+import { PersonID, PersonUsername } from '../../../shared/types/index.js';
 import { EmailAddressDeletionModule } from './email-address-deletion.module.js';
 import { EmailAddressDeletionHandler } from './email-address-deletion-handler.js';
 import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/ldap-email-address-deleted.event.js';
@@ -53,7 +52,6 @@ describe('EmailAddressDeletionHandler', () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
-                MapperTestModule,
                 EmailAddressDeletionModule,
                 EventModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
@@ -103,7 +101,7 @@ describe('EmailAddressDeletionHandler', () => {
 
     describe('handleLdapEmailAddressDeletedEvent', () => {
         const personId: PersonID = faker.string.uuid();
-        const username: PersonReferrer = faker.internet.userName();
+        const username: PersonUsername = faker.internet.userName();
         const address: string = faker.internet.email();
         const event: LdapEmailAddressDeletedEvent = new LdapEmailAddressDeletedEvent(personId, username, address);
         let emailAddress: EmailAddress<true>;
@@ -200,7 +198,7 @@ describe('EmailAddressDeletionHandler', () => {
     describe('handleOxEmailAddressDeletedEvent', () => {
         const personId: PersonID = faker.string.uuid();
         const oxUserId: OXUserID = faker.string.uuid();
-        const username: PersonReferrer = faker.internet.userName();
+        const username: PersonUsername = faker.internet.userName();
         const address: string = faker.internet.email();
         const oxContextId: OXContextID = '10';
         const oxContextName: OXContextName = 'testContext';

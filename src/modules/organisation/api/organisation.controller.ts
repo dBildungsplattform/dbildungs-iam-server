@@ -55,14 +55,13 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { OrganisationService } from '../domain/organisation.service.js';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { OrganisationIstBereitsZugewiesenError } from '../domain/organisation-ist-bereits-zugewiesen.error.js';
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
 import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
+import { OrganisationDeleteService } from '../organisation-delete/organisation-delete.service.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -76,9 +75,9 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 export class OrganisationController {
     public constructor(
         private readonly organisationRepository: OrganisationRepository,
-        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly config: ConfigService<ServerConfig>,
         private readonly organisationService: OrganisationService,
+        private readonly organisationDeleteService: OrganisationDeleteService,
     ) {}
 
     @Post()
@@ -299,7 +298,11 @@ export class OrganisationController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<OrganisationResponse>> {
         const [organisations, total, pageTotal]: [Organisation<true>[], number, number] =
-            await this.organisationRepository.findAuthorized(permissions, queryParams.systemrechte, queryParams);
+            await this.organisationRepository.findAuthorized(
+                permissions,
+                queryParams.systemrechte.map((value: RollenSystemRechtEnum) => RollenSystemRecht.getByName(value)),
+                queryParams,
+            );
 
         const organisationResponses: OrganisationResponse[] = organisations.map((organisation: Organisation<true>) => {
             return new OrganisationResponse(organisation);
@@ -436,46 +439,6 @@ export class OrganisationController {
         }
     }
 
-    @Delete(':organisationId/klasse')
-    @UseGuards(StepUpGuard)
-    @HttpCode(HttpStatus.NO_CONTENT)
-    @ApiOperation({ description: 'Delete an organisation of type Klasse by id.' })
-    @ApiNoContentResponse({ description: 'The organisation was deleted successfully.' })
-    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamOrganisationError })
-    @ApiNotFoundResponse({ description: 'The organisation that should be deleted does not exist.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to delete the organisation.' })
-    public async deleteKlasse(
-        @Param() params: OrganisationByIdParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<void> {
-        if (
-            !(await permissions.hasSystemrechtAtOrganisation(
-                params.organisationId,
-                RollenSystemRecht.KLASSEN_VERWALTEN,
-            ))
-        ) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Not authorized to manage this organisation'),
-                ),
-            );
-        }
-
-        if (await this.dBiamPersonenkontextRepo.isOrganisationAlreadyAssigned(params.organisationId)) {
-            throw new OrganisationIstBereitsZugewiesenError();
-        }
-
-        const result: Option<DomainError> = await this.organisationRepository.deleteKlasse(
-            params.organisationId,
-            permissions,
-        );
-        if (result instanceof DomainError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
-            );
-        }
-    }
-
     @Patch(':organisationId/name')
     @UseGuards(StepUpGuard)
     @ApiOkResponse({
@@ -555,5 +518,38 @@ export class OrganisationController {
         }
 
         return new OrganisationResponse(result);
+    }
+
+    @Delete(':organisationId')
+    @UseGuards(StepUpGuard)
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiOperation({ description: 'Delete an organisation by id.' })
+    @ApiNoContentResponse({ description: 'The organisation was deleted successfully.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamOrganisationError })
+    @ApiNotFoundResponse({ description: 'The organisation that should be deleted does not exist.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to delete the organisation.' })
+    public async deleteOrganisation(
+        @Param() params: OrganisationByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        const organisation: Result<
+            Organisation<true>,
+            EntityNotFoundError | MissingPermissionsError
+        > = await this.organisationService.findOrganisationByIdAndAnyMatchingPermissions(
+            permissions,
+            params.organisationId,
+        );
+        if (!organisation.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(organisation.error),
+            );
+        }
+
+        const result: DomainError | void = await this.organisationDeleteService.deleteOrganisation(
+            params.organisationId,
+        );
+        if (result instanceof DomainError) {
+            throw result;
+        }
     }
 }

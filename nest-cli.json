@@ -10,6 +10,15 @@
         "tsConfigPath": "tsconfig.build.json"
     },
     "projects": {
+        "email": {
+            "type": "application",
+            "root": "src",
+            "entryFile": "src/email/main",
+            "sourceRoot": "src",
+            "compilerOptions": {
+                "tsConfigPath": "tsconfig.build.json"
+            }
+        },
         "server": {
             "type": "application",
             "root": "src",

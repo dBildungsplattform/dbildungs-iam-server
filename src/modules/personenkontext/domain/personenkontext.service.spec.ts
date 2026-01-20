@@ -1,5 +1,3 @@
-import { Dictionary, Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
@@ -24,7 +22,6 @@ describe('PersonenkontextService', () => {
     let personenkontextService: PersonenkontextService;
     let dbiamPersonenKontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let dbiamPersonenKontextRepoInternalMock: DeepMocked<DBiamPersonenkontextRepoInternal>;
-    let mapperMock: DeepMocked<Mapper>;
 
     let personenkontextFactory: PersonenkontextFactory;
 
@@ -54,10 +51,6 @@ describe('PersonenkontextService', () => {
                     useValue: createMock<DBiamPersonenkontextRepoInternal>(),
                 },
                 {
-                    provide: getMapperToken(),
-                    useValue: createMock<Mapper>(),
-                },
-                {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
                 },
@@ -67,7 +60,6 @@ describe('PersonenkontextService', () => {
         dbiamPersonenKontextRepoMock = module.get(DBiamPersonenkontextRepo);
         dbiamPersonenKontextRepoInternalMock = module.get(DBiamPersonenkontextRepoInternal);
         personenkontextFactory = module.get(PersonenkontextFactory);
-        mapperMock = module.get(getMapperToken());
         personenkontextFactory = module.get(PersonenkontextFactory);
     });
 
@@ -93,7 +85,6 @@ describe('PersonenkontextService', () => {
                     personenkontext2 as unknown as Personenkontext<true>,
                 ];
                 dbiamPersonenKontextRepoMock.findBy.mockResolvedValue([personenkontexte, personenkontexte.length]);
-                mapperMock.map.mockReturnValue(personenkontexte as unknown as Dictionary<unknown>);
                 const personenkontextDoWithQueryParam: PersonenkontextQueryParams = new PersonenkontextQueryParams();
 
                 const result: Paged<Personenkontext<true>> = await personenkontextService.findAllPersonenkontexte(
@@ -111,9 +102,7 @@ describe('PersonenkontextService', () => {
 
         describe('When no personenkontexte are found', () => {
             it('should return a result with an empty array', async () => {
-                const personenkontext: Personenkontext<false> = DoFactory.createPersonenkontext(false);
                 dbiamPersonenKontextRepoMock.findBy.mockResolvedValue([[], 0]);
-                mapperMock.map.mockReturnValue(personenkontext as unknown as Dictionary<unknown>);
 
                 const result: Paged<Personenkontext<true>> = await personenkontextService.findAllPersonenkontexte(
                     new PersonenkontextQueryParams(),

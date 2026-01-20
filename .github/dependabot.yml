@@ -10,9 +10,6 @@ updates:
     labels:
       - 'dependencies'
     groups:
-      automapper:
-        patterns:
-          - '@automapper/*'
       mikro-orm:
         patterns:
           - '@mikro-orm/core'

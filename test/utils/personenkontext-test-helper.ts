@@ -29,7 +29,7 @@ export function createPersonenkontext(
         revision: '1',
         jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
         personenstatus: Personenstatus.AKTIV,
-        referrer: 'referrer',
+        username: 'username',
         sichtfreigabe: SichtfreigabeType.JA,
         loeschungZeitpunkt: faker.date.anytime(),
     };
@@ -57,7 +57,7 @@ export async function createAndPersistPersonenkontext(
         revision: '1',
         jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
         personenstatus: Personenstatus.AKTIV,
-        referrer: 'referrer',
+        username: 'username',
         sichtfreigabe: SichtfreigabeType.JA,
         loeschungZeitpunkt: faker.date.anytime(),
     };

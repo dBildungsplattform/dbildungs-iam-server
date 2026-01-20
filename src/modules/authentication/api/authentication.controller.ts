@@ -36,6 +36,7 @@ import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js
 import PersonTimeLimitService from '../../person/domain/person-time-limit-info.service.js';
 import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -132,7 +133,7 @@ export class AuthenticationController {
                 new PersonenkontextRolleFieldsResponse(
                     new OrganisationResponse(field.organisation),
                     new RollenSystemRechtServiceProviderIDResponse(
-                        field.rolle.systemrechte,
+                        field.rolle.systemrechte.map((systemrecht: RollenSystemRecht) => systemrecht.name),
                         field.rolle.serviceProviderIds,
                     ),
                 ),
@@ -142,7 +143,9 @@ export class AuthenticationController {
             const lastPasswordChange: Result<Date, DomainError> = await this.keycloakUserService.getLastPasswordChange(
                 permissions.personFields.keycloakUserId,
             );
-            if (lastPasswordChange.ok) userinfoExtension.password_updated_at = lastPasswordChange.value;
+            if (lastPasswordChange.ok) {
+                userinfoExtension.password_updated_at = lastPasswordChange.value;
+            }
         }
 
         const timeLimitInfos: PersonTimeLimitInfo[] = await this.personTimeLimitService.getPersonTimeLimitInfo(

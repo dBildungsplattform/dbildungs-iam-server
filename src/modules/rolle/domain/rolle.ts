@@ -1,7 +1,8 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
+import { RollenArt, RollenMerkmal } from './rolle.enums.js';
+import { RollenSystemRecht } from './systemrecht.js';
 import { EntityAlreadyExistsError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -147,7 +148,9 @@ export class Rolle<WasPersisted extends boolean> {
     }
 
     public async canBeAssignedToOrga(orgaId: OrganisationID): Promise<boolean> {
-        if (orgaId === this.administeredBySchulstrukturknoten) return true;
+        if (orgaId === this.administeredBySchulstrukturknoten) {
+            return true;
+        }
         return this.organisationRepo.isOrgaAParentOfOrgaB(this.administeredBySchulstrukturknoten, orgaId);
     }
 

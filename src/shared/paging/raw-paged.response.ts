@@ -28,8 +28,8 @@ export const ApiOkResponsePaginated = <DataDto extends Type<unknown>>(
     options?: Omit<ApiResponseOptions, 'schema' | 'type'>,
 ): (<TFunction extends () => unknown, Y>(
     target: object | TFunction,
-    propertyKey?: string | symbol | undefined,
-    descriptor?: TypedPropertyDescriptor<Y> | undefined,
+    propertyKey: string | symbol | undefined,
+    descriptor: TypedPropertyDescriptor<Y> | undefined,
 ) => void) =>
     applyDecorators(
         ApiExtraModels(RawPagedResponse, dataDto),

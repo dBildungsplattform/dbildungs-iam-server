@@ -54,7 +54,7 @@ export class PersonLandesbediensteterSearchResponse {
             person.id,
             person.vorname,
             person.familienname,
-            person.referrer,
+            person.username,
             person.personalnummer,
             email?.address,
             kontexteWithOrgaAndRolle.map(

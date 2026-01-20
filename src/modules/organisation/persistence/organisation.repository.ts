@@ -16,25 +16,25 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
-import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
 import { OrganisationsTyp, RootDirectChildrenType, SortFieldOrganisation } from '../domain/organisation.enums.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationScope } from './organisation.scope.js';
-import { KafkaKlasseDeletedEvent } from '../../../shared/events/kafka-klasse-deleted.event.js';
 import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-updated.event.js';
 import { KafkaSchuleItslearningEnabledEvent } from '../../../shared/events/kafka-schule-itslearning-enabled.event.js';
 import { KafkaSchuleCreatedEvent } from '../../../shared/events/kafka-schule-created.event.js';
 import { KafkaKlasseCreatedEvent } from '../../../shared/events/kafka-klasse-created.event.js';
+import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
+import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
 
 export function mapOrgaAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -73,7 +73,7 @@ export function mapOrgaEntityToAggregate(entity: OrganisationEntity): Organisati
     );
 }
 
-export type OrganisationSeachOptions = {
+export type OrganisationSearchOptions = {
     readonly kennung?: string;
     readonly name?: string;
     readonly searchString?: string;
@@ -86,6 +86,8 @@ export type OrganisationSeachOptions = {
     readonly limit?: number;
     readonly sortField?: SortFieldOrganisation;
     readonly sortOrder?: ScopeOrder;
+    readonly getChildrenRecursively?: boolean;
+    readonly matchAllSystemrechte?: boolean;
 };
 
 @Injectable()
@@ -229,9 +231,12 @@ export class OrganisationRepository {
     }
 
     private getDomainRecursive(organisationsSortedByDepthAsc: Organisation<true>[]): Option<string> {
-        if (!organisationsSortedByDepthAsc || organisationsSortedByDepthAsc.length == 0) return undefined;
-        if (organisationsSortedByDepthAsc[0] && organisationsSortedByDepthAsc[0].emailDomain)
+        if (!organisationsSortedByDepthAsc || organisationsSortedByDepthAsc.length === 0) {
+            return undefined;
+        }
+        if (organisationsSortedByDepthAsc[0] && organisationsSortedByDepthAsc[0].emailDomain) {
             return organisationsSortedByDepthAsc[0].emailDomain;
+        }
 
         return this.getDomainRecursive(organisationsSortedByDepthAsc.slice(1));
     }
@@ -333,9 +338,13 @@ export class OrganisationRepository {
     public async findAuthorized(
         personPermissions: PersonPermissions,
         systemrechte: RollenSystemRecht[],
-        searchOptions: OrganisationSeachOptions,
+        searchOptions: OrganisationSearchOptions,
     ): Promise<[Organisation<true>[], total: number, pageTotal: number]> {
-        const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(systemrechte, true);
+        const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(
+            systemrechte,
+            true,
+            searchOptions.matchAllSystemrechte,
+        );
         if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
             return [[], 0, 0];
         }
@@ -385,7 +394,23 @@ export class OrganisationRepository {
             andClauses.push({ typ: searchOptions.typ });
         }
         if (searchOptions.administriertVon) {
-            andClauses.push({ administriertVon: { $in: searchOptions.administriertVon } });
+            if (searchOptions.getChildrenRecursively) {
+                const query: string = `
+                    WITH RECURSIVE org_tree AS (
+                        SELECT id, administriert_von FROM organisation WHERE administriert_von IN (?)
+                        UNION ALL
+                        SELECT o.id, o.administriert_von FROM organisation o INNER JOIN org_tree t ON o.administriert_von = t.id
+                    )
+                    SELECT id FROM org_tree;
+                `;
+                const rawIds: { id: string }[] = await this.em.execute(query, [searchOptions.administriertVon]);
+
+                const allIds: string[] = rawIds.map((r: { id: string }) => r.id);
+
+                andClauses.push({ id: { $in: allIds } });
+            } else {
+                andClauses.push({ administriertVon: { $in: searchOptions.administriertVon } });
+            }
         }
         if (searchOptions.zugehoerigZu) {
             andClauses.push({ zugehoerigZu: { $in: searchOptions.zugehoerigZu } });
@@ -449,62 +474,6 @@ export class OrganisationRepository {
         }
 
         return [organisations, total + entitiesForIds.length - duplicates, pageTotal];
-    }
-
-    public async deleteKlasse(id: OrganisationID, permissions: PersonPermissions): Promise<Option<DomainError>> {
-        const organisationEntity: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
-        if (!organisationEntity) {
-            const error: EntityNotFoundError = new EntityNotFoundError('Organisation', id);
-            this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse mit der ID ${id} zu entfernen. Fehler: ${error.message}`,
-            );
-            return error;
-        }
-
-        let schoolName: string | undefined;
-        if (organisationEntity.administriertVon) {
-            const school: Option<Organisation<true>> = await this.findById(organisationEntity.administriertVon);
-            if (!school) {
-                const error: DomainError = new EntityNotFoundError('Organisation', organisationEntity.administriertVon);
-                this.logger.error(
-                    `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} zu entfernen. Fehler: ${error.message}`,
-                );
-                return error;
-            }
-            schoolName = school.name;
-        }
-        if (!schoolName) {
-            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
-                'The schoolName of a Klasse cannot be undefined.',
-            ]);
-            this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} zu entfernen. Fehler: ${error.message}`,
-            );
-            return error;
-        }
-        if (organisationEntity.typ !== OrganisationsTyp.KLASSE) {
-            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
-                'Only Klassen can be deleted.',
-            ]);
-            this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} (${schoolName}) zu entfernen. Fehler: ${error.message}`,
-            );
-            return error;
-        }
-
-        await this.em.removeAndFlush(organisationEntity);
-        this.eventService.publish(
-            new KlasseDeletedEvent(organisationEntity.id),
-            new KafkaKlasseDeletedEvent(organisationEntity.id),
-        );
-
-        if (organisationEntity.zugehoerigZu) {
-            this.logger.info(
-                `Admin: ${permissions.personFields.id}) hat eine Klasse entfernt: ${organisationEntity.name} (${schoolName}).`,
-            );
-        }
-
-        return;
     }
 
     public async updateOrganisationName(
@@ -735,5 +704,21 @@ export class OrganisationRepository {
         }
 
         return RootDirectChildrenType.OEFFENTLICH;
+    }
+
+    public async delete(organisationId: OrganisationID): Promise<void | DomainError> {
+        const entity: OrganisationEntity | null = await this.em.findOne(OrganisationEntity, { id: organisationId });
+        if (!entity) {
+            return new EntityNotFoundError('Organisation', organisationId);
+        }
+
+        this.eventService.publish(
+            OrganisationDeletedEvent.fromOrganisation(entity),
+            KafkaOrganisationDeletedEvent.fromOrganisation(entity),
+        );
+
+        await this.em.removeAndFlush(entity);
+
+        this.logger.info(`Organisation ${entity.name} vom Typ ${entity.typ} entfernt.`);
     }
 }

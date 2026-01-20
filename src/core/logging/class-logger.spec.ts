@@ -182,6 +182,19 @@ describe('ClassLogger', () => {
             expect(loggerMock.log).toHaveBeenCalledWith('warning', createTestMessage('Blah2', 'TraceInfo'));
         });
 
+        it('should take the trace into account for level warning and extend personIdentifier', () => {
+            sut.warningPersonalized('Blah2', personIdentifier, 'TraceInfo');
+
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith(
+                'warning',
+                createTestMessage(
+                    `Blah2, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
+                    'TraceInfo',
+                ),
+            );
+        });
+
         it('should take the trace into account for level alert', () => {
             sut.alert('Blah2', 'TraceInfo');
 
@@ -221,6 +234,15 @@ describe('ClassLogger', () => {
 
             expect(loggerMock.log).toHaveBeenCalledTimes(1);
             expect(loggerMock.log).toHaveBeenCalledWith('emerg', createTestMessage('Blah2', 'TraceInfo'));
+        });
+    });
+
+    describe('infoWithDetails', () => {
+        it('should log appropriately for level info', () => {
+            sut.infoWithDetails('Blah', { foo: 'bar' });
+
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('info', createTestMessage("Blah - { foo: 'bar' }"));
         });
     });
 
@@ -270,7 +292,7 @@ describe('ClassLogger', () => {
                 expect(loggerMock.log).toHaveBeenCalledWith(
                     'error',
                     createTestMessage(
-                        errorMessage + ' - ' + `${entityNotFoundError.message}`,
+                        errorMessage + ' - ' + `${entityNotFoundError.name}: ${entityNotFoundError.message}`,
                         entityNotFoundError.stack,
                     ),
                 );

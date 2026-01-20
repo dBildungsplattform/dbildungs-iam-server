@@ -2,46 +2,49 @@ import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { PersonApiMapper } from '../../../person/mapper/person-api.mapper.js';
-import { PersonInfoController } from './person-info.controller.js';
-import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 import { DoFactory } from '../../../../../test/utils/do-factory.js';
+import { ClassLogger } from '../../../../core/logging/class-logger.js';
+import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
+import { EmailAddressStatus } from '../../../email/domain/email-address.js';
+import { EmailRepo } from '../../../email/persistence/email.repo.js';
+import { UserLock } from '../../../keycloak-administration/domain/user-lock.js';
+import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
+import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../../organisation/domain/organisation.js';
+import { PersonEmailResponse } from '../../../person/api/person-email-response.js';
+import { Person } from '../../../person/domain/person.js';
+import { PersonApiMapper } from '../../../person/mapper/person-api.mapper.js';
+import { PersonRepository } from '../../../person/persistence/person.repository.js';
+import { PersonenkontextResponse } from '../../../personenkontext/api/response/personenkontext.response.js';
+import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
 import {
     DBiamPersonenkontextRepo,
     KontextWithOrgaAndRolle,
 } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonRepository } from '../../../person/persistence/person.repository.js';
-import { Person } from '../../../person/domain/person.js';
-import { EmailRepo } from '../../../email/persistence/email.repo.js';
-import { EmailAddressStatus } from '../../../email/domain/email-address.js';
-import { PersonEmailResponse } from '../../../person/api/person-email-response.js';
-import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
-import { PersonenkontextResponse } from '../../../personenkontext/api/response/personenkontext.response.js';
-import { Organisation } from '../../../organisation/domain/organisation.js';
-import { Rolle } from '../../../rolle/domain/rolle.js';
-import { PersonBirthResponse } from '../../../person/api/person-birth.response.js';
-import { PersonNameResponse } from '../../../person/api/person-name.response.js';
-import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
-import { PersonInfoPersonResponseV1 } from './v1/person-info-person.response.v1.js';
-import { SchulconnexOrganisationTyp, SchulconnexPersonenstatus, SchulconnexRolle } from '../schulconnex-enums.v1.js';
 import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
-import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
-import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
-import { UserLock } from '../../../keycloak-administration/domain/user-lock.js';
+import { Rolle } from '../../../rolle/domain/rolle.js';
+import { SchulconnexOrganisationTyp, SchulconnexPersonenstatus, SchulconnexRolle } from '../schulconnex-enums.v1.js';
+import { PersonInfoController } from './person-info.controller.js';
 import { PersonInfoResponse, PersonNestedInPersonInfoResponse } from './v0/person-info.response.js';
+import { PersonInfoPersonResponseV1 } from './v1/person-info-person.response.v1.js';
+import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
+import { ConfigTestModule, DatabaseTestModule } from '../../../../../test/utils/index.js';
+import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 
 describe('PersonInfoController', () => {
     let module: TestingModule;
     let sut: PersonInfoController;
+    let logger: DeepMocked<ClassLogger>;
     let personRepoMock: DeepMocked<PersonRepository>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let emailRepoMock: DeepMocked<EmailRepo>;
+    let emailResolverService: DeepMocked<EmailResolverService>;
     let userLockRepoMock: DeepMocked<UserLockRepository>;
     let personApiMapper: DeepMocked<PersonApiMapper>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [
                 PersonInfoController,
                 {
@@ -68,13 +71,22 @@ describe('PersonInfoController', () => {
                     provide: EmailRepo,
                     useValue: createMock<EmailRepo>(),
                 },
+                {
+                    provide: EmailResolverService,
+                    useValue: createMock<EmailResolverService>(),
+                },
             ],
-        }).compile();
+        })
+            .overrideProvider(UserLockRepository)
+            .useValue(createMock<UserLockRepository>())
+            .compile();
 
         sut = module.get<PersonInfoController>(PersonInfoController);
+        logger = module.get(ClassLogger);
         personRepoMock = module.get(PersonRepository);
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         emailRepoMock = module.get(EmailRepo);
+        emailResolverService = module.get(EmailResolverService);
         personApiMapper = module.get(PersonApiMapper);
         userLockRepoMock = module.get(UserLockRepository);
     });
@@ -101,34 +113,69 @@ describe('PersonInfoController', () => {
             expectedBaseNestedPersonInfo = {
                 id: person.id,
                 mandant: person.mandant,
-                referrer: person.referrer,
+                username: person.username,
                 name: {
                     familiennamen: person.familienname,
                     vorname: person.vorname,
-                    anrede: person.nameAnrede,
-                    initialenfamilienname: person.initialenFamilienname,
-                    initialenvorname: person.initialenVorname,
-                    rufname: person.rufname,
-                    titel: person.nameTitel,
-                    namenspraefix: person.namePraefix,
-                    namenssuffix: person.nameSuffix,
-                    sortierindex: person.nameSortierindex,
-                } satisfies PersonNameResponse,
-                geburt: {
-                    datum: person.geburtsdatum,
-                    geburtsort: person.geburtsort,
-                } satisfies PersonBirthResponse,
+                },
                 stammorganisation: person.stammorganisation,
-                geschlecht: person.geschlecht,
-                lokalisierung: person.lokalisierung,
-                vertrauensstufe: person.vertrauensstufe,
                 personalnummer: person.personalnummer,
                 revision: person.revision,
                 dienststellen: [],
             };
         });
         describe('when person exists', () => {
-            it('should return person info with loeschung', async () => {
+            it('should return person info with loeschung old Repo', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+
+                const permissions: PersonPermissions = {
+                    personFields: {
+                        id: faker.string.uuid(),
+                    },
+                } as PersonPermissions;
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
+                const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(orga);
+                    },
+                });
+                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+
+                personRepoMock.findById.mockResolvedValue(person);
+                personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                    {
+                        personenkontext: kontext,
+                        organisation: orga!,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                ]);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(undefined);
+
+                const result: PersonInfoResponse = await sut.info(permissions);
+                expect(result).toBeInstanceOf(PersonInfoResponse);
+                expect(result.person).toBeInstanceOf(PersonNestedInPersonInfoResponse);
+                expect(result.person).toEqual({ ...expectedBaseNestedPersonInfo, dienststellen: [orga!.kennung] });
+
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using old emailRepo`));
+                expect(result.pid).toEqual(person?.id);
+                expect(result.personenkontexte.length).toEqual(1);
+                expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
+                expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
+                expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
+                expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(orga?.typ);
+                expect(result.personenkontexte.at(0)?.rollenart).toEqual(rolle.rollenart);
+                expect(result.personenkontexte.at(0)?.rollenname).toEqual(rolle.name);
+                expect(result.gruppen).toEqual([]);
+                expect(result.email).toEqual(undefined);
+            });
+            it('should return person info with loeschung new Microservice', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
@@ -158,13 +205,14 @@ describe('PersonInfoController', () => {
                         rolle: rolle,
                     } satisfies KontextWithOrgaAndRolle,
                 ]);
-                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
+                emailResolverService.findEmailBySpshPerson.mockResolvedValueOnce(email);
 
                 const result: PersonInfoResponse = await sut.info(permissions);
                 expect(result).toBeInstanceOf(PersonInfoResponse);
                 expect(result.person).toBeInstanceOf(PersonNestedInPersonInfoResponse);
                 expect(result.person).toEqual({ ...expectedBaseNestedPersonInfo, dienststellen: [orga!.kennung] });
 
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using new Microservice`));
                 expect(result.pid).toEqual(person?.id);
                 expect(result.personenkontexte.length).toEqual(1);
                 expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
@@ -181,6 +229,8 @@ describe('PersonInfoController', () => {
                 });
             });
             it('should return person info with no loeschungZeitpunkt', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
@@ -233,6 +283,8 @@ describe('PersonInfoController', () => {
                 });
             });
             it('should return person info with empty dnr array and no kontexte', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
@@ -294,9 +346,12 @@ describe('PersonInfoController', () => {
         beforeEach(() => {
             person = DoFactory.createPerson(true);
             orga = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
+            emailResolverService.shouldUseEmailMicroservice.mockReturnValue(false);
         });
         describe('when person exists', () => {
-            it('should return person info for locked person with kontext at land', async () => {
+            it('should return person info for locked person with kontext at land old Repo', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+
                 const orgaLand: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND });
                 const permissions: PersonPermissions = {
                     personFields: {
@@ -330,6 +385,57 @@ describe('PersonInfoController', () => {
                 expect(result).toBeInstanceOf(PersonInfoResponseV1);
                 expect(result.person).toBeInstanceOf(PersonInfoPersonResponseV1);
 
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using old emailRepo`));
+                expect(result.pid).toEqual(person?.id);
+                expect(result.person.name.vorname).toEqual(person?.vorname);
+                expect(result.person.name.familiennamen).toEqual(person?.familienname);
+                expect(result.personenkontexte.length).toEqual(1);
+                expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
+                expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orgaLand?.id);
+                expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orgaLand?.kennung);
+                expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orgaLand?.name);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(SchulconnexOrganisationTyp.SONSTIGE);
+                expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
+                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(undefined);
+                expect(result.personenkontexte.at(0)?.rolle).toEqual(SchulconnexRolle.SYSADMIN);
+            });
+            it('should return person info for locked person with kontext at land new Microservice', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+                const orgaLand: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND });
+                const permissions: PersonPermissions = {
+                    personFields: {
+                        id: faker.string.uuid(),
+                    },
+                } as PersonPermissions;
+                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN });
+                const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(orgaLand);
+                    },
+                });
+                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+
+                userLockRepoMock.findByPersonId.mockResolvedValue([createMock<UserLock>()]);
+                personRepoMock.findById.mockResolvedValue(person);
+                personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                    {
+                        personenkontext: kontext,
+                        organisation: orgaLand,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                ]);
+                emailResolverService.findEmailBySpshPerson.mockResolvedValueOnce(undefined);
+
+                const result: PersonInfoResponseV1 = await sut.infoV1(permissions);
+                expect(result).toBeInstanceOf(PersonInfoResponseV1);
+                expect(result.person).toBeInstanceOf(PersonInfoPersonResponseV1);
+
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using new Microservice`));
                 expect(result.pid).toEqual(person?.id);
                 expect(result.person.name.vorname).toEqual(person?.vorname);
                 expect(result.person.name.familiennamen).toEqual(person?.familienname);

@@ -7,7 +7,6 @@ import { LoggerModule } from '../../core/logging/logger.module.js';
 import { KeycloakConfigModule } from './keycloak-config.module.js';
 import { KeycloakGroupRoleService } from './domain/keycloak-group-role.service.js';
 import { KeycloakClientService } from './domain/keycloak-client.service.js';
-import { KeycloakEventHandler } from './event-handlers/keycloak-event-handler.js';
 import { EventModule } from '../../core/eventbus/event.module.js';
 
 import { KeycloakAdministrationService } from './domain/keycloak-admin-client.service.js';
@@ -25,7 +24,6 @@ import { UserLockRepository } from './repository/user-lock.repository.js';
         KeycloakClientService,
         KeycloakAdministrationService,
         CreateGroupAndRoleHandler,
-        KeycloakEventHandler,
         UserLockRepository,
     ],
     exports: [KeycloakUserService, KeycloakGroupRoleService, KeycloakClientService, UserLockRepository],

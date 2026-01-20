@@ -24,13 +24,16 @@ import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ka
 import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
 import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
 import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
-import { KafkaOxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/kafka-ox-metadata-in-keycloak-changed.event.js';
-import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
-import { OrganisationID, OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
+import {
+    EmailAddressID,
+    OrganisationID,
+    OrganisationKennung,
+    PersonID,
+    PersonUsername,
+} from '../../../shared/types/index.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonDomainError } from '../../person/domain/person-domain.error.js';
@@ -48,6 +51,84 @@ import { EmailAddressEntity } from '../persistence/email-address.entity.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from './email-address.js';
 import { EmailFactory } from './email.factory.js';
+import { LdapSyncFailedEvent } from '../../../shared/events/ldap/ldap-sync-failed.event.js';
+import { KafkaLdapSyncFailedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-failed.event.js';
+import { EmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/email-address-generated-after-ldap-sync-failed.event.js';
+import { KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/kafka-email-address-generated-after-ldap-sync-failed.event.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
+import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
+import { KafkaOxSyncUserCreatedEvent } from '../../../shared/events/ox/kafka-ox-sync-user-created.event.js';
+import { OxSyncUserCreatedEvent } from '../../../shared/events/ox/ox-sync-user-created.event.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+
+export type EmailAddressGeneratedCreator = (
+    personId: PersonID,
+    username: PersonUsername,
+    emailAddressId: EmailAddressID,
+    address: string,
+    enabled: boolean,
+    orgaKennung: string,
+    alternativeAddress?: string,
+) => [EmailAddressGeneratedEvent, KafkaEmailAddressGeneratedEvent];
+
+export const generateEmailAddressGeneratedEvent: EmailAddressGeneratedCreator = (
+    personId: PersonID,
+    username: PersonUsername,
+    emailAddressId: EmailAddressID,
+    address: string,
+    enabled: boolean,
+    orgaKennung: string,
+    alternativeAddress?: string,
+) => {
+    return [
+        new EmailAddressGeneratedEvent(
+            personId,
+            username,
+            emailAddressId,
+            address,
+            enabled,
+            orgaKennung,
+            alternativeAddress,
+        ),
+        new KafkaEmailAddressGeneratedEvent(
+            personId,
+            username,
+            emailAddressId,
+            address,
+            enabled,
+            orgaKennung,
+            alternativeAddress,
+        ),
+    ];
+};
+
+export const generateEmailAddressGeneratedAfterLdapSyncFailedEvent: EmailAddressGeneratedCreator = (
+    personId: PersonID,
+    username: PersonUsername,
+    emailAddressId: EmailAddressID,
+    address: string,
+    enabled: boolean,
+    orgaKennung: string,
+) => {
+    return [
+        new EmailAddressGeneratedAfterLdapSyncFailedEvent(
+            personId,
+            username,
+            emailAddressId,
+            address,
+            enabled,
+            orgaKennung,
+        ),
+        new KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent(
+            personId,
+            username,
+            emailAddressId,
+            address,
+            enabled,
+            orgaKennung,
+        ),
+    ];
+};
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -60,6 +141,7 @@ export class EmailEventHandler {
 
     public constructor(
         private readonly logger: ClassLogger,
+        private readonly emailResolverService: EmailResolverService,
         private readonly emailFactory: EmailFactory,
         private readonly emailRepo: EmailRepo,
         private readonly rolleRepo: RolleRepo,
@@ -78,6 +160,61 @@ export class EmailEventHandler {
         this.OX_ENABLED = oxConfig.ENABLED;
     }
 
+    @KafkaEventHandler(KafkaOxSyncUserCreatedEvent)
+    @EventHandler(OxSyncUserCreatedEvent)
+    @EnsureRequestContext()
+    public async handleOxSyncUserCreatedEvent(event: OxSyncUserCreatedEvent): Promise<void> {
+        this.logger.info(
+            `Received OxSyncUserCreatedEvent personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, oxUserName:${event.oxUserName}, contextName:${event.oxContextName}, email:${event.primaryEmail}`,
+        );
+        await this.handleOxUserChangedEventOrOxSyncUserCreatedEvent(event);
+    }
+
+    @KafkaEventHandler(KafkaOxUserChangedEvent)
+    @EventHandler(OxUserChangedEvent)
+    @EnsureRequestContext()
+    public async handleOxUserChangedEvent(event: OxUserChangedEvent): Promise<void> {
+        this.logger.info(
+            `Received OxUserChangedEvent personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, oxUserName:${event.oxUserName}, contextName:${event.oxContextName}, email:${event.primaryEmail}`,
+        );
+        await this.handleOxUserChangedEventOrOxSyncUserCreatedEvent(event);
+    }
+
+    private async handleOxUserChangedEventOrOxSyncUserCreatedEvent(event: OxUserChangedEvent): Promise<void> {
+        const email: Option<EmailAddress<true>> = await this.emailRepo.findRequestedByPerson(event.personId);
+
+        if (!email) {
+            return this.logger.info(
+                `Cannot find REQUESTED email-address for person with personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, enabling not necessary`,
+            );
+        }
+
+        if (email.address !== event.primaryEmail) {
+            this.logger.warning(
+                `Mismatch between REQUESTED(${email.address}) and received(${event.primaryEmail}) address from OX, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
+            );
+            this.logger.warning(
+                `Overriding ${email.address} with ${event.primaryEmail}) from OX, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
+            );
+            email.setAddress(event.primaryEmail);
+        }
+
+        email.enable();
+        email.oxUserID = event.oxUserId;
+        const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
+
+        if (persistenceResult instanceof DomainError) {
+            this.logger.error('Irgendwas ist immer...');
+            return this.logger.error(
+                `Could not ENABLE email for personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, error:${persistenceResult.message}`,
+            );
+        } else {
+            return this.logger.info(
+                `Changed email-address:${persistenceResult.address} from REQUESTED to ENABLED, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
+            );
+        }
+    }
+
     /*
      * Method 'handlePersonRenamedEvent' is replaced by 'handleLdapPersonEntryRenamedEvent' to handle the operations regarding person-renaming synchronously after each other,
      * first in LdapEventHandler then here in EmailEventHandler.
@@ -89,6 +226,12 @@ export class EmailEventHandler {
         this.logger.info(
             `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, username:${event.username}, oldUsername:${event.oldUsername}`,
         );
+
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Ignoring Event for personId:${event.personId} because email microservice is enabled`);
+            return;
+        }
+
         const rollenWithPK: Map<string, RolleWithPK> = await this.getRollenWithPKForPerson(event.personId);
         const rollen: Rolle<true>[] = Array.from(rollenWithPK.values(), (value: RolleWithPK) => {
             return value.rolle;
@@ -124,7 +267,11 @@ export class EmailEventHandler {
                         existingEmail,
                     );
                 } else {
-                    await this.createNewEmail(event.personId, pkForRolleWithSPReference.personenkontext.organisationId);
+                    await this.createNewEmail(
+                        event.personId,
+                        pkForRolleWithSPReference.personenkontext.organisationId,
+                        generateEmailAddressGeneratedEvent,
+                    );
                 }
             }
         } else {
@@ -175,6 +322,15 @@ export class EmailEventHandler {
         return resMap;
     }
 
+    @KafkaEventHandler(KafkaLdapSyncFailedEvent)
+    @EventHandler(LdapSyncFailedEvent)
+    @EnsureRequestContext()
+    public async handleLdapSyncFailedEvent(event: LdapSyncFailedEvent | KafkaLdapSyncFailedEvent): Promise<void> {
+        this.logger.info(`Received LdapSyncFailedEvent, personId:${event.personId}, username:${event.username}`);
+
+        await this.handlePersonDueToLdapSyncFailed(event.personId, event.username);
+    }
+
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
     @EnsureRequestContext()
@@ -186,6 +342,12 @@ export class EmailEventHandler {
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, username:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
 
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Ignoring Event for personId:${event.person.id} because email microservice is enabled`);
+            return;
+        }
+
+        this.logger.debug(`Handle PersonenkontextUpdatedEvent in old way`);
         await this.handlePerson(event.person.id, event.person.username, event.removedKontexte);
     }
 
@@ -196,6 +358,11 @@ export class EmailEventHandler {
     public async handlePersonDeletedEvent(event: PersonDeletedEvent | KafkaPersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}, username:${event.username}`);
         //Setting person_id to null in Email table is done via deleteRule, not necessary here
+
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Ignoring Event for personId:${event.personId} because email microservice is enabled`);
+            return;
+        }
 
         if (!event.emailAddress) {
             return this.logger.info(
@@ -222,81 +389,12 @@ export class EmailEventHandler {
         const rolleIds: Option<string>[] = await Promise.all(pro);
 
         for (const rolleId of rolleIds) {
-            if (rolleId) return rolleId;
+            if (rolleId) {
+                return rolleId;
+            }
         }
 
         return undefined;
-    }
-
-    // disabled for now, since we might run into issues (sheer volume of data) with fetching all affected personenkontexte
-    // @KafkaEventHandler(KafkaRolleUpdatedEvent)
-    // @EventHandler(RolleUpdatedEvent)
-    @EnsureRequestContext()
-    public async handleRolleUpdatedEvent(event: RolleUpdatedEvent): Promise<void> {
-        this.logger.info(`Received RolleUpdatedEvent, rolleId:${event.id}, rollenArt:${event.rollenArt}`);
-
-        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByRolle(event.id);
-
-        //const personIdReferrerSet: Set<[PersonID, PersonReferrer]> = new Set<[PersonID, PersonReferrer]>();
-
-        const personIdUsernameMap: Map<PersonID, PersonReferrer | undefined> = new Map<
-            PersonID,
-            PersonReferrer | undefined
-        >();
-        const personIdsSet: Set<PersonID> = new Set<PersonID>();
-        personenkontexte.forEach((pk: Personenkontext<true>) => {
-            personIdsSet.add(pk.personId);
-            personIdUsernameMap.set(pk.personId, pk.referrer);
-        });
-        const distinctPersonIds: PersonID[] = Array.from(personIdsSet.values());
-
-        this.logger.info(`RolleUpdatedEvent affects:${distinctPersonIds.length} persons`);
-
-        const handlePersonPromises: Promise<void>[] = distinctPersonIds.map((personId: PersonID) => {
-            return this.handlePerson(personId, personIdUsernameMap.get(personId));
-        });
-
-        await Promise.all(handlePersonPromises);
-    }
-
-    @KafkaEventHandler(KafkaOxMetadataInKeycloakChangedEvent)
-    @EventHandler(OxMetadataInKeycloakChangedEvent)
-    @EnsureRequestContext()
-    public async handleOxMetadataInKeycloakChangedEvent(event: OxMetadataInKeycloakChangedEvent): Promise<void> {
-        this.logger.info(
-            `Received OxMetadataInKeycloakChangedEvent personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, oxUserName:${event.oxUserName}, contextName:${event.oxContextName}, email:${event.emailAddress}`,
-        );
-        const email: Option<EmailAddress<true>> = await this.emailRepo.findRequestedByPerson(event.personId);
-
-        if (!email) {
-            return this.logger.info(
-                `Cannot find REQUESTED email-address for person with personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, enabling not necessary`,
-            );
-        }
-
-        if (email.address !== event.emailAddress) {
-            this.logger.warning(
-                `Mismatch between REQUESTED(${email.address}) and received(${event.emailAddress}) address from OX, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
-            );
-            this.logger.warning(
-                `Overriding ${email.address} with ${event.emailAddress}) from OX, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
-            );
-            email.setAddress(event.emailAddress);
-        }
-
-        email.enable();
-        email.oxUserID = event.oxUserId;
-        const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
-
-        if (persistenceResult instanceof DomainError) {
-            return this.logger.error(
-                `Could not ENABLE email for personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, error:${persistenceResult.message}`,
-            );
-        } else {
-            return this.logger.info(
-                `Changed email-address:${persistenceResult.address} from REQUESTED to ENABLED, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
-            );
-        }
     }
 
     @KafkaEventHandler(KafkaDisabledOxUserChangedEvent)
@@ -329,7 +427,7 @@ export class EmailEventHandler {
         }
     }
 
-    private async getPersonUsernameOrError(personId: PersonID): Promise<Result<PersonReferrer>> {
+    private async getPersonUsernameOrError(personId: PersonID): Promise<Result<PersonUsername>> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
 
         if (!person) {
@@ -339,7 +437,7 @@ export class EmailEventHandler {
                 error: new EntityNotFoundError('Person', personId),
             };
         }
-        if (!person.referrer) {
+        if (!person.username) {
             this.logger.error(`Username Could Not Be Found For personId:${personId}`);
             return {
                 ok: false,
@@ -347,17 +445,96 @@ export class EmailEventHandler {
             };
         }
 
-        this.logger.info(`Found username:${person.referrer} for personId:${personId}`);
+        this.logger.info(`Found username:${person.username} for personId:${personId}`);
 
         return {
             ok: true,
-            value: person.referrer,
+            value: person.username,
         };
+    }
+
+    private async handlePersonDueToLdapSyncFailed(personId: PersonID, username: PersonUsername): Promise<void> {
+        // Map to store combinations of rolleId and organisationId as the key
+        const rolleIdPKMap: Map<string, Personenkontext<true>> = new Map<string, Personenkontext<true>>();
+
+        // Retrieve all personenkontexte for the given personId
+        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
+
+        // Array to hold the role IDs
+        const rollenIds: string[] = [];
+
+        // Process each personenkontext and add it to the map and array
+        personenkontexte.forEach((pk: Personenkontext<true>) => {
+            // Use combination of rolleId and organisationId as the key
+            const key: string = `${pk.rolleId}-${pk.organisationId}`;
+            rolleIdPKMap.set(key, pk);
+            rollenIds.push(pk.rolleId);
+        });
+
+        // Retrieve role details based on the role IDs
+        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
+        const rollen: Rolle<true>[] = Array.from(rollenMap.values());
+
+        // Check if any role has a reference to an SP for email service provider
+        const rollenIdWithSPReference: Option<string> = await this.getAnyRolleReferencesEmailServiceProvider(rollen);
+
+        if (rollenIdWithSPReference) {
+            await this.handlePersonWithEmailSPReferenceAfterLdapSyncFailed(
+                personId,
+                username,
+                personenkontexte,
+                rollenIdWithSPReference,
+                rolleIdPKMap,
+                generateEmailAddressGeneratedAfterLdapSyncFailedEvent,
+            );
+        } else {
+            this.logger.warning(
+                `Handling LdapSyncFailedEvent failed, no role has reference to SP for email service provider, personId:${personId}`,
+            );
+        }
+    }
+
+    private async handlePersonWithEmailSPReferenceAfterLdapSyncFailed(
+        personId: PersonID,
+        username: PersonUsername | undefined,
+        personenkontexte: Personenkontext<true>[],
+        rollenIdWithSPReference: string,
+        rolleIdPKMap: Map<string, Personenkontext<true>>,
+        emailAdressGeneratedCreator: EmailAddressGeneratedCreator,
+    ): Promise<void> {
+        // Array to store matching Personenkontext objects for further processing
+        const pkOfRolleWithSPReferenceList: Personenkontext<true>[] = [];
+
+        // Check all combinations of rolleId and organisationId for this role
+        for (const pk of personenkontexte) {
+            if (pk.rolleId === rollenIdWithSPReference) {
+                const key: string = `${pk.rolleId}-${pk.organisationId}`;
+                const pkFromMap: Personenkontext<true> | undefined = rolleIdPKMap.get(key);
+                if (pkFromMap) {
+                    pkOfRolleWithSPReferenceList.push(pkFromMap); // Collect valid matches
+                }
+            }
+        }
+
+        // Only look for the first PK here, because we DO NOT want to create multiple EmailAddresses for a person
+        // just because multiple PKs with Email-SP-reference exist for that person. At the moment the only valid domain is 'schule-sh.de'.
+        // This has to be adjusted in the future when organisations start to define different domains for EmailAddresses.
+        if (pkOfRolleWithSPReferenceList[0]) {
+            this.logger.info(
+                `Person with personId:${personId}, username:${username} needs an email, creating or enabling address`,
+            );
+            const pkOfRolleWithSPReference: Personenkontext<true> = pkOfRolleWithSPReferenceList[0];
+            await this.createNewEmail(personId, pkOfRolleWithSPReference.organisationId, emailAdressGeneratedCreator);
+        } else {
+            this.logger.error(
+                `Rolle with id:${rollenIdWithSPReference} references SP, but no matching Personenkontext was found`,
+            );
+        }
     }
 
     private async handlePerson(
         personId: PersonID,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
         removedKontexte?: PersonenkontextEventKontextData[],
     ): Promise<void> {
         // Map to store combinations of rolleId and organisationId as the key
@@ -397,6 +574,7 @@ export class EmailEventHandler {
                 personenkontexte,
                 rollenIdWithSPReference,
                 rolleIdPKMap,
+                generateEmailAddressGeneratedEvent,
             );
         } else {
             // If no role references an SP, disable any existing emails
@@ -406,10 +584,11 @@ export class EmailEventHandler {
 
     private async handlePersonWithEmailSPReference(
         personId: PersonID,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
         personenkontexte: Personenkontext<true>[],
         rollenIdWithSPReference: string,
         rolleIdPKMap: Map<string, Personenkontext<true>>,
+        emailAdressGeneratedCreator: EmailAddressGeneratedCreator,
     ): Promise<void> {
         // Array to store matching Personenkontext objects for further processing
         const pkOfRolleWithSPReferenceList: Personenkontext<true>[] = [];
@@ -433,7 +612,11 @@ export class EmailEventHandler {
             // Iterate over all valid Personenkontext objects and trigger email creation
             for (const pkOfRolleWithSPReference of pkOfRolleWithSPReferenceList) {
                 // eslint-disable-next-line no-await-in-loop
-                await this.createOrEnableEmail(personId, pkOfRolleWithSPReference.organisationId);
+                await this.createOrEnableEmail(
+                    personId,
+                    pkOfRolleWithSPReference.organisationId,
+                    emailAdressGeneratedCreator,
+                );
             }
         } else {
             this.logger.error(
@@ -444,7 +627,7 @@ export class EmailEventHandler {
 
     private async handlePersonWithoutEmailSPReference(
         personId: PersonID,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
     ): Promise<void> {
         if (!this.OX_ENABLED) {
             return this.logger.info(
@@ -483,14 +666,14 @@ export class EmailEventHandler {
 
             if (anyEmailWasDisabled) {
                 const person: Option<Person<true>> = await this.personRepository.findById(personId);
-                if (!person || !person.referrer) {
+                if (!person || !person.username) {
                     this.logger.error(
                         `Could not publish EmailAddressDisabledEvent, personId:${personId} has no username`,
                     );
                 } else {
                     this.eventService.publish(
-                        new EmailAddressDisabledEvent(personId, person.referrer),
-                        new KafkaEmailAddressDisabledEvent(personId, person.referrer),
+                        new EmailAddressDisabledEvent(personId, person.username),
+                        new KafkaEmailAddressDisabledEvent(personId, person.username),
                     );
                 }
             }
@@ -512,15 +695,19 @@ export class EmailEventHandler {
         };
     }
 
-    private async createOrEnableEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
+    private async createOrEnableEmail(
+        personId: PersonID,
+        organisationId: OrganisationID,
+        emailAdressGeneratedCreator: EmailAddressGeneratedCreator,
+    ): Promise<void> {
         const organisationKennung: Result<OrganisationKennung> = await this.getOrganisationKennung(organisationId);
-        if (!organisationKennung.ok) return;
+        if (!organisationKennung.ok) {
+            return;
+        }
 
         const existingEmails: EmailAddress<true>[] = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
 
         if (existingEmails.length > 0) {
-            // Publish the EmailAddressAlreadyExistsEvent as the User already has an email.
-            // The status of the email is not relevant to adding the user in the OX group.
             this.eventService.publish(
                 new EmailAddressAlreadyExistsEvent(personId, organisationKennung.value),
                 new KafkaEmailAddressAlreadyExistsEvent(personId, organisationKennung.value),
@@ -529,61 +716,76 @@ export class EmailEventHandler {
 
         const personUsername: Result<string> = await this.getPersonUsernameOrError(personId);
         if (!personUsername.ok) {
-            return; //error logging is done in getPersonUsernameOrError
+            //error logging is done in getPersonUsernameOrError
+            return;
         }
+
+        let primaryEmail: EmailAddress<true> | undefined;
+        let alternativeEmail: EmailAddress<true> | undefined;
+
+        // Check if any email is already enabled
         for (const email of existingEmails) {
             if (email.enabled) {
                 return this.logger.info(
                     `Existing email for personId:${personId}, username:${personUsername.value} already ENABLED`,
                 );
-            } else if (email.disabled && this.OX_ENABLED) {
-                // If we find a disabled address, we just enable it again
-                email.enable();
-
-                // Will return after the first iteration, so it's not an await in a loop
-                // eslint-disable-next-line no-await-in-loop
-                const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
-                if (persistenceResult instanceof EmailAddress) {
-                    this.logger.info(
-                        `Set REQUESTED status and persisted address:${persistenceResult.address}, personId:${personId}, username:${personUsername.value}`,
-                    );
-                    // eslint-disable-next-line no-await-in-loop
-                    this.eventService.publish(
-                        new EmailAddressGeneratedEvent(
-                            personId,
-                            personUsername.value,
-                            persistenceResult.id,
-                            persistenceResult.address,
-                            persistenceResult.enabled,
-                            organisationKennung.value,
-                        ),
-                        new KafkaEmailAddressGeneratedEvent(
-                            personId,
-                            personUsername.value,
-                            persistenceResult.id,
-                            persistenceResult.address,
-                            persistenceResult.enabled,
-                            organisationKennung.value,
-                        ),
-                    );
-                } else {
-                    this.logger.error(
-                        `Could not ENABLE email for personId:${personId}, username:${personUsername.value}, error:${persistenceResult.message}`,
-                    );
-                }
-
-                return;
             }
         }
-        this.logger.info(
-            `No existing email found for personId:${personId}, username:${personUsername.value}, creating a new one`,
+
+        // Find the first disabled email to enable as primary
+        const firstDisabledEmail: EmailAddress<true> | undefined = existingEmails.find(
+            (email: EmailAddress<true>) => email.disabled,
         );
-        await this.createNewEmail(personId, organisationId);
+
+        if (firstDisabledEmail && this.OX_ENABLED) {
+            firstDisabledEmail.enable();
+            const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(firstDisabledEmail);
+
+            if (!(persistenceResult instanceof EmailAddress)) {
+                this.logger.error(
+                    `Could not ENABLE email for personId:${personId}, username:${personUsername.value}, error:${persistenceResult.message}`,
+                );
+                return; // stop if save failed
+            }
+
+            // The enabled email becomes the primary email
+            primaryEmail = persistenceResult;
+            this.logger.info(
+                `Enabled PRIMARY email address:${persistenceResult.address}, personId:${personId}, username:${personUsername.value}`,
+            );
+
+            // Find the latest disabled email (that wasn't just enabled) as alternative
+            alternativeEmail = existingEmails.find(
+                (email: EmailAddress<true>) => email.disabled && email.id !== firstDisabledEmail.id,
+            );
+        }
+
+        // No existing emails found or none could be enabled → create a completely new one
+        if (!primaryEmail) {
+            this.logger.info(
+                `No existing email found for personId:${personId}, username:${personUsername.value}, creating a new one`,
+            );
+            await this.createNewEmail(personId, organisationId, emailAdressGeneratedCreator);
+            return;
+        }
+
+        // This fires ONE event with primary email and alternative email (if exists)
+        const events: [EmailAddressGeneratedEvent, KafkaEmailAddressGeneratedEvent] = emailAdressGeneratedCreator(
+            personId,
+            personUsername.value,
+            primaryEmail.id,
+            primaryEmail.address,
+            primaryEmail.enabled,
+            organisationKennung.value,
+            alternativeEmail?.address, // Alternative email address (still disabled)
+        );
+
+        this.eventService.publish(...events);
     }
 
     private async createAndPersistFailedEmailAddress(
         personId: PersonID,
-        username: PersonReferrer | undefined,
+        username: PersonUsername | undefined,
     ): Promise<void> {
         const personIdAndTimestamp: string = personId + '-' + Date.now();
         const failedEmailAddress: EmailAddress<false> = EmailAddress.createNew(
@@ -604,9 +806,15 @@ export class EmailEventHandler {
         }
     }
 
-    private async createNewEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
+    private async createNewEmail(
+        personId: PersonID,
+        organisationId: OrganisationID,
+        emailAdressGeneratedCreator: EmailAddressGeneratedCreator,
+    ): Promise<void> {
         const organisationKennung: Result<OrganisationKennung> = await this.getOrganisationKennung(organisationId);
-        if (!organisationKennung.ok) return;
+        if (!organisationKennung.ok) {
+            return;
+        }
         const personUsername: Result<string> = await this.getPersonUsernameOrError(personId);
         if (!personUsername.ok) {
             return; //error logging is done in getPersonUsernameOrError
@@ -624,24 +832,15 @@ export class EmailEventHandler {
             this.logger.info(
                 `Successfully persisted email with REQUEST status for address:${persistenceResult.address}, personId:${personId}, username:${personUsername.value}`,
             );
-            this.eventService.publish(
-                new EmailAddressGeneratedEvent(
-                    personId,
-                    personUsername.value,
-                    persistenceResult.id,
-                    persistenceResult.address,
-                    persistenceResult.enabled,
-                    organisationKennung.value,
-                ),
-                new KafkaEmailAddressGeneratedEvent(
-                    personId,
-                    personUsername.value,
-                    persistenceResult.id,
-                    persistenceResult.address,
-                    persistenceResult.enabled,
-                    organisationKennung.value,
-                ),
+            const events: [EmailAddressGeneratedEvent, KafkaEmailAddressGeneratedEvent] = emailAdressGeneratedCreator(
+                personId,
+                personUsername.value,
+                persistenceResult.id,
+                persistenceResult.address,
+                persistenceResult.enabled,
+                organisationKennung.value,
             );
+            this.eventService.publish(...events);
         } else {
             this.logger.error(
                 `Could not persist email for personId:${personId}, username:${personUsername.value}, error:${persistenceResult.message}`,
@@ -699,7 +898,9 @@ export class EmailEventHandler {
         oldEmail: EmailAddress<true>,
     ): Promise<void> {
         const organisationKennung: Result<OrganisationKennung> = await this.getOrganisationKennung(organisationId);
-        if (!organisationKennung.ok) return;
+        if (!organisationKennung.ok) {
+            return;
+        }
         const personUsername: Result<string> = await this.getPersonUsernameOrError(personId);
         if (!personUsername.ok) {
             return; //error logging is done in getPersonUsernameOrError
@@ -760,7 +961,9 @@ export class EmailEventHandler {
             (sp: ServiceProvider<true>) => sp.kategorie === ServiceProviderKategorie.EMAIL,
         );
 
-        if (references) return rolle.id;
+        if (references) {
+            return rolle.id;
+        }
 
         return undefined;
     }

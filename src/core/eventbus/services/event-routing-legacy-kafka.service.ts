@@ -16,10 +16,9 @@ export class EventRoutingLegacyKafkaService {
         private readonly logger: ClassLogger,
         private readonly eventService: EventService,
         private readonly kafkaEventService: KafkaEventService,
-        private readonly configService: ConfigService<ServerConfig>,
+        configService: ConfigService<ServerConfig>,
     ) {
-        const kafkaConfig: KafkaConfig | undefined = this.configService.get<KafkaConfig>('KAFKA');
-        this.kafkaEnabled = kafkaConfig?.ENABLED ?? false;
+        this.kafkaEnabled = configService.getOrThrow<KafkaConfig>('KAFKA').ENABLED;
     }
 
     public publish(legacyEvent: BaseEvent, kafkaEvent?: KafkaEvent): void {

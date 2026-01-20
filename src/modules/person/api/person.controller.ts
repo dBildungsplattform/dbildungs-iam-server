@@ -44,14 +44,12 @@ import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
 import { ApiOkResponsePaginated, Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
-import { ScopeOrder } from '../../../shared/persistence/index.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PermittedOrgas, PersonFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
@@ -59,7 +57,7 @@ import { PersonenkontextResponse } from '../../personenkontext/api/response/pers
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { PersonDomainError } from '../domain/person-domain.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
@@ -68,7 +66,6 @@ import { PersonLockOccasion } from '../domain/person.enums.js';
 import { Person } from '../domain/person.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { PersonRepository } from '../persistence/person.repository.js';
-import { PersonScope } from '../persistence/person.scope.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
 import { DbiamPersonError } from './dbiam-person.error.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
@@ -77,7 +74,6 @@ import { PersonEmailResponse } from './person-email-response.js';
 import { PersonExceptionFilter } from './person-exception-filter.js';
 import { PersonLockResponse } from './person-lock.response.js';
 import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
-import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
@@ -86,6 +82,8 @@ import { KafkaPersonLdapSyncEvent } from '../../../shared/events/kafka-person-ld
 import { PersonLandesbediensteterSearchQueryParams } from './person-landesbediensteter-search-query.param.js';
 import { PersonLandesbediensteterSearchResponse } from './person-landesbediensteter-search.response.js';
 import { PersonLandesbediensteterSearchService } from '../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -96,8 +94,9 @@ export class PersonController {
     public readonly ROOT_ORGANISATION_ID: string;
 
     public constructor(
-        private readonly personRepository: PersonRepository,
         private readonly emailRepo: EmailRepo,
+        private readonly personRepository: PersonRepository,
+        private readonly emailResolverService: EmailResolverService,
         private readonly personenkontextService: PersonenkontextService,
         private readonly personDeleteService: PersonDeleteService,
         private readonly personLandesbediensteterSearchService: PersonLandesbediensteterSearchService,
@@ -113,6 +112,7 @@ export class PersonController {
     }
 
     @Get('landesbediensteter')
+    @UseGuards(StepUpGuard)
     @ApiOkResponse({
         description: 'The landesbediensteter was successfully returned.',
         type: [PersonLandesbediensteterSearchResponse],
@@ -165,14 +165,14 @@ export class PersonController {
         // Throw an HTTP exception if the delete response is an error
         if (!response.ok) {
             this.logger.error(
-                `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht den Benutzer ${person?.referrer} (BenutzerId: ${person?.id}) zu löschen. Fehler: ${response.error.message}`,
+                `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht den Benutzer ${person?.username} (BenutzerId: ${person?.id}) zu löschen. Fehler: ${response.error.message}`,
             );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(response.error),
             );
         }
         this.logger.info(
-            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat Benutzer ${person?.referrer} (BenutzerId: ${person?.id}) gelöscht.`,
+            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat Benutzer ${person?.username} (BenutzerId: ${person?.id}) gelöscht.`,
         );
     }
 
@@ -200,14 +200,21 @@ export class PersonController {
             );
         }
 
-        const personEmailResponse: Option<PersonEmailResponse> = await this.emailRepo.getEmailAddressAndStatusForPerson(
-            personResult.value,
-        );
+        let personEmailResponse: Option<PersonEmailResponse>;
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(
+                `Getting PersonEmailResponse for PersonId ${personResult.value.id} using new Microservice`,
+            );
+            personEmailResponse = await this.emailResolverService.findEmailBySpshPerson(personResult.value.id);
+        } else {
+            this.logger.info(`Getting PersonEmailResponse for PersonId ${personResult.value.id} using old emailRepo`);
+            personEmailResponse = await this.emailRepo.getEmailAddressAndStatusForPerson(personResult.value);
+        }
 
         const response: PersonendatensatzResponse = new PersonendatensatzResponse(
             personResult.value,
             false,
-            personEmailResponse ?? undefined,
+            personEmailResponse ? personEmailResponse : undefined,
         );
 
         return response;
@@ -282,53 +289,6 @@ export class PersonController {
         });
     }
 
-    @Get()
-    @ApiOkResponse({
-        description:
-            'The persons were successfully returned. WARNING: This endpoint returns all persons as default when no paging parameters were set.',
-        type: [PersonendatensatzResponse],
-        headers: PagingHeadersObject,
-    })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
-    public async findPersons(
-        @Query() queryParams: PersonenQueryParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<PagedResponse<PersonendatensatzResponse>> {
-        // Find all organisations where user has permission
-        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.PERSONEN_LESEN],
-            true,
-            false,
-        );
-
-        // Find all Personen on child-orgas (+root orgas)
-        const scope: PersonScope = new PersonScope();
-        if (!permittedOrgas.all) {
-            scope.findBy({ organisationen: permittedOrgas.orgaIds });
-        }
-        scope.sortBy('vorname', ScopeOrder.ASC).paged(queryParams.offset, queryParams.limit);
-
-        const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
-
-        const personIds: PersonID[] = persons.map((p: Person<true>) => p.id);
-        const personEmailResponseMap: Map<PersonID, PersonEmailResponse> =
-            await this.emailRepo.getEmailAddressAndStatusForPersonIds(personIds);
-
-        const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse({
-            offset: queryParams.offset ?? 0,
-            limit: queryParams.limit ?? total,
-            total: total,
-            items: persons.map(
-                (person: Person<true>) =>
-                    new PersonendatensatzResponse(person, false, personEmailResponseMap.get(person.id)),
-            ),
-        });
-
-        return response;
-    }
-
     @Put(':personId')
     @UseGuards(StepUpGuard)
     @ApiOkResponse({
@@ -361,22 +321,8 @@ export class PersonController {
             body.revision,
             body.name.familienname,
             body.name.vorname,
-            body.referrer,
+            body.username,
             body.stammorganisation,
-            body.name.initialenfamilienname,
-            body.name.initialenvorname,
-            body.name.rufname,
-            body.name.titel,
-            body.name.anrede,
-            body.name.namenspraefix,
-            body.name.namenssuffix,
-            body.name.sortierindex,
-            body.geburt?.datum,
-            body.geburt?.geburtsort,
-            body.geschlecht,
-            body.lokalisierung,
-            body.vertrauensstufe,
-            body.auskunftssperre,
         );
         if (updateResult instanceof DomainError) {
             if (updateResult instanceof PersonDomainError) {
@@ -408,6 +354,7 @@ export class PersonController {
             params.personId,
             permissions,
         );
+
         if (!personResult.ok) {
             const error: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
@@ -427,12 +374,12 @@ export class PersonController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult),
             );
             this.logger.error(
-                `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht das Password des Benutzers ${personResult.value.referrer} mit BenutzerId ${personResult.value.id} zurückzusetzen. Fehler: ${error.message}`,
+                `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht das Password des Benutzers ${personResult.value.username} mit BenutzerId ${personResult.value.id} zurückzusetzen. Fehler: ${error.message}`,
             );
             throw error;
         }
         this.logger.info(
-            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat das Passwort von Benutzer ${saveResult.referrer} (BenutzerId: ${saveResult.id}) zurueckgesetzt.`,
+            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat das Passwort von Benutzer ${saveResult.username} (BenutzerId: ${saveResult.id}) zurueckgesetzt.`,
         );
         return { ok: true, value: personResult.value.newPassword! };
     }
@@ -476,11 +423,11 @@ export class PersonController {
             );
             if (lockUserBodyParams.lock) {
                 this.logger.error(
-                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht den Benutzer ${personResult.value.referrer} (BenutzerId: ${personId}) zu sperren. Fehler: ${error.message}.`,
+                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht den Benutzer ${personResult.value.username} (BenutzerId: ${personId}) zu sperren. Fehler: ${error.message}.`,
                 );
             } else {
                 this.logger.error(
-                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht den Benutzer ${personResult.value.referrer} (BenutzerId: ${personId}) zu entsperren. Fehler: ${error.message}.`,
+                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht den Benutzer ${personResult.value.username} (BenutzerId: ${personId}) zu entsperren. Fehler: ${error.message}.`,
                 );
             }
             throw error;
@@ -506,22 +453,22 @@ export class PersonController {
             ]);
             if (lockUserBodyParams.lock) {
                 this.logger.error(
-                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}, Sperrende Organisation: ${userLock.locked_by}) hat versucht den Benutzer ${personResult.value.referrer} (BenutzerId: ${personId}) zu sperren. Fehler: ${error.message}.`,
+                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}, Sperrende Organisation: ${userLock.locked_by}) hat versucht den Benutzer ${personResult.value.username} (BenutzerId: ${personId}) zu sperren. Fehler: ${error.message}.`,
                 );
             } else {
                 this.logger.error(
-                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}, Sperrende Organisation: ${userLock.locked_by}) hat versucht den Benutzer ${personResult.value.referrer} (BenutzerId: ${personId}) zu entsperren. Fehler: ${error.message}.`,
+                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}, Sperrende Organisation: ${userLock.locked_by}) hat versucht den Benutzer ${personResult.value.username} (BenutzerId: ${personId}) zu entsperren. Fehler: ${error.message}.`,
                 );
             }
             throw error;
         }
         if (lockUserBodyParams.lock) {
             this.logger.info(
-                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}, Sperrende Organisation: ${userLock.locked_by}) hat Benutzer ${personResult.value.referrer} (BenutzerId: ${personId})) gesperrt (Befristung: ${userLock.locked_until?.toString() ?? 'unbefristet'}).`,
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}, Sperrende Organisation: ${userLock.locked_by}) hat Benutzer ${personResult.value.username} (BenutzerId: ${personId})) gesperrt (Befristung: ${userLock.locked_until?.toString() ?? 'unbefristet'}).`,
             );
         } else {
             this.logger.info(
-                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}, Sperrende Organisation: ${userLock.locked_by}) hat Benutzer ${personResult.value.referrer} (BenutzerId: ${personId})) entsperrt (Befristung: ${userLock.locked_until?.toString() ?? 'unbefristet'}).`,
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}, Sperrende Organisation: ${userLock.locked_by}) hat Benutzer ${personResult.value.username} (BenutzerId: ${personId})) entsperrt (Befristung: ${userLock.locked_until?.toString() ?? 'unbefristet'}).`,
             );
         }
         return new PersonLockResponse(`User has been successfully ${lockUserBodyParams.lock ? '' : 'un'}locked.`);
@@ -557,7 +504,7 @@ export class PersonController {
             new KafkaPersonExternalSystemsSyncEvent(personId),
         );
         this.logger.info(
-            `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id} hat für Benutzer ${personResult.value.referrer} (BenutzerId: ${personResult.value.id}) eine Synchronisation durchgeführt.`,
+            `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id} hat für Benutzer ${personResult.value.username} (BenutzerId: ${personResult.value.id}) eine Synchronisation durchgeführt.`,
         );
     }
 
@@ -614,7 +561,7 @@ export class PersonController {
             );
         }
         this.logger.info(
-            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat die persoenlichen Daten von Benutzer ${result.referrer} (BenutzerId: ${result.id}) geändert.`,
+            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat die persoenlichen Daten von Benutzer ${result.username} (BenutzerId: ${result.id}) geändert.`,
         );
         return new PersonendatensatzResponse(result, false);
     }
@@ -642,16 +589,16 @@ export class PersonController {
                 ),
             );
         }
-        if (!personResult.value.referrer) {
+        if (!personResult.value.username) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new PersonDomainError('Person-Referrer NOT defined', params.personId),
+                    new PersonDomainError('Person-Username NOT defined', params.personId),
                 ),
             );
         }
         const changeUserPasswordResult: Result<PersonID> = await this.ldapClientService.changeUserPasswordByPersonId(
             personResult.value.id,
-            personResult.value.referrer,
+            personResult.value.username,
         );
         this.eventService.publish(
             new PersonLdapSyncEvent(personResult.value.id),

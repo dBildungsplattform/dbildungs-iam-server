@@ -1,28 +1,30 @@
 import { faker } from '@faker-js/faker';
+import { ImportDataItem } from '../../src/modules/import/domain/import-data-item.js';
+import { ImportVorgang } from '../../src/modules/import/domain/import-vorgang.js';
+import { ImportStatus } from '../../src/modules/import/domain/import.enums.js';
+import { ImportDataItemStatus } from '../../src/modules/import/domain/importDataItem.enum.js';
 import { User } from '../../src/modules/keycloak-administration/domain/user.js';
+import { Meldung } from '../../src/modules/meldung/domain/meldung.js';
 import { OrganisationsTyp, Traegerschaft } from '../../src/modules/organisation/domain/organisation.enums.js';
+import { Organisation } from '../../src/modules/organisation/domain/organisation.js';
+import { Person } from '../../src/modules/person/domain/person.js';
 import {
     Jahrgangsstufe,
     Personenstatus,
     SichtfreigabeType,
 } from '../../src/modules/personenkontext/domain/personenkontext.enums.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../src/modules/rolle/domain/rolle.enums.js';
+import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
+import { RollenArt, RollenMerkmal } from '../../src/modules/rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../src/modules/rolle/domain/systemrecht.js';
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
-import { DoBase } from '../../src/shared/types/do-base.js';
-import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderSystem,
     ServiceProviderTarget,
 } from '../../src/modules/service-provider/domain/service-provider.enum.js';
-import { Person } from '../../src/modules/person/domain/person.js';
-import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
-import { Organisation } from '../../src/modules/organisation/domain/organisation.js';
-import { ImportDataItem } from '../../src/modules/import/domain/import-data-item.js';
-import { ImportVorgang } from '../../src/modules/import/domain/import-vorgang.js';
-import { ImportStatus } from '../../src/modules/import/domain/import.enums.js';
-import { ImportDataItemStatus } from '../../src/modules/import/domain/importDataItem.enum.js';
-import { Meldung } from '../../src/modules/meldung/domain/meldung.js';
+import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
+import { DoBase } from '../../src/shared/types/do-base.js';
+import { Rollenerweiterung } from '../../src/modules/rolle/domain/rollenerweiterung.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -88,7 +90,6 @@ export class DoFactory {
             email: faker.internet.email(),
             externalSystemIDs: {},
             enabled: true,
-            attributes: {},
         };
 
         return Object.assign(Object.create(User.prototype) as User<boolean>, user, props);
@@ -110,7 +111,7 @@ export class DoFactory {
             rolleId: faker.string.uuid(),
             jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
             personenstatus: Personenstatus.AKTIV,
-            referrer: 'referrer',
+            username: 'username',
             sichtfreigabe: SichtfreigabeType.JA,
             loeschungZeitpunkt: faker.date.anytime(),
             befristung: faker.date.anytime(),
@@ -129,7 +130,7 @@ export class DoFactory {
             administeredBySchulstrukturknoten: faker.string.uuid(),
             rollenart: faker.helpers.enumValue(RollenArt),
             merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-            systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+            systemrechte: [RollenSystemRecht.PERSONEN_VERWALTEN],
             serviceProviderIds: [],
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
@@ -161,6 +162,7 @@ export class DoFactory {
             providedOnSchulstrukturknoten: faker.string.uuid(),
             externalSystem: ServiceProviderSystem.NONE,
             requires2fa: true,
+            merkmale: [],
         };
         return Object.assign(
             Object.create(ServiceProvider.prototype) as ServiceProvider<boolean>,
@@ -247,5 +249,25 @@ export class DoFactory {
             organisationId: faker.string.uuid(),
         };
         return Object.assign(Object.create(ImportVorgang.prototype) as ImportVorgang<boolean>, objectVallue, props);
+    }
+
+    public static createRollenerweiterung<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        props?: Partial<Rollenerweiterung<WasPersisted>>,
+    ): Rollenerweiterung<WasPersisted> {
+        const rollenerweiterung: Partial<Rollenerweiterung<WasPersisted>> = {
+            id: withId ? faker.string.uuid() : undefined,
+            createdAt: withId ? faker.date.past() : undefined,
+            updatedAt: withId ? faker.date.recent() : undefined,
+            rolleId: faker.string.uuid(),
+            serviceProviderId: faker.string.uuid(),
+            organisationId: faker.string.uuid(),
+        };
+        return Object.assign(
+            Object.create(Rollenerweiterung.prototype) as Rollenerweiterung<boolean>,
+            rollenerweiterung,
+            props,
+        );
     }
 }

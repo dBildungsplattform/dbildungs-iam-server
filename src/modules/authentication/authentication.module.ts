@@ -5,6 +5,7 @@ import { PersonModule } from '../person/person.module.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { RolleModule } from '../rolle/rolle.module.js';
 import { PersonPermissionsRepo } from './domain/person-permission.repo.js';
+import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
 
 @Module({
     imports: [
@@ -13,6 +14,7 @@ import { PersonPermissionsRepo } from './domain/person-permission.repo.js';
         PersonenKontextModule,
         OrganisationModule,
         RolleModule,
+        EmailMicroserviceModule,
     ],
     providers: [PersonPermissionsRepo],
     exports: [PersonPermissionsRepo],

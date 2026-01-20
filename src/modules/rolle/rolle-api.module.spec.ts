@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
 import { RolleController } from './api/rolle.controller.js';
 import { RolleApiModule } from './rolle-api.module.js';
 
@@ -8,7 +8,7 @@ describe('RolleApiModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, RolleApiModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), RolleApiModule],
         }).compile();
     });
 

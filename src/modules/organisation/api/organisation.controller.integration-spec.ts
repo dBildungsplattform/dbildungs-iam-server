@@ -1,8 +1,11 @@
 import { faker } from '@faker-js/faker';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Request } from 'express';
+import { Observable } from 'rxjs';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
@@ -10,32 +13,36 @@ import {
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
-import { OrganisationEntity } from '../persistence/organisation.entity.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { Observable } from 'rxjs';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { PassportUser } from '../../authentication/types/user.js';
-import { Request } from 'express';
-import { OrganisationApiModule } from '../organisation-api.module.js';
-import { OrganisationsTyp } from '../domain/organisation.enums.js';
-import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
+import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
+import { PersonFactory } from '../../person/domain/person.factory.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { Person } from '../../person/domain/person.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { PersonFactory } from '../../person/domain/person.factory.js';
-import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
-import { generatePassword } from '../../../shared/util/password-generator.js';
-import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { Organisation } from '../domain/organisation.js';
+import { OrganisationApiModule } from '../organisation-api.module.js';
+import { OrganisationEntity } from '../persistence/organisation.entity.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
+import { OrganisationSpecificationErrorI18nTypes } from './dbiam-organisation.error.js';
 
 describe('Organisation API', () => {
     let app: INestApplication;
@@ -44,6 +51,9 @@ describe('Organisation API', () => {
     let rolleRepo: RolleRepo;
     let personRepo: PersonRepository;
     let dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
+    let serviceProviderRepo: ServiceProviderRepo;
+    let organisationRepo: OrganisationRepository;
+    let rollenerweiterungRepo: RollenerweiterungRepo;
     let personenkontextFactory: PersonenkontextFactory;
     let personFactory: PersonFactory;
 
@@ -76,7 +86,6 @@ describe('Organisation API', () => {
                 OrganisationApiModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
             ],
             providers: [
                 {
@@ -131,6 +140,9 @@ describe('Organisation API', () => {
         personRepo = module.get(PersonRepository);
         personenkontextFactory = module.get(PersonenkontextFactory);
         dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
+        serviceProviderRepo = module.get(ServiceProviderRepo);
+        organisationRepo = module.get(OrganisationRepository);
+        rollenerweiterungRepo = module.get(RollenerweiterungRepo);
         personFactory = module.get(PersonFactory);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
@@ -150,13 +162,13 @@ describe('Organisation API', () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
 
-    describe('/DELETE organisationId', () => {
+    describe('/DELETE klasse by organisationId', () => {
         describe('should return error', () => {
             it('if user is missing permissions', async () => {
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisationen/${faker.string.uuid()}/klasse`)
+                    .delete(`/organisationen/${faker.string.uuid()}`)
                     .send();
 
                 expect(response.status).toBe(404);
@@ -166,7 +178,7 @@ describe('Organisation API', () => {
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisationen/${faker.string.uuid()}/klasse`)
+                    .delete(`/organisationen/${faker.string.uuid()}`)
                     .send();
 
                 expect(response.status).toBe(404);
@@ -181,7 +193,7 @@ describe('Organisation API', () => {
                 await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisationen/${faker.string.uuid()}/klasse`)
+                    .delete(`/organisationen/${faker.string.uuid()}`)
                     .send();
 
                 expect(response.status).toBe(404);
@@ -211,11 +223,12 @@ describe('Organisation API', () => {
 
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LERN,
                     }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 await dBiamPersonenkontextRepoInternal.save(
                     createPersonenkontext(false, {
@@ -226,13 +239,13 @@ describe('Organisation API', () => {
                 );
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisationen/${organisation.id}/klasse`)
+                    .delete(`/organisationen/${organisation.id}`)
                     .send();
 
                 expect(response.status).toBe(400);
                 expect(response.body).toEqual({
                     code: 400,
-                    i18nKey: 'ORGANISATION_IST_BEREITS_ZUGEWIESEN_ERROR',
+                    i18nKey: 'ORGANISATION_HAT_PERSONENKONTEXTE',
                 });
             });
         });
@@ -251,10 +264,156 @@ describe('Organisation API', () => {
                 await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisationen/${organisation.id}/klasse`)
+                    .delete(`/organisationen/${organisation.id}`)
                     .send();
 
                 expect(response.status).toBe(204);
+            });
+        });
+    });
+
+    describe('/DELETE organisation', () => {
+        describe('when all conditions pass', () => {
+            it('should succeed', async () => {
+                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+                const orga: OrganisationEntity = new OrganisationEntity();
+                Object.assign(orga, DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }));
+                await em.persistAndFlush(orga);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/organisationen/${orga.id}`)
+                    .send();
+                expect(response.status).toBe(204);
+            });
+        });
+
+        describe('when orga is still referenced', () => {
+            type TestFixture = {
+                entityType: string;
+                setup: () => Promise<string>;
+                i18nKey: OrganisationSpecificationErrorI18nTypes;
+            };
+            describe.each([
+                {
+                    entityType: 'Organisation',
+                    setup: async (): Promise<string> => {
+                        const savedOrga: Organisation<true> = await organisationRepo.save(
+                            DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+                        );
+                        await organisationRepo.save(
+                            DoFactory.createOrganisation(false, {
+                                typ: OrganisationsTyp.KLASSE,
+                                administriertVon: savedOrga.id,
+                            }),
+                        );
+                        return savedOrga.id;
+                    },
+                    i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_HAT_KINDER,
+                },
+                {
+                    entityType: 'Rolle',
+                    setup: async (): Promise<string> => {
+                        const savedOrga: Organisation<true> = await organisationRepo.save(
+                            DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+                        );
+                        await rolleRepo.save(
+                            DoFactory.createRolle(false, {
+                                administeredBySchulstrukturknoten: savedOrga.id,
+                            }),
+                        );
+                        return savedOrga.id;
+                    },
+                    i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_HAT_ROLLEN,
+                },
+                {
+                    entityType: 'Personenkontext',
+                    setup: async (): Promise<string> => {
+                        const savedOrga: Organisation<true> = await organisationRepo.save(
+                            DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+                        );
+
+                        const person: Person<true> | DomainError = await personRepo.save(DoFactory.createPerson(false));
+                        if (person instanceof DomainError) {
+                            throw person;
+                        }
+
+                        const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                        if (rolle instanceof DomainError) {
+                            throw rolle;
+                        }
+
+                        await dBiamPersonenkontextRepoInternal.save(
+                            DoFactory.createPersonenkontext(false, {
+                                organisationId: savedOrga.id,
+                                personId: person.id,
+                                rolleId: rolle.id,
+                            }),
+                        );
+                        return savedOrga.id;
+                    },
+                    i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_HAT_PERSONENKONTEXTE,
+                },
+                {
+                    entityType: 'ServiceProvider',
+                    setup: async (): Promise<string> => {
+                        const savedOrga: Organisation<true> = await organisationRepo.save(
+                            DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+                        );
+
+                        await serviceProviderRepo.save(
+                            DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: savedOrga.id }),
+                        );
+                        return savedOrga.id;
+                    },
+                    i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_HAT_ANGEBOTE,
+                },
+                {
+                    entityType: 'Rollenerweiterung',
+                    setup: async (): Promise<string> => {
+                        const savedOrga: Organisation<true> = await organisationRepo.save(
+                            DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+                        );
+                        const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                        if (rolle instanceof DomainError) {
+                            throw rolle;
+                        }
+                        const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                            DoFactory.createServiceProvider(false, {
+                                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                            }),
+                        );
+                        await rollenerweiterungRepo.create(
+                            DoFactory.createRollenerweiterung(false, {
+                                organisationId: savedOrga.id,
+                                rolleId: rolle.id,
+                                serviceProviderId: serviceProvider.id,
+                            }),
+                        );
+                        return savedOrga.id;
+                    },
+                    i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_HAT_ROLLENERWEITERUNGEN,
+                },
+            ] as Array<TestFixture>)('by $entityType', ({ setup, i18nKey }: TestFixture) => {
+                let orgaId: OrganisationID;
+                beforeEach(async () => {
+                    permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+                    permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+                    orgaId = await setup();
+                });
+
+                it('should fail', async () => {
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .delete(`/organisationen/${orgaId}`)
+                        .send();
+                    expect(response.status).toBe(400);
+                    expect(response.body).toEqual(
+                        expect.objectContaining({
+                            code: 400,
+                            i18nKey,
+                        }),
+                    );
+                });
             });
         });
     });

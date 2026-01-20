@@ -3,20 +3,22 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { HttpException, NotImplementedException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
+import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EntityCouldNotBeDeleted, EntityNotFoundError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
+import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
-import { PersonID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
@@ -37,26 +39,25 @@ import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-t
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
+import { PersonLandesbediensteterSearchService } from '../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonEmailResponse } from './person-email-response.js';
-import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
-import { PersonController } from './person.controller.js';
-import { PersonenQueryParams } from './personen-query.param.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
-import { UpdatePersonBodyParams } from './update-person.body.params.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
-import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
-import { PersonLandesbediensteterSearchService } from '../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
 import { PersonLandesbediensteterSearchQueryParams } from './person-landesbediensteter-search-query.param.js';
 import { PersonLandesbediensteterSearchResponse } from './person-landesbediensteter-search.response.js';
+import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
+import { PersonController } from './person.controller.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { UpdatePersonBodyParams } from './update-person.body.params.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
+    let logger: ClassLogger;
     let personController: PersonController;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let emailRepoMock: DeepMocked<EmailRepo>;
+    let emailResolverService: DeepMocked<EmailResolverService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let keycloakUserService: DeepMocked<KeycloakUserService>;
@@ -69,11 +70,15 @@ describe('PersonController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [MapperTestModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [
                 PersonController,
                 PersonFactory,
                 PersonApiMapper,
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
+                },
                 {
                     provide: UsernameGeneratorService,
                     useValue: createMock<UsernameGeneratorService>(),
@@ -138,11 +143,22 @@ describe('PersonController', () => {
                     provide: LdapSyncEventHandler,
                     useValue: createMock<LdapSyncEventHandler>(),
                 },
+                {
+                    provide: EmailResolverService,
+                    useValue: createMock<EmailResolverService>(),
+                },
             ],
-        }).compile();
+        })
+            .overrideProvider(EventRoutingLegacyKafkaService)
+            .useValue(createMock<EventRoutingLegacyKafkaService>())
+            .overrideProvider(KeycloakUserService)
+            .useValue(createMock<KeycloakUserService>())
+            .compile();
+        logger = module.get(ClassLogger);
         personController = module.get(PersonController);
         personRepositoryMock = module.get(PersonRepository);
         emailRepoMock = module.get(EmailRepo);
+        emailResolverService = module.get(EmailResolverService);
         personenkontextServiceMock = module.get(PersonenkontextService);
         rolleRepoMock = module.get(RolleRepo);
         personDeleteServiceMock = module.get(PersonDeleteService);
@@ -164,22 +180,7 @@ describe('PersonController', () => {
             '1',
             username,
             faker.lorem.word(),
-            username, // referrer
             undefined, // stammorganisation
-            undefined, // initialenFamilienname
-            undefined, // initialenVorname
-            undefined, // rufname
-            undefined, // nameTitel
-            undefined, // nameAnrede
-            undefined, // namePraefix
-            undefined, // nameSuffix
-            undefined, // nameSortierindex
-            undefined, // geburtsdatum
-            undefined, // geburtsort
-            undefined, // geschlecht
-            undefined, // lokalisierung
-            undefined, // vertrauensstufe
-            undefined, // auskunftssperre
             undefined, // personalnummer
             undefined, // orgUnassignmentDate
             [
@@ -265,23 +266,87 @@ describe('PersonController', () => {
             expect(personRepositoryMock.findById).toHaveBeenCalledTimes(0);
         });
 
+        describe('when person has no email-address assigned', () => {
+            it('should get a person without Email old way', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+
+                personRepositoryMock.findById.mockResolvedValue(person);
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(undefined);
+                const personResponse: PersonendatensatzResponse = await personController.findPersonById(
+                    params,
+                    personPermissionsMock,
+                );
+
+                expect(emailResolverService.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using old emailRepo`));
+                expect(emailRepoMock.getEmailAddressAndStatusForPerson).toHaveBeenCalled();
+                expect(personResponse.person.email).toEqual(undefined);
+            });
+
+            it('should get a person without Email new microservice', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+                personRepositoryMock.findById.mockResolvedValue(person);
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                emailResolverService.findEmailBySpshPerson.mockResolvedValueOnce(undefined);
+                const personResponse: PersonendatensatzResponse = await personController.findPersonById(
+                    params,
+                    personPermissionsMock,
+                );
+
+                expect(emailResolverService.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using new Microservice`));
+                expect(emailResolverService.findEmailBySpshPerson).toHaveBeenCalled();
+                expect(personResponse.person.email).toEqual(undefined);
+            });
+        });
+
         describe('when person has an email-address assigned', () => {
-            it('should get a person', async () => {
+            it('should get a person old Repo', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+
                 personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
                 const fakeEmailAddress: string = faker.internet.email();
-                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValue(
-                    createMock<PersonEmailResponse>({
-                        address: fakeEmailAddress,
-                        status: EmailAddressStatus.ENABLED,
-                    }),
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(
+                    new PersonEmailResponse(EmailAddressStatus.ENABLED, fakeEmailAddress),
                 );
                 const personResponse: PersonendatensatzResponse = await personController.findPersonById(
                     params,
                     personPermissionsMock,
                 );
 
-                if (!personResponse.person.email) throw Error();
+                if (!personResponse.person.email) {
+                    throw Error();
+                }
+                expect(emailResolverService.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using old emailRepo`));
+                expect(emailRepoMock.getEmailAddressAndStatusForPerson).toHaveBeenCalled();
+                expect(personResponse.person.email.status).toStrictEqual(EmailAddressStatus.ENABLED);
+                expect(personResponse.person.email.address).toStrictEqual(fakeEmailAddress);
+            });
+
+            it('should get a person new Microservice', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+                personRepositoryMock.findById.mockResolvedValue(person);
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                const fakeEmailAddress: string = faker.internet.email();
+                emailResolverService.findEmailBySpshPerson.mockResolvedValueOnce(
+                    new PersonEmailResponse(EmailAddressStatus.ENABLED, fakeEmailAddress),
+                );
+                const personResponse: PersonendatensatzResponse = await personController.findPersonById(
+                    params,
+                    personPermissionsMock,
+                );
+
+                if (!personResponse.person.email) {
+                    throw Error();
+                }
+                expect(emailResolverService.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using new Microservice`));
+                expect(emailResolverService.findEmailBySpshPerson).toHaveBeenCalled();
                 expect(personResponse.person.email.status).toStrictEqual(EmailAddressStatus.ENABLED);
                 expect(personResponse.person.email.address).toStrictEqual(fakeEmailAddress);
             });
@@ -337,93 +402,6 @@ describe('PersonController', () => {
         });
     });
 
-    describe('findPersons', () => {
-        const options: {
-            referrer: string;
-            lastName: string;
-            firstName: string;
-        } = {
-            referrer: faker.string.alpha(),
-            lastName: faker.person.lastName(),
-            firstName: faker.person.firstName(),
-        };
-        const queryParams: PersonenQueryParams = {
-            referrer: options.referrer,
-            familienname: options.lastName,
-            vorname: options.firstName,
-            sichtfreigabe: SichtfreigabeType.NEIN,
-            suchFilter: '',
-        };
-        const person1: Person<true> = Person.construct(
-            faker.string.uuid(),
-            faker.date.past(),
-            faker.date.recent(),
-            faker.person.lastName(),
-            'Moritz',
-            '1',
-            faker.lorem.word(),
-            faker.lorem.word(),
-            faker.string.uuid(),
-        );
-        const person2: Person<true> = Person.construct(
-            faker.string.uuid(),
-            faker.date.past(),
-            faker.date.recent(),
-            faker.person.lastName(),
-            'Paul',
-            '1',
-            faker.lorem.word(),
-            faker.lorem.word(),
-            faker.string.uuid(),
-        );
-        personPermissionsMock = createMock<PersonPermissions>();
-
-        it('should get all persons', async () => {
-            personRepositoryMock.findBy.mockResolvedValueOnce([[person1, person2], 2]);
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
-
-            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
-                queryParams,
-                personPermissionsMock,
-            );
-            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
-            expect(result.total).toEqual(2);
-            expect(result.limit).toEqual(2);
-            expect(result.offset).toEqual(0);
-            expect(result.items.length).toEqual(2);
-            expect(result.items.at(0)?.person.name.vorname).toEqual('Moritz');
-        });
-
-        it('should get all persons inclusive enabled EAs when organisationIds is found and is ROOT', async () => {
-            personRepositoryMock.findBy.mockResolvedValueOnce([[person1, person2], 2]);
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
-                all: false,
-                orgaIds: [personController.ROOT_ORGANISATION_ID],
-            });
-            const map: Map<PersonID, PersonEmailResponse> = new Map<PersonID, PersonEmailResponse>();
-            const emailResponsePerson1: PersonEmailResponse = new PersonEmailResponse(
-                EmailAddressStatus.ENABLED,
-                faker.internet.email(),
-            );
-            map.set(person1.id, emailResponsePerson1);
-            emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValueOnce(map);
-
-            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
-                queryParams,
-                personPermissionsMock,
-            );
-            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
-            expect(result.total).toEqual(2);
-            expect(result.limit).toEqual(2);
-            expect(result.offset).toEqual(0);
-            expect(result.items.length).toEqual(2);
-            expect(result.items.at(0)?.person.name.vorname).toEqual('Moritz');
-            expect(result.items.at(0)?.person.email).toEqual(emailResponsePerson1);
-            expect(result.items.at(1)?.person.name.vorname).toEqual('Paul');
-            expect(result.items.at(1)?.person.email).toBeUndefined();
-        });
-    });
-
     describe('createPersonenkontext', () => {
         it('should throw NotImplemented error', () => {
             expect(() => personController.createPersonenkontext()).toThrow(NotImplementedException);
@@ -437,7 +415,7 @@ describe('PersonController', () => {
                     personId: faker.string.uuid(),
                 };
                 const queryParams: PersonenkontextQueryParams = {
-                    referrer: 'referrer',
+                    username: 'username',
                     sichtfreigabe: SichtfreigabeType.NEIN,
                     personenstatus: Personenstatus.AKTIV,
                 };
@@ -472,7 +450,7 @@ describe('PersonController', () => {
                     personId: faker.string.uuid(),
                 };
                 const queryParams: PersonenkontextQueryParams = {
-                    referrer: 'referrer',
+                    username: 'username',
                     sichtfreigabe: SichtfreigabeType.NEIN,
                     personenstatus: Personenstatus.AKTIV,
                 };
@@ -588,13 +566,11 @@ describe('PersonController', () => {
         };
         const body: UpdatePersonBodyParams = {
             stammorganisation: faker.string.uuid(),
-            referrer: 'referrer',
+            username: 'username',
             name: {
                 vorname: 'john',
                 familienname: 'doe',
             },
-            geburt: {},
-            lokalisierung: 'de-DE',
             revision: '1',
         };
         personPermissionsMock = createMock<PersonPermissions>();
@@ -673,13 +649,11 @@ describe('PersonController', () => {
             const person: Person<true> = getPerson();
             const bodyParams: UpdatePersonBodyParams = {
                 stammorganisation: faker.string.uuid(),
-                referrer: 'referrer',
+                username: 'username',
                 name: {
                     vorname: ' john',
                     familienname: 'doe',
                 },
-                geburt: {},
-                lokalisierung: 'de-DE',
                 revision: '1',
             };
 
@@ -983,7 +957,7 @@ describe('PersonController', () => {
             });
         });
 
-        describe('when person does NOT have a defined referrer', () => {
+        describe('when person does NOT have a defined username', () => {
             const params: PersonByIdParams = {
                 personId: faker.string.uuid(),
             };
@@ -993,7 +967,7 @@ describe('PersonController', () => {
                 personRepositoryMock.findBy.mockResolvedValue([[], 0]);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
-                    value: createMock<Person<true>>({ referrer: undefined }),
+                    value: createMock<Person<true>>({ username: undefined }),
                 });
 
                 await expect(
@@ -1071,7 +1045,7 @@ describe('PersonController', () => {
         describe('when person does NOT have a defined username', () => {
             const person: Person<true> = getPerson();
             person.username = undefined;
-            person.referrer = undefined;
+            person.username = undefined;
             const permissions: PersonPermissions = new PersonPermissions(
                 createMock<DBiamPersonenkontextRepo>(),
                 createMock<OrganisationRepository>(),

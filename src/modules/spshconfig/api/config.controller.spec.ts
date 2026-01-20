@@ -38,5 +38,6 @@ describe('ConfigController', () => {
         expect(result).toBeInstanceOf(FeatureFlagResponse);
         expect(result.rolleBearbeitenEnabled).toBeTruthy();
         expect(result.befristungBearbeitenEnabled).toBeFalsy(); //Default
+        expect(result.rolleErweiternEnabled).toBeFalsy(); //Default
     });
 });

@@ -1,14 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MeldungRepo } from './persistence/meldung.repo.js';
 import { MeldungModule } from './meldung.module.js';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import { LoggingTestModule } from '../../../test/utils/vitest/logging-test.module.js';
+import { ConfigTestModule } from '../../../test/utils/config-test.module.js';
+import { DatabaseTestModule } from '../../../test/utils/database-test.module.js';
 
 describe('MeldungModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, MapperTestModule, DatabaseTestModule.forRoot(), MeldungModule],
+            imports: [ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot(), MeldungModule],
         }).compile();
     });
 

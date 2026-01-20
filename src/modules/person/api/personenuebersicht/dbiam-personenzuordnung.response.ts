@@ -2,9 +2,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { RolleID } from '../../../../shared/types/index.js';
 import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
-import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
 import { OrganisationsTyp, OrganisationsTypName } from '../../../organisation/domain/organisation.enums.js';
 import { RollenArt, RollenArtTypName, RollenMerkmal, RollenMerkmalTypName } from '../../../rolle/domain/rolle.enums.js';
+import { Organisation } from '../../../organisation/domain/organisation.js';
 
 export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: String })
@@ -45,7 +45,7 @@ export class DBiamPersonenzuordnungResponse {
 
     public constructor(
         personenkontext: Personenkontext<true>,
-        organisation: OrganisationDo<true>,
+        organisation: Organisation<true>,
         rolle: Rolle<true>,
         editable: boolean,
         admins: string[] | undefined,

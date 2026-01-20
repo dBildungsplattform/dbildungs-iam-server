@@ -7,10 +7,8 @@ import {
     SichtfreigabeType,
     SichtfreigabeTypName,
 } from '../../domain/personenkontext.enums.js';
-import { AutoMap } from '@automapper/classes';
 
 export class PersonenkontextQueryParams extends PagedQueryParams {
-    @AutoMap()
     @IsOptional()
     @IsString()
     @ApiProperty({
@@ -19,16 +17,14 @@ export class PersonenkontextQueryParams extends PagedQueryParams {
     })
     public readonly personId?: string;
 
-    @AutoMap()
     @IsOptional()
     @IsString()
     @ApiProperty({
         required: false,
         nullable: true,
     })
-    public readonly referrer?: string;
+    public readonly username?: string;
 
-    @AutoMap()
     @IsOptional()
     @IsEnum(Personenstatus)
     @ApiProperty({
@@ -39,7 +35,6 @@ export class PersonenkontextQueryParams extends PagedQueryParams {
     })
     public readonly personenstatus?: Personenstatus;
 
-    @AutoMap()
     @IsOptional()
     @IsEnum(SichtfreigabeType)
     @ApiProperty({

@@ -6,7 +6,6 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import {
     ImportQueryOptions,
@@ -52,7 +51,6 @@ describe('ImportVorgangRepository', () => {
             imports: [
                 RolleModule,
                 OrganisationModule,
-                MapperTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],
@@ -88,7 +86,6 @@ describe('ImportVorgangRepository', () => {
                     provide: UserLockRepository,
                     useValue: createMock<UserLockRepository>(),
                 },
-
                 {
                     provide: OxUserBlacklistRepo,
                     useValue: createMock<OxUserBlacklistRepo>(),
@@ -138,7 +135,9 @@ describe('ImportVorgangRepository', () => {
                 rollenart: RollenArt.LERN,
             }),
         );
-        if (rolle instanceof DomainError) throw Error();
+        if (rolle instanceof DomainError) {
+            throw Error();
+        }
         return rolle;
     }
 

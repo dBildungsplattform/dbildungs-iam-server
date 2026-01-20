@@ -9,7 +9,6 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../../shared/validation/global-validation.pipe.js';
 import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
@@ -73,7 +72,6 @@ describe('Personenuebersicht API', () => {
                 PersonApiModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
                 LoggingTestModule,
             ],
             providers: [
@@ -187,7 +185,7 @@ describe('Personenuebersicht API', () => {
                     expect(responseBody?.personId).toEqual(savedPerson.id);
                     expect(responseBody?.vorname).toEqual(savedPerson.vorname);
                     expect(responseBody?.nachname).toEqual(savedPerson.familienname);
-                    expect(responseBody?.benutzername).toEqual(savedPerson.referrer);
+                    expect(responseBody?.benutzername).toEqual(savedPerson.username);
                     expect(responseBody?.lastModifiedZuordnungen).toBeUndefined();
                     expect(responseBody?.zuordnungen).toEqual([]);
                 });
@@ -229,7 +227,9 @@ describe('Personenuebersicht API', () => {
                         return;
                     }
                     const savedRolle1: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
-                    if (savedRolle1 instanceof DomainError) throw Error();
+                    if (savedRolle1 instanceof DomainError) {
+                        throw Error();
+                    }
 
                     const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
                         faker.string.alpha(5),
@@ -246,7 +246,9 @@ describe('Personenuebersicht API', () => {
                         return;
                     }
                     const savedRolle2: Rolle<true> | DomainError = await rolleRepo.save(rolle2);
-                    if (savedRolle2 instanceof DomainError) throw Error();
+                    if (savedRolle2 instanceof DomainError) {
+                        throw Error();
+                    }
 
                     const savedOrganisation1: OrganisationEntity = await createAndPersistOrganisation(
                         em,
@@ -283,7 +285,7 @@ describe('Personenuebersicht API', () => {
                     expect(responseBody?.personId).toEqual(savedPerson.id);
                     expect(responseBody?.vorname).toEqual(savedPerson.vorname);
                     expect(responseBody?.nachname).toEqual(savedPerson.familienname);
-                    expect(responseBody?.benutzername).toEqual(savedPerson.referrer);
+                    expect(responseBody?.benutzername).toEqual(savedPerson.username);
                     expect(responseBody?.lastModifiedZuordnungen).not.toBeNull();
                     expect(responseBody?.zuordnungen.length).toEqual(3);
                     expect(
@@ -414,7 +416,9 @@ describe('Personenuebersicht API', () => {
                 return;
             }
             const savedRolle1: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
-            if (savedRolle1 instanceof DomainError) throw Error();
+            if (savedRolle1 instanceof DomainError) {
+                throw Error();
+            }
 
             const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
                 faker.string.alpha(5),
@@ -431,7 +435,9 @@ describe('Personenuebersicht API', () => {
                 return;
             }
             const savedRolle2: Rolle<true> | DomainError = await rolleRepo.save(rolle2);
-            if (savedRolle2 instanceof DomainError) throw Error();
+            if (savedRolle2 instanceof DomainError) {
+                throw Error();
+            }
 
             savedOrganisation1 = await createAndPersistRootOrganisation(em, organisationRepository);
             savedOrganisation2 = await createAndPersistOrganisation(
@@ -482,7 +488,7 @@ describe('Personenuebersicht API', () => {
             expect(item1?.personId).toEqual(savedPerson1.id);
             expect(item1?.vorname).toEqual(savedPerson1.vorname);
             expect(item1?.nachname).toEqual(savedPerson1.familienname);
-            expect(item1?.benutzername).toEqual(savedPerson1.referrer);
+            expect(item1?.benutzername).toEqual(savedPerson1.username);
             expect(item1?.lastModifiedZuordnungen).not.toBeNull();
             expect(item1?.zuordnungen.length).toEqual(3);
         });
@@ -516,7 +522,7 @@ describe('Personenuebersicht API', () => {
             expect(item1?.personId).toEqual(savedPerson1.id);
             expect(item1?.vorname).toEqual(savedPerson1.vorname);
             expect(item1?.nachname).toEqual(savedPerson1.familienname);
-            expect(item1?.benutzername).toEqual(savedPerson1.referrer);
+            expect(item1?.benutzername).toEqual(savedPerson1.username);
             expect(item1?.lastModifiedZuordnungen).not.toBeNull();
             expect(item1?.zuordnungen.length).toEqual(3);
         });

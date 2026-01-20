@@ -7,7 +7,6 @@ import {
     DatabaseTestModule,
     DoFactory,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonEntity } from './person.entity.js';
@@ -57,7 +56,6 @@ describe('PersonScope', () => {
                 LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
                 PersonenKontextModule,
                 LoggingTestModule,
             ],
@@ -109,32 +107,6 @@ describe('PersonScope', () => {
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
 
                 expect(total).toBe(21);
-                expect(persons).toHaveLength(10);
-            });
-        });
-
-        describe('when filtering by birthday', () => {
-            const birthday: Date = faker.date.past();
-
-            beforeEach(async () => {
-                const persons: PersonEntity[] = Array.from({ length: 20 }, () =>
-                    em.create(
-                        PersonEntity,
-                        mapAggregateToData(DoFactory.createPerson(false, { geburtsdatum: birthday })),
-                    ),
-                );
-
-                await em.persistAndFlush(persons);
-            });
-
-            it('should return found persons', async () => {
-                const scope: PersonScope = new PersonScope()
-                    .findBy({ geburtsdatum: birthday })
-                    .sortBy('vorname', ScopeOrder.ASC)
-                    .paged(10, 10);
-                const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
-
-                expect(total).toBe(20);
                 expect(persons).toHaveLength(10);
             });
         });
@@ -195,7 +167,9 @@ describe('PersonScope', () => {
                 const person1: PersonEntity = createPersonEntity();
                 const person2: PersonEntity = createPersonEntity();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
                 organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
 
                 await em.persistAndFlush([person1, person2]);
@@ -221,7 +195,9 @@ describe('PersonScope', () => {
                 const person1: PersonEntity = createPersonEntity();
                 const person2: PersonEntity = createPersonEntity();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
                 organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
                 rolleID = rolle.id;
                 await em.persistAndFlush([person1, person2]);
@@ -245,7 +221,9 @@ describe('PersonScope', () => {
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
                 organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
 
                 await em.persistAndFlush([person1]);
@@ -270,7 +248,9 @@ describe('PersonScope', () => {
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
                 organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
 
                 rolleID = rolle.id;

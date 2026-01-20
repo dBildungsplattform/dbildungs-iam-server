@@ -1,25 +1,30 @@
 import { faker } from '@faker-js/faker';
-import { EntityManager, MikroORM } from '@mikro-orm/core';
+import { createMock } from '@golevelup/ts-jest';
+import { Collection, EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     LoggingTestModule,
 } from '../../../../test/utils/index.js';
-import { ServiceProvider } from '../domain/service-provider.js';
-import { ServiceProviderRepo } from './service-provider.repo.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { createMock } from '@golevelup/ts-jest';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { ServiceProviderEntity } from './service-provider.entity.js';
-import { ServiceProviderKategorie, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import {
+    ServiceProviderKategorie,
+    ServiceProviderMerkmal,
+    ServiceProviderTarget,
+} from '../domain/service-provider.enum.js';
+import { ServiceProvider } from '../domain/service-provider.js';
+import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
+import { ServiceProviderEntity } from './service-provider.entity.js';
+import { ServiceProviderRepo } from './service-provider.repo.js';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
@@ -35,8 +40,6 @@ describe('ServiceProviderRepo', () => {
                 ServiceProviderRepo,
                 RolleRepo,
                 RolleFactory,
-                OrganisationRepository,
-
                 {
                     provide: EventRoutingLegacyKafkaService,
                     useValue: createMock<EventRoutingLegacyKafkaService>(),
@@ -72,6 +75,7 @@ describe('ServiceProviderRepo', () => {
     describe('save', () => {
         it('should save new service-provider', async () => {
             const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            serviceProvider.merkmale = [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR];
 
             const savedServiceProvider: ServiceProvider<true> = await sut.save(serviceProvider);
 
@@ -182,6 +186,149 @@ describe('ServiceProviderRepo', () => {
         });
     });
 
+    describe('findAuthorized', () => {
+        describe.each([
+            {
+                all: true,
+            } as PermittedOrgas,
+            {
+                all: false,
+                orgaIds: [faker.string.uuid()],
+            } as PermittedOrgas,
+        ])('when permissions are %s', (permittedOrgas: PermittedOrgas) => {
+            it('should return all service-providers the user is allowed to manage', async () => {
+                const permittedOrgaIds: string[] = permittedOrgas.all ? [faker.string.uuid()] : permittedOrgas.orgaIds;
+
+                const serviceProviders: ServiceProvider<true>[] = await Promise.all([
+                    sut.save(
+                        DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: permittedOrgaIds[0] }),
+                    ),
+                    sut.save(
+                        DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: faker.string.uuid() }),
+                    ),
+                ]);
+
+                const permissions: PersonPermissions = createMock<PersonPermissions>({
+                    getOrgIdsWithSystemrecht: jest.fn().mockReturnValue(permittedOrgas),
+                });
+                const [serviceProviderResult, count]: Counted<ServiceProvider<true>> = await sut.findAuthorized(
+                    permissions,
+                    5,
+                    0,
+                );
+
+                if (permittedOrgas.all) {
+                    expect(serviceProviderResult).toHaveLength(serviceProviders.length);
+                    expect(count).toEqual(serviceProviders.length);
+                } else {
+                    expect(serviceProviderResult).toHaveLength(1);
+                    expect(serviceProviderResult[0]!.id).toEqual(serviceProviders[0]!.id);
+                    expect(count).toEqual(1);
+                }
+            });
+        });
+
+        it('should respect the limit and offset', async () => {
+            const total: number = 10;
+            await Promise.all(Array.from({ length: total }, () => sut.save(DoFactory.createServiceProvider(false))));
+            const permittedOrgas: PermittedOrgas = { all: true };
+            const permissions: PersonPermissions = createMock<PersonPermissions>({
+                getOrgIdsWithSystemrecht: jest.fn().mockReturnValue(permittedOrgas),
+            });
+            const limit: number = 5;
+            const [serviceProviderWithoutOffsetResult, countWithoutOffset]: Counted<ServiceProvider<true>> =
+                await sut.findAuthorized(permissions, limit, 0);
+            expect(serviceProviderWithoutOffsetResult).toHaveLength(limit);
+            expect(countWithoutOffset).toEqual(total);
+
+            const [serviceProviderWithOffsetResult, countWithOffset]: Counted<ServiceProvider<true>> =
+                await sut.findAuthorized(permissions, limit, 5);
+            expect(serviceProviderWithOffsetResult).toHaveLength(limit);
+            expect(countWithOffset).toEqual(total);
+
+            for (let index: number = 0; index < limit; index++) {
+                expect(serviceProviderWithOffsetResult[index]!.id).not.toEqual(
+                    serviceProviderWithoutOffsetResult[index]!.id,
+                );
+            }
+        });
+
+        it('should have the correct order', async () => {
+            await Promise.all(
+                Array.from(
+                    [
+                        ServiceProviderKategorie.VERWALTUNG,
+                        ServiceProviderKategorie.HINWEISE,
+                        ServiceProviderKategorie.EMAIL,
+                        ServiceProviderKategorie.ANGEBOTE,
+                        ServiceProviderKategorie.UNTERRICHT,
+                    ],
+                    (kategorie: ServiceProviderKategorie) =>
+                        sut.save(DoFactory.createServiceProvider(false, { kategorie })),
+                ),
+            );
+            const permittedOrgas: PermittedOrgas = { all: true };
+            const permissions: PersonPermissions = createMock<PersonPermissions>({
+                getOrgIdsWithSystemrecht: jest.fn().mockReturnValue(permittedOrgas),
+            });
+            const [serviceProviderResult]: Counted<ServiceProvider<true>> = await sut.findAuthorized(permissions, 5, 0);
+            [
+                ServiceProviderKategorie.EMAIL,
+                ServiceProviderKategorie.UNTERRICHT,
+                ServiceProviderKategorie.VERWALTUNG,
+                ServiceProviderKategorie.HINWEISE,
+                ServiceProviderKategorie.ANGEBOTE,
+            ].forEach((kategorie: ServiceProviderKategorie, index: number) => {
+                expect(serviceProviderResult[index]!.kategorie).toBe(kategorie);
+            });
+        });
+    });
+
+    describe('findAuthorizedById', () => {
+        describe.each([
+            {
+                all: true,
+            } as PermittedOrgas,
+            {
+                all: false,
+                orgaIds: [faker.string.uuid()],
+            } as PermittedOrgas,
+        ])('when permissions are %s', (permittedOrgas: PermittedOrgas) => {
+            it('should return service-provider if the user is allowed to manage it', async () => {
+                const permittedOrgaIds: string[] = permittedOrgas.all ? [faker.string.uuid()] : permittedOrgas.orgaIds;
+
+                const serviceProviders: ServiceProvider<true>[] = await Promise.all([
+                    sut.save(
+                        DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: permittedOrgaIds[0] }),
+                    ),
+                    sut.save(
+                        DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: faker.string.uuid() }),
+                    ),
+                ]);
+
+                const permissions: PersonPermissions = createMock<PersonPermissions>({
+                    getOrgIdsWithSystemrecht: jest.fn().mockReturnValue(permittedOrgas),
+                });
+                const serviceProviderResult: Option<ServiceProvider<true>> = await sut.findAuthorizedById(
+                    permissions,
+                    serviceProviders[0]!.id,
+                );
+                const otherServiceProviderResult: Option<ServiceProvider<true>> = await sut.findAuthorizedById(
+                    permissions,
+                    serviceProviders[1]!.id,
+                );
+
+                expect(serviceProviderResult).toBeDefined();
+                expect(serviceProviderResult?.id).toBe(serviceProviders[0]!.id);
+                if (permittedOrgas.all) {
+                    expect(otherServiceProviderResult).toBeDefined();
+                } else {
+                    expect(otherServiceProviderResult).toBeNull();
+                }
+            });
+        });
+    });
+
     describe('findByName', () => {
         it('should find a ServiceProvider by its name if a ServiceProvider with the given name exists', async () => {
             const expectedServiceProvider: ServiceProvider<true> = await sut.save(
@@ -249,6 +396,21 @@ describe('ServiceProviderRepo', () => {
         });
     });
 
+    describe('findBySchulstrukturknoten', () => {
+        it('should return the service provider', async () => {
+            const providedOnSchulstrukturknoten: string = faker.string.uuid();
+            const sp: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+                providedOnSchulstrukturknoten,
+            });
+            const persistedServiceProvider: ServiceProvider<true> = await sut.save(sp);
+            const result: Array<ServiceProvider<true>> =
+                await sut.findBySchulstrukturknoten(providedOnSchulstrukturknoten);
+
+            expect(result).toHaveLength(1);
+            expect(result).toEqual(expect.arrayContaining([persistedServiceProvider]));
+        });
+    });
+
     describe('fetchRolleServiceProvidersWithoutPerson', () => {
         it('should define serviceProviderResult', async () => {
             const role: RolleID = faker.string.uuid();
@@ -262,13 +424,16 @@ describe('ServiceProviderRepo', () => {
             // Arrange
             const roleId: RolleID = faker.string.uuid();
 
-            const serviceProviderEntityMock: ServiceProviderEntity = {
+            const serviceProviderEntityMock: ServiceProviderEntity = createMock<ServiceProviderEntity>({
                 id: faker.string.uuid(),
                 name: faker.company.name(),
                 target: ServiceProviderTarget.SCHULPORTAL_ADMINISTRATION,
                 providedOnSchulstrukturknoten: faker.string.uuid(),
                 kategorie: ServiceProviderKategorie.VERWALTUNG,
-            } as ServiceProviderEntity;
+                merkmale: createMock<Collection<ServiceProviderMerkmalEntity>>({
+                    map: () => [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+                }),
+            });
 
             const rolleServiceProviderEntityMock: RolleServiceProviderEntity = {
                 rolle: { id: roleId } as RolleEntity,
@@ -283,7 +448,7 @@ describe('ServiceProviderRepo', () => {
             expect(em.find).toHaveBeenCalledWith(
                 RolleServiceProviderEntity,
                 { rolle: { id: roleId } },
-                { populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'] },
+                { populate: ['serviceProvider', 'serviceProvider.merkmale', 'rolle', 'rolle.personenKontexte'] },
             );
         });
     });

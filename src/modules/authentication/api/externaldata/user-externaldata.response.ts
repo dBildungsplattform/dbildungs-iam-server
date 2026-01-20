@@ -1,16 +1,19 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { uniq } from 'lodash-es';
+import { Person } from '../../../person/domain/person.js';
+import { RequiredExternalPkData } from '../authentication.controller.js';
 import { UserExeternalDataResponseItslearning } from './user-externaldata-itslearning.response.js';
 import { UserExeternalDataResponseOnlineDateiablage } from './user-externaldata-onlinedateiablage.response.js';
-import { UserExeternalDataResponseOpsh } from './user-externaldata-opsh.response.js';
-import { UserExeternalDataResponseOx } from './user-externaldata-ox.response.js';
-import { UserExeternalDataResponseVidis } from './user-externaldata-vidis.response.js';
 import { UserExeternalDataResponseOpshPk } from './user-externaldata-opsh-pk.response.js';
-import { RequiredExternalPkData } from '../authentication.controller.js';
-import { Person } from '../../../person/domain/person.js';
+import { UserExeternalDataResponseOpsh } from './user-externaldata-opsh.response.js';
+import { NewOxParams, OldOxParams, UserExternalDataResponseOx } from './user-externaldata-ox.response.js';
+import { UserExeternalDataResponseVidis } from './user-externaldata-vidis.response.js';
+import { UserExternaldataWorkflowAggregate } from '../../domain/user-extenaldata.workflow.js';
+import { PersonenkontextErweitertVirtualEntityLoaded } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
-export class UserExeternalDataResponse {
-    @ApiProperty({ type: UserExeternalDataResponseOx })
-    public ox: UserExeternalDataResponseOx;
+export class UserExternalDataResponse {
+    @ApiPropertyOptional({ type: UserExternalDataResponseOx })
+    public ox?: UserExternalDataResponseOx;
 
     @ApiProperty({ type: UserExeternalDataResponseItslearning })
     public itslearning: UserExeternalDataResponseItslearning;
@@ -25,7 +28,7 @@ export class UserExeternalDataResponse {
     public onlineDateiablage: UserExeternalDataResponseOnlineDateiablage;
 
     private constructor(
-        ox: UserExeternalDataResponseOx,
+        ox: UserExternalDataResponseOx | undefined,
         itslearning: UserExeternalDataResponseItslearning,
         vidis: UserExeternalDataResponseVidis,
         opsh: UserExeternalDataResponseOpsh,
@@ -41,17 +44,25 @@ export class UserExeternalDataResponse {
     public static createNew(
         person: Person<true>,
         externalPkData: RequiredExternalPkData[],
-        contextID: string,
-    ): UserExeternalDataResponse {
-        const ox: UserExeternalDataResponseOx = new UserExeternalDataResponseOx(person.referrer!, contextID);
+        personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[],
+        contextParams: OldOxParams | NewOxParams | undefined,
+    ): UserExternalDataResponse {
+        const ox: Option<UserExternalDataResponseOx> =
+            contextParams && UserExternalDataResponseOx.createNew(contextParams);
         const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(person.id);
+        const mergedExternalPkData: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
+            externalPkData,
+            personenKontextErweiterungen,
+        );
+        const externalPkDataWithVidisAngebotId: RequiredExternalPkData[] =
+            UserExternaldataWorkflowAggregate.getExternalPkDataWithSpWithVidisAngebotId(mergedExternalPkData);
         const vidis: UserExeternalDataResponseVidis = new UserExeternalDataResponseVidis(
             person.id,
             person.vorname,
             person.familienname,
             externalPkData[0]?.rollenart,
             person.email,
-            externalPkData.map((pk: RequiredExternalPkData) => pk.kennung),
+            uniq(externalPkDataWithVidisAngebotId.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean)),
         );
         const opsh: UserExeternalDataResponseOpsh = new UserExeternalDataResponseOpsh(
             person.vorname,
@@ -64,6 +75,6 @@ export class UserExeternalDataResponse {
         const onlineDateiablage: UserExeternalDataResponseOnlineDateiablage =
             new UserExeternalDataResponseOnlineDateiablage(person.id);
 
-        return new UserExeternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage);
+        return new UserExternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage);
     }
 }

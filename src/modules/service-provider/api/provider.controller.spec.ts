@@ -1,35 +1,45 @@
-//import { MikroORM } from '@mikro-orm/core';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Client } from 'openid-client';
+
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { ProviderController } from './provider.controller.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
+import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
+import { ManageableServiceProviderWithReferencedObjects } from '../domain/types.js';
+import { RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
+import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let providerController: ProviderController;
+    let personPermissionsMock: DeepMocked<PersonPermissions>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
-                MapperTestModule,
                 ServiceProviderApiModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
@@ -54,12 +64,170 @@ describe('Provider Controller Test', () => {
         serviceProviderServiceMock = module.get<DeepMocked<ServiceProviderService>>(ServiceProviderService);
         serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         providerController = module.get(ProviderController);
+        personPermissionsMock = createMock<PersonPermissions>();
+
         app = module.createNestApplication();
         await app.init();
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await app.close();
+    });
+
+    describe('findRollenerweiterungenByServiceProviderId', () => {
+        let permissionsMock: DeepMocked<PersonPermissions>;
+        let rollenerweiterungRepoMock: DeepMocked<RollenerweiterungRepo>;
+        let rolleRepoMock: DeepMocked<RolleRepo>;
+        let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
+        let providerController: ProviderController;
+
+        beforeEach(() => {
+            permissionsMock = createMock<PersonPermissions>();
+            rollenerweiterungRepoMock = createMock<RollenerweiterungRepo>();
+            rolleRepoMock = createMock<RolleRepo>();
+            organisationRepositoryMock = createMock<OrganisationRepository>();
+            providerController = new ProviderController(
+                createMock<StreamableFileFactory>(),
+                createMock<ServiceProviderRepo>(),
+                createMock<ServiceProviderService>(),
+                rollenerweiterungRepoMock,
+                rolleRepoMock,
+                organisationRepositoryMock,
+            );
+        });
+
+        it('should throw UnauthorizedException if user has no permitted orgas', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
+
+            await expect(
+                providerController.findRollenerweiterungenByServiceProviderId(
+                    permissionsMock,
+                    { angebotId: faker.string.uuid() },
+                    { offset: 0, limit: faker.number.int({ min: 1, max: 100 }) },
+                ),
+            ).rejects.toBeInstanceOf(UnauthorizedException);
+        });
+
+        it('should return paged response with items and correct total', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+
+            const rollenerweiterung: Rollenerweiterung<true> = DoFactory.createRollenerweiterung(true);
+            rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrgaKennung.mockResolvedValueOnce([
+                [rollenerweiterung],
+                1,
+            ]);
+
+            const offset: number = faker.number.int({ min: 1, max: 100 });
+            const limit: number = faker.number.int({ min: 1, max: 100 });
+
+            organisationRepositoryMock.findByIds.mockResolvedValue(
+                new Map([
+                    [
+                        rollenerweiterung.organisationId,
+                        DoFactory.createOrganisation(true, {
+                            id: rollenerweiterung.organisationId,
+                            name: 'FixedOrgaName',
+                            kennung: 'FixedOrgaKennung',
+                        }),
+                    ],
+                ]),
+            );
+            rolleRepoMock.findByIds.mockResolvedValue(
+                new Map([
+                    [
+                        rollenerweiterung.rolleId,
+                        DoFactory.createRolle(true, { id: rollenerweiterung.rolleId, name: 'FixedRolleName' }),
+                    ],
+                ]),
+            );
+
+            const result: RawPagedResponse<RollenerweiterungWithExtendedDataResponse> =
+                await providerController.findRollenerweiterungenByServiceProviderId(
+                    permissionsMock,
+                    { angebotId: faker.string.uuid() },
+                    { offset: offset, limit: limit },
+                );
+
+            expect(result).toBeInstanceOf(RawPagedResponse);
+            expect(result.offset).toBe(offset);
+            expect(result.limit).toBe(limit);
+            expect(result.total).toBe(1);
+            expect(result.items).toHaveLength(1);
+            expect(result.items[0]).toBeInstanceOf(RollenerweiterungWithExtendedDataResponse);
+            expect(result.items[0]?.rolleName).toBe('FixedRolleName');
+            expect(result.items[0]?.organisationName).toBe('FixedOrgaName');
+            expect(result.items[0]?.organisationKennung).toBe('FixedOrgaKennung');
+        });
+
+        it('should return fallbacks as empty strings for extended data of related aggregate is mising', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+
+            const rollenerweiterung: Rollenerweiterung<true> = DoFactory.createRollenerweiterung(true);
+            rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrgaKennung.mockResolvedValueOnce([
+                [rollenerweiterung],
+                1,
+            ]);
+
+            organisationRepositoryMock.findByIds.mockResolvedValue(new Map());
+            rolleRepoMock.findByIds.mockResolvedValue(new Map());
+
+            const offset: number = faker.number.int({ min: 1, max: 100 });
+            const limit: number = faker.number.int({ min: 1, max: 100 });
+
+            const result: RawPagedResponse<RollenerweiterungWithExtendedDataResponse> =
+                await providerController.findRollenerweiterungenByServiceProviderId(
+                    permissionsMock,
+                    { angebotId: faker.string.uuid() },
+                    { offset: offset, limit: limit },
+                );
+
+            expect(result).toBeInstanceOf(RawPagedResponse);
+            expect(result.offset).toBe(offset);
+            expect(result.limit).toBe(limit);
+            expect(result.total).toBe(1);
+            expect(result.items).toHaveLength(1);
+            expect(result.items[0]).toBeInstanceOf(RollenerweiterungWithExtendedDataResponse);
+            expect(result.items[0]?.rolleName).toBe('');
+            expect(result.items[0]?.organisationName).toBe('');
+            expect(result.items[0]?.organisationKennung).toBe('');
+        });
+
+        it('should return paged response with default offset and limit if not provided', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+
+            const rollenerweiterung: Rollenerweiterung<true> = DoFactory.createRollenerweiterung(true);
+            rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrgaKennung.mockResolvedValueOnce([
+                [rollenerweiterung],
+                1,
+            ]);
+
+            const result: RawPagedResponse<RollenerweiterungWithExtendedDataResponse> =
+                await providerController.findRollenerweiterungenByServiceProviderId(
+                    permissionsMock,
+                    { angebotId: faker.string.uuid() },
+                    {},
+                );
+
+            expect(result.offset).toBe(0);
+            expect(result.limit).toBe(1);
+            expect(result.total).toBe(1);
+            expect(result.items).toHaveLength(1);
+        });
+
+        it('should return empty items if repo returns empty array', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+            rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrgaKennung.mockResolvedValueOnce([[], 0]);
+
+            const result: RawPagedResponse<RollenerweiterungWithExtendedDataResponse> =
+                await providerController.findRollenerweiterungenByServiceProviderId(
+                    permissionsMock,
+                    { angebotId: faker.string.uuid() },
+                    { offset: 0, limit: 10 },
+                );
+
+            expect(result.items).toHaveLength(0);
+            expect(result.total).toBe(0);
+        });
     });
 
     describe('getAllServiceProviders', () => {
@@ -90,40 +258,86 @@ describe('Provider Controller Test', () => {
     });
 
     describe('getAvailableServiceProviders', () => {
-        describe('when service providers were found', () => {
-            it('should return all service provider', async () => {
-                const rolleId: string = faker.string.uuid();
-                const spId: string = faker.string.uuid();
+        let pk: Personenkontext<true>;
+        let rolleId: string;
+        let spId: string;
+        let sp: ServiceProvider<true>;
+        let personPermissions: DeepMocked<PersonPermissions>;
 
-                const sp: ServiceProvider<true> = DoFactory.createServiceProvider(true, { id: spId });
-                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({});
-                personPermissions.getRoleIds.mockResolvedValueOnce([rolleId]);
+        beforeEach(() => {
+            rolleId = faker.string.uuid();
+            spId = faker.string.uuid();
+            sp = DoFactory.createServiceProvider(true, { id: spId });
+            pk = DoFactory.createPersonenkontext(true, { rolleId });
+            personPermissions = createMock<PersonPermissions>({});
+            personPermissions.getPersonenkontextIds.mockResolvedValueOnce([
+                { organisationId: pk.organisationId, rolleId: pk.rolleId },
+            ]);
+        });
 
-                serviceProviderServiceMock.getServiceProvidersByRolleIds.mockResolvedValueOnce([sp]);
-
+        describe.each([
+            ['found', true],
+            ['not found', false],
+        ])('when service providers were %s', (_label: string, hasFoundServiceProviders: boolean) => {
+            beforeEach(() => {
+                serviceProviderServiceMock.getServiceProvidersByOrganisationenAndRollen.mockResolvedValueOnce(
+                    hasFoundServiceProviders ? [sp] : [],
+                );
+            });
+            it('should return list of responses', async () => {
                 const spResponse: ServiceProviderResponse[] =
                     await providerController.getAvailableServiceProviders(personPermissions);
                 expect(spResponse).toBeDefined();
                 expect(spResponse).toBeInstanceOf(Array);
-                expect(spResponse).toHaveLength(1);
+                if (hasFoundServiceProviders) {
+                    expect(spResponse).toHaveLength(1);
+                } else {
+                    expect(spResponse).toHaveLength(0);
+                }
+                expect(serviceProviderServiceMock.getServiceProvidersByOrganisationenAndRollen).toHaveBeenCalledWith([
+                    { organisationId: pk.organisationId, rolleId: pk.rolleId },
+                ]);
             });
         });
+    });
 
-        describe('when no service providers were found', () => {
-            it('should return empty list as response', async () => {
-                const rolleId: string = faker.string.uuid();
+    describe('getManageableServiceProviders', () => {
+        it.each([
+            { limit: 2, offset: 1 },
+            { limit: undefined, offset: undefined },
+        ])(
+            'should return paged manageable service providers with correct offset and limit for %s',
+            async (params: ManageableServiceProvidersParams) => {
+                const total: number = 10;
+                const serviceProviders: Array<ServiceProvider<true>> = [
+                    DoFactory.createServiceProvider(true),
+                    DoFactory.createServiceProvider(true),
+                ];
 
-                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({});
-                personPermissions.getRoleIds.mockResolvedValueOnce([rolleId]);
+                const manageableObjects: ManageableServiceProviderWithReferencedObjects[] = serviceProviders.map(
+                    (serviceProvider: ServiceProvider<true>) => ({
+                        serviceProvider: serviceProvider,
+                        organisation: DoFactory.createOrganisation(true),
+                        rollen: [DoFactory.createRolle(true)],
+                        rollenerweiterungen: [DoFactory.createRollenerweiterung(true)],
+                    }),
+                );
 
-                serviceProviderServiceMock.getServiceProvidersByRolleIds.mockResolvedValueOnce([]);
+                serviceProviderRepoMock.findAuthorized.mockResolvedValueOnce([serviceProviders, total]);
+                serviceProviderServiceMock.getOrganisationRollenAndRollenerweiterungenForServiceProviders.mockResolvedValueOnce(
+                    manageableObjects,
+                );
 
-                const spResponse: ServiceProviderResponse[] =
-                    await providerController.getAvailableServiceProviders(personPermissions);
-                expect(spResponse).toBeDefined();
-                expect(spResponse).toBeInstanceOf(Array);
-                expect(spResponse).toHaveLength(0);
-            });
-        });
+                const result: RawPagedResponse<ManageableServiceProviderListEntryResponse> =
+                    await providerController.getManageableServiceProviders(personPermissionsMock, params);
+
+                expect(result).toBeDefined();
+                expect(result.offset).toBe(params.offset ?? 0);
+                expect(result.limit).toBe(params.limit ?? total);
+                expect(result.items).toHaveLength(2);
+                expect(result.items[0]?.hasRollenerweiterung).toBe(true);
+                expect(result.items[0]).toBeInstanceOf(ManageableServiceProviderListEntryResponse);
+            },
+        );
     });
 });

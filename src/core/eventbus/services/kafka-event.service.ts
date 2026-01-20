@@ -1,5 +1,5 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Consumer, Kafka, KafkaMessage, Producer } from 'kafkajs';
+import { KafkaJS } from '@confluentinc/kafka-javascript';
 import { BaseEvent } from '../../../shared/events/index.js';
 import { Constructor, EventHandlerType, MaybePromise } from '../types/util.types.js';
 import { ClassLogger } from '../../logging/class-logger.js';
@@ -17,6 +17,12 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { KafkaConfig } from '../../../shared/config/kafka.config.js';
 import { KAFKA_INSTANCE } from '../kafka-client-provider.js';
+
+type Kafka = KafkaJS.Kafka;
+type Consumer = KafkaJS.Consumer;
+type Producer = KafkaJS.Producer;
+type KafkaMessage = KafkaJS.KafkaMessage;
+type EachMessagePayload = KafkaJS.EachMessagePayload;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -43,12 +49,18 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             return;
         }
         this.consumer = this.kafka.consumer({
-            groupId: this.kafkaConfig.GROUP_ID,
-            sessionTimeout: this.kafkaConfig.SESSION_TIMEOUT,
-            heartbeatInterval: this.kafkaConfig.HEARTBEAT_INTERVAL,
-            allowAutoTopicCreation: false,
+            'group.id': this.kafkaConfig.GROUP_ID,
+            'session.timeout.ms': this.kafkaConfig.SESSION_TIMEOUT,
+            'heartbeat.interval.ms': this.kafkaConfig.HEARTBEAT_INTERVAL,
+            'allow.auto.create.topics': false,
+            // The server is very strict about open connections and will disconnect the producers after 5000ms of inactivity
+            'log.connection.close': false,
         });
-        this.producer = this.kafka.producer();
+        this.producer = this.kafka.producer({
+            'allow.auto.create.topics': false,
+            // The server is very strict about open connections and will disconnect the producers after 5000ms of inactivity
+            'log.connection.close': false,
+        });
     }
 
     public async onModuleInit(): Promise<void> {
@@ -60,25 +72,17 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
 
             this.logger.info('Connecting to Kafka');
             await this.consumer?.connect();
+
             const topics: Set<string> = this.getTopicSetWithPrefixFromMappings();
-            await Promise.all(
-                Array.from(topics).map((topic: string) => this.consumer?.subscribe({ topic, fromBeginning: true })),
-            );
+            await this.consumer?.subscribe({ topics: Array.from(topics) });
 
             await this.consumer?.run({
-                autoCommit: true,
-                autoCommitThreshold: 1,
                 eachMessage: async ({
                     topic,
                     partition,
                     message,
                     heartbeat,
-                }: {
-                    topic: string;
-                    partition: number;
-                    message: KafkaMessage;
-                    heartbeat: () => Promise<void>;
-                }) => {
+                }: Omit<EachMessagePayload, 'heartbeat'> & { heartbeat: () => Promise<void> }) => {
                     this.logger.info(
                         `Consuming message from topic: ${topic}, partition: ${partition}, offset: ${message.offset}, key: ${message.key?.toString()}`,
                     );
@@ -139,6 +143,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             this.logger.error('Failed to parse Kafka message', error);
             return;
         }
+
         const kafkaEvent: BaseEvent & KafkaEvent = Object.assign(new eventClass(), eventData);
         const handlers: EventHandlerType<BaseEvent>[] | undefined = this.handlerMap.get(eventClass);
 
@@ -190,8 +195,6 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         topic: string,
         additionalHeaders: Record<string, string> = {},
     ): Promise<void> {
-        await this.producer?.connect();
-
         const eventType: string | undefined = event.constructor.name;
         const headers: Record<string, string> = { eventKey, ...additionalHeaders };
 
@@ -294,12 +297,12 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                         );
                         clearTimeout(timeout);
                         completed = true;
-                        resolve(result ?? ({ ok: true, value: null } satisfies Result<unknown> | void));
+                        resolve(result ?? ({ ok: true, value: null } satisfies Result<unknown>));
                     }
                 })
                 .catch((error: Error) => {
                     if (!completed) {
-                        this.logger.error(
+                        this.logger.logUnknownAsError(
                             `Handler for event ${event.constructor.name} with EventID: ${event.eventID} failed`,
                             error,
                         );
@@ -308,7 +311,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                         resolve({
                             ok: false,
                             error,
-                        } satisfies Result<unknown> | void);
+                        } satisfies Result<unknown>);
                     }
                 });
         });

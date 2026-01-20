@@ -1,10 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    LoggingTestModule,
-    MapperTestModule,
-} from '../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../test/utils/index.js';
 import { EmailModule } from './email.module.js';
 import { EmailRepo } from './persistence/email.repo.js';
 import { EmailFactory } from './domain/email.factory.js';
@@ -16,7 +11,7 @@ describe('EmailModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, LoggingTestModule, MapperTestModule, DatabaseTestModule.forRoot(), EmailModule],
+            imports: [ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot(), EmailModule],
             providers: [],
         })
             .overrideProvider(PersonRepository)

@@ -23,7 +23,9 @@ export class PrivacyIdeaAdministrationServiceHandler {
     @EnsureRequestContext()
     public async handlePersonRenamedEvent(event: PersonRenamedEvent | KafkaPersonRenamedEvent): Promise<void> {
         this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
-        if (!event.username) throw new Error('Referrer is missing');
+        if (!event.username) {
+            throw new Error('Username is missing');
+        }
 
         await this.privacyIdeaAdministrationService.updateUsername(event.oldUsername, event.username);
     }

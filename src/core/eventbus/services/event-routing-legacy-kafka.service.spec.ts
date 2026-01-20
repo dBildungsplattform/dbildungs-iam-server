@@ -11,7 +11,9 @@ import { KafkaEvent } from '../../../shared/events/kafka-event.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 
 function flushPromises(): Promise<void> {
-    return new Promise((resolve: (value: void | PromiseLike<void>) => void) => setImmediate(resolve));
+    return new Promise((resolve: (value: void | PromiseLike<void>) => void) => {
+        setImmediate(resolve);
+    });
 }
 
 describe('EventRoutingLegacyKafkaService', () => {
@@ -24,7 +26,7 @@ describe('EventRoutingLegacyKafkaService', () => {
 
     async function setupModule(kafkaEnabled: boolean = false): Promise<void> {
         configServiceMock = createMock<ConfigService>();
-        configServiceMock.get.mockReturnValue({ ENABLED: kafkaEnabled });
+        configServiceMock.getOrThrow.mockReturnValue({ ENABLED: kafkaEnabled });
 
         module = await Test.createTestingModule({
             imports: [LoggingTestModule],
@@ -46,7 +48,9 @@ describe('EventRoutingLegacyKafkaService', () => {
 
     afterEach(async () => {
         jest.resetAllMocks();
-        if (module) await module.close();
+        if (module) {
+            await module.close();
+        }
     });
 
     it('should be defined', async () => {
@@ -108,27 +112,5 @@ describe('EventRoutingLegacyKafkaService', () => {
             expect(eventServiceMock.publish).not.toHaveBeenCalled();
             expect(logger.logUnknownAsError).toHaveBeenCalled();
         });
-    });
-
-    it('should set kafkaEnabled to false when kafkaConfig is undefined', async () => {
-        configServiceMock = createMock<ConfigService>();
-        configServiceMock.get.mockReturnValue(undefined); // Simulate undefined kafkaConfig
-
-        module = await Test.createTestingModule({
-            imports: [LoggingTestModule],
-            providers: [
-                EventRoutingLegacyKafkaService,
-                { provide: EventService, useValue: createMock<EventService>() },
-                { provide: KafkaEventService, useValue: createMock<KafkaEventService>() },
-                { provide: ConfigService, useValue: configServiceMock },
-            ],
-        }).compile();
-
-        sut = module.get(EventRoutingLegacyKafkaService);
-
-        // @ts-expect-error - accessing private field for testing
-        expect(sut.kafkaEnabled).toBe(false);
-
-        await module.close();
     });
 });

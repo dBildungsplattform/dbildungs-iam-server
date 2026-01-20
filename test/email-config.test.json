@@ -1,0 +1,30 @@
+{
+    "HOST": {
+        "PORT": 8080
+    },
+    "LOGGING": {
+        "DEFAULT_LOG_LEVEL": "info"
+    },
+    "DB": {
+        "CLIENT_URL": "postgres://127.0.0.1:5432",
+        "DB_NAME": "dbildungs-iam-server",
+        "USE_SSL": true
+    },
+    "LDAP": {
+        "URL": "ldap://localhost",
+        "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
+        "PASSWORD": "admin"
+    },
+    "OX": {
+        "ENABLED": false,
+        "ENDPOINT": "https://ox_ip:ox_port/webservices/",
+        "USERNAME": "username",
+        "PASSWORD": "password",
+        "CONTEXT_ID": "10",
+        "CONTEXT_NAME": "testContext",
+        "NUMBER_OF_RETRIES": 1
+    },
+    "EMAIL": {
+        "NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS": 90
+    }
+}

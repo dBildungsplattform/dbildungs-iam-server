@@ -2,19 +2,16 @@ import { CommandRunner, SubCommand } from 'nest-commander';
 import fs from 'fs';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 import { MikroORM } from '@mikro-orm/core';
-import { Inject } from '@nestjs/common';
-import { getMapperToken } from '@automapper/nestjs';
-import { Mapper } from '@automapper/core';
 import { DbSeedService } from './domain/db-seed.service.js';
 import { PersonFile } from './file/person-file.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { OrganisationFile } from './file/organisation-file.js';
-import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { DataProviderFile } from './file/data-provider-file.js';
 import { createHash, Hash } from 'crypto';
 import { DbSeed } from './domain/db-seed.js';
 import { DbSeedStatus } from './repo/db-seed.entity.js';
 import { DbSeedRepo } from './repo/db-seed.repo.js';
+import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 
 export interface SeedFile {
     entityName: string;
@@ -35,7 +32,6 @@ export class DbSeedConsole extends CommandRunner {
         private readonly logger: ClassLogger,
         private readonly dbSeedService: DbSeedService,
         private readonly dbSeedRepo: DbSeedRepo,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {
         super();
     }
@@ -68,7 +64,7 @@ export class DbSeedConsole extends CommandRunner {
 
         for (const subDir of subDirs) {
             const entityFileNames: string[] = this.dbSeedService.getEntityFileNames(directory, subDir);
-            if (entityFileNames.length == 0) {
+            if (entityFileNames.length === 0) {
                 this.logger.error(`No seeding data in the directory ${directory}!`);
                 throw new Error('No seeding data in the directory');
             }
@@ -138,6 +134,12 @@ export class DbSeedConsole extends CommandRunner {
             case 'TechnicalUser':
                 await this.dbSeedService.seedTechnicalUser(fileContentAsStr);
                 break;
+            case 'EmailDomain':
+                await this.dbSeedService.seedEmailDomain(fileContentAsStr);
+                break;
+            case 'Rollenerweiterung':
+                await this.dbSeedService.seedRollenerweiterung(fileContentAsStr);
+                break;
             default:
                 throw new Error(`Unsupported EntityName / EntityType: ${seedFile.entityName}`);
         }
@@ -145,7 +147,13 @@ export class DbSeedConsole extends CommandRunner {
 
     private handleDataProvider(entities: Entity[], entityName: string): void {
         for (const entity of entities) {
-            const mappedEntity: DataProviderEntity = this.mapper.map(entity, DataProviderFile, DataProviderEntity);
+            const { id, createdAt, updatedAt }: DataProviderFile = entity as DataProviderFile;
+
+            const mappedEntity: DataProviderEntity = this.orm.em.create(DataProviderEntity, {
+                id,
+                createdAt,
+                updatedAt,
+            });
             this.orm.em.persist(mappedEntity);
         }
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);

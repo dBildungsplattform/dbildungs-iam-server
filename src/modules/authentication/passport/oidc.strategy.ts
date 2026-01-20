@@ -11,6 +11,7 @@ import { Person } from '../../person/domain/person.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
 import { Request } from 'express';
 import { decode, JwtPayload } from 'jsonwebtoken';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export interface CustomJwtPayload extends JwtPayload {
     acr: StepUpLevel;
@@ -37,7 +38,9 @@ export function getLowestStepUpLevel(): StepUpLevel {
 // timeout in seconds
 export function isStepUpTimeOver(req: Request, timeout: number): boolean {
     const currentTime: number = Date.now();
-    if (!req.session?.lastRouteChangeTime) return false;
+    if (!req.session?.lastRouteChangeTime) {
+        return false;
+    }
     const lastRouteChangeTime: number = req.session.lastRouteChangeTime;
     const deltaTime: number = currentTime - lastRouteChangeTime;
     return deltaTime >= timeout * 1000;
@@ -49,7 +52,9 @@ export function updateAndGetStepUpLevel(req: Request, timeout: number): StepUpLe
     }
 
     if (isStepUpTimeOver(req, timeout)) {
-        if (req.passportUser) req.passportUser.stepUpLevel = getLowestStepUpLevel();
+        if (req.passportUser) {
+            req.passportUser.stepUpLevel = getLowestStepUpLevel();
+        }
     }
 
     req.session.lastRouteChangeTime = new Date().getTime();
@@ -62,6 +67,7 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
         @Inject(OIDC_CLIENT) private client: Client,
         configService: ConfigService<ServerConfig>,
         private personRepo: PersonRepository,
+        private readonly logger: ClassLogger,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
 
@@ -89,6 +95,7 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
             userinfo = await this.client.userinfo(tokenset);
             person = await this.personRepo.findByKeycloakUserId(userinfo.sub);
         } catch (err: unknown) {
+            this.logger.logUnknownAsWarning('Could not authorize user', err);
             throw new UnauthorizedException();
         }
 
@@ -110,7 +117,7 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
             access_token: accessToken,
             refresh_token: refreshToken,
             userinfo: userinfo,
-            personPermissions: () => Promise.reject(),
+            personPermissions: () => Promise.reject(new Error('Permissions not loaded')),
             redirect_uri: req.session?.redirectUrl,
             stepUpLevel: stepUpLevel,
         };

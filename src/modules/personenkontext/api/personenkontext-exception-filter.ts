@@ -11,7 +11,6 @@ import { PersonenkontextSpecificationError } from '../specification/error/person
 import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 import { RolleNurAnPassendeOrganisationError } from '../specification/error/rolle-nur-an-passende-organisation.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
-import { LernHatKeineKlasseError } from '../specification/error/lern-hat-keine-klasse.error.js';
 
 @Catch(PersonenkontextSpecificationError, DuplicatePersonalnummerError)
 export class PersonenkontextExceptionFilter implements ExceptionFilter<PersonenkontextSpecificationError> {
@@ -21,13 +20,6 @@ export class PersonenkontextExceptionFilter implements ExceptionFilter<Personenk
             new DbiamPersonenkontextError({
                 code: 400,
                 i18nKey: PersonenkontextSpecificationErrorI18nTypes.NUR_LEHR_UND_LERN_AN_KLASSE,
-            }),
-        ],
-        [
-            LernHatKeineKlasseError.name,
-            new DbiamPersonenkontextError({
-                code: 400,
-                i18nKey: PersonenkontextSpecificationErrorI18nTypes.LERN_HAT_KEINE_KLASSE,
             }),
         ],
         [

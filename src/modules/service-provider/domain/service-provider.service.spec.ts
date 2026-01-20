@@ -1,21 +1,28 @@
+import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { zip } from 'lodash-es';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
+import { VidisService } from '../../vidis/vidis.service.js';
+import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
+import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import { ServiceProviderService } from './service-provider.service.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
-import { VidisService } from '../../vidis/vidis.service.js';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
-import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { faker } from '@faker-js/faker';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
+import {
+    ManageableServiceProviderWithReferencedObjects,
+    RollenerweiterungForManageableServiceProvider,
+} from './types.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -84,6 +91,7 @@ const mockExistingVidisServiceProviderContainedInVidisAngebote: ServiceProvider<
     externalSystem: ServiceProviderSystem.NONE,
     requires2fa: false,
     vidisAngebotId: '7654321',
+    merkmale: [],
 };
 
 const mockExistingVidisServiceProviderNotInVidisAngebote: ServiceProvider<true> = {
@@ -102,6 +110,7 @@ const mockExistingVidisServiceProviderNotInVidisAngebote: ServiceProvider<true> 
     externalSystem: ServiceProviderSystem.NONE,
     requires2fa: false,
     vidisAngebotId: '9999999',
+    merkmale: [],
 };
 
 const mockExistingServiceProviders: ServiceProvider<true>[] = [
@@ -188,6 +197,7 @@ function getIdMap<T>(arr: Array<T & { id: string }>): Map<string, T> {
 describe('ServiceProviderService', () => {
     let service: ServiceProviderService;
     let rolleRepo: DeepMocked<RolleRepo>;
+    let rollenerweiterungRepo: DeepMocked<RollenerweiterungRepo>;
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
     let vidisService: DeepMocked<VidisService>;
@@ -199,6 +209,7 @@ describe('ServiceProviderService', () => {
             providers: [
                 ServiceProviderService,
                 { provide: RolleRepo, useValue: createMock<RolleRepo>() },
+                { provide: RollenerweiterungRepo, useValue: createMock<RollenerweiterungRepo>() },
                 { provide: ServiceProviderRepo, useValue: createMock<ServiceProviderRepo>() },
                 { provide: OrganisationRepository, useValue: createMock<OrganisationRepository>() },
                 { provide: VidisService, useValue: createMock<VidisService>() },
@@ -207,6 +218,7 @@ describe('ServiceProviderService', () => {
         }).compile();
         service = module.get<ServiceProviderService>(ServiceProviderService);
         rolleRepo = module.get<DeepMocked<RolleRepo>>(RolleRepo);
+        rollenerweiterungRepo = module.get<DeepMocked<RollenerweiterungRepo>>(RollenerweiterungRepo);
         serviceProviderRepo = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         organisationRepo = module.get<DeepMocked<OrganisationRepository>>(OrganisationRepository);
         vidisService = module.get<DeepMocked<VidisService>>(VidisService);
@@ -275,6 +287,152 @@ describe('ServiceProviderService', () => {
         );
     });
 
+    describe('getServiceProvidersByOrganisationenAndRollen', () => {
+        describe.each([[true], [false]])('when rollen have rollenerweiterungen', (haveRollenerweiterungen: boolean) => {
+            const organisations: Array<Organisation<true>> = [
+                DoFactory.createOrganisation(true),
+                DoFactory.createOrganisation(true),
+                DoFactory.createOrganisation(true),
+                DoFactory.createOrganisation(true),
+                DoFactory.createOrganisation(true),
+            ];
+            const serviceProviders: Array<ServiceProvider<true>> = [
+                DoFactory.createServiceProvider(true),
+                DoFactory.createServiceProvider(true),
+                DoFactory.createServiceProvider(true),
+                DoFactory.createServiceProvider(true),
+                DoFactory.createServiceProvider(true),
+            ];
+            const rollen: Array<Rolle<true>> = serviceProviders.map((sp: ServiceProvider<true>) =>
+                DoFactory.createRolle(true, { serviceProviderIds: [sp.id] }),
+            );
+            beforeEach(() => {
+                rolleRepo.findByIds.mockImplementation((ids: Array<string>) => {
+                    return Promise.resolve(getIdMap(rollen.filter((r: Rolle<true>) => ids.includes(r.id))));
+                });
+                rollenerweiterungRepo.findManyByOrganisationAndRolle.mockResolvedValue(
+                    haveRollenerweiterungen
+                        ? zip(organisations, rollen).map(
+                              ([organisation, rolle]: [Organisation<true> | undefined, Rolle<true> | undefined]) =>
+                                  DoFactory.createRollenerweiterung(true, {
+                                      organisationId: organisation?.id,
+                                      rolleId: rolle?.id,
+                                  }),
+                          )
+                        : [],
+                );
+                serviceProviderRepo.findByIds.mockImplementation((ids: Array<string>) => {
+                    return Promise.resolve(
+                        getIdMap(ids.map((id: string) => DoFactory.createServiceProvider(true, { id }))),
+                    );
+                });
+            });
+            afterEach(() => {
+                jest.restoreAllMocks();
+            });
+            it('returns a list of service providers', async () => {
+                const result: Array<ServiceProvider<true>> = await service.getServiceProvidersByOrganisationenAndRollen(
+                    zip(organisations, rollen).map(
+                        ([o, r]: [Organisation<true> | undefined, Rolle<true> | undefined]) => ({
+                            organisationId: o!.id,
+                            rolleId: r!.id,
+                        }),
+                    ),
+                );
+                expect(result.length).toBe(
+                    haveRollenerweiterungen ? organisations.length + serviceProviders.length : serviceProviders.length,
+                );
+            });
+        });
+    });
+
+    describe('getOrganisationRollenAndRollenerweiterungenForServiceProviders', () => {
+        let serviceProvider: ServiceProvider<true>;
+        let organisation: Organisation<true>;
+        let rolle: Rolle<true>;
+        let rollenerweiterung: Rollenerweiterung<true>;
+
+        beforeEach(() => {
+            serviceProvider = DoFactory.createServiceProvider(true);
+            organisation = DoFactory.createOrganisation(true, {
+                id: serviceProvider.providedOnSchulstrukturknoten,
+            });
+            rolle = DoFactory.createRolle(true, { serviceProviderIds: [serviceProvider.id] });
+            rollenerweiterung = DoFactory.createRollenerweiterung(true, {
+                serviceProviderId: serviceProvider.id,
+            });
+        });
+
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('should return referenced objects for serviceProviders', async () => {
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProvider.id, [rolle]]]));
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
+                new Map([[serviceProvider.id, [rollenerweiterung]]]),
+            );
+            organisationRepo.findByIds.mockResolvedValue(
+                new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
+            );
+
+            const result: ManageableServiceProviderWithReferencedObjects[] =
+                await service.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]!.serviceProvider).toBe(serviceProvider);
+            expect(result[0]!.organisation).toBe(organisation);
+            expect(result[0]!.rollen).toContain(rolle);
+            expect(result[0]!.rollenerweiterungen).toContain(rollenerweiterung);
+        });
+
+        it('should return empty arrays for serviceProviders without rollen or rollenerweiterungen', async () => {
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map());
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map());
+            organisationRepo.findByIds.mockResolvedValue(
+                new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
+            );
+
+            const result: ManageableServiceProviderWithReferencedObjects[] =
+                await service.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]!.serviceProvider).toBe(serviceProvider);
+            expect(result[0]!.organisation).toBe(organisation);
+            expect(result[0]!.rollen).toBeInstanceOf(Array);
+            expect(result[0]!.rollen).toHaveLength(0);
+            expect(result[0]!.rollenerweiterungen).toBeInstanceOf(Array);
+            expect(result[0]!.rollenerweiterungen).toHaveLength(0);
+        });
+    });
+
+    describe('getRollenerweiterungenForManageableServiceProvider', () => {
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('should return rollenerweiterungen for display', async () => {
+            const rollenerweiterung: Rollenerweiterung<true> = DoFactory.createRollenerweiterung(true);
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                id: rollenerweiterung.organisationId,
+            });
+            const rolle: Rolle<true> = DoFactory.createRolle(true, { id: rollenerweiterung.rolleId });
+
+            organisationRepo.findByIds.mockResolvedValue(new Map([[organisation.id, organisation]]));
+            rolleRepo.findByIds.mockResolvedValue(new Map([[rolle.id, rolle]]));
+
+            const result: RollenerweiterungForManageableServiceProvider[] =
+                await service.getRollenerweiterungenForManageableServiceProvider([rollenerweiterung]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]!.organisation.id).toBe(organisation.id);
+            expect(result[0]!.organisation.name).toBe(organisation.name);
+            expect(result[0]!.organisation.kennung).toBe(organisation.kennung);
+            expect(result[0]!.rolle.id).toBe(rolle.id);
+            expect(result[0]!.rolle.name).toBe(rolle.name);
+        });
+    });
+
     describe('updateServiceProvidersForVidis', () => {
         afterEach(() => {
             jest.restoreAllMocks();
@@ -287,7 +445,9 @@ describe('ServiceProviderService', () => {
                 mockExistingVidisServiceProviderContainedInVidisAngebote,
             );
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
-            if (mockExistingSchulen[0]) organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            if (mockExistingSchulen[0]) {
+                organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            }
             organisationServiceProviderRepo.save.mockResolvedValue();
 
             await service.updateServiceProvidersForVidis();
@@ -309,7 +469,9 @@ describe('ServiceProviderService', () => {
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
-            if (mockExistingSchulen[0]) organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            if (mockExistingSchulen[0]) {
+                organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            }
             organisationServiceProviderRepo.save.mockResolvedValue();
 
             await service.updateServiceProvidersForVidis();
@@ -331,7 +493,9 @@ describe('ServiceProviderService', () => {
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
-            if (mockExistingSchulen[0]) organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            if (mockExistingSchulen[0]) {
+                organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            }
             organisationServiceProviderRepo.save.mockResolvedValue();
             serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
             serviceProviderRepo.deleteById.mockResolvedValue(true);

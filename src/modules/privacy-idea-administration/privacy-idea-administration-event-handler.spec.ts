@@ -8,7 +8,7 @@ import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../.
 import { PersonDeletedEvent } from '../../shared/events/person-deleted.event.js';
 import { ResetTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
 import { TokenResetError } from './api/error/token-reset.error.js';
-import { PersonReferrer } from '../../shared/types/aggregate-ids.types.js';
+import { PersonUsername } from '../../shared/types/aggregate-ids.types.js';
 
 export const mockPrivacyIdeaToken: PrivacyIdeaToken = {
     active: true,
@@ -75,16 +75,16 @@ describe('PrivacyIdeaAdministration Event Handler', () => {
 
     describe('handlePersonDeletedEvent', () => {
         let personId: string;
-        let referrer: PersonReferrer;
+        let username: PersonUsername;
         let emailAddress: string;
         let event: PersonDeletedEvent;
         let mockResetTokenResponse: ResetTokenResponse;
 
         beforeEach(() => {
             personId = faker.string.uuid();
-            referrer = faker.string.alpha();
+            username = faker.string.alpha();
             emailAddress = faker.internet.email();
-            event = new PersonDeletedEvent(personId, referrer, emailAddress);
+            event = new PersonDeletedEvent(personId, username, emailAddress);
             mockResetTokenResponse = createMock<ResetTokenResponse>();
         });
 

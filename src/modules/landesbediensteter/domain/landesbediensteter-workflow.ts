@@ -18,7 +18,7 @@ import { PersonenkontextWorkflowSharedKernel } from '../../personenkontext/domai
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontexteUpdate } from '../../personenkontext/domain/personenkontexte-update.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
@@ -76,7 +76,9 @@ export class LandesbediensteterWorkflowAggregate {
         );
 
         // If there are no permitted orgas, return an empty array early
-        if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) return [];
+        if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
+            return [];
+        }
 
         // Fetch organisations based on the permitted organization IDs and the search string
         const allOrganisationsExceptKlassen: Organisation<true>[] =
@@ -88,7 +90,9 @@ export class LandesbediensteterWorkflowAggregate {
             );
 
         // If no organizations were found, return an empty array
-        if (allOrganisationsExceptKlassen.length === 0) return [];
+        if (allOrganisationsExceptKlassen.length === 0) {
+            return [];
+        }
 
         // Return only the orgas that the admin have rights on
         let filteredOrganisations: Organisation<boolean>[] = allOrganisationsExceptKlassen.filter(
@@ -116,8 +120,12 @@ export class LandesbediensteterWorkflowAggregate {
                 return aTitle.localeCompare(bTitle, 'de', { numeric: true });
             }
             // Ensure a return value for cases where name is not defined (Should never happen normally)
-            if (a.name) return -1;
-            if (b.name) return 1;
+            if (a.name) {
+                return -1;
+            }
+            if (b.name) {
+                return 1;
+            }
             return 0;
         });
 
@@ -170,7 +178,9 @@ export class LandesbediensteterWorkflowAggregate {
                 this.selectedOrganisationId,
             );
 
-            if (!permissionCheckError.ok) return permissionCheckError;
+            if (!permissionCheckError.ok) {
+                return permissionCheckError;
+            }
         }
 
         return Ok(undefined);

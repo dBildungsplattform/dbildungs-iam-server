@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { NurLehrUndLernAnKlasse } from './nur-lehr-und-lern-an-klasse.js';
 import { Personenkontext } from '../domain/personenkontext.js';
@@ -47,7 +47,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false }), MapperTestModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [
                 PersonenkontextFactory,
                 {

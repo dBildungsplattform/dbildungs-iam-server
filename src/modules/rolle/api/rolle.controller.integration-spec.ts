@@ -13,7 +13,6 @@ import {
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
@@ -38,7 +37,8 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
@@ -51,6 +51,7 @@ import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.
 import { RolleResponse } from './rolle.response.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { SystemRechtResponse } from './systemrecht.response.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -67,12 +68,7 @@ describe('Rolle API', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [
-                RolleApiModule,
-                ConfigTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
-            ],
+            imports: [RolleApiModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 {
                     provide: APP_PIPE,
@@ -203,7 +199,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -232,7 +228,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: faker.string.uuid(),
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -263,7 +259,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: 'INVALID' as RollenArt,
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -294,7 +290,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: ['INVALID' as RollenMerkmal],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -325,7 +321,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT, RollenMerkmal.BEFRISTUNG_PFLICHT],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -346,7 +342,9 @@ describe('Rolle API', () => {
                     name: rolleName,
                 }),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             const params: CreateRolleBodyParams = {
                 name: rolleName,
@@ -410,7 +408,9 @@ describe('Rolle API', () => {
         it('should return rollen with the given queried name', async () => {
             const testRolle: { name: string; administeredBySchulstrukturknoten: string } | DomainError =
                 await rolleRepo.save(DoFactory.createRolle(false));
-            if (testRolle instanceof DomainError) throw Error();
+            if (testRolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
@@ -502,7 +502,9 @@ describe('Rolle API', () => {
                     rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: false })),
                 ])
             ).map((r: Rolle<true> | DomainError) => {
-                if (r instanceof DomainError) throw Error();
+                if (r instanceof DomainError) {
+                    throw Error();
+                }
                 return r.administeredBySchulstrukturknoten;
             });
 
@@ -523,7 +525,9 @@ describe('Rolle API', () => {
     describe('/GET rolle by id', () => {
         it('should return rolle', async () => {
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
@@ -545,7 +549,9 @@ describe('Rolle API', () => {
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
@@ -579,7 +585,9 @@ describe('Rolle API', () => {
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { istTechnisch: true }),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
@@ -599,10 +607,12 @@ describe('Rolle API', () => {
         describe('when rolle exists and systemrecht is matching enum', () => {
             it('should return 200', async () => {
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const params: AddSystemrechtBodyParams = {
-                    systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
+                    systemRecht: RollenSystemRechtEnum.ROLLEN_VERWALTEN,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .patch(`/rolle/${rolle.id}`)
@@ -617,7 +627,7 @@ describe('Rolle API', () => {
                 await rolleRepo.save(DoFactory.createRolle(false));
                 const validButNonExistingUUID: string = faker.string.uuid();
                 const params: AddSystemrechtBodyParams = {
-                    systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
+                    systemRecht: RollenSystemRechtEnum.ROLLEN_VERWALTEN,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .patch(`/rolle/${validButNonExistingUUID}`)
@@ -637,7 +647,9 @@ describe('Rolle API', () => {
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .get(`/rolle/${rolle.id}/serviceProviders`)
@@ -666,7 +678,9 @@ describe('Rolle API', () => {
                     DoFactory.createServiceProvider(false),
                 );
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const params: RolleServiceProviderBodyParams = {
                     serviceProviderIds: [serviceProvider.id],
@@ -688,7 +702,9 @@ describe('Rolle API', () => {
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const params: RolleServiceProviderBodyParams = {
                     serviceProviderIds: [serviceProvider.id],
@@ -720,7 +736,9 @@ describe('Rolle API', () => {
         describe('when serviceProvider does not exist', () => {
             it('should return 404', async () => {
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const params: RolleServiceProviderBodyParams = {
                     serviceProviderIds: [faker.string.uuid()],
@@ -744,7 +762,9 @@ describe('Rolle API', () => {
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const params: RolleServiceProviderBodyParams = {
                     serviceProviderIds: [serviceProvider.id],
@@ -776,7 +796,9 @@ describe('Rolle API', () => {
         describe('when serviceProvider does not exist', () => {
             it('should return 500', async () => {
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
                 const nonExistingServiceProviderId: string = faker.string.uuid();
 
                 const params: RolleServiceProviderBodyParams = {
@@ -789,6 +811,16 @@ describe('Rolle API', () => {
 
                 expect(response.status).toBe(404);
             });
+        });
+    });
+
+    describe('GET systemrechte', () => {
+        it('should return all systemrechte', async () => {
+            const response: Response = await request(app.getHttpServer() as App).get('/rolle/systemrechte');
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual(
+                RollenSystemRecht.ALL.map((sr: RollenSystemRecht) => new SystemRechtResponse(sr)),
+            );
         });
     });
 
@@ -816,7 +848,9 @@ describe('Rolle API', () => {
                     rollenart: RollenArt.LEHR,
                 }),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [organisation.id] });
 
@@ -827,7 +861,7 @@ describe('Rolle API', () => {
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [RollenSystemRechtEnum.ROLLEN_ERWEITERN],
                 serviceProviderIds: [serviceProvider.id],
                 version: 1,
             };
@@ -843,7 +877,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: rolle.rollenart,
                 merkmale: params.merkmale,
-                systemrechte: params.systemrechte,
+                systemrechte: [new SystemRechtResponse(RollenSystemRecht.ROLLEN_ERWEITERN)],
             });
         });
 
@@ -863,7 +897,7 @@ describe('Rolle API', () => {
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
                 serviceProviderIds: [],
                 version: 1,
             };
@@ -896,7 +930,9 @@ describe('Rolle API', () => {
                 }),
             );
 
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
@@ -905,7 +941,7 @@ describe('Rolle API', () => {
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
                 serviceProviderIds: [],
                 version: 1,
             };
@@ -945,7 +981,9 @@ describe('Rolle API', () => {
                 }),
             );
 
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisation.id] });
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
@@ -954,7 +992,7 @@ describe('Rolle API', () => {
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
                 serviceProviderIds: [],
                 version: 1,
             };
@@ -1007,9 +1045,12 @@ describe('Rolle API', () => {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LEHR,
                         istTechnisch: false,
+                        merkmale: [],
                     }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 await dBiamPersonenkontextRepoInternal.save(
                     DoFactory.createPersonenkontext(false, {
@@ -1026,7 +1067,7 @@ describe('Rolle API', () => {
                 const params: UpdateRolleBodyParams = {
                     name: faker.person.jobTitle(),
                     merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                    systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                    systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
                     serviceProviderIds: [],
                     version: 1,
                 };
@@ -1064,7 +1105,9 @@ describe('Rolle API', () => {
                     rollenart: RollenArt.LEHR,
                 }),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
                 DoFactory.createServiceProvider(false),
@@ -1073,7 +1116,7 @@ describe('Rolle API', () => {
             const params: UpdateRolleBodyParams = {
                 name: ' newName ',
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
                 serviceProviderIds: [serviceProvider.id],
                 version: 1,
             };
@@ -1150,7 +1193,9 @@ describe('Rolle API', () => {
                         rollenart: RollenArt.LEHR,
                     }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 await dBiamPersonenkontextRepoInternal.save(
                     DoFactory.createPersonenkontext(false, {
@@ -1199,7 +1244,9 @@ describe('Rolle API', () => {
                         rollenart: RollenArt.LEHR,
                     }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                     all: false,
@@ -1243,7 +1290,9 @@ describe('Rolle API', () => {
                         istTechnisch: true,
                     }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                     all: false,
@@ -1293,7 +1342,9 @@ describe('Rolle API', () => {
                         istTechnisch: false,
                     }),
                 );
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                     all: false,

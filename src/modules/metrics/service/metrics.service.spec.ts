@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/dot-notation */
 // Mocks for Counter and Gauge
 let incMock: jest.Mock;
 let setMock: jest.Mock;

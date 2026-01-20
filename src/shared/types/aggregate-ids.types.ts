@@ -1,10 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Flavor } from './flavor.types.js';
 
 declare const personSymbol: unique symbol;
 export type PersonID = Flavor<string, typeof personSymbol>;
 
-declare const personReferrerSymbol: unique symbol;
-export type PersonReferrer = Flavor<string, typeof personReferrerSymbol>;
+declare const personUsernameSymbol: unique symbol;
+export type PersonUsername = Flavor<string, typeof personUsernameSymbol>;
+
+declare const personExternalIdSymbol: unique symbol;
+export type PersonExternalID = Flavor<string, typeof personExternalIdSymbol>;
 
 declare const organisationSymbol: unique symbol;
 export type OrganisationID = Flavor<string, typeof organisationSymbol>;
@@ -23,3 +27,6 @@ export type ServiceProviderID = Flavor<string, typeof serviceProviderSymbol>;
 
 declare const emailAddressSymbol: unique symbol;
 export type EmailAddressID = Flavor<string, typeof emailAddressSymbol>;
+
+declare const rollenerweiterungSymbol: unique symbol;
+export type RollenerweiterungID = Flavor<string, typeof rollenerweiterungSymbol>;

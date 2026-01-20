@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { Rolle } from './rolle.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
+import { RollenArt, RollenMerkmal } from './rolle.enums.js';
+import { RollenSystemRecht } from './systemrecht.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';

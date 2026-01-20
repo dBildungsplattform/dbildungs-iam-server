@@ -57,7 +57,9 @@ export class ItslearningPersonRepo {
         const person: Option<PersonResponse> = await this.readPerson(personId, syncId);
 
         // Person is not in itslearning, should not update the e-mail
-        if (!person) return new ItsLearningError(`[updateEmail] person with ID ${personId} not found.`);
+        if (!person) {
+            return new ItsLearningError(`[updateEmail] person with ID ${personId} not found.`);
+        }
 
         return this.createOrUpdatePerson(
             {

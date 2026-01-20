@@ -1,54 +1,54 @@
 import { faker } from '@faker-js/faker';
-import { EntityManager, MikroORM } from '@mikro-orm/core';
-import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    DoFactory,
-    LoggingTestModule,
-    MapperTestModule,
-} from '../../../../test/utils/index.js';
-import { Personenkontext, mapAggregateToPartial } from '../domain/personenkontext.js';
-import {
-    DBiamPersonenkontextRepo,
-    ExternalPkData,
-    KontextWithOrgaAndRolle,
-    RollenCount,
-} from './dbiam-personenkontext.repo.js';
-import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
-import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
-import { PersonFactory } from '../../person/domain/person.factory.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { Person } from '../../person/domain/person.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
-import { RolleModule } from '../../rolle/rolle.module.js';
-import { OrganisationModule } from '../../organisation/organisation.module.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { OrganisationID, PersonenkontextID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { createMock } from '@golevelup/ts-jest';
-import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { PersonenkontextScope } from './personenkontext.scope.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
+import { DeepPartial, EntityManager, EntityName, MikroORM } from '@mikro-orm/core';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import {
     createAndPersistOrganisation,
     createAndPersistRootOrganisation,
 } from '../../../../test/utils/organisation-test-helper.js';
-import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { OrganisationID, PersonenkontextID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
-import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationModule } from '../../organisation/organisation.module.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonFactory } from '../../person/domain/person.factory.js';
+import { Person } from '../../person/domain/person.js';
+import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
 import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RolleModule } from '../../rolle/rolle.module.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { mapAggregateToPartial, Personenkontext } from '../domain/personenkontext.js';
+import {
+    DBiamPersonenkontextRepo,
+    ExternalPkData,
+    KontextWithOrgaAndRolle,
+    PersonenkontextErweitertVirtualEntityLoaded,
+    RollenCount,
+} from './dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
+import { PersonenkontextScope } from './personenkontext.scope.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
+import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { PersonenkontextEntity } from './personenkontext.entity.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -62,6 +62,7 @@ describe('dbiam Personenkontext Repo', () => {
     let organisationRepository: OrganisationRepository;
     let rolleRepo: RolleRepo;
     let serviceProviderRepo: ServiceProviderRepo;
+    let rollenerweiterungRepo: RollenerweiterungRepo;
     let rolleFactory: RolleFactory;
 
     let personenkontextFactory: PersonenkontextFactory;
@@ -90,7 +91,6 @@ describe('dbiam Personenkontext Repo', () => {
         module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
-                MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 RolleModule,
                 OrganisationModule,
@@ -106,6 +106,7 @@ describe('dbiam Personenkontext Repo', () => {
                 RolleFactory,
                 RolleRepo,
                 ServiceProviderRepo,
+                RollenerweiterungRepo,
                 PersonenkontextFactory,
                 EntityAggregateMapper,
                 {
@@ -140,6 +141,7 @@ describe('dbiam Personenkontext Repo', () => {
         rolleRepo = module.get(RolleRepo);
         serviceProviderRepo = module.get(ServiceProviderRepo);
         rolleFactory = module.get(RolleFactory);
+        rollenerweiterungRepo = module.get(RollenerweiterungRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -183,7 +185,9 @@ describe('dbiam Personenkontext Repo', () => {
             throw rolle;
         }
         const result: Rolle<true> | DomainError = await rolleRepo.save(rolle);
-        if (result instanceof DomainError) throw Error();
+        if (result instanceof DomainError) {
+            throw Error();
+        }
 
         return result;
     }
@@ -213,7 +217,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             const personenkontext: Personenkontext<true> = await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
@@ -247,8 +253,12 @@ describe('dbiam Personenkontext Repo', () => {
             const organisationB: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolleA instanceof DomainError) throw Error();
-            if (rolleB instanceof DomainError) throw Error();
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+            if (rolleB instanceof DomainError) {
+                throw Error();
+            }
 
             await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
@@ -293,6 +303,75 @@ describe('dbiam Personenkontext Repo', () => {
                 ),
             ).not.toEqual(-1);
         });
+
+        // This extra test is for the line coverage of the mapping from RolleServiceProviderEntity to ServiceProviderEntity
+        it('should find relevant external personenkontext data including original and extra serviceProvider', async () => {
+            const person: Person<true> = await createPerson();
+            const organisationA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    rolleId: rolleA.id,
+                    organisationId: organisationA.id,
+                }),
+            );
+
+            // Mock the ORM response for rolle.serviceProvider.getItems()
+            const mockServiceProvider: DeepPartial<ServiceProviderEntity> = createMock<
+                DeepPartial<ServiceProviderEntity>
+            >({
+                id: faker.string.uuid(),
+                name: 'Mocked Service Provider',
+                vidisAngebotId: faker.string.uuid(),
+            });
+            const mockRolleServiceProviderEntity: RolleServiceProviderEntity = createMock<RolleServiceProviderEntity>({
+                serviceProvider: mockServiceProvider,
+            });
+
+            const findSpy: jest.SpyInstance = jest
+                .spyOn(sut['em'], 'find')
+                .mockImplementation(<T>(entityClass: EntityName<T>) => {
+                    if (entityClass === PersonenkontextEntity) {
+                        return Promise.resolve([
+                            {
+                                id: 'pk-123',
+                                rolleId: {
+                                    unwrap: () => ({
+                                        rollenart: rolleA.rollenart,
+                                        serviceProvider: {
+                                            getItems: () => [mockRolleServiceProviderEntity],
+                                        },
+                                    }),
+                                },
+                                organisationId: {
+                                    unwrap: () => ({ kennung: organisationA.kennung }),
+                                },
+                            },
+                        ]);
+                    }
+
+                    return Promise.resolve([]);
+                });
+
+            const result: ExternalPkData[] = await sut.findExternalPkData(person.id);
+
+            expect(result.length).toEqual(1);
+            const pkData: ExternalPkData | undefined = result[0];
+            expect(pkData?.rollenart).toEqual(rolleA.rollenart);
+            expect(pkData?.kennung).toEqual(organisationA.kennung);
+
+            const spIds: string[] | undefined = pkData?.serviceProvider?.map((sp: ServiceProviderEntity) => sp.id);
+            expect(spIds).toContain(mockServiceProvider.id); // from mocked RolleServiceProviderEntity
+
+            findSpy.mockRestore();
+        });
     });
 
     describe('findBy', () => {
@@ -304,8 +383,12 @@ describe('dbiam Personenkontext Repo', () => {
                 const organisation: Organisation<true> = await organisationRepository.save(
                     DoFactory.createOrganisation(false),
                 );
-                if (rolleA instanceof DomainError) throw Error();
-                if (rolleB instanceof DomainError) throw Error();
+                if (rolleA instanceof DomainError) {
+                    throw Error();
+                }
+                if (rolleB instanceof DomainError) {
+                    throw Error();
+                }
 
                 const personenkontextA: Personenkontext<true> = await personenkontextRepoInternal.save(
                     createPersonenkontext(false, {
@@ -356,7 +439,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await Promise.all([
                 personenkontextRepoInternal.save(
@@ -389,7 +474,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await Promise.all([
                 personenkontextRepoInternal.save(
@@ -416,15 +503,22 @@ describe('dbiam Personenkontext Repo', () => {
         });
     });
 
-    describe('findByPersonIdsWithOrgaAndRolle', () => {
+    describe('findByPersonIdsAndServiceprovidersWithOrgaAndRolle', () => {
         it('should return all personenkontexte for a person with orga and rolle', async () => {
             const personA: Person<true> = await createPerson();
             const personB: Person<true> = await createPerson();
-            const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            const serviceprovider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceprovider.id] }),
+            );
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await Promise.all([
                 personenkontextRepoInternal.save(
@@ -444,11 +538,206 @@ describe('dbiam Personenkontext Repo', () => {
             ]);
 
             const personenkontexte: Map<PersonID, KontextWithOrgaAndRolle[]> =
-                await sut.findByPersonIdsWithOrgaAndRolle([personA.id, personB.id]);
+                await sut.findByPersonIdsAndServiceprovidersWithOrgaAndRolle(
+                    [personA.id, personB.id],
+                    [serviceprovider.id],
+                    { all: true },
+                );
 
             expect(personenkontexte.size).toEqual(2);
             expect(personenkontexte.get(personA.id)).toHaveLength(1);
             expect(personenkontexte.get(personB.id)).toHaveLength(1);
+        });
+
+        it('should only return kontexte at permitted orgas', async () => {
+            const person: Person<true> = await createPerson();
+            const serviceprovider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceprovider.id] }),
+            );
+            const organisationA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            const organisationB: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+
+            await Promise.all([
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: person.id,
+                        rolleId: rolle.id,
+                        organisationId: organisationA.id,
+                    }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: person.id,
+                        rolleId: rolle.id,
+                        organisationId: organisationB.id,
+                    }),
+                ),
+            ]);
+
+            const personenkontexte: Map<PersonID, KontextWithOrgaAndRolle[]> =
+                await sut.findByPersonIdsAndServiceprovidersWithOrgaAndRolle([person.id], [serviceprovider.id], {
+                    all: false,
+                    orgaIds: [organisationA.id],
+                });
+
+            expect(personenkontexte.size).toEqual(1);
+            expect(personenkontexte.get(person.id)).toHaveLength(1);
+        });
+
+        it('should return all personenkontexte when a rollenerweiterung exists', async () => {
+            const person: Person<true> = await createPerson();
+            const serviceprovider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+            const organisation: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolle.id,
+                    organisationId: organisation.id,
+                    serviceProviderId: serviceprovider.id,
+                }),
+            );
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    rolleId: rolle.id,
+                    organisationId: organisation.id,
+                }),
+            );
+
+            const personenkontexte: Map<PersonID, KontextWithOrgaAndRolle[]> =
+                await sut.findByPersonIdsAndServiceprovidersWithOrgaAndRolle([person.id], [serviceprovider.id], {
+                    all: true,
+                });
+
+            expect(personenkontexte.size).toEqual(1);
+            expect(personenkontexte.get(person.id)).toHaveLength(1);
+        });
+
+        // see bug spsh-2982
+        it('should not personenkontexte when another rollenerweiterung exists', async () => {
+            const person: Person<true> = await createPerson();
+            const serviceproviderA: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const serviceproviderB: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const rolleWithProviderA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleWithProviderA instanceof DomainError) {
+                throw Error();
+            }
+            const rolleWithProviderB: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleWithProviderB instanceof DomainError) {
+                throw Error();
+            }
+            const organisationA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            const organisationB: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleWithProviderA.id,
+                    organisationId: organisationA.id,
+                    serviceProviderId: serviceproviderA.id,
+                }),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleWithProviderB.id,
+                    organisationId: organisationB.id,
+                    serviceProviderId: serviceproviderB.id,
+                }),
+            );
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    rolleId: rolleWithProviderA.id,
+                    organisationId: organisationA.id,
+                }),
+            );
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    rolleId: rolleWithProviderB.id,
+                    organisationId: organisationB.id,
+                }),
+            );
+
+            const personenkontexte: Map<PersonID, KontextWithOrgaAndRolle[]> =
+                await sut.findByPersonIdsAndServiceprovidersWithOrgaAndRolle([person.id], [serviceproviderA.id], {
+                    all: true,
+                });
+
+            expect(personenkontexte.size).toEqual(1);
+            expect(personenkontexte.get(person.id)).toHaveLength(1);
+        });
+
+        it('should return not return personenkontexte when it doesnt have the serviceprovider', async () => {
+            const person: Person<true> = await createPerson();
+            const serviceproviderA: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const serviceproviderB: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceproviderA.id, serviceproviderB.id] }),
+            );
+            const rolleB: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceproviderB.id] }),
+            );
+            const organisation: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            if (rolleA instanceof DomainError || rolleB instanceof DomainError) {
+                throw Error();
+            }
+
+            await Promise.all([
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: person.id,
+                        rolleId: rolleA.id,
+                        organisationId: organisation.id,
+                    }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: person.id,
+                        rolleId: rolleB.id,
+                        organisationId: organisation.id,
+                    }),
+                ),
+            ]);
+
+            const personenkontexte: Map<PersonID, KontextWithOrgaAndRolle[]> =
+                await sut.findByPersonIdsAndServiceprovidersWithOrgaAndRolle([person.id], [serviceproviderA.id], {
+                    all: true,
+                });
+
+            expect(personenkontexte.size).toEqual(1);
+            expect(personenkontexte.get(person.id)).toHaveLength(1);
         });
     });
 
@@ -459,7 +748,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
@@ -486,7 +777,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false, { itslearningEnabled: true }),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
@@ -524,8 +817,12 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false, { itslearningEnabled: true }),
             );
-            if (rolleA instanceof DomainError) throw Error();
-            if (rolleB instanceof DomainError) throw Error();
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+            if (rolleB instanceof DomainError) {
+                throw Error();
+            }
 
             await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
@@ -558,7 +855,9 @@ describe('dbiam Personenkontext Repo', () => {
                     DoFactory.createOrganisation(false),
                 );
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 await personenkontextRepoInternal.save(
                     createPersonenkontext(false, {
@@ -582,7 +881,9 @@ describe('dbiam Personenkontext Repo', () => {
                 const personUUID: string = faker.string.uuid();
                 const organisationUUID: string = faker.string.uuid();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) throw Error();
+                if (rolle instanceof DomainError) {
+                    throw Error();
+                }
 
                 const personenkontext: Option<Personenkontext<true>> = await sut.find(
                     personUUID,
@@ -665,7 +966,9 @@ describe('dbiam Personenkontext Repo', () => {
         it('should return true if there is any personenkontext for an organisation', async () => {
             const person: Person<true> = await createPerson();
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
@@ -690,7 +993,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
@@ -742,7 +1047,9 @@ describe('dbiam Personenkontext Repo', () => {
             );
 
             const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
-            if (rolle1Result instanceof DomainError) throw Error();
+            if (rolle1Result instanceof DomainError) {
+                throw Error();
+            }
 
             //Kontexte with exceeding Befristung
             const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
@@ -804,7 +1111,9 @@ describe('dbiam Personenkontext Repo', () => {
             const organisation: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolle instanceof DomainError) throw Error();
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
 
             await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
@@ -878,6 +1187,47 @@ describe('dbiam Personenkontext Repo', () => {
             );
 
             expect(result).toBe(false);
+        });
+    });
+
+    describe('findPkErweiterungen', () => {
+        it('should find pkErweiterungen for this person', async () => {
+            const person: Person<true> = await createPerson();
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            const organisationA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    rolleId: rolleA.id,
+                    organisationId: organisationA.id,
+                }),
+            );
+
+            const serviceprovider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleA.id,
+                    organisationId: organisationA.id,
+                    serviceProviderId: serviceprovider.id,
+                }),
+            );
+
+            const result: PersonenkontextErweitertVirtualEntityLoaded[] = await sut.findPKErweiterungen(person.id);
+            expect(result.length).toEqual(1);
+            expect(
+                result.findIndex(
+                    (pker: PersonenkontextErweitertVirtualEntityLoaded) =>
+                        pker.serviceProvider.unwrap().id === serviceprovider.id,
+                ),
+            ).not.toEqual(-1);
         });
     });
 });

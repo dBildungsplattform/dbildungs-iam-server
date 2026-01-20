@@ -1,4 +1,5 @@
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../../modules/rolle/domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
+import { RollenSystemRechtEnum } from '../../../modules/rolle/domain/systemrecht.js';
 
 export class RolleFile {
     public id?: number;
@@ -13,7 +14,7 @@ export class RolleFile {
 
     public merkmale!: RollenMerkmal[];
 
-    public systemrechte!: RollenSystemRecht[];
+    public systemrechte!: RollenSystemRechtEnum[];
 
     public serviceProviderIds!: number[];
 

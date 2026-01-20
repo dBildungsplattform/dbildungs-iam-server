@@ -13,7 +13,7 @@ import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulcon
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { MeldungResponse } from './meldung.response.js';

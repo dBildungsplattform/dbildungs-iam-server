@@ -15,7 +15,9 @@ export class EmailGenerator {
     public isEqual(address: string, firstname: string, lastname: string, emailDomain: string): boolean {
         const createAddress: Result<string> = this.generateAddress(firstname, lastname);
 
-        if (!createAddress.ok) return false;
+        if (!createAddress.ok) {
+            return false;
+        }
 
         return address === createAddress.value + '@' + emailDomain;
     }
@@ -74,14 +76,18 @@ export class EmailGenerator {
     ): Promise<Result<string>> {
         const createdAddress: Result<string> = this.generateAddress(firstname, lastname);
 
-        if (!createdAddress.ok) return createdAddress;
+        if (!createdAddress.ok) {
+            return createdAddress;
+        }
 
         const nextAvailableAddressResult: Result<string> = await this.getNextAvailableAddress(
             createdAddress.value,
             emailDomain,
         );
 
-        if (!nextAvailableAddressResult.ok) return nextAvailableAddressResult;
+        if (!nextAvailableAddressResult.ok) {
+            return nextAvailableAddressResult;
+        }
 
         return {
             ok: true,

@@ -11,8 +11,9 @@ import { isOxErrorResponse, OxBaseAction } from '../actions/ox-base-action.js';
 import { OxError } from '../../../shared/error/ox.error.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { OxErrorMapper } from './ox-error.mapper.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { OxNonRetryableError } from '../error/ox-non-retryable.error.js';
+import { OxErrorMapper } from './ox-error.mapper.js';
 
 export type OxErrorType = {
     message: string;
@@ -78,13 +79,17 @@ export class OxService {
                     throw result.error;
                 }
             } catch (error) {
+                if (error instanceof OxNonRetryableError) {
+                    this.logger.info('Skipping retry for non-retryable error', error);
+                    return result;
+                }
                 if (failCounter < this.max_retries) {
                     this.logger.logUnknownAsError(
                         `Attempt ${failCounter + 1} failed. Retrying in ${delay}ms... Remaining retries: ${this.max_retries - failCounter}`,
                         error,
                     );
 
-                    // eslint-disable-next-line no-await-in-loop
+                    // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
                     await new Promise<void>((resolve: () => void) => setTimeout(resolve, delay));
                 }
             }
@@ -154,6 +159,8 @@ export class OxService {
                     ok: false,
                     error: mappedOxError,
                 };
+            } else {
+                this.logger.logUnknownAsError('Unknown error occurred during OX request', err);
             }
             return {
                 ok: false,

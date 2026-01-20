@@ -16,6 +16,8 @@ import { UpdatePersonNotFoundError } from '../domain/error/update-person-not-fou
 import { UpdateInvalidRollenartForLernError } from '../domain/error/update-invalid-rollenart-for-lern.error.js';
 import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
 import { PersonenkontextBefristungRequiredError } from '../domain/error/personenkontext-befristung-required.error.js';
+import { DuplicateKlassenkontextError } from '../domain/error/update-invalid-duplicate-klassenkontext-for-same-rolle.js';
+import { UpdateLernNotAtSchuleAndKlasseError } from '../domain/error/update-lern-not-at-schule-and-klasse.error.js';
 
 @Catch(PersonenkontexteUpdateError)
 export class PersonenkontexteUpdateExceptionFilter implements ExceptionFilter<PersonenkontexteUpdateError> {
@@ -81,6 +83,20 @@ export class PersonenkontexteUpdateExceptionFilter implements ExceptionFilter<Pe
             new DbiamPersonenkontexteUpdateError({
                 code: 400,
                 i18nKey: PersonenkontexteUpdateErrorI18nTypes.BEFRISTUNG_REQUIRED_FOR_PERSONENKONTEXT,
+            }),
+        ],
+        [
+            DuplicateKlassenkontextError.name,
+            new DbiamPersonenkontexteUpdateError({
+                code: 400,
+                i18nKey: PersonenkontexteUpdateErrorI18nTypes.DUPLICATE_KLASSENKONTEXT_FOR_SAME_ROLLE,
+            }),
+        ],
+        [
+            UpdateLernNotAtSchuleAndKlasseError.name,
+            new DbiamPersonenkontexteUpdateError({
+                code: 400,
+                i18nKey: PersonenkontexteUpdateErrorI18nTypes.LERN_NOT_AT_SCHULE_AND_KLASSE,
             }),
         ],
     ]);

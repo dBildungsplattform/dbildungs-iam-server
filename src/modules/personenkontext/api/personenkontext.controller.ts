@@ -37,12 +37,8 @@ import { PersonenkontextResponse } from './response/personenkontext.response.js'
 import { PersonenkontextdatensatzResponse } from './response/personenkontextdatensatz.response.js';
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
 
-import { SystemrechtResponse } from './response/personenkontext-systemrecht.response.js';
-import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
-import { HatSystemrechtQueryParams } from './param/hat-systemrecht.query.params.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
-import { isEnum } from 'class-validator';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { DomainError } from '../../../shared/error/index.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
@@ -53,12 +49,6 @@ import { PersonenkontextService } from '../domain/personenkontext.service.js';
 import { PersonService } from '../../person/domain/person.service.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonResponseAutomapper } from '../../person/api/person.response-automapper.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { OrganisationService } from '../../organisation/domain/organisation.service.js';
-import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 import { PersonApiMapper } from '../../person/mapper/person-api.mapper.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
@@ -71,9 +61,6 @@ export class PersonenkontextController {
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personenkontextService: PersonenkontextService,
         private readonly personService: PersonService,
-        private readonly rolleRepo: RolleRepo,
-        private readonly organisationRepository: OrganisationRepository,
-        private readonly organisationService: OrganisationService,
         private readonly personApiMapper: PersonApiMapper,
     ) {}
 
@@ -163,53 +150,6 @@ export class PersonenkontextController {
         });
 
         return response;
-    }
-
-    @Get(':personId/hatSystemrecht')
-    @ApiOkResponse({
-        type: SystemrechtResponse,
-        description: 'The SchulStrukturKnoten associated with this personId and systemrecht. Can return empty list',
-    })
-    @ApiNotFoundResponse({ description: 'The systemrecht could not be found (does not exist as type of systemrecht).' })
-    public async hatSystemRecht(
-        @Param() personByIdParams: PersonByIdParams,
-        @Query() hatSystemrechtQueryParams: HatSystemrechtQueryParams,
-    ): Promise<SystemrechtResponse> {
-        if (!isEnum(hatSystemrechtQueryParams.systemRecht, RollenSystemRecht)) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError()),
-            );
-        }
-        const systemrecht: RollenSystemRecht = hatSystemrechtQueryParams.systemRecht as RollenSystemRecht;
-
-        const organisations: Organisation<true>[] = [];
-        const personenkontexte: Personenkontext<true>[] =
-            await this.personenkontextService.findPersonenkontexteByPersonId(personByIdParams.personId);
-        /* eslint-disable no-await-in-loop */
-        for (const personenkontext of personenkontexte) {
-            const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);
-            if (!rolle) continue;
-            if (rolle.hasSystemRecht(systemrecht)) {
-                const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
-                    personenkontext.organisationId,
-                );
-                if (organisation) {
-                    organisations.push(organisation);
-                    const children: Option<Paged<Organisation<true>>> =
-                        await this.organisationService.findAllAdministriertVon(personenkontext.organisationId);
-                    organisations.push(...children.items);
-                }
-            }
-        }
-        /* eslint-disable no-await-in-loop */
-        const systemrechtResponse: SystemrechtResponse = new SystemrechtResponse();
-
-        const organisationResponses: OrganisationResponseLegacy[] = organisations.map(
-            (org: Organisation<true>) => new OrganisationResponseLegacy(org),
-        );
-        systemrechtResponse[RollenSystemRecht.ROLLEN_VERWALTEN] = organisationResponses;
-
-        return systemrechtResponse;
     }
 
     @Put(':personenkontextId')

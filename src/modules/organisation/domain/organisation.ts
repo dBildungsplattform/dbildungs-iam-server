@@ -156,15 +156,23 @@ export class Organisation<WasPersisted extends boolean> {
     }
 
     private async validateClassNameIsUniqueOnSchool(organisationRepository: OrganisationRepository): Promise<boolean> {
-        if (this.typ !== OrganisationsTyp.KLASSE) return true;
-        if (!this.administriertVon) return false;
+        if (this.typ !== OrganisationsTyp.KLASSE) {
+            return true;
+        }
+        if (!this.administriertVon) {
+            return false;
+        }
         const parent: Option<Organisation<true>> = await organisationRepository.findById(this.administriertVon);
-        if (!parent) return false;
+        if (!parent) {
+            return false;
+        }
         //check that parent is of type SCHULE is done in a different specification
         const otherChildOrgas: Organisation<true>[] = await organisationRepository.findChildOrgasForIds([parent.id]);
         for (const otherChildOrga of otherChildOrgas) {
             if (otherChildOrga.typ === OrganisationsTyp.KLASSE) {
-                if (otherChildOrga.name === this.name) return false; //not satisfied if another Klasse already has same name
+                if (otherChildOrga.name === this.name) {
+                    return false;
+                } //not satisfied if another Klasse already has same name
             }
         }
         return true;

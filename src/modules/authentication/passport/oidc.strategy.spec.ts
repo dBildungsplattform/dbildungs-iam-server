@@ -4,7 +4,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthorizationParameters, Client, Issuer, Strategy, TokenSet, UserinfoResponse } from 'openid-client';
 
-import { ConfigTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
 import {
     extractStepUpLevelFromJWT,
@@ -46,7 +46,7 @@ describe('OpenIdConnectStrategy', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule],
+            imports: [ConfigTestModule, LoggingTestModule],
             providers: [
                 OpenIdConnectStrategy,
                 {
@@ -114,7 +114,7 @@ describe('OpenIdConnectStrategy', () => {
             const request: Request = createMock<Request>();
             const user: AuthorizationParameters & PassportUser = await sut.validate(request, new TokenSet());
 
-            await expect(user.personPermissions()).rejects.toBeUndefined();
+            await expect(user.personPermissions()).rejects.toThrow('Permissions not loaded');
         });
 
         it('should throw KeycloakUserNotFoundError if keycloak-user does not exist', async () => {

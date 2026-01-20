@@ -1,19 +1,6 @@
-import { AutoMap } from '@automapper/classes';
-import {
-    ArrayType,
-    Collection,
-    DateTimeType,
-    Entity,
-    Enum,
-    Index,
-    ManyToOne,
-    OneToMany,
-    Property,
-    QueryOrder,
-} from '@mikro-orm/core';
+import { Collection, DateTimeType, Entity, Index, ManyToOne, OneToMany, Property, QueryOrder } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
-import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { UserLockEntity } from '../../keycloak-administration/entity/user-lock.entity.js';
@@ -28,7 +15,6 @@ export class PersonEntity extends TimestampedEntity {
         super();
     }
 
-    @AutoMap()
     @Index({
         name: 'person_keycloak_user_id_unique',
         expression:
@@ -37,23 +23,19 @@ export class PersonEntity extends TimestampedEntity {
     @Property()
     public keycloakUserId!: string;
 
-    @AutoMap()
     @Index({
         name: 'person_referrer_trgm_index',
-        expression: 'create index "person_referrer_trgm_index" on "person" using gin ("referrer" gin_trgm_ops);',
+        expression: 'create index "person_referrer_trgm_index" on "person" using gin ("username" gin_trgm_ops);',
     })
     @Property({ nullable: true })
-    public referrer?: string;
+    public username?: string;
 
-    @AutoMap()
     @Property()
     public mandant!: string;
 
-    @AutoMap()
     @Property({ nullable: true })
     public readonly stammorganisation?: string;
 
-    @AutoMap()
     @Index({
         name: 'person_familienname_trgm_index',
         expression:
@@ -62,7 +44,6 @@ export class PersonEntity extends TimestampedEntity {
     @Property()
     public familienname!: string;
 
-    @AutoMap()
     @Index({
         name: 'person_vorname_trgm_index',
         expression: 'create index "person_vorname_trgm_index" on "person" using gin ("vorname" gin_trgm_ops);',
@@ -70,70 +51,12 @@ export class PersonEntity extends TimestampedEntity {
     @Property()
     public vorname!: string;
 
-    @AutoMap()
-    @Property({ nullable: true })
-    public initialenFamilienname?: string;
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public initialenVorname?: string;
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public rufname?: string;
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public nameTitel?: string;
-
-    @AutoMap(() => [String])
-    @Property({ nullable: true, type: ArrayType })
-    public nameAnrede?: string[];
-
-    @AutoMap(() => [String])
-    @Property({ nullable: true, type: ArrayType })
-    public namePraefix?: string[];
-
-    @AutoMap(() => [String])
-    @Property({ nullable: true, type: ArrayType })
-    public nameSuffix?: string[];
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public nameSortierindex?: string;
-
-    @AutoMap()
-    @Property({ nullable: true, type: DateTimeType })
-    public geburtsdatum?: Date;
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public geburtsort?: string;
-
-    @AutoMap(() => String)
-    @Enum({ items: () => Geschlecht, nullable: true, nativeEnumName: 'geschlecht_enum' })
-    public geschlecht?: Geschlecht;
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public lokalisierung?: string;
-
-    @AutoMap(() => String)
-    @Enum({ items: () => Vertrauensstufe, nullable: true, nativeEnumName: 'vertrauensstufe_enum' })
-    public vertrauensstufe?: Vertrauensstufe;
-
-    @AutoMap()
-    @Property({ nullable: true })
-    public auskunftssperre?: boolean;
-
     @ManyToOne({ nullable: true })
     public dataProvider?: DataProviderEntity;
 
-    @AutoMap()
     @Property({ nullable: false, default: '1' })
     public revision!: string;
 
-    @AutoMap()
     @Index({
         name: 'person_personalnummer_unique',
         expression: 'create unique index "person_personalnummer_unique" on "person" ("personalnummer") nulls distinct;',
@@ -162,7 +85,6 @@ export class PersonEntity extends TimestampedEntity {
     })
     public emailAddresses: Collection<EmailAddressEntity> = new Collection<EmailAddressEntity>(this);
 
-    @AutoMap()
     @Property({ nullable: true, type: DateTimeType })
     public orgUnassignmentDate?: Date;
 
@@ -172,7 +94,6 @@ export class PersonEntity extends TimestampedEntity {
     })
     public userLocks: Collection<UserLockEntity> = new Collection<UserLockEntity>(this);
 
-    @AutoMap()
     @Property({ nullable: false, default: false })
     public istTechnisch!: boolean;
 

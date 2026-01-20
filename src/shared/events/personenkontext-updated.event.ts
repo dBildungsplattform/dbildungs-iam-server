@@ -19,7 +19,7 @@ function mapPersonToData(person: Person<true>): PersonenkontextUpdatedPersonData
         id: person.id,
         vorname: person.vorname,
         familienname: person.familienname,
-        username: person.referrer,
+        username: person.username,
         keycloakUserId: person.keycloakUserId,
         email: person.email,
     };

@@ -1,7 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ServiceProviderFactory } from './service-provider.factory.js';
 import { faker } from '@faker-js/faker';
-import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
+import { Test, TestingModule } from '@nestjs/testing';
+import {
+    ServiceProviderKategorie,
+    ServiceProviderMerkmal,
+    ServiceProviderSystem,
+    ServiceProviderTarget,
+} from './service-provider.enum.js';
+import { ServiceProviderFactory } from './service-provider.factory.js';
 import { ServiceProvider } from './service-provider.js';
 
 describe('ServiceProviderFactory', () => {
@@ -39,6 +44,7 @@ describe('ServiceProviderFactory', () => {
                 const keycloakRole: string = faker.string.alpha();
                 const externalSystem: ServiceProviderSystem = faker.helpers.enumValue(ServiceProviderSystem);
                 const vidisAngebotId: string = faker.string.numeric();
+                const merkmale: ServiceProviderMerkmal[] = [faker.helpers.enumValue(ServiceProviderMerkmal)];
                 const example: ServiceProvider<true> = {
                     id: id,
                     createdAt: created,
@@ -55,6 +61,7 @@ describe('ServiceProviderFactory', () => {
                     externalSystem: externalSystem,
                     requires2fa: false,
                     vidisAngebotId: vidisAngebotId,
+                    merkmale,
                 };
                 const serviceProvider: ServiceProvider<true> = sut.construct(
                     id,
@@ -72,6 +79,7 @@ describe('ServiceProviderFactory', () => {
                     externalSystem,
                     false,
                     vidisAngebotId,
+                    merkmale,
                 );
 
                 expect(serviceProvider).toEqual(example);

@@ -104,7 +104,8 @@
     },
     "FEATUREFLAG": {
         "FEATURE_FLAG_ROLLE_BEARBEITEN": false,
-        "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": false
+        "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": false,
+        "FEATURE_FLAG_ROLLE_ERWEITERN": true
     },
     "KAFKA": {
         "BROKER": "localhost:9094",
@@ -118,5 +119,15 @@
     },
     "PORTAL": {
         "LIMITED_ROLLENART_ALLOWLIST": ["LERN", "EXTERN"]
+    },
+    "CRON": {
+        "PERSON_WITHOUT_ORG_LIMIT": 30
+    },
+    "EMAIL_MICROSERVICE": {
+        "USE_EMAIL_MICROSERVICE": true,
+        "ENDPOINT": "http://localhost:9091/"
+    },
+    "SCHULCONNEX": {
+        "LIMIT_PERSONENINFO": 2500
     }
 }

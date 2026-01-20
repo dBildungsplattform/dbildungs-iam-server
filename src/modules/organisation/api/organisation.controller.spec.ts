@@ -30,6 +30,10 @@ import { OrganisationByNameQueryParams } from './organisation-by-name.query.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
+import { RollenSystemRechtEnum, RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { OrganisationDeleteService } from '../organisation-delete/organisation-delete.service.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { OrganisationHasChildrenError } from '../organisation-delete/errors/organisation-has-children.error.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -45,6 +49,7 @@ describe('OrganisationController', () => {
     let module: TestingModule;
     let organisationController: OrganisationController;
     let organisationServiceMock: DeepMocked<OrganisationService>;
+    let organisationDeleteServiceMock: DeepMocked<OrganisationDeleteService>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
 
@@ -56,6 +61,10 @@ describe('OrganisationController', () => {
                 {
                     provide: OrganisationService,
                     useValue: createMock<OrganisationService>(),
+                },
+                {
+                    provide: OrganisationDeleteService,
+                    useValue: createMock<OrganisationDeleteService>(),
                 },
                 {
                     provide: OrganisationRepository,
@@ -73,6 +82,7 @@ describe('OrganisationController', () => {
         }).compile();
         organisationController = module.get(OrganisationController);
         organisationServiceMock = module.get(OrganisationService);
+        organisationDeleteServiceMock = module.get(OrganisationDeleteService);
         organisationRepositoryMock = module.get(OrganisationRepository);
     });
 
@@ -455,7 +465,7 @@ describe('OrganisationController', () => {
                 const queryParams: FindOrganisationQueryParams = {
                     typ: OrganisationsTyp.SONSTIGE,
                     searchString: faker.lorem.word(),
-                    systemrechte: [],
+                    systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
                     administriertVon: [faker.string.uuid(), faker.string.uuid()],
                     // Assuming you have a field for organisationIds in your query params
                     organisationIds: organisationIds,
@@ -509,6 +519,11 @@ describe('OrganisationController', () => {
                 );
 
                 expect(organisationRepositoryMock.findAuthorized).toHaveBeenCalledTimes(1);
+                expect(organisationRepositoryMock.findAuthorized.mock.calls[0]).toMatchObject([
+                    permissionsMock,
+                    [RollenSystemRecht.PERSONEN_VERWALTEN],
+                    queryParams,
+                ]);
 
                 expect(result.items.length).toEqual(3);
             });
@@ -981,6 +996,34 @@ describe('OrganisationController', () => {
                 await expect(organisationController.enableForitslearning(params, permissionsMock)).rejects.toThrow(
                     HttpException,
                 );
+            });
+        });
+    });
+
+    describe('deleteOrganisation', () => {
+        describe("when id or permissions don't match", () => {
+            it('should throw an error', async () => {
+                organisationServiceMock.findOrganisationByIdAndAnyMatchingPermissions.mockResolvedValue({
+                    ok: false,
+                    error: new MissingPermissionsError('Missing permissions'),
+                });
+                await expect(
+                    organisationController.deleteOrganisation({ organisationId: faker.string.uuid() }, permissionsMock),
+                ).rejects.toThrow(HttpException);
+            });
+        });
+
+        describe('when deletion fails', () => {
+            it('should throw an error', async () => {
+                const orga: Organisation<true> = DoFactory.createOrganisation(true);
+                organisationServiceMock.findOrganisationByIdAndAnyMatchingPermissions.mockResolvedValue({
+                    ok: true,
+                    value: orga,
+                });
+                organisationDeleteServiceMock.deleteOrganisation.mockResolvedValue(new OrganisationHasChildrenError());
+                await expect(
+                    organisationController.deleteOrganisation({ organisationId: orga.id }, permissionsMock),
+                ).rejects.toThrow(OrganisationHasChildrenError);
             });
         });
     });

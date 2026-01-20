@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { DbSeedService } from './domain/db-seed.service.js';
-import { DbSeedMapper } from './db-seed-mapper.js';
 import { DbSeedConsole } from './db-seed.console.js';
 import { PersonModule } from '../../modules/person/person.module.js';
 import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
@@ -15,7 +14,8 @@ import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persiste
 import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
 import { LdapModule } from '../../core/ldap/ldap.module.js';
 import { EntityAggregateMapper } from '../../modules/person/mapper/entity-aggregate.mapper.js';
-
+import { EmailCoreModule } from '../../email/modules/core/email-core.module.js';
+import { EmailDomainRepo } from '../../email/modules/core/persistence/email-domain.repo.js';
 @Module({
     imports: [
         LdapModule,
@@ -25,17 +25,18 @@ import { EntityAggregateMapper } from '../../modules/person/mapper/entity-aggreg
         RolleModule,
         ServiceProviderModule,
         KeycloakAdministrationModule,
+        EmailCoreModule,
         LoggerModule.register(DbSeedModule.name),
     ],
     providers: [
         DbSeedService,
-        DbSeedMapper,
         DbSeedConsole,
         DBiamPersonenkontextRepo,
+        EmailDomainRepo,
         DbSeedRepo,
         DbSeedReferenceRepo,
         EntityAggregateMapper,
     ],
-    exports: [DbSeedService, DbSeedMapper, DbSeedConsole, DbSeedRepo],
+    exports: [DbSeedService, DbSeedConsole, DbSeedRepo],
 })
 export class DbSeedModule {}

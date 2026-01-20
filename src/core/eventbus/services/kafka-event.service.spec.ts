@@ -7,18 +7,18 @@ import { KafkaEventService } from './kafka-event.service.js';
 import { KafkaEvent } from '../../../shared/events/kafka-event.js';
 import { ConfigService } from '@nestjs/config';
 import { KafkaConfig } from '../../../shared/config/kafka.config.js';
-import {
-    Kafka,
-    Consumer,
-    Producer,
-    KafkaMessage,
-    EachMessageHandler,
-    ConsumerRunConfig,
-    EachMessagePayload,
-} from 'kafkajs';
+import { KafkaJS } from '@confluentinc/kafka-javascript';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KAFKA_INSTANCE } from '../kafka-client-provider.js';
 import { inspect } from 'util';
+
+type Kafka = KafkaJS.Kafka;
+type Consumer = KafkaJS.Consumer;
+type Producer = KafkaJS.Producer;
+type KafkaMessage = KafkaJS.KafkaMessage;
+type EachMessageHandler = KafkaJS.EachMessageHandler;
+type ConsumerRunConfig = KafkaJS.ConsumerRunConfig;
+type EachMessagePayload = KafkaJS.EachMessagePayload;
 
 class TestEvent extends BaseEvent implements KafkaEvent {
     public constructor() {
@@ -48,9 +48,10 @@ describe('KafkaEventService', () => {
         USER_TOPIC: 'user-topic',
         USER_DLQ_TOPIC: 'dlq-topic',
         ENABLED: true,
-        SASL_ENABLED: false,
-        USERNAME: 'username',
-        PASSWORD: 'password',
+        SSL_ENABLED: false,
+        SSL_CA_PATH: undefined,
+        SSL_CERT_PATH: undefined,
+        SSL_KEY_PATH: undefined,
     };
 
     beforeEach(async () => {
@@ -96,8 +97,8 @@ describe('KafkaEventService', () => {
 
         expect(consumer.connect).toHaveBeenCalled();
         expect(consumer.subscribe).toHaveBeenCalledWith({
-            topic: 'prefix.user-topic',
-            fromBeginning: true,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            topics: expect.arrayContaining(['prefix.user-topic']),
         });
         expect(producer.connect).toHaveBeenCalled();
         expect(logger.info).toHaveBeenCalledWith('Connecting to Kafka');
@@ -215,7 +216,7 @@ describe('KafkaEventService', () => {
 
         await sut.handleMessage(message, () => Promise.resolve());
 
-        expect(logger.error).toHaveBeenCalled();
+        expect(logger.logUnknownAsError).toHaveBeenCalled();
     });
 
     it('should log error if handler throws an sync exception', async () => {

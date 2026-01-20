@@ -39,6 +39,7 @@ import { UserExistsError } from './api/error/user-exists.error.js';
 import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
 import { TokenStateError } from './api/error/token-state.error.js';
 import { PIUnavailableError } from './api/error/pi-unavailable.error.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
@@ -54,6 +55,7 @@ export class PrivacyIdeaAdministrationService {
         private readonly httpService: HttpService,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly personenkontextService: PersonenkontextService,
+        private readonly logger: ClassLogger,
         configService: ConfigService<ServerConfig>,
     ) {
         this.privacyIdeaConfig = configService.getOrThrow<PrivacyIdeaConfig>('PRIVACYIDEA');
@@ -74,6 +76,7 @@ export class PrivacyIdeaAdministrationService {
             const response: InitSoftwareToken = await this.initToken(user, token, selfService);
             return response.detail.googleurl.img;
         } catch (error: unknown) {
+            this.logger.logUnknownAsError('Could not initialize software token', error);
             throw new SoftwareTokenInitializationError(error instanceof Error ? error.message : undefined);
         }
     }
@@ -102,6 +105,8 @@ export class PrivacyIdeaAdministrationService {
             this.jwtToken = response.data.result.value.token;
             return this.jwtToken;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not authenticate against privacyidea', error);
+
             if (error instanceof PIUnavailableError) {
                 throw error;
             } else if (error instanceof Error) {
@@ -152,6 +157,8 @@ export class PrivacyIdeaAdministrationService {
             );
             return response.data;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not initialize token', error);
+
             if (error instanceof Error) {
                 throw new Error(`Error requesting 2fa token: ${error.message}`);
             } else {
@@ -166,6 +173,8 @@ export class PrivacyIdeaAdministrationService {
                 (x: PrivacyIdeaToken) => x.rollout_state !== 'verify',
             )[0];
         } catch (error) {
+            this.logger.logUnknownAsError('Could not get auth state', error);
+
             if (error instanceof PIUnavailableError) {
                 throw error;
             } else {
@@ -194,6 +203,8 @@ export class PrivacyIdeaAdministrationService {
             );
             return response.data.result.value.tokens;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not get user tokens', error);
+
             if (error instanceof PIUnavailableError) {
                 throw error;
             } else if (error instanceof Error) {
@@ -222,6 +233,8 @@ export class PrivacyIdeaAdministrationService {
             );
             return response.data.result.value.length > 0;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not check if user exists', error);
+
             if (error instanceof PIUnavailableError) {
                 throw error;
             } else if (error instanceof Error) {
@@ -247,6 +260,8 @@ export class PrivacyIdeaAdministrationService {
         try {
             await firstValueFrom(this.httpService.post(url, payload, { headers: headers }));
         } catch (error) {
+            this.logger.logUnknownAsError('Could not add user', error);
+
             if (error instanceof Error) {
                 throw new Error(`Error adding user: ${error.message}`);
             } else {
@@ -271,6 +286,7 @@ export class PrivacyIdeaAdministrationService {
             await firstValueFrom(this.httpService.delete(url, { headers: headers }));
             return { ok: true, value: undefined };
         } catch (error) {
+            this.logger.logUnknownAsError('Could not delete user', error);
             return { ok: false, error: new DeleteUserError() };
         }
     }
@@ -315,6 +331,7 @@ export class PrivacyIdeaAdministrationService {
             );
             return response.data;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not verify token status', error);
             throw new HardwareTokenServiceError();
         }
     }
@@ -331,6 +348,7 @@ export class PrivacyIdeaAdministrationService {
             );
             return response.data;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not get serial', error);
             throw new HardwareTokenServiceError();
         }
     }
@@ -355,6 +373,7 @@ export class PrivacyIdeaAdministrationService {
             );
             return response.data;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not assign token', error);
             throw new HardwareTokenServiceError();
         }
     }
@@ -404,6 +423,7 @@ export class PrivacyIdeaAdministrationService {
             }
             return response;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not reset token', error);
             throw new TokenResetError();
         }
     }
@@ -427,6 +447,8 @@ export class PrivacyIdeaAdministrationService {
             );
             return response.data;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not unassign token', error);
+
             if (error instanceof Error) {
                 throw new Error(`Error unassigning token: ${error.message}`);
             } else {
@@ -467,6 +489,8 @@ export class PrivacyIdeaAdministrationService {
                 throw new SoftwareTokenVerificationError();
             }
         } catch (error) {
+            this.logger.logUnknownAsError('Could not verify token', error);
+
             if (error instanceof TokenError) {
                 throw error;
             } else if (error instanceof Error) {
@@ -505,6 +529,8 @@ export class PrivacyIdeaAdministrationService {
             );
             return response.data;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not delete token', error);
+
             if (error instanceof Error) {
                 throw new Error(`Error deleting token: ${error.message}`);
             } else {

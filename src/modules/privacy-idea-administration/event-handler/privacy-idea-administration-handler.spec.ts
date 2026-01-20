@@ -42,10 +42,10 @@ describe('PrivacyIdeaAdministrationServiceHandler', () => {
                 'person-id-123',
                 'vorname',
                 'familienname',
-                'referrer',
+                'username',
                 'oldVorname',
                 'oldFamilienname',
-                'old-referrer',
+                'old-username',
             );
 
             await handler.handlePersonRenamedEvent(event);
@@ -57,7 +57,7 @@ describe('PrivacyIdeaAdministrationServiceHandler', () => {
             );
         });
 
-        it('should throw an error if referrer is missing', async () => {
+        it('should throw an error if username is missing', async () => {
             const event: PersonRenamedEvent = new PersonRenamedEvent(
                 'person-id-123',
                 'vorname',
@@ -65,10 +65,10 @@ describe('PrivacyIdeaAdministrationServiceHandler', () => {
                 undefined,
                 'oldVorname',
                 'oldFamilienname',
-                'old-referrer',
+                'old-username',
             );
 
-            await expect(handler.handlePersonRenamedEvent(event)).rejects.toThrow('Referrer is missing');
+            await expect(handler.handlePersonRenamedEvent(event)).rejects.toThrow('Username is missing');
         });
     });
 });

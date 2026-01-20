@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule } from '../../../../test/utils/index.js';
 import { SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
 import { PersonFrontendController } from './person.frontend.controller.js';
 import { PersonenQueryParams } from './personen-query.param.js';
@@ -20,7 +20,7 @@ describe('PersonFrontendController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [MapperTestModule, ConfigTestModule],
+            imports: [ConfigTestModule],
             providers: [
                 PersonFrontendController,
                 {
@@ -47,16 +47,16 @@ describe('PersonFrontendController', () => {
 
     describe('findPersons', () => {
         const options: {
-            referrer: string;
+            username: string;
             lastName: string;
             firstName: string;
         } = {
-            referrer: faker.string.alpha(),
+            username: faker.string.alpha(),
             lastName: faker.person.lastName(),
             firstName: faker.person.firstName(),
         };
         const queryParams: PersonenQueryParams = {
-            referrer: options.referrer,
+            username: options.username,
             familienname: options.lastName,
             vorname: options.firstName,
             sichtfreigabe: SichtfreigabeType.NEIN,

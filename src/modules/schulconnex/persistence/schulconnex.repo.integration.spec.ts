@@ -1,13 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    DoFactory,
-    LoggingTestModule,
-    MapperTestModule,
-} from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -34,6 +28,7 @@ import { PersonenkontextFactory } from '../../personenkontext/domain/personenkon
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { SchulconnexModule } from '../schulconnex.module.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 
 describe('Schulconnex Repo', () => {
     let module: TestingModule;
@@ -47,6 +42,7 @@ describe('Schulconnex Repo', () => {
     let organisationRepository: OrganisationRepository;
     let serviceProviderRepo: ServiceProviderRepo;
     let rolleRepo: RolleRepo;
+    let rollenErweiterungRepo: RollenerweiterungRepo;
 
     let personenkontextFactory: PersonenkontextFactory;
 
@@ -74,7 +70,6 @@ describe('Schulconnex Repo', () => {
         module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
-                MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 RolleModule,
                 OrganisationModule,
@@ -86,6 +81,7 @@ describe('Schulconnex Repo', () => {
                 DBiamPersonenkontextRepoInternal,
                 PersonFactory,
                 PersonRepository,
+                RollenerweiterungRepo,
                 UsernameGeneratorService,
                 OxUserBlacklistRepo,
                 RolleFactory,
@@ -127,6 +123,7 @@ describe('Schulconnex Repo', () => {
         rolleRepo = module.get(RolleRepo);
         serviceProviderRepo = module.get(ServiceProviderRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
+        rollenErweiterungRepo = module.get(RollenerweiterungRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, 10000000);
@@ -163,6 +160,185 @@ describe('Schulconnex Repo', () => {
         expect(em).toBeDefined();
     });
 
+    describe('findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations', () => {
+        it('should return empty array if serviceProviderIds is empty', async () => {
+            const organisationA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            const personIds: PersonID[] =
+                await sut.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations(
+                    new Set([]),
+                    new Set([organisationA.id]),
+                );
+            expect(personIds).toHaveLength(0);
+        });
+
+        it('should return only persons that have a correct rollenerweiterung at dedicated orgas', async () => {
+            const personA: Person<true> = await createPerson();
+            const personB: Person<true> = await createPerson();
+            const personC: Person<true> = await createPerson();
+            const serviceProviderA: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceProviderA.id] }),
+            );
+            const rolleB: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            const organisationA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            const organisationB: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            const organisationC: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+            if (rolleB instanceof DomainError) {
+                throw Error();
+            }
+
+            await rollenErweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleA.id,
+                    organisationId: organisationA.id,
+                    serviceProviderId: serviceProviderA.id,
+                }),
+            );
+            await rollenErweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleA.id,
+                    organisationId: organisationC.id,
+                    serviceProviderId: serviceProviderA.id,
+                }),
+            );
+
+            await Promise.all([
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personA.id,
+                        rolleId: rolleA.id,
+                        organisationId: organisationA.id,
+                    }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personB.id,
+                        rolleId: rolleA.id,
+                        organisationId: organisationB.id,
+                    }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personC.id,
+                        rolleId: rolleB.id,
+                        organisationId: organisationA.id,
+                    }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personC.id,
+                        rolleId: rolleA.id,
+                        organisationId: organisationC.id,
+                    }),
+                ),
+            ]);
+
+            const personIds: PersonID[] =
+                await sut.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations(
+                    new Set([serviceProviderA.id]),
+                    new Set([organisationA.id, organisationB.id]),
+                );
+            expect(personIds).toHaveLength(1);
+            expect(personIds).toContain(personA.id);
+        });
+
+        it('should return only persons that have a correct rollenerweiterung at any orga', async () => {
+            const personA: Person<true> = await createPerson();
+            const personB: Person<true> = await createPerson();
+            const personC: Person<true> = await createPerson();
+            const serviceProviderA: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceProviderA.id] }),
+            );
+            const rolleB: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            const organisationA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            const organisationB: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            const organisationC: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+            if (rolleB instanceof DomainError) {
+                throw Error();
+            }
+
+            await rollenErweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleA.id,
+                    organisationId: organisationA.id,
+                    serviceProviderId: serviceProviderA.id,
+                }),
+            );
+            await rollenErweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleA.id,
+                    organisationId: organisationC.id,
+                    serviceProviderId: serviceProviderA.id,
+                }),
+            );
+
+            await Promise.all([
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personA.id,
+                        rolleId: rolleA.id,
+                        organisationId: organisationA.id,
+                    }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personB.id,
+                        rolleId: rolleA.id,
+                        organisationId: organisationB.id,
+                    }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personC.id,
+                        rolleId: rolleB.id,
+                        organisationId: organisationA.id,
+                    }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personC.id,
+                        rolleId: rolleA.id,
+                        organisationId: organisationC.id,
+                    }),
+                ),
+            ]);
+
+            const personIds: PersonID[] =
+                await sut.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations(
+                    new Set([serviceProviderA.id]),
+                    'all',
+                );
+            expect(personIds).toHaveLength(2);
+            expect(personIds).toContain(personA.id);
+            expect(personIds).toContain(personC.id);
+        });
+    });
+
     describe('findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations', () => {
         it('should return empty array if serviceProviderIds is empty', async () => {
             const organisationA: Organisation<true> = await organisationRepository.save(
@@ -172,8 +348,6 @@ describe('Schulconnex Repo', () => {
                 await sut.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
                     new Set([]),
                     new Set([organisationA.id]),
-                    0,
-                    10,
                 );
             expect(personIds).toHaveLength(0);
         });
@@ -194,8 +368,12 @@ describe('Schulconnex Repo', () => {
             const organisationB: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolleA instanceof DomainError) throw Error();
-            if (rolleB instanceof DomainError) throw Error();
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+            if (rolleB instanceof DomainError) {
+                throw Error();
+            }
 
             await Promise.all([
                 personenkontextRepoInternal.save(
@@ -225,8 +403,6 @@ describe('Schulconnex Repo', () => {
                 await sut.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
                     new Set([serviceProvierA.id]),
                     new Set([organisationA.id]),
-                    0,
-                    10,
                 );
             expect(personIds).toHaveLength(1);
             expect(personIds.at(0)).toEqual(personA.id);
@@ -249,8 +425,12 @@ describe('Schulconnex Repo', () => {
             const organisationB: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolleA instanceof DomainError) throw Error();
-            if (rolleB instanceof DomainError) throw Error();
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+            if (rolleB instanceof DomainError) {
+                throw Error();
+            }
 
             await Promise.all([
                 personenkontextRepoInternal.save(
@@ -280,8 +460,6 @@ describe('Schulconnex Repo', () => {
                 await sut.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
                     new Set([serviceProvierA.id]),
                     'all',
-                    0,
-                    10,
                 );
             expect(personIds).toHaveLength(2);
             expect(personIds.findIndex((id: PersonID) => id === personA.id)).not.toEqual(-1);

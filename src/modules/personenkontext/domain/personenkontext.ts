@@ -1,12 +1,12 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { OrganisationID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/index.js';
+import { OrganisationID, PersonID, PersonUsername, RolleID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
@@ -40,7 +40,7 @@ export class Personenkontext<WasPersisted extends boolean> {
         public readonly organisationId: OrganisationID,
         public readonly rolleId: RolleID,
         // new
-        public readonly referrer: PersonReferrer | undefined,
+        public readonly username: PersonUsername | undefined,
         public readonly mandant: string | undefined,
         public readonly personenstatus: Personenstatus | undefined,
         public readonly jahrgangsstufe: Jahrgangsstufe | undefined,
@@ -61,7 +61,7 @@ export class Personenkontext<WasPersisted extends boolean> {
         organisationId: OrganisationID,
         rolleId: RolleID,
         // new params
-        referrer: PersonReferrer | undefined = undefined,
+        username: PersonUsername | undefined = undefined,
         mandant: string | undefined = undefined,
         personenstatus: Personenstatus | undefined = undefined,
         jahrgangsstufe: Jahrgangsstufe | undefined = undefined,
@@ -81,7 +81,7 @@ export class Personenkontext<WasPersisted extends boolean> {
             organisationId,
             rolleId,
             // new fields
-            referrer,
+            username,
             mandant,
             personenstatus,
             jahrgangsstufe,
@@ -100,7 +100,7 @@ export class Personenkontext<WasPersisted extends boolean> {
         organisationId: OrganisationID,
         rolleId: RolleID,
         // new fields
-        referrer: PersonReferrer | undefined = undefined,
+        username: PersonUsername | undefined = undefined,
         mandant: string | undefined = undefined,
         personenstatus: Personenstatus | undefined = undefined,
         jahrgangsstufe: Jahrgangsstufe | undefined = undefined,
@@ -119,7 +119,7 @@ export class Personenkontext<WasPersisted extends boolean> {
             organisationId,
             rolleId,
             // new
-            referrer,
+            username,
             mandant,
             personenstatus,
             jahrgangsstufe,

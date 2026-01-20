@@ -168,7 +168,9 @@ describe('UserLockRepository', () => {
             );
 
             const createdUserLock: UserLock | DomainError = await sut.createUserLock(userLock);
-            if (createdUserLock instanceof DomainError) throw new Error();
+            if (createdUserLock instanceof DomainError) {
+                throw new Error();
+            }
             expect(createdUserLock).toBeTruthy();
             expect(createdUserLock.person).toEqual(userLock.person);
         });
@@ -188,12 +190,16 @@ describe('UserLockRepository', () => {
             );
 
             const createdUserLock: UserLock | DomainError = await sut.createUserLock(userLock);
-            if (createdUserLock instanceof DomainError) throw new Error();
+            if (createdUserLock instanceof DomainError) {
+                throw new Error();
+            }
             expect(createdUserLock).toBeTruthy();
 
             createdUserLock.locked_by = faker.string.uuid();
             const updatedUserLock: UserLock | DomainError = await sut.update(createdUserLock);
-            if (updatedUserLock instanceof DomainError) throw new Error();
+            if (updatedUserLock instanceof DomainError) {
+                throw new Error();
+            }
             expect(updatedUserLock).toBeTruthy();
             expect(updatedUserLock.locked_by).toEqual(createdUserLock.locked_by);
         });

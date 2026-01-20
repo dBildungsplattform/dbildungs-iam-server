@@ -26,10 +26,18 @@ export function compareEmailAddressesByUpdatedAt(
     ea2: EmailAddressEntity,
     order: SortOrder,
 ): number {
-    if (!ea1.updatedAt && order === SortOrder.ASC) return Number.MAX_VALUE;
-    if (!ea1.updatedAt && order === SortOrder.DESC) return Number.MIN_VALUE;
-    if (!ea2.updatedAt && order === SortOrder.ASC) return Number.MIN_VALUE;
-    if (!ea2.updatedAt && order === SortOrder.DESC) return Number.MAX_VALUE;
+    if (!ea1.updatedAt && order === SortOrder.ASC) {
+        return Number.MAX_VALUE;
+    }
+    if (!ea1.updatedAt && order === SortOrder.DESC) {
+        return Number.MIN_VALUE;
+    }
+    if (!ea2.updatedAt && order === SortOrder.ASC) {
+        return Number.MIN_VALUE;
+    }
+    if (!ea2.updatedAt && order === SortOrder.DESC) {
+        return Number.MAX_VALUE;
+    }
     if (order === SortOrder.ASC) {
         return ea1.updatedAt.getTime() - ea2.updatedAt.getTime();
     }
@@ -82,7 +90,9 @@ export class EmailRepo {
             },
             {},
         );
-        if (!emailAddressEntity) return undefined;
+        if (!emailAddressEntity) {
+            return undefined;
+        }
 
         return mapEntityToAggregate(emailAddressEntity);
     }
@@ -97,7 +107,9 @@ export class EmailRepo {
             EmailAddressStatus.REQUESTED,
         );
 
-        if (!emailAddresses || !emailAddresses[0]) return null;
+        if (!emailAddresses || !emailAddresses[0]) {
+            return null;
+        }
 
         if (emailAddresses.length > 1) {
             this.logger.warning(
@@ -161,7 +173,9 @@ export class EmailRepo {
             { orderBy: { updatedAt: QueryOrder.DESC } },
         );
 
-        if (!emailAddressEntity) return undefined;
+        if (!emailAddressEntity) {
+            return undefined;
+        }
 
         return mapEntityToAggregate(emailAddressEntity);
     }
@@ -170,14 +184,16 @@ export class EmailRepo {
      * Returns all EmailAddresses with status DELETED_LDAP, DELETED_OX and DELETE or
      * which have an updatedAt that exceeds the deadline (180 days) and are not ENABLED.
      * The result is ordered by updatedAt descending.
+     *
+     * @param limit Maximum number of email addresses to return
      */
-    public async getByDeletedStatusOrUpdatedAtExceedsDeadline(): Promise<EmailAddress<true>[]> {
+    public async getByDeletedStatusOrUpdatedAtExceedsDeadline(limit: number): Promise<Counted<EmailAddress<true>>> {
         const daysAgo: Date = new Date();
         const deadlineInDays: number = this.getDeadlineInDaysForNonEnabledEmailAddresses();
-        this.logger.info(`Fetching EmailAddressing For Deletion, deadlineInDays:${deadlineInDays}`);
+        this.logger.info(`Fetching EmailAddresses For Deletion, deadlineInDays:${deadlineInDays}`);
         daysAgo.setDate(daysAgo.getDate() - deadlineInDays);
 
-        const emailAddressEntities: EmailAddressEntity[] = await this.em.find(
+        const [emailAddressEntities, count]: [EmailAddressEntity[], number] = await this.em.findAndCount(
             EmailAddressEntity,
             {
                 $or: [
@@ -189,10 +205,10 @@ export class EmailRepo {
                     },
                 ],
             },
-            { orderBy: { updatedAt: QueryOrder.DESC } },
+            { orderBy: { updatedAt: QueryOrder.DESC }, limit },
         );
 
-        return emailAddressEntities.map(mapEntityToAggregate);
+        return [emailAddressEntities.map(mapEntityToAggregate), count];
     }
 
     public async existsEmailAddress(address: string): Promise<boolean> {
@@ -211,7 +227,9 @@ export class EmailRepo {
             { address: emailAddress },
             {},
         );
-        if (!emailAddressEntity) return new EmailAddressNotFoundError(emailAddress);
+        if (!emailAddressEntity) {
+            return new EmailAddressNotFoundError(emailAddress);
+        }
 
         emailAddressEntity.status = EmailAddressStatus.DISABLED;
         await this.em.persistAndFlush(emailAddressEntity);
@@ -225,7 +243,9 @@ export class EmailRepo {
             return new PersonEmailResponse(enabledEmailAddress.status, enabledEmailAddress.address);
         }
         const emailAddresses: Option<EmailAddress<true>[]> = await this.findByPersonSortedByUpdatedAtDesc(person.id);
-        if (!emailAddresses || !emailAddresses[0]) return undefined;
+        if (!emailAddresses || !emailAddresses[0]) {
+            return undefined;
+        }
 
         return new PersonEmailResponse(emailAddresses[0].status, emailAddresses[0].address);
     }
@@ -246,7 +266,7 @@ export class EmailRepo {
         const addresses: EmailAddress<true>[] = await this.findEnabledByPersonIdsSortedByUpdatedAtDesc(personIds);
         const responseMap: Map<PersonID, PersonEmailResponse> = new Map<PersonID, PersonEmailResponse>();
 
-        addresses.map((ea: EmailAddress<true>) => {
+        addresses.forEach((ea: EmailAddress<true>) => {
             if (lastUsedPersonId === ea.personId) {
                 this.logger.error(
                     `Found multiple ENABLED EmailAddresses, treating ${ea.address} as latest address, personId:${ea.personId}`,
@@ -270,8 +290,9 @@ export class EmailRepo {
             const enabledEmailAddressExists: Option<EmailAddress<true>> = await this.findEnabledByPerson(
                 emailAddress.personId,
             );
-            if (enabledEmailAddressExists)
+            if (enabledEmailAddressExists) {
                 return new PersonAlreadyHasEnabledEmailAddressError(emailAddress.personId, emailAddress.address);
+            }
         }
         if (emailAddress.id) {
             return this.update(emailAddress);

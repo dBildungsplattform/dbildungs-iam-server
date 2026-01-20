@@ -70,7 +70,7 @@ describe('PersonTimeLimitInfoService', () => {
             const rolle: Rolle<true> = DoFactory.createRolle(true, { name: 'Testrolle' });
 
             const kontextExpiresDate: Date = new Date();
-            kontextExpiresDate.setDate(kontextExpiresDate.getDate() + KONTEXT_EXPIRES_IN_DAYS);
+            kontextExpiresDate.setDate(kontextExpiresDate.getDate() + KONTEXT_EXPIRES_IN_DAYS - 1);
             const expriringPersonenKontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                 befristung: kontextExpiresDate,
                 organisationId: org.id,
@@ -87,22 +87,26 @@ describe('PersonTimeLimitInfoService', () => {
             const expectedNoKontexteDeadline: Date = new Date(person.orgUnassignmentDate!);
             expectedNoKontexteDeadline.setDate(expectedNoKontexteDeadline.getDate() + NO_KONTEXTE_DEADLINE_IN_DAYS);
 
-            expect(result).toEqual<PersonTimeLimitInfo[]>([
-                {
+            expect(result[0]).toEqual(
+                expect.objectContaining({
                     occasion: TimeLimitOccasion.KOPERS,
                     deadline: expectedKopersDeadline,
-                },
-                {
+                }),
+            );
+            expect(result[1]).toEqual(
+                expect.objectContaining({
                     occasion: TimeLimitOccasion.NO_KONTEXTE,
                     deadline: expectedNoKontexteDeadline,
-                },
-                {
+                }),
+            );
+            expect(result[2]).toEqual(
+                expect.objectContaining({
                     occasion: TimeLimitOccasion.PERSONENKONTEXT_EXPIRES,
                     deadline: kontextExpiresDate,
                     school: 'Testschule',
                     rolle: 'Testrolle',
-                },
-            ]);
+                }),
+            );
         });
 
         it.each([

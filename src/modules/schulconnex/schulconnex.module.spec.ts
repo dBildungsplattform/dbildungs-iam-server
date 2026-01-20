@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
 import { EventModule } from '../../core/eventbus/index.js';
 import { PersonenInfoService } from './domain/personeninfo/personeninfo.service.js';
 import { SchulconnexModule } from './schulconnex.module.js';
@@ -11,7 +11,7 @@ describe('SchulconnexModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, EventModule, SchulconnexModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), EventModule, SchulconnexModule],
         }).compile();
     });
 

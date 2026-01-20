@@ -1,10 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    MapperTestModule,
-    KeycloakConfigTestModule,
-} from '../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, KeycloakConfigTestModule } from '../../../test/utils/index.js';
 import { PersonController } from './api/person.controller.js';
 import { PersonApiModule } from './person-api.module.js';
 import { PersonFrontendController } from './api/person.frontend.controller.js';
@@ -17,7 +12,6 @@ describe('PersonApiModule', () => {
             imports: [
                 ConfigTestModule,
                 DatabaseTestModule.forRoot(),
-                MapperTestModule,
                 PersonApiModule,
                 KeycloakConfigTestModule.forRoot(),
             ],

@@ -1,5 +1,5 @@
 import { BaseEvent } from '../base-event.js';
-import { EmailAddressID, PersonID, PersonReferrer } from '../../types/aggregate-ids.types.js';
+import { EmailAddressID, PersonID, PersonUsername } from '../../types/aggregate-ids.types.js';
 
 /**
  * This event should be triggered when a new email-address is generated for a user and persisted successfully in the database.
@@ -9,11 +9,12 @@ import { EmailAddressID, PersonID, PersonReferrer } from '../../types/aggregate-
 export class EmailAddressGeneratedEvent extends BaseEvent {
     public constructor(
         public readonly personId: PersonID,
-        public readonly username: PersonReferrer,
+        public readonly username: PersonUsername,
         public readonly emailAddressId: EmailAddressID,
         public readonly address: string,
         public readonly enabled: boolean,
         public readonly orgaKennung: string,
+        public readonly alternativeAddress?: string,
     ) {
         super();
     }

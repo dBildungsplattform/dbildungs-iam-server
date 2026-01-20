@@ -1,8 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import { ApiProperty } from '@nestjs/swagger';
-import { Vertrauensstufe, VertrauensstufeTypName } from '../../../../person/domain/person.enums.js';
 import { PersonNameResponse } from '../../../../person/api/person-name.response.js';
-import { PersonBirthResponse } from '../../../../person/api/person-birth.response.js';
 import { PersonEmailResponse } from '../../../../person/api/person-email-response.js';
 import { Person } from '../../../../person/domain/person.js';
 import { PersonenInfoKontextResponse } from './person-info-kontext.response.js';
@@ -15,7 +13,7 @@ export class PersonNestedInPersonInfoResponse {
     public readonly id: string;
 
     @ApiProperty({ nullable: true })
-    public readonly referrer?: string;
+    public readonly username?: string;
 
     @ApiProperty()
     public readonly mandant: string;
@@ -23,20 +21,8 @@ export class PersonNestedInPersonInfoResponse {
     @ApiProperty({ type: PersonNameResponse })
     public readonly name: PersonNameResponse;
 
-    @ApiProperty({ type: PersonBirthResponse, nullable: true })
-    public readonly geburt?: PersonBirthResponse;
-
     @ApiProperty({ nullable: true })
     public readonly stammorganisation?: string;
-
-    @ApiProperty({ nullable: true })
-    public readonly geschlecht?: string;
-
-    @ApiProperty({ nullable: true })
-    public readonly lokalisierung?: string;
-
-    @ApiProperty({ enum: Vertrauensstufe, enumName: VertrauensstufeTypName, nullable: true })
-    public readonly vertrauensstufe?: Vertrauensstufe;
 
     @ApiProperty()
     public readonly revision: string;
@@ -52,24 +38,16 @@ export class PersonNestedInPersonInfoResponse {
         name: PersonNameResponse,
         revision: string,
         mandant: string,
-        referrer?: string,
-        geburt?: PersonBirthResponse,
+        username?: string,
         stammorganisation?: string,
-        geschlecht?: string,
-        lokalisierung?: string,
-        vertrauensstufe?: Vertrauensstufe,
         personalnummer?: string,
         dienststellen?: string[],
     ) {
         this.id = id;
-        this.referrer = referrer;
+        this.username = username;
         this.mandant = mandant;
         this.name = new PersonNameResponse(name);
-        this.geburt = new PersonBirthResponse(geburt);
         this.stammorganisation = stammorganisation;
-        this.geschlecht = geschlecht;
-        this.lokalisierung = lokalisierung;
-        this.vertrauensstufe = vertrauensstufe;
         this.revision = revision;
         this.personalnummer = personalnummer;
         this.dienststellen = dienststellen;
@@ -79,28 +57,13 @@ export class PersonNestedInPersonInfoResponse {
         return new PersonNestedInPersonInfoResponse(
             person.id,
             {
-                titel: person.nameTitel,
-                anrede: person.nameAnrede,
                 vorname: person.vorname,
                 familiennamen: person.familienname,
-                initialenfamilienname: person.initialenFamilienname,
-                initialenvorname: person.initialenVorname,
-                rufname: person.rufname,
-                namenspraefix: person.namePraefix,
-                namenssuffix: person.nameSuffix,
-                sortierindex: person.nameSortierindex,
             } satisfies PersonNameResponse,
             person.revision,
             person.mandant,
-            person.referrer,
-            {
-                datum: person.geburtsdatum,
-                geburtsort: person.geburtsort,
-            } satisfies PersonBirthResponse,
+            person.username,
             person.stammorganisation,
-            person.geschlecht,
-            person.lokalisierung,
-            person.vertrauensstufe,
             person.personalnummer,
             dienststellen,
         );
@@ -131,20 +94,20 @@ export class PersonInfoResponse {
     protected constructor(
         pid: string,
         kontexte: PersonenInfoKontextResponse[],
-        email: PersonEmailResponse | undefined,
+        email: Option<PersonEmailResponse>,
         nestedPerson: PersonNestedInPersonInfoResponse,
     ) {
         this.pid = pid;
         this.person = nestedPerson;
         this.personenkontexte = kontexte;
         this.gruppen = [];
-        this.email = email;
+        this.email = email ? email : undefined;
     }
 
     public static createNew(
         person: Person<true>,
         kontexteWithOrgaAndRolle: KontextWithOrgaAndRolle[],
-        email: PersonEmailResponse | undefined,
+        email: Option<PersonEmailResponse>,
     ): PersonInfoResponse {
         const dienststellen: string[] = kontexteWithOrgaAndRolle
             .map((k: KontextWithOrgaAndRolle) => k.organisation.kennung)
@@ -157,7 +120,7 @@ export class PersonInfoResponse {
         const kontexte: PersonenInfoKontextResponse[] = kontexteWithOrgaAndRolle.map((k: KontextWithOrgaAndRolle) => {
             return new PersonenInfoKontextResponse({
                 id: k.personenkontext.id,
-                referrer: person.referrer,
+                username: person.username,
                 mandant: person.mandant,
                 organisation: PersonenInfoKontextOrganisationResponse.new({
                     id: k.organisation.id,

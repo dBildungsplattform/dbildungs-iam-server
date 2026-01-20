@@ -1,8 +1,9 @@
 import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -31,7 +32,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [MapperTestModule, LoggingTestModule],
+            imports: [LoggingTestModule],
             providers: [
                 DbiamPersonenkontextWorkflowController,
                 {
@@ -224,7 +225,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     const params: FindDbiamPersonenkontextWorkflowBodyParams = {
                         operationContext,
                         organisationId: organisation.id,
-                        requestedWithSystemrecht: RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
+                        requestedWithSystemrecht: RollenSystemRechtEnum.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
                     };
 
                     const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
@@ -261,7 +262,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     const params: FindDbiamPersonenkontextWorkflowBodyParams = {
                         operationContext,
                         organisationId: organisation.id,
-                        requestedWithSystemrecht: RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
+                        requestedWithSystemrecht: RollenSystemRechtEnum.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
                     };
 
                     const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);

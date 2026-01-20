@@ -1,5 +1,6 @@
 import {
     ServiceProviderKategorie,
+    ServiceProviderMerkmal,
     ServiceProviderSystem,
     ServiceProviderTarget,
 } from '../../../modules/service-provider/domain/service-provider.enum.js';
@@ -32,4 +33,6 @@ export class ServiceProviderFile {
     public requires2fa!: boolean;
 
     public vidisAngebotId?: string;
+
+    public merkmale?: ServiceProviderMerkmal[];
 }

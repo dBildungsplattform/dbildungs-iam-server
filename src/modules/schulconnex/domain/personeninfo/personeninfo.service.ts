@@ -4,7 +4,7 @@ import {
     DBiamPersonenkontextRepo,
     KontextWithOrgaAndRolle,
 } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RollenSystemRecht } from '../../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../../rolle/domain/systemrecht.js';
 import { EmailRepo } from '../../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from '../../../person/api/person-email-response.js';
 import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
@@ -57,13 +57,20 @@ export class PersonenInfoService {
             return [];
         }
 
-        const personIds: PersonID[] =
-            await this.schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
+        const [idsWithKontext, idsWithRollenerweiterung]: [PersonID[], PersonID[]] = await Promise.all([
+            this.schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
                 permittedServiceProviderIds,
                 permittedOrgas.all ? 'all' : new Set<string>(permittedOrgas.orgaIds),
-                offset,
-                limit,
-            );
+            ),
+            this.schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations(
+                permittedServiceProviderIds,
+                permittedOrgas.all ? 'all' : new Set<string>(permittedOrgas.orgaIds),
+            ),
+        ]);
+
+        const personIds: PersonID[] = Array.from(new Set([...idsWithRollenerweiterung, ...idsWithKontext]))
+            .sort((a: string, b: string) => a.localeCompare(b))
+            .slice(offset, offset + limit);
 
         const [persons, emailsForPersons, kontexteForPersons, userLocksForPersons]: [
             Person<true>[],
@@ -73,7 +80,11 @@ export class PersonenInfoService {
         ] = await Promise.all([
             this.personRepo.findByPersonIds(personIds),
             this.emailRepo.getEmailAddressAndStatusForPersonIds(personIds),
-            this.personenkontextRepo.findByPersonIdsWithOrgaAndRolle(personIds),
+            this.personenkontextRepo.findByPersonIdsAndServiceprovidersWithOrgaAndRolle(
+                personIds,
+                Array.from(permittedServiceProviderIds),
+                permittedOrgas,
+            ),
             this.userLockRepo.findByPersonIds(personIds),
         ]);
 

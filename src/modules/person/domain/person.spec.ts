@@ -4,7 +4,6 @@ import { DomainError, InvalidCharacterSetError } from '../../../shared/error/ind
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
 import { VornameForPersonWithTrailingSpaceError } from './vorname-with-trailing-space.error.js';
 import { FamiliennameForPersonWithTrailingSpaceError } from './familienname-with-trailing-space.error.js';
@@ -16,7 +15,7 @@ describe('Person', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, MapperTestModule],
+            imports: [ConfigTestModule],
             providers: [
                 {
                     provide: UsernameGeneratorService,
@@ -93,21 +92,6 @@ describe('Person', () => {
                 faker.lorem.word(),
                 faker.lorem.word(),
                 faker.string.uuid(),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
                 undefined,
                 undefined,
                 undefined,
@@ -347,7 +331,7 @@ describe('Person', () => {
                 expect(result).not.toBeInstanceOf(DomainError);
                 expect(person.vorname).toEqual('Max');
                 expect(person.familienname).toEqual('Mustermann');
-                expect(person.referrer).toEqual('abc');
+                expect(person.username).toEqual('abc');
                 expect(person.istTechnisch).toEqual(initialIstTechnisch);
             });
         });
@@ -374,20 +358,6 @@ describe('Person', () => {
                     undefined,
                     undefined,
                     undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
                     '',
                     true,
                 );
@@ -396,20 +366,6 @@ describe('Person', () => {
 
                 result = person.update(
                     '6',
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
                     undefined,
                     undefined,
                     undefined,
@@ -495,22 +451,8 @@ describe('Person', () => {
                     '5',
                     undefined, // familienname
                     undefined, // vorname
-                    undefined, // referrer
+                    undefined, // username
                     undefined, // stammorganisation
-                    undefined, // initialenFamilienname
-                    undefined, // initialenVorname
-                    undefined, // rufname
-                    undefined, // nameTitel
-                    undefined, // nameAnrede
-                    undefined, // namePraefix
-                    undefined, // nameSuffix
-                    undefined, // nameSortierindex
-                    undefined, // geburtsdatum
-                    undefined, // geburtsort
-                    undefined, // geschlecht
-                    undefined, // lokalisierung
-                    undefined, // vertrauensstufe
-                    undefined, // auskunftssperre
                     ' 12345678', // personalnummer with whitespace
                 );
                 expect(result).toBeInstanceOf(PersonalNummerForPersonWithTrailingSpaceError);
@@ -532,22 +474,8 @@ describe('Person', () => {
                     '5',
                     undefined, // familienname
                     undefined, // vorname
-                    undefined, // referrer
+                    undefined, // username
                     undefined, // stammorganisation
-                    undefined, // initialenFamilienname
-                    undefined, // initialenVorname
-                    undefined, // rufname
-                    undefined, // nameTitel
-                    undefined, // nameAnrede
-                    undefined, // namePraefix
-                    undefined, // nameSuffix
-                    undefined, // nameSortierindex
-                    undefined, // geburtsdatum
-                    undefined, // geburtsort
-                    undefined, // geschlecht
-                    undefined, // lokalisierung
-                    undefined, // vertrauensstufe
-                    undefined, // auskunftssperre
                     '12345678 ', // personalnummer with whitespace
                 );
                 expect(result).toBeInstanceOf(PersonalNummerForPersonWithTrailingSpaceError);

@@ -1,0 +1,17 @@
+{
+    "entityName": "EmailDomain",
+    "entities": [
+        {
+            "id":1,
+            "overrideId": "d8f679f4-ea5c-4143-9233-01b96fe73196",
+            "domain": "schule-sh.de",
+            "spshServiceProviderId": "d292304b-9628-4fdd-93ac-b49a32b0bbc2"
+        },
+        {
+            "id":2,
+            "overrideId": "451a3df9-b92d-4ed3-8e39-917cc15aeb47",
+            "domain": "ersatzschule-sh.de",
+            "spshServiceProviderId": "d292304b-9628-4fdd-93ac-b49a32b0bbc2"
+        }
+    ]
+}

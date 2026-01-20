@@ -8,7 +8,6 @@ import {
     DatabaseTestModule,
     DoFactory,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
@@ -44,7 +43,6 @@ describe('PersonenkontextScope', () => {
                 LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
                 EventModule,
                 LoggingTestModule,
             ],
@@ -81,14 +79,16 @@ describe('PersonenkontextScope', () => {
 
                 for (let i: number = 0; i < 30; i++) {
                     const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                    if (rolle instanceof DomainError) throw Error();
+                    if (rolle instanceof DomainError) {
+                        throw Error();
+                    }
                     await createAndPersistPersonenkontext(em, person.id, rolle.id, organisation1.id);
                 }
             });
 
             it('should return found personenkontexte', async () => {
                 const scope: PersonenkontextScope = new PersonenkontextScope()
-                    .findBy({ referrer: 'referrer' })
+                    .findBy({ username: 'username' })
                     .sortBy('id', ScopeOrder.ASC)
                     .paged(10, 10);
                 const [personenkontext, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(em);
@@ -114,9 +114,10 @@ describe('PersonenkontextScope', () => {
                 const personenkontextPromises: Promise<PersonenkontextEntity>[] = [];
                 for (let i: number = 0; i < 30; i++) {
                     personenkontextPromises.push(
-                        // eslint-disable-next-line @typescript-eslint/no-loop-func
                         rolleRepo.save(DoFactory.createRolle(false)).then((rolle: Rolle<true> | DomainError) => {
-                            if (rolle instanceof DomainError) throw Error();
+                            if (rolle instanceof DomainError) {
+                                throw Error();
+                            }
                             return createAndPersistPersonenkontext(em, person.id, rolle.id, organisation1.id);
                         }),
                     );
@@ -155,9 +156,10 @@ describe('PersonenkontextScope', () => {
                         personenkontextPromises.push(
                             rolleRepo
                                 .save(DoFactory.createRolle(false, { rollenart: rolleArt }))
-                                // eslint-disable-next-line @typescript-eslint/no-loop-func
                                 .then((rolle: Rolle<true> | DomainError) => {
-                                    if (rolle instanceof DomainError) throw Error();
+                                    if (rolle instanceof DomainError) {
+                                        throw Error();
+                                    }
                                     return createAndPersistPersonenkontext(em, person.id, rolle.id, organisation1.id);
                                 }),
                         );

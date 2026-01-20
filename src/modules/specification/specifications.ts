@@ -1,5 +1,5 @@
+/* eslint-disable no-use-before-define */
 /* eslint-disable max-classes-per-file */
-/* eslint-disable @typescript-eslint/no-use-before-define */
 
 export interface Specification<T> {
     isSatisfiedBy(t: T): Promise<boolean>;

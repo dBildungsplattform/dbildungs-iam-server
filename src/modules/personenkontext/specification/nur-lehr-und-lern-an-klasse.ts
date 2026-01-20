@@ -18,14 +18,19 @@ export class NurLehrUndLernAnKlasse extends CompositeSpecification<Personenkonte
         super();
     }
 
-    // eslint-disable-next-line @typescript-eslint/require-await
     public async isSatisfiedBy(p: Personenkontext<boolean>): Promise<boolean> {
         const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(p.organisationId);
-        if (!organisation) return false;
-        if (organisation.typ !== OrganisationsTyp.KLASSE) return true;
+        if (!organisation) {
+            return false;
+        }
+        if (organisation.typ !== OrganisationsTyp.KLASSE) {
+            return true;
+        }
 
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(p.rolleId);
-        if (!rolle) return false;
+        if (!rolle) {
+            return false;
+        }
         return rolle.rollenart === RollenArt.LEHR || rolle.rollenart === RollenArt.LERN;
     }
 }

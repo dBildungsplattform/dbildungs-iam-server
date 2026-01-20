@@ -4,12 +4,17 @@ import { PersonenInfoService } from '../../domain/personeninfo/personeninfo.serv
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { HttpException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 describe('PersonenInfoController', () => {
     let controller: PersonenInfoController;
     let service: PersonenInfoService;
+    let configService: DeepMocked<ConfigService>;
 
     beforeEach(async () => {
+        configService = createMock<ConfigService>();
+        configService.getOrThrow.mockReturnValue({ LIMIT_PERSONENINFO: 2500 });
         const module: TestingModule = await Test.createTestingModule({
             controllers: [PersonenInfoController],
             providers: [
@@ -21,11 +26,13 @@ describe('PersonenInfoController', () => {
                     provide: ClassLogger,
                     useValue: createMock<ClassLogger>(),
                 },
+                { provide: ConfigService, useValue: configService },
             ],
         }).compile();
 
         controller = module.get<PersonenInfoController>(PersonenInfoController);
         service = module.get<PersonenInfoService>(PersonenInfoService);
+        configService = module.get(ConfigService);
     });
 
     afterEach(() => {
@@ -41,6 +48,16 @@ describe('PersonenInfoController', () => {
     it('should handle invalid offset and limit with fallback of page 1', async () => {
         const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
         await controller.infoV1(permissions, 'invalid', 'invalid');
-        expect(service.findPersonsForPersonenInfo).toHaveBeenCalledWith(permissions, 0, 25);
+        expect(service.findPersonsForPersonenInfo).toHaveBeenCalledWith(permissions, 0, 2500);
+    });
+
+    it('should handle limit that exceeds maximum limit', async () => {
+        const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+        try {
+            await controller.infoV1(permissions, '0', '1000000');
+            fail('Expected exception was not thrown');
+        } catch (e) {
+            expect(e).toBeInstanceOf(HttpException);
+        }
     });
 });

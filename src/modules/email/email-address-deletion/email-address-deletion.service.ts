@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { EmailRepo } from '../persistence/email.repo.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { EmailAddress } from '../domain/email-address.js';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { Person } from '../../person/domain/person.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
-import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
 import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { EmailAddress } from '../domain/email-address.js';
+import { EmailRepo } from '../persistence/email.repo.js';
 
 @Injectable()
 export class EmailAddressDeletionService {
@@ -22,9 +22,18 @@ export class EmailAddressDeletionService {
         private readonly eventService: EventRoutingLegacyKafkaService,
     ) {}
 
-    public async deleteEmailAddresses(permissions: PersonPermissions): Promise<void> {
-        const nonPrimaryEmailAddresses: EmailAddress<true>[] =
-            await this.emailRepo.getByDeletedStatusOrUpdatedAtExceedsDeadline();
+    /**
+     *
+     * @param permissions
+     * @param limit
+     * @returns { processed: number; total: number } - processed: number of email addresses processed in this run, total: total number of email addresses that are marked for deletion or exceeded the deadline
+     */
+    public async deleteEmailAddresses(
+        permissions: PersonPermissions,
+        limit: number,
+    ): Promise<{ processed: number; total: number }> {
+        const [nonPrimaryEmailAddresses, total]: [EmailAddress<true>[], number] =
+            await this.emailRepo.getByDeletedStatusOrUpdatedAtExceedsDeadline(limit);
         const affectedPersonIds: (PersonID | undefined)[] = nonPrimaryEmailAddresses.map(
             (ea: EmailAddress<true>) => ea.personId,
         );
@@ -42,6 +51,7 @@ export class EmailAddressDeletionService {
         affectedPersons.forEach((p: Person<true>) => {
             personMap.set(p.id, p);
         });
+        let processed: number = 0;
 
         for (const ea of nonPrimaryEmailAddresses) {
             if (!ea.oxUserID) {
@@ -72,9 +82,10 @@ export class EmailAddressDeletionService {
                         ea.address,
                     ),
                 );
+                processed++;
                 continue;
             }
-            const username: string | undefined = personMap.get(ea.personId)?.referrer;
+            const username: string | undefined = personMap.get(ea.personId)?.username;
             if (!username) {
                 this.logger.error(
                     `Could NOT get username when generating EmailAddressDeletedEvent, personId:${ea.personId}`,
@@ -99,7 +110,9 @@ export class EmailAddressDeletionService {
                     ea.address,
                 ),
             );
+            processed++;
         }
+        return { processed, total };
     }
 
     public async checkRemainingEmailAddressesByPersonId(
@@ -123,17 +136,17 @@ export class EmailAddressDeletionService {
         }
         const allEmailAddressesForPerson: EmailAddress<true>[] =
             await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
-        if (allEmailAddressesForPerson.length == 0) {
+        if (allEmailAddressesForPerson.length === 0) {
             this.logger.info(
-                `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, username:${person.referrer}`,
+                `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, username:${person.username}`,
             );
             return this.eventService.publish(
-                new EmailAddressesPurgedEvent(personId, person.referrer, oxUserId),
-                new KafkaEmailAddressesPurgedEvent(personId, person.referrer, oxUserId),
+                new EmailAddressesPurgedEvent(personId, person.username, oxUserId),
+                new KafkaEmailAddressesPurgedEvent(personId, person.username, oxUserId),
             );
         }
         this.logger.info(
-            `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, username:${person.referrer}`,
+            `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, username:${person.username}`,
         );
     }
 }

@@ -1,35 +1,38 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { CronController } from './cron.controller.js';
-import { KeycloakUserService } from '../keycloak-administration/domain/keycloak-user.service.js';
-import { PersonRepository } from '../person/persistence/person.repository.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { KeycloakClientError } from '../../shared/error/keycloak-client.error.js';
-import { PersonID } from '../../shared/types/aggregate-ids.types.js';
-import { PersonDeleteService } from '../person/person-deletion/person-delete.service.js';
-import { PersonPermissions } from '../authentication/domain/person-permissions.js';
-import { MissingPermissionsError } from '../../shared/error/missing-permissions.error.js';
-import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/personenkontext-workflow.factory.js';
+import { HttpException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigTestModule } from '../../../test/utils/config-test.module.js';
 import { DoFactory } from '../../../test/utils/do-factory.js';
-import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
-import { Person } from '../person/domain/person.js';
-import { PersonenkontextWorkflowAggregate } from '../personenkontext/domain/personenkontext-workflow.js';
-import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/personenkontexte-update.error.js';
+import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
+import { DomainError } from '../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.js';
+import { KeycloakClientError } from '../../shared/error/keycloak-client.error.js';
+import { MissingPermissionsError } from '../../shared/error/missing-permissions.error.js';
+import { PersonID } from '../../shared/types/aggregate-ids.types.js';
+import { PersonPermissions } from '../authentication/domain/person-permissions.js';
+import { EmailAddressDeletionService } from '../email/email-address-deletion/email-address-deletion.service.js';
+import { KeycloakUserService } from '../keycloak-administration/domain/keycloak-user.service.js';
 import { UserLock } from '../keycloak-administration/domain/user-lock.js';
 import { UserLockRepository } from '../keycloak-administration/repository/user-lock.repository.js';
 import { PersonLockOccasion } from '../person/domain/person.enums.js';
-import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.js';
+import { Person } from '../person/domain/person.js';
+import { PersonRepository } from '../person/persistence/person.repository.js';
+import { PersonDeleteService } from '../person/person-deletion/person-delete.service.js';
+import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/personenkontexte-update.error.js';
+import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/personenkontext-workflow.factory.js';
+import { PersonenkontextWorkflowAggregate } from '../personenkontext/domain/personenkontext-workflow.js';
+import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
+import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
-import { HttpException } from '@nestjs/common';
-import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
-import { DomainError } from '../../shared/error/domain.error.js';
-import { EmailAddressDeletionService } from '../email/email-address-deletion/email-address-deletion.service.js';
+import { CronController } from './cron.controller.js';
 
 class UnknownError extends DomainError {
     public constructor(message: string) {
         super(message, '');
     }
 }
+
+const PERSON_WITHOUT_ORG_LIMIT: number = 30;
 
 describe('CronController', () => {
     let cronController: CronController;
@@ -46,7 +49,7 @@ describe('CronController', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [LoggingTestModule],
+            imports: [LoggingTestModule, ConfigTestModule],
             providers: [
                 {
                     provide: KeycloakUserService,
@@ -356,7 +359,10 @@ describe('CronController', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(personMock1);
                 personRepositoryMock.findById.mockResolvedValueOnce(personMock2);
                 personRepositoryMock.findById.mockResolvedValueOnce(personMock3);
-                personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce(mockUserIds);
+                personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce({
+                    ids: mockUserIds,
+                    total: mockUserIds.length,
+                });
                 personDeleteServiceMock.deletePersonAfterDeadlineExceeded.mockResolvedValueOnce({
                     ok: true,
                     value: undefined,
@@ -378,13 +384,16 @@ describe('CronController', () => {
                 expect(personDeleteServiceMock.deletePersonAfterDeadlineExceeded).toHaveBeenCalledTimes(
                     mockUserIds.length,
                 );
+                expect(personRepositoryMock.getPersonWithoutOrgDeleteList).toHaveBeenCalledWith(
+                    PERSON_WITHOUT_ORG_LIMIT,
+                );
             });
         });
 
         describe('when there are no users to remove', () => {
             it('should return false', async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
-                personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce([]);
+                personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce({ ids: [], total: 0 });
 
                 const personPermissionsMock: PersonPermissions = createMock<PersonPermissions>();
                 const result: boolean = await cronController.personWithoutOrgDelete(personPermissionsMock);
@@ -405,7 +414,10 @@ describe('CronController', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(personMock3);
 
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
-                personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce(mockUserIds);
+                personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce({
+                    ids: mockUserIds,
+                    total: mockUserIds.length,
+                });
                 personDeleteServiceMock.deletePersonAfterDeadlineExceeded.mockResolvedValueOnce({
                     ok: true,
                     value: undefined,
@@ -676,7 +688,7 @@ describe('CronController', () => {
         describe(`when is authorized user`, () => {
             it(`should delete non-enabled EmailAddresses which exceed deadline`, async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-                emailAddressDeletionServiceMock.deleteEmailAddresses.mockResolvedValue();
+                emailAddressDeletionServiceMock.deleteEmailAddresses.mockResolvedValue({ processed: 0, total: 0 });
 
                 await cronController.emailAddressesDelete(permissionsMock);
 

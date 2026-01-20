@@ -19,7 +19,7 @@ export class PersonenkontextService {
 
     public async findAllPersonenkontexte(
         personenkontext: PersonenkontextQueryParams,
-        organisationIDs?: OrganisationID[] | undefined,
+        organisationIDs?: OrganisationID[],
         offset?: number,
         limit?: number,
     ): Promise<Paged<Personenkontext<true>>> {
@@ -28,7 +28,7 @@ export class PersonenkontextService {
             .byOrganisations(organisationIDs)
             .findBy({
                 personId: personenkontext.personId,
-                referrer: personenkontext.referrer,
+                username: personenkontext.username,
                 personenstatus: personenkontext.personenstatus,
                 sichtfreigabe: personenkontext.sichtfreigabe,
             })

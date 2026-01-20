@@ -6,41 +6,40 @@ import { Request, Response } from 'express';
 import { Session, SessionData } from 'express-session';
 import { Client, EndSessionParameters, IssuerMetadata } from 'openid-client';
 
+import { MikroORM } from '@mikro-orm/core';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { DatabaseTestModule } from '../../../../test/utils/index.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
+import { KeycloakConfig } from '../../../shared/config/keycloak.config.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import PersonTimeLimitService from '../../person/domain/person-time-limit-info.service.js';
+import { Person } from '../../person/domain/person.js';
+import { TimeLimitOccasion } from '../../person/domain/time-limit-occasion.enums.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { PersonModule } from '../../person/person.module.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
+import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
+import { PersonenkontextRolleWithOrganisation, PersonPermissions } from '../domain/person-permissions.js';
+import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
 import { PassportUser } from '../types/user.js';
 import { AuthenticationController } from './authentication.controller.js';
 import { UserinfoResponse } from './userinfo.response.js';
-import { DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
-import { PersonModule } from '../../person/person.module.js';
-import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
-import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
-import { MikroORM } from '@mikro-orm/core';
-import { PersonenkontextRolleWithOrganisation, PersonPermissions } from '../domain/person-permissions.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { Person } from '../../person/domain/person.js';
-import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { KeycloakConfig } from '../../../shared/config/keycloak.config.js';
-import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { TimeLimitOccasion } from '../../person/domain/time-limit-occasion.enums.js';
-import PersonTimeLimitService from '../../person/domain/person-time-limit-info.service.js';
-import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RolleModule } from '../../rolle/rolle.module.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
     let authController: AuthenticationController;
     let oidcClient: DeepMocked<Client>;
     let frontendConfig: FrontendConfig;
-    let personPermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
-    let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
-    let organisationRepoMock: DeepMocked<OrganisationRepository>;
-    let rolleRepoMock: DeepMocked<RolleRepo>;
     const keycloakUserServiceMock: DeepMocked<KeycloakUserService> = createMock<KeycloakUserService>();
     let keyCloakConfig: KeycloakConfig;
     const personTimeLimitServiceMock: DeepMocked<PersonTimeLimitService> = createMock<PersonTimeLimitService>();
@@ -49,11 +48,12 @@ describe('AuthenticationController', () => {
             imports: [
                 ConfigTestModule,
                 LoggingTestModule,
-                MapperTestModule,
                 ServiceProviderModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,
                 PersonenKontextModule,
+                RolleModule,
+                EmailMicroserviceModule,
             ],
             providers: [
                 AuthenticationController,
@@ -96,10 +96,6 @@ describe('AuthenticationController', () => {
         oidcClient = module.get(OIDC_CLIENT);
         frontendConfig = module.get(ConfigService).getOrThrow<FrontendConfig>('FRONTEND');
         keyCloakConfig = module.get(ConfigService).getOrThrow<KeycloakConfig>('KEYCLOAK');
-        personPermissionsRepoMock = module.get(PersonPermissionsRepo);
-        dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
-        organisationRepoMock = module.get(OrganisationRepository);
-        rolleRepoMock = module.get(RolleRepo);
     });
 
     afterEach(() => {
@@ -245,31 +241,9 @@ describe('AuthenticationController', () => {
         }
 
         it('should return user info', async () => {
-            const person: Person<true> = Person.construct(
-                faker.string.uuid(),
-                faker.date.past(),
-                faker.date.recent(),
-                faker.person.lastName(),
-                faker.person.firstName(),
-                '1',
-                faker.lorem.word(),
-                undefined,
-                faker.string.uuid(),
-            );
-            person.geburtsdatum = faker.date.past();
-
-            const personPermissions: PersonPermissions = new PersonPermissions(
-                dbiamPersonenkontextRepoMock,
-                organisationRepoMock,
-                rolleRepoMock,
-                person,
-            );
-            personPermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(personPermissions);
-
             const permissions: PersonPermissions = createMock<PersonPermissions>({
                 get personFields(): Person<true> {
                     return createMock<Person<true>>({
-                        geburtsdatum: createMock(),
                         updatedAt: new Date(Date.now()),
                     });
                 },
@@ -277,13 +251,13 @@ describe('AuthenticationController', () => {
                     Promise.resolve([
                         {
                             organisation: createMock<Organisation<true>>(),
-                            rolle: { systemrechte: [], serviceProviderIds: [] },
+                            rolle: { systemrechte: [RollenSystemRecht.PERSONEN_VERWALTEN], serviceProviderIds: [] },
                         },
                     ]),
             });
             keycloakUserServiceMock.getLastPasswordChange.mockResolvedValueOnce({
                 ok: true,
-                value: person.updatedAt,
+                value: faker.date.past(),
             });
 
             personTimeLimitServiceMock.getPersonTimeLimitInfo.mockResolvedValueOnce([
@@ -297,7 +271,6 @@ describe('AuthenticationController', () => {
             const result: UserinfoResponse = await authController.info(permissions, requestMock);
 
             expect(result).toBeInstanceOf(UserinfoResponse);
-            expect(result.birthdate!).toBe(permissions.personFields.geburtsdatum?.toISOString());
         });
     });
 

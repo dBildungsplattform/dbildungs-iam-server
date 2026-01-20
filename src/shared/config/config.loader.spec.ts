@@ -1,8 +1,11 @@
 import 'reflect-metadata'; // some decorators use reflect-metadata in the background
+
 import fs from 'fs';
-import { JsonConfig, loadConfigFiles } from './index.js';
-import { DeepPartial } from '../../../test/utils/index.js';
 import { PathLike } from 'node:fs';
+
+import { DeepPartial } from '../../../test/utils/index.js';
+import { EmailAppConfig } from './email-app.config.js';
+import { JsonConfig, loadConfigFiles, loadEmailAppConfigFiles } from './index.js';
 
 describe('configloader', () => {
     describe('loadConfigFiles', () => {
@@ -29,6 +32,7 @@ describe('configloader', () => {
                 FEATUREFLAG: {
                     FEATURE_FLAG_ROLLE_BEARBEITEN: true,
                     FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: true,
+                    FEATURE_FLAG_ROLLE_ERWEITERN: true,
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -92,6 +96,8 @@ describe('configloader', () => {
                     CONTEXT_ID: '1337',
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
+                    USER_PASSWORD_DEFAULT: 'password',
+                    EMAIL_ADDRESS_DELETED_EVENT_DELAY: 0,
                 },
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
@@ -119,10 +125,24 @@ describe('configloader', () => {
                     SESSION_TIMEOUT: 300000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
-                    SASL_ENABLED: true,
+                    SSL_ENABLED: true,
+                    SSL_CA_PATH: '/tls/ca.pem',
+                    SSL_CERT_PATH: '/tls/client-cert.pem',
+                    SSL_KEY_PATH: '/tls/client-key.pem',
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
+                },
+                CRON: {
+                    PERSON_WITHOUT_ORG_LIMIT: 30,
+                    EMAIL_ADDRESSES_DELETE_LIMIT: 10,
+                },
+                EMAIL_MICROSERVICE: {
+                    USE_EMAIL_MICROSERVICE: false,
+                    ENDPOINT: 'http://localhost:9091/',
+                },
+                SCHULCONNEX: {
+                    LIMIT_PERSONENINFO: 2500,
                 },
             };
 
@@ -141,10 +161,6 @@ describe('configloader', () => {
                     PASSWORD: 'password',
                 },
                 OX: {
-                    PASSWORD: 'password',
-                },
-                KAFKA: {
-                    USERNAME: 'username',
                     PASSWORD: 'password',
                 },
             };
@@ -191,6 +207,7 @@ describe('configloader', () => {
                 FEATUREFLAG: {
                     FEATURE_FLAG_ROLLE_BEARBEITEN: true,
                     FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: true,
+                    FEATURE_FLAG_ROLLE_ERWEITERN: true,
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -262,6 +279,8 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                    USER_PASSWORD_DEFAULT: 'password',
+                    EMAIL_ADDRESS_DELETED_EVENT_DELAY: 0,
                 },
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
@@ -281,7 +300,7 @@ describe('configloader', () => {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
                 KAFKA: {
-                    BROKER: 'localhost:9094',
+                    BROKER: 'localhost',
                     TOPIC_PREFIX: 'local.',
                     USER_TOPIC: 'spsh-user-topic',
                     USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
@@ -289,12 +308,24 @@ describe('configloader', () => {
                     SESSION_TIMEOUT: 300000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
-                    SASL_ENABLED: true,
-                    USERNAME: 'username',
-                    PASSWORD: 'password',
+                    SSL_ENABLED: false,
+                    SSL_CA_PATH: undefined,
+                    SSL_CERT_PATH: undefined,
+                    SSL_KEY_PATH: undefined,
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
+                },
+                CRON: {
+                    PERSON_WITHOUT_ORG_LIMIT: 30,
+                    EMAIL_ADDRESSES_DELETE_LIMIT: 10,
+                },
+                EMAIL_MICROSERVICE: {
+                    USE_EMAIL_MICROSERVICE: false,
+                    ENDPOINT: 'http://localhost:9091/',
+                },
+                SCHULCONNEX: {
+                    LIMIT_PERSONENINFO: 2500,
                 },
             };
 
@@ -302,7 +333,7 @@ describe('configloader', () => {
                 const existsSyncSpy: jest.SpyInstance = jest
                     .spyOn(fs, 'existsSync')
                     .mockImplementation((name: PathLike): boolean => {
-                        if (name == './config/secrets.json') {
+                        if (name === './config/secrets.json') {
                             return false;
                         }
                         fail(`Unknown file ${name.toString()}`);
@@ -347,6 +378,146 @@ describe('configloader', () => {
 
             it('should throw', () => {
                 expect(() => loadConfigFiles()).toThrow();
+                expect(readFileSyncSpy).toHaveBeenCalled();
+            });
+        });
+    });
+
+    describe('loadEmailAppConfigFiles', () => {
+        describe('when config is valid', () => {
+            let readFileSyncSpy: jest.SpyInstance;
+
+            const config: DeepPartial<EmailAppConfig> = {
+                HOST: {
+                    PORT: 8080,
+                },
+                LOGGING: {
+                    DEFAULT_LOG_LEVEL: 'debug',
+                },
+                DB: {
+                    CLIENT_URL: 'postgres://localhost:5432',
+                    USERNAME: 'admin',
+                    DB_NAME: 'test-db',
+                    USE_SSL: false,
+                },
+                OX: {
+                    ENABLED: true,
+                    ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
+                    CONTEXT_ID: '1337',
+                    CONTEXT_NAME: 'context1',
+                    USERNAME: 'username',
+                    USER_PASSWORD_DEFAULT: 'password',
+                    EMAIL_ADDRESS_DELETED_EVENT_DELAY: 0,
+                },
+                LDAP: {
+                    URL: 'ldap://localhost',
+                    BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
+                    BASE_DN: 'dc=schule-sh,dc=de',
+                },
+                EMAIL: {
+                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 90,
+                },
+            };
+
+            const secrets: DeepPartial<JsonConfig> = {
+                DB: { SECRET: 'SuperSecretSecret' },
+                LDAP: { ADMIN_PASSWORD: 'password' },
+                OX: {
+                    PASSWORD: 'password',
+                },
+            };
+
+            beforeEach(() => {
+                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
+                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(secrets));
+            });
+
+            afterEach(() => {
+                jest.clearAllMocks();
+            });
+
+            it('should return validated JsonConfig', () => {
+                jest.spyOn(fs, 'existsSync').mockReturnValueOnce(true);
+                const validatedConfig: EmailAppConfig = loadEmailAppConfigFiles();
+                expect(validatedConfig).toBeInstanceOf(EmailAppConfig);
+                expect(readFileSyncSpy).toHaveBeenCalledTimes(2);
+            });
+        });
+
+        describe('When there is no secrets config', () => {
+            beforeAll(() => {
+                jest.clearAllMocks();
+            });
+
+            const config: DeepPartial<EmailAppConfig> = {
+                HOST: {
+                    PORT: 8080,
+                },
+                LOGGING: {
+                    DEFAULT_LOG_LEVEL: 'debug',
+                },
+                DB: {
+                    CLIENT_URL: 'postgres://localhost:5432',
+                    USERNAME: 'admin',
+                    DB_NAME: 'test-db',
+                    USE_SSL: false,
+                    SECRET: 'x',
+                },
+                OX: {
+                    ENABLED: true,
+                    ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
+                    CONTEXT_ID: '1337',
+                    CONTEXT_NAME: 'context1',
+                    USERNAME: 'username',
+                    USER_PASSWORD_DEFAULT: 'password',
+                    EMAIL_ADDRESS_DELETED_EVENT_DELAY: 0,
+                    PASSWORD: 'x',
+                },
+                LDAP: {
+                    URL: 'ldap://localhost',
+                    BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
+                    BASE_DN: 'dc=schule-sh,dc=de',
+                    ADMIN_PASSWORD: 'x',
+                },
+                EMAIL: {
+                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 90,
+                },
+            };
+
+            it("should not load the secrets file if it can't find it", () => {
+                const existsSyncSpy: jest.SpyInstance = jest
+                    .spyOn(fs, 'existsSync')
+                    .mockImplementation((name: PathLike): boolean => {
+                        if (name === './config/email-secrets.json') {
+                            return false;
+                        }
+                        fail(`Unknown file ${name.toString()}`);
+                    });
+                jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
+                loadEmailAppConfigFiles();
+                expect(existsSyncSpy).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when config is invalid', () => {
+            let readFileSyncSpy: jest.SpyInstance;
+
+            const config: DeepPartial<EmailAppConfig> = {
+                HOST: {
+                    PORT: 1,
+                },
+            };
+
+            beforeEach(() => {
+                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+            });
+
+            afterEach(() => {
+                jest.clearAllMocks();
+            });
+
+            it('should throw', () => {
+                expect(() => loadEmailAppConfigFiles()).toThrow();
                 expect(readFileSyncSpy).toHaveBeenCalled();
             });
         });

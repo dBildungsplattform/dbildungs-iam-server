@@ -34,7 +34,7 @@ function mapEntityToAggregate(
         entity.personId.id,
         entity.organisationId.id,
         entity.rolleId.id,
-        entity.referrer,
+        entity.username,
         entity.mandant,
         entity.personenstatus,
         entity.jahrgangsstufe,

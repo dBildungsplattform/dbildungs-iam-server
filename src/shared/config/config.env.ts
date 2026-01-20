@@ -1,20 +1,23 @@
+import { CronConfig } from './cron.config.js';
 import { DbConfig } from './db.config.js';
-import { KeycloakConfig } from './keycloak.config.js';
-import { FrontendConfig } from './frontend.config.js';
-import { HostConfig } from './host.config.js';
-import { ItsLearningConfig } from './itslearning.config.js';
-import { LdapConfig } from './ldap.config.js';
-import { PrivacyIdeaConfig } from './privacyidea.config.js';
-import { SystemConfig } from './system.config.js';
-import { OxConfig } from './ox.config.js';
-import { RedisConfig } from './redis.config.js';
+import { EmailMicroserviceConfig } from './email-microservice.config.js';
 import { FeatureFlagConfig } from './featureflag.config.js';
+import { FrontendConfig } from './frontend.config.js';
+import { HeaderApiKeyConfig } from './headerapikey.config.js';
+import { HostConfig } from './host.config.js';
+import { ImportConfig } from './import.config.js';
+import { ItsLearningConfig } from './itslearning.config.js';
+import { KafkaConfig } from './kafka.config.js';
+import { KeycloakConfig } from './keycloak.config.js';
+import { LdapConfig } from './ldap.config.js';
+import { OxConfig } from './ox.config.js';
+import { PortalConfig } from './portal.config.js';
+import { PrivacyIdeaConfig } from './privacyidea.config.js';
+import { RedisConfig } from './redis.config.js';
+import { SchulconnexConfig } from './schulconnex.config.js';
+import { SystemConfig } from './system.config.js';
 import { envToOptionalBoolean, envToOptionalInteger, envToStringArray } from './utils.js';
 import { VidisConfig } from './vidis.config.js';
-import { ImportConfig } from './import.config.js';
-import { HeaderApiKeyConfig } from './headerapikey.config.js';
-import { KafkaConfig } from './kafka.config.js';
-import { PortalConfig } from './portal.config.js';
 
 export type Config = {
     DB: Partial<DbConfig>;
@@ -33,6 +36,9 @@ export type Config = {
     HEADER_API_KEY: Partial<HeaderApiKeyConfig>;
     KAFKA: Partial<KafkaConfig>;
     PORTAL: Partial<PortalConfig>;
+    CRON: Partial<CronConfig>;
+    EMAIL_MICROSERVICE: Partial<EmailMicroserviceConfig>;
+    SCHULCONNEX: Partial<SchulconnexConfig>;
 };
 
 export default (): Config => ({
@@ -68,6 +74,7 @@ export default (): Config => ({
     FEATUREFLAG: {
         FEATURE_FLAG_ROLLE_BEARBEITEN: envToOptionalBoolean('FEATURE_FLAG_ROLLE_BEARBEITEN'),
         FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: envToOptionalBoolean('FEATURE_FLAG_BEFRISTUNG_BEARBEITEN'),
+        FEATURE_FLAG_ROLLE_ERWEITERN: envToOptionalBoolean('FEATURE_FLAG_ROLLE_ERWEITERN'),
     },
     HOST: {
         HOSTNAME: process.env['BACKEND_HOSTNAME'],
@@ -103,6 +110,8 @@ export default (): Config => ({
         CONTEXT_ID: process.env['OX_CONTEXT_ID'],
         CONTEXT_NAME: process.env['OX_CONTEXT_NAME'],
         NUMBER_OF_RETRIES: envToOptionalInteger('OX_NUMBER_OF_RETRIES'),
+        USER_PASSWORD_DEFAULT: process.env['OX_USER_PASSWORD_DEFAULT'],
+        EMAIL_ADDRESS_DELETED_EVENT_DELAY: envToOptionalInteger('OX_EMAIL_ADDRESS_DELETED_EVENT_DELAY'),
     },
     SYSTEM: {
         RENAME_WAITING_TIME_IN_SECONDS: envToOptionalInteger('SYSTEM_RENAME_WAITING_TIME_IN_SECONDS'),
@@ -135,11 +144,23 @@ export default (): Config => ({
         SESSION_TIMEOUT: envToOptionalInteger('KAFKA_SESSION_TIMEOUT'),
         HEARTBEAT_INTERVAL: envToOptionalInteger('KAFKA_HEARTBEAT_INTERVAL'),
         ENABLED: envToOptionalBoolean('KAFKA_ENABLED'),
-        SASL_ENABLED: envToOptionalBoolean('KAFKA_SASL_ENABLED'),
-        USERNAME: process.env['KAFKA_USERNAME'],
-        PASSWORD: process.env['KAFKA_PASSWORD'],
+        SSL_ENABLED: envToOptionalBoolean('KAFKA_SSL_ENABLED'),
+        SSL_CA_PATH: process.env['KAFKA_SSL_CA_PATH'],
+        SSL_CERT_PATH: process.env['KAFKA_SSL_CERT_PATH'],
+        SSL_KEY_PATH: process.env['KAFKA_SSL_KEY_PATH'],
     },
     PORTAL: {
         LIMITED_ROLLENART_ALLOWLIST: envToStringArray('PORTAL_LIMITED_ROLLENART_ALLOWLIST'),
+    },
+    CRON: {
+        PERSON_WITHOUT_ORG_LIMIT: envToOptionalInteger('CRON_PERSON_WITHOUT_ORG_LIMIT'),
+        EMAIL_ADDRESSES_DELETE_LIMIT: envToOptionalInteger('CRON_EMAIL_ADDRESSES_DELETE_LIMIT'),
+    },
+    EMAIL_MICROSERVICE: {
+        USE_EMAIL_MICROSERVICE: envToOptionalBoolean('EMAIL_MICROSERVICE__USE_EMAIL_MICROSERVICE'),
+        ENDPOINT: process.env['EMAIL_MICROSERVICE__ENDPOINT'],
+    },
+    SCHULCONNEX: {
+        LIMIT_PERSONENINFO: envToOptionalInteger('SCHULCONNEX_LIMIT_PERSONENINFO'),
     },
 });

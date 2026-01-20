@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "common.names.name" . }}-email
+  namespace: {{ template "common.names.namespace" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+data:
+  config-json: |-
+    {{ .Files.Get "config/email-config.json" | nindent 4 }}
+  NODE_ENV: 'prod'
+  DEPLOY_STAGE: {{ .Values.environment | quote }}
+  DB_NAME: {{ .Values.database.name | quote }}
+  LDAP_URL: '{{ .Values.ldap.url | replace "spsh-xxx" .Release.Namespace }}'
+  LDAP_OEFFENTLICHE_SCHULEN_DOMAIN: "{{ .Values.ldap.oeffentlicheSchulenDomain }}"
+  LDAP_ERSATZSCHULEN_DOMAIN: "{{ .Values.ldap.ersatzschulenDomain }}"
+  OX_ENABLED: "{{ .Values.ox.enabled }}"
+  OX_USERNAME: "{{ .Values.ox.username }}"
+  OX_ENDPOINT: "{{ .Values.ox.endpoint }}"
+  OX_CONTEXT_ID: "{{ .Values.ox.contextId }}"
+  OX_CONTEXT_NAME: "{{ .Values.ox.contextName }}"
+  OX_NUMBER_OF_RETRIES: "{{ .Values.ox.numberOfRetries }}"
+  OX_USER_PASSWORD_DEFAULT: "{{ .Values.ox.userPasswordDefault }}"
+  OX_EMAIL_ADDRESS_DELETED_EVENT_DELAY: "{{ .Values.ox.emailAddressDeletedEventDelay }}"

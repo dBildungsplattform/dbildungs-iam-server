@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { HttpException, NotImplementedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { DoFactory } from '../../../../test/utils/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { Personenstatus, SichtfreigabeType } from '../domain/personenkontext.enums.js';
@@ -15,13 +15,9 @@ import { PersonenkontextController } from './personenkontext.controller.js';
 import { PersonenkontextdatensatzResponse } from './response/personenkontextdatensatz.response.js';
 
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
-import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
-import { HatSystemrechtQueryParams } from './param/hat-systemrecht.query.params.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { SystemrechtResponse } from './response/personenkontext-systemrecht.response.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
 import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
-import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
@@ -34,8 +30,6 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { PersonApiMapper } from '../../person/mapper/person-api.mapper.js';
 
-import { Organisation } from '../../organisation/domain/organisation.js';
-
 describe('PersonenkontextController', () => {
     let module: TestingModule;
     let sut: PersonenkontextController;
@@ -43,12 +37,10 @@ describe('PersonenkontextController', () => {
     let personenkontextService: DeepMocked<PersonenkontextService>;
     let personService: DeepMocked<PersonService>;
     let rolleRepo: DeepMocked<RolleRepo>;
-    let organisationRepository: DeepMocked<OrganisationRepository>;
-    let organisationService: DeepMocked<OrganisationService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [MapperTestModule],
+            imports: [],
             providers: [
                 PersonenkontextController,
                 {
@@ -83,8 +75,6 @@ describe('PersonenkontextController', () => {
         personenkontextService = module.get(PersonenkontextService);
         personService = module.get(PersonService);
         rolleRepo = module.get(RolleRepo);
-        organisationRepository = module.get(OrganisationRepository);
-        organisationService = module.get(OrganisationService);
     });
 
     afterAll(async () => {
@@ -229,7 +219,7 @@ describe('PersonenkontextController', () => {
         describe('when finding personenkontexte', () => {
             it('should return personenkontext for one allowed organisation', async () => {
                 const queryParams: PersonenkontextQueryParams = {
-                    referrer: 'referrer',
+                    username: 'username',
                     sichtfreigabe: SichtfreigabeType.JA,
                     personenstatus: Personenstatus.AKTIV,
                     offset: 0,
@@ -273,7 +263,7 @@ describe('PersonenkontextController', () => {
 
             it('should return personenkontext for root admins', async () => {
                 const queryParams: PersonenkontextQueryParams = {
-                    referrer: 'referrer',
+                    username: 'username',
                     sichtfreigabe: SichtfreigabeType.JA,
                     personenstatus: Personenstatus.AKTIV,
                     offset: 0,
@@ -312,68 +302,6 @@ describe('PersonenkontextController', () => {
                     expect(result.items[0].person.id).toBe(mockPersonenkontext.personId);
                     expect(result.items[0].personenkontexte).toHaveLength(1);
                 }
-            });
-        });
-    });
-
-    describe('hatSystemRecht', () => {
-        describe('when verifying user has existing SystemRecht', () => {
-            it('should return SystemrechtResponse', async () => {
-                const idParams: PersonByIdParams = { personId: '1' };
-                const bodyParams: HatSystemrechtQueryParams = {
-                    systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
-                };
-
-                const organisations: Organisation<true>[] = [
-                    DoFactory.createOrganisation(true, {
-                        id: 'org1',
-                        name: 'Organisation 1',
-                    }),
-                ];
-
-                const organisationResponses: OrganisationResponseLegacy[] = organisations.map(
-                    (org: Organisation<true>) => new OrganisationResponseLegacy(org),
-                );
-                const systemrechtResponse: SystemrechtResponse = {
-                    ROLLEN_VERWALTEN: organisationResponses,
-                };
-
-                personenkontextService.findPersonenkontexteByPersonId.mockResolvedValueOnce([
-                    DoFactory.createPersonenkontext(true, { rolleId: 'rolle1', organisationId: 'org1' }),
-                    DoFactory.createPersonenkontext(true, { rolleId: 'rolle2', organisationId: 'org2' }),
-                ]);
-                rolleRepo.findById
-                    .mockResolvedValueOnce(DoFactory.createRolle(true, { hasSystemRecht: () => true }))
-                    .mockResolvedValueOnce(undefined);
-                organisationRepository.findById.mockResolvedValue(organisations[0]);
-                const pagedOrgas: Paged<Organisation<true>> = {
-                    offset: 0,
-                    limit: 0,
-                    total: 0,
-                    items: [],
-                };
-                organisationService.findAllAdministriertVon.mockResolvedValue(pagedOrgas);
-
-                const response: SystemrechtResponse = await sut.hatSystemRecht(idParams, bodyParams);
-                expect(response).toEqual(systemrechtResponse);
-                expect(response.ROLLEN_VERWALTEN).toHaveLength(1);
-                expect(personenkontextService.findPersonenkontexteByPersonId).toHaveBeenCalledTimes(1);
-                expect(rolleRepo.findById).toHaveBeenCalledTimes(2);
-                expect(organisationRepository.findById).toHaveBeenCalledTimes(1);
-                expect(organisationService.findAllAdministriertVon).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('when verifying user has non-existing SystemRecht', () => {
-            it('should return 404', async () => {
-                const idParams: PersonByIdParams = {
-                    personId: '1',
-                };
-                const queryParams: HatSystemrechtQueryParams = {
-                    systemRecht: 'FALSCHER_RECHTE_NAME',
-                };
-
-                await expect(sut.hatSystemRecht(idParams, queryParams)).rejects.toThrow(HttpException);
             });
         });
     });

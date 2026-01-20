@@ -8,7 +8,6 @@ type FindProps = {
     ids?: PersonID[] | undefined[];
     vorname?: string;
     familienname?: string;
-    geburtsdatum?: Date;
     organisationen?: OrganisationID[];
 };
 
@@ -25,7 +24,6 @@ export class PersonScope extends ScopeBase<PersonEntity> {
                 },
                 findProps.vorname !== undefined && { vorname: findProps.vorname },
                 findProps.familienname !== undefined && { familienname: findProps.familienname },
-                findProps.geburtsdatum !== undefined && { geburtsdatum: findProps.geburtsdatum },
                 findProps.organisationen !== undefined && {
                     personenKontexte: { $some: { organisationId: { $in: findProps.organisationen } } },
                 },
@@ -48,7 +46,7 @@ export class PersonScope extends ScopeBase<PersonEntity> {
         return [entities, count];
     }
 
-    public findByPersonenKontext(organisationen?: string[] | undefined, rollen?: string[] | undefined): this {
+    public findByPersonenKontext(organisationen?: string[], rollen?: string[]): this {
         const filters: QBFilterQuery<PersonEntity> = {
             personenKontexte: {
                 ...(organisationen ? { organisationId: { $in: organisationen } } : {}),
@@ -60,7 +58,7 @@ export class PersonScope extends ScopeBase<PersonEntity> {
     }
 
     public findBySearchString(searchStr: string): this {
-        this.findBySubstring(['vorname', 'familienname', 'referrer', 'personalnummer'], searchStr, ScopeOperator.OR);
+        this.findBySubstring(['vorname', 'familienname', 'username', 'personalnummer'], searchStr, ScopeOperator.OR);
 
         return this;
     }

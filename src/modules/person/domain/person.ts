@@ -1,5 +1,5 @@
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
-import { Geschlecht, PersonExternalIdType, Vertrauensstufe } from './person.enums.js';
+import { PersonExternalIdType } from './person.enums.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { VornameForPersonWithTrailingSpaceError } from './vorname-with-trailing-space.error.js';
@@ -14,22 +14,7 @@ export type PersonCreationParams = {
     id?: number;
     familienname: string;
     vorname: string;
-    referrer?: string;
     stammorganisation?: string;
-    initialenFamilienname?: string;
-    initialenVorname?: string;
-    rufname?: string;
-    nameTitel?: string;
-    nameAnrede?: string[];
-    namePraefix?: string[];
-    nameSuffix?: string[];
-    nameSortierindex?: string;
-    geburtsdatum?: Date;
-    geburtsort?: string;
-    geschlecht?: Geschlecht;
-    lokalisierung?: string;
-    vertrauensstufe?: Vertrauensstufe;
-    auskunftssperre?: boolean;
     username?: string;
     password?: string;
     personalnummer?: string;
@@ -59,22 +44,7 @@ export class Person<WasPersisted extends boolean> {
         public revision: string,
         public username: string | undefined,
         public keycloakUserId: string | undefined,
-        public referrer: string | undefined,
         public stammorganisation: string | undefined,
-        public initialenFamilienname: string | undefined,
-        public initialenVorname: string | undefined,
-        public rufname: string | undefined,
-        public nameTitel: string | undefined,
-        public nameAnrede: string[] | undefined,
-        public namePraefix: string[] | undefined,
-        public nameSuffix: string[] | undefined,
-        public nameSortierindex: string | undefined,
-        public geburtsdatum: Date | undefined,
-        public geburtsort: string | undefined,
-        public geschlecht: Geschlecht | undefined,
-        public lokalisierung: string | undefined,
-        public vertrauensstufe: Vertrauensstufe | undefined,
-        public auskunftssperre: boolean | undefined,
         public personalnummer: string | undefined,
         public userLock: UserLock[],
         public orgUnassignmentDate: Date | undefined,
@@ -104,22 +74,7 @@ export class Person<WasPersisted extends boolean> {
         revision: string,
         username?: string,
         keycloakUserId?: string,
-        referrer?: string,
         stammorganisation?: string,
-        initialenFamilienname?: string,
-        initialenVorname?: string,
-        rufname?: string,
-        nameTitel?: string,
-        nameAnrede?: string[],
-        namePraefix?: string[],
-        nameSuffix?: string[],
-        nameSortierindex?: string,
-        geburtsdatum?: Date,
-        geburtsort?: string,
-        geschlecht?: Geschlecht,
-        lokalisierung?: string,
-        vertrauensstufe?: Vertrauensstufe,
-        auskunftssperre?: boolean,
         personalnummer?: string,
         orgUnassignmentDate?: Date,
         userLock: UserLock[] = [],
@@ -138,22 +93,7 @@ export class Person<WasPersisted extends boolean> {
             revision,
             username,
             keycloakUserId,
-            referrer,
             stammorganisation,
-            initialenFamilienname,
-            initialenVorname,
-            rufname,
-            nameTitel,
-            nameAnrede,
-            namePraefix,
-            nameSuffix,
-            nameSortierindex,
-            geburtsdatum,
-            geburtsort,
-            geschlecht,
-            lokalisierung,
-            vertrauensstufe,
-            auskunftssperre,
             personalnummer,
             userLock,
             orgUnassignmentDate,
@@ -188,22 +128,7 @@ export class Person<WasPersisted extends boolean> {
             '1',
             undefined, //username
             undefined, //keycloakUserId
-            creationParams.referrer,
             creationParams.stammorganisation,
-            creationParams.initialenFamilienname,
-            creationParams.initialenVorname,
-            creationParams.rufname,
-            creationParams.nameTitel,
-            creationParams.nameAnrede,
-            creationParams.namePraefix,
-            creationParams.nameSuffix,
-            creationParams.nameSortierindex,
-            creationParams.geburtsdatum,
-            creationParams.geburtsort,
-            creationParams.geschlecht,
-            creationParams.lokalisierung,
-            creationParams.vertrauensstufe,
-            creationParams.auskunftssperre,
             creationParams.personalnummer,
             creationParams.userLock ?? [],
             creationParams.orgUnassignmentDate,
@@ -241,22 +166,8 @@ export class Person<WasPersisted extends boolean> {
         revision: string,
         familienname?: string,
         vorname?: string,
-        referrer?: string,
+        username?: string,
         stammorganisation?: string,
-        initialenFamilienname?: string,
-        initialenVorname?: string,
-        rufname?: string,
-        nameTitel?: string,
-        nameAnrede?: string[],
-        namePraefix?: string[],
-        nameSuffix?: string[],
-        nameSortierindex?: string,
-        geburtsdatum?: Date,
-        geburtsort?: string,
-        geschlecht?: Geschlecht,
-        lokalisierung?: string,
-        vertrauensstufe?: Vertrauensstufe,
-        auskunftssperre?: boolean,
         personalnummer?: string,
         userLock?: UserLock[],
         orgUnassignmentDate?: Date,
@@ -285,29 +196,17 @@ export class Person<WasPersisted extends boolean> {
 
         this.familienname = familienname ?? this.familienname;
         this.vorname = vorname ?? this.vorname;
-        this.referrer = referrer;
+        this.username = username ?? this.username;
         this.stammorganisation = stammorganisation;
-        this.initialenFamilienname = initialenFamilienname;
-        this.initialenVorname = initialenVorname;
-        this.rufname = rufname;
-        this.nameTitel = nameTitel;
-        this.nameAnrede = nameAnrede;
-        this.namePraefix = namePraefix;
-        this.nameSuffix = nameSuffix;
-        this.nameSortierindex = nameSortierindex;
-        this.geburtsdatum = geburtsdatum;
-        this.geburtsort = geburtsort;
-        this.geschlecht = geschlecht;
-        this.lokalisierung = lokalisierung;
-        this.vertrauensstufe = vertrauensstufe;
-        this.auskunftssperre = auskunftssperre;
         this.revision = newRevision;
         this.personalnummer = personalnummer ?? this.personalnummer;
         this.orgUnassignmentDate = orgUnassignmentDate;
         this.isLocked = isLocked;
         this.email = email;
         this.userLock = userLock ?? [];
-        if (istTechnisch !== undefined) this.istTechnisch = istTechnisch;
+        if (istTechnisch !== undefined) {
+            this.istTechnisch = istTechnisch;
+        }
         this.externalIds = externalIds ?? this.externalIds;
     }
 

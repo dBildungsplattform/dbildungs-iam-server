@@ -13,7 +13,7 @@ export class PersonenQueryParams extends PagedQueryParams {
         required: false,
         nullable: true,
     })
-    public readonly referrer?: string;
+    public readonly username?: string;
 
     @IsOptional()
     @IsString()
@@ -69,7 +69,7 @@ export class PersonenQueryParams extends PagedQueryParams {
     @IsOptional()
     @ApiProperty({
         description:
-            'Search filter used to filter for Persons. It could be the vorname, familienname, referrer or the personalnummer.',
+            'Search filter used to filter for Persons. It could be the vorname, familienname, username or the personalnummer.',
         required: false,
         nullable: true,
     })

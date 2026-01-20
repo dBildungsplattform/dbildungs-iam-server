@@ -6,7 +6,7 @@ import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import { OrganisationID, PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
@@ -17,7 +17,6 @@ import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-del
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { KafkaEventHandler } from '../../eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
-import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-email-address-generated.event.js';
 import { KafkaEmailAddressChangedEvent } from '../../../shared/events/email/kafka-email-address-changed.event.js';
 import { inspect } from 'util';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
@@ -28,7 +27,6 @@ import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/ldap-e
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
 import { LdapEntryDeletedEvent } from '../../../shared/events/ldap/ldap-entry-deleted.event.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
 import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/kafka-person-deleted-after-deadline-exceeded.event.js';
 import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-renamed.event.js';
@@ -36,6 +34,12 @@ import { KafkaLdapEntryDeletedEvent } from '../../../shared/events/ldap/kafka-ld
 import { LdapDeleteLehrerError } from '../error/ldap-delete-lehrer.error.js';
 import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
 import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
+import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-email-address-generated.event.js';
+import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
+import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
+import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
+import { Ok } from '../../../shared/util/result.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -54,11 +58,12 @@ export class LdapEventHandler {
     private async getEmailDomainForOrganisationId(organisationId: OrganisationID): Promise<Result<string>> {
         const emailDomain: string | undefined =
             await this.organisationRepository.findEmailDomainForOrganisation(organisationId);
-        if (emailDomain)
+        if (emailDomain) {
             return {
                 ok: true,
                 value: emailDomain,
             };
+        }
 
         return { ok: false, error: new LdapEmailDomainError() };
     }
@@ -72,7 +77,9 @@ export class LdapEventHandler {
         this.logger.info(
             `Received PersonenkontextDeletedEvent, personId:${event.personId}, username:${event.username}`,
         );
-        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByUsername(event.username);
+        const deletionResult: Result<PersonID | null> = await this.ldapClientService.deleteLehrerByUsername(
+            event.username,
+        );
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
         }
@@ -89,7 +96,9 @@ export class LdapEventHandler {
         this.logger.info(
             `Received PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );
-        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByUsername(event.username);
+        const deletionResult: Result<PersonID | null> = await this.ldapClientService.deleteLehrerByUsername(
+            event.username,
+        );
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
         }
@@ -106,7 +115,7 @@ export class LdapEventHandler {
         this.logger.info(
             `Received PersonRenamedEvent, personId:${event.personId}, username:${event.username}, oldUsername:${event.oldUsername}`,
         );
-        const modifyResult: Result<PersonReferrer> = await this.ldapClientService.modifyPersonAttributes(
+        const modifyResult: Result<PersonUsername> = await this.ldapClientService.modifyPersonAttributes(
             event.oldUsername,
             event.vorname,
             event.familienname,
@@ -225,7 +234,7 @@ export class LdapEventHandler {
                                 this.logger.error(
                                     `LdapClientService createLehrer NOT called, because organisation:${pk.orgaId} has no valid emailDomain`,
                                 );
-                                return Promise.reject({ ok: false, error: new Error('Invalid email domain') });
+                                return Promise.reject(new Error('Invalid email domain'));
                             }
                         });
                 }),
@@ -265,6 +274,7 @@ export class LdapEventHandler {
             event.personId,
             event.username,
             event.address,
+            event.alternativeAddress,
         );
 
         return result;
@@ -284,6 +294,7 @@ export class LdapEventHandler {
             event.personId,
             event.username,
             event.newAddress,
+            event.oldAddress,
         );
 
         return result;
@@ -340,7 +351,10 @@ export class LdapEventHandler {
             };
         }
 
-        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByUsername(event.username);
+        const deletionResult: Result<PersonID | null> = await this.ldapClientService.deleteLehrerByUsername(
+            event.username,
+            true,
+        );
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
         } else {
@@ -351,6 +365,22 @@ export class LdapEventHandler {
         }
 
         return deletionResult;
+    }
+
+    @KafkaEventHandler(KafkaOrganisationDeletedEvent)
+    @EventHandler(OrganisationDeletedEvent)
+    public async handleOrganisationDeletedEvent(event: OrganisationDeletedEvent): Promise<Result<unknown>> {
+        this.logger.info(
+            `Received OrganisationDeletedEvent, organisationId:${event.organisationId}, name:${event.name}, kennung:${event.kennung}, typ:${event.typ}`,
+        );
+        if (event?.typ !== OrganisationsTyp.SCHULE || !event.kennung) {
+            this.logger.info(
+                `Cannot delete organisation, since typ is not ${OrganisationsTyp.SCHULE} or kennung is UNDEFINED, organisationId:${event.organisationId}, kennung:${event.kennung}, typ:${event.typ}`,
+            );
+            return Ok(undefined);
+        }
+
+        return this.ldapClientService.deleteOrganisation(event.kennung);
     }
 
     public hatZuordnungZuOrganisationNachLoeschen(

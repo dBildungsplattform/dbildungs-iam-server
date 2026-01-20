@@ -1,12 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DbSeedService } from './db-seed.service.js';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    DoFactory,
-    LoggingTestModule,
-    MapperTestModule,
-} from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import fs from 'fs';
 import { DataProviderFile } from '../file/data-provider-file.js';
 import { PersonFactory } from '../../../modules/person/domain/person.factory.js';
@@ -33,14 +27,22 @@ import { NameForOrganisationWithTrailingSpaceError } from '../../../modules/orga
 import { NameForRolleWithTrailingSpaceError } from '../../../modules/rolle/domain/name-with-trailing-space.error.js';
 import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
 import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
+import { EmailDomainRepo } from '../../../email/modules/core/persistence/email-domain.repo.js';
+import { EmailDomain } from '../../../email/modules/core/domain/email-domain.js';
+import { DbSeedReference } from './db-seed-reference.js';
+import { RollenerweiterungRepo } from '../../../modules/rolle/repo/rollenerweiterung.repo.js';
+import { RollenerweiterungFactory } from '../../../modules/rolle/domain/rollenerweiterung.factory.js';
+import { Rollenerweiterung } from '../../../modules/rolle/domain/rollenerweiterung.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
     let dbSeedService: DbSeedService;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
+    let rollenerweiterungenRepoMock: DeepMocked<RollenerweiterungRepo>;
     let personRepoMock: DeepMocked<PersonRepository>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
+    let emailDomainRepoMock: DeepMocked<EmailDomainRepo>;
     let personenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
     let dbSeedReferenceRepoMock: DeepMocked<DbSeedReferenceRepo>;
     let kcUserService: DeepMocked<KeycloakUserService>;
@@ -48,12 +50,7 @@ describe('DbSeedService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                LoggingTestModule,
-                ConfigTestModule,
-                MapperTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
-            ],
+            imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [
                 DbSeedService,
                 RolleFactory,
@@ -76,6 +73,10 @@ describe('DbSeedService', () => {
                     useValue: createMock<PersonRepository>(),
                 },
                 {
+                    provide: EmailDomainRepo,
+                    useValue: createMock<EmailDomainRepo>(),
+                },
+                {
                     provide: DBiamPersonenkontextRepoInternal,
                     useValue: createMock<DBiamPersonenkontextRepoInternal>(),
                 },
@@ -86,6 +87,14 @@ describe('DbSeedService', () => {
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: RollenerweiterungRepo,
+                    useValue: createMock<RollenerweiterungRepo>(),
+                },
+                {
+                    provide: RollenerweiterungFactory,
+                    useValue: createMock<RollenerweiterungFactory>(),
                 },
                 {
                     provide: ServiceProviderRepo,
@@ -99,17 +108,23 @@ describe('DbSeedService', () => {
                     provide: KeycloakGroupRoleService,
                     useValue: createMock<KeycloakGroupRoleService>(),
                 },
+                {
+                    provide: EmailDomainRepo,
+                    useValue: createMock<EmailDomainRepo>(),
+                },
             ],
         }).compile();
         dbSeedService = module.get(DbSeedService);
         organisationRepositoryMock = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);
+        rollenerweiterungenRepoMock = module.get(RollenerweiterungRepo);
         personRepoMock = module.get(PersonRepository);
         serviceProviderRepoMock = module.get(ServiceProviderRepo);
         personenkontextServiceMock = module.get(DBiamPersonenkontextService);
         dbSeedReferenceRepoMock = module.get(DbSeedReferenceRepo);
         kcUserService = module.get(KeycloakUserService);
         personFactory = module.get(PersonFactory);
+        emailDomainRepoMock = module.get(EmailDomainRepo);
     });
 
     afterAll(async () => {
@@ -397,6 +412,62 @@ describe('DbSeedService', () => {
         });
     });
 
+    describe('seedRollenerweiterung', () => {
+        it('should not throw an error', async () => {
+            const fileContentAsStr: string = fs.readFileSync(
+                `./seeding/seeding-integration-test/rollenerweiterungen/01_rollenerweiterung.json`,
+                'utf-8',
+            );
+            dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+            organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock getReferencedOrganisation
+
+            dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+            rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>({ merkmale: [] })); // mock getReferencedRolle
+
+            dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+            serviceProviderRepoMock.findById.mockResolvedValue(createMock<ServiceProvider<true>>()); // mock getReferencedServiceProvider
+
+            rollenerweiterungenRepoMock.create.mockResolvedValue(
+                createMock<Rollenerweiterung<true>>({
+                    id: faker.string.uuid(),
+                }),
+            );
+            dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid());
+            dbSeedReferenceRepoMock.create.mockResolvedValue(createMock<DbSeedReference>());
+
+            await expect(dbSeedService.seedRollenerweiterung(fileContentAsStr)).resolves.not.toThrow();
+            expect(rollenerweiterungenRepoMock.create).toHaveBeenCalledTimes(1);
+            expect(dbSeedReferenceRepoMock.create).toHaveBeenCalledTimes(0);
+        });
+
+        it('should not throw an error when id is set', async () => {
+            const fileContentAsStr: string = fs.readFileSync(
+                `./seeding/seeding-integration-test/rollenerweiterungen/02_rollenerweiterung-with-id.json`,
+                'utf-8',
+            );
+            dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+            organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock getReferencedOrganisation
+
+            dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+            rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>({ merkmale: [] })); // mock getReferencedRolle
+
+            dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+            serviceProviderRepoMock.findById.mockResolvedValue(createMock<ServiceProvider<true>>()); // mock getReferencedServiceProvider
+
+            rollenerweiterungenRepoMock.create.mockResolvedValue(
+                createMock<Rollenerweiterung<true>>({
+                    id: faker.string.uuid(),
+                }),
+            );
+            dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid());
+            dbSeedReferenceRepoMock.create.mockResolvedValue(createMock<DbSeedReference>());
+
+            await expect(dbSeedService.seedRollenerweiterung(fileContentAsStr)).resolves.not.toThrow();
+            expect(rollenerweiterungenRepoMock.create).toHaveBeenCalledTimes(1);
+            expect(dbSeedReferenceRepoMock.create).toHaveBeenCalledTimes(1);
+        });
+    });
+
     describe('seedServiceProvider', () => {
         describe('seedServiceProvider with two entities', () => {
             it('should not throw an error', async () => {
@@ -427,6 +498,38 @@ describe('DbSeedService', () => {
         });
     });
 
+    describe('seedEmailDomain', () => {
+        it('should not throw an error', async () => {
+            const fileContentAsStr: string = fs.readFileSync(
+                `./seeding/seeding-integration-test/emailDomain/01_email-domain.json`,
+                'utf-8',
+            );
+            emailDomainRepoMock.create.mockResolvedValue(
+                createMock<EmailDomain<true>>({ id: faker.string.uuid(), domain: 'test1.com' }),
+            );
+            dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid());
+            dbSeedReferenceRepoMock.create.mockResolvedValue(createMock<DbSeedReference>());
+
+            await expect(dbSeedService.seedEmailDomain(fileContentAsStr)).resolves.not.toThrow();
+            expect(emailDomainRepoMock.create).toHaveBeenCalledTimes(2);
+            expect(dbSeedReferenceRepoMock.create).toHaveBeenCalledTimes(2);
+        });
+
+        it('should skip reference if persistedEmailDomain is undefined', async () => {
+            const fileContentAsStr: string = fs.readFileSync(
+                `./seeding/seeding-integration-test/emailDomain/01_email-domain.json`,
+                'utf-8',
+            );
+            emailDomainRepoMock.create.mockResolvedValueOnce(undefined as unknown as EmailDomain<true>);
+            emailDomainRepoMock.create.mockResolvedValueOnce(
+                createMock<EmailDomain<true>>({ id: faker.string.uuid(), domain: 'test2.com' }),
+            );
+
+            await dbSeedService.seedEmailDomain(fileContentAsStr);
+            expect(dbSeedReferenceRepoMock.create).toHaveBeenCalledTimes(1);
+        });
+    });
+
     describe('seedPerson', () => {
         describe('person already exists in keycloak', () => {
             it('should delete the person and then create it again', async () => {
@@ -446,7 +549,6 @@ describe('DbSeedService', () => {
                         ID_ITSLEARNING: [faker.string.uuid()],
                     },
                     true,
-                    {},
                 );
 
                 kcUserService.findOne.mockResolvedValueOnce({ ok: true, value: existingUser });
@@ -709,7 +811,7 @@ describe('DbSeedService', () => {
                     'seeding-integration-test/all',
                     '01',
                 );
-                expect(entityFileNames).toHaveLength(7);
+                expect(entityFileNames).toHaveLength(9);
             });
         });
     });

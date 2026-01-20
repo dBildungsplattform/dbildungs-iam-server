@@ -15,7 +15,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { Person } from '../../person/domain/person.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rollenart-for-lern.error.js';
@@ -27,8 +27,11 @@ import { PersonenkontextBefristungRequiredError } from './error/personenkontext-
 import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
-import { LernHatKlasse } from '../specification/lern-hat-klasse.js';
-import { LernHatKeineKlasseError } from '../specification/error/lern-hat-keine-klasse.error.js';
+import { LernAnSchuleUndKlasse } from '../specification/lern-an-schule-und-klasse.js';
+import { UpdateLernNotAtSchuleAndKlasseError } from './error/update-lern-not-at-schule-and-klasse.error.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { CheckDuplicateKlassenkontextSpecification } from '../specification/check-duplicate-klassenkontext.js';
+import { DuplicateKlassenkontextError } from './error/update-invalid-duplicate-klassenkontext-for-same-rolle.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -82,19 +85,19 @@ export class PersonenkontexteUpdate {
         );
     }
 
-    /* eslint-disable no-await-in-loop */
     private async getSentPersonenkontexte(): Promise<Personenkontext<boolean>[] | PersonenkontexteUpdateError> {
         const personenKontexte: Personenkontext<boolean>[] = [];
         for (const pkBodyParam of this.dBiamPersonenkontextBodyParams) {
-            if (pkBodyParam.personId != this.personId) {
+            if (pkBodyParam.personId !== this.personId) {
                 return new UpdatePersonIdMismatchError();
             }
+            // eslint-disable-next-line no-await-in-loop
             const pk: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.find(
                 pkBodyParam.personId,
                 pkBodyParam.organisationId,
                 pkBodyParam.rolleId,
             );
-            if (!pk || pk.befristung?.getTime() != pkBodyParam.befristung?.getTime()) {
+            if (!pk || pk.befristung?.getTime() !== pkBodyParam.befristung?.getTime()) {
                 const newPK: Personenkontext<false> = this.personenkontextFactory.createNew(
                     pkBodyParam.personId,
                     pkBodyParam.organisationId,
@@ -116,7 +119,6 @@ export class PersonenkontexteUpdate {
         return personenKontexte;
     }
 
-    /* eslint-disable no-await-in-loop */
     private async validate(existingPKs: Personenkontext<true>[]): Promise<Option<PersonenkontexteUpdateError>> {
         const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
 
@@ -222,20 +224,19 @@ export class PersonenkontexteUpdate {
             if (
                 !sentPKs.some(
                     (pk: Personenkontext<true>) =>
-                        pk.personId == existingPK.personId &&
-                        pk.organisationId == existingPK.organisationId &&
-                        pk.rolleId == existingPK.rolleId &&
-                        pk.befristung?.getTime() == existingPK.befristung?.getTime(),
+                        pk.personId === existingPK.personId &&
+                        pk.organisationId === existingPK.organisationId &&
+                        pk.rolleId === existingPK.rolleId &&
+                        pk.befristung?.getTime() === existingPK.befristung?.getTime(),
                 )
             ) {
                 try {
-                    /* eslint-disable no-await-in-loop */
-                    await this.dBiamPersonenkontextRepoInternal.delete(existingPK).then(() => {});
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.dBiamPersonenkontextRepoInternal.delete(existingPK);
                     deletedPKs.push(existingPK);
                     this.logger.info(
                         `Schulzuordnung (Organisation:${existingPK.organisationId}, Rolle:${existingPK.rolleId}) für Benutzer mit BenutzerId: {${existingPK.personId}}.'}`,
                     );
-                    /* eslint-disable no-await-in-loop */
                 } catch (err) {
                     this.logger.error(`Personenkontext with ID ${existingPK.id} could not be deleted!`, err);
                 }
@@ -245,7 +246,6 @@ export class PersonenkontexteUpdate {
         return deletedPKs;
     }
 
-    /* eslint-disable no-await-in-loop */
     private async add(
         existingPKs: Personenkontext<true>[],
         sentPKs: Personenkontext<boolean>[],
@@ -256,13 +256,14 @@ export class PersonenkontexteUpdate {
             if (
                 !existingPKs.some(
                     (existingPK: Personenkontext<true>) =>
-                        existingPK.personId == sentPK.personId &&
-                        existingPK.organisationId == sentPK.organisationId &&
-                        existingPK.rolleId == sentPK.rolleId &&
-                        existingPK.befristung?.getTime() == sentPK.befristung?.getTime(),
+                        existingPK.personId === sentPK.personId &&
+                        existingPK.organisationId === sentPK.organisationId &&
+                        existingPK.rolleId === sentPK.rolleId &&
+                        existingPK.befristung?.getTime() === sentPK.befristung?.getTime(),
                 )
             ) {
                 try {
+                    // eslint-disable-next-line no-await-in-loop
                     const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepoInternal.save(sentPK);
                     createdPKs.push(savedPK);
                     this.logger.info(
@@ -276,9 +277,23 @@ export class PersonenkontexteUpdate {
                 }
             }
         }
-        /* eslint-disable no-await-in-loop */
 
         return createdPKs;
+    }
+
+    private async checkDuplicateKlassenkontext(
+        sentPKs: Personenkontext<boolean>[],
+    ): Promise<Option<PersonenkontexteUpdateError>> {
+        const isSatisfied: boolean = await new CheckDuplicateKlassenkontextSpecification(
+            this.organisationRepo,
+            this.rolleRepo,
+        ).checkDuplicateKlassenkontext(sentPKs);
+
+        if (!isSatisfied) {
+            return new DuplicateKlassenkontextError();
+        }
+
+        return undefined;
     }
 
     private async checkRollenartSpecification(
@@ -296,15 +311,16 @@ export class PersonenkontexteUpdate {
         return undefined;
     }
 
-    private async checkLernHatKlasseSpecification(
+    private async checkLernAnSchuleUndKlasseSpecification(
         sentPKs: Personenkontext<boolean>[],
     ): Promise<Option<PersonenkontexteUpdateError>> {
-        const isSatisfied: boolean = await new LernHatKlasse(this.organisationRepo, this.rolleRepo).isSatisfiedBy(
-            sentPKs,
-        );
+        const isSatisfied: boolean = await new LernAnSchuleUndKlasse(
+            this.organisationRepo,
+            this.rolleRepo,
+        ).isSatisfiedBy(sentPKs);
 
         if (!isSatisfied) {
-            return new LernHatKeineKlasseError();
+            return new UpdateLernNotAtSchuleAndKlasseError();
         }
 
         return undefined;
@@ -322,7 +338,9 @@ export class PersonenkontexteUpdate {
         return undefined;
     }
 
-    public async update(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
+    public async update(): Promise<
+        Personenkontext<true>[] | PersonenkontexteUpdateError | DuplicatePersonalnummerError
+    > {
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
         if (sentPKs instanceof PersonenkontexteUpdateError) {
             return sentPKs;
@@ -337,9 +355,15 @@ export class PersonenkontexteUpdate {
         }
 
         const validationForLernHatKlasseError: Option<PersonenkontexteUpdateError> =
-            await this.checkLernHatKlasseSpecification(sentPKs);
+            await this.checkLernAnSchuleUndKlasseSpecification(sentPKs);
         if (validationForLernHatKlasseError) {
             return validationForLernHatKlasseError;
+        }
+
+        const validationForDuplicateKlassenkontext: Option<PersonenkontexteUpdateError> =
+            await this.checkDuplicateKlassenkontext(sentPKs);
+        if (validationForDuplicateKlassenkontext) {
+            return validationForDuplicateKlassenkontext;
         }
 
         const validationForBefristung: Option<PersonenkontexteUpdateError> =
@@ -347,6 +371,7 @@ export class PersonenkontexteUpdate {
         if (validationForBefristung) {
             return validationForBefristung;
         }
+
         const validationError: Option<PersonenkontexteUpdateError> = await this.validate(existingPKs);
         if (validationError) {
             return validationError;
@@ -357,6 +382,25 @@ export class PersonenkontexteUpdate {
             return permissionsError;
         }
 
+        // Update the personalnummer if it is provided
+        if (this.personalnummer) {
+            const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
+            if (person) {
+                const updateResult: Person<true> | DomainError = await this.personRepo.updatePersonMetadata(
+                    person.id,
+                    person.familienname,
+                    person.vorname,
+                    this.personalnummer,
+                    person.updatedAt,
+                    person.revision,
+                    this.permissions,
+                );
+                if (updateResult instanceof DomainError) {
+                    return updateResult;
+                }
+            }
+        }
+
         const deletedPKs: Personenkontext<true>[] = await this.delete(existingPKs, sentPKs);
         const createdPKs: Personenkontext<true>[] = await this.add(existingPKs, sentPKs);
 
@@ -364,17 +408,8 @@ export class PersonenkontexteUpdate {
             this.personId,
         );
 
-        // Update the personalnummer if it is provided
-        if (this.personalnummer) {
-            const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
-            if (person) {
-                person.personalnummer = this.personalnummer;
-                await this.personRepo.save(person);
-            }
-        }
-
         // Set value with current date in database, when person has no Personenkontext anymore
-        if (existingPKsAfterUpdate.length == 0) {
+        if (existingPKsAfterUpdate.length === 0) {
             const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
             if (person) {
                 person.orgUnassignmentDate = new Date();
@@ -382,7 +417,7 @@ export class PersonenkontexteUpdate {
             }
         } else {
             const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
-            if (person && person.orgUnassignmentDate) {
+            if (person?.orgUnassignmentDate) {
                 person.orgUnassignmentDate = undefined;
                 await this.personRepo.save(person);
             }

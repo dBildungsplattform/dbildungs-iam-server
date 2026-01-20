@@ -26,7 +26,7 @@ describe('PrivacyIdeaAdministrationController', () => {
     let personRepository: DeepMocked<PersonRepository>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
 
-    function getPerson(emptyReferrer: boolean = false): Person<true> {
+    function getPerson(emptyUsername: boolean = false): Person<true> {
         return Person.construct(
             faker.string.uuid(),
             faker.date.past(),
@@ -34,9 +34,9 @@ describe('PrivacyIdeaAdministrationController', () => {
             faker.person.lastName(),
             faker.person.firstName(),
             '1',
+            emptyUsername ? undefined : faker.string.uuid(),
             faker.lorem.word(),
             faker.lorem.word(),
-            emptyReferrer ? undefined : faker.string.uuid(),
         );
     }
 
@@ -59,6 +59,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         sut = module.get<PrivacyIdeaAdministrationController>(PrivacyIdeaAdministrationController);
         serviceMock = module.get<DeepMocked<PrivacyIdeaAdministrationService>>(PrivacyIdeaAdministrationService);
         personRepository = module.get<DeepMocked<PersonRepository>>(PersonRepository);
+        personPermissionsMock = createMock<PersonPermissions>();
     });
 
     afterAll(async () => {
@@ -78,7 +79,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: true,
                 value: person,
             });
-            personPermissionsMock = createMock<PersonPermissions>();
 
             serviceMock.initializeSoftwareToken.mockResolvedValue('token123');
             const response: string = await sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock);
@@ -90,7 +90,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: false,
                 error: new Error('Forbidden access'),
             });
-            personPermissionsMock = createMock<PersonPermissions>();
             await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
                 new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
             );
@@ -101,7 +100,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: true,
                 value: person,
             });
-            personPermissionsMock = createMock<PersonPermissions>();
             serviceMock.initializeSoftwareToken.mockRejectedValueOnce(
                 new SoftwareTokenInitializationError('SoftwareToken Error'),
             );
@@ -152,7 +150,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                 user_realm: '',
                 username: '',
             };
-            personPermissionsMock = createMock<PersonPermissions>();
 
             serviceMock.getTwoAuthState.mockResolvedValue(mockTokenState);
             const response: TokenStateResponse = await sut.getTwoAuthState('user1', personPermissionsMock);
@@ -167,8 +164,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: true,
                 value: person,
             });
-
-            personPermissionsMock = createMock<PersonPermissions>();
 
             serviceMock.getTwoAuthState.mockResolvedValue(undefined);
             serviceMock.requires2fa.mockResolvedValue(twoFaRequired);
@@ -187,7 +182,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
 
-        it('should return user not found if referrer is undefined', async () => {
+        it('should return user not found if username is undefined', async () => {
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: getPerson(true),
@@ -198,7 +193,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
 
-        it('should return user not found if referrer is undefined', async () => {
+        it('should return user not found if username is undefined', async () => {
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: getPerson(true),
@@ -209,7 +204,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
 
-        it('should return user not found if referrer is undefined self service', async () => {
+        it('should return user not found if username is undefined self service', async () => {
             personRepository.findById.mockResolvedValueOnce(getPerson(true));
             personPermissionsMock.personFields.id = 'user1';
 
@@ -218,7 +213,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
 
-        it('should return valid response if referrer is valid self service', async () => {
+        it('should return valid response if username is valid self service', async () => {
             personRepository.findById.mockResolvedValueOnce(getPerson(false));
             personPermissionsMock.personFields.id = 'user1';
 
@@ -227,6 +222,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             expect(response).toEqual(new TokenStateResponse(undefined));
         });
     });
+
     describe('PrivacyIdeaAdministrationController resetToken', () => {
         it('should successfully reset a token', async () => {
             const person: Person<true> = getPerson();
@@ -243,7 +239,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             const response: boolean = await sut.resetToken(personId, personPermissionsMock);
 
             expect(response).toEqual(mockResetTokenResponse.result.status);
-            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.referrer);
+            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.username);
         });
 
         it('should return bad request if username is not given or not found', async () => {
@@ -283,7 +279,7 @@ describe('PrivacyIdeaAdministrationController', () => {
 
             await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(tokenError);
 
-            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.referrer);
+            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.username);
         });
 
         it('should map other errors to SchulConnexError', async () => {
@@ -303,15 +299,11 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ),
             );
 
-            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.referrer);
+            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.username);
         });
     });
 
     describe('PrivacyIdeaAdministrationController assignHardwareToken', () => {
-        beforeEach(() => {
-            personPermissionsMock = createMock<PersonPermissions>();
-        });
-
         it('should successfully assign a hardware token', async () => {
             const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
             const mockAssignTokenResponse: AssignTokenResponse = createMock<AssignTokenResponse>();
@@ -354,7 +346,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
 
-        it('should return user not found if referrer is undefined', async () => {
+        it('should return user not found if username is undefined', async () => {
             const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
@@ -442,7 +434,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
 
-        it('should return user not found if referrer is undefined', async () => {
+        it('should return user not found if username is undefined', async () => {
             personPermissionsMock = createMock<PersonPermissions>();
 
             jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({

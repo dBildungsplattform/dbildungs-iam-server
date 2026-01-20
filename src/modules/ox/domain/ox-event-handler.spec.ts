@@ -1,56 +1,70 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
+
+import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { EmailAddressID, OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
-import { OxEventHandler } from './ox-event-handler.js';
-import { OxService } from './ox.service.js';
-import { CreateUserAction } from '../actions/user/create-user.action.js';
+import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
+import { EntityCouldNotBeCreated } from '../../../shared/error/index.js';
 import { OxError } from '../../../shared/error/ox.error.js';
+import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
+import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email/email-address-already-exists.event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
+import { EmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/email-address-generated-after-ldap-sync-failed.event.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
+import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
+import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
+import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { EmailAddressID, OrganisationKennung, PersonID, PersonUsername } from '../../../shared/types/index.js';
+import { OXContextID, OXContextName, OXGroupID, OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { Person } from '../../person/domain/person.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
+import { ListGroupsAction, ListGroupsResponse } from '../actions/group/list-groups.action.js';
+import { CreateUserAction } from '../actions/user/create-user.action.js';
 import { ExistsUserAction } from '../actions/user/exists-user.action.js';
-import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
-import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
 import { GetDataForUserResponse } from '../actions/user/get-data-user.action.js';
-import { EntityCouldNotBeCreated } from '../../../shared/error/index.js';
-import { OXContextID, OXContextName, OXGroupID, OXUserID } from '../../../shared/types/ox-ids.types.js';
-import { ListGroupsAction } from '../actions/group/list-groups.action.js';
-import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email/email-address-already-exists.event.js';
-import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
-import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
-import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
-import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
-import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
-import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
-import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
+import { OxGroupNotFoundError } from '../error/ox-group-not-found.error.js';
+import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 import { OxNoSuchUserError } from '../error/ox-no-such-user.error.js';
+import { OxEventHandler } from './ox-event-handler.js';
+import { OxEventService } from './ox-event.service.js';
+import { OxSyncEventHandler } from './ox-sync-event-handler.js';
+import { OxService } from './ox.service.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
 
     let sut: OxEventHandler;
     let oxServiceMock: DeepMocked<OxService>;
+    let oxSyncHandlerMock: DeepMocked<OxSyncEventHandler>;
     let loggerMock: DeepMocked<ClassLogger>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let emailRepoMock: DeepMocked<EmailRepo>;
     let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
+    let emailResolverService: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot()],
             providers: [
                 OxEventHandler,
+                OxEventService,
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
@@ -76,19 +90,30 @@ describe('OxEventHandler', () => {
                     useValue: createMock<OxService>(),
                 },
                 {
+                    provide: OxSyncEventHandler,
+                    useValue: createMock<OxSyncEventHandler>(),
+                },
+                {
                     provide: EventRoutingLegacyKafkaService,
                     useValue: createMock<EventRoutingLegacyKafkaService>(),
+                },
+                {
+                    provide: EmailResolverService,
+                    useValue: createMock<EmailResolverService>(),
                 },
             ],
         }).compile();
 
         sut = module.get(OxEventHandler);
         oxServiceMock = module.get(OxService);
+        oxSyncHandlerMock = module.get(OxSyncEventHandler);
         loggerMock = module.get(ClassLogger);
 
         personRepositoryMock = module.get(PersonRepository);
         emailRepoMock = module.get(EmailRepo);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
+        emailResolverService = module.get(EmailResolverService);
+        jest.useFakeTimers();
     });
 
     function getRequestedEmailAddresses(address?: string): EmailAddress<true>[] {
@@ -178,10 +203,10 @@ describe('OxEventHandler', () => {
      * @param oxUserId
      * @param email
      */
-    function getPerson(id?: PersonID, username?: PersonReferrer, oxUserId?: OXUserID, email?: string): Person<true> {
+    function getPerson(id?: PersonID, username?: PersonUsername, oxUserId?: OXUserID, email?: string): Person<true> {
         return createMock<Person<true>>({
             id: id ?? faker.string.uuid(),
-            referrer: username ?? faker.internet.userName(),
+            username: username ?? faker.internet.userName(),
             oxUserId: oxUserId ?? faker.string.numeric(),
             email: email ?? faker.internet.email(),
         });
@@ -243,6 +268,40 @@ describe('OxEventHandler', () => {
     beforeEach(() => {
         sut.ENABLED = true;
         jest.resetAllMocks();
+        emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+    });
+
+    describe('Ignore events when new Microservice enabled', () => {
+        it('should log ignoring PersonenkontextUpdatedEvent event', async () => {
+            jest.resetAllMocks();
+            emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+            const personId: PersonID = faker.string.uuid();
+            const rollenArtLehrPKOrgaKennung: OrganisationKennung = faker.string.numeric(7);
+            const event: PersonenkontextUpdatedEvent = getPersonenkontextUpdatedEvent(
+                personId,
+                rollenArtLehrPKOrgaKennung,
+                true,
+            );
+
+            await sut.handlePersonenkontextUpdatedEvent(event);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Ignoring Event for personId:${personId} because email microservice is enabled`,
+            );
+        });
+
+        it('should log ignoring PersonDeletedEvent event', async () => {
+            jest.resetAllMocks();
+            emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+            const personId: PersonID = faker.string.uuid();
+            const event: PersonDeletedEvent = new PersonDeletedEvent(personId, faker.internet.userName());
+
+            await sut.handlePersonDeletedEvent(event);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Ignoring Event for personId:${personId} because email microservice is enabled`,
+            );
+        });
     });
 
     describe('createOxGroup', () => {
@@ -263,7 +322,7 @@ describe('OxEventHandler', () => {
                 true,
                 fakeDstNr,
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: faker.internet.userName() });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
         });
 
         describe('when creating group fails', () => {
@@ -320,7 +379,7 @@ describe('OxEventHandler', () => {
                 true,
                 fakeDstNr,
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: faker.internet.userName() });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
         });
 
         describe('when existing group is found', () => {
@@ -507,7 +566,7 @@ describe('OxEventHandler', () => {
 
     describe('addOxUserToOxGroup', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let fakeDstNr: string;
         let event: EmailAddressGeneratedEvent;
@@ -530,7 +589,51 @@ describe('OxEventHandler', () => {
                 true,
                 fakeDstNr,
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: faker.internet.userName() });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
+        });
+
+        describe('when adding user as member to group fails because member is already in group', () => {
+            it('should log info about that intentional error', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
+                    createMock<EmailAddress<true>>(),
+                ]);
+
+                //mock exists-oxUser-request
+                mockExistsUserRequest(false);
+                //mock create-oxUser-request
+                const fakeOXUserId: string = faker.string.uuid();
+                mockUserCreationRequest(fakeOXUserId, event.address);
+                //mock list-oxGroups-request, empty result -> no groups found
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        groups: [],
+                    },
+                });
+                const fakeOxGroupId: OXGroupID = faker.string.uuid();
+                //mock create-oxGroup-request
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        id: fakeOxGroupId,
+                    },
+                });
+                //mock add-member-to-oxGroup-request
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: false,
+                    error: new OxMemberAlreadyInGroupError('msg'),
+                });
+
+                await sut.handleEmailAddressGeneratedEvent(event);
+
+                expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
+                expect(loggerMock.infoPersonalized).toHaveBeenCalledWith(
+                    `Added OxUser To OxGroup not necessary (already in group), oxUserId:${fakeOXUserId}, oxGroupId:${fakeOxGroupId}`,
+                    personIdentifier,
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+            });
         });
 
         describe('when adding user as member to group fails', () => {
@@ -580,7 +683,7 @@ describe('OxEventHandler', () => {
 
     describe('handleEmailAddressGeneratedEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let event: EmailAddressGeneratedEvent;
         let person: Person<true>;
@@ -601,7 +704,7 @@ describe('OxEventHandler', () => {
                 true,
                 faker.string.numeric(),
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: username });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: username });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -628,6 +731,19 @@ describe('OxEventHandler', () => {
             );
         });
 
+        it('should set email to failed when person already exists in OX', async () => {
+            const mockEmail: DeepMocked<EmailAddress<true>> = createMock();
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([mockEmail]);
+            //mock exists-oxUser-request
+            mockExistsUserRequest(true);
+
+            await sut.handleEmailAddressGeneratedEvent(event);
+
+            expect(mockEmail.failed).toHaveBeenCalled();
+            expect(emailRepoMock.save).toHaveBeenCalledWith(mockEmail);
+        });
+
         it('should log error when person cannot be found in DB', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
@@ -638,7 +754,7 @@ describe('OxEventHandler', () => {
         });
 
         it('should log error when person has no username set', async () => {
-            person.referrer = undefined;
+            person.username = undefined;
             personRepositoryMock.findById.mockResolvedValueOnce(person);
 
             await sut.handleEmailAddressGeneratedEvent(event);
@@ -855,9 +971,98 @@ describe('OxEventHandler', () => {
         });
     });
 
+    describe('handleEmailAddressGeneratedAfterLdapSyncFailedEvent', () => {
+        let personId: PersonID;
+        let username: PersonUsername;
+        let personIdentifier: PersonIdentifier;
+        let event: EmailAddressGeneratedAfterLdapSyncFailedEvent;
+        let person: Person<true>;
+
+        beforeEach(() => {
+            jest.resetAllMocks();
+            personId = faker.string.uuid();
+            username = faker.internet.userName();
+            personIdentifier = {
+                personId: personId,
+                username: username,
+            };
+            event = new EmailAddressGeneratedAfterLdapSyncFailedEvent(
+                personId,
+                username,
+                faker.string.uuid(),
+                faker.internet.email(),
+                true,
+                faker.string.numeric(),
+            );
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: username });
+        });
+
+        it('should skip event, if not enabled', async () => {
+            sut.ENABLED = false;
+            await sut.handleEmailAddressGeneratedAfterLdapSyncFailedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
+            expect(oxServiceMock.send).not.toHaveBeenCalled();
+        });
+
+        it('should log info and publish OxUserCreatedEvent on success', async () => {
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
+
+            //mock exists-oxUser-request
+            mockExistsUserRequest(false);
+            //mock create-oxUser-request
+            const fakeOXUserId: string = faker.string.uuid();
+            mockUserCreationRequest(fakeOXUserId, event.address);
+            //mock list-oxGroups-request, no result -> mocks no group found
+            const fakeOXGroupId: string = faker.string.uuid();
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    groups: [],
+                },
+            });
+            //mock create-oxGroup-request
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    id: fakeOXGroupId,
+                },
+            });
+            //mock add-member-to-oxGroup-request
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    status: {
+                        code: 'success',
+                    },
+                    data: undefined,
+                },
+            });
+            //mock changeByModuleAccess request
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            });
+
+            await sut.handleEmailAddressGeneratedAfterLdapSyncFailedEvent(event);
+
+            expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
+            expect(loggerMock.infoPersonalized).toHaveBeenCalledWith(
+                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}`,
+                personIdentifier,
+            );
+            expect(loggerMock.infoPersonalized).toHaveBeenLastCalledWith(
+                `Successfully Added OxUser To OxGroup, oxUserId:${fakeOXUserId}, oxGroupId:${fakeOXGroupId}`,
+                personIdentifier,
+            );
+            expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
+        });
+    });
+
     describe('handleEmailAddressChangedEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let event: EmailAddressChangedEvent;
         let person: Person<true>;
@@ -889,7 +1094,7 @@ describe('OxEventHandler', () => {
                 faker.internet.email(),
                 faker.string.numeric(),
             );
-            person = createMock<Person<true>>({ email: email, referrer: username, oxUserId: oxUserId });
+            person = createMock<Person<true>>({ email: email, username: username, oxUserId: oxUserId });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -910,7 +1115,7 @@ describe('OxEventHandler', () => {
         });
 
         it('should log error when person has no username set', async () => {
-            person.referrer = undefined;
+            person.username = undefined;
             personRepositoryMock.findById.mockResolvedValueOnce(person);
 
             await sut.handleEmailAddressChangedEvent(event);
@@ -957,7 +1162,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Cannot get data for oxUsername:${person.referrer} from OX, Aborting Email-Address Change, personId:${personId}, username:${username}`,
+                `Cannot get data for oxUsername:${person.username} from OX, Aborting Email-Address Change, personId:${personId}, username:${username}`,
             );
         });
 
@@ -1055,7 +1260,7 @@ describe('OxEventHandler', () => {
         let personId: PersonID;
         let event: DisabledEmailAddressGeneratedEvent;
         let person: Person<true>;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let emailId: string;
         let email: string;
@@ -1081,7 +1286,7 @@ describe('OxEventHandler', () => {
             contextId = '10';
             contextName = 'testContext';
             event = new DisabledEmailAddressGeneratedEvent(personId, username, email, emailId, domain);
-            person = createMock<Person<true>>({ email: email, referrer: username, oxUserId: oxUserId });
+            person = createMock<Person<true>>({ email: email, username: username, oxUserId: oxUserId });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -1151,7 +1356,7 @@ describe('OxEventHandler', () => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
             event = new EmailAddressAlreadyExistsEvent(personId, faker.string.uuid());
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: faker.internet.userName() });
+            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
         });
 
         describe('when handler is disabled', () => {
@@ -1181,7 +1386,20 @@ describe('OxEventHandler', () => {
                 await sut.handleEmailAddressAlreadyExistsEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Person with personId:${event.personId} does not have an oxUserId. Cannot add to group.`,
+                    `Person with personId:${event.personId} does not have a ox_id. Cannot sync.`,
+                );
+            });
+        });
+
+        describe('when person has no username', () => {
+            it('should log error if username is missing', async () => {
+                person.username = undefined;
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                await sut.handleEmailAddressAlreadyExistsEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Person with personId:${event.personId} does not have a username. Cannot sync.`,
                 );
             });
         });
@@ -1190,99 +1408,19 @@ describe('OxEventHandler', () => {
             it('should successfully process event and publish OxUserChangedEvent', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
 
-                //mock list-oxGroups-request, no result -> mocks no group found
-                const fakeOXGroupId: string = faker.string.uuid();
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        groups: [],
-                    },
-                });
-                //mock create-oxGroup-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        id: fakeOXGroupId,
-                    },
-                });
-                //mock add-member-to-oxGroup-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        status: {
-                            code: 'success',
-                        },
-                        data: undefined,
-                    },
-                });
-
                 await sut.handleEmailAddressAlreadyExistsEvent(event);
 
                 expect(loggerMock.info).toHaveBeenLastCalledWith(
-                    `Successfully added user to group, personId:${event.personId}, oxUserId:${person.oxUserId}, oxGroupId:${fakeOXGroupId}`,
+                    `Successfully synced user, personId:${event.personId}, oxUserId:${person.oxUserId}`,
                 );
-                expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('failure scenarios', () => {
-            it('should log error if group creation/retrieval fails', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(person);
-
-                // Mock group creation/retrieval failure
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: false,
-                    error: new OxError(),
-                });
-
-                await sut.handleEmailAddressAlreadyExistsEvent(event);
-
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining(
-                        `Get or create OX group failed, personId:${event.personId}, oxUserId:${person.oxUserId}, orgaKennung:${event.orgaKennung}`,
-                    ),
-                );
-            });
-
-            it('should log error if adding user to group fails', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(person);
-
-                const fakeOXGroupId: string = faker.string.uuid();
-
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        groups: [],
-                    },
-                });
-                // Mock group creation/retrieval success
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        id: fakeOXGroupId,
-                    },
-                });
-
-                // Mock add user to group failure
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: false,
-                    error: new OxError(),
-                });
-
-                await sut.handleEmailAddressAlreadyExistsEvent(event);
-
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining(
-                        `Failed to add user to group, personId:${event.personId}, oxUserId:${person.oxUserId}, oxGroupId:${fakeOXGroupId}`,
-                    ),
-                );
+                expect(oxSyncHandlerMock.sync).toHaveBeenCalledWith(event.personId, person.username);
             });
         });
     });
 
     describe('handlePersonDeletedEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let event: PersonDeletedEvent;
 
@@ -1441,7 +1579,7 @@ describe('OxEventHandler', () => {
         const contextName: OXContextName = 'testContext';
 
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let oxUserId: OXUserID;
         let emailAddressId: EmailAddressID;
         let status: EmailAddressStatus;
@@ -1472,7 +1610,7 @@ describe('OxEventHandler', () => {
                 await sut.handleEmailAddressMarkedForDeletionEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+                    `Received EmailAddressMarkedForDeletionEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
                 );
                 expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
             });
@@ -1528,6 +1666,7 @@ describe('OxEventHandler', () => {
                     value: undefined,
                 });
                 await sut.handleEmailAddressMarkedForDeletionEvent(event);
+                await jest.runAllTimersAsync();
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Found Current aliases:${JSON.stringify(aliases)}, personId:${event.personId}, username:${event.username}`,
@@ -1584,7 +1723,7 @@ describe('OxEventHandler', () => {
 
     describe('handleEmailAddressesPurgedEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let oxUserId: OXUserID;
         let event: EmailAddressesPurgedEvent;
@@ -1709,7 +1848,7 @@ describe('OxEventHandler', () => {
             person = createMock<Person<true>>({
                 id: personId,
                 email: faker.internet.email(),
-                referrer: username,
+                username: username,
                 oxUserId: oxUserId,
             });
         });
@@ -1804,7 +1943,7 @@ describe('OxEventHandler', () => {
 
     describe('handlePersonenkontextUpdatedEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let personIdentifier: PersonIdentifier;
         let oxUserId: OXUserID;
         let oxGroupId: OXGroupID;
@@ -1842,7 +1981,7 @@ describe('OxEventHandler', () => {
             it('should log error about that', async () => {
                 person = createMock<Person<true>>({
                     email: faker.internet.email(),
-                    referrer: username,
+                    username: username,
                     oxUserId: undefined,
                 });
                 personRepositoryMock.findById.mockResolvedValue(person);
@@ -1892,7 +2031,7 @@ describe('OxEventHandler', () => {
 
     describe('handlePersonDeletedAfterDeadlineExceededEvent', () => {
         let personId: PersonID;
-        let username: PersonReferrer;
+        let username: PersonUsername;
         let oxUserId: OXUserID;
         let event: PersonDeletedAfterDeadlineExceededEvent;
         let person: Person<true>;
@@ -1952,6 +2091,103 @@ describe('OxEventHandler', () => {
                         `Successfully Changed OxUsername, personId:${personId}, username:${username}, oxUserId:${oxUserId} After PersonDeletedAfterDeadlineExceededEvent`,
                     );
                 });
+            });
+        });
+    });
+
+    describe('handleOrganisationDeletedEvent', () => {
+        let organisation: Organisation<true>;
+        let event: OrganisationDeletedEvent;
+
+        beforeEach(() => {
+            jest.resetAllMocks();
+            organisation = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
+            event = OrganisationDeletedEvent.fromOrganisation(organisation);
+        });
+
+        function getMockGroupsResponse(oxGroupId: string): ListGroupsResponse {
+            return {
+                groups: [
+                    {
+                        id: oxGroupId,
+                        displayname: '',
+                        memberIds: [],
+                        name: '',
+                    },
+                ],
+            };
+        }
+
+        describe('when handler is disabled', () => {
+            it('should log and skip processing when not enabled', async () => {
+                sut.ENABLED = false;
+                await sut.handleOrganisationDeletedEvent(event);
+                expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
+            });
+        });
+
+        describe('when event is incomplete', () => {
+            const MESSAGE: string = 'OrganisationDeletedEvent does not apply, ignoring event';
+            it('should log and skip processing when kennung is missing', async () => {
+                event = OrganisationDeletedEvent.fromOrganisation({ ...organisation, kennung: undefined });
+                await sut.handleOrganisationDeletedEvent(event);
+                expect(loggerMock.info).toHaveBeenLastCalledWith(MESSAGE);
+            });
+            it('should log and skip processing when typ is missing', async () => {
+                event = OrganisationDeletedEvent.fromOrganisation({ ...organisation, typ: undefined });
+                await sut.handleOrganisationDeletedEvent(event);
+                expect(loggerMock.info).toHaveBeenLastCalledWith(MESSAGE);
+            });
+            it('should log and skip processing when typ is not SCHULE', async () => {
+                event = OrganisationDeletedEvent.fromOrganisation({ ...organisation, typ: OrganisationsTyp.ROOT });
+                await sut.handleOrganisationDeletedEvent(event);
+                expect(loggerMock.info).toHaveBeenLastCalledWith(MESSAGE);
+            });
+        });
+
+        describe('when action succeds', () => {
+            it('should log info', async () => {
+                const oxGroupId: string = faker.string.uuid();
+                const oxLehrerGroupName: string = 'lehrer-' + event.kennung;
+                const mockGroupsResponse: ListGroupsResponse = getMockGroupsResponse(oxGroupId);
+                oxServiceMock.send.mockResolvedValueOnce(Ok(mockGroupsResponse)); // getOxGroupByName
+                oxServiceMock.send.mockResolvedValueOnce(Ok(undefined)); // removeOxGroup
+                await sut.handleOrganisationDeletedEvent(event);
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Received OrganisationDeletedEvent, organisationId:${event.organisationId}, name:${event.name}, kennung:${event.kennung}, typ:${event.typ}`,
+                );
+                expect(loggerMock.info).toHaveBeenLastCalledWith(
+                    `Successfully Deleted OxGroup ${oxLehrerGroupName}, oxGroupId:${oxGroupId}`,
+                );
+            });
+        });
+
+        describe('when action fails', () => {
+            it.each([
+                ['OxGroupNotFoundError', new OxGroupNotFoundError('not found')],
+                ['OxError', new OxError('generic error')],
+            ])('should log %s, when group can not be found', async (_label: string, error: OxError) => {
+                const oxLehrerGroupName: string = 'lehrer-' + event.kennung;
+                oxServiceMock.send.mockResolvedValueOnce(Err(error)); // getOxGroupByName
+                await sut.handleOrganisationDeletedEvent(event);
+                expect(loggerMock.logUnknownAsError).toHaveBeenLastCalledWith(
+                    `Could Not Find OxGroup ${oxLehrerGroupName} for Deletion`,
+                    error,
+                );
+            });
+
+            it('should log error, when group can not be deleted', async () => {
+                const oxGroupId: string = faker.string.uuid();
+                const oxLehrerGroupName: string = 'lehrer-' + event.kennung;
+                const mockError: OxGroupNotFoundError = new OxGroupNotFoundError('not found');
+                const mockGroupsResponse: ListGroupsResponse = getMockGroupsResponse(oxGroupId);
+                oxServiceMock.send.mockResolvedValueOnce(Ok(mockGroupsResponse)); // getOxGroupByName
+                oxServiceMock.send.mockResolvedValueOnce(Err(mockError)); // removeOxGroup
+                await sut.handleOrganisationDeletedEvent(event);
+                expect(loggerMock.logUnknownAsError).toHaveBeenLastCalledWith(
+                    `Could Not Delete OxGroup ${oxLehrerGroupName}, oxGroupId:${oxGroupId}`,
+                    mockError,
+                );
             });
         });
     });

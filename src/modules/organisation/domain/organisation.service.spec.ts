@@ -1,8 +1,5 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { Dictionary } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
@@ -10,13 +7,14 @@ import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js
 import { PersonPermissionsMock } from '../../../../test/utils/person-permissions.mock.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { EntityCouldNotBeUpdated, MissingPermissionsError } from '../../../shared/error/index.js';
+import { DomainError, EntityCouldNotBeUpdated, MissingPermissionsError } from '../../../shared/error/index.js';
 import { Paged } from '../../../shared/paging/index.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import {
     PersonenkontextRolleWithOrganisation,
     PersonPermissions,
 } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
 import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
@@ -39,7 +37,6 @@ describe('OrganisationService', () => {
     let module: TestingModule;
     let organisationService: OrganisationService;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
-    let mapperMock: DeepMocked<Mapper>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -50,15 +47,10 @@ describe('OrganisationService', () => {
                     provide: OrganisationRepository,
                     useValue: createMock<OrganisationRepository>(),
                 },
-                {
-                    provide: getMapperToken(),
-                    useValue: createMock<Mapper>(),
-                },
             ],
         }).compile();
         organisationService = module.get(OrganisationService);
         organisationRepositoryMock = module.get(OrganisationRepository);
-        mapperMock = module.get(getMapperToken());
     });
 
     afterAll(async () => {
@@ -86,7 +78,6 @@ describe('OrganisationService', () => {
         it('should create an organisation', async () => {
             const organisation: Organisation<false> = DoFactory.createOrganisation(false);
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 organisation,
                 permissionsMock,
@@ -104,7 +95,6 @@ describe('OrganisationService', () => {
             schule.typ = OrganisationsTyp.SCHULE;
             organisationRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
             organisationRepositoryMock.save.mockResolvedValue(schule as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(schule as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 schule,
@@ -130,7 +120,6 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
             organisationRepositoryMock.save.mockResolvedValue(klasse as unknown as Organisation<true>);
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
-            mapperMock.map.mockReturnValue(klasse as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 klasse,
@@ -153,7 +142,6 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.exists.mockResolvedValue(true);
             organisationRepositoryMock.exists.mockResolvedValue(true);
             organisationRepositoryMock.save.mockResolvedValue(klasse as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(klasse as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 klasse,
@@ -207,7 +195,6 @@ describe('OrganisationService', () => {
                 kennung: undefined,
             });
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 organisation,
@@ -230,7 +217,6 @@ describe('OrganisationService', () => {
                 name: undefined,
             });
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 organisation,
@@ -250,7 +236,6 @@ describe('OrganisationService', () => {
                 name: 'Klasse123',
             });
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 organisation,
@@ -286,7 +271,6 @@ describe('OrganisationService', () => {
             ];
             organisationRepositoryMock.findBy.mockResolvedValueOnce(counted);
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 organisation,
@@ -502,7 +486,6 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
             organisationRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
             organisationRepositoryMock.save.mockResolvedValue(schule as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(schule as unknown as Dictionary<unknown>);
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
 
@@ -532,7 +515,6 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.findChildOrgasForIds.mockResolvedValueOnce([]);
             organisationRepositoryMock.save.mockResolvedValue(klasse as unknown as Organisation<true>);
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
-            mapperMock.map.mockReturnValue(klasse as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
                 klasse,
@@ -553,7 +535,6 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.findById.mockResolvedValueOnce(klasse);
             organisationRepositoryMock.save.mockResolvedValue(klasse as unknown as Organisation<true>);
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
-            mapperMock.map.mockReturnValue(klasse as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
                 klasse,
@@ -656,7 +637,6 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.findById.mockResolvedValue(organisation as unknown as Organisation<true>);
             organisationRepositoryMock.findBy.mockResolvedValueOnce(counted);
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
-            mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
                 organisation,
@@ -1068,5 +1048,127 @@ describe('OrganisationService', () => {
                 expect(result.items).toBeInstanceOf(Array);
             });
         });
+    });
+
+    describe('findOrganisationByIdAndMatchingPermissions', () => {
+        it('should return an error, if orga can not be found', async () => {
+            const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            organisationRepositoryMock.findAuthorized.mockResolvedValue([[], 0, 0]);
+            const result: Result<
+                Organisation<true>,
+                DomainError
+            > = await organisationService.findOrganisationByIdAndAnyMatchingPermissions(
+                permissionsMock,
+                faker.string.uuid(),
+            );
+            expect(result.ok).toBeFalsy();
+            expect(!result.ok && result.error).toBeInstanceOf(EntityNotFoundError);
+        });
+
+        it('should return an error, if wrong orga is found', async () => {
+            const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            organisationRepositoryMock.findAuthorized.mockResolvedValue([[DoFactory.createOrganisation(true)], 1, 1]);
+            const result: Result<
+                Organisation<true>,
+                DomainError
+            > = await organisationService.findOrganisationByIdAndAnyMatchingPermissions(
+                permissionsMock,
+                faker.string.uuid(),
+            );
+            expect(result.ok).toBeFalsy();
+            expect(!result.ok && result.error).toBeInstanceOf(EntityNotFoundError);
+        });
+
+        it('should return an error, if orga has no type', async () => {
+            const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const mockOrganisation: Organisation<true> = DoFactory.createOrganisation(true, { typ: undefined });
+            organisationRepositoryMock.findAuthorized.mockResolvedValue([[mockOrganisation], 1, 1]);
+            const result: Result<
+                Organisation<true>,
+                DomainError
+            > = await organisationService.findOrganisationByIdAndAnyMatchingPermissions(
+                permissionsMock,
+                mockOrganisation.id,
+            );
+            expect(result.ok).toBeFalsy();
+            expect(!result.ok && result.error).toBeInstanceOf(MissingPermissionsError);
+        });
+
+        it('should return an error, if permissions are not defined for OrganisationsTyp', async () => {
+            const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
+            const mockOrganisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.ROOT,
+            });
+            organisationRepositoryMock.findAuthorized.mockResolvedValue([[mockOrganisation], 1, 1]);
+            const result: Result<
+                Organisation<true>,
+                DomainError
+            > = await organisationService.findOrganisationByIdAndAnyMatchingPermissions(
+                permissionsMock,
+                mockOrganisation.id,
+            );
+            expect(result.ok).toBeFalsy();
+            expect(!result.ok && result.error).toBeInstanceOf(MissingPermissionsError);
+        });
+
+        describe.each([
+            {
+                organisation: DoFactory.createOrganisation(true, { typ: OrganisationsTyp.TRAEGER }),
+                expectedSystemrecht: RollenSystemRecht.SCHULTRAEGER_VERWALTEN,
+            },
+            {
+                organisation: DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
+                expectedSystemrecht: RollenSystemRecht.SCHULEN_VERWALTEN,
+            },
+            {
+                organisation: DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE }),
+                expectedSystemrecht: RollenSystemRecht.KLASSEN_VERWALTEN,
+            },
+        ])(
+            'with organisation of type $organisation.typ',
+            ({
+                organisation,
+                expectedSystemrecht,
+            }: {
+                organisation: Organisation<true>;
+                expectedSystemrecht: RollenSystemRecht;
+            }) => {
+                it(`it should use ${expectedSystemrecht.name} for permissions check`, async () => {
+                    organisationRepositoryMock.findAuthorized.mockResolvedValue([[organisation], 1, 1]);
+                    const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                    permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+                    await organisationService.findOrganisationByIdAndAnyMatchingPermissions(
+                        permissionsMock,
+                        organisation.id,
+                    );
+                    expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenCalledTimes(1);
+                    expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenCalledWith(
+                        organisation.id,
+                        expectedSystemrecht,
+                    );
+                });
+
+                it('should return an error, if permissions are missing', async () => {
+                    organisationRepositoryMock.findAuthorized.mockResolvedValue([[organisation], 1, 1]);
+                    const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                    permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
+                    const result: Result<
+                        Organisation<true>,
+                        DomainError
+                    > = await organisationService.findOrganisationByIdAndAnyMatchingPermissions(
+                        permissionsMock,
+                        organisation.id,
+                    );
+                    expect(result.ok).toBeFalsy();
+                    expect(!result.ok && result.error).toBeInstanceOf(MissingPermissionsError);
+                    expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenCalledTimes(1);
+                    expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenCalledWith(
+                        organisation.id,
+                        expectedSystemrecht,
+                    );
+                });
+            },
+        );
     });
 });

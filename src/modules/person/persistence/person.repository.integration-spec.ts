@@ -1,5 +1,7 @@
 import { faker } from '@faker-js/faker';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Collection, EntityManager, MikroORM, ref, RequiredEntityData } from '@mikro-orm/core';
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -7,24 +9,11 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     LoggingTestModule,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { PersonEntity } from './person.entity.js';
-import {
-    getEnabledOrAlternativeEmailAddress,
-    getOxUserId,
-    mapAggregateToData,
-    mapEntityToAggregate,
-    mapEntityToAggregateInplace,
-    PersonenQueryParams,
-    PersonRepository,
-} from './person.repository.js';
-import { Person } from '../domain/person.js';
-import { PersonScope } from './person.scope.js';
-import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { UsernameGeneratorService } from '../domain/username-generator.service.js';
-import { KeycloakUserService, PersonHasNoKeycloakId } from '../../keycloak-administration/index.js';
+import { createAndPersistOrganisation } from '../../../../test/utils/organisation-test-helper.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import {
     DomainError,
     EntityCouldNotBeDeleted,
@@ -35,46 +24,58 @@ import {
     MismatchedRevisionError,
     MissingPermissionsError,
 } from '../../../shared/error/index.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { ConfigService } from '@nestjs/config';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
-import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
-import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
-import { createAndPersistOrganisation } from '../../../../test/utils/organisation-test-helper.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
-import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
-import { EmailAddressStatus } from '../../email/domain/email-address.js';
-import { PersonExternalIdType, PersonLockOccasion, SortFieldPerson } from '../domain/person.enums.js';
-import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
-import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
-import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
-import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
-import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
-import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
-import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
-import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
-import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
+import { KeycloakUserService, PersonHasNoKeycloakId } from '../../keycloak-administration/index.js';
+import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
+import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
+import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
+import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
+import { PersonExternalIdType, PersonLockOccasion, SortFieldPerson } from '../domain/person.enums.js';
+import { Person } from '../domain/person.js';
+import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
+import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
+import { UsernameGeneratorService } from '../domain/username-generator.service.js';
+import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
+import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
+import { PersonEntity } from './person.entity.js';
+import {
+    getEnabledOrAlternativeEmailAddress,
+    getOxUserId,
+    mapAggregateToData,
+    mapEntityToAggregate,
+    mapEntityToAggregateInplace,
+    PersonenQueryParams,
+    PersonRepository,
+    PersonWithoutOrgDeleteListResult,
+} from './person.repository.js';
+import { PersonScope } from './person.scope.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -95,12 +96,7 @@ describe('PersonRepository Integration', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                LoggingTestModule,
-                ConfigTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                MapperTestModule,
-            ],
+            imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 PersonRepository,
                 OrganisationRepository,
@@ -170,11 +166,11 @@ describe('PersonRepository Integration', () => {
     type SavedPersonProps = { keycloackID: string };
     async function savePerson(
         withPersonalnummer: boolean = false,
-        props: Partial<SavedPersonProps & { vorname?: string; familienname?: string; referrer?: string }> = {},
+        props: Partial<SavedPersonProps & { vorname?: string; familienname?: string; username?: string }> = {},
     ): Promise<Person<true>> {
         usernameGeneratorService.generateUsername.mockResolvedValueOnce({
             ok: true,
-            value: props.referrer ?? 'testusername',
+            value: props.username ?? 'testusername',
         });
         const defaultProps: SavedPersonProps = {
             keycloackID: faker.string.uuid(),
@@ -187,7 +183,6 @@ describe('PersonRepository Integration', () => {
             keycloackID: string;
         } = { ...defaultProps, ...props };
         const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-            referrer: faker.string.alphanumeric(5),
             familienname,
             vorname,
             personalnummer: withPersonalnummer ? faker.finance.pin(7) : undefined,
@@ -274,7 +269,9 @@ describe('PersonRepository Integration', () => {
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
             );
-            if (rolle instanceof DomainError) throw rolle;
+            if (rolle instanceof DomainError) {
+                throw rolle;
+            }
             await dbiamPersonenkontextRepoInternal.save(
                 DoFactory.createPersonenkontext(false, {
                     organisationId: orga.id,
@@ -314,8 +311,12 @@ describe('PersonRepository Integration', () => {
             const rolleB: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
             );
-            if (rolleA instanceof DomainError) throw rolleA;
-            if (rolleB instanceof DomainError) throw rolleB;
+            if (rolleA instanceof DomainError) {
+                throw rolleA;
+            }
+            if (rolleB instanceof DomainError) {
+                throw rolleB;
+            }
             await dbiamPersonenkontextRepoInternal.save(
                 DoFactory.createPersonenkontext(false, {
                     organisationId: orgaA.id,
@@ -349,7 +350,9 @@ describe('PersonRepository Integration', () => {
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
             );
-            if (rolle instanceof DomainError) throw rolle;
+            if (rolle instanceof DomainError) {
+                throw rolle;
+            }
             await dbiamPersonenkontextRepoInternal.save(
                 DoFactory.createPersonenkontext(false, {
                     organisationId: orga.id,
@@ -396,7 +399,6 @@ describe('PersonRepository Integration', () => {
                     .findBy({
                         vorname: undefined,
                         familienname: undefined,
-                        geburtsdatum: undefined,
                     })
                     .sortBy('vorname', ScopeOrder.ASC)
                     .paged(0, 2);
@@ -759,6 +761,99 @@ describe('PersonRepository Integration', () => {
     });
 
     describe('update', () => {
+        describe('when updating personalnummer to duplicate value', () => {
+            beforeEach(() => {
+                jest.restoreAllMocks();
+            });
+            it('should return DuplicatePersonalnummerError', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'testusername1',
+                });
+
+                const personalnummer: string = '54321';
+
+                // Create first person with personalnummer
+                const person1: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    personalnummer: personalnummer,
+                });
+                expect(person1).not.toBeInstanceOf(DomainError);
+                if (person1 instanceof DomainError) {
+                    throw person1;
+                }
+
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'something',
+                });
+
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+
+                const existingPerson1: Person<true> | DomainError = await sut.create(person1);
+                expect(existingPerson1).not.toBeInstanceOf(DomainError);
+                if (existingPerson1 instanceof DomainError) {
+                    throw existingPerson1;
+                }
+
+                // Create second person without personalnummer
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'testusername2',
+                });
+
+                const person2: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                });
+                expect(person2).not.toBeInstanceOf(DomainError);
+                if (person2 instanceof DomainError) {
+                    throw person2;
+                }
+
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'something2',
+                });
+
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+
+                const existingPerson2: Person<true> | DomainError = await sut.create(person2);
+                expect(existingPerson2).not.toBeInstanceOf(DomainError);
+                if (existingPerson2 instanceof DomainError) {
+                    throw existingPerson2;
+                }
+
+                // Try to update person2 with the same personalnummer as person1
+                const personToUpdate: Person<true> = Person.construct(
+                    existingPerson2.id,
+                    existingPerson2.createdAt,
+                    existingPerson2.updatedAt,
+                    existingPerson2.familienname,
+                    existingPerson2.vorname,
+                    existingPerson2.revision,
+                    existingPerson2.username,
+                );
+
+                personToUpdate.keycloakUserId = existingPerson2.keycloakUserId;
+                personToUpdate.personalnummer = personalnummer; // Duplicate personalnummer
+
+                const result: Person<true> | DomainError = await sut.update(personToUpdate);
+
+                expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
+                if (result instanceof DuplicatePersonalnummerError) {
+                    expect(result.message).toContain('Personalnummer 54321 already exists');
+                }
+            });
+        });
+
         describe('when person exist', () => {
             describe('when only updating database attributes', () => {
                 it('should return updated person', async () => {
@@ -981,8 +1076,8 @@ describe('PersonRepository Integration', () => {
                 await expect(sut.update(person)).rejects.toBeDefined();
             });
         });
-        describe('when referrer is defined', () => {
-            it('should use the existing referrer if the person has not been renamed', async () => {
+        describe('when username is defined', () => {
+            it('should use the existing username if the person has not been renamed', async () => {
                 const existingPerson: Person<true> = await savePerson();
                 kcUserServiceMock.setPassword.mockResolvedValueOnce({
                     ok: true,
@@ -992,11 +1087,11 @@ describe('PersonRepository Integration', () => {
 
                 expect(result).toBeInstanceOf(Person);
                 if (result instanceof Person) {
-                    expect(result.referrer).toEqual(existingPerson.referrer);
+                    expect(result.username).toEqual(existingPerson.username);
                 }
             });
         });
-        describe('when referrer is undefined', () => {
+        describe('when username is undefined', () => {
             beforeEach(() => {
                 jest.restoreAllMocks();
             });
@@ -1044,14 +1139,14 @@ describe('PersonRepository Integration', () => {
                     ok: false,
                     error: new InvalidCharacterSetError('name.vorname', 'DIN-91379A'),
                 });
-                jest.spyOn(sut, 'getReferrer').mockReturnValueOnce(undefined);
+                jest.spyOn(sut, 'getUsername').mockReturnValueOnce(undefined);
 
                 const result: Person<true> | DomainError = await sut.update(personConstructed);
                 expect(result).toBeInstanceOf(DomainError);
                 expect(usernameGeneratorService.generateUsername).toHaveBeenCalledWith(firstname, lastname);
             });
 
-            it('should generate a new referrer if the person has been renamed', async () => {
+            it('should generate a new username if the person has been renamed', async () => {
                 usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
                 const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
                     familienname: 'lastname',
@@ -1086,16 +1181,16 @@ describe('PersonRepository Integration', () => {
                     lastname,
                     firstname,
                     '1',
-                    faker.lorem.word(),
-                    faker.lorem.word(),
                     'newtestusername',
+                    faker.lorem.word(),
+                    faker.lorem.word(),
                 );
                 usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'newtestusername' });
-                jest.spyOn(sut, 'getReferrer').mockReturnValueOnce(undefined);
+                jest.spyOn(sut, 'getUsername').mockReturnValueOnce(undefined);
                 const result: Person<true> | DomainError = await sut.update(personConstructed);
                 expect(result).toBeInstanceOf(Person);
                 if (result instanceof Person) {
-                    expect(result.referrer).toEqual('newtestusername');
+                    expect(result.username).toEqual('newtestusername');
                 }
                 expect(usernameGeneratorService.generateUsername).toHaveBeenCalledWith(firstname, lastname);
             });
@@ -1291,25 +1386,11 @@ describe('PersonRepository Integration', () => {
 
             const expectedProperties: string[] = [
                 'keycloakUserId',
-                'referrer',
+                'username',
                 'mandant',
                 'stammorganisation',
                 'familienname',
                 'vorname',
-                'initialenFamilienname',
-                'initialenVorname',
-                'rufname',
-                'nameTitel',
-                'nameAnrede',
-                'namePraefix',
-                'nameSuffix',
-                'nameSortierindex',
-                'geburtsdatum',
-                'geburtsort',
-                'geschlecht',
-                'lokalisierung',
-                'vertrauensstufe',
-                'auskunftssperre',
                 'dataProvider',
                 'revision',
                 'istTechnisch',
@@ -1370,49 +1451,89 @@ describe('PersonRepository Integration', () => {
     });
 
     describe('findByPrimaryEmailAddress', () => {
-        it('should return persons with matching email address', async () => {
-            const person1: Person<true> = DoFactory.createPerson(true);
-            const personEntity: PersonEntity = new PersonEntity();
-            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
-            person1.id = personEntity.id;
-            const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-            emailAddressEntity.address = 'test@example.com';
-            emailAddressEntity.status = EmailAddressStatus.ENABLED;
-            emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
-            const disabledEmailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-            disabledEmailAddressEntity.address = 'test-disabled@example.com';
-            disabledEmailAddressEntity.status = EmailAddressStatus.DISABLED;
-            disabledEmailAddressEntity.personId = ref(PersonEntity, personEntity.id);
-            await em.persistAndFlush([emailAddressEntity, disabledEmailAddressEntity]);
-            personEntity.emailAddresses.add(emailAddressEntity, disabledEmailAddressEntity);
+        let person: Person<true>;
+        let personEntity: PersonEntity;
+        beforeEach(async () => {
+            person = DoFactory.createPerson(true);
+            personEntity = new PersonEntity();
+            personEntity = personEntity.assign(mapAggregateToData(person));
             await em.persistAndFlush(personEntity);
-
-            const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
-
-            expect(result).toHaveLength(1);
-            expect(result[0]?.id).toBe(person1.id);
+            person.id = personEntity.id;
         });
 
-        it('should return empty list if no enabled email found', async () => {
-            const person1: Person<true> = DoFactory.createPerson(true);
-            const personEntity: PersonEntity = new PersonEntity();
-            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
-            person1.id = personEntity.id;
-            const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-            emailAddressEntity.address = 'test@example.com';
-            emailAddressEntity.status = EmailAddressStatus.DISABLED;
-            emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
-            await em.persistAndFlush(emailAddressEntity);
-            personEntity.emailAddresses.add(emailAddressEntity);
+        it.each([[EmailAddressStatus.ENABLED], [EmailAddressStatus.DISABLED]])(
+            'should return persons with matching email addresses in status %s',
+            async (status: EmailAddressStatus) => {
+                const emailAddressEntities: EmailAddressEntity[] = ['test@example.com', 'test-other@example.com'].map(
+                    (email: string) => {
+                        const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+                        emailAddressEntity.address = email;
+                        emailAddressEntity.status = status;
+                        emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+                        return emailAddressEntity;
+                    },
+                );
+                await em.persistAndFlush(emailAddressEntities);
+                personEntity.emailAddresses.add(emailAddressEntities);
+                await em.persistAndFlush(personEntity);
+
+                const result: Person<true>[] = await sut.findByPrimaryEmailAddress('test@example.com');
+
+                expect(result).toHaveLength(1);
+                expect(result[0]?.id).toBe(person.id);
+            },
+        );
+
+        it('should not return person with different primary email address', async () => {
+            const emailAddressEntities: EmailAddressEntity[] = [
+                EmailAddressStatus.DISABLED,
+                EmailAddressStatus.ENABLED,
+            ].map((status: EmailAddressStatus) => {
+                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+                emailAddressEntity.address = faker.internet.email();
+                emailAddressEntity.status = status;
+                emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+                return emailAddressEntity;
+            });
+            await em.persistAndFlush(emailAddressEntities);
+            personEntity.emailAddresses.add(emailAddressEntities);
             await em.persistAndFlush(personEntity);
 
-            const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
+            const email: string = emailAddressEntities.find(
+                (e: EmailAddressEntity) => e.status === EmailAddressStatus.DISABLED,
+            )!.address;
+            expect(email).toBeDefined();
+
+            const result: Person<true>[] = await sut.findByPrimaryEmailAddress(email);
+
+            expect(result).toHaveLength(0);
+        });
+
+        it('should return empty list if no enabled/disabled email found', async () => {
+            const emailAddressEntities: EmailAddressEntity[] = [
+                EmailAddressStatus.DELETED,
+                EmailAddressStatus.DELETED_LDAP,
+                EmailAddressStatus.DELETED_OX,
+                EmailAddressStatus.FAILED,
+                EmailAddressStatus.REQUESTED,
+            ].map((status: EmailAddressStatus) => {
+                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+                emailAddressEntity.address = `test-${status}@example.com`;
+                emailAddressEntity.status = status;
+                emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+                return emailAddressEntity;
+            });
+            await em.persistAndFlush(emailAddressEntities);
+            personEntity.emailAddresses.add(emailAddressEntities);
+            await em.persistAndFlush(personEntity);
+
+            const result: Person<true>[] = await sut.findByPrimaryEmailAddress('test@example.com');
 
             expect(result).toHaveLength(0);
         });
 
         it('should return empty list if no matching email found', async () => {
-            const result: Person<true>[] = await sut.findByEmailAddress('nonexistent@example.com');
+            const result: Person<true>[] = await sut.findByPrimaryEmailAddress('nonexistent@example.com');
             expect(result).toHaveLength(0);
         });
     });
@@ -1438,10 +1559,10 @@ describe('PersonRepository Integration', () => {
     });
 
     describe('findByUsername', () => {
-        it('should return persons with matching username (referrer)', async () => {
+        it('should return persons with matching username (username)', async () => {
             const username: string = faker.internet.userName();
             const person1: Person<true> = DoFactory.createPerson(true);
-            person1.referrer = username;
+            person1.username = username;
             const personEntity: PersonEntity = new PersonEntity();
             await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
             person1.id = personEntity.id;
@@ -1451,8 +1572,8 @@ describe('PersonRepository Integration', () => {
             expect(result).toHaveLength(1);
         });
 
-        it('should return empty list if no match for username (referrer)', async () => {
-            const result: Person<true>[] = await sut.findByUsername('not-existent-referrer');
+        it('should return empty list if no match for username (username)', async () => {
+            const result: Person<true>[] = await sut.findByUsername('not-existent-username');
             expect(result).toHaveLength(0);
         });
     });
@@ -1529,7 +1650,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1582,7 +1702,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1639,7 +1758,6 @@ describe('PersonRepository Integration', () => {
                     email: faker.internet.email(),
                     createdDate: new Date(),
                     externalSystemIDs: {},
-                    attributes: {},
                 },
             });
 
@@ -1673,7 +1791,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1753,7 +1870,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1789,7 +1905,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1822,7 +1937,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1889,7 +2003,6 @@ describe('PersonRepository Integration', () => {
                             email: faker.internet.email(),
                             createdDate: new Date(),
                             externalSystemIDs: {},
-                            attributes: {},
                         },
                     });
 
@@ -1949,7 +2062,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1982,7 +2094,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2025,7 +2136,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2058,7 +2168,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2096,10 +2205,10 @@ describe('PersonRepository Integration', () => {
                 expect(result.ok).toBeTruthy();
             });
 
-            it('should delete the person as admin of organisation and publish events when referrer and oxUserId are defined', async () => {
+            it('should delete the person as admin of organisation and publish events when username and oxUserId are defined', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 const personEntity: PersonEntity = new PersonEntity();
-                person1.referrer = faker.internet.userName();
+                person1.username = faker.internet.userName();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
 
@@ -2131,7 +2240,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2170,12 +2278,12 @@ describe('PersonRepository Integration', () => {
                 expect(eventServiceMock.publish).toHaveBeenCalledWith(
                     expect.objectContaining({
                         personId: person1.id,
-                        username: person1.referrer,
+                        username: person1.username,
                         oxUserId: oxUserId,
                     }),
                     expect.objectContaining({
                         personId: person1.id,
-                        username: person1.referrer,
+                        username: person1.username,
                         oxUserId: oxUserId,
                     }),
                 );
@@ -2218,7 +2326,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2251,7 +2358,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2294,7 +2400,7 @@ describe('PersonRepository Integration', () => {
                     existingPerson.mandant,
                     existingPerson.stammorganisation,
                     existingPerson.keycloakUserId,
-                    existingPerson.referrer,
+                    existingPerson.username,
                 );
 
                 const result: Person<true> | DomainError = await sut.save(updatedPerson);
@@ -2316,24 +2422,9 @@ describe('PersonRepository Integration', () => {
                     faker.person.lastName(),
                     faker.person.firstName(),
                     existingPerson.mandant,
-                    existingPerson.stammorganisation,
+                    existingPerson.username,
                     existingPerson.keycloakUserId,
-                    existingPerson.referrer,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
+                    existingPerson.stammorganisation,
                     undefined,
                     undefined,
                     undefined,
@@ -2347,14 +2438,18 @@ describe('PersonRepository Integration', () => {
                 );
 
                 let result: Person<true> | DomainError = await sut.save(updatedPerson);
-                if (result instanceof DomainError) throw result;
+                if (result instanceof DomainError) {
+                    throw result;
+                }
 
                 expect(result.externalIds.LDAP).toEqual(updatedPerson.externalIds.LDAP);
 
                 updatedPerson.externalIds.LDAP = undefined;
 
                 result = await sut.save(updatedPerson);
-                if (result instanceof DomainError) throw result;
+                if (result instanceof DomainError) {
+                    throw result;
+                }
 
                 expect(result.externalIds.LDAP).toBeUndefined();
             });
@@ -2544,10 +2639,8 @@ describe('PersonRepository Integration', () => {
             const [persons, total]: [Person<true>[], number] = result;
 
             expect(total).toBe(4);
-            expect(persons[0]?.familienname).toBe('Brown');
-            expect(persons[1]?.familienname).toBe('Brown');
-            expect(persons[0]?.referrer).toBe(person1.referrer);
-            expect(persons[1]?.referrer).toBe(person2.referrer);
+            expect(persons[0]?.familienname).toBe(person1.familienname);
+            expect(persons[1]?.familienname).toBe(person2.familienname);
             expect(persons[2]?.familienname).toBe('Johnson');
             expect(persons[3]?.familienname).toBe('Smith');
         });
@@ -2577,18 +2670,18 @@ describe('PersonRepository Integration', () => {
 
             expect(persons[0]?.vorname).toBe('Anna');
             expect(persons[1]?.vorname).toBe('Anna');
-            expect(persons[0]?.referrer).toBe(person1.referrer);
-            expect(persons[1]?.referrer).toBe(person2.referrer);
+            expect(persons[0]?.username).toBe(person1.username);
+            expect(persons[1]?.username).toBe(person2.username);
             expect(persons[2]?.vorname).toBe('Bob');
             expect(persons[3]?.vorname).toBe('Charlie');
         });
 
-        it.each([SortFieldPerson.PERSONALNUMMER, SortFieldPerson.REFERRER])(
+        it.each([SortFieldPerson.PERSONALNUMMER, SortFieldPerson.USERNAME])(
             'should apply sort criteria correctly for %s',
             async (sortField: SortFieldPerson) => {
-                await savePerson(false, { vorname: 'Charlie', familienname: 'Smith', referrer: 'csmith' });
-                await savePerson(false, { vorname: 'Bob', familienname: 'Smith', referrer: 'bsmith' });
-                await savePerson(false, { vorname: 'Anna', familienname: 'Smith', referrer: 'asmith' });
+                await savePerson(false, { vorname: 'Charlie', familienname: 'Smith', username: 'csmith' });
+                await savePerson(false, { vorname: 'Bob', familienname: 'Smith', username: 'bsmith' });
+                await savePerson(false, { vorname: 'Anna', familienname: 'Smith', username: 'asmith' });
 
                 const permittedOrgas: PermittedOrgas = { all: true };
 
@@ -2607,9 +2700,9 @@ describe('PersonRepository Integration', () => {
 
                 expect(total).toBe(3);
 
-                expect(persons[0]?.referrer).toBe('asmith');
-                expect(persons[1]?.referrer).toBe('bsmith');
-                expect(persons[2]?.referrer).toBe('csmith');
+                expect(persons[0]?.username).toBe('asmith');
+                expect(persons[1]?.username).toBe('bsmith');
+                expect(persons[2]?.username).toBe('csmith');
             },
         );
     });
@@ -2654,7 +2747,9 @@ describe('PersonRepository Integration', () => {
                 return;
             }
             const savedRolle: Rolle<true> | DomainError = await rolleRepo.save(rolle);
-            if (savedRolle instanceof DomainError) throw Error();
+            if (savedRolle instanceof DomainError) {
+                throw Error();
+            }
 
             const savedOrganisation: OrganisationEntity = await createAndPersistOrganisation(
                 em,
@@ -2713,7 +2808,7 @@ describe('PersonRepository Integration', () => {
             expect(person.id).toBe(result.id);
             expect(result.familienname).toEqual(newFamilienname);
             expect(result.vorname).toEqual(newVorname);
-            expect(result.referrer).toEqual('testusername1');
+            expect(result.username).toEqual('testusername1');
 
             expect(person.personalnummer).not.toEqual(newPersonalnummer);
             expect(result.personalnummer).toEqual(newPersonalnummer);
@@ -2986,8 +3081,12 @@ describe('PersonRepository Integration', () => {
 
             const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
             const rolle2Result: Rolle<true> | DomainError = await rolleRepo.save(rolle2);
-            if (rolle1Result instanceof DomainError) throw Error();
-            if (rolle2Result instanceof DomainError) throw Error();
+            if (rolle1Result instanceof DomainError) {
+                throw Error();
+            }
+            if (rolle2Result instanceof DomainError) {
+                throw Error();
+            }
 
             // personenKontext where createdAt exceeds the time-limit
             jest.useFakeTimers({ now: daysAgo });
@@ -3068,7 +3167,9 @@ describe('PersonRepository Integration', () => {
                     merkmale: [RollenMerkmal.KOPERS_PFLICHT],
                 });
                 const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
-                if (rolle1Result instanceof DomainError) throw Error();
+                if (rolle1Result instanceof DomainError) {
+                    throw Error();
+                }
 
                 const organisation1: Organisation<true> = await organisationRepository.save(
                     DoFactory.createOrganisation(false),
@@ -3087,12 +3188,13 @@ describe('PersonRepository Integration', () => {
                 person4.id = personEntity4.id;
 
                 //get person ids without personenkontext
-                const personsWithOrgList: string[] = await sut.getPersonWithoutOrgDeleteList();
+                const { ids, total }: PersonWithoutOrgDeleteListResult = await sut.getPersonWithoutOrgDeleteList();
 
-                expect(personsWithOrgList).toContain(person1.id);
-                expect(personsWithOrgList).toContain(person2.id);
-                expect(personsWithOrgList).not.toContain(person3.id);
-                expect(personsWithOrgList).not.toContain(person4.id);
+                expect(ids).toContain(person1.id);
+                expect(ids).toContain(person2.id);
+                expect(ids).not.toContain(person3.id);
+                expect(ids).not.toContain(person4.id);
+                expect(total).toBe(2);
             });
         });
         describe('findOrganisationAdminsByOrganisationId', () => {
@@ -3108,7 +3210,9 @@ describe('PersonRepository Integration', () => {
                     merkmale: [RollenMerkmal.KOPERS_PFLICHT],
                 });
                 const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
-                if (rolle1Result instanceof DomainError) throw Error();
+                if (rolle1Result instanceof DomainError) {
+                    throw Error();
+                }
 
                 const organisation1: Organisation<true> = await organisationRepository.save(
                     DoFactory.createOrganisation(false),

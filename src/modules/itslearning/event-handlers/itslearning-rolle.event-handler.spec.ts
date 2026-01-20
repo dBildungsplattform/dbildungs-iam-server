@@ -249,7 +249,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                 await sut.rolleUpdatedEventHandler(event, () => {});
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `[EventID: ${event.eventID}] Creation of person ${person.referrer} failed with the following reason: Input Error`,
+                    `[EventID: ${event.eventID}] Creation of person ${person.username} failed with the following reason: Input Error`,
                 );
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `[EventID: ${event.eventID}] Could not give Rolle to person ${personenkontext.personId} at orga ${personenkontext.organisationId}, failed with the following reason: Input Error`,
@@ -283,7 +283,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                 await sut.rolleUpdatedEventHandler(event, () => {});
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `[EventID: ${event.eventID}] Creation of person ${person.referrer} failed with the following reason: Unknown Error`,
+                    `[EventID: ${event.eventID}] Creation of person ${person.username} failed with the following reason: Unknown Error`,
                 );
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `[EventID: ${event.eventID}] Could not give Rolle to person ${personenkontext.personId} at orga ${personenkontext.organisationId}, failed with the following reason: Unknown Error`,
@@ -369,7 +369,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     `[EventID: ${event.eventID}] Could not remove Rolle from person ${personenkontext.personId} at orga ${personenkontext.organisationId}, failed with the following reason: Input Error`,
                 );
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `[EventID: ${event.eventID}] Deletion of person ${person.referrer} failed with the following reason: Input Error`,
+                    `[EventID: ${event.eventID}] Deletion of person ${person.username} failed with the following reason: Input Error`,
                 );
             });
 
@@ -403,7 +403,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     `[EventID: ${event.eventID}] Could not remove Rolle from person ${personenkontext.personId} at orga ${personenkontext.organisationId}, failed with the following reason: Unknown Error`,
                 );
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `[EventID: ${event.eventID}] Deletion of person ${person.referrer} failed with the following reason: Unknown Error`,
+                    `[EventID: ${event.eventID}] Deletion of person ${person.username} failed with the following reason: Unknown Error`,
                 );
             });
         });

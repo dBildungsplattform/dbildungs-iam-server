@@ -3,7 +3,6 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
@@ -22,7 +21,7 @@ describe('Organisation', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, MapperTestModule],
+            imports: [ConfigTestModule],
             providers: [
                 {
                     provide: OrganisationRepository,

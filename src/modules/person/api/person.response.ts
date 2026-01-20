@@ -1,6 +1,4 @@
 import { PersonNameParams } from './person-name.params.js';
-import { PersonBirthParams } from './person-birth.params.js';
-import { Vertrauensstufe, VertrauensstufeTypName } from '../domain/person.enums.js';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserLockParams } from '../../keycloak-administration/api/user-lock.params.js';
 import { PersonEmailResponse } from './person-email-response.js';
@@ -10,7 +8,7 @@ export class PersonResponse {
     public id!: string;
 
     @ApiProperty({ nullable: true })
-    public referrer?: string;
+    public username?: string;
 
     @ApiProperty()
     public mandant: string = '';
@@ -18,20 +16,8 @@ export class PersonResponse {
     @ApiProperty({ type: PersonNameParams })
     public name!: PersonNameParams;
 
-    @ApiProperty({ type: PersonBirthParams, nullable: true })
-    public geburt?: PersonBirthParams;
-
     @ApiProperty({ nullable: true })
     public readonly stammorganisation?: string;
-
-    @ApiProperty({ nullable: true })
-    public geschlecht?: string;
-
-    @ApiProperty({ nullable: true })
-    public lokalisierung?: string;
-
-    @ApiProperty({ enum: Vertrauensstufe, enumName: VertrauensstufeTypName, nullable: true })
-    public vertrauensstufe?: Vertrauensstufe;
 
     @ApiProperty()
     public revision!: string;

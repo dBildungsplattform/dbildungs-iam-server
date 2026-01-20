@@ -24,7 +24,7 @@ export class LoggingConfig {
 
     @IsOptional()
     @IsEnum(ALLOWED_LOG_LEVEL)
-    public readonly PERSON_API_MODULE_LOG_LEVEL!: string;
+    public readonly PERSON_API_MODULE_LOG_LEVEL?: string;
 
     @IsOptional()
     @IsEnum(ALLOWED_LOG_LEVEL)

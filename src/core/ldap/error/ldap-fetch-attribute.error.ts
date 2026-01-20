@@ -1,10 +1,10 @@
 import { DomainError } from '../../../shared/error/index.js';
-import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
 
 export class LdapFetchAttributeError extends DomainError {
     public constructor(
         attributeName: string,
-        username: PersonReferrer,
+        username: PersonUsername,
         personId: PersonID | undefined,
         details?: unknown[] | Record<string, unknown>,
     ) {

@@ -1,25 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { ClassLogger } from '../../logging/class-logger.js';
-import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
-import { LdapEntityType, LdapPersonEntry } from './ldap.types.js';
-import { LdapClient } from './ldap-client.js';
-import { LdapInstanceConfig } from '../ldap-instance-config.js';
-import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
 import { Mutex } from 'async-mutex';
-import { LdapSearchError } from '../error/ldap-search.error.js';
-import { OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
-import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
+import { Attribute, Change, Client, Entry, NoSuchObjectError, SearchResult } from 'ldapts';
+import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
+import { KafkaLdapPersonEntryChangedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-changed.event.js';
 import { LdapPersonEntryChangedEvent } from '../../../shared/events/ldap/ldap-person-entry-changed.event.js';
+import { OrganisationKennung, PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../logging/class-logger.js';
+import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.error.js';
+import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
+import { LdapDeleteOrganisationError } from '../error/ldap-delete-organisation.error.js';
 import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
-import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
+import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
 import { LdapModifyEmailError } from '../error/ldap-modify-email.error.js';
 import { LdapModifyUserPasswordError } from '../error/ldap-modify-user-password.error.js';
-import { generatePassword } from '../../../shared/util/password-generator.js';
-import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.error.js';
 import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
-import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
-import { KafkaLdapPersonEntryChangedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-changed.event.js';
+import { LdapSearchError } from '../error/ldap-search.error.js';
+import { LdapInstanceConfig } from '../ldap-instance-config.js';
+import { LdapClient } from './ldap-client.js';
+import { LdapEntityType, LdapPersonEntry } from './ldap.types.js';
 
 export type LdapPersonAttributes = {
     entryUUID?: string;
@@ -114,16 +116,16 @@ export class LdapClientService {
         );
     }
 
-    public async isLehrerExisting(username: PersonReferrer, domain: string): Promise<Result<boolean>> {
+    public async isLehrerExisting(username: PersonUsername, domain: string): Promise<Result<boolean>> {
         return this.executeWithRetry(() => this.isLehrerExistingInternal(username, domain), this.getNrOfRetries());
     }
 
     public async modifyPersonAttributes(
-        oldUsername: PersonReferrer,
+        oldUsername: PersonUsername,
         newGivenName?: string,
         newSn?: string,
-        newUsername?: PersonReferrer,
-    ): Promise<Result<PersonReferrer>> {
+        newUsername?: PersonUsername,
+    ): Promise<Result<PersonUsername>> {
         return this.executeWithRetry(
             () => this.modifyPersonAttributesInternal(oldUsername, newGivenName, newSn, newUsername),
             this.getNrOfRetries(),
@@ -132,7 +134,7 @@ export class LdapClientService {
 
     public async getPersonAttributes(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         domain: string,
     ): Promise<Result<LdapPersonAttributes>> {
         return this.executeWithRetry(
@@ -143,7 +145,7 @@ export class LdapClientService {
 
     public async setMailAlternativeAddress(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         newMailAlternativeAddress: string,
     ): Promise<Result<PersonID>> {
         return this.executeWithRetry(
@@ -152,13 +154,13 @@ export class LdapClientService {
         );
     }
 
-    public async getGroupsForPerson(personId: PersonID, username: PersonReferrer): Promise<Result<string[]>> {
+    public async getGroupsForPerson(personId: PersonID, username: PersonUsername): Promise<Result<string[]>> {
         return this.executeWithRetry(() => this.getGroupsForPersonInternal(personId, username), this.getNrOfRetries());
     }
 
     public async updateMemberDnInGroups(
-        oldUsername: PersonReferrer,
-        newUsername: PersonReferrer,
+        oldUsername: PersonUsername,
+        newUsername: PersonUsername,
         oldUid: string,
         client: Client,
     ): Promise<Result<string>> {
@@ -168,8 +170,14 @@ export class LdapClientService {
         );
     }
 
-    public async deleteLehrerByUsername(username: PersonReferrer): Promise<Result<string>> {
-        return this.executeWithRetry(() => this.deleteLehrerByUsernameInternal(username), this.getNrOfRetries());
+    public async deleteLehrerByUsername(
+        username: PersonUsername,
+        failIfUserNotFound: boolean = false,
+    ): Promise<Result<string | null>> {
+        return this.executeWithRetry(
+            () => this.deleteLehrerByUsernameInternal(username, failIfUserNotFound),
+            this.getNrOfRetries(),
+        );
     }
 
     public async deleteLehrer(
@@ -196,7 +204,7 @@ export class LdapClientService {
 
     public async removeMailAlternativeAddress(
         personId: PersonID | undefined,
-        username: PersonReferrer,
+        username: PersonUsername,
         address: string,
     ): Promise<Result<boolean>> {
         return this.executeWithRetry(
@@ -207,17 +215,19 @@ export class LdapClientService {
 
     public async changeEmailAddressByPersonId(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         newEmailAddress: string,
+        alternativeEmailAddress?: string,
     ): Promise<Result<PersonID>> {
         return this.executeWithRetry(
-            () => this.changeEmailAddressByPersonIdInternal(personId, username, newEmailAddress),
+            () =>
+                this.changeEmailAddressByPersonIdInternal(personId, username, newEmailAddress, alternativeEmailAddress),
             this.getNrOfRetries(),
         );
     }
 
     public async removePersonFromGroup(
-        username: PersonReferrer,
+        username: PersonUsername,
         orgaKennung: OrganisationKennung,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
@@ -228,28 +238,34 @@ export class LdapClientService {
     }
 
     public async removePersonFromGroupByUsernameAndKennung(
-        username: PersonReferrer,
+        username: PersonUsername,
         orgaKennung: OrganisationKennung,
         domain: string,
     ): Promise<Result<boolean>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
-        if (!rootName.ok) return rootName;
+        if (!rootName.ok) {
+            return rootName;
+        }
 
         const lehrerUid: string = this.getLehrerUid(username, rootName.value);
 
         return this.removePersonFromGroup(username, orgaKennung, lehrerUid);
     }
 
-    public async changeUserPasswordByPersonId(personId: PersonID, username: PersonReferrer): Promise<Result<PersonID>> {
+    public async changeUserPasswordByPersonId(personId: PersonID, username: PersonUsername): Promise<Result<PersonID>> {
         return this.executeWithRetry(
             () => this.changeUserPasswordByPersonIdInternal(personId, username),
             this.getNrOfRetries(),
         );
     }
 
+    public async deleteOrganisation(kennung: string): Promise<Result<string>> {
+        return this.executeWithRetry(() => this.deleteOrganisationInternal(kennung), this.getNrOfRetries());
+    }
+
     //** BELOW ONLY PUBLIC HELPER FUNCTIONS THAT NOT OPERATE ON LDAP - MUST NOT USE THE 'executeWithRetry'/
 
-    public createNewLehrerUidFromOldUid(oldUid: string, newUsername: PersonReferrer): string {
+    public createNewLehrerUidFromOldUid(oldUid: string, newUsername: PersonUsername): string {
         const splitted: string[] = oldUid.split(',');
         splitted[0] = `uid=${newUsername}`;
         return splitted.join(',');
@@ -287,19 +303,21 @@ export class LdapClientService {
         if (
             emailDomain === this.ldapInstanceConfig.ERSATZSCHULEN_DOMAIN ||
             emailDomain === LdapClientService.ERSATZ_SCHULEN_DOMAIN_DEFAULT
-        )
+        ) {
             return {
                 ok: true,
                 value: LdapClientService.ERSATZ_SCHULEN_OU,
             };
+        }
         if (
             emailDomain === this.ldapInstanceConfig.OEFFENTLICHE_SCHULEN_DOMAIN ||
             emailDomain === LdapClientService.OEFFENTLICHE_SCHULEN_DOMAIN_DEFAULT
-        )
+        ) {
             return {
                 ok: true,
                 value: LdapClientService.OEFFENTLICHE_SCHULEN_OU,
             };
+        }
 
         return {
             ok: false,
@@ -307,7 +325,7 @@ export class LdapClientService {
         };
     }
 
-    private getLehrerUid(username: PersonReferrer, rootName: string): string {
+    private getLehrerUid(username: PersonUsername, rootName: string): string {
         return `uid=${username},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
     }
 
@@ -325,7 +343,7 @@ export class LdapClientService {
         schulId: string,
         mail?: string, //Wird hier erstmal seperat mit reingegeben bis die Umstellung auf primary/alternative erfolgt
     ): Promise<Result<PersonData>> {
-        const username: PersonReferrer | undefined = person.username;
+        const username: PersonUsername | undefined = person.username;
         if (!username) {
             return {
                 ok: false,
@@ -335,14 +353,18 @@ export class LdapClientService {
             };
         }
         const rootName: Result<string> = this.getRootNameOrError(domain);
-        if (!rootName.ok) return rootName;
+        if (!rootName.ok) {
+            return rootName;
+        }
 
         const lehrerUid: string = this.getLehrerUid(username, rootName.value);
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: createLehrer');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {
+                return bindResult;
+            }
 
             const groupResult: Result<boolean, Error> = await this.addPersonToGroup(username, schulId, lehrerUid);
             if (!groupResult.ok) {
@@ -378,7 +400,9 @@ export class LdapClientService {
                 await client.add(lehrerUid, entry);
 
                 const entryUUIDResult: Result<string> = await this.getEntryUUID(client, person.id, username);
-                if (!entryUUIDResult.ok) return entryUUIDResult;
+                if (!entryUUIDResult.ok) {
+                    return entryUUIDResult;
+                }
                 person.ldapEntryUUID = entryUUIDResult.value;
 
                 this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
@@ -392,15 +416,19 @@ export class LdapClientService {
         });
     }
 
-    private async isLehrerExistingInternal(username: PersonReferrer, domain: string): Promise<Result<boolean>> {
+    private async isLehrerExistingInternal(username: PersonUsername, domain: string): Promise<Result<boolean>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
-        if (!rootName.ok) return rootName;
+        if (!rootName.ok) {
+            return rootName;
+        }
 
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: isLehrerExisting');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {
+                return bindResult;
+            }
 
             const searchResultLehrer: SearchResult = await client.search(
                 `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
@@ -416,16 +444,18 @@ export class LdapClientService {
     }
 
     private async modifyPersonAttributesInternal(
-        oldUsername: PersonReferrer,
+        oldUsername: PersonUsername,
         newGivenName?: string,
         newSn?: string,
-        newUsername?: PersonReferrer,
-    ): Promise<Result<PersonReferrer>> {
+        newUsername?: PersonUsername,
+    ): Promise<Result<PersonUsername>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: modifyPersonAttributes');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {
+                return bindResult;
+            }
 
             const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
@@ -522,14 +552,16 @@ export class LdapClientService {
      */
     private async getPersonAttributesInternal(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         emailDomain: string,
     ): Promise<Result<LdapPersonAttributes>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: getPersonAttributes');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {
+                return bindResult;
+            }
 
             const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
@@ -550,7 +582,9 @@ export class LdapClientService {
                     `Fetching person-attributes FAILED, no entry for username:${username}, personId:${personId}`,
                 );
                 const creationResult: Result<string> = await this.createEmptyPersonEntry(username, emailDomain);
-                if (!creationResult.ok) return creationResult;
+                if (!creationResult.ok) {
+                    return creationResult;
+                }
 
                 const entryUUIDResult: Result<string> = await this.getEntryUUID(client, personId, username);
                 if (!entryUUIDResult.ok) {
@@ -627,7 +661,7 @@ export class LdapClientService {
     private getAttributeAsStringOrError(
         entry: Entry,
         attributeName: string,
-        username: PersonReferrer,
+        username: PersonUsername,
         personId: PersonID | undefined,
     ): Result<string> {
         const attributeValue: unknown = entry[attributeName];
@@ -650,14 +684,18 @@ export class LdapClientService {
      * Returns the DN of the created PersonEntry or an Error.
      * For fetching the EntryUUID of an Entry use getEntryUUID.
      */
-    private async createEmptyPersonEntry(username: PersonReferrer, domain: string): Promise<Result<string>> {
+    private async createEmptyPersonEntry(username: PersonUsername, domain: string): Promise<Result<string>> {
         this.logger.info('LDAP: createEmptyPersonEntry');
         const client: Client = this.ldapClient.getClient();
         const bindResult: Result<boolean> = await this.bind();
-        if (!bindResult.ok) return bindResult;
+        if (!bindResult.ok) {
+            return bindResult;
+        }
 
         const rootName: Result<string> = this.getRootNameOrError(domain);
-        if (!rootName.ok) return rootName;
+        if (!rootName.ok) {
+            return rootName;
+        }
 
         const lehrerUid: string = this.getLehrerUid(username, rootName.value);
 
@@ -686,7 +724,7 @@ export class LdapClientService {
         }
     }
 
-    private async getEntryUUID(client: Client, personId: PersonID, username: PersonReferrer): Promise<Result<string>> {
+    private async getEntryUUID(client: Client, personId: PersonID, username: PersonUsername): Promise<Result<string>> {
         const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
             scope: 'sub',
             filter: `(uid=${username})`,
@@ -712,14 +750,16 @@ export class LdapClientService {
 
     private async setMailAlternativeAddressInternal(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         newMailAlternativeAddress: string,
     ): Promise<Result<PersonID>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: setMailAlternativeAddress');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {
+                return bindResult;
+            }
 
             const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
@@ -758,12 +798,14 @@ export class LdapClientService {
         });
     }
 
-    private async getGroupsForPersonInternal(personId: PersonID, username: PersonReferrer): Promise<Result<string[]>> {
+    private async getGroupsForPersonInternal(personId: PersonID, username: PersonUsername): Promise<Result<string[]>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: getGroupsForPerson');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {
+                return bindResult;
+            }
 
             const personSearchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
@@ -807,8 +849,8 @@ export class LdapClientService {
     }
 
     private async updateMemberDnInGroupsInternal(
-        oldUsername: PersonReferrer,
-        newUsername: PersonReferrer,
+        oldUsername: PersonUsername,
+        newUsername: PersonUsername,
         oldUid: string,
         client: Client,
     ): Promise<Result<string>> {
@@ -882,21 +924,33 @@ export class LdapClientService {
         return { ok: true, value: `Updated member data for ${groupEntries.length} groups.` };
     }
 
-    private async deleteLehrerByUsernameInternal(username: PersonReferrer): Promise<Result<string>> {
+    private async deleteLehrerByUsernameInternal(
+        username: PersonUsername,
+        failIfUserNotFound: boolean,
+    ): Promise<Result<string | null>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrerByUsernameInternal');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {
+                return bindResult;
+            }
 
             const searchResultLehrer: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
                 filter: `(uid=${username})`,
             });
             if (!searchResultLehrer.searchEntries[0]) {
+                if (failIfUserNotFound) {
+                    return {
+                        ok: false,
+                        error: new Error(`User not found: ${username}`),
+                    };
+                }
+                this.logger.info(`LDAP: user to delete not found: ${username}`);
                 return {
-                    ok: false,
-                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                    ok: true,
+                    value: null,
                 };
             }
             await client.del(searchResultLehrer.searchEntries[0].dn);
@@ -912,13 +966,17 @@ export class LdapClientService {
         domain: string,
     ): Promise<Result<PersonData>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
-        if (!rootName.ok) return rootName;
+        if (!rootName.ok) {
+            return rootName;
+        }
 
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrer by person');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {
+                return bindResult;
+            }
             if (!person.username) {
                 return {
                     ok: false,
@@ -955,8 +1013,9 @@ export class LdapClientService {
 
     private async changeEmailAddressByPersonIdInternal(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
         newEmailAddress: string,
+        alternativEmailAddress?: string,
     ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
         return this.mutex.runExclusive(async () => {
@@ -972,10 +1031,14 @@ export class LdapClientService {
             }
             const domain: string = splitted[1];
             const rootName: Result<string> = this.getRootNameOrError(domain);
-            if (!rootName.ok) return rootName;
+            if (!rootName.ok) {
+                return rootName;
+            }
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {
+                return bindResult;
+            }
             const searchResult: SearchResult = await client.search(
                 `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
@@ -994,17 +1057,6 @@ export class LdapClientService {
                     error: new LdapSearchError(LdapEntityType.LEHRER),
                 };
             }
-            // result can be a simple string or a string-array
-            let currentEmailAddressString: string | undefined;
-            const currentLDAPEmailAddressString: unknown =
-                searchResult.searchEntries[0][LdapClientService.MAIL_PRIMARY_ADDRESS];
-            if (typeof currentLDAPEmailAddressString === 'string') {
-                currentEmailAddressString = currentLDAPEmailAddressString;
-            }
-            if (Array.isArray(currentLDAPEmailAddressString) && typeof currentLDAPEmailAddressString[0] === 'string') {
-                currentEmailAddressString = currentLDAPEmailAddressString[0];
-            }
-            const currentEmailAddress: string = currentEmailAddressString ?? newEmailAddress;
 
             try {
                 await client.modify(searchResult.searchEntries[0].dn, [
@@ -1021,7 +1073,7 @@ export class LdapClientService {
                         operation: 'replace',
                         modification: new Attribute({
                             type: LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
-                            values: [currentEmailAddress],
+                            values: [alternativEmailAddress ?? ''],
                         }),
                     }),
                 ]);
@@ -1029,8 +1081,8 @@ export class LdapClientService {
                     `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, username:${username}`,
                 );
                 this.eventService.publish(
-                    new LdapPersonEntryChangedEvent(personId, username, newEmailAddress, currentEmailAddress),
-                    new KafkaLdapPersonEntryChangedEvent(personId, username, newEmailAddress, currentEmailAddress),
+                    new LdapPersonEntryChangedEvent(personId, username, newEmailAddress, alternativEmailAddress),
+                    new KafkaLdapPersonEntryChangedEvent(personId, username, newEmailAddress, alternativEmailAddress),
                 );
 
                 return { ok: true, value: personId };
@@ -1047,7 +1099,7 @@ export class LdapClientService {
 
     private async removeMailAlternativeAddressInternal(
         personId: PersonID | undefined,
-        username: PersonReferrer,
+        username: PersonUsername,
         address: string,
     ): Promise<Result<boolean>> {
         return this.mutex.runExclusive(async () => {
@@ -1063,10 +1115,14 @@ export class LdapClientService {
             }
             const domain: string = splitted[1];
             const rootName: Result<string> = this.getRootNameOrError(domain);
-            if (!rootName.ok) return rootName;
+            if (!rootName.ok) {
+                return rootName;
+            }
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {
+                return bindResult;
+            }
 
             const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
@@ -1141,7 +1197,9 @@ export class LdapClientService {
             this.logger.info(`LDAP: Adding person ${personUid} to group ${groupId}`);
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {
+                return bindResult;
+            }
 
             const orgUnitDn: string = `ou=${orgaKennung},${this.ldapInstanceConfig.BASE_DN}`;
             const searchResultOrgUnit: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
@@ -1216,7 +1274,7 @@ export class LdapClientService {
     }
 
     private async removePersonFromGroupInternal(
-        username: PersonReferrer,
+        username: PersonUsername,
         orgaKennung: OrganisationKennung,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
@@ -1225,7 +1283,9 @@ export class LdapClientService {
             this.logger.info(`LDAP: Removing person ${username} from group ${groupId}`);
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {
+                return bindResult;
+            }
             const searchResultOrgUnit: SearchResult = await client.search(
                 `cn=${LdapClientService.GROUPS},ou=${orgaKennung},${this.ldapInstanceConfig.BASE_DN}`,
                 {
@@ -1295,7 +1355,7 @@ export class LdapClientService {
 
     private async changeUserPasswordByPersonIdInternal(
         personId: PersonID,
-        username: PersonReferrer,
+        username: PersonUsername,
     ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
         const userPassword: string = generatePassword();
@@ -1304,7 +1364,9 @@ export class LdapClientService {
             this.logger.info('LDAP: changeUserPassword');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {
+                return bindResult;
+            }
 
             const searchResult: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
                 scope: 'sub',
@@ -1352,6 +1414,41 @@ export class LdapClientService {
         });
     }
 
+    private async deleteOrganisationInternal(kennung: string): Promise<Result<string>> {
+        return this.mutex.runExclusive(async () => {
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) {
+                return bindResult;
+            }
+
+            const orgUnitDn: string = `ou=${kennung},${this.ldapInstanceConfig.BASE_DN}`;
+            const groupDn: string = `cn=${LdapClientService.GROUPS},${orgUnitDn}`;
+
+            try {
+                await client.del(groupDn);
+            } catch (err) {
+                if (!(err instanceof NoSuchObjectError)) {
+                    this.logger.logUnknownAsError(`LDAP: Deleting group FAILED for kennung:${kennung}`, err);
+                    return Err(new LdapDeleteOrganisationError({ kennung }));
+                }
+            }
+
+            try {
+                await client.del(orgUnitDn);
+            } catch (err) {
+                if (!(err instanceof NoSuchObjectError)) {
+                    this.logger.logUnknownAsError(`LDAP: Deleting orgUnit FAILED for kennung:${kennung}`, err);
+                    return Err(new LdapDeleteOrganisationError({ kennung }));
+                }
+            }
+
+            this.logger.info(`LDAP: Successfully deleted organisation with kennung:${kennung}.`);
+
+            return Ok<string, Error>(kennung);
+        });
+    }
+
     private async executeWithRetry<T>(
         func: () => Promise<Result<T>>,
         retries: number,
@@ -1378,8 +1475,10 @@ export class LdapClientService {
                     error,
                 );
 
-                // eslint-disable-next-line no-await-in-loop
-                if (currentAttempt < retries) await this.sleep(delay);
+                if (currentAttempt < retries) {
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.sleep(delay);
+                }
             }
             currentAttempt++;
         }
@@ -1388,6 +1487,7 @@ export class LdapClientService {
     }
 
     private async sleep(ms: number): Promise<void> {
+        // eslint-disable-next-line no-promise-executor-return
         return new Promise<void>((resolve: () => void) => setTimeout(resolve, ms));
     }
 }

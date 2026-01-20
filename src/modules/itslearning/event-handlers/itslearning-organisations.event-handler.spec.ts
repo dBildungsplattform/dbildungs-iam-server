@@ -6,7 +6,6 @@ import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } fr
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
-import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
 import { OrganisationsTyp, RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
@@ -16,6 +15,7 @@ import { CreateGroupParams } from '../actions/create-group.params.js';
 import { GroupResponse } from '../actions/read-group.action.js';
 import { ItslearningGroupRepo } from '../repo/itslearning-group.repo.js';
 import { ItsLearningOrganisationsEventHandler } from './itslearning-organisations.event-handler.js';
+import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
 
 describe('ItsLearning Organisations Event Handler', () => {
     let module: TestingModule;
@@ -276,44 +276,6 @@ describe('ItsLearning Organisations Event Handler', () => {
         });
     });
 
-    describe('deletedKlasseEventHandler', () => {
-        it('should log on success', async () => {
-            const event: KlasseDeletedEvent = new KlasseDeletedEvent(faker.string.uuid());
-            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(undefined); // DeleteGroupAction
-
-            await sut.deletedKlasseEventHandler(event);
-
-            expect(itslearningGroupRepoMock.deleteGroup).toHaveBeenLastCalledWith(
-                event.organisationId,
-                `${event.eventID}-KLASSE-DELETED`,
-            );
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Klasse with ID ${event.organisationId} was deleted.`,
-            );
-        });
-
-        it('should skip event, if not enabled', async () => {
-            sut.ENABLED = false;
-            const event: KlasseDeletedEvent = new KlasseDeletedEvent(faker.string.uuid());
-
-            await sut.deletedKlasseEventHandler(event);
-
-            expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
-            expect(itslearningGroupRepoMock.deleteGroup).not.toHaveBeenCalled();
-        });
-
-        it('should log error on failed delete', async () => {
-            const event: KlasseDeletedEvent = new KlasseDeletedEvent(faker.string.uuid());
-            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(createMock<DomainError>({ message: 'Error' })); // DeleteGroupAction
-
-            await sut.deletedKlasseEventHandler(event);
-
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Could not delete Klasse in itsLearning: Error`,
-            );
-        });
-    });
-
     describe('schuleItslearningEnabledEventHandler', () => {
         it('should skip event, if not enabled', async () => {
             sut.ENABLED = false;
@@ -526,6 +488,75 @@ describe('ItsLearning Organisations Event Handler', () => {
                     },
                 ],
                 `${event.eventID}-SCHULE-SYNC`,
+            );
+        });
+    });
+
+    describe('organisationDeletedEventHandler', () => {
+        it('should skip event, if not enabled', async () => {
+            sut.ENABLED = false;
+            const event: OrganisationDeletedEvent = new OrganisationDeletedEvent(
+                faker.string.uuid(),
+                faker.word.noun(),
+                faker.string.numeric(7),
+                OrganisationsTyp.SCHULE,
+            );
+
+            await sut.organisationDeletedEventHandler(event);
+            expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
+            expect(itslearningGroupRepoMock.deleteGroup).not.toHaveBeenCalled();
+        });
+
+        it('should log error, if organisation is not a schule or klasse', async () => {
+            const event: OrganisationDeletedEvent = new OrganisationDeletedEvent(
+                faker.string.uuid(),
+                faker.word.noun(),
+                faker.string.numeric(7),
+                OrganisationsTyp.UNBEST,
+            );
+
+            await sut.organisationDeletedEventHandler(event);
+
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `[EventID: ${event.eventID}] The organisation with ID ${event.organisationId} is not of type "SCHULE" or "KLASSE"!`,
+            );
+            expect(itslearningGroupRepoMock.createOrUpdateGroups).not.toHaveBeenCalled();
+        });
+
+        it('should log error, if deletion failed', async () => {
+            const event: OrganisationDeletedEvent = new OrganisationDeletedEvent(
+                faker.string.uuid(),
+                faker.word.noun(),
+                faker.string.numeric(7),
+                OrganisationsTyp.SCHULE,
+            );
+            orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
+            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(createMock<DomainError>({ message: 'Error' }));
+
+            await sut.organisationDeletedEventHandler(event);
+
+            expect(loggerMock.error).toHaveBeenLastCalledWith(
+                `[EventID: ${event.eventID}] Could not delete Schule (ID ${event.organisationId}) in itsLearning: Error`,
+            );
+        });
+
+        it('should call deleteGroup with correct params', async () => {
+            const event: OrganisationDeletedEvent = new OrganisationDeletedEvent(
+                faker.string.uuid(),
+                faker.word.noun(),
+                faker.string.numeric(7),
+                OrganisationsTyp.SCHULE,
+            );
+            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(undefined);
+
+            await sut.organisationDeletedEventHandler(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} was deleted.`,
+            );
+            expect(itslearningGroupRepoMock.deleteGroup).toHaveBeenCalledWith(
+                event.organisationId,
+                `${event.eventID}-ORGANISATION-DELETED`,
             );
         });
     });
