@@ -405,6 +405,52 @@ describe('Provider Controller Test', () => {
             expect(result).toBeInstanceOf(ServiceProviderResponse);
         });
 
+        it('should create a new service provider without logo when user has permission', async () => {
+            const body: CreateServiceProviderBodyParams = {
+                name: faker.company.name(),
+                target: ServiceProviderTarget.EMAIL,
+                url: faker.internet.url(),
+                kategorie: ServiceProviderKategorie.EMAIL,
+                providedOnSchulstrukturknoten: faker.string.uuid(),
+                logoBase64: undefined,
+                requires2fa: false,
+                vidisAngebotId: undefined,
+                merkmale: [],
+                organisationId: faker.string.uuid(),
+            };
+
+            const createdDomainSp: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const persistedSp: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+
+            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            serviceProviderFactoryMock.createNew.mockReturnValueOnce(createdDomainSp);
+            serviceProviderRepoMock.save.mockResolvedValueOnce(persistedSp);
+
+            const result: ServiceProviderResponse = await providerController.createServiceProvider(
+                personPermissionsMock,
+                body,
+            );
+
+            expect(result).toBeDefined();
+            expect(serviceProviderFactoryMock.createNew).toHaveBeenCalledWith(
+                body.name,
+                body.target,
+                body.url,
+                body.kategorie,
+                body.providedOnSchulstrukturknoten,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                ServiceProviderSystem.NONE,
+                body.requires2fa,
+                body.vidisAngebotId,
+                body.merkmale,
+            );
+            expect(serviceProviderRepoMock.save).toHaveBeenCalledWith(createdDomainSp);
+            expect(result).toBeInstanceOf(ServiceProviderResponse);
+        });
+
         it('should throw forbidden error when user lacks permission', async () => {
             const body: CreateServiceProviderBodyParams = {
                 name: faker.company.name(),

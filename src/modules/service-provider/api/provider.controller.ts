@@ -320,13 +320,7 @@ export class ProviderController {
         }
 
         // Convert base64 to Buffer (if provided)
-        let logoBuffer: Buffer | undefined;
-
-        if (body.logoBase64) {
-            logoBuffer = Buffer.from(body.logoBase64, 'base64');
-        } else {
-            logoBuffer = undefined;
-        }
+        const logoBuffer: Buffer | undefined = body.logoBase64 ? Buffer.from(body.logoBase64, 'base64') : undefined;
 
         const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
             body.name,
