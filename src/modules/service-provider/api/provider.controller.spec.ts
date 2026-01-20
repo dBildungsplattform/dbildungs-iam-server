@@ -412,6 +412,7 @@ describe('Provider Controller Test', () => {
                 url: undefined,
                 kategorie: ServiceProviderKategorie.ANGEBOTE,
                 providedOnSchulstrukturknoten: faker.string.uuid(),
+                logoBase64: undefined,
                 requires2fa: false,
                 vidisAngebotId: undefined,
                 merkmale: [],
