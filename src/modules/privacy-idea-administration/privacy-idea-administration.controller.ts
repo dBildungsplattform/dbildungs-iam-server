@@ -9,6 +9,7 @@ import {
     Put,
     Query,
     UseFilters,
+    UseGuards,
 } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
@@ -22,16 +23,20 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
 import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
+import { PersonUsername } from '../../shared/types/aggregate-ids.types.js';
+import { AuthenticationExceptionFilter } from '../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../authentication/api/permissions.decorator.js';
-import { Public } from '../authentication/api/public.decorator.js';
+import { StepUpGuard } from '../authentication/api/steup-up.guard.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { Person } from '../person/domain/person.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { AssignHardwareTokenBodyParams } from './api/assign-hardware-token.body.params.js';
 import { AssignHardwareTokenResponse } from './api/assign-hardware-token.response.js';
+import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
 import { TokenError } from './api/error/token.error.js';
 import { PrivacyIdeaAdministrationExceptionFilter } from './api/privacy-idea-administration-exception-filter.js';
 import { TokenRequiredResponse } from './api/token-required.response.js';
@@ -40,11 +45,8 @@ import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './pri
 import { TokenInitBodyParams } from './token-init.body.params.js';
 import { TokenStateResponse } from './token-state.response.js';
 import { TokenVerifyBodyParams } from './token-verify.params.js';
-import { ClassLogger } from '../../core/logging/class-logger.js';
-import { PersonUsername } from '../../shared/types/aggregate-ids.types.js';
-import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
 
-@UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
+@UseFilters(new PrivacyIdeaAdministrationExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('2FA')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -118,7 +120,7 @@ export class PrivacyIdeaAdministrationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to reset token.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to reset token.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while reseting a token.' })
-    @Public()
+    @UseGuards(StepUpGuard)
     public async resetToken(
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
