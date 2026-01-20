@@ -353,17 +353,20 @@ describe('Provider Controller Test', () => {
         );
     });
     describe('createServiceProvider', () => {
+        beforeEach(() => {
+            jest.clearAllMocks();
+        });
         it('should create a new service provider when user has permission', async () => {
             const body: CreateServiceProviderBodyParams = {
-                name: 'Test Angebot',
+                name: faker.company.name(),
                 target: ServiceProviderTarget.EMAIL,
-                url: 'https://example.org',
-                kategorie: ServiceProviderKategorie.ANGEBOTE,
-                providedOnSchulstrukturknoten: 'orga-id-1',
+                url: faker.internet.url(),
+                kategorie: ServiceProviderKategorie.EMAIL,
+                providedOnSchulstrukturknoten: faker.string.uuid(),
                 requires2fa: false,
                 vidisAngebotId: undefined,
                 merkmale: [],
-                organisationId: 'orga-id-1',
+                organisationId: faker.string.uuid(),
             };
 
             const createdDomainSp: ServiceProvider<false> = DoFactory.createServiceProvider(false);
@@ -400,15 +403,15 @@ describe('Provider Controller Test', () => {
 
         it('should throw forbidden error when user lacks permission', async () => {
             const body: CreateServiceProviderBodyParams = {
-                name: 'Test Angebot',
+                name: faker.company.name(),
                 target: ServiceProviderTarget.EMAIL,
                 url: undefined,
                 kategorie: ServiceProviderKategorie.ANGEBOTE,
-                providedOnSchulstrukturknoten: 'orga-id-1',
+                providedOnSchulstrukturknoten: faker.string.uuid(),
                 requires2fa: false,
                 vidisAngebotId: undefined,
                 merkmale: [],
-                organisationId: 'orga-id-1',
+                organisationId: faker.string.uuid(),
             };
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
