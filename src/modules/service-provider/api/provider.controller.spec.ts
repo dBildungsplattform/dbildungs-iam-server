@@ -357,12 +357,16 @@ describe('Provider Controller Test', () => {
             jest.clearAllMocks();
         });
         it('should create a new service provider when user has permission', async () => {
+            const tinyPngBase64: string =
+                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBg0GwHjcAAAAASUVORK5CYII=';
+
             const body: CreateServiceProviderBodyParams = {
                 name: faker.company.name(),
                 target: ServiceProviderTarget.EMAIL,
                 url: faker.internet.url(),
                 kategorie: ServiceProviderKategorie.EMAIL,
                 providedOnSchulstrukturknoten: faker.string.uuid(),
+                logoBase64: tinyPngBase64,
                 requires2fa: false,
                 vidisAngebotId: undefined,
                 merkmale: [],
@@ -388,7 +392,7 @@ describe('Provider Controller Test', () => {
                 body.url,
                 body.kategorie,
                 body.providedOnSchulstrukturknoten,
-                undefined,
+                Buffer.from(tinyPngBase64, 'base64'),
                 undefined,
                 undefined,
                 undefined,
