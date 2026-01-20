@@ -24,6 +24,12 @@ export class CreateServiceProviderBodyParams {
     })
     public providedOnSchulstrukturknoten!: string;
 
+    @ApiProperty({
+        required: false,
+        description: 'Optional logo as base64-encoded string',
+    })
+    public logoBase64?: string;
+
     @ApiProperty({ enum: ServiceProviderKategorie })
     public kategorie!: ServiceProviderKategorie;
 

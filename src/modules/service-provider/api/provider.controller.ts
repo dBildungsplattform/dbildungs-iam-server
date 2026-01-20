@@ -318,13 +318,19 @@ export class ProviderController {
                 ),
             );
         }
+
+        // Convert base64 to Buffer (if provided)
+        const logoBuffer: Buffer<ArrayBuffer> | undefined = body.logoBase64
+            ? Buffer.from(body.logoBase64, 'base64')
+            : undefined;
+
         const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
             body.name,
             body.target,
             body.url,
             body.kategorie,
             body.providedOnSchulstrukturknoten,
-            undefined, // logo
+            logoBuffer,
             undefined, // logoMimeType
             undefined, // keycloakGroup
             undefined, // keycloakRole
