@@ -14,6 +14,7 @@ import { NoRedundantRollenerweiterungError } from '../specification/error/no-red
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
 import { NoRedundantRollenerweiterung } from '../specification/no-redundant-rollenerweiterung.specification.js';
 import { ServiceProviderVerfuegbarFuerRollenerweiterung } from '../specification/service-provider-verfuegbar-fuer-rollenerweiterung.specification.js';
+import { Ok } from '../../../shared/util/result.js';
 
 type RollenerweiterungIds = {
     organisationId: OrganisationID;
@@ -159,6 +160,42 @@ export class RollenerweiterungRepo {
         return rollenerweiterungEntities.map((entity: Loaded<RollenerweiterungEntity>) =>
             this.mapEntityToAggregate(entity),
         );
+    }
+
+    public async findManyByOrganisationIdAndServiceProviderId(
+        organisationId: OrganisationID,
+        serviceProviderId: ServiceProviderID,
+    ): Promise<Array<Rollenerweiterung<true>>> {
+        const rollenerweiterungEntities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
+            RollenerweiterungEntity,
+            {
+                organisationId,
+                serviceProviderId,
+            },
+        );
+        return rollenerweiterungEntities.map((entity: Loaded<RollenerweiterungEntity>) =>
+            this.mapEntityToAggregate(entity),
+        );
+    }
+
+    public async deleteByIds(props: {
+        organisationId: OrganisationID;
+        rolleId: RolleID;
+        serviceProviderId: ServiceProviderID;
+    }): Promise<Result<null, DomainError>> {
+        if (!(await this.exists(props))) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('TBD'),
+            };
+        }
+
+        await this.em.nativeDelete(RollenerweiterungEntity, {
+            serviceProviderId: props.serviceProviderId,
+            organisationId: props.organisationId,
+            rolleId: props.rolleId,
+        });
+        return Ok(null);
     }
 
     public async findByServiceProviderIds(
