@@ -4,7 +4,8 @@ import {
     ServiceProviderMerkmal,
     ServiceProviderTarget,
 } from '../domain/service-provider.enum.js';
-import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+
 export class CreateServiceProviderBodyParams {
     @IsUUID()
     @ApiProperty({
@@ -19,6 +20,7 @@ export class CreateServiceProviderBodyParams {
     public name!: string;
 
     @ApiProperty({ enum: ServiceProviderTarget })
+    @IsEnum(ServiceProviderTarget)
     public target!: ServiceProviderTarget;
 
     @ApiProperty({ required: false })
@@ -33,9 +35,11 @@ export class CreateServiceProviderBodyParams {
     public logoBase64?: string;
 
     @ApiProperty({ enum: ServiceProviderKategorie })
+    @IsEnum(ServiceProviderKategorie)
     public kategorie!: ServiceProviderKategorie;
 
     @ApiProperty({ required: true })
+    @IsBoolean()
     public requires2fa!: boolean;
 
     @ApiProperty({ required: false })
