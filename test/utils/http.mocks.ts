@@ -10,6 +10,7 @@ export function createResponseMock(): MockedObject<Response> {
         json: vi.fn().mockReturnThis(),
         send: vi.fn().mockReturnThis(),
         setHeader: vi.fn().mockReturnThis(),
+        redirect: vi.fn(),
         // Add other methods and properties of Response as needed
     } as MockedObject<Response>;
 }
@@ -34,7 +35,7 @@ export function createRequestMock(options?: RequestMockOptions): MockedObject<Re
         isAuthenticated: vi.fn().mockReturnValue(false),
         logout: vi.fn(),
         query: {},
-        session: options?.session ?? {},
+        session: options?.session ?? ({ destroy: vi.fn() } as unknown as MockedObject<Session>),
         headers: options?.headers ?? {},
         // Add other methods and properties of Response as needed
     } as unknown as MockedObject<Request>;

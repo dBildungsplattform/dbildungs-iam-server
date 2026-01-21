@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { BaseClient, UserinfoResponse as OidcUserinfoResponse } from 'openid-client';
+import { BaseClient, ClientMetadata, Issuer, IssuerMetadata, UserinfoResponse as OidcUserinfoResponse } from 'openid-client';
 import { UserinfoResponse } from '../../src/modules/authentication/api/userinfo.response.js';
 import { PersonFields, PersonPermissions } from '../../src/modules/authentication/domain/person-permissions.js';
 import { IPersonPermissions } from '../../src/shared/permissions/person-permissions.interface.js';
@@ -59,11 +59,15 @@ export function createPassportUserMock(personPermissions?: PersonPermissions): P
 }
 
 export function createOidcClientMock(clientFields?: Partial<BaseClient>): DeepMocked<BaseClient> {
+    // add more properties as needed
     const client: DeepMocked<BaseClient> = {
         introspect: vi.fn().mockResolvedValue({ scope: 'openid', active: true }),
         refresh: vi.fn(),
         userinfo: vi.fn(),
-    } as unknown as DeepMocked<BaseClient>;
+        endSessionUrl: vi.fn().mockReturnValue(faker.internet.url()),
+        metadata: {} as ClientMetadata,
+        issuer: { metadata: {} as IssuerMetadata } as Issuer,
+    } as DeepMocked<BaseClient>;
     return Object.assign(client, clientFields);
 }
 

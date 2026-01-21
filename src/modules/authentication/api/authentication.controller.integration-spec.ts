@@ -1,23 +1,27 @@
 import { faker } from '@faker-js/faker';
-import { vi } from 'vitest';
+import { Mock, MockedObject, vi } from 'vitest';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
-import { Session, SessionData } from 'express-session';
+import { SessionData } from 'express-session';
 import { Client, EndSessionParameters, IssuerMetadata } from 'openid-client';
 
 import { MikroORM } from '@mikro-orm/core';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { createOidcClientMock, DatabaseTestModule } from '../../../../test/utils/index.js';
+import {
+    createOidcClientMock,
+    createPassportUserMock,
+    createPersonPermissionsMock,
+    DatabaseTestModule,
+    DoFactory,
+} from '../../../../test/utils/index.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
 import { KeycloakConfig } from '../../../shared/config/keycloak.config.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import PersonTimeLimitService from '../../person/domain/person-time-limit-info.service.js';
-import { Person } from '../../person/domain/person.js';
 import { TimeLimitOccasion } from '../../person/domain/time-limit-occasion.enums.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { PersonModule } from '../../person/person.module.js';
@@ -141,47 +145,48 @@ describe('AuthenticationController', () => {
 
     describe('Logout', () => {
         function setupRequest(passportUser?: PassportUser, logoutErr?: Error, destroyErr?: Error): Request {
-            const sessionMock: DeepMocked<Session> = createMock(Session);
-            const requestMock: DeepMocked<Request> = createRequestMock({
-                session: sessionMock,
+            const requestMock: MockedObject<Request> = createRequestMock({
                 passportUser,
             });
-            requestMock.logout.mockImplementationOnce((cb: (err: unknown) => void): void => {
+            (requestMock.logout as Mock).mockImplementation((cb: (err: unknown) => void): void => {
                 cb(logoutErr);
             });
-            sessionMock.destroy.mockImplementationOnce((cb: (err: unknown) => void): Session => {
+            (requestMock.session.destroy as Mock).mockImplementation((cb: (err: unknown) => void): void => {
                 cb(destroyErr);
-                return sessionMock;
             });
+            // sessionMock.destroy.mockImplementationOnce((cb: (err: unknown) => void): Session => {
+            //     cb(destroyErr);
+            //     return sessionMock;
+            // });
 
             return requestMock;
         }
 
         it('should call request.logout', () => {
             const requestMock: Request = setupRequest();
-            oidcClient.issuer.metadata = createMock<IssuerMetadata>({});
+            oidcClient.issuer.metadata = {} as IssuerMetadata;
 
-            authController.logout(requestMock, createMock());
+            authController.logout(requestMock, createResponseMock());
 
             expect(requestMock.logout).toHaveBeenCalled();
         });
 
         it('should call session.destroy', () => {
             const requestMock: Request = setupRequest();
-            oidcClient.issuer.metadata = createMock<IssuerMetadata>({});
+            oidcClient.issuer.metadata = {} as IssuerMetadata;
 
-            authController.logout(requestMock, createMock());
+            authController.logout(requestMock, createResponseMock());
 
             expect(requestMock.logout).toHaveBeenCalled();
         });
 
         describe('when end_session_endpoint is defined', () => {
             it('should call endSessionUrl with correct params', () => {
-                const user: PassportUser = createMock<PassportUser>({ id_token: faker.string.alphanumeric(32) });
+                const user: PassportUser = createPassportUserMock();
                 const requestMock: Request = setupRequest(user);
-                oidcClient.issuer.metadata = createMock<IssuerMetadata>({ end_session_endpoint: faker.internet.url() });
+                oidcClient.issuer.metadata = { end_session_endpoint: faker.internet.url() } as IssuerMetadata;
 
-                authController.logout(requestMock, createMock());
+                authController.logout(requestMock, createResponseMock());
 
                 expect(oidcClient.endSessionUrl).toHaveBeenCalledWith<[EndSessionParameters]>({
                     id_token_hint: user.id_token,
@@ -191,10 +196,10 @@ describe('AuthenticationController', () => {
             });
 
             it('should redirect to return value of endSessionUrl', () => {
-                const user: PassportUser = createMock<PassportUser>({ id_token: faker.string.alphanumeric(32) });
+                const user: PassportUser = createPassportUserMock();
                 const requestMock: Request = setupRequest(user);
                 const responseMock: Response = createResponseMock();
-                oidcClient.issuer.metadata = createMock<IssuerMetadata>({ end_session_endpoint: faker.internet.url() });
+                oidcClient.issuer.metadata = { end_session_endpoint: faker.internet.url() } as IssuerMetadata;
                 const endSessionUrl: string = faker.internet.url();
                 oidcClient.endSessionUrl.mockReturnValueOnce(endSessionUrl);
 
@@ -208,7 +213,7 @@ describe('AuthenticationController', () => {
             it('should return to redirectUrl param', () => {
                 const requestMock: Request = setupRequest();
                 const responseMock: Response = createResponseMock();
-                oidcClient.issuer.metadata = createMock<IssuerMetadata>({ end_session_endpoint: undefined });
+                oidcClient.issuer.metadata = { end_session_endpoint: undefined } as IssuerMetadata;
 
                 authController.logout(requestMock, responseMock);
 
@@ -220,7 +225,7 @@ describe('AuthenticationController', () => {
             it('should not throw error', () => {
                 const requestMock: Request = setupRequest(undefined, new Error());
 
-                expect(() => authController.logout(requestMock, createMock())).not.toThrow();
+                expect(() => authController.logout(requestMock, createResponseMock())).not.toThrow();
             });
         });
 
@@ -228,36 +233,34 @@ describe('AuthenticationController', () => {
             it('should not throw error', () => {
                 const requestMock: Request = setupRequest(undefined, undefined, new Error());
 
-                expect(() => authController.logout(requestMock, createMock())).not.toThrow();
+                expect(() => authController.logout(requestMock, createResponseMock())).not.toThrow();
             });
         });
     });
 
     describe('info', () => {
         function setupRequest(passportUser?: PassportUser): Request {
-            const sessionMock: DeepMocked<Session> = createMock(Session);
-            const requestMock: DeepMocked<Request> = createMock<Request>({
-                session: sessionMock,
+            const requestMock: DeepMocked<Request> = createRequestMock({
                 passportUser,
             });
             return requestMock;
         }
 
         it('should return user info', async () => {
-            const permissions: PersonPermissions = createMock<PersonPermissions>({
-                get personFields(): Person<true> {
-                    return createMock<Person<true>>({
-                        updatedAt: new Date(Date.now()),
-                    });
-                },
-                getPersonenkontexteWithRolesAndOrgs: (): Promise<PersonenkontextRolleWithOrganisation[]> =>
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock({
+                updatedAt: new Date(Date.now()),
+            });
+            permissions.getRoleIds.mockResolvedValue([]);
+            permissions.getPersonenkontexteWithRolesAndOrgs.mockImplementation(
+                (): Promise<PersonenkontextRolleWithOrganisation[]> =>
                     Promise.resolve([
                         {
-                            organisation: createMock(Organisation<true>),
+                            organisation: DoFactory.createOrganisation(true),
                             rolle: { systemrechte: [RollenSystemRecht.PERSONEN_VERWALTEN], serviceProviderIds: [] },
                         },
                     ]),
-            });
+            );
+
             keycloakUserServiceMock.getLastPasswordChange.mockResolvedValueOnce({
                 ok: true,
                 value: faker.date.past(),

@@ -1,7 +1,8 @@
+import { Request as OriginalRequest } from 'express';
 import { PassportUser, User } from './user.js';
 
 declare module 'express' {
-    interface Request {
+    interface Request extends OriginalRequest {
         user?: User;
         accessTokenJWT?: string;
         passportUser?: PassportUser;
