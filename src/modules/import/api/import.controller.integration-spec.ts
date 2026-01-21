@@ -44,22 +44,28 @@ import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { KeycloakAdministrationService } from '../../keycloak-administration/domain/keycloak-admin-client.service.js';
 import { ImportVorgangStatusResponse } from './importvorgang-status.response.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
-import { mapAggregateToData } from '../../person/persistence/person.repository.js';
+import { mapAggregateToData, PersonRepository } from '../../person/persistence/person.repository.js';
 import { ImportResultResponse } from './import-result.response.js';
 import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
+import { PassportUser } from '../../authentication/types/user.js';
+import { Person } from '../../person/domain/person.js';
 
 describe('Import API', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
     let rolleRepo: RolleRepo;
+
+    let personRepo: PersonRepository;
     let importDataRepository: ImportDataRepository;
     let importVorgangRepository: ImportVorgangRepository;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let keycloakUserServiceMock: DeepMocked<KeycloakUserService>;
     let keycloakAdministrationServiceMock: DeepMocked<KeycloakAdministrationService>;
+    let passportUserMock: PassportUser;
+    let persistedAdmin: Person<true>;
 
     beforeAll(async () => {
         keycloakAdministrationServiceMock = createMock(KeycloakAdministrationService);
@@ -72,11 +78,7 @@ describe('Import API', () => {
             return Promise.resolve({ ok: true, value: faker.string.uuid() });
         });
 
-        personPermissionsMock = createPersonPermissionsMock();
-        personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-        personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-        personPermissionsMock.hasSystemrechteAtOrganisation.mockResolvedValue(true);
-        personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+        passportUserMock = createPassportUserMock();
 
         const module: TestingModule = await Test.createTestingModule({
             imports: [ImportApiModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
@@ -90,7 +92,7 @@ describe('Import API', () => {
                     useValue: {
                         intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
                             const req: Request = context.switchToHttp().getRequest();
-                            req.passportUser = createPassportUserMock(personPermissionsMock);
+                            req.passportUser = passportUserMock;
                             return next.handle();
                         },
                     },
@@ -117,12 +119,10 @@ describe('Import API', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         rolleRepo = module.get(RolleRepo);
+        personRepo = module.get(PersonRepository);
         importDataRepository = module.get(ImportDataRepository);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
         importVorgangRepository = module.get(ImportVorgangRepository);
-
-        personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
-
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
@@ -135,6 +135,23 @@ describe('Import API', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
+
+        const admin: Person<false> = DoFactory.createPerson(false);
+        admin.id = undefined;
+        admin.personalnummer = undefined;
+        const persistedAdminOrError: Person<true> | DomainError = await personRepo.save(admin);
+        if (persistedAdminOrError instanceof DomainError) {
+            throw persistedAdminOrError;
+        }
+        persistedAdmin = persistedAdminOrError;
+
+        personPermissionsMock = createPersonPermissionsMock({ id: persistedAdmin.id });
+        personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+        personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+        personPermissionsMock.hasSystemrechteAtOrganisation.mockResolvedValue(true);
+        personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+        passportUserMock.personPermissions = (): Promise<PersonPermissions> => Promise.resolve(personPermissionsMock);
+        personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
     });
 
     describe('/POST upload', () => {
@@ -780,7 +797,7 @@ describe('Import API', () => {
                 importVorgangRepository.save(
                     DoFactory.createImportVorgang(false, {
                         organisationId: orgaId1,
-                        importByPersonId: undefined,
+                        importByPersonId: persistedAdmin.id,
                         rolleId: undefined,
                     }),
                 ),
@@ -788,7 +805,7 @@ describe('Import API', () => {
                     DoFactory.createImportVorgang(false, {
                         rolleId: rolleId,
                         organisationId: orgaId2,
-                        importByPersonId: undefined,
+                        importByPersonId: persistedAdmin.id,
                     }),
                 ),
             ]);
@@ -856,7 +873,7 @@ describe('Import API', () => {
             personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
             const startedImport: ImportVorgang<true> = await importVorgangRepository.save(
                 DoFactory.createImportVorgang(false, {
-                    importByPersonId: undefined,
+                    importByPersonId: persistedAdmin.id,
                     rolleId: undefined,
                     organisationId: undefined,
                 }),
