@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { Loaded, LoadedReference, MikroORM } from '@mikro-orm/core';
+import { Loaded, LoadedReference, MikroORM, Reference } from '@mikro-orm/core';
 import { HttpException } from '@nestjs/common';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
@@ -30,6 +30,18 @@ import { KeycloakInternalController } from './keycloakinternal.controller.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
+
+function createLoadedReference<T>(entity: T): LoadedReference<T> {
+    const reference: Reference<T> = createMock<Reference<T>>(Reference);
+    reference.unwrap = vi.fn().mockReturnValue(entity);
+    const loadedReference: LoadedReference<T> = {
+        ...reference,
+        isInitialized: () => true,
+        get: () => reference.unwrap(),
+    } as LoadedReference<T>;
+
+    return loadedReference;
+}
 
 describe('KeycloakInternalController', () => {
     let module: TestingModule;
@@ -67,11 +79,10 @@ describe('KeycloakInternalController', () => {
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personRepoMock = module.get(PersonRepository);
         emailResolverServiceMock = module.get(EmailResolverService);
-        jest.disableAutomock();
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     afterAll(async () => {
@@ -104,13 +115,21 @@ describe('KeycloakInternalController', () => {
                     pkId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
-                    serviceProvider: [createMock<ServiceProviderEntity>({ vidisAngebotId: faker.string.uuid() })],
+                    serviceProvider: [
+                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                            vidisAngebotId: faker.string.uuid(),
+                        }),
+                    ],
                 },
                 {
                     pkId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
-                    serviceProvider: [createMock<ServiceProviderEntity>({ vidisAngebotId: faker.string.uuid() })],
+                    serviceProvider: [
+                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                            vidisAngebotId: faker.string.uuid(),
+                        }),
+                    ],
                 },
                 {
                     pkId: faker.string.uuid(),
@@ -127,17 +146,15 @@ describe('KeycloakInternalController', () => {
                 organisationId: faker.string.uuid(),
             });
 
-            const spRef: DeepMocked<LoadedReference<Loaded<ServiceProviderEntity>>> = createMock<
-                LoadedReference<Loaded<ServiceProviderEntity>>
-            >({
-                load: jest.fn().mockResolvedValue(sp),
-            });
+            let serviceProviderEntity: ServiceProviderEntity = new ServiceProviderEntity();
+            serviceProviderEntity = Object.assign(serviceProviderEntity, sp);
 
-            const pkRef: DeepMocked<LoadedReference<Loaded<PersonenkontextEntity>>> = createMock<
-                LoadedReference<Loaded<PersonenkontextEntity>>
-            >({
-                load: jest.fn().mockResolvedValue(pk),
-            });
+            let personenkontextEntity: PersonenkontextEntity = new PersonenkontextEntity();
+            personenkontextEntity = Object.assign(personenkontextEntity, pk);
+
+            const spRef: LoadedReference<Loaded<ServiceProviderEntity>> = createLoadedReference(serviceProviderEntity);
+
+            const pkRef: LoadedReference<Loaded<PersonenkontextEntity>> = createLoadedReference(personenkontextEntity);
 
             const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = [
                 {
@@ -190,13 +207,21 @@ describe('KeycloakInternalController', () => {
                     pkId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
-                    serviceProvider: [createMock<ServiceProviderEntity>({ vidisAngebotId: faker.string.uuid() })],
+                    serviceProvider: [
+                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                            vidisAngebotId: faker.string.uuid(),
+                        }),
+                    ],
                 },
                 {
                     pkId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
-                    serviceProvider: [createMock<ServiceProviderEntity>({ vidisAngebotId: faker.string.uuid() })],
+                    serviceProvider: [
+                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                            vidisAngebotId: faker.string.uuid(),
+                        }),
+                    ],
                 },
                 {
                     pkId: faker.string.uuid(),
@@ -213,17 +238,15 @@ describe('KeycloakInternalController', () => {
                 organisationId: faker.string.uuid(),
             });
 
-            const spRef: DeepMocked<LoadedReference<Loaded<ServiceProviderEntity>>> = createMock<
-                LoadedReference<Loaded<ServiceProviderEntity>>
-            >({
-                load: jest.fn().mockResolvedValue(sp),
-            });
+            let serviceProviderEntity: ServiceProviderEntity = new ServiceProviderEntity();
+            serviceProviderEntity = Object.assign(serviceProviderEntity, sp);
 
-            const pkRef: DeepMocked<LoadedReference<Loaded<PersonenkontextEntity>>> = createMock<
-                LoadedReference<Loaded<PersonenkontextEntity>>
-            >({
-                load: jest.fn().mockResolvedValue(pk),
-            });
+            let personenkontextEntity: PersonenkontextEntity = new PersonenkontextEntity();
+            personenkontextEntity = Object.assign(personenkontextEntity, pk);
+
+            const spRef: LoadedReference<Loaded<ServiceProviderEntity>> = createLoadedReference(serviceProviderEntity);
+
+            const pkRef: LoadedReference<Loaded<PersonenkontextEntity>> = createLoadedReference(personenkontextEntity);
 
             const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = [
                 {
@@ -233,7 +256,7 @@ describe('KeycloakInternalController', () => {
             ];
 
             emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValueOnce(
-                createMock<EmailAddressResponse>({
+                createMock<EmailAddressResponse>(EmailAddressResponse, {
                     oxLoginId: `${faker.string.uuid()}@${faker.number.int({ min: 1000, max: 9999 })}`,
                 }),
             );
@@ -276,7 +299,7 @@ describe('KeycloakInternalController', () => {
                 },
             ];
 
-            personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(createMock(Person<true>));
+            personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(DoFactory.createPerson(true));
             personRepoMock.findById.mockResolvedValueOnce(undefined);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
 

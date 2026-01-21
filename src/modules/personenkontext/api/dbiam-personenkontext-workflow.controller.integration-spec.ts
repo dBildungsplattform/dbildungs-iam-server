@@ -1,12 +1,14 @@
 import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
-import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
+    createAuthInterceptorMock,
+    createPersonPermissionsMock,
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
@@ -19,10 +21,6 @@ import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { Observable } from 'rxjs';
-import { PassportUser } from '../../authentication/types/user.js';
-import { Request } from 'express';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
@@ -44,13 +42,18 @@ import { generatePassword } from '../../../shared/util/password-generator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
 import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { DbiamPersonenkontextFactory } from '../domain/dbiam-personenkontext.factory.js';
+import { ConfigService } from '@nestjs/config';
+import { PersonenkontextWorkflowSharedKernel } from '../domain/personenkontext-workflow-shared-kernel.js';
 
 describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let organisationRepo: OrganisationRepository;
     let rolleRepo: RolleRepo;
-    let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
+    let personPermissionsMock: DeepMocked<PersonPermissions>;
     let personRepo: PersonRepository;
     let personenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personFactory: PersonFactory;
@@ -58,6 +61,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let personenkontextWorkflowFactoryMock: DeepMocked<PersonenkontextWorkflowFactory>;
 
     beforeAll(async () => {
+        personPermissionsMock = createPersonPermissionsMock();
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
@@ -81,17 +85,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 },
                 {
                     provide: APP_INTERCEPTOR,
-                    useValue: {
-                        intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-                            const req: Request = context.switchToHttp().getRequest();
-                            req.passportUser = createMock<PassportUser>({
-                                async personPermissions() {
-                                    return personpermissionsRepoMock.loadPersonPermissions('');
-                                },
-                            });
-                            return next.handle();
-                        },
-                    },
+                    useValue: createAuthInterceptorMock(personPermissionsMock),
                 },
             ],
         })
@@ -100,12 +94,11 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             .compile();
 
         const stepUpGuard: StepUpGuard = module.get(StepUpGuard);
-        stepUpGuard.canActivate = jest.fn().mockReturnValue(true);
+        stepUpGuard.canActivate = vi.fn().mockReturnValue(true);
 
         orm = module.get(MikroORM);
         organisationRepo = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
-        personpermissionsRepoMock = module.get(PersonPermissionsRepo);
         personRepo = module.get(PersonRepository);
         personenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personFactory = module.get(PersonFactory);
@@ -163,9 +156,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 throw Error();
             }
 
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')
@@ -201,9 +192,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 throw Error();
             }
 
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')
@@ -232,11 +221,9 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 throw Error();
             }
 
-            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
-            permissions.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-            permissions.canModifyPerson.mockResolvedValueOnce(true);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissions);
+            personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
+            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')
@@ -268,10 +255,8 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 throw Error();
             }
 
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
+            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')
@@ -307,10 +292,8 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 throw Error();
             }
 
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
+            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')
@@ -346,12 +329,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 throw Error();
             }
 
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             // Mock the service to throw DuplicatePersonalnummerError
-            jest.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
+            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
                 new DuplicatePersonalnummerError('Duplicate Kopers'),
             );
 
@@ -387,12 +368,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 throw Error();
             }
 
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             // Mock the service to throw DuplicatePersonalnummerError
-            jest.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
+            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
                 new PersonenkontexteUpdateError('Error'),
             );
 
@@ -426,12 +405,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 throw Error();
             }
 
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             // Mock the service to throw DuplicatePersonalnummerError
-            jest.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
+            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
                 new PersonenkontexteUpdateError('Error'),
             );
 
@@ -473,16 +450,14 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         updatedAt: new Date(),
                     }),
                 );
-                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
-                    createMock<DbiamUpdatePersonenkontexteBodyParams>({
-                        count: 1,
-                        lastModified: savedPK.updatedAt,
-                        personenkontexte: [],
-                    });
-                const personpermissions: DeepMocked<PersonPermissions> = createMock();
-                personpermissions.canModifyPerson.mockResolvedValueOnce(true);
-                personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams = {
+                    count: 1,
+                    lastModified: savedPK.updatedAt,
+                    personenkontexte: [],
+                };
+
+                personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+                personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .put(`/personenkontext-workflow/${person.id}`)
@@ -510,12 +485,11 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         updatedAt: new Date(),
                     }),
                 );
-                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
-                    createMock<DbiamUpdatePersonenkontexteBodyParams>({
-                        count: 0,
-                        lastModified: savedPK.updatedAt,
-                        personenkontexte: [],
-                    });
+                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams = {
+                    count: 0,
+                    lastModified: savedPK.updatedAt,
+                    personenkontexte: [],
+                };
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .put(`/personenkontext-workflow/${person.id}`)
@@ -557,27 +531,25 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     throw Error();
                 }
 
-                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
-                    createMock<DbiamUpdatePersonenkontexteBodyParams>({
-                        count: 2,
-                        lastModified: savedPK.updatedAt,
-                        personenkontexte: [
-                            {
-                                personId: schueler.id,
-                                rolleId: lernRolle.id,
-                                organisationId: schule.id,
-                            },
-                            {
-                                personId: schueler.id,
-                                rolleId: lehrerRolle.id,
-                                organisationId: schule.id,
-                            },
-                        ],
-                    });
-                const personpermissions: DeepMocked<PersonPermissions> = createMock();
-                personpermissions.canModifyPerson.mockResolvedValueOnce(true);
-                personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams = {
+                    count: 2,
+                    lastModified: savedPK.updatedAt,
+                    personenkontexte: [
+                        {
+                            personId: schueler.id,
+                            rolleId: lernRolle.id,
+                            organisationId: schule.id,
+                        },
+                        {
+                            personId: schueler.id,
+                            rolleId: lehrerRolle.id,
+                            organisationId: schule.id,
+                        },
+                    ],
+                };
+
+                personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+                personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .put(`/personenkontext-workflow/${schueler.id}`)
@@ -611,29 +583,34 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     }),
                 );
 
-                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
-                    createMock<DbiamUpdatePersonenkontexteBodyParams>({
-                        count: 1,
-                        lastModified: savedPK.updatedAt,
-                        personenkontexte: [
-                            {
-                                personId: person.id,
-                                rolleId: rolle.id,
-                                organisationId: orga.id,
-                            },
-                        ],
-                    });
+                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams = {
+                    count: 1,
+                    lastModified: savedPK.updatedAt,
+                    personenkontexte: [
+                        {
+                            personId: person.id,
+                            rolleId: rolle.id,
+                            organisationId: orga.id,
+                        },
+                    ],
+                };
 
-                const personpermissions: DeepMocked<PersonPermissions> = createMock();
-                personpermissions.canModifyPerson.mockResolvedValueOnce(true);
-                personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+                personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+                personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-                const mockWorkflow: DeepMocked<PersonenkontextWorkflowAggregate> =
-                    createMock(PersonenkontextWorkflowAggregate);
+                const mockWorkflow: DeepMocked<PersonenkontextWorkflowAggregate> = vi.mockObject(
+                    PersonenkontextWorkflowAggregate.createNew(
+                        null as unknown as RolleRepo,
+                        null as unknown as OrganisationRepository,
+                        null as unknown as DBiamPersonenkontextRepo,
+                        null as unknown as DbiamPersonenkontextFactory,
+                        null as unknown as ConfigService,
+                        null as unknown as PersonenkontextWorkflowSharedKernel,
+                    ),
+                );
                 mockWorkflow.commit.mockResolvedValueOnce(new DuplicatePersonalnummerError('12345'));
 
-                jest.spyOn(personenkontextWorkflowFactoryMock, 'createNew').mockReturnValueOnce(mockWorkflow);
+                vi.spyOn(personenkontextWorkflowFactoryMock, 'createNew').mockReturnValueOnce(mockWorkflow);
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .put(`/personenkontext-workflow/${person.id}`)

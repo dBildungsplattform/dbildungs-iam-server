@@ -2,7 +2,7 @@ import { MikroORM } from '@mikro-orm/core';
 import { Migrator, TSMigrationGenerator } from '@mikro-orm/migrations';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig, PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { DynamicModule, OnModuleDestroy, Post } from '@nestjs/common';
+import { DynamicModule, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { randomUUID } from 'crypto';

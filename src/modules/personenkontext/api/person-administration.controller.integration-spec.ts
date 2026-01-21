@@ -7,6 +7,8 @@ import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
+    createPassportUserMock,
+    createPersonPermissionsMock,
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
@@ -16,22 +18,24 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Observable } from 'rxjs';
-import { PassportUser } from '../../authentication/types/user.js';
 import { Request } from 'express';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { FindRollenResponse } from './response/find-rollen.response.js';
 import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
+import { DeepMocked } from '../../../../test/utils/createMock.js';
 
 describe('PersonAdministrationController Integration Test', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let rolleRepo: RolleRepo;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
+    let personPermissionsMock: DeepMocked<PersonPermissions>;
 
     beforeAll(async () => {
+        personPermissionsMock = createPersonPermissionsMock();
+        personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
@@ -46,18 +50,14 @@ describe('PersonAdministrationController Integration Test', () => {
                 },
                 {
                     provide: PersonPermissionsRepo,
-                    useValue: createMock(PersonPermissionsRepo),
+                    useValue: personpermissionsRepoMock,
                 },
                 {
                     provide: APP_INTERCEPTOR,
                     useValue: {
                         intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
                             const req: Request = context.switchToHttp().getRequest();
-                            req.passportUser = createMock<PassportUser>({
-                                async personPermissions() {
-                                    return personpermissionsRepoMock.loadPersonPermissions('');
-                                },
-                            });
+                            req.passportUser = createPassportUserMock(personPermissionsMock);
                             return next.handle();
                         },
                     },
@@ -94,9 +94,6 @@ describe('PersonAdministrationController Integration Test', () => {
             await rolleRepo.save(
                 DoFactory.createRolle(false, { name: schuladminRolleName, rollenart: RollenArt.LEIT }),
             );
-
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/person-administration/rollen')

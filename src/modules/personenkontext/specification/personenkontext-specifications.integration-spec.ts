@@ -1,7 +1,9 @@
+import { vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
     DatabaseTestModule,
+    DoFactory,
     KeycloakConfigTestModule,
     LoggingTestModule,
 } from '../../../../test/utils/index.js';
@@ -9,9 +11,8 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 import { GleicheRolleAnKlasseWieSchule } from './gleiche-rolle-an-klasse-wie-schule.js';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
@@ -28,6 +29,10 @@ import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
+
+// TODO fix integration test
+// This is not a proper integration test, because most of the repositories are mocked.
+// I changed this test from jest to vitest, but the test itself needs a refactoring to become a real integration test.
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -56,7 +61,6 @@ describe('PersonenkontextSpecifications Integration', () => {
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
-    let personenkontextRepoInternalMock: DeepMocked<DBiamPersonenkontextRepoInternal>;
 
     let personFactory: PersonFactory;
     let personRepo: PersonRepository;
@@ -90,10 +94,6 @@ describe('PersonenkontextSpecifications Integration', () => {
                     useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
-                    provide: DBiamPersonenkontextRepoInternal,
-                    useValue: createMock(DBiamPersonenkontextRepoInternal),
-                },
-                {
                     provide: OrganisationRepository,
                     useValue: createMock(OrganisationRepository),
                 },
@@ -111,7 +111,6 @@ describe('PersonenkontextSpecifications Integration', () => {
         organisationRepoMock = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
-        personenkontextRepoInternalMock = module.get(DBiamPersonenkontextRepoInternal);
         personFactory = module.get(PersonFactory);
         personenkontextFactory = module.get(PersonenkontextFactory);
         personRepo = module.get(PersonRepository);
@@ -122,7 +121,7 @@ describe('PersonenkontextSpecifications Integration', () => {
     }, 10000000);
 
     beforeEach(async () => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         await DatabaseTestModule.clearDatabase(orm);
     });
 
@@ -137,11 +136,8 @@ describe('PersonenkontextSpecifications Integration', () => {
 
     describe('Gleiche Rolle An Klasse Wie Schule', () => {
         it('should not be satisfied when rolle could not be found', async () => {
-            const klasse: Organisation<true> = createMock(Organisation<true>);
-            klasse.typ = OrganisationsTyp.KLASSE;
-            const schule: Organisation<true> = createMock(Organisation<true>);
-            schule.typ = OrganisationsTyp.SCHULE;
-            schule.id = faker.string.uuid();
+            const klasse: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE });
+            const schule: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
             klasse.administriertVon = schule.id;
             const specification: GleicheRolleAnKlasseWieSchule = new GleicheRolleAnKlasseWieSchule(
                 organisationRepoMock,
@@ -162,15 +158,13 @@ describe('PersonenkontextSpecifications Integration', () => {
             const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false, {
                 personId: person.id,
             });
-            const foundPersonenkontextDummy: Personenkontext<false> = createPersonenkontext(
-                personenkontextFactory,
-                false,
-                {
+            personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
+                DoFactory.createPersonenkontext(true, {
                     organisationId: schule.id,
                     personId: person.id,
-                },
-            );
-            await personenkontextRepoInternalMock.save(foundPersonenkontextDummy);
+                    rolleId: faker.string.uuid(),
+                }),
+            ]);
 
             organisationRepoMock.findById.mockResolvedValueOnce(klasse); //mock Klasse
             organisationRepoMock.findById.mockResolvedValueOnce(schule); //mock Schule

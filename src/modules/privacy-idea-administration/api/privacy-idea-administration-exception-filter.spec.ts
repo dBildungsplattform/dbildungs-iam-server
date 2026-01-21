@@ -1,6 +1,6 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { MockedObject } from 'vitest';
 import { ArgumentsHost } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces';
+import { Response } from 'express';
 import {
     DbiamPrivacyIdeaAdministrationError,
     PrivacyIdeaAdministrationErrorI18nTypes,
@@ -14,12 +14,13 @@ import { PrivacyIdeaAdministrationExceptionFilter } from './privacy-idea-adminis
 import { TokenResetError } from './error/token-reset.error.js';
 import { TwoAuthStateError } from './error/two-auth-state.error.js';
 import { SoftwareTokenVerificationError } from './error/software-token-verification.error.js';
+import { createArgumentsHostMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
 
 describe('PrivacyIdeaAdministrationExceptionFilter', () => {
     let filter: PrivacyIdeaAdministrationExceptionFilter;
     const statusCode: number = 500;
-    let responseMock: DeepMocked<Response>;
-    let argumentsHost: DeepMocked<ArgumentsHost>;
+    let responseMock: MockedObject<Response>;
+    let argumentsHost: MockedObject<ArgumentsHost>;
 
     const generalBadRequestError: DbiamPrivacyIdeaAdministrationError = new DbiamPrivacyIdeaAdministrationError({
         code: 500,
@@ -28,12 +29,9 @@ describe('PrivacyIdeaAdministrationExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new PrivacyIdeaAdministrationExceptionFilter();
-        responseMock = createMock(Response);
-        argumentsHost = createMock<ArgumentsHost>({
-            switchToHttp: () =>
-                createMock<HttpArgumentsHost>({
-                    getResponse: () => responseMock,
-                }),
+        responseMock = createResponseMock();
+        argumentsHost = createArgumentsHostMock({
+            response: responseMock,
         });
     });
 

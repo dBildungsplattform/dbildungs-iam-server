@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
@@ -10,6 +10,8 @@ import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
+    createPassportUserMock,
+    createPersonPermissionsMock,
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
@@ -21,7 +23,6 @@ import { GlobalValidationPipe } from '../../../shared/validation/global-validati
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { PassportUser } from '../../authentication/types/user.js';
 import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
@@ -57,8 +58,8 @@ describe('Organisation API', () => {
     let personenkontextFactory: PersonenkontextFactory;
     let personFactory: PersonFactory;
 
-    let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let permissionsMock: DeepMocked<PersonPermissions>;
+    let keycloakUserServiceMock: DeepMocked<KeycloakUserService>;
 
     function createPersonenkontext<WasPersisted extends boolean>(
         this: void,
@@ -81,6 +82,22 @@ describe('Organisation API', () => {
     }
 
     beforeAll(async () => {
+        keycloakUserServiceMock = createMock<KeycloakUserService>(KeycloakUserService);
+        keycloakUserServiceMock.create.mockImplementation(() =>
+            Promise.resolve({
+                ok: true,
+                value: faker.string.uuid(),
+            }),
+        );
+        keycloakUserServiceMock.setPassword.mockImplementation(() =>
+            Promise.resolve({
+                ok: true,
+                value: faker.string.alphanumeric(16),
+            }),
+        );
+
+        permissionsMock = createPersonPermissionsMock();
+
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 OrganisationApiModule,
@@ -97,11 +114,7 @@ describe('Organisation API', () => {
                     useValue: {
                         intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
                             const req: Request = context.switchToHttp().getRequest();
-                            req.passportUser = createMock<PassportUser>({
-                                async personPermissions() {
-                                    return personpermissionsRepoMock.loadPersonPermissions('');
-                                },
-                            });
+                            req.passportUser = createPassportUserMock(permissionsMock);
                             return next.handle();
                         },
                     },
@@ -112,18 +125,7 @@ describe('Organisation API', () => {
                 },
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>({
-                        create: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.uuid(),
-                            }),
-                        setPassword: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.alphanumeric(16),
-                            }),
-                    }),
+                    useValue: keycloakUserServiceMock,
                 },
             ],
         })
@@ -132,7 +134,7 @@ describe('Organisation API', () => {
             .compile();
 
         const stepUpGuard: StepUpGuard = module.get(StepUpGuard);
-        stepUpGuard.canActivate = jest.fn().mockReturnValue(true);
+        stepUpGuard.canActivate = vi.fn().mockReturnValue(true);
 
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
@@ -144,7 +146,6 @@ describe('Organisation API', () => {
         organisationRepo = module.get(OrganisationRepository);
         rollenerweiterungRepo = module.get(RollenerweiterungRepo);
         personFactory = module.get(PersonFactory);
-        personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
@@ -157,8 +158,6 @@ describe('Organisation API', () => {
     });
 
     beforeEach(async () => {
-        permissionsMock = createMock(PersonPermissions);
-        personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
         await DatabaseTestModule.clearDatabase(orm);
     });
 

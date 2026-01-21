@@ -11,7 +11,7 @@ import { OxUserBlacklistEntry } from '../domain/ox-user-blacklist-entry.js';
 import { OxUserBlacklistEntity } from './ox-user-blacklist.entity.js';
 import { OXEmail, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock } from '../../../../test/utils/createMock.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 

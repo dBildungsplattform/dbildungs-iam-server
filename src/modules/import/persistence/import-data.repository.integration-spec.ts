@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -40,7 +41,7 @@ describe('ImportDataRepository', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {

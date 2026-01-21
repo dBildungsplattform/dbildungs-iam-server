@@ -1,5 +1,6 @@
-import { faker } from '@faker-js/faker/';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { faker } from '@faker-js/faker';
+import { vi } from 'vitest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
@@ -8,7 +9,7 @@ import { Client, EndSessionParameters, IssuerMetadata } from 'openid-client';
 
 import { MikroORM } from '@mikro-orm/core';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { DatabaseTestModule } from '../../../../test/utils/index.js';
+import { createOidcClientMock, DatabaseTestModule } from '../../../../test/utils/index.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
 import { KeycloakConfig } from '../../../shared/config/keycloak.config.js';
@@ -34,6 +35,7 @@ import { UserinfoResponse } from './userinfo.response.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleModule } from '../../rolle/rolle.module.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
+import { createRequestMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -72,7 +74,7 @@ describe('AuthenticationController', () => {
                 },
                 {
                     provide: OIDC_CLIENT,
-                    useValue: createMock(Client),
+                    useValue: createOidcClientMock(),
                 },
                 {
                     provide: KeycloakUserService,
@@ -99,7 +101,7 @@ describe('AuthenticationController', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     afterAll(async () => {
@@ -113,7 +115,7 @@ describe('AuthenticationController', () => {
 
     describe('Login', () => {
         it('should redirect', () => {
-            const responseMock: Response = createMock(Response);
+            const responseMock: Response = createResponseMock();
             const session: SessionData = { cookie: { originalMaxAge: 0 } };
 
             authController.login(responseMock, session);
@@ -122,13 +124,14 @@ describe('AuthenticationController', () => {
         });
 
         it('should redirect to saved redirectUrl', () => {
-            const responseMock: Response = createMock(Response);
+            const responseMock: Response = createResponseMock();
             const user: { redirect_uri: string } = { redirect_uri: faker.internet.url() };
             const passport: { user: { redirect_uri: string } } = { user: user };
-            const sessionMock: SessionData = createMock<SessionData>({
+            const sessionMock: SessionData = {
                 redirectUrl: passport.user.redirect_uri,
                 passport: passport,
-            });
+                cookie: { originalMaxAge: 0 },
+            };
 
             authController.login(responseMock, sessionMock);
 
@@ -139,7 +142,7 @@ describe('AuthenticationController', () => {
     describe('Logout', () => {
         function setupRequest(passportUser?: PassportUser, logoutErr?: Error, destroyErr?: Error): Request {
             const sessionMock: DeepMocked<Session> = createMock(Session);
-            const requestMock: DeepMocked<Request> = createMock<Request>({
+            const requestMock: DeepMocked<Request> = createRequestMock({
                 session: sessionMock,
                 passportUser,
             });
@@ -190,7 +193,7 @@ describe('AuthenticationController', () => {
             it('should redirect to return value of endSessionUrl', () => {
                 const user: PassportUser = createMock<PassportUser>({ id_token: faker.string.alphanumeric(32) });
                 const requestMock: Request = setupRequest(user);
-                const responseMock: Response = createMock(Response);
+                const responseMock: Response = createResponseMock();
                 oidcClient.issuer.metadata = createMock<IssuerMetadata>({ end_session_endpoint: faker.internet.url() });
                 const endSessionUrl: string = faker.internet.url();
                 oidcClient.endSessionUrl.mockReturnValueOnce(endSessionUrl);
@@ -204,7 +207,7 @@ describe('AuthenticationController', () => {
         describe('when end_session_endpoint is not defined', () => {
             it('should return to redirectUrl param', () => {
                 const requestMock: Request = setupRequest();
-                const responseMock: Response = createMock(Response);
+                const responseMock: Response = createResponseMock();
                 oidcClient.issuer.metadata = createMock<IssuerMetadata>({ end_session_endpoint: undefined });
 
                 authController.logout(requestMock, responseMock);
@@ -276,7 +279,7 @@ describe('AuthenticationController', () => {
 
     describe('ResetPassword', () => {
         it('should redirect to the correct Keycloak URL', () => {
-            const responseMock: Response = createMock(Response);
+            const responseMock: Response = createResponseMock();
             const redirectUrl: string = faker.internet.url();
             const loginHint: string = faker.internet.userName();
             authController.resetPassword(redirectUrl, loginHint, responseMock);

@@ -8,17 +8,18 @@ import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
+    createPassportUserMock,
+    createPersonPermissionsMock,
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { Observable } from 'rxjs';
 import { Request } from 'express';
-import { PassportUser } from '../../authentication/types/user.js';
 
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
@@ -46,6 +47,7 @@ import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { mapAggregateToData } from '../../person/persistence/person.repository.js';
 import { ImportResultResponse } from './import-result.response.js';
 import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
+import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 
 describe('Import API', () => {
     let app: INestApplication;
@@ -56,8 +58,26 @@ describe('Import API', () => {
     let importVorgangRepository: ImportVorgangRepository;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
+    let keycloakUserServiceMock: DeepMocked<KeycloakUserService>;
+    let keycloakAdministrationServiceMock: DeepMocked<KeycloakAdministrationService>;
 
     beforeAll(async () => {
+        keycloakAdministrationServiceMock = createMock(KeycloakAdministrationService);
+        keycloakAdministrationServiceMock.getAuthedKcAdminClient.mockResolvedValue({
+            ok: true,
+            value: {} as KeycloakAdminClient,
+        });
+        keycloakUserServiceMock = createMock(KeycloakUserService);
+        keycloakUserServiceMock.create.mockImplementation(() => {
+            return Promise.resolve({ ok: true, value: faker.string.uuid() });
+        });
+
+        personPermissionsMock = createPersonPermissionsMock();
+        personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+        personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+        personPermissionsMock.hasSystemrechteAtOrganisation.mockResolvedValue(true);
+        personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+
         const module: TestingModule = await Test.createTestingModule({
             imports: [ImportApiModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
@@ -70,39 +90,18 @@ describe('Import API', () => {
                     useValue: {
                         intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
                             const req: Request = context.switchToHttp().getRequest();
-                            req.passportUser = createMock<PassportUser>({
-                                async personPermissions() {
-                                    return personpermissionsRepoMock.loadPersonPermissions('');
-                                },
-                            });
+                            req.passportUser = createPassportUserMock(personPermissionsMock);
                             return next.handle();
                         },
                     },
                 },
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>({
-                        create: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.uuid(),
-                            }),
-                        setPassword: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.alphanumeric(16),
-                            }),
-                    }),
+                    useValue: keycloakUserServiceMock,
                 },
                 {
                     provide: KeycloakAdministrationService,
-                    useValue: createMock<KeycloakAdministrationService>({
-                        getAuthedKcAdminClient: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: createMock(),
-                            }),
-                    }),
+                    useValue: keycloakAdministrationServiceMock,
                 },
             ],
         })
@@ -113,7 +112,7 @@ describe('Import API', () => {
             .compile();
 
         const stepUpGuard: StepUpGuard = module.get(StepUpGuard);
-        stepUpGuard.canActivate = jest.fn().mockReturnValue(true);
+        stepUpGuard.canActivate = vi.fn().mockReturnValue(true);
 
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
@@ -122,10 +121,7 @@ describe('Import API', () => {
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
         importVorgangRepository = module.get(ImportVorgangRepository);
 
-        personPermissionsMock = createMock(PersonPermissions);
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
-        personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-        personPermissionsMock.personFields.username = faker.internet.userName();
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
@@ -143,6 +139,7 @@ describe('Import API', () => {
 
     describe('/POST upload', () => {
         it('should return 201 OK with ImportUploadResponse', async () => {
+            personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
             const filePath: string = path.resolve('./', `test/imports/valid_test_import_SuS.csv`);
 
             const fileExists: boolean = fs.existsSync(filePath);
@@ -200,6 +197,7 @@ describe('Import API', () => {
         });
 
         it('should return 201 OK with ImportUploadResponse when there are missing values in the data items', async () => {
+            personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
             const filePath: string = path.resolve('./', `test/imports/valid_with_empty_values_test_import_SuS.csv`);
 
             const fileExists: boolean = fs.existsSync(filePath);
@@ -722,6 +720,7 @@ describe('Import API', () => {
 
     describe('/DELETE deleteImportTransaction', () => {
         it('should return 204', async () => {
+            personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
                 DoFactory.createImportVorgang(false, {
                     importByPersonId: undefined,
@@ -880,6 +879,7 @@ describe('Import API', () => {
 
     describe('/GET importstatus by id', () => {
         it('should return 200 OK with import status', async () => {
+            personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
                 DoFactory.createImportVorgang(false, {
                     status: ImportStatus.COMPLETED,

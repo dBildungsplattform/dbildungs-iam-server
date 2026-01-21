@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker/locale/af_ZA';
 import { ArgumentsHost, ExecutionContext } from '@nestjs/common';
 import { Response, Request } from 'express';
+import { Session } from 'express-session';
 import { MockedObject } from 'vitest';
 
 export function createResponseMock(): MockedObject<Response> {
@@ -20,19 +21,10 @@ export interface RequestMockOptions {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     passportUser?: any;
     headers?: Record<string, string>;
+    session?: Session | MockedObject<Session>;
 }
 
 export function createRequestMock(options?: RequestMockOptions): MockedObject<Request> {
-    // const requestStub: Request = {
-    //     user: undefined,
-    //     accessTokenJWT: faker.string.uuid(),
-    //     passportUser: undefined,
-    //     isAuthenticated: function (): this is AuthenticatedRequest {
-    //         return false;
-    //     },
-    //     logout: vi.fn(),
-    //     // Add other methods and properties of Response as needed
-    // } as Request;
     return {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         user: options?.user,
@@ -42,7 +34,7 @@ export function createRequestMock(options?: RequestMockOptions): MockedObject<Re
         isAuthenticated: vi.fn().mockReturnValue(false),
         logout: vi.fn(),
         query: {},
-        session: {},
+        session: options?.session ?? {},
         headers: options?.headers ?? {},
         // Add other methods and properties of Response as needed
     } as unknown as MockedObject<Request>;

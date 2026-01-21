@@ -5,6 +5,9 @@ import { PersonFields, PersonPermissions } from '../../src/modules/authenticatio
 import { IPersonPermissions } from '../../src/shared/permissions/person-permissions.interface.js';
 import { createMock, DeepMocked } from './createMock.js';
 import { PassportUser } from '../../src/modules/authentication/types/user.js';
+import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { Request } from 'express';
 
 export class PersonPermissionsMock implements IPersonPermissions {
     public hasSystemrechteAtOrganisation(): Promise<boolean> {
@@ -52,7 +55,7 @@ export function createPassportUserMock(personPermissions?: PersonPermissions): P
         id_token: faker.string.uuid(),
         access_token: faker.string.uuid(),
         refresh_token: faker.string.uuid(),
-     };
+    };
 }
 
 export function createOidcClientMock(clientFields?: Partial<BaseClient>): DeepMocked<BaseClient> {
@@ -62,4 +65,14 @@ export function createOidcClientMock(clientFields?: Partial<BaseClient>): DeepMo
         userinfo: vi.fn(),
     } as unknown as DeepMocked<BaseClient>;
     return Object.assign(client, clientFields);
+}
+
+export function createAuthInterceptorMock(personPermissions?: PersonPermissions): NestInterceptor {
+    return {
+        intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+            const req: Request = context.switchToHttp().getRequest();
+            req.passportUser = createPassportUserMock(personPermissions ?? createPersonPermissionsMock());
+            return next.handle();
+        },
+    };
 }

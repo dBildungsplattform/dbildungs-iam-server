@@ -17,11 +17,11 @@ import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group
 
 describe('OxServiceConstructor', () => {
     it('should set default retries', () => {
-        const configServiceMock: DeepMocked<ConfigService<unknown>> = createMock<ConfigService>({
+        const configServiceMock: DeepMocked<ConfigService<unknown>> = createMock<ConfigService>(ConfigService,{
             getOrThrow: () => ({}), // Empty OX config
         });
 
-        const sut: OxService = new OxService(createMock(), createMock(), configServiceMock);
+        const sut: OxService = new OxService(createMock(HttpService), createMock(ClassLogger), configServiceMock);
 
         expect(configServiceMock.getOrThrow).toHaveBeenCalledTimes(1);
         expect((sut as unknown as { max_retries: number }).max_retries).toBe(3);
