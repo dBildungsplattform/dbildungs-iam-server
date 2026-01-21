@@ -23,6 +23,8 @@ import {
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -84,6 +86,31 @@ export class ServiceProviderService {
         );
 
         return Array.from(serviceProviders.values());
+    }
+
+    public async findAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
+        organisationId: OrganisationID,
+        permissions: PersonPermissions,
+        limit?: number,
+        offset?: number,
+    ): Promise<Counted<ServiceProvider<true>>> {
+        const hasPermission: boolean = await permissions.hasSystemrechteAtOrganisation(organisationId, [
+            RollenSystemRecht.ROLLEN_ERWEITERN,
+            RollenSystemRecht.ANGEBOTE_VERWALTEN,
+        ]);
+        if (!hasPermission) {
+            return [[], 0];
+        }
+        const parents: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds([organisationId]);
+        const organisationWithParentsIds: OrganisationID[] = [
+            organisationId,
+            ...parents.map((orga: Organisation<true>) => orga.id),
+        ];
+        return this.serviceProviderRepo.findAuthorizedByOrgasWithMerkmalRollenerweiterung(
+            organisationWithParentsIds,
+            limit,
+            offset,
+        );
     }
 
     public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(

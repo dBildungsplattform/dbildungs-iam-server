@@ -45,6 +45,7 @@ import { uniq } from 'lodash-es';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
@@ -230,6 +231,48 @@ export class ProviderController {
                         spWithData.serviceProvider,
                         spWithData.organisation,
                         spWithData.rollen,
+                        spWithData.rollenerweiterungen,
+                    ),
+            ),
+        });
+    }
+
+    @Get('manageable/:organisationId')
+    @ApiOperation({ description: 'Get service-providers the logged-in user is allowed to manage for an Organisation.' })
+    @ApiOkResponsePaginated(ManageableServiceProviderListEntryResponse, {
+        description:
+            'The service providers were successfully returned. WARNING: This endpoint returns all service providers as default when no paging parameters were set.',
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
+    public async getManageableServiceProvidersForOrganisationId(
+        @Permissions() permissions: PersonPermissions,
+        @Param('organisationId') organisationId: OrganisationID,
+        @Query() params: ManageableServiceProvidersForOrganisationParams,
+    ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
+        const [serviceProviders, total]: Counted<ServiceProvider<true>> =
+            await this.serviceProviderService.findAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
+                organisationId,
+                permissions,
+                params.limit,
+                params.offset,
+            );
+        const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects[] =
+            await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
+                serviceProviders,
+            );
+
+        return new RawPagedResponse({
+            offset: params.offset ?? 0,
+            limit: params.limit ?? total,
+            total,
+            items: serviceProvidersWithRollenAndErweiterungen.map(
+                (spWithData: ManageableServiceProviderWithReferencedObjects) =>
+                    new ManageableServiceProviderListEntryResponse(
+                        spWithData.serviceProvider,
+                        spWithData.organisation,
+                        spWithData.rollen.slice(0, 5),
                         spWithData.rollenerweiterungen,
                     ),
             ),
