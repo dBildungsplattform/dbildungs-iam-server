@@ -8,20 +8,32 @@ import { Organisation } from '../../organisation/domain/organisation.js';
  * Needs to be refactored into a specification
  */
 export class OrganisationMatchesRollenart {
+    private static readonly rollenartToOrganisationsTypMap: Map<RollenArt, Array<OrganisationsTyp>> = new Map([
+        [RollenArt.SYSADMIN, [ OrganisationsTyp.LAND, OrganisationsTyp.ROOT]],
+        [RollenArt.LEIT, [ OrganisationsTyp.SCHULE]],
+        [RollenArt.LERN, [ OrganisationsTyp.SCHULE, OrganisationsTyp.KLASSE]],
+        [RollenArt.LEHR, [ OrganisationsTyp.SCHULE]],
+    ]);
+
     public isSatisfiedBy(organisation: Organisation<true>, rolle: Rolle<true>): boolean {
-        if (rolle.rollenart === RollenArt.SYSADMIN) {
-            return organisation.typ === OrganisationsTyp.LAND || organisation.typ === OrganisationsTyp.ROOT;
-        }
-        if (rolle.rollenart === RollenArt.LEIT) {
-            return organisation.typ === OrganisationsTyp.SCHULE;
-        }
-        if (rolle.rollenart === RollenArt.LERN) {
-            return organisation.typ === OrganisationsTyp.SCHULE || organisation.typ === OrganisationsTyp.KLASSE;
-        }
-        if (rolle.rollenart === RollenArt.LEHR) {
-            return organisation.typ === OrganisationsTyp.SCHULE;
+        if (!OrganisationMatchesRollenart.rollenartToOrganisationsTypMap.has(rolle.rollenart)) {
+            return true;
+        };
+
+        if (!organisation.typ) {
+            return false;
         }
 
-        return true;
+        return OrganisationMatchesRollenart.rollenartToOrganisationsTypMap.get(rolle.rollenart)!.includes(organisation.typ);
+    }
+
+    public static getAllowedRollenartenForOrganisationsTyp(organisationsTyp: OrganisationsTyp): Set<RollenArt> {
+        const allowedRollenarten: Set<RollenArt> = new Set();
+        for (const [rollenArt, organisationsTypen] of this.rollenartToOrganisationsTypMap) {
+            if (organisationsTypen.includes(organisationsTyp)) {
+                allowedRollenarten.add(rollenArt);
+            }
+        }
+        return allowedRollenarten;
     }
 }

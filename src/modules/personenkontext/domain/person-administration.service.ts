@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { intersection } from 'lodash-es';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 
 @Injectable()
 export class PersonAdministrationService {
@@ -18,41 +22,59 @@ export class PersonAdministrationService {
         permissions: PersonPermissions,
         rolleName?: string,
         limit?: number,
+        organisationIds?: Array<OrganisationID>,
     ): Promise<Rolle<true>[]> {
-        let rollen: Rolle<true>[];
-
-        if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName, false);
-        } else {
-            rollen = await this.rolleRepo.find(false);
-        }
-
-        if (rollen.length === 0) {
-            return [];
-        }
-
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
-            true,
+            true, // TODO: if we can assume that allowed Rollenarten for KLASSE will always be a subset of the ones for SCHULE, we can set this to false to optimize
         );
+        const hasSelectedOrgas = organisationIds && organisationIds.length > 0;
 
-        //Landesadmin can view all roles.
+            let rollenarten: Array<RollenArt> | undefined;
+            let schulstrukturknoten: Array<OrganisationID> | undefined;
         if (permittedOrgas.all) {
-            return limit ? rollen.slice(0, limit) : rollen;
+            if (hasSelectedOrgas) {
+                rollenarten = await this.getAllowedRollenArtenForOrganisationen(organisationIds);
+                schulstrukturknoten = await this.getAllowedSchulstrukturknotenForRollen(organisationIds);
+            } else {
+                // no selection, everything is permitted, leave filters empty
+            }
+        } else {
+            if (permittedOrgas.orgaIds.length === 0) {
+                return [];
+            }
+            if (hasSelectedOrgas) {
+                const selectedAndPermittedOrgasIds: Array<OrganisationID> = intersection(permittedOrgas.orgaIds, organisationIds);
+                rollenarten = await this.getAllowedRollenArtenForOrganisationen(selectedAndPermittedOrgasIds);
+                schulstrukturknoten = await this.getAllowedSchulstrukturknotenForRollen(selectedAndPermittedOrgasIds);
+            } else {
+                rollenarten = await this.getAllowedRollenArtenForOrganisationen(permittedOrgas.orgaIds);
+                schulstrukturknoten = await this.getAllowedSchulstrukturknotenForRollen(permittedOrgas.orgaIds);
+            }
         }
+            return this.rolleRepo.findBy(rolleName, rollenarten, schulstrukturknoten, limit)
+    }
 
-        const allowedRollen: Rolle<true>[] = [];
-        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        (await this.organisationRepository.findByIds(permittedOrgas.orgaIds)).forEach(function (
-            orga: Organisation<true>,
-        ) {
-            rollen.forEach(function (rolle: Rolle<true>) {
-                if (organisationMatchesRollenart.isSatisfiedBy(orga, rolle) && !allowedRollen.includes(rolle)) {
-                    allowedRollen.push(rolle);
-                }
-            });
+    private async getAllowedRollenArtenForOrganisationen(orgaIds: Array<OrganisationID>): Promise<Array<RollenArt>> {
+        const organisationen: Map<OrganisationID, Organisation<true>> = await this.organisationRepository.findByIds(orgaIds);
+        const organisationsTypen: Set<OrganisationsTyp> = new Set();
+        organisationen.forEach((orga: Organisation<true>) => {
+            if (orga.typ) {
+                organisationsTypen.add(orga.typ);
+            }
         });
 
-        return limit ? allowedRollen.slice(0, limit) : allowedRollen;
+        const allowedRollenarten: Array<RollenArt> = [];
+        for (const organistationsTyp of organisationsTypen) {
+            allowedRollenarten.push(...OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organistationsTyp));
+        }
+        return allowedRollenarten;
+    }
+
+    private async getAllowedSchulstrukturknotenForRollen(orgaIds: Array<OrganisationID>): Promise<Array<OrganisationID>> {
+                const parentsOfPermittedOrgas: Array<Organisation<true>> = await this.organisationRepository.findParentOrgasForIds(orgaIds);
+                const allowedStrukturknoten: Set<OrganisationID> = new Set(orgaIds);
+                parentsOfPermittedOrgas.forEach((orga: Organisation<true>) => allowedStrukturknoten.add(orga.id));
+                return Array.from(allowedStrukturknoten);
     }
 }

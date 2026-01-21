@@ -43,6 +43,7 @@ export class PersonAdministrationController {
             permissions,
             params.rolleName,
             params.limit,
+            params.organisationIds,
         );
         const response: FindRollenResponse = new FindRollenResponse(rollen, rollen.length);
 

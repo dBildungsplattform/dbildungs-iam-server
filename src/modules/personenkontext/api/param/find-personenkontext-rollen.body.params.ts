@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class FindPersonenkontextRollenBodyParams {
     @IsString()
@@ -20,4 +21,20 @@ export class FindPersonenkontextRollenBodyParams {
         nullable: false,
     })
     public readonly limit?: number;
+
+    @IsArray()
+    @IsUUID('all', { each: true })
+    @IsOptional()
+    @ApiProperty({
+        description: 'OrganisationIDs to filter rollen',
+        required: false,
+        nullable: false,
+    })
+    @Transform(({ value }) => {
+        if (typeof value === 'string') {
+            return [value];
+        }
+        return value;
+    })
+    public readonly organisationIds?: string[];
 }

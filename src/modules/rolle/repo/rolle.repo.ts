@@ -256,6 +256,39 @@ export class RolleRepo {
         return rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory));
     }
 
+    public async findBy(
+        searchString?: string,
+        rollenarten?: RollenArt[],
+        schulstrukturknoten?: OrganisationID[],
+        limit?: number,
+        offset?: number,
+    ): Promise<Rolle<true>[]> {
+        const nameQuery: Record<string, unknown> = searchString ?
+                { name: { $ilike: '%' + searchString + '%' } } : {};
+        const technischeQuery: { istTechnisch: false } = { istTechnisch: false };
+        const rollenartQuery: Record<string, unknown> =
+            rollenarten && rollenarten.length > 0 ? { rollenart: { $in: rollenarten } } : {};
+        const schulstrukturknotenQuery: Record<string, unknown> =
+            schulstrukturknoten && schulstrukturknoten.length > 0 ? { administeredBySchulstrukturknoten: { $in: schulstrukturknoten } } : {};
+
+        const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, {
+            populate: [
+                'merkmale',
+                'systemrechte',
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+            ] as const,
+            exclude: ['serviceProvider.serviceProvider.logo'] as const,
+            where: { 
+                ...nameQuery,
+                ...technischeQuery, ...rollenartQuery, ...schulstrukturknotenQuery },
+            limit: limit,
+            offset: offset,
+        });
+
+        return rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory));
+    }
+
     public async findRollenAuthorized(
         permissions: PersonPermissions,
         includeTechnische: boolean,
