@@ -26,7 +26,7 @@ export class PersonAdministrationService {
     ): Promise<Rolle<true>[]> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
-            false, // we assume that the Rollenarten allowed for KLASSE are a subset of the ones for SCHULE and Rollen can not be defined on KLASSE
+            false, // we assume that the Rollenarten allowed for KLASSE are a subset of the ones for SCHULE and that Rollen can not be defined on KLASSE
         );
 
         let rollenarten: Array<RollenArt> | undefined;
@@ -73,13 +73,15 @@ export class PersonAdministrationService {
             }
         });
 
-        const allowedRollenarten: Array<RollenArt> = [];
-        for (const organistationsTyp of organisationsTypen) {
-            allowedRollenarten.push(
-                ...OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organistationsTyp),
+        const allowedRollenarten: Set<RollenArt> = new Set();
+        organisationsTypen.forEach((organisationsTyp: OrganisationsTyp) => {
+            OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organisationsTyp).forEach(
+                (allowedRollenart: RollenArt) => {
+                    allowedRollenarten.add(allowedRollenart);
+                },
             );
-        }
-        return allowedRollenarten;
+        });
+        return Array.from(allowedRollenarten);
     }
 
     private async getAllowedSchulstrukturknotenForRollen(
