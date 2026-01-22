@@ -31,6 +31,7 @@ import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
+import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -219,6 +220,99 @@ describe('ServiceProvider API', () => {
                     expect(entry?.rollen.length).toBe(0);
                 }
             });
+        });
+    });
+
+    describe('/GET manageable service provider for organisation', () => {
+        let organisation: Organisation<true>;
+        let serviceProvider: ServiceProvider<true>;
+        let rolle: Rolle<true>;
+        let rolleWithErweiterung: Rolle<true>;
+
+        beforeEach(async () => {
+            organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
+            serviceProvider = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false, {
+                    providedOnSchulstrukturknoten: organisation.id,
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+            );
+            rolle = (await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    serviceProviderIds: [serviceProvider.id],
+                }),
+            )) as Rolle<true>;
+            if (rolle instanceof DomainError) {
+                throw rolle;
+            }
+            rolleWithErweiterung = (await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                }),
+            )) as Rolle<true>;
+            if (rolleWithErweiterung instanceof DomainError) {
+                throw rolleWithErweiterung;
+            }
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    organisationId: organisation.id,
+                    rolleId: rolleWithErweiterung.id,
+                    serviceProviderId: serviceProvider.id,
+                }),
+            );
+        });
+
+        it('should return manageable service provider for organisation', async () => {
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/provider/manageable-by-organisation/${organisation.id}`)
+                .send();
+
+            const body: ManageableServiceProviderResponse = response.body as ManageableServiceProviderResponse;
+            expect(response.status).toBe(200);
+
+            expect(body).toEqual<RawPagedResponse<ManageableServiceProviderListEntryResponse>>({
+                items: [
+                    {
+                        id: serviceProvider.id,
+                        name: serviceProvider.name,
+                        administrationsebene: {
+                            id: organisation.id,
+                            name: organisation.name!,
+                            kennung: organisation.kennung!,
+                        },
+                        kategorie: serviceProvider.kategorie,
+                        requires2fa: serviceProvider.requires2fa,
+                        merkmale: serviceProvider.merkmale,
+                        hasRollenerweiterung: true,
+                        rollen: [
+                            {
+                                id: rolle.id,
+                                name: rolle.name,
+                            },
+                        ],
+                    },
+                ],
+                limit: 1,
+                offset: 0,
+                total: 1,
+            } as RawPagedResponse<ManageableServiceProviderListEntryResponse>);
+        });
+
+        it('should return empty list', async () => {
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/provider/manageable-by-organisation/${faker.string.uuid()}`)
+                .send();
+
+            const body: ManageableServiceProviderResponse = response.body as ManageableServiceProviderResponse;
+            expect(response.status).toBe(200);
+
+            expect(body).toEqual<RawPagedResponse<ManageableServiceProviderListEntryResponse>>({
+                items: [],
+                limit: 0,
+                offset: 0,
+                total: 0,
+            } as RawPagedResponse<ManageableServiceProviderListEntryResponse>);
         });
     });
 

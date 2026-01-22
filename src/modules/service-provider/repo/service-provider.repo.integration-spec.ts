@@ -284,6 +284,104 @@ describe('ServiceProviderRepo', () => {
         });
     });
 
+    describe('findAuthorizedByOrgasWithMerkmalRollenerweiterung', () => {
+        it('returns only service-providers for the given organisation ids that have the rollenerweiterung merkmal', async () => {
+            const orgId: string = faker.string.uuid();
+
+            const spWithMerkmal: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+                providedOnSchulstrukturknoten: orgId,
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+            const spWithoutMerkmal: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+                providedOnSchulstrukturknoten: orgId,
+            });
+            const spOtherOrgaWithMerkmal: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+                providedOnSchulstrukturknoten: faker.string.uuid(),
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+
+            const [persistedWithMerkmal]: ServiceProvider<true>[] = await Promise.all([
+                sut.save(spWithMerkmal),
+                sut.save(spWithoutMerkmal),
+                sut.save(spOtherOrgaWithMerkmal),
+            ]);
+
+            em.clear();
+
+            const [result, count]: Counted<ServiceProvider<true>> =
+                await sut.findAuthorizedByOrgasWithMerkmalRollenerweiterung([orgId], 5, 0);
+
+            expect(count).toEqual(1);
+            expect(result).toHaveLength(1);
+            expect(result[0]!.id).toEqual(persistedWithMerkmal!.id);
+        });
+
+        it('respects limit and offset for results that match organisation ids and merkmal', async () => {
+            const orgId: string = faker.string.uuid();
+            const total: number = 10;
+
+            await Promise.all(
+                Array.from({ length: total }, () =>
+                    sut.save(
+                        DoFactory.createServiceProvider(false, {
+                            providedOnSchulstrukturknoten: orgId,
+                            merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                        }),
+                    ),
+                ),
+            );
+
+            const limit: number = 5;
+            const [withoutOffsetResult, countWithoutOffset]: Counted<ServiceProvider<true>> =
+                await sut.findAuthorizedByOrgasWithMerkmalRollenerweiterung([orgId], limit, 0);
+            expect(withoutOffsetResult).toHaveLength(limit);
+            expect(countWithoutOffset).toEqual(total);
+
+            const [withOffsetResult, countWithOffset]: Counted<ServiceProvider<true>> =
+                await sut.findAuthorizedByOrgasWithMerkmalRollenerweiterung([orgId], limit, 5);
+            expect(withOffsetResult).toHaveLength(limit);
+            expect(countWithOffset).toEqual(total);
+
+            for (let index: number = 0; index < limit; index++) {
+                expect(withOffsetResult[index]!.id).not.toEqual(withoutOffsetResult[index]!.id);
+            }
+        });
+
+        it('should have the correct order', async () => {
+            const orgId: string = faker.string.uuid();
+            await Promise.all(
+                [
+                    ServiceProviderKategorie.VERWALTUNG,
+                    ServiceProviderKategorie.HINWEISE,
+                    ServiceProviderKategorie.EMAIL,
+                    ServiceProviderKategorie.ANGEBOTE,
+                    ServiceProviderKategorie.UNTERRICHT,
+                ].map((kategorie: ServiceProviderKategorie) =>
+                    sut.save(
+                        DoFactory.createServiceProvider(false, {
+                            kategorie,
+                            providedOnSchulstrukturknoten: orgId,
+                            merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                        }),
+                    ),
+                ),
+            );
+
+            const [serviceProviderResult]: Counted<ServiceProvider<true>> =
+                await sut.findAuthorizedByOrgasWithMerkmalRollenerweiterung([orgId], 5, 0);
+
+            [
+                ServiceProviderKategorie.EMAIL,
+                ServiceProviderKategorie.UNTERRICHT,
+                ServiceProviderKategorie.VERWALTUNG,
+                ServiceProviderKategorie.HINWEISE,
+                ServiceProviderKategorie.ANGEBOTE,
+            ].forEach((kategorie: ServiceProviderKategorie, index: number) => {
+                expect(serviceProviderResult[index]!.kategorie).toBe(kategorie);
+            });
+        });
+    });
+
     describe('findAuthorizedById', () => {
         describe.each([
             {

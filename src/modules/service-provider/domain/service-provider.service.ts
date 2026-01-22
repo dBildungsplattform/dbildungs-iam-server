@@ -88,7 +88,7 @@ export class ServiceProviderService {
         return Array.from(serviceProviders.values());
     }
 
-    public async findAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
+    public async getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
         organisationId: OrganisationID,
         permissions: PersonPermissions,
         limit?: number,

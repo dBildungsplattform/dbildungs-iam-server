@@ -16,13 +16,19 @@ import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 import { VidisService } from '../../vidis/vidis.service.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
-import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
+import {
+    ServiceProviderKategorie,
+    ServiceProviderMerkmal,
+    ServiceProviderSystem,
+    ServiceProviderTarget,
+} from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import { ServiceProviderService } from './service-provider.service.js';
 import {
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -343,6 +349,89 @@ describe('ServiceProviderService', () => {
                     haveRollenerweiterungen ? organisations.length + serviceProviders.length : serviceProviders.length,
                 );
             });
+        });
+    });
+
+    describe('getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung', () => {
+        let organisation: Organisation<true>;
+        let serviceProvider: ServiceProvider<true>;
+
+        beforeEach(() => {
+            organisation = DoFactory.createOrganisation(true);
+            serviceProvider = DoFactory.createServiceProvider(true, {
+                providedOnSchulstrukturknoten: organisation.id,
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+        });
+
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('returns empty result if person lacks required system rights', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.hasSystemrechteAtOrganisation = jest.fn().mockResolvedValue(false);
+
+            const result: Counted<ServiceProvider<true>> =
+                await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions);
+
+            expect(result).toEqual([[], 0]);
+            expect(organisationRepo.findParentOrgasForIds).not.toHaveBeenCalled();
+            expect(serviceProviderRepo.findAuthorizedByOrgasWithMerkmalRollenerweiterung).not.toHaveBeenCalled();
+        });
+
+        it('returns authorized serviceProviders when person has rights and includes parent organisation ids', async () => {
+            const parentOrga: Organisation<true> = DoFactory.createOrganisation(true);
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.hasSystemrechteAtOrganisation = jest.fn().mockResolvedValue(true);
+
+            organisationRepo.findParentOrgasForIds.mockResolvedValue([parentOrga]);
+            serviceProviderRepo.findAuthorizedByOrgasWithMerkmalRollenerweiterung.mockResolvedValue([
+                [serviceProvider],
+                1,
+            ]);
+
+            const result: Counted<ServiceProvider<true>> =
+                await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions);
+
+            expect(serviceProviderRepo.findAuthorizedByOrgasWithMerkmalRollenerweiterung).toHaveBeenCalledWith(
+                [organisation.id, parentOrga.id],
+                undefined,
+                undefined,
+            );
+            expect(result[0]).toContain(serviceProvider);
+            expect(result[1]).toBe(1);
+        });
+
+        it('returns authorized serviceProviders when person has rights and includes parent organisation ids (limit & offset)', async () => {
+            const parentOrga: Organisation<true> = DoFactory.createOrganisation(true);
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.hasSystemrechteAtOrganisation = jest.fn().mockResolvedValue(true);
+
+            const limit: number = 10;
+            const offset: number = 5;
+
+            organisationRepo.findParentOrgasForIds.mockResolvedValue([parentOrga]);
+            serviceProviderRepo.findAuthorizedByOrgasWithMerkmalRollenerweiterung.mockResolvedValue([
+                [serviceProvider],
+                1,
+            ]);
+
+            const result: Counted<ServiceProvider<true>> =
+                await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
+                    organisation.id,
+                    permissions,
+                    limit,
+                    offset,
+                );
+
+            expect(serviceProviderRepo.findAuthorizedByOrgasWithMerkmalRollenerweiterung).toHaveBeenCalledWith(
+                [organisation.id, parentOrga.id],
+                limit,
+                offset,
+            );
+            expect(result[0]).toContain(serviceProvider);
+            expect(result[1]).toBe(1);
         });
     });
 

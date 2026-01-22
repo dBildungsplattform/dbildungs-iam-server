@@ -237,7 +237,7 @@ export class ProviderController {
         });
     }
 
-    @Get('manageable/:organisationId')
+    @Get('manageable-by-organisation/:organisationId')
     @ApiOperation({ description: 'Get service-providers the logged-in user is allowed to manage for an Organisation.' })
     @ApiOkResponsePaginated(ManageableServiceProviderListEntryResponse, {
         description:
@@ -252,7 +252,7 @@ export class ProviderController {
         @Query() params: ManageableServiceProvidersForOrganisationParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
         const [serviceProviders, total]: Counted<ServiceProvider<true>> =
-            await this.serviceProviderService.findAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
+            await this.serviceProviderService.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
                 organisationId,
                 permissions,
                 params.limit,
