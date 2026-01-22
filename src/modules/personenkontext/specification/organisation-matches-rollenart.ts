@@ -12,7 +12,9 @@ export class OrganisationMatchesRollenart {
         if (!organisation.typ) {
             return false;
         }
-        return OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organisation.typ).has(rolle.rollenart);
+        return OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organisation.typ).has(
+            rolle.rollenart,
+        );
     }
 
     public static getAllowedRollenartenForOrganisationsTyp(organisationsTyp: OrganisationsTyp): Set<RollenArt> {

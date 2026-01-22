@@ -263,13 +263,14 @@ export class RolleRepo {
         limit?: number,
         offset?: number,
     ): Promise<Rolle<true>[]> {
-        const nameQuery: Record<string, unknown> = searchString ?
-                { name: { $ilike: '%' + searchString + '%' } } : {};
+        const nameQuery: Record<string, unknown> = searchString ? { name: { $ilike: '%' + searchString + '%' } } : {};
         const technischeQuery: { istTechnisch: false } = { istTechnisch: false };
         const rollenartQuery: Record<string, unknown> =
             rollenarten && rollenarten.length > 0 ? { rollenart: { $in: rollenarten } } : {};
         const schulstrukturknotenQuery: Record<string, unknown> =
-            schulstrukturknoten && schulstrukturknoten.length > 0 ? { administeredBySchulstrukturknoten: { $in: schulstrukturknoten } } : {};
+            schulstrukturknoten && schulstrukturknoten.length > 0
+                ? { administeredBySchulstrukturknoten: { $in: schulstrukturknoten } }
+                : {};
 
         const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, {
             populate: [
@@ -279,9 +280,12 @@ export class RolleRepo {
                 'serviceProvider.serviceProvider.merkmale',
             ] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
-            where: { 
+            where: {
                 ...nameQuery,
-                ...technischeQuery, ...rollenartQuery, ...schulstrukturknotenQuery },
+                ...technischeQuery,
+                ...rollenartQuery,
+                ...schulstrukturknotenQuery,
+            },
             limit: limit,
             offset: offset,
         });

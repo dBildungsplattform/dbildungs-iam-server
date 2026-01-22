@@ -26,14 +26,13 @@ export class PersonAdministrationService {
     ): Promise<Rolle<true>[]> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
-            true, // TODO: if we can assume that allowed Rollenarten for KLASSE will always be a subset of the ones for SCHULE, we can set this to false to optimize
+            false, // we assume that the Rollenarten allowed for KLASSE are a subset of the ones for SCHULE and Rollen can not be defined on KLASSE
         );
-        const hasSelectedOrgas = organisationIds && organisationIds.length > 0;
 
-            let rollenarten: Array<RollenArt> | undefined;
-            let schulstrukturknoten: Array<OrganisationID> | undefined;
+        let rollenarten: Array<RollenArt> | undefined;
+        let schulstrukturknoten: Array<OrganisationID> | undefined;
         if (permittedOrgas.all) {
-            if (hasSelectedOrgas) {
+            if (this.hasSelectedOrgas(organisationIds)) {
                 rollenarten = await this.getAllowedRollenArtenForOrganisationen(organisationIds);
                 schulstrukturknoten = await this.getAllowedSchulstrukturknotenForRollen(organisationIds);
             } else {
@@ -43,8 +42,11 @@ export class PersonAdministrationService {
             if (permittedOrgas.orgaIds.length === 0) {
                 return [];
             }
-            if (hasSelectedOrgas) {
-                const selectedAndPermittedOrgasIds: Array<OrganisationID> = intersection(permittedOrgas.orgaIds, organisationIds);
+            if (this.hasSelectedOrgas(organisationIds)) {
+                const selectedAndPermittedOrgasIds: Array<OrganisationID> = intersection(
+                    permittedOrgas.orgaIds,
+                    organisationIds,
+                );
                 rollenarten = await this.getAllowedRollenArtenForOrganisationen(selectedAndPermittedOrgasIds);
                 schulstrukturknoten = await this.getAllowedSchulstrukturknotenForRollen(selectedAndPermittedOrgasIds);
             } else {
@@ -52,11 +54,18 @@ export class PersonAdministrationService {
                 schulstrukturknoten = await this.getAllowedSchulstrukturknotenForRollen(permittedOrgas.orgaIds);
             }
         }
-            return this.rolleRepo.findBy(rolleName, rollenarten, schulstrukturknoten, limit)
+
+        return this.rolleRepo.findBy(rolleName, rollenarten, schulstrukturknoten, limit);
+    }
+
+    private hasSelectedOrgas(organisationIds?: Array<OrganisationID>): organisationIds is Array<OrganisationID> {
+        return (organisationIds?.length ?? 0) > 0;
     }
 
     private async getAllowedRollenArtenForOrganisationen(orgaIds: Array<OrganisationID>): Promise<Array<RollenArt>> {
-        const organisationen: Map<OrganisationID, Organisation<true>> = await this.organisationRepository.findByIds(orgaIds);
+        const organisationen: Map<OrganisationID, Organisation<true>> = await this.organisationRepository.findByIds(
+            orgaIds,
+        );
         const organisationsTypen: Set<OrganisationsTyp> = new Set();
         organisationen.forEach((orga: Organisation<true>) => {
             if (orga.typ) {
@@ -66,15 +75,20 @@ export class PersonAdministrationService {
 
         const allowedRollenarten: Array<RollenArt> = [];
         for (const organistationsTyp of organisationsTypen) {
-            allowedRollenarten.push(...OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organistationsTyp));
+            allowedRollenarten.push(
+                ...OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organistationsTyp),
+            );
         }
         return allowedRollenarten;
     }
 
-    private async getAllowedSchulstrukturknotenForRollen(orgaIds: Array<OrganisationID>): Promise<Array<OrganisationID>> {
-                const parentsOfPermittedOrgas: Array<Organisation<true>> = await this.organisationRepository.findParentOrgasForIds(orgaIds);
-                const allowedStrukturknoten: Set<OrganisationID> = new Set(orgaIds);
-                parentsOfPermittedOrgas.forEach((orga: Organisation<true>) => allowedStrukturknoten.add(orga.id));
-                return Array.from(allowedStrukturknoten);
+    private async getAllowedSchulstrukturknotenForRollen(
+        orgaIds: Array<OrganisationID>,
+    ): Promise<Array<OrganisationID>> {
+        const parentsOfPermittedOrgas: Array<Organisation<true>> =
+            await this.organisationRepository.findParentOrgasForIds(orgaIds);
+        const allowedStrukturknoten: Set<OrganisationID> = new Set(orgaIds);
+        parentsOfPermittedOrgas.forEach((orga: Organisation<true>) => allowedStrukturknoten.add(orga.id));
+        return Array.from(allowedStrukturknoten);
     }
 }

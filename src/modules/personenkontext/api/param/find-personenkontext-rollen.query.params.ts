@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, TransformFnParams } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class FindPersonenkontextRollenQueryParams {
@@ -30,11 +30,14 @@ export class FindPersonenkontextRollenQueryParams {
         required: false,
         nullable: false,
     })
-    @Transform(({ value }) => {
-        if (typeof value === 'string') {
-            return [value];
-        }
-        return value;
+    @Transform(({ value }: TransformFnParams): Array<string> => {
+        const arrayValue: Array<unknown> = Array.isArray(value) ? value : [value];
+        return arrayValue.map((v: unknown) => {
+            if (typeof v !== 'string') {
+                return String(v);
+            }
+            return v;
+        });
     })
     public readonly organisationIds?: string[];
 }
