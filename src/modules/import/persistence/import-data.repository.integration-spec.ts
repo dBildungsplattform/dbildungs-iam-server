@@ -7,6 +7,7 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { ImportDataRepository, mapAggregateToData, mapEntityToAggregate } from './import-data.repository.js';
 import { ImportDataItemEntity } from './import-data-item.entity.js';
@@ -24,7 +25,7 @@ describe('ImportDataRepository', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), LoggingTestModule],
             providers: [ImportDataRepository, ImportVorgangRepository],
         }).compile();
         sut = module.get(ImportDataRepository);
@@ -36,6 +37,7 @@ describe('ImportDataRepository', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
+        await orm.close(true);
         await module.close();
     });
 
