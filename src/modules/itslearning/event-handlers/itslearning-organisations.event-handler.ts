@@ -9,12 +9,10 @@ import { ItsLearningConfig } from '../../../shared/config/itslearning.config.js'
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { KafkaKlasseCreatedEvent } from '../../../shared/events/kafka-klasse-created.event.js';
-import { KafkaKlasseDeletedEvent } from '../../../shared/events/kafka-klasse-deleted.event.js';
 import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-updated.event.js';
 import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
 import { KafkaSchuleItslearningEnabledEvent } from '../../../shared/events/kafka-schule-itslearning-enabled.event.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
-import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
 import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
@@ -153,31 +151,6 @@ export class ItsLearningOrganisationsEventHandler {
         this.logger.info(`[EventID: ${event.eventID}] Klasse with ID ${event.organisationId} was updated.`);
     }
 
-    @KafkaEventHandler(KafkaKlasseDeletedEvent)
-    @EventHandler(KlasseDeletedEvent)
-    @EnsureRequestContext()
-    public async deletedKlasseEventHandler(event: KlasseDeletedEvent): Promise<void> {
-        this.logger.info(`[EventID: ${event.eventID}] Received KlasseUpdatedEvent, ID: ${event.organisationId}`);
-
-        if (!this.ENABLED) {
-            this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
-            return;
-        }
-
-        const deleteError: Option<DomainError> = await this.itslearningGroupRepo.deleteGroup(
-            event.organisationId,
-            `${event.eventID}-KLASSE-DELETED`,
-        );
-
-        if (deleteError) {
-            return this.logger.error(
-                `[EventID: ${event.eventID}] Could not delete Klasse in itsLearning: ${deleteError.message}`,
-            );
-        }
-
-        this.logger.info(`[EventID: ${event.eventID}] Klasse with ID ${event.organisationId} was deleted.`);
-    }
-
     @KafkaEventHandler(KafkaSchuleItslearningEnabledEvent)
     @EventHandler(SchuleItslearningEnabledEvent)
     @EnsureRequestContext()
@@ -252,22 +225,17 @@ export class ItsLearningOrganisationsEventHandler {
             return;
         }
 
-        if (event.typ !== OrganisationsTyp.SCHULE) {
+        if (event.typ !== OrganisationsTyp.SCHULE && event.typ !== OrganisationsTyp.KLASSE) {
             this.logger.error(
-                `[EventID: ${event.eventID}] The organisation with ID ${event.organisationId} is not of type "SCHULE"!`,
+                `[EventID: ${event.eventID}] The organisation with ID ${event.organisationId} is not of type "SCHULE" or "KLASSE"!`,
             );
             return;
         }
 
-        const rootType: RootDirectChildrenType =
-            await this.organisationRepo.findOrganisationZuordnungErsatzOderOeffentlich(event.organisationId);
-
-        if (rootType === RootDirectChildrenType.ERSATZ) {
-            this.logger.error(`[EventID: ${event.eventID}] Ersatzschule, ignoring.`);
-            return;
-        }
-
-        const deleteError: Option<DomainError> = await this.itslearningGroupRepo.deleteGroup(event.organisationId);
+        const deleteError: Option<DomainError> = await this.itslearningGroupRepo.deleteGroup(
+            event.organisationId,
+            `${event.eventID}-ORGANISATION-DELETED`,
+        );
 
         if (deleteError) {
             return this.logger.error(
