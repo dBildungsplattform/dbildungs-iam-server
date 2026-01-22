@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 
-export class FindPersonenkontextRollenBodyParams {
+export class FindPersonenkontextRollenQueryParams {
     @IsString()
     @IsOptional()
     @ApiProperty({
