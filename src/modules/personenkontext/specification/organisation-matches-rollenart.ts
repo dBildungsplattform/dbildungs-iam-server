@@ -8,32 +8,24 @@ import { Organisation } from '../../organisation/domain/organisation.js';
  * Needs to be refactored into a specification
  */
 export class OrganisationMatchesRollenart {
-    private static readonly rollenartToOrganisationsTypMap: Map<RollenArt, Array<OrganisationsTyp>> = new Map([
-        [RollenArt.SYSADMIN, [ OrganisationsTyp.LAND, OrganisationsTyp.ROOT]],
-        [RollenArt.LEIT, [ OrganisationsTyp.SCHULE]],
-        [RollenArt.LERN, [ OrganisationsTyp.SCHULE, OrganisationsTyp.KLASSE]],
-        [RollenArt.LEHR, [ OrganisationsTyp.SCHULE]],
-    ]);
-
     public isSatisfiedBy(organisation: Organisation<true>, rolle: Rolle<true>): boolean {
-        if (!OrganisationMatchesRollenart.rollenartToOrganisationsTypMap.has(rolle.rollenart)) {
-            return true;
-        };
-
         if (!organisation.typ) {
             return false;
         }
-
-        return OrganisationMatchesRollenart.rollenartToOrganisationsTypMap.get(rolle.rollenart)!.includes(organisation.typ);
+        return OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organisation.typ).has(rolle.rollenart);
     }
 
     public static getAllowedRollenartenForOrganisationsTyp(organisationsTyp: OrganisationsTyp): Set<RollenArt> {
-        const allowedRollenarten: Set<RollenArt> = new Set();
-        for (const [rollenArt, organisationsTypen] of this.rollenartToOrganisationsTypMap) {
-            if (organisationsTypen.includes(organisationsTyp)) {
-                allowedRollenarten.add(rollenArt);
-            }
+        switch (organisationsTyp) {
+            case OrganisationsTyp.ROOT:
+            case OrganisationsTyp.LAND:
+                return new Set<RollenArt>([RollenArt.SYSADMIN]);
+            case OrganisationsTyp.SCHULE:
+                return new Set<RollenArt>([RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN]);
+            case OrganisationsTyp.KLASSE:
+                return new Set<RollenArt>([RollenArt.LERN]);
+            default:
+                return new Set<RollenArt>(Object.values(RollenArt));
         }
-        return allowedRollenarten;
     }
 }
