@@ -4,7 +4,8 @@ import {
     ServiceProviderMerkmal,
     ServiceProviderTarget,
 } from '../domain/service-provider.enum.js';
-import { IsBoolean, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsEnum, IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ALLOWED_LOGO_MIME_TYPES } from './allowed-mime-types.js';
 
 export class CreateServiceProviderBodyParams {
     @IsUUID()
@@ -33,6 +34,15 @@ export class CreateServiceProviderBodyParams {
     })
     @IsOptional()
     public logoBase64?: string;
+
+    @ApiProperty({
+        required: false,
+        enum: ALLOWED_LOGO_MIME_TYPES,
+        example: 'image/png',
+    })
+    @IsOptional()
+    @IsIn(ALLOWED_LOGO_MIME_TYPES)
+    public logoMimeType?: string;
 
     @ApiProperty({ enum: ServiceProviderKategorie })
     @IsEnum(ServiceProviderKategorie)
