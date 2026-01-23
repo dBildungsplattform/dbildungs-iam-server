@@ -329,7 +329,7 @@ export class ProviderController {
             body.kategorie,
             body.organisationId,
             logoBuffer,
-            undefined, // logoMimeType
+            body.logoMimeType,
             undefined, // keycloakGroup
             undefined, // keycloakRole
             ServiceProviderSystem.NONE,
