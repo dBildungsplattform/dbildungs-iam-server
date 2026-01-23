@@ -113,10 +113,82 @@ export class RollenerweiterungController {
         const existingErweiterungen: Array<Rollenerweiterung<true>> =
             await this.rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId(orgaId, angebotId);
 
+        const [addResults, removeResults]: [TunknownResultForRolle[], TunknownResultForRolle[]] = await Promise.all([
+            Promise.all(
+                this.handleAddErweiterungen(
+                    orgaId,
+                    angebotId,
+                    existingErweiterungen,
+                    body.addErweiterungenForRolleIds,
+                    rollen,
+                    permissions,
+                ),
+            ),
+            Promise.all(
+                this.handleRemoveErweiterungen(
+                    orgaId,
+                    angebotId,
+                    existingErweiterungen,
+                    body.removeErweiterungenForRolleIds,
+                    rollen,
+                ),
+            ),
+        ]);
+        const results: TunknownResultForRolle[] = [...addResults, ...removeResults];
+        const errors: TerrorResultForRolle[] = results.filter(isErrorResult);
+
+        if (errors.length > 0) {
+            throw new ApplyRollenerweiterungRolesError(
+                errors.map((e: TerrorResultForRolle) => ({ rolleId: e.rolleId, error: e.result.error })),
+            );
+        }
+    }
+
+    private handleRemoveErweiterungen(
+        orgaId: string,
+        angebotId: string,
+        existingErweiterungen: Array<Rollenerweiterung<true>>,
+        removeErweiterungenForRolleIds: string[],
+        rollen: Map<string, Rolle<true>>,
+    ): Promise<{ rolleId: string; result: Result<null, DomainError> }>[] {
+        const removeErweiterungenPromises: Promise<{ rolleId: string; result: Result<null, DomainError> }>[] =
+            removeErweiterungenForRolleIds
+                .filter((rolleId: string) => {
+                    return (
+                        existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) !== -1
+                    );
+                })
+                .map((rolleId: string) => {
+                    const rolle: Option<Rolle<true>> = rollen.get(rolleId);
+                    if (!rolle) {
+                        return Promise.resolve({ rolleId, result: Err(new EntityNotFoundError('Rolle', rolleId)) });
+                    }
+                    return this.rollenerweiterungRepo
+                        .deleteByIds({
+                            organisationId: orgaId,
+                            rolleId: rolleId,
+                            serviceProviderId: angebotId,
+                        })
+                        .then((result: Result<null, DomainError>) => ({ rolleId, result }));
+                });
+        return removeErweiterungenPromises;
+    }
+
+    private handleAddErweiterungen(
+        orgaId: string,
+        angebotId: string,
+        existingErweiterungen: Array<Rollenerweiterung<true>>,
+        addErweiterungenForRolleIds: string[],
+        rollen: Map<string, Rolle<true>>,
+        permissions: PersonPermissions,
+    ): Promise<{
+        rolleId: string;
+        result: Result<Rollenerweiterung<true>, DomainError>;
+    }>[] {
         const erweiterungenPromises: Promise<{
             rolleId: string;
             result: Result<Rollenerweiterung<true>, DomainError>;
-        }>[] = body.addErweiterungenForRolleIds
+        }>[] = addErweiterungenForRolleIds
             .filter((rolleId: string) => {
                 return existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) === -1;
             })
@@ -139,37 +211,6 @@ export class RollenerweiterungController {
                     )
                     .then((result: Result<Rollenerweiterung<true>, DomainError>) => ({ rolleId, result }));
             });
-
-        const removePromises: Promise<{ rolleId: string; result: Result<null, DomainError> }>[] =
-            body.removeErweiterungenForRolleIds
-                .filter((rolleId: string) => {
-                    return (
-                        existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) !== -1
-                    );
-                })
-                .map((rolleId: string) => {
-                    const rolle: Option<Rolle<true>> = rollen.get(rolleId);
-                    if (!rolle) {
-                        return Promise.resolve({ rolleId, result: Err(new EntityNotFoundError('Rolle', rolleId)) });
-                    }
-                    return this.rollenerweiterungRepo
-                        .deleteByIds({
-                            organisationId: orgaId,
-                            rolleId: rolleId,
-                            serviceProviderId: angebotId,
-                        })
-                        .then((result: Result<null, DomainError>) => ({ rolleId, result }));
-                });
-
-        const results: TunknownResultForRolle[] = await Promise.all([...erweiterungenPromises, ...removePromises]);
-        const errors: TerrorResultForRolle[] = results.filter(isErrorResult);
-
-        if (errors.length === 0) {
-            return;
-        }
-
-        throw new ApplyRollenerweiterungRolesError(
-            errors.map((e: TerrorResultForRolle) => ({ rolleId: e.rolleId, error: e.result.error })),
-        );
+        return erweiterungenPromises;
     }
 }
