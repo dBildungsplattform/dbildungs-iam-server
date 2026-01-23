@@ -11,7 +11,6 @@ import { Public } from 'nest-keycloak-connect';
 import { ClassLogger } from '../../../core/logging/class-logger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter';
-import { RolleExceptionFilter } from './rolle-exception-filter';
 import { PersonPermissions } from '../../authentication/domain/person-permissions';
 import { RollenSystemRecht } from '../domain/systemrecht';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
@@ -30,8 +29,27 @@ import { ServiceProviderMerkmal } from '../../service-provider/domain/service-pr
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo';
 import { Rollenerweiterung } from '../domain/rollenerweiterung';
 import { Err } from '../../../shared/util/result';
+import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error';
 
-@UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
+type TunknownResultForRolle = {
+    rolleId: string;
+    result: Result<unknown, DomainError>;
+};
+
+type TerrorResultForRolle = {
+    rolleId: string;
+    result: {
+        ok: false;
+        error: DomainError;
+    };
+};
+
+function isErrorResult<T>(r: {
+    result: Result<T, DomainError>;
+}): r is { rolleId: string; result: { ok: false; error: DomainError } } {
+    return r.result.ok === false;
+}
+@UseFilters(new SchulConnexValidationErrorFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -59,7 +77,9 @@ export class RollenerweiterungController {
         @Body() body: ApplyRollenerweiterungBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        this.logger.info('applyRollenerweiterungChanges called');
+        this.logger.info(
+            `applyRollenerweiterungChanges called by ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} with ${body.addErweiterungenForRolleIds.length} additions and ${body.removeErweiterungenForRolleIds.length} removals.`,
+        );
         const angebotId: string = params.angebotId;
         const orgaId: string = params.organisationId;
         if (!(await permissions.hasSystemrechtAtOrganisation(orgaId, RollenSystemRecht.ROLLEN_ERWEITERN))) {
@@ -93,19 +113,20 @@ export class RollenerweiterungController {
         const existingErweiterungen: Array<Rollenerweiterung<true>> =
             await this.rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId(orgaId, angebotId);
 
-        const erweiterungenPromises: Promise<Result<Rollenerweiterung<true>, DomainError>>[] =
-            body.addErweiterungenForRolleIds
-                .filter((rolleId: string) => {
-                    return (
-                        existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) === -1
-                    );
-                })
-                .map((rolleId: string) => {
-                    const rolle: Option<Rolle<true>> = rollen.get(rolleId);
-                    if (!rolle) {
-                        return Promise.resolve(Err(new EntityNotFoundError('Rolle', rolleId)));
-                    }
-                    return this.rollenerweiterungRepo.createAuthorized(
+        const erweiterungenPromises: Promise<{
+            rolleId: string;
+            result: Result<Rollenerweiterung<true>, DomainError>;
+        }>[] = body.addErweiterungenForRolleIds
+            .filter((rolleId: string) => {
+                return existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) === -1;
+            })
+            .map((rolleId: string) => {
+                const rolle: Option<Rolle<true>> = rollen.get(rolleId);
+                if (!rolle) {
+                    return Promise.resolve({ rolleId, result: Err(new EntityNotFoundError('Rolle', rolleId)) });
+                }
+                return this.rollenerweiterungRepo
+                    .createAuthorized(
                         Rollenerweiterung.createNew(
                             this.organisationRepo,
                             this.rolleRepo,
@@ -115,25 +136,40 @@ export class RollenerweiterungController {
                             angebotId,
                         ),
                         permissions,
-                    );
-                });
-
-        const removePromises: Promise<Result<null, DomainError>>[] = body.removeErweiterungenForRolleIds
-            .filter((rolleId: string) => {
-                return existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) !== -1;
-            })
-            .map((rolleId: string) => {
-                const rolle: Option<Rolle<true>> = rollen.get(rolleId);
-                if (!rolle) {
-                    return Promise.resolve(Err(new EntityNotFoundError('Rolle', rolleId)));
-                }
-                return this.rollenerweiterungRepo.deleteByIds({
-                    organisationId: orgaId,
-                    rolleId: rolleId,
-                    serviceProviderId: angebotId,
-                });
+                    )
+                    .then((result: Result<Rollenerweiterung<true>, DomainError>) => ({ rolleId, result }));
             });
 
-        await Promise.all([...erweiterungenPromises, ...removePromises]);
+        const removePromises: Promise<{ rolleId: string; result: Result<null, DomainError> }>[] =
+            body.removeErweiterungenForRolleIds
+                .filter((rolleId: string) => {
+                    return (
+                        existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) !== -1
+                    );
+                })
+                .map((rolleId: string) => {
+                    const rolle: Option<Rolle<true>> = rollen.get(rolleId);
+                    if (!rolle) {
+                        return Promise.resolve({ rolleId, result: Err(new EntityNotFoundError('Rolle', rolleId)) });
+                    }
+                    return this.rollenerweiterungRepo
+                        .deleteByIds({
+                            organisationId: orgaId,
+                            rolleId: rolleId,
+                            serviceProviderId: angebotId,
+                        })
+                        .then((result: Result<null, DomainError>) => ({ rolleId, result }));
+                });
+
+        const results: TunknownResultForRolle[] = await Promise.all([...erweiterungenPromises, ...removePromises]);
+        const errors: TerrorResultForRolle[] = results.filter(isErrorResult);
+
+        if (errors.length === 0) {
+            return;
+        }
+
+        throw new ApplyRollenerweiterungRolesError(
+            errors.map((e: TerrorResultForRolle) => ({ rolleId: e.rolleId, error: e.result.error })),
+        );
     }
 }
