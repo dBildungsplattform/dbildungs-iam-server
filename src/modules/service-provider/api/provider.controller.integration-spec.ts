@@ -32,6 +32,7 @@ import { ManageableServiceProviderListEntryResponse } from './manageable-service
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -263,12 +264,17 @@ describe('ServiceProvider API', () => {
             );
         });
 
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
         it('should return manageable service provider for organisation', async () => {
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/provider/manageable-by-organisation/${organisation.id}`)
                 .send();
 
-            const body: ManageableServiceProviderResponse = response.body as ManageableServiceProviderResponse;
+            const body: RawPagedResponse<ManageableServiceProviderListEntryResponse> =
+                response.body as RawPagedResponse<ManageableServiceProviderListEntryResponse>;
             expect(response.status).toBe(200);
 
             expect(body).toEqual<RawPagedResponse<ManageableServiceProviderListEntryResponse>>({
@@ -299,12 +305,83 @@ describe('ServiceProvider API', () => {
             } as RawPagedResponse<ManageableServiceProviderListEntryResponse>);
         });
 
+        it('should return only 5 roles in result', async () => {
+            const rollePromises: Promise<Rolle<true> | DomainError>[] = [];
+            for (let i: number = 0; i < 10; i++) {
+                rollePromises.push(
+                    rolleRepo.save(
+                        DoFactory.createRolle(false, {
+                            administeredBySchulstrukturknoten: organisation.id,
+                            serviceProviderIds: [serviceProvider.id],
+                        }),
+                    ),
+                );
+            }
+            const newRollen: Rolle<true>[] = (await Promise.all(rollePromises)) as Rolle<true>[];
+
+            const rollenerweiterungPromises: Promise<Rollenerweiterung<true>>[] = newRollen.map(
+                (newRolle: Rolle<true>) =>
+                    rollenerweiterungRepo.create(
+                        DoFactory.createRollenerweiterung(false, {
+                            organisationId: organisation.id,
+                            rolleId: newRolle.id,
+                            serviceProviderId: serviceProvider.id,
+                        }),
+                    ),
+            );
+            await Promise.all(rollenerweiterungPromises);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/provider/manageable-by-organisation/${organisation.id}`)
+                .send();
+
+            const body: RawPagedResponse<ManageableServiceProviderListEntryResponse> =
+                response.body as RawPagedResponse<ManageableServiceProviderListEntryResponse>;
+            expect(response.status).toBe(200);
+
+            const expectedRollen: { id: string; name: string }[] = [rolle, ...newRollen.slice(0, 4)].map(
+                (r: Rolle<true>) => ({
+                    id: r.id,
+                    name: r.name,
+                }),
+            );
+
+            expect(body.items).toBeInstanceOf(Array);
+            expect(body.items.length).toBe(1);
+
+            const actualItem: ManageableServiceProviderListEntryResponse | undefined = body.items[0];
+            expect(actualItem!.id).toBe(serviceProvider.id);
+            expect(actualItem!.name).toBe(serviceProvider.name);
+            expect(actualItem!.administrationsebene).toEqual({
+                id: organisation.id,
+                name: organisation.name!,
+                kennung: organisation.kennung!,
+            });
+            expect(actualItem!.kategorie).toBe(serviceProvider.kategorie);
+            expect(actualItem!.requires2fa).toBe(serviceProvider.requires2fa);
+            expect(actualItem!.merkmale).toEqual(serviceProvider.merkmale);
+            expect(actualItem!.hasRollenerweiterung).toBe(true);
+
+            const sortById = (a: { id: string }, b: { id: string }): number => a.id.localeCompare(b.id);
+            const expectedSorted: { id: string; name: string }[] = expectedRollen.slice().sort(sortById);
+            const actualSorted: { id: string; name: string }[] = (actualItem!.rollen as { id: string; name: string }[])
+                .slice()
+                .sort(sortById);
+
+            expect(actualSorted).toEqual(expectedSorted);
+
+            expect(body.limit).toBe(1);
+            expect(body.offset).toBe(0);
+            expect(body.total).toBe(1);
+        });
+
         it('should return empty list', async () => {
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/provider/manageable-by-organisation/${faker.string.uuid()}`)
                 .send();
 
-            const body: ManageableServiceProviderResponse = response.body as ManageableServiceProviderResponse;
+            const body: RawPagedResponse<ManageableServiceProviderListEntryResponse> =
+                response.body as RawPagedResponse<ManageableServiceProviderListEntryResponse>;
             expect(response.status).toBe(200);
 
             expect(body).toEqual<RawPagedResponse<ManageableServiceProviderListEntryResponse>>({
