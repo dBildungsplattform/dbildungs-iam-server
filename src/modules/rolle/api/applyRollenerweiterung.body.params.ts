@@ -1,11 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsString, ArrayNotEmpty } from 'class-validator';
+import { IsArray, IsString } from 'class-validator';
 
 export class ApplyRollenerweiterungBodyParams {
     @IsArray()
-    @ArrayNotEmpty()
     @IsString({ each: true })
-    @IsNotEmpty({ each: true })
     @ApiProperty({
         description: 'List of rolleIds to apply.',
         type: [String],
@@ -15,9 +13,7 @@ export class ApplyRollenerweiterungBodyParams {
     public readonly addErweiterungenForRolleIds!: string[];
 
     @IsArray()
-    @ArrayNotEmpty()
     @IsString({ each: true })
-    @IsNotEmpty({ each: true })
     @ApiProperty({
         description: 'List of rolleIds to apply.',
         type: [String],

@@ -6,6 +6,7 @@ import { RolleModule } from './rolle.module.js';
 import { ServiceProviderModule } from '../service-provider/service-provider.module.js';
 import { PersonModule } from '../person/person.module.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
+import { RollenerweiterungController } from './api/rollenerweiterung.controller.js';
 
 @Module({
     imports: [
@@ -17,6 +18,6 @@ import { PersonenKontextModule } from '../personenkontext/personenkontext.module
         LoggerModule.register(RolleApiModule.name),
     ],
     providers: [],
-    controllers: [RolleController],
+    controllers: [RolleController, RollenerweiterungController],
 })
 export class RolleApiModule {}

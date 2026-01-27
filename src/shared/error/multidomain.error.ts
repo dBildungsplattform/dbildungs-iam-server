@@ -1,4 +1,4 @@
-import { DomainError } from './domain.error';
+import { DomainError } from './domain.error.js';
 
 export abstract class MultiDomainError extends DomainError {
     public readonly errors: {

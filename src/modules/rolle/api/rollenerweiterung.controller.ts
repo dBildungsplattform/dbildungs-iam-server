@@ -8,28 +8,31 @@ import {
     ApiNoContentResponse,
 } from '@nestjs/swagger';
 import { Public } from 'nest-keycloak-connect';
-import { ClassLogger } from '../../../core/logging/class-logger';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter';
-import { PersonPermissions } from '../../authentication/domain/person-permissions';
-import { RollenSystemRecht } from '../domain/systemrecht';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error';
-import { ApplyRollenerweiterungPathParams } from './applyRollenerweiterungChanges.path.params';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo';
-import { ServiceProvider } from '../../service-provider/domain/service-provider';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository';
-import { Organisation } from '../../organisation/domain/organisation';
-import { ApplyRollenerweiterungBodyParams } from './applyRollenerweiterung.body.params';
-import { RolleRepo } from '../repo/rolle.repo';
+import { ApplyRollenerweiterungPathParams } from './applyRollenerweiterungChanges.path.params.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { ApplyRollenerweiterungBodyParams } from './applyRollenerweiterung.body.params.js';
+import { RolleRepo } from '../repo/rolle.repo.js';
 import { uniq } from 'lodash-es';
-import { Rolle } from '../domain/rolle';
-import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum';
-import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo';
-import { Rollenerweiterung } from '../domain/rollenerweiterung';
-import { Err } from '../../../shared/util/result';
-import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error';
+import { Rolle } from '../domain/rolle.js';
+import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
+import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
+import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
+import { Err } from '../../../shared/util/result.js';
+import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { RollenerweiterungExceptionFilter } from './rollenerweiterung-exception-filter.js';
+import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
+import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
 
 type TunknownResultForRolle = {
     rolleId: string;
@@ -49,7 +52,12 @@ function isErrorResult<T>(r: {
 }): r is { rolleId: string; result: { ok: false; error: DomainError } } {
     return r.result.ok === false;
 }
-@UseFilters(new SchulConnexValidationErrorFilter(), new AuthenticationExceptionFilter())
+@UseFilters(
+    new SchulConnexValidationErrorFilter(),
+    new AuthenticationExceptionFilter(),
+    new RollenerweiterungExceptionFilter(),
+    new ApplyRollenerweiterungMultiExceptionFilter(),
+)
 @ApiTags('rolle')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -106,9 +114,7 @@ export class RollenerweiterungController {
         }
 
         if (!serviceProvider.merkmale.includes(ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG)) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('TBD')),
-            );
+            throw new MissingMerkmalVerfuegbarFuerRollenerweiterungError();
         }
         const existingErweiterungen: Array<Rollenerweiterung<true>> =
             await this.rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId(orgaId, angebotId);
@@ -138,6 +144,7 @@ export class RollenerweiterungController {
         const errors: TerrorResultForRolle[] = results.filter(isErrorResult);
 
         if (errors.length > 0) {
+            this.logger.info('D');
             throw new ApplyRollenerweiterungRolesError(
                 errors.map((e: TerrorResultForRolle) => ({ rolleId: e.rolleId, error: e.result.error })),
             );
@@ -160,7 +167,9 @@ export class RollenerweiterungController {
                 })
                 .map((rolleId: string) => {
                     const rolle: Option<Rolle<true>> = rollen.get(rolleId);
+                    this.logger.debug(`Removing Erweiterung for rolleId: ${rolleId}`);
                     if (!rolle) {
+                        this.logger.debug(`Rolle not found for rolleId: ${rolleId}`);
                         return Promise.resolve({ rolleId, result: Err(new EntityNotFoundError('Rolle', rolleId)) });
                     }
                     return this.rollenerweiterungRepo
@@ -194,7 +203,9 @@ export class RollenerweiterungController {
             })
             .map((rolleId: string) => {
                 const rolle: Option<Rolle<true>> = rollen.get(rolleId);
+                this.logger.debug(`Adding Erweiterung for rolleId: ${rolleId}`);
                 if (!rolle) {
+                    this.logger.debug(`Rolle not found for rolleId: ${rolleId}`);
                     return Promise.resolve({ rolleId, result: Err(new EntityNotFoundError('Rolle', rolleId)) });
                 }
                 return this.rollenerweiterungRepo
