@@ -84,8 +84,8 @@ describe('PersonAdministrationService', () => {
                                         zugehoerigZu: parent.id,
                                         administriertVon: parent.id,
                                     });
-                                    organisationRepositoryMock.findByIds.mockResolvedValue(
-                                        new Map([[organisation.id, organisation]]),
+                                    organisationRepositoryMock.findDistinctOrganisationsTypen.mockResolvedValue(
+                                        [organisationsTyp],
                                     );
                                     organisationRepositoryMock.findParentOrgasForIds.mockResolvedValue([parent]);
                                 });
@@ -128,8 +128,8 @@ describe('PersonAdministrationService', () => {
                         all: false,
                         orgaIds: schulen.map((s: Organisation<true>) => s.id),
                     });
-                    organisationRepositoryMock.findByIds.mockResolvedValue(
-                        new Map(schulen.map((s: Organisation<true>) => [s.id, s])),
+                    organisationRepositoryMock.findDistinctOrganisationsTypen.mockResolvedValue(
+                        [OrganisationsTyp.SCHULE],
                     );
                     organisationRepositoryMock.findParentOrgasForIds.mockResolvedValue([traeger]);
                 });

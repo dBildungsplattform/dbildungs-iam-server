@@ -63,18 +63,10 @@ export class PersonAdministrationService {
     }
 
     private async getAllowedRollenArtenForOrganisationen(orgaIds: Array<OrganisationID>): Promise<Array<RollenArt>> {
-        const organisationen: Map<OrganisationID, Organisation<true>> = await this.organisationRepository.findByIds(
-            orgaIds,
-        );
-        const organisationsTypen: Set<OrganisationsTyp> = new Set();
-        organisationen.forEach((orga: Organisation<true>) => {
-            if (orga.typ) {
-                organisationsTypen.add(orga.typ);
-            }
-        });
+        const distinctOrganisationsTypen: Array<OrganisationsTyp> = await this.organisationRepository.findDistinctOrganisationsTypen(orgaIds);
 
         const allowedRollenarten: Set<RollenArt> = new Set();
-        organisationsTypen.forEach((organisationsTyp: OrganisationsTyp) => {
+        distinctOrganisationsTypen.forEach((organisationsTyp: OrganisationsTyp) => {
             OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organisationsTyp).forEach(
                 (allowedRollenart: RollenArt) => {
                     allowedRollenarten.add(allowedRollenart);
@@ -89,8 +81,10 @@ export class PersonAdministrationService {
     ): Promise<Array<OrganisationID>> {
         const parentsOfPermittedOrgas: Array<Organisation<true>> =
             await this.organisationRepository.findParentOrgasForIds(orgaIds);
+
         const allowedStrukturknoten: Set<OrganisationID> = new Set(orgaIds);
-        parentsOfPermittedOrgas.forEach((orga: Organisation<true>) => allowedStrukturknoten.add(orga.id));
+        parentsOfPermittedOrgas.forEach((o: Organisation<true>) => allowedStrukturknoten.add(o.id));
+
         return Array.from(allowedStrukturknoten);
     }
 }
