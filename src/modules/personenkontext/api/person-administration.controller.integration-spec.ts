@@ -165,14 +165,12 @@ describe('PersonAdministrationController Integration Test', () => {
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
                 personpermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                     all: false,
-                    orgaIds: [parentOrga.id],
+                    orgaIds: [parentOrga.id, orga.id],
                 });
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .get(
-                        `/person-administration/rollen?rolleName=${rolleName}&limit=25&organisationIds=${parentOrga.id}`,
-                    )
+                    .get(`/person-administration/rollen?rolleName=${rolleName}&limit=25`)
                     .send();
 
                 expect(response.status).toBe(200);
