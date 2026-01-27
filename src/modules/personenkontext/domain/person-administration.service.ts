@@ -26,7 +26,7 @@ export class PersonAdministrationService {
     ): Promise<Rolle<true>[]> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
-            false, // we assume that the Rollenarten allowed for KLASSE are a subset of the ones for SCHULE and that Rollen can not be defined on KLASSE
+            true,
         );
 
         let rollenarten: Array<RollenArt> | undefined;
