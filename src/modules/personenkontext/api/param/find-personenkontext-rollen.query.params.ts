@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, TransformFnParams } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { TransformToArray } from '../../../../shared/util/array-transform.validator';
 
 export class FindPersonenkontextRollenQueryParams {
     @IsString()
@@ -30,14 +31,6 @@ export class FindPersonenkontextRollenQueryParams {
         required: false,
         nullable: false,
     })
-    @Transform(({ value }: TransformFnParams): Array<string> => {
-        const arrayValue: Array<unknown> = Array.isArray(value) ? value : [value];
-        return arrayValue.map((v: unknown) => {
-            if (typeof v !== 'string') {
-                return String(v);
-            }
-            return v;
-        });
-    })
+    @TransformToArray<string>()
     public readonly organisationIds?: string[];
 }
