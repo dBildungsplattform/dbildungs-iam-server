@@ -63,7 +63,8 @@ export class PersonAdministrationService {
     }
 
     private async getAllowedRollenArtenForOrganisationen(orgaIds: Array<OrganisationID>): Promise<Array<RollenArt>> {
-        const distinctOrganisationsTypen: Array<OrganisationsTyp> = await this.organisationRepository.findDistinctOrganisationsTypen(orgaIds);
+        const distinctOrganisationsTypen: Array<OrganisationsTyp> =
+            await this.organisationRepository.findDistinctOrganisationsTypen(orgaIds);
 
         const allowedRollenarten: Set<RollenArt> = new Set();
         distinctOrganisationsTypen.forEach((organisationsTyp: OrganisationsTyp) => {

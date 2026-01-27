@@ -6,7 +6,7 @@ import {
     QueryBuilder,
     RawQueryFragment,
     RequiredEntityData,
-    sql
+    sql,
 } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -728,7 +728,10 @@ export class OrganisationRepository {
             return [];
         }
         const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity, 'organisation');
-        const result: Pick<Required<OrganisationEntity>, 'typ'>[] = await qb.select('typ', true).where({ id: { $in: organisationIds }, typ: { $ne: null } }).execute();
+        const result: Pick<Required<OrganisationEntity>, 'typ'>[] = await qb
+            .select('typ', true)
+            .where({ id: { $in: organisationIds }, typ: { $ne: null } })
+            .execute();
         return result.map((r: Pick<Required<OrganisationEntity>, 'typ'>) => r.typ);
     }
 }

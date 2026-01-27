@@ -84,9 +84,9 @@ describe('PersonAdministrationService', () => {
                                         zugehoerigZu: parent.id,
                                         administriertVon: parent.id,
                                     });
-                                    organisationRepositoryMock.findDistinctOrganisationsTypen.mockResolvedValue(
-                                        [organisationsTyp],
-                                    );
+                                    organisationRepositoryMock.findDistinctOrganisationsTypen.mockResolvedValue([
+                                        organisationsTyp,
+                                    ]);
                                     organisationRepositoryMock.findParentOrgasForIds.mockResolvedValue([parent]);
                                 });
 
@@ -128,9 +128,9 @@ describe('PersonAdministrationService', () => {
                         all: false,
                         orgaIds: schulen.map((s: Organisation<true>) => s.id),
                     });
-                    organisationRepositoryMock.findDistinctOrganisationsTypen.mockResolvedValue(
-                        [OrganisationsTyp.SCHULE],
-                    );
+                    organisationRepositoryMock.findDistinctOrganisationsTypen.mockResolvedValue([
+                        OrganisationsTyp.SCHULE,
+                    ]);
                     organisationRepositoryMock.findParentOrgasForIds.mockResolvedValue([traeger]);
                 });
 

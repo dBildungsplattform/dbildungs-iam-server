@@ -572,10 +572,7 @@ describe('RolleRepo', () => {
                 ),
             ]);
 
-            const rollenResult: Rolle<true>[] = await sut.findBy(undefined, [
-                RollenArt.LEIT,
-                RollenArt.LEHR,
-            ]);
+            const rollenResult: Rolle<true>[] = await sut.findBy(undefined, [RollenArt.LEIT, RollenArt.LEHR]);
             expect(rollenResult).toHaveLength(2);
             const rollenarten: RollenArt[] = rollenResult.map((r: Rolle<true>) => r.rollenart);
             expect(rollenarten).toContain(RollenArt.LEIT);
@@ -603,7 +600,9 @@ describe('RolleRepo', () => {
                 ),
             ]);
 
-            const rollenResult: Rolle<true>[] = await sut.findBy(undefined, undefined, [administeredBySchulstrukturknoten]);
+            const rollenResult: Rolle<true>[] = await sut.findBy(undefined, undefined, [
+                administeredBySchulstrukturknoten,
+            ]);
             expect(rollenResult).toHaveLength(2);
             expect(rollenResult.map((r: Rolle<true>) => r.administeredBySchulstrukturknoten)).toEqual(
                 expect.arrayContaining([administeredBySchulstrukturknoten, administeredBySchulstrukturknoten]),
@@ -612,20 +611,14 @@ describe('RolleRepo', () => {
 
         it('should respect limit and offset', async () => {
             await Promise.all([
-                sut.save(
-                    DoFactory.createRolle(false),
-                ),
-                sut.save(
-                    DoFactory.createRolle(false),
-                ),
-                sut.save(
-                    DoFactory.createRolle(false),
-                ),
+                sut.save(DoFactory.createRolle(false)),
+                sut.save(DoFactory.createRolle(false)),
+                sut.save(DoFactory.createRolle(false)),
             ]);
 
             const rollenResult1: Rolle<true>[] = await sut.findBy(undefined, undefined, undefined, 2, 0);
             expect(rollenResult1).toHaveLength(2);
-            
+
             const rollenResult2: Rolle<true>[] = await sut.findBy(undefined, undefined, undefined, 2, 1);
             expect(rollenResult2).toHaveLength(2);
             expect(rollenResult2).not.toEqual(rollenResult1);
