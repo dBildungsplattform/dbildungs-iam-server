@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ResultInterceptor } from './result-interceptor.js';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { Observable, of } from 'rxjs';

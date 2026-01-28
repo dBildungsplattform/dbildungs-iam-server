@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { KafkaJS } from '@confluentinc/kafka-javascript';
-import { createMock, DeepMocked} from '../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 

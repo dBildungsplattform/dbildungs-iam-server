@@ -1,16 +1,16 @@
 import { ArgumentsHost } from '@nestjs/common';
-import { DeepMocked, createMock } from '@golevelup/ts-vitest';
 import { Response } from 'express';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { DbiamRolleError, RolleErrorI18nTypes } from './dbiam-rolle.error.js';
 import { RolleDomainError } from '../domain/rolle-domain.error.js';
+import { createArgumentsHostMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
+import { MockedObject } from 'vitest';
 
 describe('RolleExceptionFilter', () => {
     let filter: RolleExceptionFilter;
     const statusCode: number = 500;
-    let responseMock: DeepMocked<Response>;
-    let argumentsHost: DeepMocked<ArgumentsHost>;
+    let responseMock: MockedObject<Response>;
+    let argumentsHost: MockedObject<ArgumentsHost>;
 
     const generalBadRequestError: DbiamRolleError = new DbiamRolleError({
         code: 500,
@@ -19,13 +19,8 @@ describe('RolleExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new RolleExceptionFilter();
-        responseMock = createMock(Response);
-        argumentsHost = createMock<ArgumentsHost>({
-            switchToHttp: () =>
-                createMock<HttpArgumentsHost>({
-                    getResponse: () => responseMock,
-                }),
-        });
+        responseMock = createResponseMock();
+        argumentsHost = createArgumentsHostMock({ response: responseMock });
     });
 
     describe('catch', () => {

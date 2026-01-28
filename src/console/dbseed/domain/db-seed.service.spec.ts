@@ -5,7 +5,7 @@ import fs from 'fs';
 import { DataProviderFile } from '../file/data-provider-file.js';
 import { PersonFactory } from '../../../modules/person/domain/person.factory.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { faker } from '@faker-js/faker';
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';

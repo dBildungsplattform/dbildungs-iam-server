@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { HttpService } from '@nestjs/axios';
 import { TestingModule, Test } from '@nestjs/testing';
 import { VidisService } from './vidis.service.js';

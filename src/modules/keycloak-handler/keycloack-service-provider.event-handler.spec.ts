@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { KeycloackServiceProviderHandler } from './keycloack-service-provider.event-handler.js';
 import { KeycloakUserService } from '../keycloak-administration/index.js';

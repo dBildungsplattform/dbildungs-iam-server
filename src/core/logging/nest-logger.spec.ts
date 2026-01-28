@@ -1,16 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ModuleLogger } from './module-logger.js';
-import { createMock, DeepMocked} from '../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { NestLogger } from './nest-logger.js';
 import { Logger } from 'winston';
 
 class LoggerMock {
     public logs: Array<{ level: string; message: unknown }> = [];
 
-    public log(level: string, message: unknown): void { this.logs.push({ level, message }); }
-    public info(message: unknown): void { this.logs.push({ level: 'info', message}); }
-    public error(message: unknown): void { this.logs.push({ level: 'error', message }); }
-    public debug(message: unknown): void { this.logs.push({ level: 'debug', message }); }
+    public log(level: string, message: unknown): void {
+        this.logs.push({ level, message });
+    }
+    public info(message: unknown): void {
+        this.logs.push({ level: 'info', message });
+    }
+    public error(message: unknown): void {
+        this.logs.push({ level: 'error', message });
+    }
+    public debug(message: unknown): void {
+        this.logs.push({ level: 'debug', message });
+    }
 }
 
 describe('The nest Logger', () => {
@@ -37,9 +45,9 @@ describe('The nest Logger', () => {
 
             expect(moduleLogger.getLogger).toHaveBeenCalled();
             expect(
-                (moduleLogger
-                    .getLogger() as DeepMocked<Logger>)
-                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] === 'log'),
+                (moduleLogger.getLogger() as DeepMocked<Logger>).log.mock.calls.every(
+                    (v: [level: string, message: unknown]): boolean => v[0] === 'log',
+                ),
             );
         });
 
@@ -50,9 +58,9 @@ describe('The nest Logger', () => {
 
             expect(moduleLogger.getLogger).toHaveBeenCalled();
             expect(
-                (moduleLogger
-                    .getLogger() as DeepMocked<Logger>)
-                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] === 'debug'),
+                (moduleLogger.getLogger() as DeepMocked<Logger>).log.mock.calls.every(
+                    (v: [level: string, message: unknown]): boolean => v[0] === 'debug',
+                ),
             );
         });
 
@@ -63,9 +71,9 @@ describe('The nest Logger', () => {
 
             expect(moduleLogger.getLogger).toHaveBeenCalled();
             expect(
-                (moduleLogger
-                    .getLogger() as DeepMocked<Logger>)
-                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] === 'error'),
+                (moduleLogger.getLogger() as DeepMocked<Logger>).log.mock.calls.every(
+                    (v: [level: string, message: unknown]): boolean => v[0] === 'error',
+                ),
             );
         });
 
@@ -76,9 +84,9 @@ describe('The nest Logger', () => {
 
             expect(moduleLogger.getLogger).toHaveBeenCalled();
             expect(
-                (moduleLogger
-                    .getLogger() as DeepMocked<Logger>)
-                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] === 'warn'),
+                (moduleLogger.getLogger() as DeepMocked<Logger>).log.mock.calls.every(
+                    (v: [level: string, message: unknown]): boolean => v[0] === 'warn',
+                ),
             );
         });
 
@@ -89,9 +97,9 @@ describe('The nest Logger', () => {
 
             expect(moduleLogger.getLogger).toHaveBeenCalled();
             expect(
-                (moduleLogger
-                    .getLogger() as DeepMocked<Logger>)
-                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[1] === 'verbose'),
+                (moduleLogger.getLogger() as DeepMocked<Logger>).log.mock.calls.every(
+                    (v: [level: string, message: unknown]): boolean => v[1] === 'verbose',
+                ),
             );
         });
     });

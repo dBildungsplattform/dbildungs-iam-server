@@ -6,7 +6,7 @@ import {
     HttpHealthIndicator,
     MikroOrmHealthIndicator,
 } from '@nestjs/terminus';
-import { createMock, DeepMocked} from '../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { ConfigService } from '@nestjs/config';
 import { KeycloakConfig } from '../../shared/config/index.js';
 import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';

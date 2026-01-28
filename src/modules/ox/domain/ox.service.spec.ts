@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosResponse } from 'axios';
@@ -17,7 +17,7 @@ import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group
 
 describe('OxServiceConstructor', () => {
     it('should set default retries', () => {
-        const configServiceMock: DeepMocked<ConfigService<unknown>> = createMock<ConfigService>(ConfigService,{
+        const configServiceMock: DeepMocked<ConfigService<unknown>> = createMock<ConfigService>(ConfigService, {
             getOrThrow: () => ({}), // Empty OX config
         });
 

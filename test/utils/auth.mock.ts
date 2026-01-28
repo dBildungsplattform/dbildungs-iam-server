@@ -1,5 +1,11 @@
 import { faker } from '@faker-js/faker';
-import { BaseClient, ClientMetadata, Issuer, IssuerMetadata, UserinfoResponse as OidcUserinfoResponse } from 'openid-client';
+import {
+    BaseClient,
+    ClientMetadata,
+    Issuer,
+    IssuerMetadata,
+    UserinfoResponse as OidcUserinfoResponse,
+} from 'openid-client';
 import { UserinfoResponse } from '../../src/modules/authentication/api/userinfo.response.js';
 import { PersonFields, PersonPermissions } from '../../src/modules/authentication/domain/person-permissions.js';
 import { IPersonPermissions } from '../../src/shared/permissions/person-permissions.interface.js';

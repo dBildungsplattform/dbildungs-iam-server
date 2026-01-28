@@ -5,7 +5,7 @@ import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../
 import { GlobalValidationPipe } from '../../../../../shared/validation/global-validation.pipe.js';
 import { faker } from '@faker-js/faker';
 import { EmailWriteController } from './email-write.controller.js';
-import { createMock, DeepMocked} from '../../../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../../../test/utils/createMock.js';
 import { SetEmailAddressForSpshPersonService } from '../../domain/set-email-address-for-spsh-person.service.js';
 import { SetEmailAddressForSpshPersonBodyParams } from '../dtos/params/set-email-address-for-spsh-person.bodyparams.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';

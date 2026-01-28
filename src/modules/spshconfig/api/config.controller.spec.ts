@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigController } from './config.controller.js';
 import { ConfigTestModule } from '../../../../test/utils/index.js';
 import { ConfigService } from '@nestjs/config';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { FeatureFlagResponse } from './featureflag.response.js';
 import { FeatureFlagConfig } from '../../../shared/config/featureflag.config.js';
 

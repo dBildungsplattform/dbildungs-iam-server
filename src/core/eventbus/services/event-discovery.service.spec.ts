@@ -1,6 +1,6 @@
 // eslint-disable-next-line max-classes-per-file
 import { DiscoveryModule } from '@golevelup/nestjs-discovery';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Controller, Injectable } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 

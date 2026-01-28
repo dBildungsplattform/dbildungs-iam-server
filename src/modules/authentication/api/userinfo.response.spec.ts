@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import 'reflect-metadata';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { OrganisationResponse } from '../../organisation/api/organisation.response.js';

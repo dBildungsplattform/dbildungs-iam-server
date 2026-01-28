@@ -20,7 +20,7 @@ import { DbSeedModule } from './db-seed.module.js';
 import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
 import { OxUserBlacklistRepo } from '../../modules/person/persistence/ox-user-blacklist.repo.js';
 import { EntityAggregateMapper } from '../../modules/person/mapper/entity-aggregate.mapper.js';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 
 describe('DbSeedConsoleIntegration', () => {

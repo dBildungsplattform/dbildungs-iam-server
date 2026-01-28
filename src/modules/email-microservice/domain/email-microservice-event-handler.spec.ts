@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
@@ -303,9 +303,7 @@ describe('EmailMicroserviceEventHandler', () => {
 
             rolleRepoMock.findByIds.mockResolvedValue(new Map([['r1', mockRolle]]));
 
-            const setEmailSpy: Mock = jest
-                .spyOn(emailResolverServiceMock, 'setEmailForSpshPerson')
-                .mockResolvedValue();
+            const setEmailSpy: Mock = jest.spyOn(emailResolverServiceMock, 'setEmailForSpshPerson').mockResolvedValue();
 
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
 

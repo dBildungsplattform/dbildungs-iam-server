@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailFactory } from './email.factory.js';
 import { EmailAddress, EmailAddressStatus } from './email-address.js';

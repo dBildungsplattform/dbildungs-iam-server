@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ArgumentsHost } from '@nestjs/common';
 
 import { HttpArgumentsHost } from '@nestjs/common/interfaces';

@@ -287,7 +287,7 @@ export class DoFactory {
                 address ?? faker.internet.email(),
                 props?.status ?? faker.helpers.enumValue(EmailAddressStatus),
                 props?.oxUserID ?? faker.string.uuid(),
-        );
+            );
         } else {
             emailAddress = EmailAddress.createNew(
                 props?.personId ?? faker.string.uuid(),

@@ -875,13 +875,13 @@ describe('EmailRepo', () => {
     });
 
     describe('compareFunctions', () => {
-        const emailAddressUndefinedUpdatedAt: EmailAddressEntity = createMock<EmailAddressEntity>(EmailAddressEntity,{
+        const emailAddressUndefinedUpdatedAt: EmailAddressEntity = createMock<EmailAddressEntity>(EmailAddressEntity, {
             updatedAt: undefined,
         });
-        const emailAddress1: EmailAddressEntity = createMock<EmailAddressEntity>(EmailAddressEntity,{
+        const emailAddress1: EmailAddressEntity = createMock<EmailAddressEntity>(EmailAddressEntity, {
             updatedAt: faker.date.recent(),
         });
-        const emailAddress2: EmailAddressEntity = createMock<EmailAddressEntity>(EmailAddressEntity,{
+        const emailAddress2: EmailAddressEntity = createMock<EmailAddressEntity>(EmailAddressEntity, {
             updatedAt: faker.date.past(),
         });
         describe('compareEmailAddressesByUpdatedAt', () => {

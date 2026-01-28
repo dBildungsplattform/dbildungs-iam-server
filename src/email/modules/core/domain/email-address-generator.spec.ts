@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { faker } from '@faker-js/faker';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
-import { createMock, DeepMocked} from '../../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { EmailAddressGenerator } from './email-address-generator.js';
 import {
     InvalidAttributeLengthError,

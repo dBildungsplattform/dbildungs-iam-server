@@ -26,6 +26,7 @@ export default defineConfig({
             '**/health/**/*spec.ts',
             '**/import/**/*spec.ts',
             '**/itslearning/**/*spec.ts',
+            '**/kc-db-health/**/*spec.ts',
             '**/meldung/**/*spec.ts',
             '**/organisation/**/*spec.ts',
             '**/person/**/*spec.ts',
@@ -34,6 +35,7 @@ export default defineConfig({
             '**/eventbus/**/*spec.ts',
             '**/ldap/**/*spec.ts',
             '**/logging/**/*spec.ts',
+            '**/keycloak-administration/**/*spec.ts',
         ],
         // projects: [
         //     {

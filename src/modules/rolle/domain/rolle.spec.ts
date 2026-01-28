@@ -7,7 +7,7 @@ import { Rolle } from './rolle.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RolleFactory } from './rolle.factory.js';

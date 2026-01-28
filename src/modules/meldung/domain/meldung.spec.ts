@@ -1,6 +1,6 @@
 import { DeepMocked, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EventModule } from '../../../core/eventbus/event.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MeldungRepo } from '../persistence/meldung.repo.js';

@@ -4,22 +4,30 @@ export type DeepMocked<T> = ReturnType<typeof vi.mockObject<T>>;
 export function createMock<T extends object>(T: new (...args: any[]) => T, implementation?: Partial<T>): DeepMocked<T> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
     const instance: T = Object.create(T.prototype);
-    return vi.mockObject<T>(Object.assign(instance, implementation));
+    const mockObject: DeepMocked<T> = vi.mockObject<T>(Object.assign(instance, implementation));
+    // if (implementation) {
+    //     for (const key of Object.getOwnPropertyNames(implementation)) {
+    //         // Set the return values of the mock to the implementation provided
+    //         if ((mockObject[key as keyof typeof mockObject] as Mock).mockReset) {
+    //             (mockObject[key as keyof typeof mockObject] as Mock).mockReset();
+    //         }
+    //         // if (
+    //         //     implementation[key as keyof typeof implementation] &&
+    //         //     implementation[key as keyof typeof implementation] instanceof Function
+    //         // ) {
+    //         //     (mockObject[key as keyof typeof mockObject] as Mock).mockImplementation(
+    //         //         implementation[key as keyof typeof implementation] as (...args: unknown[]) => unknown,
+    //         //     );
+    //         // } else if (mockObject[key as keyof typeof mockObject] instanceof Function) {
+    //         //     (mockObject[key as keyof typeof mockObject] as Mock).mockReturnValue(
+    //         //         implementation[key as keyof typeof implementation] as unknown,
+    //         //     );
+    //         // } else {
+    //         //     mockObject[key as keyof typeof mockObject] = implementation[
+    //         //         key as keyof typeof implementation
+    //         //     ] as T[keyof T] as unknown as DeepMocked<T>[keyof DeepMocked<T>];
+    //         // }
+    //     }
+    // }
+    return mockObject;
 }
-
-
-// export function createMock<T extends object>(T: any, implementation?: Partial<T>): DeepMocked<T> {
-//     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
-//     let instance: T = {} as T;
-//     for (const key of Object.keys(implementation || {})) {
-//         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-//         instance[key as keyof T] = implementation![key as keyof T]!;
-//     }
-//     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-//     if (T.prototype) {
-//         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-//         instance = Object.create(T.prototype);
-//     }
-
-//     return vi.mockObject<T>(Object.assign(instance, implementation));
-// }

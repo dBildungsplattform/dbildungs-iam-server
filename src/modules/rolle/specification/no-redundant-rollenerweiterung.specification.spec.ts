@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
@@ -24,7 +23,7 @@ describe('NoRedundantRollenerweiterung', () => {
             async (expected: boolean, _label: string, rolle: Option<Rolle<boolean>>) => {
                 const rollenerweiterungMock: Rollenerweiterung<boolean> = DoFactory.createRollenerweiterung(true, {
                     serviceProviderId: serviceProviderId,
-                })
+                });
                 vi.spyOn(rollenerweiterungMock, 'getRolle').mockResolvedValue(rolle);
 
                 const specification: NoRedundantRollenerweiterung = new NoRedundantRollenerweiterung();

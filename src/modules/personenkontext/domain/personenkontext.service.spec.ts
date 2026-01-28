@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
