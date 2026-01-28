@@ -5,7 +5,7 @@ import { Injectable } from '@nestjs/common';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
 import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
-import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
@@ -180,6 +180,31 @@ export class ServiceProviderRepo {
                 : {
                       providedOnSchulstrukturknoten: { $in: permittedOrgas.orgaIds },
                   },
+            {
+                populate: ['merkmale'],
+                limit,
+                offset,
+                orderBy: {
+                    kategorie: 'ASC', // kategorie defines a custom order
+                },
+            },
+        );
+
+        return [entities.map(mapEntityToAggregate), count];
+    }
+
+    public async findByOrgasWithMerkmal(
+        organisationIds: OrganisationID[],
+        merkmal: ServiceProviderMerkmal,
+        limit?: number,
+        offset?: number,
+    ): Promise<Counted<ServiceProvider<true>>> {
+        const [entities, count]: Counted<ServiceProviderEntity> = await this.em.findAndCount(
+            ServiceProviderEntity,
+            {
+                providedOnSchulstrukturknoten: { $in: organisationIds },
+                merkmale: { merkmal: merkmal },
+            },
             {
                 populate: ['merkmale'],
                 limit,

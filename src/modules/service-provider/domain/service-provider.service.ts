@@ -17,12 +17,20 @@ import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 import { VidisService } from '../../vidis/vidis.service.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
-import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
+import {
+    ServiceProviderKategorie,
+    ServiceProviderMerkmal,
+    ServiceProviderSystem,
+    ServiceProviderTarget,
+} from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import {
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -86,12 +94,41 @@ export class ServiceProviderService {
         return Array.from(serviceProviders.values());
     }
 
+    public async getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
+        organisationId: OrganisationID,
+        permissions: PersonPermissions,
+        limit?: number,
+        offset?: number,
+    ): Promise<Counted<ServiceProvider<true>>> {
+        const hasPermission: boolean = await permissions.hasSystemrechtAtOrganisation(
+            organisationId,
+            RollenSystemRecht.ROLLEN_ERWEITERN,
+        );
+        if (!hasPermission) {
+            throw new MissingPermissionsError('Rollen Erweitern Systemrecht Required For This Endpoint');
+        }
+        const parents: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds([organisationId]);
+        const organisationWithParentsIds: OrganisationID[] = [
+            organisationId,
+            ...parents.map((orga: Organisation<true>) => orga.id),
+        ];
+        return this.serviceProviderRepo.findByOrgasWithMerkmal(
+            organisationWithParentsIds,
+            ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+            limit,
+            offset,
+        );
+    }
+
     public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(
         serviceProviders: ServiceProvider<true>[],
+        limitRoles?: number,
     ): Promise<ManageableServiceProviderWithReferencedObjects[]> {
         const serviceProvidersIds: ServiceProviderID[] = serviceProviders.map((sp: ServiceProvider<true>) => sp.id);
-        const rollen: Map<ServiceProviderID, Rolle<true>[]> =
-            await this.rolleRepo.findByServiceProviderIds(serviceProvidersIds);
+        const rollen: Map<ServiceProviderID, Rolle<true>[]> = await this.rolleRepo.findByServiceProviderIds(
+            serviceProvidersIds,
+            limitRoles,
+        );
         const rollenerweiterungen: Map<ServiceProviderID, Rollenerweiterung<true>[]> =
             await this.rollenerweiterungRepo.findByServiceProviderIds(serviceProvidersIds);
         const organisationen: Map<ServiceProviderID, Organisation<true>> = await this.organisationRepo.findByIds(

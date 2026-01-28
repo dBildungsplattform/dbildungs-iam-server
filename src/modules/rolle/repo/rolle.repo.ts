@@ -321,28 +321,30 @@ export class RolleRepo {
 
     public async findByServiceProviderIds(
         serviceProviderIds: string[],
+        limit?: number,
     ): Promise<Map<ServiceProviderID, Rolle<true>[]>> {
-        const rollen: Rolle<true>[] = (
-            await this.em.find(
-                RolleEntity,
-                {
-                    serviceProvider: {
-                        serviceProvider: {
-                            id: { $in: serviceProviderIds },
-                        },
-                    },
-                },
-                {
-                    populate: [
-                        'merkmale',
-                        'systemrechte',
-                        'serviceProvider.serviceProvider',
-                        'serviceProvider.serviceProvider.merkmale',
-                    ] as const,
-                    exclude: ['serviceProvider.serviceProvider.logo'] as const,
-                },
-            )
-        ).map((rolleEntity: RolleEntity) => mapRolleEntityToAggregate(rolleEntity, this.rolleFactory));
+        const query: object = {
+            serviceProvider: { serviceProvider: { id: { $in: serviceProviderIds } } },
+        };
+
+        const findOptions: Record<string, unknown> = {
+            populate: [
+                'merkmale',
+                'systemrechte',
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+            ] as const,
+            exclude: ['serviceProvider.serviceProvider.logo'] as const,
+            orderBy: { name: 'ASC' },
+        };
+
+        if (limit !== undefined) {
+            findOptions['limit'] = limit;
+        }
+
+        const rollen: Rolle<true>[] = (await this.em.find(RolleEntity, query, findOptions)).map(
+            (rolleEntity: RolleEntity) => mapRolleEntityToAggregate(rolleEntity, this.rolleFactory),
+        );
 
         return new Map(
             serviceProviderIds.map((spId: ServiceProviderID) => [
