@@ -9,4 +9,12 @@ export class AngebotByIdParams {
         nullable: false,
     })
     public angebotId!: string;
+
+    @IsUUID()
+    @ApiProperty({
+        description: 'The id of the organisation',
+        required: false,
+        nullable: true,
+    })
+    public organisationId?: string;
 }

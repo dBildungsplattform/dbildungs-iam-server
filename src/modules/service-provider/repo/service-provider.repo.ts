@@ -198,7 +198,7 @@ export class ServiceProviderRepo {
         id: string,
     ): Promise<Option<ServiceProvider<true>>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.ANGEBOTE_VERWALTEN],
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ROLLEN_ERWEITERN],
             true,
         );
         const entity: Option<ServiceProviderEntity> = await this.em.findOne(
