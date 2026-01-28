@@ -9,19 +9,25 @@ import { Organisation } from '../../organisation/domain/organisation.js';
  */
 export class OrganisationMatchesRollenart {
     public isSatisfiedBy(organisation: Organisation<true>, rolle: Rolle<true>): boolean {
-        if (rolle.rollenart === RollenArt.SYSADMIN) {
-            return organisation.typ === OrganisationsTyp.LAND || organisation.typ === OrganisationsTyp.ROOT;
+        if (!organisation.typ) {
+            return false;
         }
-        if (rolle.rollenart === RollenArt.LEIT) {
-            return organisation.typ === OrganisationsTyp.SCHULE;
-        }
-        if (rolle.rollenart === RollenArt.LERN) {
-            return organisation.typ === OrganisationsTyp.SCHULE || organisation.typ === OrganisationsTyp.KLASSE;
-        }
-        if (rolle.rollenart === RollenArt.LEHR) {
-            return organisation.typ === OrganisationsTyp.SCHULE;
-        }
+        return OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organisation.typ).has(
+            rolle.rollenart,
+        );
+    }
 
-        return true;
+    public static getAllowedRollenartenForOrganisationsTyp(organisationsTyp: OrganisationsTyp): Set<RollenArt> {
+        switch (organisationsTyp) {
+            case OrganisationsTyp.ROOT:
+            case OrganisationsTyp.LAND:
+                return new Set<RollenArt>([RollenArt.SYSADMIN]);
+            case OrganisationsTyp.SCHULE:
+                return new Set<RollenArt>([RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN]);
+            case OrganisationsTyp.KLASSE:
+                return new Set<RollenArt>([RollenArt.LERN]);
+            default:
+                return new Set<RollenArt>(Object.values(RollenArt));
+        }
     }
 }
