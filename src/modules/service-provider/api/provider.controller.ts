@@ -234,6 +234,7 @@ export class ProviderController {
         const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects[] =
             await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
                 serviceProviders,
+                1,
             );
 
         return new RawPagedResponse({
@@ -275,6 +276,7 @@ export class ProviderController {
         const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects[] =
             await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
                 serviceProviders,
+                5,
             );
 
         return new RawPagedResponse({

@@ -122,10 +122,13 @@ export class ServiceProviderService {
 
     public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(
         serviceProviders: ServiceProvider<true>[],
+        limitRoles?: number,
     ): Promise<ManageableServiceProviderWithReferencedObjects[]> {
         const serviceProvidersIds: ServiceProviderID[] = serviceProviders.map((sp: ServiceProvider<true>) => sp.id);
-        const rollen: Map<ServiceProviderID, Rolle<true>[]> =
-            await this.rolleRepo.findByServiceProviderIds(serviceProvidersIds);
+        const rollen: Map<ServiceProviderID, Rolle<true>[]> = await this.rolleRepo.findByServiceProviderIds(
+            serviceProvidersIds,
+            limitRoles,
+        );
         const rollenerweiterungen: Map<ServiceProviderID, Rollenerweiterung<true>[]> =
             await this.rollenerweiterungRepo.findByServiceProviderIds(serviceProvidersIds);
         const organisationen: Map<ServiceProviderID, Organisation<true>> = await this.organisationRepo.findByIds(
