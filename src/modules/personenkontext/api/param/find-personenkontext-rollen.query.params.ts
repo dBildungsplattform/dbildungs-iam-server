@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
-import { TransformToArray } from '../../../../shared/util/array-transform.validator';
+import { TransformToArray } from '../../../../shared/util/array-transform.validator.js';
 
 export class FindPersonenkontextRollenQueryParams {
     @IsString()
