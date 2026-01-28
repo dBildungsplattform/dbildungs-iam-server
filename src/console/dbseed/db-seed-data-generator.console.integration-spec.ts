@@ -110,6 +110,10 @@ describe('DbSeedDataGeneratorConsoleIntegration', () => {
             expect(sut.parseTeacherName('LehrerPrefix')).toBe('LehrerPrefix');
         });
 
+        it('should parse teacherRoleId', () => {
+            expect(sut.parseTeacherRoleId('10')).toBe(10);
+        });
+
         it('should parse studentCount', () => {
             expect(sut.parseStudentCount('10')).toBe(10);
         });
