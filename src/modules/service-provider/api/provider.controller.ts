@@ -237,7 +237,7 @@ export class ProviderController {
         });
     }
 
-    @Get('manageable-by-organisation/:organisationId')
+    @Get('manageable-by-organisation')
     @ApiOperation({ description: 'Get service-providers the logged-in user is allowed to manage for an Organisation.' })
     @ApiOkResponsePaginated(ManageableServiceProviderListEntryResponse, {
         description:
@@ -248,12 +248,11 @@ export class ProviderController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
     public async getManageableServiceProvidersForOrganisationId(
         @Permissions() permissions: PersonPermissions,
-        @Param('organisationId') organisationId: OrganisationID,
         @Query() params: ManageableServiceProvidersForOrganisationParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
         const [serviceProviders, total]: Counted<ServiceProvider<true>> =
             await this.serviceProviderService.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
-                organisationId,
+                params.organisationId,
                 permissions,
                 params.limit,
                 params.offset,
@@ -272,7 +271,7 @@ export class ProviderController {
                     new ManageableServiceProviderListEntryResponse(
                         spWithData.serviceProvider,
                         spWithData.organisation,
-                        spWithData.rollen.slice(0, 5),
+                        spWithData.rollen,
                         spWithData.rollenerweiterungen,
                     ),
             ),

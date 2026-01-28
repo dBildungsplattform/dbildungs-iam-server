@@ -193,8 +193,9 @@ export class ServiceProviderRepo {
         return [entities.map(mapEntityToAggregate), count];
     }
 
-    public async findAuthorizedByOrgasWithMerkmalRollenerweiterung(
+    public async findByOrgasWithMerkmal(
         organisationIds: OrganisationID[],
+        merkmal: ServiceProviderMerkmal,
         limit?: number,
         offset?: number,
     ): Promise<Counted<ServiceProvider<true>>> {
@@ -202,7 +203,7 @@ export class ServiceProviderRepo {
             ServiceProviderEntity,
             {
                 providedOnSchulstrukturknoten: { $in: organisationIds },
-                merkmale: { merkmal: ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG },
+                merkmale: { merkmal: merkmal },
             },
             {
                 populate: ['merkmale'],

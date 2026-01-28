@@ -29,6 +29,7 @@ import {
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -368,16 +369,15 @@ describe('ServiceProviderService', () => {
             jest.restoreAllMocks();
         });
 
-        it('returns empty result if person lacks required system rights', async () => {
+        it('throws MissingPermissionsError if person lacks required system rights', async () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechteAtOrganisation = jest.fn().mockResolvedValue(false);
+            permissions.hasSystemrechtAtOrganisation = jest.fn().mockResolvedValue(false);
 
-            const result: Counted<ServiceProvider<true>> =
-                await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions);
-
-            expect(result).toEqual([[], 0]);
+            await expect(
+                service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions),
+            ).rejects.toThrow(MissingPermissionsError);
             expect(organisationRepo.findParentOrgasForIds).not.toHaveBeenCalled();
-            expect(serviceProviderRepo.findAuthorizedByOrgasWithMerkmalRollenerweiterung).not.toHaveBeenCalled();
+            expect(serviceProviderRepo.findByOrgasWithMerkmal).not.toHaveBeenCalled();
         });
 
         it('returns authorized serviceProviders when person has rights and includes parent organisation ids', async () => {
@@ -386,16 +386,14 @@ describe('ServiceProviderService', () => {
             permissions.hasSystemrechteAtOrganisation = jest.fn().mockResolvedValue(true);
 
             organisationRepo.findParentOrgasForIds.mockResolvedValue([parentOrga]);
-            serviceProviderRepo.findAuthorizedByOrgasWithMerkmalRollenerweiterung.mockResolvedValue([
-                [serviceProvider],
-                1,
-            ]);
+            serviceProviderRepo.findByOrgasWithMerkmal.mockResolvedValue([[serviceProvider], 1]);
 
             const result: Counted<ServiceProvider<true>> =
                 await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions);
 
-            expect(serviceProviderRepo.findAuthorizedByOrgasWithMerkmalRollenerweiterung).toHaveBeenCalledWith(
+            expect(serviceProviderRepo.findByOrgasWithMerkmal).toHaveBeenCalledWith(
                 [organisation.id, parentOrga.id],
+                ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
                 undefined,
                 undefined,
             );
@@ -412,10 +410,7 @@ describe('ServiceProviderService', () => {
             const offset: number = 5;
 
             organisationRepo.findParentOrgasForIds.mockResolvedValue([parentOrga]);
-            serviceProviderRepo.findAuthorizedByOrgasWithMerkmalRollenerweiterung.mockResolvedValue([
-                [serviceProvider],
-                1,
-            ]);
+            serviceProviderRepo.findByOrgasWithMerkmal.mockResolvedValue([[serviceProvider], 1]);
 
             const result: Counted<ServiceProvider<true>> =
                 await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
@@ -425,8 +420,9 @@ describe('ServiceProviderService', () => {
                     offset,
                 );
 
-            expect(serviceProviderRepo.findAuthorizedByOrgasWithMerkmalRollenerweiterung).toHaveBeenCalledWith(
+            expect(serviceProviderRepo.findByOrgasWithMerkmal).toHaveBeenCalledWith(
                 [organisation.id, parentOrga.id],
+                ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
                 limit,
                 offset,
             );

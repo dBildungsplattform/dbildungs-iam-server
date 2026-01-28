@@ -284,7 +284,7 @@ describe('ServiceProviderRepo', () => {
         });
     });
 
-    describe('findAuthorizedByOrgasWithMerkmalRollenerweiterung', () => {
+    describe('findByOrgasWithMerkmal', () => {
         it('returns only service-providers for the given organisation ids that have the rollenerweiterung merkmal', async () => {
             const orgId: string = faker.string.uuid();
 
@@ -308,8 +308,12 @@ describe('ServiceProviderRepo', () => {
 
             em.clear();
 
-            const [result, count]: Counted<ServiceProvider<true>> =
-                await sut.findAuthorizedByOrgasWithMerkmalRollenerweiterung([orgId], 5, 0);
+            const [result, count]: Counted<ServiceProvider<true>> = await sut.findByOrgasWithMerkmal(
+                [orgId],
+                ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+                5,
+                0,
+            );
 
             expect(count).toEqual(1);
             expect(result).toHaveLength(1);
@@ -333,12 +337,22 @@ describe('ServiceProviderRepo', () => {
 
             const limit: number = 5;
             const [withoutOffsetResult, countWithoutOffset]: Counted<ServiceProvider<true>> =
-                await sut.findAuthorizedByOrgasWithMerkmalRollenerweiterung([orgId], limit, 0);
+                await sut.findByOrgasWithMerkmal(
+                    [orgId],
+                    ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+                    limit,
+                    0,
+                );
             expect(withoutOffsetResult).toHaveLength(limit);
             expect(countWithoutOffset).toEqual(total);
 
             const [withOffsetResult, countWithOffset]: Counted<ServiceProvider<true>> =
-                await sut.findAuthorizedByOrgasWithMerkmalRollenerweiterung([orgId], limit, 5);
+                await sut.findByOrgasWithMerkmal(
+                    [orgId],
+                    ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+                    limit,
+                    5,
+                );
             expect(withOffsetResult).toHaveLength(limit);
             expect(countWithOffset).toEqual(total);
 
@@ -367,8 +381,12 @@ describe('ServiceProviderRepo', () => {
                 ),
             );
 
-            const [serviceProviderResult]: Counted<ServiceProvider<true>> =
-                await sut.findAuthorizedByOrgasWithMerkmalRollenerweiterung([orgId], 5, 0);
+            const [serviceProviderResult]: Counted<ServiceProvider<true>> = await sut.findByOrgasWithMerkmal(
+                [orgId],
+                ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+                5,
+                0,
+            );
 
             [
                 ServiceProviderKategorie.EMAIL,

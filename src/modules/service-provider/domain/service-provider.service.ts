@@ -17,7 +17,12 @@ import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 import { VidisService } from '../../vidis/vidis.service.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
-import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
+import {
+    ServiceProviderKategorie,
+    ServiceProviderMerkmal,
+    ServiceProviderSystem,
+    ServiceProviderTarget,
+} from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import {
     ManageableServiceProviderWithReferencedObjects,
@@ -25,6 +30,7 @@ import {
 } from './types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -94,20 +100,21 @@ export class ServiceProviderService {
         limit?: number,
         offset?: number,
     ): Promise<Counted<ServiceProvider<true>>> {
-        const hasPermission: boolean = await permissions.hasSystemrechteAtOrganisation(organisationId, [
+        const hasPermission: boolean = await permissions.hasSystemrechtAtOrganisation(
+            organisationId,
             RollenSystemRecht.ROLLEN_ERWEITERN,
-            RollenSystemRecht.ANGEBOTE_VERWALTEN,
-        ]);
+        );
         if (!hasPermission) {
-            return [[], 0];
+            throw new MissingPermissionsError('Rollen Erweitern Systemrecht Required For This Endpoint');
         }
         const parents: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds([organisationId]);
         const organisationWithParentsIds: OrganisationID[] = [
             organisationId,
             ...parents.map((orga: Organisation<true>) => orga.id),
         ];
-        return this.serviceProviderRepo.findAuthorizedByOrgasWithMerkmalRollenerweiterung(
+        return this.serviceProviderRepo.findByOrgasWithMerkmal(
             organisationWithParentsIds,
+            ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
             limit,
             offset,
         );

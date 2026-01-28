@@ -340,6 +340,8 @@ export class RolleRepo {
                         'serviceProvider.serviceProvider.merkmale',
                     ] as const,
                     exclude: ['serviceProvider.serviceProvider.logo'] as const,
+                    orderBy: { name: 'ASC' },
+                    limit: 5,
                 },
             )
         ).map((rolleEntity: RolleEntity) => mapRolleEntityToAggregate(rolleEntity, this.rolleFactory));
