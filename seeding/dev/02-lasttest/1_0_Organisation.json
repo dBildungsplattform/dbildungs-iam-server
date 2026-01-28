@@ -1,0 +1,2705 @@
+{
+	"entityName": "Organisation",
+	"entities": [
+		{
+			"id": 1000,
+			"kennung": "1111000",
+			"name": "SeedingSchule-1000",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1000",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1001,
+			"kennung": "1111001",
+			"name": "SeedingSchule-1001",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1001",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1002,
+			"kennung": "1111002",
+			"name": "SeedingSchule-1002",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1002",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1003,
+			"kennung": "1111003",
+			"name": "SeedingSchule-1003",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1003",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1004,
+			"kennung": "1111004",
+			"name": "SeedingSchule-1004",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1004",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1005,
+			"kennung": "1111005",
+			"name": "SeedingSchule-1005",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1005",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1006,
+			"kennung": "1111006",
+			"name": "SeedingSchule-1006",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1006",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1007,
+			"kennung": "1111007",
+			"name": "SeedingSchule-1007",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1007",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1008,
+			"kennung": "1111008",
+			"name": "SeedingSchule-1008",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1008",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1009,
+			"kennung": "1111009",
+			"name": "SeedingSchule-1009",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1009",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1010,
+			"kennung": "1111010",
+			"name": "SeedingSchule-1010",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1010",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1011,
+			"kennung": "1111011",
+			"name": "SeedingSchule-1011",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1011",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1012,
+			"kennung": "1111012",
+			"name": "SeedingSchule-1012",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1012",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1013,
+			"kennung": "1111013",
+			"name": "SeedingSchule-1013",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1013",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1014,
+			"kennung": "1111014",
+			"name": "SeedingSchule-1014",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1014",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1015,
+			"kennung": "1111015",
+			"name": "SeedingSchule-1015",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1015",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1016,
+			"kennung": "1111016",
+			"name": "SeedingSchule-1016",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1016",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1017,
+			"kennung": "1111017",
+			"name": "SeedingSchule-1017",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1017",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1018,
+			"kennung": "1111018",
+			"name": "SeedingSchule-1018",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1018",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1019,
+			"kennung": "1111019",
+			"name": "SeedingSchule-1019",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1019",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1020,
+			"kennung": "1111020",
+			"name": "SeedingSchule-1020",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1020",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1021,
+			"kennung": "1111021",
+			"name": "SeedingSchule-1021",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1021",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1022,
+			"kennung": "1111022",
+			"name": "SeedingSchule-1022",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1022",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1023,
+			"kennung": "1111023",
+			"name": "SeedingSchule-1023",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1023",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1024,
+			"kennung": "1111024",
+			"name": "SeedingSchule-1024",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1024",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1025,
+			"kennung": "1111025",
+			"name": "SeedingSchule-1025",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1025",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1026,
+			"kennung": "1111026",
+			"name": "SeedingSchule-1026",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1026",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1027,
+			"kennung": "1111027",
+			"name": "SeedingSchule-1027",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1027",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1028,
+			"kennung": "1111028",
+			"name": "SeedingSchule-1028",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1028",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1029,
+			"kennung": "1111029",
+			"name": "SeedingSchule-1029",
+			"namensergaenzung": "Keine",
+			"kuerzel": "SeedingSchule-1029",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 1030,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1000,
+			"zugehoerigZu": 1000
+		},
+		{
+			"id": 1031,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1000,
+			"zugehoerigZu": 1000
+		},
+		{
+			"id": 1032,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1000,
+			"zugehoerigZu": 1000
+		},
+		{
+			"id": 1033,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1000,
+			"zugehoerigZu": 1000
+		},
+		{
+			"id": 1034,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1000,
+			"zugehoerigZu": 1000
+		},
+		{
+			"id": 1035,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1000,
+			"zugehoerigZu": 1000
+		},
+		{
+			"id": 1036,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1000,
+			"zugehoerigZu": 1000
+		},
+		{
+			"id": 1037,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1000,
+			"zugehoerigZu": 1000
+		},
+		{
+			"id": 1038,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1000,
+			"zugehoerigZu": 1000
+		},
+		{
+			"id": 1039,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1000,
+			"zugehoerigZu": 1000
+		},
+		{
+			"id": 1040,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1001,
+			"zugehoerigZu": 1001
+		},
+		{
+			"id": 1041,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1001,
+			"zugehoerigZu": 1001
+		},
+		{
+			"id": 1042,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1001,
+			"zugehoerigZu": 1001
+		},
+		{
+			"id": 1043,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1001,
+			"zugehoerigZu": 1001
+		},
+		{
+			"id": 1044,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1001,
+			"zugehoerigZu": 1001
+		},
+		{
+			"id": 1045,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1001,
+			"zugehoerigZu": 1001
+		},
+		{
+			"id": 1046,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1001,
+			"zugehoerigZu": 1001
+		},
+		{
+			"id": 1047,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1001,
+			"zugehoerigZu": 1001
+		},
+		{
+			"id": 1048,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1001,
+			"zugehoerigZu": 1001
+		},
+		{
+			"id": 1049,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1001,
+			"zugehoerigZu": 1001
+		},
+		{
+			"id": 1050,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1002,
+			"zugehoerigZu": 1002
+		},
+		{
+			"id": 1051,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1002,
+			"zugehoerigZu": 1002
+		},
+		{
+			"id": 1052,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1002,
+			"zugehoerigZu": 1002
+		},
+		{
+			"id": 1053,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1002,
+			"zugehoerigZu": 1002
+		},
+		{
+			"id": 1054,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1002,
+			"zugehoerigZu": 1002
+		},
+		{
+			"id": 1055,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1002,
+			"zugehoerigZu": 1002
+		},
+		{
+			"id": 1056,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1002,
+			"zugehoerigZu": 1002
+		},
+		{
+			"id": 1057,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1002,
+			"zugehoerigZu": 1002
+		},
+		{
+			"id": 1058,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1002,
+			"zugehoerigZu": 1002
+		},
+		{
+			"id": 1059,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1002,
+			"zugehoerigZu": 1002
+		},
+		{
+			"id": 1060,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1003,
+			"zugehoerigZu": 1003
+		},
+		{
+			"id": 1061,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1003,
+			"zugehoerigZu": 1003
+		},
+		{
+			"id": 1062,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1003,
+			"zugehoerigZu": 1003
+		},
+		{
+			"id": 1063,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1003,
+			"zugehoerigZu": 1003
+		},
+		{
+			"id": 1064,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1003,
+			"zugehoerigZu": 1003
+		},
+		{
+			"id": 1065,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1003,
+			"zugehoerigZu": 1003
+		},
+		{
+			"id": 1066,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1003,
+			"zugehoerigZu": 1003
+		},
+		{
+			"id": 1067,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1003,
+			"zugehoerigZu": 1003
+		},
+		{
+			"id": 1068,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1003,
+			"zugehoerigZu": 1003
+		},
+		{
+			"id": 1069,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1003,
+			"zugehoerigZu": 1003
+		},
+		{
+			"id": 1070,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1004,
+			"zugehoerigZu": 1004
+		},
+		{
+			"id": 1071,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1004,
+			"zugehoerigZu": 1004
+		},
+		{
+			"id": 1072,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1004,
+			"zugehoerigZu": 1004
+		},
+		{
+			"id": 1073,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1004,
+			"zugehoerigZu": 1004
+		},
+		{
+			"id": 1074,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1004,
+			"zugehoerigZu": 1004
+		},
+		{
+			"id": 1075,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1004,
+			"zugehoerigZu": 1004
+		},
+		{
+			"id": 1076,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1004,
+			"zugehoerigZu": 1004
+		},
+		{
+			"id": 1077,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1004,
+			"zugehoerigZu": 1004
+		},
+		{
+			"id": 1078,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1004,
+			"zugehoerigZu": 1004
+		},
+		{
+			"id": 1079,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1004,
+			"zugehoerigZu": 1004
+		},
+		{
+			"id": 1080,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1005,
+			"zugehoerigZu": 1005
+		},
+		{
+			"id": 1081,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1005,
+			"zugehoerigZu": 1005
+		},
+		{
+			"id": 1082,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1005,
+			"zugehoerigZu": 1005
+		},
+		{
+			"id": 1083,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1005,
+			"zugehoerigZu": 1005
+		},
+		{
+			"id": 1084,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1005,
+			"zugehoerigZu": 1005
+		},
+		{
+			"id": 1085,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1005,
+			"zugehoerigZu": 1005
+		},
+		{
+			"id": 1086,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1005,
+			"zugehoerigZu": 1005
+		},
+		{
+			"id": 1087,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1005,
+			"zugehoerigZu": 1005
+		},
+		{
+			"id": 1088,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1005,
+			"zugehoerigZu": 1005
+		},
+		{
+			"id": 1089,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1005,
+			"zugehoerigZu": 1005
+		},
+		{
+			"id": 1090,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1006,
+			"zugehoerigZu": 1006
+		},
+		{
+			"id": 1091,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1006,
+			"zugehoerigZu": 1006
+		},
+		{
+			"id": 1092,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1006,
+			"zugehoerigZu": 1006
+		},
+		{
+			"id": 1093,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1006,
+			"zugehoerigZu": 1006
+		},
+		{
+			"id": 1094,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1006,
+			"zugehoerigZu": 1006
+		},
+		{
+			"id": 1095,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1006,
+			"zugehoerigZu": 1006
+		},
+		{
+			"id": 1096,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1006,
+			"zugehoerigZu": 1006
+		},
+		{
+			"id": 1097,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1006,
+			"zugehoerigZu": 1006
+		},
+		{
+			"id": 1098,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1006,
+			"zugehoerigZu": 1006
+		},
+		{
+			"id": 1099,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1006,
+			"zugehoerigZu": 1006
+		},
+		{
+			"id": 1100,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1007,
+			"zugehoerigZu": 1007
+		},
+		{
+			"id": 1101,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1007,
+			"zugehoerigZu": 1007
+		},
+		{
+			"id": 1102,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1007,
+			"zugehoerigZu": 1007
+		},
+		{
+			"id": 1103,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1007,
+			"zugehoerigZu": 1007
+		},
+		{
+			"id": 1104,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1007,
+			"zugehoerigZu": 1007
+		},
+		{
+			"id": 1105,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1007,
+			"zugehoerigZu": 1007
+		},
+		{
+			"id": 1106,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1007,
+			"zugehoerigZu": 1007
+		},
+		{
+			"id": 1107,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1007,
+			"zugehoerigZu": 1007
+		},
+		{
+			"id": 1108,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1007,
+			"zugehoerigZu": 1007
+		},
+		{
+			"id": 1109,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1007,
+			"zugehoerigZu": 1007
+		},
+		{
+			"id": 1110,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1008,
+			"zugehoerigZu": 1008
+		},
+		{
+			"id": 1111,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1008,
+			"zugehoerigZu": 1008
+		},
+		{
+			"id": 1112,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1008,
+			"zugehoerigZu": 1008
+		},
+		{
+			"id": 1113,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1008,
+			"zugehoerigZu": 1008
+		},
+		{
+			"id": 1114,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1008,
+			"zugehoerigZu": 1008
+		},
+		{
+			"id": 1115,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1008,
+			"zugehoerigZu": 1008
+		},
+		{
+			"id": 1116,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1008,
+			"zugehoerigZu": 1008
+		},
+		{
+			"id": 1117,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1008,
+			"zugehoerigZu": 1008
+		},
+		{
+			"id": 1118,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1008,
+			"zugehoerigZu": 1008
+		},
+		{
+			"id": 1119,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1008,
+			"zugehoerigZu": 1008
+		},
+		{
+			"id": 1120,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1009,
+			"zugehoerigZu": 1009
+		},
+		{
+			"id": 1121,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1009,
+			"zugehoerigZu": 1009
+		},
+		{
+			"id": 1122,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1009,
+			"zugehoerigZu": 1009
+		},
+		{
+			"id": 1123,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1009,
+			"zugehoerigZu": 1009
+		},
+		{
+			"id": 1124,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1009,
+			"zugehoerigZu": 1009
+		},
+		{
+			"id": 1125,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1009,
+			"zugehoerigZu": 1009
+		},
+		{
+			"id": 1126,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1009,
+			"zugehoerigZu": 1009
+		},
+		{
+			"id": 1127,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1009,
+			"zugehoerigZu": 1009
+		},
+		{
+			"id": 1128,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1009,
+			"zugehoerigZu": 1009
+		},
+		{
+			"id": 1129,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1009,
+			"zugehoerigZu": 1009
+		},
+		{
+			"id": 1130,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1010,
+			"zugehoerigZu": 1010
+		},
+		{
+			"id": 1131,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1010,
+			"zugehoerigZu": 1010
+		},
+		{
+			"id": 1132,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1010,
+			"zugehoerigZu": 1010
+		},
+		{
+			"id": 1133,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1010,
+			"zugehoerigZu": 1010
+		},
+		{
+			"id": 1134,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1010,
+			"zugehoerigZu": 1010
+		},
+		{
+			"id": 1135,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1010,
+			"zugehoerigZu": 1010
+		},
+		{
+			"id": 1136,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1010,
+			"zugehoerigZu": 1010
+		},
+		{
+			"id": 1137,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1010,
+			"zugehoerigZu": 1010
+		},
+		{
+			"id": 1138,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1010,
+			"zugehoerigZu": 1010
+		},
+		{
+			"id": 1139,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1010,
+			"zugehoerigZu": 1010
+		},
+		{
+			"id": 1140,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1011,
+			"zugehoerigZu": 1011
+		},
+		{
+			"id": 1141,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1011,
+			"zugehoerigZu": 1011
+		},
+		{
+			"id": 1142,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1011,
+			"zugehoerigZu": 1011
+		},
+		{
+			"id": 1143,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1011,
+			"zugehoerigZu": 1011
+		},
+		{
+			"id": 1144,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1011,
+			"zugehoerigZu": 1011
+		},
+		{
+			"id": 1145,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1011,
+			"zugehoerigZu": 1011
+		},
+		{
+			"id": 1146,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1011,
+			"zugehoerigZu": 1011
+		},
+		{
+			"id": 1147,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1011,
+			"zugehoerigZu": 1011
+		},
+		{
+			"id": 1148,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1011,
+			"zugehoerigZu": 1011
+		},
+		{
+			"id": 1149,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1011,
+			"zugehoerigZu": 1011
+		},
+		{
+			"id": 1150,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1012,
+			"zugehoerigZu": 1012
+		},
+		{
+			"id": 1151,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1012,
+			"zugehoerigZu": 1012
+		},
+		{
+			"id": 1152,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1012,
+			"zugehoerigZu": 1012
+		},
+		{
+			"id": 1153,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1012,
+			"zugehoerigZu": 1012
+		},
+		{
+			"id": 1154,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1012,
+			"zugehoerigZu": 1012
+		},
+		{
+			"id": 1155,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1012,
+			"zugehoerigZu": 1012
+		},
+		{
+			"id": 1156,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1012,
+			"zugehoerigZu": 1012
+		},
+		{
+			"id": 1157,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1012,
+			"zugehoerigZu": 1012
+		},
+		{
+			"id": 1158,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1012,
+			"zugehoerigZu": 1012
+		},
+		{
+			"id": 1159,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1012,
+			"zugehoerigZu": 1012
+		},
+		{
+			"id": 1160,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1013,
+			"zugehoerigZu": 1013
+		},
+		{
+			"id": 1161,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1013,
+			"zugehoerigZu": 1013
+		},
+		{
+			"id": 1162,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1013,
+			"zugehoerigZu": 1013
+		},
+		{
+			"id": 1163,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1013,
+			"zugehoerigZu": 1013
+		},
+		{
+			"id": 1164,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1013,
+			"zugehoerigZu": 1013
+		},
+		{
+			"id": 1165,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1013,
+			"zugehoerigZu": 1013
+		},
+		{
+			"id": 1166,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1013,
+			"zugehoerigZu": 1013
+		},
+		{
+			"id": 1167,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1013,
+			"zugehoerigZu": 1013
+		},
+		{
+			"id": 1168,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1013,
+			"zugehoerigZu": 1013
+		},
+		{
+			"id": 1169,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1013,
+			"zugehoerigZu": 1013
+		},
+		{
+			"id": 1170,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1014,
+			"zugehoerigZu": 1014
+		},
+		{
+			"id": 1171,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1014,
+			"zugehoerigZu": 1014
+		},
+		{
+			"id": 1172,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1014,
+			"zugehoerigZu": 1014
+		},
+		{
+			"id": 1173,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1014,
+			"zugehoerigZu": 1014
+		},
+		{
+			"id": 1174,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1014,
+			"zugehoerigZu": 1014
+		},
+		{
+			"id": 1175,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1014,
+			"zugehoerigZu": 1014
+		},
+		{
+			"id": 1176,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1014,
+			"zugehoerigZu": 1014
+		},
+		{
+			"id": 1177,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1014,
+			"zugehoerigZu": 1014
+		},
+		{
+			"id": 1178,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1014,
+			"zugehoerigZu": 1014
+		},
+		{
+			"id": 1179,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1014,
+			"zugehoerigZu": 1014
+		},
+		{
+			"id": 1180,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1015,
+			"zugehoerigZu": 1015
+		},
+		{
+			"id": 1181,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1015,
+			"zugehoerigZu": 1015
+		},
+		{
+			"id": 1182,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1015,
+			"zugehoerigZu": 1015
+		},
+		{
+			"id": 1183,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1015,
+			"zugehoerigZu": 1015
+		},
+		{
+			"id": 1184,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1015,
+			"zugehoerigZu": 1015
+		},
+		{
+			"id": 1185,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1015,
+			"zugehoerigZu": 1015
+		},
+		{
+			"id": 1186,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1015,
+			"zugehoerigZu": 1015
+		},
+		{
+			"id": 1187,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1015,
+			"zugehoerigZu": 1015
+		},
+		{
+			"id": 1188,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1015,
+			"zugehoerigZu": 1015
+		},
+		{
+			"id": 1189,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1015,
+			"zugehoerigZu": 1015
+		},
+		{
+			"id": 1190,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1016,
+			"zugehoerigZu": 1016
+		},
+		{
+			"id": 1191,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1016,
+			"zugehoerigZu": 1016
+		},
+		{
+			"id": 1192,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1016,
+			"zugehoerigZu": 1016
+		},
+		{
+			"id": 1193,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1016,
+			"zugehoerigZu": 1016
+		},
+		{
+			"id": 1194,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1016,
+			"zugehoerigZu": 1016
+		},
+		{
+			"id": 1195,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1016,
+			"zugehoerigZu": 1016
+		},
+		{
+			"id": 1196,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1016,
+			"zugehoerigZu": 1016
+		},
+		{
+			"id": 1197,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1016,
+			"zugehoerigZu": 1016
+		},
+		{
+			"id": 1198,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1016,
+			"zugehoerigZu": 1016
+		},
+		{
+			"id": 1199,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1016,
+			"zugehoerigZu": 1016
+		},
+		{
+			"id": 1200,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1017,
+			"zugehoerigZu": 1017
+		},
+		{
+			"id": 1201,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1017,
+			"zugehoerigZu": 1017
+		},
+		{
+			"id": 1202,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1017,
+			"zugehoerigZu": 1017
+		},
+		{
+			"id": 1203,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1017,
+			"zugehoerigZu": 1017
+		},
+		{
+			"id": 1204,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1017,
+			"zugehoerigZu": 1017
+		},
+		{
+			"id": 1205,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1017,
+			"zugehoerigZu": 1017
+		},
+		{
+			"id": 1206,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1017,
+			"zugehoerigZu": 1017
+		},
+		{
+			"id": 1207,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1017,
+			"zugehoerigZu": 1017
+		},
+		{
+			"id": 1208,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1017,
+			"zugehoerigZu": 1017
+		},
+		{
+			"id": 1209,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1017,
+			"zugehoerigZu": 1017
+		},
+		{
+			"id": 1210,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1018,
+			"zugehoerigZu": 1018
+		},
+		{
+			"id": 1211,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1018,
+			"zugehoerigZu": 1018
+		},
+		{
+			"id": 1212,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1018,
+			"zugehoerigZu": 1018
+		},
+		{
+			"id": 1213,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1018,
+			"zugehoerigZu": 1018
+		},
+		{
+			"id": 1214,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1018,
+			"zugehoerigZu": 1018
+		},
+		{
+			"id": 1215,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1018,
+			"zugehoerigZu": 1018
+		},
+		{
+			"id": 1216,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1018,
+			"zugehoerigZu": 1018
+		},
+		{
+			"id": 1217,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1018,
+			"zugehoerigZu": 1018
+		},
+		{
+			"id": 1218,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1018,
+			"zugehoerigZu": 1018
+		},
+		{
+			"id": 1219,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1018,
+			"zugehoerigZu": 1018
+		},
+		{
+			"id": 1220,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1019,
+			"zugehoerigZu": 1019
+		},
+		{
+			"id": 1221,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1019,
+			"zugehoerigZu": 1019
+		},
+		{
+			"id": 1222,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1019,
+			"zugehoerigZu": 1019
+		},
+		{
+			"id": 1223,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1019,
+			"zugehoerigZu": 1019
+		},
+		{
+			"id": 1224,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1019,
+			"zugehoerigZu": 1019
+		},
+		{
+			"id": 1225,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1019,
+			"zugehoerigZu": 1019
+		},
+		{
+			"id": 1226,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1019,
+			"zugehoerigZu": 1019
+		},
+		{
+			"id": 1227,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1019,
+			"zugehoerigZu": 1019
+		},
+		{
+			"id": 1228,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1019,
+			"zugehoerigZu": 1019
+		},
+		{
+			"id": 1229,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1019,
+			"zugehoerigZu": 1019
+		},
+		{
+			"id": 1230,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1020,
+			"zugehoerigZu": 1020
+		},
+		{
+			"id": 1231,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1020,
+			"zugehoerigZu": 1020
+		},
+		{
+			"id": 1232,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1020,
+			"zugehoerigZu": 1020
+		},
+		{
+			"id": 1233,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1020,
+			"zugehoerigZu": 1020
+		},
+		{
+			"id": 1234,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1020,
+			"zugehoerigZu": 1020
+		},
+		{
+			"id": 1235,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1020,
+			"zugehoerigZu": 1020
+		},
+		{
+			"id": 1236,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1020,
+			"zugehoerigZu": 1020
+		},
+		{
+			"id": 1237,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1020,
+			"zugehoerigZu": 1020
+		},
+		{
+			"id": 1238,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1020,
+			"zugehoerigZu": 1020
+		},
+		{
+			"id": 1239,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1020,
+			"zugehoerigZu": 1020
+		},
+		{
+			"id": 1240,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1021,
+			"zugehoerigZu": 1021
+		},
+		{
+			"id": 1241,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1021,
+			"zugehoerigZu": 1021
+		},
+		{
+			"id": 1242,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1021,
+			"zugehoerigZu": 1021
+		},
+		{
+			"id": 1243,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1021,
+			"zugehoerigZu": 1021
+		},
+		{
+			"id": 1244,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1021,
+			"zugehoerigZu": 1021
+		},
+		{
+			"id": 1245,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1021,
+			"zugehoerigZu": 1021
+		},
+		{
+			"id": 1246,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1021,
+			"zugehoerigZu": 1021
+		},
+		{
+			"id": 1247,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1021,
+			"zugehoerigZu": 1021
+		},
+		{
+			"id": 1248,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1021,
+			"zugehoerigZu": 1021
+		},
+		{
+			"id": 1249,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1021,
+			"zugehoerigZu": 1021
+		},
+		{
+			"id": 1250,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1022,
+			"zugehoerigZu": 1022
+		},
+		{
+			"id": 1251,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1022,
+			"zugehoerigZu": 1022
+		},
+		{
+			"id": 1252,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1022,
+			"zugehoerigZu": 1022
+		},
+		{
+			"id": 1253,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1022,
+			"zugehoerigZu": 1022
+		},
+		{
+			"id": 1254,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1022,
+			"zugehoerigZu": 1022
+		},
+		{
+			"id": 1255,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1022,
+			"zugehoerigZu": 1022
+		},
+		{
+			"id": 1256,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1022,
+			"zugehoerigZu": 1022
+		},
+		{
+			"id": 1257,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1022,
+			"zugehoerigZu": 1022
+		},
+		{
+			"id": 1258,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1022,
+			"zugehoerigZu": 1022
+		},
+		{
+			"id": 1259,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1022,
+			"zugehoerigZu": 1022
+		},
+		{
+			"id": 1260,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1023,
+			"zugehoerigZu": 1023
+		},
+		{
+			"id": 1261,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1023,
+			"zugehoerigZu": 1023
+		},
+		{
+			"id": 1262,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1023,
+			"zugehoerigZu": 1023
+		},
+		{
+			"id": 1263,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1023,
+			"zugehoerigZu": 1023
+		},
+		{
+			"id": 1264,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1023,
+			"zugehoerigZu": 1023
+		},
+		{
+			"id": 1265,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1023,
+			"zugehoerigZu": 1023
+		},
+		{
+			"id": 1266,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1023,
+			"zugehoerigZu": 1023
+		},
+		{
+			"id": 1267,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1023,
+			"zugehoerigZu": 1023
+		},
+		{
+			"id": 1268,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1023,
+			"zugehoerigZu": 1023
+		},
+		{
+			"id": 1269,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1023,
+			"zugehoerigZu": 1023
+		},
+		{
+			"id": 1270,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1024,
+			"zugehoerigZu": 1024
+		},
+		{
+			"id": 1271,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1024,
+			"zugehoerigZu": 1024
+		},
+		{
+			"id": 1272,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1024,
+			"zugehoerigZu": 1024
+		},
+		{
+			"id": 1273,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1024,
+			"zugehoerigZu": 1024
+		},
+		{
+			"id": 1274,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1024,
+			"zugehoerigZu": 1024
+		},
+		{
+			"id": 1275,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1024,
+			"zugehoerigZu": 1024
+		},
+		{
+			"id": 1276,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1024,
+			"zugehoerigZu": 1024
+		},
+		{
+			"id": 1277,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1024,
+			"zugehoerigZu": 1024
+		},
+		{
+			"id": 1278,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1024,
+			"zugehoerigZu": 1024
+		},
+		{
+			"id": 1279,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1024,
+			"zugehoerigZu": 1024
+		},
+		{
+			"id": 1280,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1025,
+			"zugehoerigZu": 1025
+		},
+		{
+			"id": 1281,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1025,
+			"zugehoerigZu": 1025
+		},
+		{
+			"id": 1282,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1025,
+			"zugehoerigZu": 1025
+		},
+		{
+			"id": 1283,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1025,
+			"zugehoerigZu": 1025
+		},
+		{
+			"id": 1284,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1025,
+			"zugehoerigZu": 1025
+		},
+		{
+			"id": 1285,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1025,
+			"zugehoerigZu": 1025
+		},
+		{
+			"id": 1286,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1025,
+			"zugehoerigZu": 1025
+		},
+		{
+			"id": 1287,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1025,
+			"zugehoerigZu": 1025
+		},
+		{
+			"id": 1288,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1025,
+			"zugehoerigZu": 1025
+		},
+		{
+			"id": 1289,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1025,
+			"zugehoerigZu": 1025
+		},
+		{
+			"id": 1290,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1026,
+			"zugehoerigZu": 1026
+		},
+		{
+			"id": 1291,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1026,
+			"zugehoerigZu": 1026
+		},
+		{
+			"id": 1292,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1026,
+			"zugehoerigZu": 1026
+		},
+		{
+			"id": 1293,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1026,
+			"zugehoerigZu": 1026
+		},
+		{
+			"id": 1294,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1026,
+			"zugehoerigZu": 1026
+		},
+		{
+			"id": 1295,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1026,
+			"zugehoerigZu": 1026
+		},
+		{
+			"id": 1296,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1026,
+			"zugehoerigZu": 1026
+		},
+		{
+			"id": 1297,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1026,
+			"zugehoerigZu": 1026
+		},
+		{
+			"id": 1298,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1026,
+			"zugehoerigZu": 1026
+		},
+		{
+			"id": 1299,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1026,
+			"zugehoerigZu": 1026
+		},
+		{
+			"id": 1300,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1027,
+			"zugehoerigZu": 1027
+		},
+		{
+			"id": 1301,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1027,
+			"zugehoerigZu": 1027
+		},
+		{
+			"id": 1302,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1027,
+			"zugehoerigZu": 1027
+		},
+		{
+			"id": 1303,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1027,
+			"zugehoerigZu": 1027
+		},
+		{
+			"id": 1304,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1027,
+			"zugehoerigZu": 1027
+		},
+		{
+			"id": 1305,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1027,
+			"zugehoerigZu": 1027
+		},
+		{
+			"id": 1306,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1027,
+			"zugehoerigZu": 1027
+		},
+		{
+			"id": 1307,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1027,
+			"zugehoerigZu": 1027
+		},
+		{
+			"id": 1308,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1027,
+			"zugehoerigZu": 1027
+		},
+		{
+			"id": 1309,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1027,
+			"zugehoerigZu": 1027
+		},
+		{
+			"id": 1310,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1028,
+			"zugehoerigZu": 1028
+		},
+		{
+			"id": 1311,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1028,
+			"zugehoerigZu": 1028
+		},
+		{
+			"id": 1312,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1028,
+			"zugehoerigZu": 1028
+		},
+		{
+			"id": 1313,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1028,
+			"zugehoerigZu": 1028
+		},
+		{
+			"id": 1314,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1028,
+			"zugehoerigZu": 1028
+		},
+		{
+			"id": 1315,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1028,
+			"zugehoerigZu": 1028
+		},
+		{
+			"id": 1316,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1028,
+			"zugehoerigZu": 1028
+		},
+		{
+			"id": 1317,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1028,
+			"zugehoerigZu": 1028
+		},
+		{
+			"id": 1318,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1028,
+			"zugehoerigZu": 1028
+		},
+		{
+			"id": 1319,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1028,
+			"zugehoerigZu": 1028
+		},
+		{
+			"id": 1320,
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1029,
+			"zugehoerigZu": 1029
+		},
+		{
+			"id": 1321,
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1029,
+			"zugehoerigZu": 1029
+		},
+		{
+			"id": 1322,
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1029,
+			"zugehoerigZu": 1029
+		},
+		{
+			"id": 1323,
+			"name": "1D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1029,
+			"zugehoerigZu": 1029
+		},
+		{
+			"id": 1324,
+			"name": "1E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1029,
+			"zugehoerigZu": 1029
+		},
+		{
+			"id": 1325,
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1029,
+			"zugehoerigZu": 1029
+		},
+		{
+			"id": 1326,
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1029,
+			"zugehoerigZu": 1029
+		},
+		{
+			"id": 1327,
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1029,
+			"zugehoerigZu": 1029
+		},
+		{
+			"id": 1328,
+			"name": "2D",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1029,
+			"zugehoerigZu": 1029
+		},
+		{
+			"id": 1329,
+			"name": "2E",
+			"namensergaenzung": "Keine",
+			"typ": "KLASSE",
+			"administriertVon": 1029,
+			"zugehoerigZu": 1029
+		}
+	]
+}
