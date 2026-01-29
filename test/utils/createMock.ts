@@ -1,9 +1,9 @@
 export type DeepMocked<T> = ReturnType<typeof vi.mockObject<T>>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createMock<T extends object>(T: new (...args: any[]) => T, implementation?: Partial<T>): DeepMocked<T> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type
+export function createMock<T extends object>( clazz: { prototype: T }, implementation?: Partial<T>): DeepMocked<T> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
-    const instance: T = Object.create(T.prototype);
+    const instance: T = Object.create(clazz.prototype);
     const mockObject: DeepMocked<T> = vi.mockObject<T>(Object.assign(instance, implementation));
     // if (implementation) {
     //     for (const key of Object.getOwnPropertyNames(implementation)) {

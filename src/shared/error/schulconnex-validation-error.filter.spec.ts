@@ -1,7 +1,6 @@
 import { DetailedValidationError } from '../validation/detailed-validation.error.js';
 import { SchulConnexValidationErrorFilter } from './schulconnex-validation-error.filter.js';
 import { ArgumentsHost } from '@nestjs/common';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { ValidationError } from 'class-validator';
@@ -10,8 +9,8 @@ import { SchulConnexError } from './schul-connex.error.js';
 describe('SchulconnexValidationErrorFilter', () => {
     let filter: SchulConnexValidationErrorFilter;
     const statusCode: number = 400;
-    let responseMock: DeepMocked<Response>;
-    let argumentsHost: DeepMocked<ArgumentsHost>;
+    let responseMock: Partial<Response>;
+    let argumentsHost: Partial<ArgumentsHost>;
     let validationError: ValidationError;
 
     const generalBadRequestError: SchulConnexError = new SchulConnexError({
@@ -72,13 +71,23 @@ describe('SchulconnexValidationErrorFilter', () => {
 
     beforeEach(() => {
         filter = new SchulConnexValidationErrorFilter();
-        responseMock = createMock(Response);
-        argumentsHost = createMock<ArgumentsHost>({
-            switchToHttp: () =>
-                createMock<HttpArgumentsHost>({
-                    getResponse: () => responseMock,
-                }),
-        });
+        responseMock = {
+            setHeader: vi.fn().mockReturnThis(),
+            status: vi.fn().mockReturnThis(),
+            json: vi.fn().mockReturnThis(),
+            send: vi.fn().mockReturnThis(),
+        } as unknown as Response;
+
+        const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
+            getResponse: vi.fn().mockReturnValue(responseMock),
+            getRequest: vi.fn().mockReturnValue({} as Request),
+        };
+
+        argumentsHost = {
+            switchToHttp: vi.fn().mockReturnValue(httpArgumentsHostMock as HttpArgumentsHost),
+            getHandler: vi.fn().mockReturnValue(() => {}),
+            getClass: vi.fn().mockReturnValue(class {}),
+        } as unknown as ArgumentsHost;
     });
 
     describe('catch', () => {
@@ -86,7 +95,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             it('should throw a general schulconnex exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([]);
 
-                filter.catch(detailedValidationError, argumentsHost);
+                filter.catch(detailedValidationError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(statusCode);
@@ -107,7 +116,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             it('should throw a validation schulconnex exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                filter.catch(detailedValidationError, argumentsHost);
+                filter.catch(detailedValidationError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(statusCode);
@@ -128,7 +137,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             it('should throw a is not empty exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                filter.catch(detailedValidationError, argumentsHost);
+                filter.catch(detailedValidationError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(statusCode);
@@ -149,7 +158,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             it('should throw an invalid value exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                filter.catch(detailedValidationError, argumentsHost);
+                filter.catch(detailedValidationError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.status).toHaveBeenCalledWith(statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(invalidLengthOfValueError);
@@ -169,7 +178,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             it('should throw an invalid date exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                filter.catch(detailedValidationError, argumentsHost);
+                filter.catch(detailedValidationError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.status).toHaveBeenCalledWith(statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(datumError);
@@ -189,7 +198,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             it('should throw a invalid enum exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                filter.catch(detailedValidationError, argumentsHost);
+                filter.catch(detailedValidationError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(statusCode);
@@ -210,7 +219,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             it('should throw a invalid length exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                filter.catch(detailedValidationError, argumentsHost);
+                filter.catch(detailedValidationError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(statusCode);
@@ -247,7 +256,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             it('should throw a child validation schulconnex exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                filter.catch(detailedValidationError, argumentsHost);
+                filter.catch(detailedValidationError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(statusCode);
@@ -265,7 +274,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             it('should throw a general bad bad request exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                filter.catch(detailedValidationError, argumentsHost);
+                filter.catch(detailedValidationError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(statusCode);
