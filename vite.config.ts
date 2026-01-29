@@ -13,10 +13,6 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'node',
-        coverage: {
-            reporter: ['lcov', 'text'],
-        },
-        outputFile: 'coverage/sonar-report.xml',
         testTimeout: 1000000,
         // include: ['**/*spec.ts'],
         include: [
@@ -50,6 +46,13 @@ export default defineConfig({
             '**/vidis/**/*spec.ts',
             '**/shared/**/*spec.ts',
         ],
+        coverage: {
+            provider: 'istanbul',
+            reporter: ['text', 'lcov', 'cobertura'],
+            reportsDirectory: 'coverage',
+            include: ['src/**/*.ts'],
+            exclude: ['**/*.spec.ts', '**/test/**', 'vite.config.ts'],
+        },
     },
     resolve: {
         alias: {
