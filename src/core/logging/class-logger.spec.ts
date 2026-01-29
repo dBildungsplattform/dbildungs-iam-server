@@ -1,5 +1,4 @@
 import { vi } from 'vitest';
-import { createMock, DeepMocked } from '@golevelup/ts-vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from 'winston';
 import { ConfigTestModule } from '../../../test/utils/index.js';
@@ -10,6 +9,7 @@ import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.j
 import { inspect } from 'util';
 import { PersonIdentifier } from './person-identifier.js';
 import { faker } from '@faker-js/faker';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 
 describe('ClassLogger', () => {
     let module: TestingModule;
@@ -31,12 +31,13 @@ describe('ClassLogger', () => {
             imports: [LoggerModule.register(testModuleName), ConfigTestModule],
         })
             .overrideProvider(ModuleLogger)
-            .useValue(
-                createMock<ModuleLogger>({
-                    moduleName: testModuleName,
-                    getLogger: () => loggerMock,
-                }),
-            )
+            .useValue({
+                getLogger: vi.fn(() => loggerMock),
+                get moduleName() {
+                    return testModuleName;
+                },
+            })
+
             .compile();
         sut = await module.resolve(ClassLogger);
     });
