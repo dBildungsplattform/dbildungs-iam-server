@@ -41,6 +41,7 @@ export default defineConfig({
             '**/ldap/**/*spec.ts',
             '**/logging/**/*spec.ts',
             '**/vidis/**/*spec.ts',
+            '**/status/**/*spec.ts',
         ],
         // projects: [
         //     {
