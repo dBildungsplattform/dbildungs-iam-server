@@ -45,6 +45,7 @@ export default defineConfig({
             '**/spshconfig/**/*spec.ts',
             '**/specification/**/*spec.ts',
             '**/service-provider/**/*spec.ts',
+            '**/schulconnex/**/*spec.ts',
         ],
         // projects: [
         //     {
