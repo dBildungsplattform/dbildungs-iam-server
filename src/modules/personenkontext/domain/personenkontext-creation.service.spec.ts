@@ -29,32 +29,7 @@ import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { PersonenkontextWorkflowSharedKernel } from './personenkontext-workflow-shared-kernel.js';
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 import { MockedObject } from 'vitest';
-import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
-import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
-
-function createPersonenkontexteUpdateMock(): MockedObject<PersonenkontexteUpdate> {
-    const personenkontexteUpdate: PersonenkontexteUpdate = PersonenkontexteUpdate.createNew(
-        null as unknown as EventRoutingLegacyKafkaService,
-        null as unknown as ClassLogger,
-        null as unknown as DBiamPersonenkontextRepo,
-        null as unknown as DBiamPersonenkontextRepoInternal,
-        null as unknown as PersonRepository,
-        null as unknown as RolleRepo,
-        null as unknown as OrganisationRepository,
-        null as unknown as PersonenkontextFactory,
-        null as unknown as PersonID,
-        null as unknown as Date | undefined,
-        null as unknown as number,
-        null as unknown as DbiamPersonenkontextBodyParams[],
-        null as unknown as IPersonPermissions,
-        null as unknown as string,
-    );
-    return vi.mockObject(personenkontexteUpdate);
-}
+import { createPersonenkontexteUpdateMock } from '../../../../test/utils/workflow.mocks.js';
 
 describe('PersonenkontextCreationService', () => {
     let module: TestingModule;

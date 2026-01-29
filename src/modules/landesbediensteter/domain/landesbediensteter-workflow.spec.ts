@@ -26,6 +26,9 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { LandesbediensteterWorkflowFactory } from './landesbediensteter-workflow.factory.js';
 import { LandesbediensteterWorkflowAggregate } from './landesbediensteter-workflow.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { createPersonenkontexteUpdateMock } from '../../../../test/utils/workflow.mocks.js';
+import { MockedObject } from 'vitest';
 
 describe('LandesbediensteterWorkflow', () => {
     let module: TestingModule;
@@ -34,13 +37,17 @@ describe('LandesbediensteterWorkflow', () => {
 
     let factory: LandesbediensteterWorkflowFactory;
 
-    const personRepoMock: DeepMocked<PersonRepository> = createMock();
-    const rolleRepoMock: DeepMocked<RolleRepo> = createMock();
-    const organisationRepoMock: DeepMocked<OrganisationRepository> = createMock();
-    const personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo> = createMock();
-    const personenkontextFactoryMock: DeepMocked<DbiamPersonenkontextFactory> = createMock();
-    const landesbediensteteServiceMock: DeepMocked<PersonLandesbediensteterSearchService> = createMock();
-    const personenkontextWorkflowSharedKernelMock: DeepMocked<PersonenkontextWorkflowSharedKernel> = createMock();
+    const personRepoMock: DeepMocked<PersonRepository> = createMock(PersonRepository);
+    const rolleRepoMock: DeepMocked<RolleRepo> = createMock(RolleRepo);
+    const organisationRepoMock: DeepMocked<OrganisationRepository> = createMock(OrganisationRepository);
+    const personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo> = createMock(DBiamPersonenkontextRepo);
+    const personenkontextFactoryMock: DeepMocked<DbiamPersonenkontextFactory> = createMock(DbiamPersonenkontextFactory);
+    const landesbediensteteServiceMock: DeepMocked<PersonLandesbediensteterSearchService> = createMock(
+        PersonLandesbediensteterSearchService,
+    );
+    const personenkontextWorkflowSharedKernelMock: DeepMocked<PersonenkontextWorkflowSharedKernel> = createMock(
+        PersonenkontextWorkflowSharedKernel,
+    );
 
     function mockCheckPermissions(permissionsMock: DeepMocked<PersonPermissions>, success: boolean): void {
         permissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(success);
@@ -74,7 +81,7 @@ describe('LandesbediensteterWorkflow', () => {
 
     describe('findAllSchulstrukturknoten', () => {
         it('should return empty array if not allowed', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
 
             const result: Organisation<true>[] = await sut.findAllSchulstrukturknoten(
@@ -90,7 +97,7 @@ describe('LandesbediensteterWorkflow', () => {
         it('should return empty array if no valid orgas found', async () => {
             const orgaName: string = faker.word.noun();
 
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValueOnce([]);
 
@@ -114,7 +121,7 @@ describe('LandesbediensteterWorkflow', () => {
             const orgaName: string = faker.word.noun();
             const orgaId: string = faker.string.uuid();
 
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [orgaId] });
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValueOnce([]);
 
@@ -138,7 +145,7 @@ describe('LandesbediensteterWorkflow', () => {
             const orgaA: Organisation<true> = DoFactory.createOrganisation(true);
             const orgaB: Organisation<true> = DoFactory.createOrganisation(true);
 
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [orgaA.id, orgaB.id] });
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValueOnce([orgaA]);
 
@@ -162,7 +169,7 @@ describe('LandesbediensteterWorkflow', () => {
             const orgaA: Organisation<true> = DoFactory.createOrganisation(true);
             const orgaB: Organisation<true> = DoFactory.createOrganisation(true);
 
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [orgaA.id] });
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValueOnce([orgaA]);
             organisationRepoMock.findById.mockResolvedValueOnce(orgaB);
@@ -191,7 +198,7 @@ describe('LandesbediensteterWorkflow', () => {
                     DoFactory.createOrganisation(true),
                 ];
 
-                const permissions: DeepMocked<PersonPermissions> = createMock();
+                const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                     all: false,
                     orgaIds: orgas.map((o: Organisation<true>) => o.id),
@@ -212,7 +219,7 @@ describe('LandesbediensteterWorkflow', () => {
 
     describe('findRollenForOrganisation', () => {
         it('should return empty array if not allowed', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
 
             sut.initialize(faker.string.uuid(), []);
@@ -223,7 +230,7 @@ describe('LandesbediensteterWorkflow', () => {
         });
 
         it('should return empty array if organisation could not be found', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(undefined);
 
@@ -238,7 +245,7 @@ describe('LandesbediensteterWorkflow', () => {
             const orga: Organisation<true> = DoFactory.createOrganisation(true);
             const rolle: Rolle<true> = DoFactory.createRolle(true);
 
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(orga);
             rolleRepoMock.findByName.mockResolvedValueOnce([rolle]);
@@ -260,7 +267,7 @@ describe('LandesbediensteterWorkflow', () => {
                 DoFactory.createRolle(true),
             ];
 
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(orga);
             rolleRepoMock.find.mockResolvedValueOnce(rollen);
@@ -285,7 +292,7 @@ describe('LandesbediensteterWorkflow', () => {
             const allowedRolle: Rolle<true> = DoFactory.createRolle(true);
             const explicitlySelectedRolle: Rolle<true> = DoFactory.createRolle(true);
 
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(orga);
 
@@ -314,7 +321,7 @@ describe('LandesbediensteterWorkflow', () => {
 
     describe('canCommit', () => {
         it('should return no error if checks pass', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValue(undefined);
             mockCheckPermissions(permissions, true);
             sut.initialize(faker.string.uuid(), [faker.string.uuid()]);
@@ -325,7 +332,7 @@ describe('LandesbediensteterWorkflow', () => {
         });
 
         it('should return error if rolle can not be assigned', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValue(
                 new RolleNurAnPassendeOrganisationError(),
             );
@@ -338,7 +345,7 @@ describe('LandesbediensteterWorkflow', () => {
         });
 
         it('should return error if permissions are missing', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValue(undefined);
             mockCheckPermissions(permissions, false);
             sut.initialize(faker.string.uuid(), [faker.string.uuid()]);
@@ -362,13 +369,13 @@ describe('LandesbediensteterWorkflow', () => {
                     rolleId: faker.string.uuid(),
                 },
             ];
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             const personalnummer: string = faker.string.numeric(7);
             personRepoMock.findById.mockResolvedValueOnce(DoFactory.createPerson(true));
             landesbediensteteServiceMock.personIsSearchable.mockResolvedValueOnce({ ok: true, value: undefined });
 
-            const pkupdateMock: DeepMocked<PersonenkontexteUpdate> = createMock();
+            const pkupdateMock: MockedObject<PersonenkontexteUpdate> = createPersonenkontexteUpdateMock();
 
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([]);
             personenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValueOnce(pkupdateMock);
@@ -397,11 +404,11 @@ describe('LandesbediensteterWorkflow', () => {
                     rolleId: faker.string.uuid(),
                 },
             ];
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
             const personalnummer: string = faker.string.numeric(7);
 
-            const pkupdateMock: DeepMocked<PersonenkontexteUpdate> = createMock();
+            const pkupdateMock: MockedObject<PersonenkontexteUpdate> = createPersonenkontexteUpdateMock();
 
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([]);
             personenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValueOnce(pkupdateMock);
@@ -434,12 +441,12 @@ describe('LandesbediensteterWorkflow', () => {
                     rolleId: faker.string.uuid(),
                 },
             ];
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             const personalnummer: string = faker.string.numeric(7);
             personRepoMock.findById.mockResolvedValueOnce(undefined);
 
-            const pkupdateMock: DeepMocked<PersonenkontexteUpdate> = createMock();
+            const pkupdateMock: MockedObject<PersonenkontexteUpdate> = createPersonenkontexteUpdateMock();
 
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([]);
             personenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValueOnce(pkupdateMock);
@@ -470,7 +477,7 @@ describe('LandesbediensteterWorkflow', () => {
                     rolleId: faker.string.uuid(),
                 },
             ];
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             const personalnummer: string = faker.string.numeric(7);
             personRepoMock.findById.mockResolvedValueOnce(person);
@@ -479,7 +486,7 @@ describe('LandesbediensteterWorkflow', () => {
                 error: new EntityNotFoundError('Test Error'),
             });
 
-            const pkupdateMock: DeepMocked<PersonenkontexteUpdate> = createMock();
+            const pkupdateMock: MockedObject<PersonenkontexteUpdate> = createPersonenkontexteUpdateMock();
 
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([]);
             personenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValueOnce(pkupdateMock);

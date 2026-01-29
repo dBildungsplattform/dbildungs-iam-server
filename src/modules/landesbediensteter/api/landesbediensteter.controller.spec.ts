@@ -1,7 +1,8 @@
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { MockedObject } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { createPersonPermissionsMock, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { LandesbediensteterWorkflowFactory } from '../domain/landesbediensteter-workflow.factory.js';
 import { LandesbediensteterWorkflowAggregate } from '../domain/landesbediensteter-workflow.js';
 import { LandesbediensteterController } from './landesbediensteter.controller.js';
@@ -16,14 +17,18 @@ import { LandesbediensteterWorkflowCommitBodyParams } from './param/landesbedien
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontexteUpdateResponse } from '../../personenkontext/api/response/personenkontexte-update.response.js';
 import { PersonenkontexteUpdateError } from '../../personenkontext/domain/error/personenkontexte-update.error.js';
+import { createLandesbediensteterWorkflowAggregateMock } from '../../../../test/utils/workflow.mocks.js';
 
 describe('LandesbediensteterController', () => {
     let module: TestingModule;
 
     let sut: LandesbediensteterController;
 
-    const landesbediensteteWorkflowFactoryMock: DeepMocked<LandesbediensteterWorkflowFactory> = createMock();
-    const workflowMock: DeepMocked<LandesbediensteterWorkflowAggregate> = createMock();
+    const landesbediensteteWorkflowFactoryMock: DeepMocked<LandesbediensteterWorkflowFactory> = createMock(
+        LandesbediensteterWorkflowFactory,
+    );
+    const workflowMock: MockedObject<LandesbediensteterWorkflowAggregate> =
+        createLandesbediensteterWorkflowAggregateMock();
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -65,7 +70,7 @@ describe('LandesbediensteterController', () => {
                 organisationName: faker.string.alphanumeric(),
                 limit: faker.number.int(50),
             };
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             workflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce(orgas);
 
             const result: LandesbediensteterWorkflowStepResponse = await sut.step(params, permissions);
@@ -98,7 +103,7 @@ describe('LandesbediensteterController', () => {
                 organisationId: faker.string.uuid(),
                 limit: faker.number.int(50),
             };
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             workflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce(orgas);
             workflowMock.findRollenForOrganisation.mockResolvedValueOnce(rollen);
 
@@ -127,7 +132,7 @@ describe('LandesbediensteterController', () => {
                 rollenIds: [faker.string.uuid()],
                 limit: faker.number.int(50),
             };
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             workflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce(orgas);
             workflowMock.findRollenForOrganisation.mockResolvedValueOnce(rollen);
             workflowMock.canCommit.mockResolvedValueOnce({ ok: true, value: undefined });
@@ -155,7 +160,7 @@ describe('LandesbediensteterController', () => {
                 lastModified: new Date(),
                 personalnummer: faker.string.numeric(7),
             };
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             workflowMock.commit.mockResolvedValueOnce({ ok: true, value: pks });
 
             const result: PersonenkontexteUpdateResponse = await sut.commit(params, body, permissions);
@@ -183,7 +188,7 @@ describe('LandesbediensteterController', () => {
                 lastModified: new Date(),
                 personalnummer: faker.string.numeric(7),
             };
-            const permissions: DeepMocked<PersonPermissions> = createMock();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             workflowMock.commit.mockResolvedValueOnce({ ok: false, error });
 
             const result: Promise<PersonenkontexteUpdateResponse> = sut.commit(params, body, permissions);
