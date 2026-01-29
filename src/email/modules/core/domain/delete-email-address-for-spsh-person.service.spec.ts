@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { LoggingTestModule } from '../../../../../test/utils/logging-test.module.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';

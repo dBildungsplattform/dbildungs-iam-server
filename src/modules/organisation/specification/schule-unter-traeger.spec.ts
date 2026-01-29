@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 
 import { DoFactory } from '../../../../test/utils/index.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';

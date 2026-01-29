@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { HealthIndicatorResult } from '@nestjs/terminus';
 import { ConfigService } from '@nestjs/config';
 import { EmailHealthIndicator } from './email-health-indicator.js';

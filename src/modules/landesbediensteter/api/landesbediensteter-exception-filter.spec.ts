@@ -1,25 +1,21 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { ArgumentsHost } from '@nestjs/common';
 
-import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { DomainError } from '../../../shared/error/index.js';
 import { LandesbediensteterExceptionFilter } from './landesbediensteter-exception-filter.js';
+import { createArgumentsHostMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
+import { MockedObject } from 'vitest';
+import { Response } from 'express';
 
 describe('LandesbediensteterExceptionFilter', () => {
     let filter: LandesbediensteterExceptionFilter;
     const statusCode: number = 500;
-    let responseMock: DeepMocked<Response>;
-    let argumentsHost: DeepMocked<ArgumentsHost>;
+    let responseMock: MockedObject<Response>;
+    let argumentsHost: MockedObject<ArgumentsHost>;
 
     beforeEach(() => {
         filter = new LandesbediensteterExceptionFilter();
-        responseMock = createMock(Response);
-        argumentsHost = createMock<ArgumentsHost>({
-            switchToHttp: () =>
-                createMock<HttpArgumentsHost>({
-                    getResponse: () => responseMock,
-                }),
-        });
+        responseMock = createResponseMock();
+        argumentsHost = createArgumentsHostMock({ response: responseMock });
     });
 
     describe('catch', () => {

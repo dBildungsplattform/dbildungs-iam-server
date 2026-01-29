@@ -5,7 +5,7 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
 } from '../../../../test/utils/index.js';
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EventModule } from '../../../core/eventbus/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';

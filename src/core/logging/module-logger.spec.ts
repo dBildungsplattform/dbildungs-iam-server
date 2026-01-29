@@ -6,7 +6,6 @@ class TransformableInfoMock {
     [key: string]: unknown;
     public level: string = 'info';
     public message: unknown;
-
 }
 
 describe('Module Logger', () => {

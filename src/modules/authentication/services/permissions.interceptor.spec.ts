@@ -37,7 +37,6 @@ describe('Permission Interceptor', () => {
     });
 
     it('should call next middleware', () => {
-
         sut.intercept(createExecutionContextMock(), nextMock);
 
         expect(nextMock.handle).toHaveBeenCalledTimes(1);

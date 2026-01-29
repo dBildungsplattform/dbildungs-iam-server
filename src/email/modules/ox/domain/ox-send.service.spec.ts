@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { createMock, DeepMocked} from '../../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosResponse } from 'axios';
@@ -28,8 +28,8 @@ class MockAction extends OxBaseAction<unknown, string> {
     public override buildRequest(): object {
         return {};
     }
-    public override parseBody(body: unknown): Result<string, DomainError> {
-        return {ok: true, value: "message"};
+    public override parseBody(): Result<string, DomainError> {
+        return { ok: true, value: 'message' };
     }
 }
 
@@ -88,8 +88,7 @@ describe('OxSendService', () => {
 
     describe('send', () => {
         it('should call HttpService.post', async () => {
-            const mockAction: DeepMocked<OxBaseAction<unknown, unknown>> =
-                createMock(AddMemberToGroupAction);
+            const mockAction: DeepMocked<OxBaseAction<unknown, unknown>> = createMock(AddMemberToGroupAction);
             mockAction.buildRequest.mockReturnValueOnce({});
             mockAction.action = 'testAction';
             mockAction.soapServiceName = 'TestService';

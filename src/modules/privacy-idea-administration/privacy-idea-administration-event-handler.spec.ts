@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 import { PrivacyIdeaAdministrationEventHandler } from './privacy-idea-administration-event-handler.js';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';

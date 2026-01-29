@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosError, AxiosHeaders, AxiosResponse } from 'axios';
@@ -552,10 +552,9 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         const mockTwoAuthState: PrivacyIdeaToken = createMock<PrivacyIdeaToken>({ info: { tokenkind: 'hardware' } });
         const mockResetTokenResponse: ResetTokenResponse = createMock(ResetTokenResponse);
         it('should reset token successfully', async () => {
-            vi.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
             vi.spyOn(
                 service as unknown as { getTwoAuthState: (user: string) => Promise<PrivacyIdeaToken | null> },
                 'getTwoAuthState',
@@ -572,10 +571,9 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         });
 
         it('should throw an error if twoAuthState is not found', async () => {
-            vi.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
             vi.spyOn(
                 service as unknown as { getTwoAuthState: (user: string) => Promise<PrivacyIdeaToken | null> },
                 'getTwoAuthState',
@@ -585,10 +583,9 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         });
 
         it('should throw an error if unassignToken fails', async () => {
-            vi.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
             vi.spyOn(
                 service as unknown as { getTwoAuthState: (user: string) => Promise<PrivacyIdeaToken | null> },
                 'getTwoAuthState',
@@ -600,10 +597,9 @@ describe(`PrivacyIdeaAdministrationService`, () => {
 
         it('should delete token on unassing if token isnt hotp', async () => {
             const totpToken: PrivacyIdeaToken = createMock<PrivacyIdeaToken>({ info: { tokenkind: 'software' } });
-            vi.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
             vi.spyOn(
                 service as unknown as { getTwoAuthState: (user: string) => Promise<PrivacyIdeaToken | null> },
                 'getTwoAuthState',
@@ -936,10 +932,9 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         let mockJWTToken: string;
         beforeEach(() => {
             mockJWTToken = faker.string.alpha();
-            vi.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
         });
 
         it(`should delete user`, async () => {
@@ -982,10 +977,9 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const mockJWTToken: string = 'mockJWTToken';
             const mockResetTokenResponse: ResetTokenResponse = createMock(ResetTokenResponse);
 
-            vi.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
             vi.spyOn(
                 service as unknown as { getUserTokens: () => Promise<PrivacyIdeaToken[]> },
                 'getUserTokens',
@@ -1040,10 +1034,9 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const mockJWTToken: string = 'mockJWTToken';
             const mockResetTokenResponse: ResetTokenResponse = createMock(ResetTokenResponse);
 
-            vi.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
             vi.spyOn(
                 service as unknown as { getUserTokens: () => Promise<PrivacyIdeaToken[]> },
                 'getUserTokens',
@@ -1077,10 +1070,9 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const mockJWTToken: string = 'mockJWTToken';
             const mockResetTokenResponse: ResetTokenResponse = createMock(ResetTokenResponse);
 
-            vi.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
             vi.spyOn(
                 service as unknown as { getUserTokens: () => Promise<PrivacyIdeaToken[]> },
                 'getUserTokens',

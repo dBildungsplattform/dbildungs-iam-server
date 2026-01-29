@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { PersonPermissions } from '../../modules/authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../modules/rolle/domain/systemrecht.js';
 import { OrganisationID, PersonID } from '../types/index.js';

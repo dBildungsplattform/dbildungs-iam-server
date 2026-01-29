@@ -140,7 +140,7 @@ describe('PersonenkontextWorkflow', () => {
                 personpermissionsMock,
                 organisation.name,
             );
-             expect(
+            expect(
                 organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mock.calls[0] &&
                     organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mock.calls[0][1],
             ).toEqual(organisation.name);

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
@@ -148,7 +148,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     rolleId: faker.string.uuid(),
                     serviceProviderId: faker.string.uuid(),
                 };
-                permissions  = createPersonPermissionsMock();
+                permissions = createPersonPermissionsMock();
             });
 
             it('should return the response', async () => {

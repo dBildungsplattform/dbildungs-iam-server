@@ -1,5 +1,5 @@
 import { DeepMocked } from 'vitest';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
@@ -21,8 +21,9 @@ describe('ServiceProviderVerfuegbarFuerRollenerweiterung', () => {
         ])(
             'should return %s if the service provider is %s',
             async (expected: boolean, _label: string, sp: Option<ServiceProvider<boolean>>) => {
-                const rollenerweiterungMock: DeepMocked<Rollenerweiterung<boolean>> =
-                    createMock(Rollenerweiterung<boolean>);
+                const rollenerweiterungMock: DeepMocked<Rollenerweiterung<boolean>> = createMock(
+                    Rollenerweiterung<boolean>,
+                );
                 rollenerweiterungMock.getServiceProvider.mockResolvedValue(sp);
 
                 const specification: ServiceProviderVerfuegbarFuerRollenerweiterung =

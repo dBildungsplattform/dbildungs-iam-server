@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/index.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { Organisation } from '../domain/organisation.js';

@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { TestingModule, Test } from '@nestjs/testing';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import PersonTimeLimitService from './person-time-limit-info.service.js';

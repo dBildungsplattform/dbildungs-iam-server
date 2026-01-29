@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { NurKlasseKursUnterSchule } from './nur-klasse-kurs-unter-schule.js';
 import { SchuleUnterTraeger } from './schule-unter-traeger.js';

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 
@@ -9,34 +9,44 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
 import { KC_SERVICE_CLIENT } from '../keycloak-client-providers.js';
 import { KeycloakClientService } from './keycloak-client.service.js';
+import { Clients } from '@keycloak/keycloak-admin-client/lib/resources/clients.js';
 
 describe('KeycloakClientService', () => {
     let module: TestingModule;
     let sut: KeycloakClientService;
 
-    let kcClientsMock: DeepMocked<KeycloakAdminClient['clients']>;
+    let kcAdminClientMock: DeepMocked<KeycloakAdminClient>;
+    let kcClientsMock: DeepMocked<Clients>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
-        kcClientsMock = createMock(KeycloakAdminClient['clients']);
-
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, LoggingTestModule, KeycloakConfigTestModule.forRoot()],
             providers: [
                 KeycloakClientService,
                 {
                     provide: KC_SERVICE_CLIENT,
-                    useValue: createMock<KeycloakAdminClient>({ clients: kcClientsMock }),
+                    useValue: createMock<KeycloakAdminClient>(KeycloakAdminClient),
                 },
             ],
         }).compile();
 
         sut = module.get(KeycloakClientService);
+
         loggerMock = module.get(ClassLogger);
+        kcAdminClientMock = module.get(KC_SERVICE_CLIENT);
     });
 
     afterAll(async () => {
         await module.close();
+    });
+
+    beforeEach(() => {
+        kcClientsMock = createMock(Clients, {
+            update: vi.fn().mockResolvedValue(undefined),
+        });
+
+        (kcAdminClientMock.clients as unknown as Clients) = kcClientsMock;
     });
 
     afterEach(() => {

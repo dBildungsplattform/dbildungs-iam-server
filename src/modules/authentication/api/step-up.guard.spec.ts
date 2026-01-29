@@ -5,7 +5,6 @@ import { StepUpLevel } from '../passport/oidc.strategy.js';
 import { Request } from 'express';
 import { UserinfoResponse } from 'openid-client';
 import { PersonPermissions } from '../domain/person-permissions.js';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('StepUpGuard', () => {

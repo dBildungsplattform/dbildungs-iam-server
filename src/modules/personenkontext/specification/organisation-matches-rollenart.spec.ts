@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { OrganisationMatchesRollenart } from './organisation-matches-rollenart.js';
 import { Rolle } from '../../rolle/domain/rolle.js';

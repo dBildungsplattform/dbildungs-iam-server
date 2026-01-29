@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { OxService } from './ox.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -583,8 +583,9 @@ describe('OxSyncEventHandler', () => {
             ] = getPkArrayOrgaMapAndRolleMap(person);
             // hence kontexte are filtered by organisations.has, removing one organisation from map here, would not create a coverage case
             // therefore a mocked map is used
-            const mockedMap: DeepMocked<Map<OrganisationID, Organisation<true>>> =
-                createMock(Map<OrganisationID, Organisation<true>>);
+            const mockedMap: DeepMocked<Map<OrganisationID, Organisation<true>>> = createMock(
+                Map<OrganisationID, Organisation<true>>,
+            );
             mockedMap.entries.mockImplementationOnce(() => {
                 return orgaMap.entries();
             });

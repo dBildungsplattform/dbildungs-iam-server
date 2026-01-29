@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked} from '../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../test/utils/createMock.js';
 import { RedisClientType } from 'redis';
 import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../test/utils/index.js';
 import { EmailModule } from './email.module.js';

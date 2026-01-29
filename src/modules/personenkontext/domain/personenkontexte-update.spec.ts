@@ -403,7 +403,7 @@ describe('PersonenkontexteUpdate', () => {
 
         describe('when most recent updated PK time does not match lastModified time', () => {
             beforeAll(() => {
-                const wrongLastModified: Date = faker.date.past();
+                const wrongLastModified: Date = faker.date.past({ refDate: lastModified });
                 const count: number = 2;
                 sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
                     personId,

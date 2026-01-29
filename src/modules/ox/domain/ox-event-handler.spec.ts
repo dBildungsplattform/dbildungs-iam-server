@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
@@ -328,9 +328,7 @@ describe('OxEventHandler', () => {
         describe('when creating group fails', () => {
             it('should log error about failing oxGroup-creation', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
-                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock(EmailAddress<true>),
-                ]);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
 
                 //mock exists-oxUser-request
                 mockExistsUserRequest(false);
@@ -385,9 +383,7 @@ describe('OxEventHandler', () => {
         describe('when existing group is found', () => {
             it('should return the existing groups id', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
-                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock(EmailAddress<true>),
-                ]);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
 
                 //mock exists-oxUser-request
                 mockExistsUserRequest(false);
@@ -438,9 +434,7 @@ describe('OxEventHandler', () => {
         describe('when OX-request fails', () => {
             it('should log error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
-                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock(EmailAddress<true>),
-                ]);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
 
                 //mock exists-oxUser-request
                 mockExistsUserRequest(false);
@@ -466,9 +460,7 @@ describe('OxEventHandler', () => {
         describe('when no matching groups is found', () => {
             it('should log error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
-                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock(EmailAddress<true>),
-                ]);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
 
                 //mock exists-oxUser-request
                 mockExistsUserRequest(false);
@@ -521,9 +513,7 @@ describe('OxEventHandler', () => {
         describe('when multiple groups are found for same groupName', () => {
             it('should log error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
-                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock(EmailAddress<true>),
-                ]);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
 
                 //mock exists-oxUser-request
                 mockExistsUserRequest(false);
@@ -595,9 +585,7 @@ describe('OxEventHandler', () => {
         describe('when adding user as member to group fails because member is already in group', () => {
             it('should log info about that intentional error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
-                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock(EmailAddress<true>),
-                ]);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
 
                 //mock exists-oxUser-request
                 mockExistsUserRequest(false);
@@ -639,9 +627,7 @@ describe('OxEventHandler', () => {
         describe('when adding user as member to group fails', () => {
             it('should log error about failing addition to group', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
-                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock(EmailAddress<true>),
-                ]);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
 
                 //mock exists-oxUser-request
                 mockExistsUserRequest(false);

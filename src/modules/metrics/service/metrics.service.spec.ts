@@ -1,22 +1,18 @@
-// Mocks for Counter and Gauge
-let incMock: Mock;
-let setMock: Mock;
+/* eslint-disable max-classes-per-file */
+import { vi } from 'vitest';
 
-Mock('prom-client', () => {
-    const originalModule: typeof import('prom-client') = vi.requireActual('prom-client');
+type OriginalType = typeof import('prom-client');
+vi.mock<OriginalType>(import('prom-client'), async (importOriginal: () => Promise<OriginalType>) => {
+    const originalModule: OriginalType = await importOriginal();
 
     return {
         ...originalModule,
-        Counter: vi.fn().mockImplementation(() => {
-            return {
-                inc: incMock,
-            };
-        }),
-        Gauge: vi.fn().mockImplementation(() => {
-            return {
-                set: setMock,
-            };
-        }),
+        Counter: class {
+            public inc: () => void = vi.fn();
+        } as unknown as OriginalType['Counter'],
+        Gauge: class {
+            public set: () => void = vi.fn();
+        } as unknown as OriginalType['Gauge'],
     };
 });
 
@@ -28,10 +24,6 @@ describe('MetricsService', () => {
     let service: MetricsService;
 
     beforeEach(async () => {
-        // Initialize mocks before each test
-        incMock = vi.fn();
-        setMock = vi.fn();
-
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 MetricsService,
@@ -58,7 +50,7 @@ describe('MetricsService', () => {
             const counterInstance: Counter<string> | undefined = service['counter'][key];
             expect(counterInstance).toBeDefined();
 
-            expect(incMock).toHaveBeenCalledWith({});
+            expect(counterInstance?.inc).toHaveBeenCalledWith({});
         });
 
         it('should create and increment a counter with labels', () => {
@@ -70,7 +62,7 @@ describe('MetricsService', () => {
             const counterInstance: Counter<string> | undefined = service['counter'][key];
             expect(counterInstance).toBeDefined();
 
-            expect(incMock).toHaveBeenCalledWith(labels);
+            expect(counterInstance?.inc).toHaveBeenCalledWith(labels);
         });
 
         it('should increment the counter multiple times', () => {
@@ -79,8 +71,9 @@ describe('MetricsService', () => {
             service.incCounter(key);
             service.incCounter(key);
             service.incCounter(key);
+            const counterInstance: Counter<string> | undefined = service['counter'][key];
 
-            expect(incMock).toHaveBeenCalledTimes(3);
+            expect(counterInstance?.inc).toHaveBeenCalledTimes(3);
         });
     });
 
@@ -94,7 +87,7 @@ describe('MetricsService', () => {
             const gaugeInstance: Gauge<string> | undefined = service['gauge'][key];
             expect(gaugeInstance).toBeDefined();
 
-            expect(setMock).toHaveBeenCalledWith({}, value);
+            expect(gaugeInstance?.set).toHaveBeenCalledWith({}, value);
         });
 
         it('should create and set a gauge with labels', () => {
@@ -107,7 +100,7 @@ describe('MetricsService', () => {
             const gaugeInstance: Gauge<string> | undefined = service['gauge'][key];
             expect(gaugeInstance).toBeDefined();
 
-            expect(setMock).toHaveBeenCalledWith(labels, value);
+            expect(gaugeInstance?.set).toHaveBeenCalledWith(labels, value);
         });
 
         it('should overwrite the gauge value when set multiple times', () => {
@@ -117,10 +110,11 @@ describe('MetricsService', () => {
 
             service.setGauge(key, value1);
             service.setGauge(key, value2);
+            const gaugeInstance: Gauge<string> | undefined = service['gauge'][key];
 
-            expect(setMock).toHaveBeenCalledTimes(2);
-            expect(setMock).toHaveBeenNthCalledWith(1, {}, value1);
-            expect(setMock).toHaveBeenNthCalledWith(2, {}, value2);
+            expect(gaugeInstance?.set).toHaveBeenCalledTimes(2);
+            expect(gaugeInstance?.set).toHaveBeenNthCalledWith(1, {}, value1);
+            expect(gaugeInstance?.set).toHaveBeenNthCalledWith(2, {}, value2);
         });
     });
 });

@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailAddressDeletionService } from './email-address-deletion.service.js';
@@ -78,7 +78,12 @@ describe('EmailAddressDeletionService', () => {
         } else {
             address = faker.internet.email();
         }
-        const emailAddress: EmailAddress<true> = DoFactory.createEmailAddress<true>(true, address, {status, personId: person?.id, oxUserID: oxUserId, updatedAt});
+        const emailAddress: EmailAddress<true> = DoFactory.createEmailAddress<true>(true, address, {
+            status,
+            personId: person?.id,
+            oxUserID: oxUserId,
+            updatedAt,
+        });
         return emailAddress;
     }
 

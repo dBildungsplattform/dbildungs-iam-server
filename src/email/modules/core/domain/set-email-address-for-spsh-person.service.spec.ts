@@ -1,6 +1,6 @@
 import { Mock, vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked} from '../../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseTestModule } from '../../../../../test/utils/database-test.module.js';
@@ -152,7 +152,14 @@ describe('SetEmailAddressForSpshPersonService', () => {
             emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce(Ok(expectedEmailAddress));
             oxSendServiceMock.send.mockResolvedValueOnce(Ok({ id: newOxId }));
             ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Ok(false));
-            ldapClientServiceMock.createPerson.mockResolvedValueOnce(Ok({firstName: bodyParams.firstName, lastName: bodyParams.lastName, username: bodyParams.spshUsername, uid: pathParams.spshPersonId}));
+            ldapClientServiceMock.createPerson.mockResolvedValueOnce(
+                Ok({
+                    firstName: bodyParams.firstName,
+                    lastName: bodyParams.lastName,
+                    username: bodyParams.spshUsername,
+                    uid: pathParams.spshPersonId,
+                }),
+            );
 
             await sut.setEmailAddressForSpshPerson({ ...pathParams, ...bodyParams });
 

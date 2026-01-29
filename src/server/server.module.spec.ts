@@ -3,7 +3,7 @@ import { Issuer } from 'openid-client';
 import { ServerModule } from './server.module.js';
 import { OIDC_CLIENT } from '../modules/authentication/services/oidc-client.service.js';
 import { MiddlewareConsumer } from '@nestjs/common';
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { RedisClientType } from 'redis';
 import { ConfigTestModule, LoggingTestModule } from '../../test/utils/index.js';
 

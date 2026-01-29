@@ -7,9 +7,9 @@ import { EmailLdapConfigModule } from '../ldap-config.module.js';
 import { EmailLdapModule } from '../email-ldap.module.js';
 import { faker } from '@faker-js/faker';
 import { LdapClientService, PersonData } from './ldap-client.service.js';
-import { createMock, DeepMocked} from '../../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { LdapClient } from './ldap-client.js';
-import { Client, DN, SearchResult } from 'ldapts';
+import { Client, SearchResult } from 'ldapts';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapCreatePersonError } from '../error/ldap-create-person.error.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
@@ -158,7 +158,7 @@ describe('LDAP Client Service', () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValue();
                 clientMock.add.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce( { searchEntries: [], searchReferences: [] } );
+                clientMock.search.mockResolvedValueOnce({ searchEntries: [], searchReferences: [] });
                 return clientMock;
             });
             const result: Result<boolean> = await ldapClientService.isPersonExisting('user123', 'wrong-domain.de');
@@ -383,18 +383,17 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
 
                     // Get EntryUUID
-                    clientMock.search.mockResolvedValueOnce(
-                        {
-                            searchEntries: [{
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [
+                            {
                                 entryUUID: faker.string.uuid(),
-                                dn: ''
-                            }],
-                            searchReferences: []
-                        }
-                    );
+                                dn: '',
+                            },
+                        ],
+                        searchReferences: [],
+                    });
                     return clientMock;
                 });
-
 
                 const testLehrer: PersonData = getPersonData();
                 const lehrerUid: string =
@@ -411,25 +410,25 @@ describe('LDAP Client Service', () => {
             });
 
             it('when called WITHOUT entryUUID should use person.id and return truthy result', async () => {
-                 ldapClientMock.getClient.mockImplementation(() => {
+                ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
 
-                   // exists check
+                    // exists check
                     clientMock.search.mockResolvedValueOnce({ searchEntries: [], searchReferences: [] });
 
                     // Add
                     clientMock.add.mockResolvedValueOnce();
 
                     // Get EntryUUID
-                    clientMock.search.mockResolvedValueOnce(
-                        {
-                            searchEntries: [{
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [
+                            {
                                 entryUUID: faker.string.uuid(),
-                                dn: ''
-                            }],
-                            searchReferences: []
-                        }
-                    );
+                                dn: '',
+                            },
+                        ],
+                        searchReferences: [],
+                    });
                     return clientMock;
                 });
 
@@ -479,7 +478,6 @@ describe('LDAP Client Service', () => {
 
             it('when called with explicit domain "ersatzschule-sh.de" should return truthy result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
-
                     // exists check
                     clientMock.search.mockResolvedValueOnce({ searchEntries: [], searchReferences: [] });
 
@@ -487,15 +485,15 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
 
                     // Get EntryUUID
-                    clientMock.search.mockResolvedValueOnce(
-                        {
-                            searchEntries: [{
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [
+                            {
                                 entryUUID: faker.string.uuid(),
-                                dn: ''
-                            }],
-                            searchReferences: []
-                        }
-                    );
+                                dn: '',
+                            },
+                        ],
+                        searchReferences: [],
+                    });
                     return clientMock;
                 });
 
@@ -521,14 +519,14 @@ describe('LDAP Client Service', () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        {
-                            searchEntries: [{
-                                    dn: lehrerUid,
-                                }],
-                            searchReferences: []
-                        }
-                    ); //mock: lehrer already exists
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [
+                            {
+                                dn: lehrerUid,
+                            },
+                        ],
+                        searchReferences: [],
+                    }); //mock: lehrer already exists
 
                     return clientMock;
                 });
