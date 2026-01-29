@@ -55,7 +55,7 @@ describe('EmailResolverService', () => {
             const mockPersonId: string = faker.string.uuid();
             const mockEmail: string = 'test@example.com';
             const mockResponseData: EmailAddressResponse[] = [
-                createMock<EmailAddressResponse>({
+                createMock<EmailAddressResponse>(EmailAddressResponse, {
                     address: mockEmail,
                     status: EmailAddressStatusEnum.ACTIVE,
                 }),
@@ -104,7 +104,7 @@ describe('EmailResolverService', () => {
             const mockPersonId: string = faker.string.uuid();
             const mockEmail: string = 'test@example.com';
             const mockResponseData: EmailAddressResponse[] = [
-                createMock<EmailAddressResponse>({
+                createMock<EmailAddressResponse>(EmailAddressResponse, {
                     address: mockEmail,
                     status: EmailAddressStatusEnum.ACTIVE,
                 }),
@@ -154,7 +154,7 @@ describe('EmailResolverService', () => {
         it('should return spshPersonId when get call returns valid primary email data', async () => {
             const address: string = faker.internet.email();
             const spshPersonId: string = faker.string.uuid();
-            const mockResponseData: EmailAddressResponse = createMock<EmailAddressResponse>({
+            const mockResponseData: EmailAddressResponse = createMock<EmailAddressResponse>(EmailAddressResponse, {
                 address: address,
                 status: EmailAddressStatusEnum.ACTIVE,
                 isPrimary: true,
@@ -179,7 +179,7 @@ describe('EmailResolverService', () => {
 
         it('should return undefined when get call returns error code', async () => {
             const address: string = faker.internet.email();
-            const mockResponseData: EmailAddressResponse = createMock<EmailAddressResponse>({});
+            const mockResponseData: EmailAddressResponse = createMock<EmailAddressResponse>(EmailAddressResponse);
 
             const mockAxiosResponse: AxiosResponse<EmailAddressResponse> = {
                 data: mockResponseData,
@@ -200,7 +200,7 @@ describe('EmailResolverService', () => {
         it('should return undefined when get call returns valid non primary email data', async () => {
             const address: string = faker.internet.email();
             const spshPersonId: string = faker.string.uuid();
-            const mockResponseData: EmailAddressResponse = createMock<EmailAddressResponse>({
+            const mockResponseData: EmailAddressResponse = createMock<EmailAddressResponse>(EmailAddressResponse, {
                 address: address,
                 status: EmailAddressStatusEnum.ACTIVE,
                 isPrimary: false,
@@ -225,7 +225,7 @@ describe('EmailResolverService', () => {
 
         it('should return undefined when get call returns without spshPersonId', async () => {
             const address: string = faker.internet.email();
-            const mockResponseData: EmailAddressResponse = createMock<EmailAddressResponse>({
+            const mockResponseData: EmailAddressResponse = createMock<EmailAddressResponse>(EmailAddressResponse, {
                 address: address,
                 status: EmailAddressStatusEnum.ACTIVE,
                 isPrimary: true,
@@ -268,7 +268,7 @@ describe('EmailResolverService', () => {
         it('should return EmailAddressResponse when get call returns valid data', async () => {
             const mockPersonId: string = faker.string.uuid();
             const mockResponseData: EmailAddressResponse[] = [
-                createMock<EmailAddressResponse>({
+                createMock<EmailAddressResponse>(EmailAddressResponse, {
                     id: faker.string.uuid(),
                     createdAt: new Date(),
                     updatedAt: new Date(),
