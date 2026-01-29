@@ -1,8 +1,6 @@
 import 'reflect-metadata'; // some decorators use reflect-metadata in the background
-
 import fs from 'fs';
 import { PathLike } from 'node:fs';
-
 import { DeepPartial } from '../../../test/utils/index.js';
 import { EmailAppConfig } from './email-app.config.js';
 import { JsonConfig, loadConfigFiles, loadEmailAppConfigFiles } from './index.js';
@@ -167,8 +165,10 @@ describe('configloader', () => {
             };
 
             beforeEach(() => {
-                readFileSyncSpy = vi.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
-                readFileSyncSpy = vi.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(secrets));
+                readFileSyncSpy = vi.spyOn(fs, 'readFileSync');
+                readFileSyncSpy
+                    .mockReturnValueOnce(JSON.stringify(config))
+                    .mockReturnValueOnce(JSON.stringify(secrets));
             });
 
             afterEach(() => {
@@ -176,7 +176,7 @@ describe('configloader', () => {
             });
 
             it('should return validated JsonConfig', () => {
-                vi.spyOn(fs, 'existsSync').mockReturnValueOnce(true);
+                vi.spyOn(fs, 'existsSync').mockReturnValue(true);
                 const validatedConfig: JsonConfig = loadConfigFiles();
                 expect(validatedConfig).toBeInstanceOf(JsonConfig);
                 expect(readFileSyncSpy).toHaveBeenCalledTimes(2);
