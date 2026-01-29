@@ -7,11 +7,18 @@ import {
     DbiamApplyRollenerweiterungMultiError,
     DbiamApplyRollenerweiterungMultiErrorI18NTypes,
 } from './dbiam-apply-rollenerweiterung-multi.error.js';
-import { DomainError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { NoRedundantRollenerweiterungError } from '../specification/error/no-redundant-rollenerweiterung.error.js';
 
 @Catch(ApplyRollenerweiterungRolesError)
 export class ApplyRollenerweiterungMultiExceptionFilter implements ExceptionFilter<ApplyRollenerweiterungRolesError> {
-    private ERROR_I18NMAPPING: Map<string, DbiamApplyRollenerweiterungMultiErrorI18NTypes> = new Map([]);
+    private ERROR_I18NMAPPING: Map<string, DbiamApplyRollenerweiterungMultiErrorI18NTypes> = new Map([
+        [EntityNotFoundError.name, DbiamApplyRollenerweiterungMultiErrorI18NTypes.NOT_FOUND],
+        [
+            NoRedundantRollenerweiterungError.name,
+            DbiamApplyRollenerweiterungMultiErrorI18NTypes.NO_REDUNDANT_ROLLENERWEITERUNG,
+        ],
+    ]);
 
     public catch(exception: ApplyRollenerweiterungRolesError, host: ArgumentsHost): void {
         const ctx: HttpArgumentsHost = host.switchToHttp();

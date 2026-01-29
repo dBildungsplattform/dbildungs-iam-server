@@ -178,7 +178,7 @@ export class RollenerweiterungRepo {
         );
     }
 
-    public async deleteByIds(props: {
+    public async deleteByComposedId(props: {
         organisationId: OrganisationID;
         rolleId: RolleID;
         serviceProviderId: ServiceProviderID;
@@ -186,7 +186,7 @@ export class RollenerweiterungRepo {
         if (!(await this.exists(props))) {
             return {
                 ok: false,
-                error: new EntityNotFoundError('TBD'),
+                error: new EntityNotFoundError(`Rollenerweiterung ${JSON.stringify(props)}`),
             };
         }
 

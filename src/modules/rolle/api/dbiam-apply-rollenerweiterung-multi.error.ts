@@ -2,6 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export enum DbiamApplyRollenerweiterungMultiErrorI18NTypes {
     ROLLENERWEITERUNG_TECHNICAL_ERROR = 'ROLLENERWEITERUNG_TECHNICAL_ERROR',
+    NOT_FOUND = 'NOT_FOUND',
+    NO_REDUNDANT_ROLLENERWEITERUNG = 'NO_REDUNDANT_ROLLENERWEITERUNG',
 }
 
 export type DbiamApplyRollenerweiterungMultiErrorProps = {

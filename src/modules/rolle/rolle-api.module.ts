@@ -7,6 +7,7 @@ import { ServiceProviderModule } from '../service-provider/service-provider.modu
 import { PersonModule } from '../person/person.module.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { RollenerweiterungController } from './api/rollenerweiterung.controller.js';
+import { ApplyRollenerweiterungWorkflowFactory } from './domain/apply-rollenerweiterungen-workflow.factory.js';
 
 @Module({
     imports: [
@@ -17,7 +18,7 @@ import { RollenerweiterungController } from './api/rollenerweiterung.controller.
         PersonenKontextModule,
         LoggerModule.register(RolleApiModule.name),
     ],
-    providers: [],
+    providers: [ApplyRollenerweiterungWorkflowFactory],
     controllers: [RolleController, RollenerweiterungController],
 })
 export class RolleApiModule {}
