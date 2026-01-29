@@ -40,6 +40,7 @@ export default defineConfig({
             '**/eventbus/**/*spec.ts',
             '**/ldap/**/*spec.ts',
             '**/logging/**/*spec.ts',
+            '**/ox/**/*spec.ts',
             '**/privacy-idea-administration/**/*spec.ts',
             '**/schulconnex/**/*spec.ts',
             '**/service-provider/**/*spec.ts',
