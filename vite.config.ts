@@ -19,6 +19,7 @@ export default defineConfig({
         outputFile: 'coverage/sonar-report.xml',
         testTimeout: 1000000,
         // include: ['**/*spec.ts'],
+        // '**/console/**/*spec.ts',
         include: [
             '**/authentication/**/*spec.ts',
             '**/cron/**/*spec.ts',

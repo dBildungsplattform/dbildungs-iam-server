@@ -1,3 +1,4 @@
+// eslint-disable-next-line max-classes-per-file
 import { vi } from 'vitest';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -20,7 +21,7 @@ function flushPromises(): Promise<void> {
 class BaseEventMock extends BaseEvent {}
 
 class KafkaEventMock implements KafkaEvent {
-    kafkaKey: string | undefined;
+    public kafkaKey: string | undefined;
 }
 
 describe('EventRoutingLegacyKafkaService', () => {

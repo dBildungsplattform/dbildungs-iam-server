@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClassLogger } from '../core/logging/class-logger.js';
 import { DbConsole } from './db.console.js';

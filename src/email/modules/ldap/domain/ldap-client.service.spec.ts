@@ -9,7 +9,7 @@ import { faker } from '@faker-js/faker';
 import { LdapClientService, PersonData } from './ldap-client.service.js';
 import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { LdapClient } from './ldap-client.js';
-import { Client, DN, SearchResult } from 'ldapts';
+import { Client, SearchResult } from 'ldapts';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapCreatePersonError } from '../error/ldap-create-person.error.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';

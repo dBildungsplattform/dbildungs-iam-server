@@ -14,7 +14,7 @@ import {
     SichtfreigabeType,
 } from '../../src/modules/personenkontext/domain/personenkontext.enums.js';
 import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
-import { RollenArt, RollenMerkmal } from '../../src/modules/rolle/domain/rolle.enums.js';
+import { RollenArt } from '../../src/modules/rolle/domain/rolle.enums.js';
 import { RollenSystemRecht } from '../../src/modules/rolle/domain/systemrecht.js';
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
 import {
@@ -26,6 +26,7 @@ import { ServiceProvider } from '../../src/modules/service-provider/domain/servi
 import { DoBase } from '../../src/shared/types/do-base.js';
 import { Rollenerweiterung } from '../../src/modules/rolle/domain/rollenerweiterung.js';
 import { EmailAddress, EmailAddressStatus } from '../../src/modules/email/domain/email-address.js';
+import { EmailDomain } from '../../src/email/modules/core/domain/email-domain.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -54,6 +55,7 @@ export class DoFactory {
             personalnummer: faker.string.numeric({ length: 7 }),
             revision: '1',
             externalIds: {},
+            username: withId ? faker.internet.userName() : undefined,
         };
         person.istTechnisch = false;
         return Object.assign(Object.create(Person.prototype) as Person<boolean>, person, props);
@@ -296,5 +298,18 @@ export class DoFactory {
             ) as EmailAddress<WasPersisted>;
         }
         return emailAddress;
+    }
+
+    public static createEmailDomain<WasPersisted extends boolean>(
+        withId: WasPersisted,
+        props?: Partial<EmailDomain<WasPersisted>>,
+    ): EmailDomain<WasPersisted> {
+        return EmailDomain.construct({
+            id: props?.id ?? (withId ? faker.string.uuid() : (undefined as unknown as string)),
+            createdAt: props?.createdAt ?? faker.date.past(),
+            updatedAt: props?.updatedAt ?? faker.date.recent(),
+            domain: props?.domain ?? faker.internet.domainName(),
+            spshServiceProviderId: props?.spshServiceProviderId ?? faker.string.uuid(),
+        }) as EmailDomain<WasPersisted>;
     }
 }

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { ConfigTestModule, LoggingTestModule } from '../../../test/utils/index.js';
 import { KeycloakClientService } from '../../modules/keycloak-administration/domain/keycloak-client.service.js';
 import { KeycloakUpdateClientsCommand } from './keycloak-update-clients.command.js';
@@ -27,6 +27,7 @@ describe('KeycloakUpdateClientsCommand', () => {
         keycloakUpdateClients = module.get(KeycloakUpdateClientsCommand);
 
         clientServiceMock = module.get(KeycloakClientService);
+        clientServiceMock.updateClient.mockResolvedValue({ ok: true, value: undefined });
     });
 
     afterAll(async () => {

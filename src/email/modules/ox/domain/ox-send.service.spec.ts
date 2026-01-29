@@ -28,7 +28,7 @@ class MockAction extends OxBaseAction<unknown, string> {
     public override buildRequest(): object {
         return {};
     }
-    public override parseBody(body: unknown): Result<string, DomainError> {
+    public override parseBody(): Result<string, DomainError> {
         return { ok: true, value: 'message' };
     }
 }
