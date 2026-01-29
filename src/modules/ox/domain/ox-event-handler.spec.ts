@@ -117,11 +117,7 @@ describe('OxEventHandler', () => {
     });
 
     function getRequestedEmailAddresses(address?: string): EmailAddress<true>[] {
-        const emailAddress: EmailAddress<true> = createMock<EmailAddress<true>>({
-            get address(): string {
-                return address ?? faker.internet.email();
-            },
-        });
+        const emailAddress: EmailAddress<true> = DoFactory.createEmailAddress(true, address);
         return [emailAddress];
     }
 
@@ -194,22 +190,6 @@ describe('OxEventHandler', () => {
             primaryEmail: primaryMail ?? faker.internet.email(),
             aliases: aliases ?? [],
         };
-    }
-
-    /**
-     * Returns an instance of Person. Fake values are used for any non-defined optional parameter.
-     * @param id
-     * @param username
-     * @param oxUserId
-     * @param email
-     */
-    function getPerson(id?: PersonID, username?: PersonUsername, oxUserId?: OXUserID, email?: string): Person<true> {
-        return createMock<Person<true>>({
-            id: id ?? faker.string.uuid(),
-            username: username ?? faker.internet.userName(),
-            oxUserId: oxUserId ?? faker.string.numeric(),
-            email: email ?? faker.internet.email(),
-        });
     }
 
     /**
@@ -322,7 +302,9 @@ describe('OxEventHandler', () => {
                 true,
                 fakeDstNr,
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
+            person = DoFactory.createPerson(true, {
+                email: faker.internet.email(),
+            });
         });
 
         describe('when creating group fails', () => {
@@ -377,13 +359,15 @@ describe('OxEventHandler', () => {
                 true,
                 fakeDstNr,
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
+            person = DoFactory.createPerson(true, { email: faker.internet.email() });
         });
 
         describe('when existing group is found', () => {
             it('should return the existing groups id', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
-                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
+                    DoFactory.createEmailAddress(true),
+                ]);
 
                 //mock exists-oxUser-request
                 mockExistsUserRequest(false);
@@ -579,13 +563,15 @@ describe('OxEventHandler', () => {
                 true,
                 fakeDstNr,
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
+            person = DoFactory.createPerson(true, { email: faker.internet.email() });
         });
 
         describe('when adding user as member to group fails because member is already in group', () => {
             it('should log info about that intentional error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
-                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock(EmailAddress<true>)]);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
+                    DoFactory.createEmailAddress(true),
+                ]);
 
                 //mock exists-oxUser-request
                 mockExistsUserRequest(false);
@@ -690,7 +676,7 @@ describe('OxEventHandler', () => {
                 true,
                 faker.string.numeric(),
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), username: username });
+            person = DoFactory.createPerson(true, { email: faker.internet.email(), username: username });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -718,7 +704,8 @@ describe('OxEventHandler', () => {
         });
 
         it('should set email to failed when person already exists in OX', async () => {
-            const mockEmail: DeepMocked<EmailAddress<true>> = createMock();
+            const mockEmail: EmailAddress<true> = DoFactory.createEmailAddress(true);
+            vi.spyOn(mockEmail, 'failed');
             personRepositoryMock.findById.mockResolvedValueOnce(person);
             emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([mockEmail]);
             //mock exists-oxUser-request
@@ -980,7 +967,7 @@ describe('OxEventHandler', () => {
                 true,
                 faker.string.numeric(),
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), username: username });
+            person = DoFactory.createPerson(true, { email: faker.internet.email(), username: username });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -1080,7 +1067,7 @@ describe('OxEventHandler', () => {
                 faker.internet.email(),
                 faker.string.numeric(),
             );
-            person = createMock<Person<true>>({ email: email, username: username, oxUserId: oxUserId });
+            person = DoFactory.createPerson(true, { email: email, username: username, oxUserId: oxUserId });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -1159,9 +1146,9 @@ describe('OxEventHandler', () => {
             //mock getData
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
-                value: createMock<GetDataForUserResponse>({
+                value: {
                     aliases: [faker.internet.email()],
-                }),
+                },
             });
 
             //mock changeUser
@@ -1186,12 +1173,12 @@ describe('OxEventHandler', () => {
             //mock getData
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
-                value: createMock<GetDataForUserResponse>({
+                value: {
                     aliases: currentAliases,
                     username: oxUserName,
                     id: oxUserId,
                     primaryEmail: email,
-                }),
+                },
             });
 
             //mock changeUser as success
@@ -1272,7 +1259,7 @@ describe('OxEventHandler', () => {
             contextId = '10';
             contextName = 'testContext';
             event = new DisabledEmailAddressGeneratedEvent(personId, username, email, emailId, domain);
-            person = createMock<Person<true>>({ email: email, username: username, oxUserId: oxUserId });
+            person = DoFactory.createPerson(true, { email: email, username: username, oxUserId: oxUserId });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -1290,12 +1277,12 @@ describe('OxEventHandler', () => {
             //mock getData
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
-                value: createMock<GetDataForUserResponse>({
+                value: {
                     aliases: currentAliases,
                     username: oxUserName,
                     id: oxUserId,
                     primaryEmail: email,
-                }),
+                },
             });
 
             //mock changeUser as success
@@ -1342,7 +1329,12 @@ describe('OxEventHandler', () => {
             vi.resetAllMocks();
             personId = faker.string.uuid();
             event = new EmailAddressAlreadyExistsEvent(personId, faker.string.uuid());
-            person = createMock<Person<true>>({ email: faker.internet.email(), username: faker.internet.userName() });
+            person = DoFactory.createPerson(true, {
+                id: personId,
+                email: faker.internet.email(),
+                username: faker.internet.userName(),
+                oxUserId: faker.string.uuid(),
+            });
         });
 
         describe('when handler is disabled', () => {
@@ -1459,13 +1451,19 @@ describe('OxEventHandler', () => {
         describe('when oxUserId is NOT defined on found EmailAddress', () => {
             it('should log error about missing oxUserId', async () => {
                 event = new PersonDeletedEvent(personId, username, faker.internet.email());
-                emailRepoMock.findByAddress.mockResolvedValueOnce(
-                    createMock<EmailAddress<true>>({
-                        get oxUserID(): Option<string> {
-                            return undefined;
+                const emailMock: EmailAddress<true> = DoFactory.createEmailAddress(
+                    false,
+                ) as unknown as EmailAddress<true>; // cast necessary, because persisted EmailAddress has oxUserID defined
+                emailRepoMock.findByAddress.mockResolvedValueOnce(emailMock);
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        status: {
+                            code: 'success',
                         },
-                    }),
-                );
+                        data: undefined,
+                    },
+                });
 
                 await sut.handlePersonDeletedEvent(event);
 
@@ -1481,10 +1479,8 @@ describe('OxEventHandler', () => {
                 const oxUserId: OXUserID = faker.string.numeric();
 
                 emailRepoMock.findByAddress.mockResolvedValueOnce(
-                    createMock<EmailAddress<true>>({
-                        get oxUserID(): Option<string> {
-                            return oxUserId;
-                        },
+                    DoFactory.createEmailAddress(true, undefined, {
+                        oxUserID: oxUserId,
                     }),
                 );
 
@@ -1523,10 +1519,8 @@ describe('OxEventHandler', () => {
                 const oxUserId: OXUserID = faker.string.numeric();
 
                 emailRepoMock.findByAddress.mockResolvedValueOnce(
-                    createMock<EmailAddress<true>>({
-                        get oxUserID(): Option<string> {
-                            return oxUserId;
-                        },
+                    DoFactory.createEmailAddress(true, undefined, {
+                        oxUserID: oxUserId,
                     }),
                 );
 
@@ -1831,7 +1825,7 @@ describe('OxEventHandler', () => {
             };
             oxUserId = faker.string.numeric();
             event = new EmailAddressDisabledEvent(personId, username);
-            person = createMock<Person<true>>({
+            person = DoFactory.createPerson(true, {
                 id: personId,
                 email: faker.internet.email(),
                 username: username,
@@ -1854,7 +1848,9 @@ describe('OxEventHandler', () => {
         });
         describe('when person is found BUT has NO oxUserId', () => {
             it('should log error if person does not have a oxUserId', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>({ oxUserId: undefined }));
+                personRepositoryMock.findById.mockResolvedValueOnce(
+                    DoFactory.createPerson(true, { oxUserId: undefined }),
+                );
                 await sut.handleEmailAddressDisabledEvent(event);
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Could Not Remove Person From OxGroups, No OxUserId For personId:${event.personId}`,
@@ -1965,7 +1961,7 @@ describe('OxEventHandler', () => {
         });
         describe('when oxUserId is NOT defined', () => {
             it('should log error about that', async () => {
-                person = createMock<Person<true>>({
+                person = DoFactory.createPerson(true, {
                     email: faker.internet.email(),
                     username: username,
                     oxUserId: undefined,
@@ -1977,7 +1973,7 @@ describe('OxEventHandler', () => {
         });
         describe('when getting oxGroupId by oxGroupName fails', () => {
             it('should log error about that', async () => {
-                person = getPerson(personId, username, oxUserId);
+                person = DoFactory.createPerson(true, { id: personId, username, oxUserId });
                 //mock Ox-getOxGroupByName-request results in an error
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: false,
@@ -1992,7 +1988,7 @@ describe('OxEventHandler', () => {
         });
         describe('when removing user as member from oxGroup is successful', () => {
             it('should log info about that', async () => {
-                person = getPerson(personId, username, oxUserId);
+                person = DoFactory.createPerson(true, { id: personId, username, oxUserId });
                 personRepositoryMock.findById.mockResolvedValue(person);
                 // Mock group retrieval successfully
                 mockGroupRetrievalRequestSuccessful(oxUserId, oxGroupId);
@@ -2040,7 +2036,7 @@ describe('OxEventHandler', () => {
         describe('when user has no remaining PKs with rollenArt LEHR in currentKontexte', () => {
             describe('should change username in OX to personId, when change fails', () => {
                 it('should log error', async () => {
-                    person = getPerson(personId, username, oxUserId);
+                    person = DoFactory.createPerson(true, { id: personId, username, oxUserId });
                     personRepositoryMock.findById.mockResolvedValue(person);
                     const oxError: OxError = new OxError();
                     //mock Ox-changeUser-request fails
@@ -2058,7 +2054,7 @@ describe('OxEventHandler', () => {
             });
             describe('should change username in OX to personId, when change succeeds', () => {
                 it('should log info', async () => {
-                    person = getPerson(personId, username, oxUserId);
+                    person = DoFactory.createPerson(true, { id: personId, username, oxUserId });
                     personRepositoryMock.findById.mockResolvedValue(person);
                     //mock Ox-changeUser-request is successful
                     oxServiceMock.send.mockResolvedValueOnce({
