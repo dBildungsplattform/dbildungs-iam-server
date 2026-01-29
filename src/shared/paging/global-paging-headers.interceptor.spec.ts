@@ -1,5 +1,4 @@
 import { Observable, from, lastValueFrom } from 'rxjs';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { DISABLE_PAGING_INTERCEPTOR, GlobalPagingHeadersInterceptor } from './global-paging-headers.interceptor.js';
 import { Response } from 'express';
@@ -9,27 +8,33 @@ import { PagingHeaders } from './paging.enums.js';
 
 describe('GlobalPagingHeadersInterceptor', () => {
     const sut: GlobalPagingHeadersInterceptor = new GlobalPagingHeadersInterceptor();
-    let responseMock: DeepMocked<Response>;
-    let contextMock: DeepMocked<ExecutionContext>;
-    let callHandlerMock: DeepMocked<CallHandler>;
+    let responseMock: Partial<Response>;
+    let contextMock: Partial<ExecutionContext>;
+    let callHandlerMock: Partial<CallHandler>;
 
     describe('intercept', () => {
         describe('when intercepting a paged response', () => {
             beforeEach(() => {
-                responseMock = createMock(Response);
-                contextMock = createMock<ExecutionContext>({
-                    switchToHttp: () =>
-                        createMock<HttpArgumentsHost>({
-                            getResponse: () => responseMock,
-                        }),
-                });
-                callHandlerMock = createMock<CallHandler>({
-                    handle: () => from([new PagedResponse({ offset: 0, limit: 0, total: 0, items: [] })]),
-                });
+                responseMock = {
+                    setHeader: vi.fn().mockReturnThis(),
+                };
+                const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
+                    getResponse: vi.fn().mockImplementation(<T>() => responseMock as unknown as T),
+                };
+                contextMock = {
+                    switchToHttp: vi.fn(() => httpArgumentsHostMock as HttpArgumentsHost),
+                    getHandler: vi.fn(() => (): void => {}),
+                };
+                callHandlerMock = {
+                    handle: vi.fn(() => from([new PagedResponse({ offset: 0, limit: 0, total: 0, items: [] })])),
+                } as CallHandler;
             });
 
             it('should set pagination headers for the response', async () => {
-                const observable: Observable<unknown> = sut.intercept(contextMock, callHandlerMock);
+                const observable: Observable<unknown> = sut.intercept(
+                    contextMock as ExecutionContext,
+                    callHandlerMock as CallHandler,
+                );
 
                 // is needed to execute the observable pipeline
                 await lastValueFrom(observable);
@@ -41,7 +46,10 @@ describe('GlobalPagingHeadersInterceptor', () => {
             });
 
             it('should change response type to list', async () => {
-                const observable: Observable<unknown> = sut.intercept(contextMock, callHandlerMock);
+                const observable: Observable<unknown> = sut.intercept(
+                    contextMock as ExecutionContext,
+                    callHandlerMock as CallHandler,
+                );
 
                 await expect(lastValueFrom(observable)).resolves.toStrictEqual([]);
             });
@@ -49,20 +57,26 @@ describe('GlobalPagingHeadersInterceptor', () => {
 
         describe('when intercepting a non paged response', () => {
             beforeEach(() => {
-                responseMock = createMock(Response);
-                contextMock = createMock<ExecutionContext>({
-                    switchToHttp: () =>
-                        createMock<HttpArgumentsHost>({
-                            getResponse: () => responseMock,
-                        }),
-                });
-                callHandlerMock = createMock<CallHandler>({
-                    handle: () => from([null]),
-                });
+                responseMock = {
+                    setHeader: vi.fn().mockReturnThis(),
+                };
+                const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
+                    getResponse: vi.fn().mockImplementation(<T>() => responseMock as unknown as T),
+                };
+                contextMock = {
+                    switchToHttp: vi.fn(() => httpArgumentsHostMock as HttpArgumentsHost),
+                    getHandler: vi.fn(() => (): void => {}),
+                };
+                callHandlerMock = {
+                    handle: vi.fn(() => from([null])),
+                } as CallHandler;
             });
 
             it('should not set any headers', async () => {
-                const observable: Observable<unknown> = sut.intercept(contextMock, callHandlerMock);
+                const observable: Observable<unknown> = sut.intercept(
+                    contextMock as ExecutionContext,
+                    callHandlerMock as CallHandler,
+                );
 
                 // is needed to execute the observable pipeline
                 await lastValueFrom(observable);
@@ -71,7 +85,10 @@ describe('GlobalPagingHeadersInterceptor', () => {
             });
 
             it('should not change response type', async () => {
-                const observable: Observable<unknown> = sut.intercept(contextMock, callHandlerMock);
+                const observable: Observable<unknown> = sut.intercept(
+                    contextMock as ExecutionContext,
+                    callHandlerMock as CallHandler,
+                );
 
                 await expect(lastValueFrom(observable)).resolves.toBeNull();
             });
@@ -79,23 +96,29 @@ describe('GlobalPagingHeadersInterceptor', () => {
 
         describe('when endpoint should be ignored', () => {
             beforeEach(() => {
-                responseMock = createMock(Response);
-                const handlerMock: Mock = vi.fn();
+                responseMock = {
+                    setHeader: vi.fn().mockReturnThis(),
+                };
+                const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
+                    getResponse: vi.fn().mockImplementation(<T>() => responseMock as unknown as T),
+                };
+                const handlerMock = (): void => {};
                 Reflect.defineMetadata(DISABLE_PAGING_INTERCEPTOR, true, handlerMock);
-                contextMock = createMock<ExecutionContext>({
-                    getHandler: () => handlerMock,
-                    switchToHttp: () =>
-                        createMock<HttpArgumentsHost>({
-                            getResponse: () => responseMock,
-                        }),
-                });
-                callHandlerMock = createMock<CallHandler>({
-                    handle: () => from([new PagedResponse({ offset: 0, limit: 0, total: 0, items: [] })]),
-                });
+                Reflect.defineMetadata(DISABLE_PAGING_INTERCEPTOR, true, handlerMock);
+                contextMock = {
+                    getHandler: (): (() => void) => handlerMock, // <-- return the same function
+                    switchToHttp: (): HttpArgumentsHost => httpArgumentsHostMock as HttpArgumentsHost,
+                };
+                callHandlerMock = {
+                    handle: vi.fn(() => from([new PagedResponse({ offset: 0, limit: 0, total: 0, items: [] })])),
+                } as CallHandler;
             });
 
             it('should not set any headers', async () => {
-                const observable: Observable<unknown> = sut.intercept(contextMock, callHandlerMock);
+                const observable: Observable<unknown> = sut.intercept(
+                    contextMock as ExecutionContext,
+                    callHandlerMock as CallHandler,
+                );
 
                 // is needed to execute the observable pipeline
                 await lastValueFrom(observable);
@@ -104,7 +127,10 @@ describe('GlobalPagingHeadersInterceptor', () => {
             });
 
             it('should not change response type', async () => {
-                const observable: Observable<unknown> = sut.intercept(contextMock, callHandlerMock);
+                const observable: Observable<unknown> = sut.intercept(
+                    contextMock as ExecutionContext,
+                    callHandlerMock as CallHandler,
+                );
 
                 await expect(lastValueFrom(observable)).resolves.toStrictEqual(
                     new PagedResponse({ offset: 0, limit: 0, total: 0, items: [] }),

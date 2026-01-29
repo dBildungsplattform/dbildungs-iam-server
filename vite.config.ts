@@ -47,6 +47,7 @@ export default defineConfig({
             '**/spshconfig/**/*spec.ts',
             '**/status/**/*spec.ts',
             '**/vidis/**/*spec.ts',
+            '**/shared/**/*spec.ts',
         ],
         // projects: [
         //     {

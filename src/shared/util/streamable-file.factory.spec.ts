@@ -1,10 +1,10 @@
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { StreamableFile } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Readable } from 'stream';
 
 import { ClassLogger } from '../../core/logging/class-logger.js';
 import { StreamableFileFactory } from './streamable-file.factory.js';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 
 describe('StreamableFileFactory', () => {
     let module: TestingModule;

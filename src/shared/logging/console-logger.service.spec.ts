@@ -1,16 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConsoleLoggerService } from './console-logger.service.js';
+import { Mock } from 'vitest';
 
 describe('ConsoleLoggerService', () => {
     let module: TestingModule;
     let sut: ConsoleLoggerService;
 
-    const traceSpy: Mock = vi.spyOn(console, 'trace').mockImplementation();
-    const debugSpy: Mock = vi.spyOn(console, 'debug').mockImplementation();
-    const logSpy: Mock = vi.spyOn(console, 'log').mockImplementation();
-    const infoSpy: Mock = vi.spyOn(console, 'info').mockImplementation();
-    const warnSpy: Mock = vi.spyOn(console, 'warn').mockImplementation();
-    const errorSpy: Mock = vi.spyOn(console, 'error').mockImplementation();
+    const traceSpy: Mock = vi.spyOn(console, 'trace').mockImplementation(() => {});
+    const debugSpy: Mock = vi.spyOn(console, 'debug').mockImplementation(() => {});
+    const logSpy: Mock = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const infoSpy: Mock = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const warnSpy: Mock = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const errorSpy: Mock = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     beforeAll(async () => {
         module = await Test.createTestingModule({

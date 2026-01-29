@@ -1,9 +1,10 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { PersonPermissions } from '../../modules/authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../modules/rolle/domain/systemrecht.js';
 import { OrganisationID, PersonID } from '../types/index.js';
 import { PermissionsOverride } from './permissions-override.js';
+import { DeepMocked } from '../../../test/utils/createMock.js';
+import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
 
 describe('PermissionsOverride', () => {
     describe('canModifyPerson', () => {

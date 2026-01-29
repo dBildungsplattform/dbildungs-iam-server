@@ -6,6 +6,7 @@ import { PathLike } from 'node:fs';
 import { DeepPartial } from '../../../test/utils/index.js';
 import { EmailAppConfig } from './email-app.config.js';
 import { JsonConfig, loadConfigFiles, loadEmailAppConfigFiles } from './index.js';
+import { Mock } from 'vitest';
 
 describe('configloader', () => {
     describe('loadConfigFiles', () => {
@@ -330,14 +331,12 @@ describe('configloader', () => {
             };
 
             it("should not load the secrets file if it can't find it", () => {
-                const existsSyncSpy: Mock = jest
-                    .spyOn(fs, 'existsSync')
-                    .mockImplementation((name: PathLike): boolean => {
-                        if (name === './config/secrets.json') {
-                            return false;
-                        }
-                        throw new Error(`Unknown file ${name.toString()}`);
-                    });
+                const existsSyncSpy: Mock = vi.spyOn(fs, 'existsSync').mockImplementation((name: PathLike): boolean => {
+                    if (name === './config/secrets.json') {
+                        return false;
+                    }
+                    throw new Error(`Unknown file ${name.toString()}`);
+                });
                 vi.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
                 loadConfigFiles();
                 expect(existsSyncSpy).toHaveBeenCalledTimes(1);
@@ -485,14 +484,12 @@ describe('configloader', () => {
             };
 
             it("should not load the secrets file if it can't find it", () => {
-                const existsSyncSpy: Mock = jest
-                    .spyOn(fs, 'existsSync')
-                    .mockImplementation((name: PathLike): boolean => {
-                        if (name === './config/email-secrets.json') {
-                            return false;
-                        }
-                        throw new Error(`Unknown file ${name.toString()}`);
-                    });
+                const existsSyncSpy: Mock = vi.spyOn(fs, 'existsSync').mockImplementation((name: PathLike): boolean => {
+                    if (name === './config/email-secrets.json') {
+                        return false;
+                    }
+                    throw new Error(`Unknown file ${name.toString()}`);
+                });
                 vi.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
                 loadEmailAppConfigFiles();
                 expect(existsSyncSpy).toHaveBeenCalledTimes(1);
