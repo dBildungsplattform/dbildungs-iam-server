@@ -32,6 +32,7 @@ export default defineConfig({
             '**/keycloak-handler/**/*spec.ts',
             '**/landesbediensteter/**/*spec.ts',
             '**/meldung/**/*spec.ts',
+            '**/metrics/**/*spec.ts',
             '**/organisation/**/*spec.ts',
             '**/person/**/*spec.ts',
             '**/personenkontext/**/*spec.ts',
