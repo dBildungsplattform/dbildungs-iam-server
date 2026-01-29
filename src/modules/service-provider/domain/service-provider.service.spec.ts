@@ -448,6 +448,7 @@ describe('ServiceProviderService', () => {
             if (mockExistingSchulen[0]) {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
+            serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
             organisationServiceProviderRepo.save.mockResolvedValue();
 
             await service.updateServiceProvidersForVidis();
@@ -473,7 +474,7 @@ describe('ServiceProviderService', () => {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
             organisationServiceProviderRepo.save.mockResolvedValue();
-
+            serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
             await service.updateServiceProvidersForVidis();
 
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);

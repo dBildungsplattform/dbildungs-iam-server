@@ -139,8 +139,13 @@ describe('Rolle API', () => {
     }, 10000000);
 
     afterAll(async () => {
-        await orm.close();
-        await app.close();
+        if (await orm?.isConnected()) {
+            await orm.close();
+        }
+
+        if (app) {
+            await app.close();
+        }
     });
 
     beforeEach(async () => {

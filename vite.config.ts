@@ -44,6 +44,7 @@ export default defineConfig({
             '**/status/**/*spec.ts',
             '**/spshconfig/**/*spec.ts',
             '**/specification/**/*spec.ts',
+            '**/service-provider/**/*spec.ts',
         ],
         // projects: [
         //     {

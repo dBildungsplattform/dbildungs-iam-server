@@ -4,7 +4,6 @@ import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Client } from 'openid-client';
-
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
@@ -29,6 +28,7 @@ import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
@@ -36,6 +36,10 @@ describe('Provider Controller Test', () => {
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let providerController: ProviderController;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
+    const oidcClientMock: DeepMocked<Client> = {
+        grant: vi.fn(),
+        userinfo: vi.fn(),
+    } as DeepMocked<Client>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -51,7 +55,7 @@ describe('Provider Controller Test', () => {
                 },
                 {
                     provide: OIDC_CLIENT,
-                    useValue: createMock(Client),
+                    useValue: oidcClientMock,
                 },
             ],
         })
@@ -201,6 +205,28 @@ describe('Provider Controller Test', () => {
                 1,
             ]);
 
+            rolleRepoMock.findByIds.mockResolvedValue(
+                new Map([
+                    [
+                        rollenerweiterung.rolleId,
+                        DoFactory.createRolle(true, { id: rollenerweiterung.rolleId, name: faker.person.firstName() }),
+                    ],
+                ]),
+            );
+
+            organisationRepositoryMock.findByIds.mockResolvedValue(
+                new Map([
+                    [
+                        rollenerweiterung.organisationId,
+                        DoFactory.createOrganisation(true, {
+                            id: rollenerweiterung.organisationId,
+                            name: faker.company.name(),
+                            kennung: faker.string.alphanumeric(10),
+                        }),
+                    ],
+                ]),
+            );
+
             const result: RawPagedResponse<RollenerweiterungWithExtendedDataResponse> =
                 await providerController.findRollenerweiterungenByServiceProviderId(
                     permissionsMock,
@@ -269,7 +295,7 @@ describe('Provider Controller Test', () => {
             spId = faker.string.uuid();
             sp = DoFactory.createServiceProvider(true, { id: spId });
             pk = DoFactory.createPersonenkontext(true, { rolleId });
-            personPermissions = createMock<PersonPermissions>({});
+            personPermissions = createMock(PersonPermissions);
             personPermissions.getPersonenkontextIds.mockResolvedValueOnce([
                 { organisationId: pk.organisationId, rolleId: pk.rolleId },
             ]);

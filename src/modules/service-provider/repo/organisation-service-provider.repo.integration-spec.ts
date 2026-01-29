@@ -13,7 +13,7 @@ import { ServiceProvider } from '../domain/service-provider.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderRepo } from './service-provider.repo.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock } from '../../../../test/utils/createMock.js';
 
 describe('OrganisationServiceProviderRepo', () => {
     let module: TestingModule;
