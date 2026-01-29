@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosError, AxiosHeaders, AxiosResponse } from 'axios';
@@ -11,7 +10,6 @@ import { ServiceProviderService } from '../service-provider/domain/service-provi
 import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
 import { SoftwareTokenVerificationError } from './api/error/software-token-verification.error.js';
 import { TokenResetError } from './api/error/token-reset.error.js';
-import { TokenError } from './api/error/token.error.js';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import {
     AssignTokenResponse,
@@ -29,6 +27,8 @@ import { SoftwareTokenInitializationError } from './api/error/software-token-ini
 import { TokenStateError } from './api/error/token-state.error.js';
 import { PIUnavailableError } from './api/error/pi-unavailable.error.js';
 import { PersonUsername } from '../../shared/types/aggregate-ids.types.js';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
+import { Mock } from 'vitest';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -549,8 +549,12 @@ describe(`PrivacyIdeaAdministrationService`, () => {
     describe('resetToken', () => {
         const mockResetUser: string = 'testUser';
         const mockJWTToken: string = 'mockJWTToken';
-        const mockTwoAuthState: PrivacyIdeaToken = createMock<PrivacyIdeaToken>({ info: { tokenkind: 'hardware' } });
-        const mockResetTokenResponse: ResetTokenResponse = createMock(ResetTokenResponse);
+        const mockTwoAuthState: PrivacyIdeaToken = {
+            info: { tokenkind: 'hardware' },
+        } as PrivacyIdeaToken;
+
+        const mockResetTokenResponse: ResetTokenResponse = {} as ResetTokenResponse;
+
         it('should reset token successfully', async () => {
             vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
                 mockJWTToken,
@@ -596,7 +600,9 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         });
 
         it('should delete token on unassing if token isnt hotp', async () => {
-            const totpToken: PrivacyIdeaToken = createMock<PrivacyIdeaToken>({ info: { tokenkind: 'software' } });
+            const totpToken: PrivacyIdeaToken = {
+                info: { tokenkind: 'software' },
+            } as PrivacyIdeaToken;
             vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
                 mockJWTToken,
             );
@@ -604,7 +610,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                 service as unknown as { getTwoAuthState: (user: string) => Promise<PrivacyIdeaToken | null> },
                 'getTwoAuthState',
             ).mockResolvedValueOnce(totpToken);
-            const deleteSpy: Mock = jest
+            const deleteSpy: Mock<(serial: string) => Promise<ResetTokenResponse>> = vi
                 .spyOn(
                     service as unknown as { deleteToken: (serial: string) => Promise<ResetTokenResponse> },
                     'deleteToken',
@@ -622,7 +628,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         it('should unassign token successfully', async () => {
             const mockSerial: string = 'mockSerial';
             const mockToken: string = 'mockJWTToken';
-            const mockResetTokenResponse: ResetTokenResponse = createMock(ResetTokenResponse);
+            const mockResetTokenResponse: ResetTokenResponse = {} as ResetTokenResponse;
             const mockResetTokenResponsePromise: AxiosResponse<ResetTokenResponse> = {
                 data: mockResetTokenResponse,
                 status: 200,
@@ -665,7 +671,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         let getTokenToVerifySpy: Mock;
 
         beforeEach(() => {
-            getTokenToVerifySpy = jest
+            getTokenToVerifySpy = vi
                 .spyOn(
                     service as unknown as { getTokenToVerify: () => Promise<PrivacyIdeaToken | undefined> },
                     'getTokenToVerify',
@@ -717,10 +723,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             );
 
             await expect(service.assignHardwareToken('INVALID_SERIAL', 'otp', 'test-user')).rejects.toThrow(
-                new TokenError(
-                    'Die eingegebene Seriennummer konnte leider nicht gefunden werden. Vergewissern Sie sich bitte, das Sie eine korrekte Seriennummer eingegeben haben.',
-                    'token-not-found',
-                ),
+                'Die eingegebene Seriennummer konnte leider nicht gefunden werden.',
             );
         });
 
@@ -735,10 +738,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             );
 
             await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
-                new TokenError(
-                    'Die eingegebene Seriennummer wird bereits aktiv verwendet. Bitte überprüfen Sie ihre Eingabe und versuchen Sie es erneut.',
-                    'token-already-assigned',
-                ),
+                'Die eingegebene Seriennummer wird bereits aktiv verwendet. Bitte überprüfen Sie ihre Eingabe und versuchen Sie es erneut.',
             );
         });
 
@@ -752,7 +752,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenOTPSerialResponseInvalid } as AxiosResponse));
 
             await expect(service.assignHardwareToken('ABC123456', 'invalid-otp', 'test-user')).rejects.toThrow(
-                new TokenError('Ungültiger Code. Bitte versuchen Sie es erneut.', 'token-otp-not-valid'),
+                'Ungültiger Code. Bitte versuchen Sie es erneut.',
             );
         });
 
@@ -765,10 +765,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
 
             await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
-                new TokenError(
-                    'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
-                    'general-token-error',
-                ),
+                'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
             );
         });
 
@@ -782,10 +779,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
 
             await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
-                new TokenError(
-                    'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
-                    'general-token-error',
-                ),
+                'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
             );
         });
 
@@ -801,10 +795,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.post.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
 
             await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
-                new TokenError(
-                    'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
-                    'general-token-error',
-                ),
+                'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
             );
         });
 
@@ -822,10 +813,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.post.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
 
             await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
-                new TokenError(
-                    'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
-                    'general-token-error',
-                ),
+                'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
             );
         });
     });
@@ -975,7 +963,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const newUserName: string = 'newUser';
             const mockUserTokens: PrivacyIdeaToken[] = [mockPrivacyIdeaToken];
             const mockJWTToken: string = 'mockJWTToken';
-            const mockResetTokenResponse: ResetTokenResponse = createMock(ResetTokenResponse);
+            const mockResetTokenResponse: ResetTokenResponse = {} as ResetTokenResponse;
 
             vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
                 mockJWTToken,
@@ -1032,7 +1020,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const newUserName: string = 'newUser';
             const mockUserTokens: PrivacyIdeaToken[] = [mockPrivacyIdeaToken];
             const mockJWTToken: string = 'mockJWTToken';
-            const mockResetTokenResponse: ResetTokenResponse = createMock(ResetTokenResponse);
+            const mockResetTokenResponse: ResetTokenResponse = {} as ResetTokenResponse;
 
             vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
                 mockJWTToken,
@@ -1068,7 +1056,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const newUserName: string = 'newUser';
             const mockUserTokens: PrivacyIdeaToken[] = [mockPrivacyIdeaToken];
             const mockJWTToken: string = 'mockJWTToken';
-            const mockResetTokenResponse: ResetTokenResponse = createMock(ResetTokenResponse);
+            const mockResetTokenResponse: ResetTokenResponse = {} as ResetTokenResponse;
 
             vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
                 mockJWTToken,

@@ -46,6 +46,7 @@ export default defineConfig({
             '**/specification/**/*spec.ts',
             '**/service-provider/**/*spec.ts',
             '**/schulconnex/**/*spec.ts',
+            '**/privacy-idea-administration/**/*spec.ts',
         ],
         // projects: [
         //     {

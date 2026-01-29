@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
@@ -18,6 +17,8 @@ import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './pri
 import { TokenStateResponse } from './token-state.response.js';
 import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
 import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
+import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -92,7 +93,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             });
             personPermissionsMock = createPersonPermissionsMock();
             await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
-                new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
+                new HttpException(new Error('Forbidden access'), HttpStatus.FORBIDDEN),
             );
         });
         it('should return forbidden insufficient permissions', async () => {
@@ -183,7 +184,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             });
 
             await expect(sut.getTwoAuthState('user1', personPermissionsMock)).rejects.toThrow(
-                new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
+                new HttpException(new Error('Forbidden access'), HttpStatus.FORBIDDEN),
             );
         });
 
@@ -235,9 +236,10 @@ describe('PrivacyIdeaAdministrationController', () => {
                 value: person,
             });
             const personId: string = 'user1';
-            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>({
+            const mockResetTokenResponse: ResetTokenResponse = {
                 result: { status: true },
-            });
+            } as ResetTokenResponse;
+
             serviceMock.resetToken.mockResolvedValue(mockResetTokenResponse);
 
             const response: boolean = await sut.resetToken(personId, personPermissionsMock);
@@ -254,7 +256,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             });
 
             await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(
-                new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
+                new HttpException(new Error('Forbidden access'), HttpStatus.FORBIDDEN),
             );
         });
 
@@ -314,7 +316,15 @@ describe('PrivacyIdeaAdministrationController', () => {
 
         it('should successfully assign a hardware token', async () => {
             const mockParams: AssignHardwareTokenBodyParams = createMock(AssignHardwareTokenBodyParams);
-            const mockAssignTokenResponse: AssignTokenResponse = createMock(AssignTokenResponse);
+            const mockAssignTokenResponse: AssignTokenResponse = {
+                id: 1,
+                jsonrpc: '2.0',
+                time: Date.now(),
+                version: '1.0',
+                versionnumber: '1',
+                signature: faker.string.uuid(),
+                result: { status: true, value: true },
+            };
             const person: Person<true> = getPerson();
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
@@ -350,7 +360,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             });
 
             await expect(sut.assignHardwareToken(mockParams, personPermissionsMock)).rejects.toThrow(
-                new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
+                new HttpException(new Error('Forbidden access'), HttpStatus.FORBIDDEN),
             );
         });
 
@@ -438,7 +448,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             });
 
             await expect(sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock)).rejects.toThrow(
-                new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
+                new HttpException(new Error('Forbidden access'), HttpStatus.FORBIDDEN),
             );
         });
 
