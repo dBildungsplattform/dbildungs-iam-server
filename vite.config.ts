@@ -42,6 +42,7 @@ export default defineConfig({
             '**/logging/**/*spec.ts',
             '**/vidis/**/*spec.ts',
             '**/status/**/*spec.ts',
+            '**/spshconfig/**/*spec.ts',
         ],
         // projects: [
         //     {
