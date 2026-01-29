@@ -731,9 +731,9 @@ describe('LdapEventHandler', () => {
             organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
             ldapClientServiceMock.createLehrer.mockResolvedValueOnce({
                 ok: true,
-                value: vi.fn<PersonData>({
+                value: {
                     ldapEntryUUID: entryUUID,
-                }),
+                } as PersonData,
             });
 
             personRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createPerson(true));
