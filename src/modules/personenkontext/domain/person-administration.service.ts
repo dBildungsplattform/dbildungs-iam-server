@@ -29,30 +29,26 @@ export class PersonAdministrationService {
             true,
         );
 
-        let rollenarten: Array<RollenArt> | undefined;
-        let schulstrukturknoten: Array<OrganisationID> | undefined;
+        /** Filters for Rollenarten and Schulstrukturknoten are derived from these. Undefined means "no filter". */
+        let relevantOrganisationIdsForFilter: Array<OrganisationID> | undefined;
         if (permittedOrgas.all) {
-            if (this.hasSelectedOrgas(organisationIds)) {
-                rollenarten = await this.getAllowedRollenArtenForOrganisationen(organisationIds);
-                schulstrukturknoten = await this.getAllowedSchulstrukturknotenForRollen(organisationIds);
-            } else {
-                // no selection, everything is permitted, leave filters empty
-            }
+            relevantOrganisationIdsForFilter = this.hasSelectedOrgas(organisationIds) ? organisationIds : undefined;
         } else {
             if (permittedOrgas.orgaIds.length === 0) {
                 return [];
             }
-            if (this.hasSelectedOrgas(organisationIds)) {
-                const selectedAndPermittedOrgasIds: Array<OrganisationID> = intersection(
-                    permittedOrgas.orgaIds,
-                    organisationIds,
-                );
-                rollenarten = await this.getAllowedRollenArtenForOrganisationen(selectedAndPermittedOrgasIds);
-                schulstrukturknoten = await this.getAllowedSchulstrukturknotenForRollen(selectedAndPermittedOrgasIds);
-            } else {
-                rollenarten = await this.getAllowedRollenArtenForOrganisationen(permittedOrgas.orgaIds);
-                schulstrukturknoten = await this.getAllowedSchulstrukturknotenForRollen(permittedOrgas.orgaIds);
-            }
+            relevantOrganisationIdsForFilter = this.hasSelectedOrgas(organisationIds)
+                ? intersection(permittedOrgas.orgaIds, organisationIds)
+                : permittedOrgas.orgaIds;
+        }
+
+        let rollenarten: Array<RollenArt> | undefined;
+        let schulstrukturknoten: Array<OrganisationID> | undefined;
+        if (relevantOrganisationIdsForFilter) {
+            [rollenarten, schulstrukturknoten] = await Promise.all([
+                this.getAllowedRollenArtenForOrganisationen(relevantOrganisationIdsForFilter),
+                this.getAllowedSchulstrukturknotenForRollen(relevantOrganisationIdsForFilter),
+            ]);
         }
 
         return this.rolleRepo.findBy(rolleName, rollenarten, schulstrukturknoten, limit);
