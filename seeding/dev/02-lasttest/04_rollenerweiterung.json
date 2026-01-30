@@ -1,0 +1,105 @@
+{
+    "entityName": "Rollenerweiterung",
+    "entities": [
+        {
+            "organisationId": 1000,
+            "rolleId": 1,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1001,
+            "rolleId": 1,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1002,
+            "rolleId": 1,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1003,
+            "rolleId": 1,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1004,
+            "rolleId": 1,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1005,
+            "rolleId": 1,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1006,
+            "rolleId": 1,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1007,
+            "rolleId": 1,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1008,
+            "rolleId": 1,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1009,
+            "rolleId": 1,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1000,
+            "rolleId": 2,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1001,
+            "rolleId": 2,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1002,
+            "rolleId": 2,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1003,
+            "rolleId": 2,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1004,
+            "rolleId": 2,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1005,
+            "rolleId": 2,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1006,
+            "rolleId": 2,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1007,
+            "rolleId": 2,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1008,
+            "rolleId": 2,
+            "serviceProviderId": 18
+        },
+        {
+            "organisationId": 1009,
+            "rolleId": 2,
+            "serviceProviderId": 18
+        }
+    ]
+}

@@ -10,7 +10,7 @@ import { OrganisationRepository } from '../../../modules/organisation/persistenc
 import { PersonFactory } from '../../../modules/person/domain/person.factory.js';
 import { Person, PersonCreationParams } from '../../../modules/person/domain/person.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
-import { DBiamPersonenkontextService } from '../../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
+// import { DBiamPersonenkontextService } from '../../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
@@ -61,7 +61,7 @@ export class DbSeedService {
         private readonly serviceProviderFactory: ServiceProviderFactory,
         private readonly emailDomainRepo: EmailDomainRepo,
         private readonly kcUserService: KeycloakUserService,
-        private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
+        // private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
         private readonly dbSeedReferenceRepo: DbSeedReferenceRepo,
         private readonly personenkontextFactory: PersonenkontextFactory,
         config: ConfigService<ServerConfig>,
@@ -439,12 +439,13 @@ export class DbSeedService {
                 befristung,
             );
 
+            // Removed this check to accelerate seeding for the lasttest
             //Check specifications
-            const specificationCheckError: Option<DomainError> =
-                await this.dbiamPersonenkontextService.checkSpecifications(personenKontext);
-            if (specificationCheckError) {
-                throw specificationCheckError;
-            }
+            // const specificationCheckError: Option<DomainError> =
+            //     await this.dbiamPersonenkontextService.checkSpecifications(personenKontext);
+            // if (specificationCheckError) {
+            //     throw specificationCheckError;
+            // }
 
             if (file.overrideId) {
                 personenKontext.id = this.getValidUuidOrUndefined(file.overrideId);
