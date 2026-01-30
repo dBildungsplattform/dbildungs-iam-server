@@ -47,11 +47,11 @@ export default defineConfig({
             '**/shared/**/*spec.ts',
         ],
         coverage: {
-            provider: 'istanbul',
-            reporter: ['text', 'lcov', 'cobertura'],
+            provider: 'v8',
+            reporter: ['text', 'lcov'],
             reportsDirectory: 'coverage',
             include: ['src/**/*.ts'],
-            exclude: ['**/*.spec.ts', '**/test/**', 'vite.config.ts'],
+            exclude: ['**/*.spec.ts', '**/test/**', '**/*.d.ts', 'vite.config.ts'],
         },
     },
     resolve: {
