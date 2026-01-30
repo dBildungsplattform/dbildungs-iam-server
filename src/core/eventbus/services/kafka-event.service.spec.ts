@@ -218,7 +218,7 @@ describe('KafkaEventService', () => {
 
         await sut.handleMessage(message, () => Promise.resolve());
 
-        expect(logger.error).toHaveBeenCalled();
+        expect(logger.logUnknownAsError).toHaveBeenCalled();
     });
 
     it('should log error if handler throws an sync exception', async () => {

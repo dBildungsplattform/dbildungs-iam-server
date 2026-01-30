@@ -1,4 +1,4 @@
-import { Mock, DeepMocked, vi } from 'vitest';
+import { Mock, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { LoggingTestModule } from '../../../../test/utils/index.js';
@@ -6,6 +6,7 @@ import { BaseEvent } from '../../../shared/events/index.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { EventHandlerType } from '../types/util.types.js';
 import { EventService } from './event.service.js';
+import { DeepMocked } from '../../../../test/utils/createMock.js';
 
 class TestEvent extends BaseEvent {
     public constructor() {

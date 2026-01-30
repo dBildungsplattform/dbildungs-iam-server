@@ -8,11 +8,13 @@ import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error
 import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { AccessApiKeyGuard } from './access.apikey.guard.js';
 import { Public } from './public.decorator.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { NewOxParams, OldOxParams } from './externaldata/user-externaldata-ox.response.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -52,8 +54,8 @@ export class KeycloakInternalController {
         }
 
         const workflow: UserExternaldataWorkflowAggregate = this.userExternaldataWorkflowFactory.createNew();
-        await workflow.initialize(person.id);
-        if (!workflow.person || !workflow.checkedExternalPkData) {
+        const workflowInitializeError: Option<DomainError> = await workflow.initialize(person.id);
+        if (workflowInitializeError || !workflow.person || !workflow.checkedExternalPkData) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new UserExternalDataWorkflowError(
@@ -74,10 +76,27 @@ export class KeycloakInternalController {
                 oxParams,
             );
         } else {
-            const oxParams: OldOxParams = {
-                contextId: workflow.contextID,
-                username: workflow.person.username!,
-            };
+            // Check if user has email sp
+            const mergedExternalPkData: RequiredExternalPkData[] =
+                UserExternaldataWorkflowAggregate.mergeServiceProviders(
+                    workflow.checkedExternalPkData,
+                    workflow.personenKontextErweiterungen!,
+                );
+
+            const hasEmail: boolean = mergedExternalPkData.some((pkData: RequiredExternalPkData) =>
+                pkData.serviceProvider.some(
+                    (sp: ServiceProviderEntity) => sp.externalSystem === ServiceProviderSystem.EMAIL,
+                ),
+            );
+
+            let oxParams: OldOxParams | undefined;
+            if (hasEmail) {
+                oxParams = {
+                    contextId: workflow.contextID,
+                    username: workflow.person.username!,
+                };
+            }
+
             return UserExternalDataResponse.createNew(
                 workflow.person,
                 workflow.checkedExternalPkData,

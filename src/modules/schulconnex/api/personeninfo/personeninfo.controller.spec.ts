@@ -3,9 +3,10 @@ import { PersonenInfoController } from './personeninfo.controller.js';
 import { PersonenInfoService } from '../../domain/personeninfo/personeninfo.service.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { HttpException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { createPersonPermissionsMock } from '../../../../../test/utils/auth.mock.js';
 
 describe('PersonenInfoController', () => {
     let controller: PersonenInfoController;

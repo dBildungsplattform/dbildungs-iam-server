@@ -20,6 +20,11 @@ import {
 import { uniq } from 'lodash-es';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
+import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
+import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
+import { PersonID } from '../../../shared/types/index.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Person } from '../../person/domain/person.js';
 
 @Injectable()
 export class EmailMicroserviceEventHandler {
@@ -28,6 +33,7 @@ export class EmailMicroserviceEventHandler {
         private readonly rolleRepo: RolleRepo,
         private readonly emailResolverService: EmailResolverService,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly personRepository: PersonRepository,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
         // to create the request-bound EntityManager context. Removing it would break context creation.
@@ -69,10 +75,16 @@ export class EmailMicroserviceEventHandler {
         );
 
         if (!emailServiceProviderId) {
-            this.logger.info(
-                `No email service provider found for personId:${event.person.id}, skipping email resolution.`,
-            );
-            return;
+            // If only in the removedKontexte through this event is a serviceProviderId, set emails to suspended
+            if (await this.existsEmailServiceProviderIdInRemovedKontexte(event.removedKontexte)) {
+                await this.emailResolverService.setEmailsSuspendedForSpshPerson({ spshPersonId: event.person.id });
+                return;
+            } else {
+                this.logger.debug(
+                    `No email service provider found or removed for personId:${event.person.id}, skipping email resolution.`,
+                );
+                return;
+            }
         }
 
         const uniqueKennungen: string[] = uniq(
@@ -164,6 +176,71 @@ export class EmailMicroserviceEventHandler {
         await this.emailResolverService.deleteEmailsForSpshPerson({ spshPersonId: event.personId });
     }
 
+    @KafkaEventHandler(KafkaPersonExternalSystemsSyncEvent)
+    @EventHandler(PersonExternalSystemsSyncEvent)
+    @EnsureRequestContext()
+    public async handlePersonExternalSystemsSyncEvent(
+        event: PersonExternalSystemsSyncEvent | KafkaPersonExternalSystemsSyncEvent,
+    ): Promise<void> {
+        const personId: PersonID = event.personId;
+        this.logger.info(`Received PersonExternalSystemsSyncEvent, personId:${personId}`);
+        if (!this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Ignoring Event for personId:${personId} because email microservice is disabled`);
+            return;
+        }
+
+        const allKontexteForPerson: KontextWithOrgaAndRolle[] =
+            await this.personenkontextRepo.findByPersonWithOrgaAndRolle(event.personId);
+
+        const allRolleIds: string[] = allKontexteForPerson.map((k: KontextWithOrgaAndRolle) => k.rolle.id);
+        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(allRolleIds);
+
+        const emailServiceProviderId: string | undefined = this.getEmailServiceProviderId(
+            Array.from(rollenMap.values()),
+        );
+
+        if (emailServiceProviderId) {
+            this.logger.info(
+                `Found email service provider for personId:${personId}, setting emails accordingly in email microservice.`,
+            );
+            const person: Option<Person<true>> = await this.personRepository.findById(personId);
+            if (!person) {
+                this.logger.error(`Person with id:${personId} not found. Therefor aborting setEmailForSpshPerson`);
+                return;
+            }
+            if (!person.username) {
+                this.logger.error(
+                    `Person with id:${personId} found, but has no username. Therefor aborting setEmailForSpshPerson`,
+                );
+                return;
+            }
+            const uniqueKennungen: string[] = uniq(
+                this.getKennungenWithEmailServiceProvider(
+                    allKontexteForPerson.map((k: KontextWithOrgaAndRolle) => ({
+                        orgaId: k.organisation.id,
+                        orgaKennung: k.organisation.kennung,
+                        rolleId: k.rolle.id,
+                    })),
+                    rollenMap,
+                ),
+            );
+
+            await this.emailResolverService.setEmailForSpshPerson({
+                spshPersonId: event.personId,
+                spshUsername: person.username,
+                kennungen: uniqueKennungen,
+                firstName: person.vorname,
+                lastName: person.familienname,
+                spshServiceProviderId: emailServiceProviderId,
+            });
+        } else {
+            this.logger.info(
+                `No email service provider found for personId:${personId}, deleting emails in email microservice if there are any.`,
+            );
+            await this.emailResolverService.deleteEmailsForSpshPerson({ spshPersonId: personId });
+        }
+    }
+
     private getEmailServiceProviderId(rollen: Rolle<true>[]): string | undefined {
         const spshServiceProviderId: string | undefined = rollen
             .flatMap((rolle: Rolle<true>) => rolle.serviceProviderData)
@@ -189,5 +266,16 @@ export class EmailMicroserviceEventHandler {
             )
             .map((kontext: { orgaId: string; orgaKennung: string | undefined; rolleId: string }) => kontext.orgaKennung)
             .filter((kennung: string | undefined): kennung is string => !!kennung);
+    }
+
+    private async existsEmailServiceProviderIdInRemovedKontexte(
+        removedKontexte: PersonenkontextEventKontextData[],
+    ): Promise<boolean> {
+        const rolleIds: string[] = removedKontexte.map((k: PersonenkontextEventKontextData) => k.rolleId);
+        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rolleIds);
+        const emailServiceProviderId: string | undefined = this.getEmailServiceProviderId(
+            Array.from(rollenMap.values()),
+        );
+        return Boolean(emailServiceProviderId);
     }
 }

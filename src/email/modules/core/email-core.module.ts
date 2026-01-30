@@ -9,12 +9,14 @@ import { EmailAddressGenerator } from './domain/email-address-generator.js';
 import { EmailOxModule } from '../ox/email-ox.module.js';
 import { EmailLdapModule } from '../ldap/email-ldap.module.js';
 import { DeleteEmailsAddressesForSpshPersonService } from './domain/delete-email-adresses-for-spsh-person.service.js';
+import { SetEmailSuspendedService } from './domain/set-email-suspended.service.js';
 
 @Module({
     imports: [LoggerModule.register(EmailCoreModule.name), EmailOxModule, EmailLdapModule],
     providers: [
         SetEmailAddressForSpshPersonService,
         DeleteEmailsAddressesForSpshPersonService,
+        SetEmailSuspendedService,
         EmailAddressRepo,
         EmailDomainRepo,
         EmailAddressGenerator,

@@ -1,4 +1,4 @@
-import { DeepMocked, vi } from 'vitest';
+import { vi } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { RollenArt, RollenMerkmal } from './rolle.enums.js';

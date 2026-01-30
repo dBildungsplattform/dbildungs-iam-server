@@ -29,7 +29,8 @@ export function createLandesbediensteterWorkflowAggregateMock(): MockedObject<La
             createMock(PersonenkontextWorkflowSharedKernel),
         );
     return vi.mockObject(landesbediensteterWorkflowAggregate);
-}export function createPersonenkontexteUpdateMock(): MockedObject<PersonenkontexteUpdate> {
+}
+export function createPersonenkontexteUpdateMock(): MockedObject<PersonenkontexteUpdate> {
     const personenkontexteUpdate: PersonenkontexteUpdate = PersonenkontexteUpdate.createNew(
         null as unknown as EventRoutingLegacyKafkaService,
         null as unknown as ClassLogger,
@@ -44,8 +45,7 @@ export function createLandesbediensteterWorkflowAggregateMock(): MockedObject<La
         null as unknown as number,
         null as unknown as DbiamPersonenkontextBodyParams[],
         null as unknown as IPersonPermissions,
-        null as unknown as string
+        null as unknown as string,
     );
     return vi.mockObject(personenkontexteUpdate);
 }
-

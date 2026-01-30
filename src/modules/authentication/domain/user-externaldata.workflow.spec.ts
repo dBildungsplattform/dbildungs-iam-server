@@ -21,6 +21,7 @@ import { EmailAddressNotFoundError } from '../../email/error/email-address-not-f
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 import { LoadedReference, Reference } from '@mikro-orm/core';
+import { Err, Ok } from '../../../shared/util/result.js';
 
 function createLoadedServiceProviderReferences(id?: string, name?: string): LoadedReference<ServiceProviderEntity> {
     const serviceProviderReference: Reference<ServiceProviderEntity> =
@@ -152,7 +153,7 @@ describe('UserExternaldataWorkflow', () => {
             dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue([]);
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
             emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValue(
-                createMock<EmailAddressResponse>(EmailAddressResponse, { oxLoginId: oxLoginId }),
+                Ok(createMock<EmailAddressResponse>(EmailAddressResponse, { oxLoginId: oxLoginId })),
             );
 
             await sut.initialize(person.id);
@@ -166,11 +167,11 @@ describe('UserExternaldataWorkflow', () => {
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
             dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue([]);
 
-            const response: void | DomainError = await sut.initialize(faker.string.uuid());
+            const response: Option<DomainError> = await sut.initialize(faker.string.uuid());
             expect(response).toBeInstanceOf(DomainError);
         });
 
-        it('should return EmailAddressNotFoundError when email not found', async () => {
+        it('should return Error from email microservice', async () => {
             const keycloakSub: string = faker.string.uuid();
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
@@ -183,15 +184,16 @@ describe('UserExternaldataWorkflow', () => {
                 keycloakSub,
                 faker.string.uuid(),
             );
+            const error: EmailAddressNotFoundError = new EmailAddressNotFoundError();
 
             personRepositoryMock.findById.mockResolvedValue(person);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValue(undefined);
+            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValue(Err(error));
 
-            const response: void | DomainError = await sut.initialize(person.id);
+            const response: Option<DomainError> = await sut.initialize(person.id);
 
-            expect(response).toBeInstanceOf(EmailAddressNotFoundError);
+            expect(response).toBe(error);
         });
     });
 

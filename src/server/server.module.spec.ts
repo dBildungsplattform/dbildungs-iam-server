@@ -3,12 +3,21 @@ import { Issuer } from 'openid-client';
 import { ServerModule } from './server.module.js';
 import { OIDC_CLIENT } from '../modules/authentication/services/oidc-client.service.js';
 import { MiddlewareConsumer } from '@nestjs/common';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { RedisClientType } from 'redis';
 import { ConfigTestModule, LoggingTestModule } from '../../test/utils/index.js';
 
-Mock('redis', () => ({
-    createClient: (): RedisClientType => createMock(RedisClientType),
+function createRedisClientMock(overrides?: Partial<RedisClientType>): RedisClientType {
+    return {
+        connect: vi.fn(),
+        disconnect: vi.fn(),
+        get: vi.fn(),
+        set: vi.fn(),
+        ...overrides,
+    } as RedisClientType;
+}
+
+vi.mock('redis', () => ({
+    createClient: (): RedisClientType => createRedisClientMock(),
 }));
 
 describe('ServerModule', () => {
@@ -20,6 +29,7 @@ describe('ServerModule', () => {
         })
             .overrideProvider(OIDC_CLIENT)
             .useValue(
+                // createOidcClientMock(),
                 new new Issuer({
                     issuer: 'oidc',
                     jwks_uri: 'https://keycloak.example.com/nothing',
@@ -38,7 +48,7 @@ describe('ServerModule', () => {
 
     it('should run its configure method', async () => {
         expect(module.get(ServerModule)).toBeDefined();
-        const consumer: MiddlewareConsumer = createMock(MiddlewareConsumer);
+        const consumer: MiddlewareConsumer = vi.mockObject({ apply: vi.fn().mockReturnValue({}) });
         await module.get(ServerModule).configure(consumer);
 
         expect(consumer.apply).toHaveBeenCalled();

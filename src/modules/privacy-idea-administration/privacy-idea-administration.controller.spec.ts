@@ -60,6 +60,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         sut = module.get<PrivacyIdeaAdministrationController>(PrivacyIdeaAdministrationController);
         serviceMock = module.get<DeepMocked<PrivacyIdeaAdministrationService>>(PrivacyIdeaAdministrationService);
         personRepository = module.get<DeepMocked<PersonRepository>>(PersonRepository);
+        personPermissionsMock = createPersonPermissionsMock();
     });
 
     afterAll(async () => {
@@ -79,7 +80,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: true,
                 value: person,
             });
-            personPermissionsMock = createPersonPermissionsMock();
 
             serviceMock.initializeSoftwareToken.mockResolvedValue('token123');
             const response: string = await sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock);
@@ -91,7 +91,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: false,
                 error: new Error('Forbidden access'),
             });
-            personPermissionsMock = createPersonPermissionsMock();
             await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
                 new HttpException(new Error('Forbidden access'), HttpStatus.FORBIDDEN),
             );
@@ -102,7 +101,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: true,
                 value: person,
             });
-            personPermissionsMock = createPersonPermissionsMock();
             serviceMock.initializeSoftwareToken.mockRejectedValueOnce(
                 new SoftwareTokenInitializationError('SoftwareToken Error'),
             );
@@ -153,7 +151,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                 user_realm: '',
                 username: '',
             };
-            personPermissionsMock = createPersonPermissionsMock();
 
             serviceMock.getTwoAuthState.mockResolvedValue(mockTokenState);
             const response: TokenStateResponse = await sut.getTwoAuthState('user1', personPermissionsMock);
@@ -168,8 +165,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: true,
                 value: person,
             });
-
-            personPermissionsMock = createPersonPermissionsMock();
 
             serviceMock.getTwoAuthState.mockResolvedValue(undefined);
             serviceMock.requires2fa.mockResolvedValue(twoFaRequired);
@@ -228,6 +223,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             expect(response).toEqual(new TokenStateResponse(undefined));
         });
     });
+
     describe('PrivacyIdeaAdministrationController resetToken', () => {
         it('should successfully reset a token', async () => {
             const person: Person<true> = getPerson();
@@ -310,10 +306,6 @@ describe('PrivacyIdeaAdministrationController', () => {
     });
 
     describe('PrivacyIdeaAdministrationController assignHardwareToken', () => {
-        beforeEach(() => {
-            personPermissionsMock = createPersonPermissionsMock();
-        });
-
         it('should successfully assign a hardware token', async () => {
             const mockParams: AssignHardwareTokenBodyParams = createMock(AssignHardwareTokenBodyParams);
             const mockAssignTokenResponse: AssignTokenResponse = {

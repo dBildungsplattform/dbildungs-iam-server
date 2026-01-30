@@ -10,10 +10,12 @@ import { SetEmailAddressForSpshPersonService } from '../../domain/set-email-addr
 import { SetEmailAddressForSpshPersonBodyParams } from '../dtos/params/set-email-address-for-spsh-person.bodyparams.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { DeleteEmailsAddressesForSpshPersonService } from '../../domain/delete-email-adresses-for-spsh-person.service.js';
+import { SetEmailSuspendedService } from '../../domain/set-email-suspended.service.js';
 
 describe('Email Write Controller', () => {
     let emailWriteController: EmailWriteController;
     let setEmailAddressForSpshPersonServiceMock: DeepMocked<SetEmailAddressForSpshPersonService>;
+    let setEmailSuspendedServiceMock: DeepMocked<SetEmailSuspendedService>;
     let deleteEmailsAddressesForSpshPersonServiceMock: DeepMocked<DeleteEmailsAddressesForSpshPersonService>;
 
     beforeAll(async () => {
@@ -26,6 +28,7 @@ describe('Email Write Controller', () => {
                 },
                 EmailWriteController,
                 SetEmailAddressForSpshPersonService,
+                SetEmailSuspendedService,
                 DeleteEmailsAddressesForSpshPersonService,
                 ClassLogger,
             ],
@@ -33,13 +36,16 @@ describe('Email Write Controller', () => {
             .overrideProvider(SetEmailAddressForSpshPersonService)
             .useValue(createMock(SetEmailAddressForSpshPersonService))
             .overrideProvider(DeleteEmailsAddressesForSpshPersonService)
-            .useValue(createMock(DeleteEmailsAddressesForSpshPersonService))
+            .useValue(createMock<DeleteEmailsAddressesForSpshPersonService>(DeleteEmailsAddressesForSpshPersonService))
+            .overrideProvider(SetEmailSuspendedService)
+            .useValue(createMock<SetEmailSuspendedService>(SetEmailSuspendedService))
             .overrideProvider(ClassLogger)
-            .useValue(createMock(ClassLogger))
+            .useValue(createMock<ClassLogger>(ClassLogger))
             .compile();
 
         emailWriteController = module.get(EmailWriteController);
         setEmailAddressForSpshPersonServiceMock = module.get(SetEmailAddressForSpshPersonService);
+        setEmailSuspendedServiceMock = module.get(SetEmailSuspendedService);
         deleteEmailsAddressesForSpshPersonServiceMock = module.get(DeleteEmailsAddressesForSpshPersonService);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
@@ -117,6 +123,30 @@ describe('Email Write Controller', () => {
             expect(
                 deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
             ).toHaveBeenCalledWith({ spshPersonId });
+        });
+    });
+
+    describe('setEmailsSuspendedForSpshPerson', () => {
+        it('should resolve immediatly if setEmailsSuspended succeeds', () => {
+            const spshPersonId: string = faker.string.uuid();
+            setEmailSuspendedServiceMock.setEmailsSuspended.mockResolvedValue();
+            const result: void = emailWriteController.setEmailsSuspended({ spshPersonId: spshPersonId });
+            expect(result).toBeUndefined();
+            vi.runAllTimers();
+            expect(setEmailSuspendedServiceMock.setEmailsSuspended).toHaveBeenCalledWith({
+                spshPersonId: spshPersonId,
+            });
+        });
+
+        it('should resolve immediatly if setEmailsSuspended fails', () => {
+            const spshPersonId: string = faker.string.uuid();
+            setEmailSuspendedServiceMock.setEmailsSuspended.mockRejectedValue(new Error('Test error'));
+            const result: void = emailWriteController.setEmailsSuspended({ spshPersonId: spshPersonId });
+            expect(result).toBeUndefined();
+            vi.runAllTimers();
+            expect(setEmailSuspendedServiceMock.setEmailsSuspended).toHaveBeenCalledWith({
+                spshPersonId: spshPersonId,
+            });
         });
     });
 });

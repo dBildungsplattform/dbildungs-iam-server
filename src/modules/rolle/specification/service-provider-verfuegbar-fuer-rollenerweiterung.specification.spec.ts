@@ -1,4 +1,3 @@
-import { DeepMocked } from 'vitest';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';

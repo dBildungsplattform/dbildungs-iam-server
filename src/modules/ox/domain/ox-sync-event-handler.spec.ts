@@ -27,6 +27,7 @@ import { OxError } from '../../../shared/error/ox.error.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import assert from 'assert';
 import { OxEventService } from './ox-event.service.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 describe('OxSyncEventHandler', () => {
     let app: INestApplication;
@@ -41,6 +42,7 @@ describe('OxSyncEventHandler', () => {
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let oxServiceMock: DeepMocked<OxService>;
+    let emailResolverServiceMock: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -76,6 +78,10 @@ describe('OxSyncEventHandler', () => {
                     provide: OxService,
                     useValue: createMock(OxService),
                 },
+                {
+                    provide: EmailResolverService,
+                    useValue: createMock<EmailResolverService>(),
+                },
             ],
         }).compile();
 
@@ -88,6 +94,9 @@ describe('OxSyncEventHandler', () => {
         organisationRepositoryMock = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        emailResolverServiceMock = module.get(EmailResolverService);
+
+        emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
 
         oxServiceMock = module.get(OxService);
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
@@ -280,6 +289,18 @@ describe('OxSyncEventHandler', () => {
                 Map<RolleID, Rolle<true>>,
             ] = getPkArrayOrgaMapAndRolleMap(person);
             mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+        });
+
+        describe('when email microservice is enabled', () => {
+            it('should log info and stop execution', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+                await sut.ldapSyncCompletedEventHandler(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Ignoring Event for personId:${event.personId} because email microservice is enabled`,
+                );
+            });
         });
 
         describe('when person CANNOT be found', () => {

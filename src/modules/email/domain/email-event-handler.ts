@@ -27,7 +27,6 @@ import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import {
     EmailAddressID,
     OrganisationID,
@@ -397,37 +396,6 @@ export class EmailEventHandler {
         }
 
         return undefined;
-    }
-
-    // disabled for now, since we might run into issues (sheer volume of data) with fetching all affected personenkontexte
-    // @KafkaEventHandler(KafkaRolleUpdatedEvent)
-    // @EventHandler(RolleUpdatedEvent)
-    @EnsureRequestContext()
-    public async handleRolleUpdatedEvent(event: RolleUpdatedEvent): Promise<void> {
-        this.logger.info(`Received RolleUpdatedEvent, rolleId:${event.id}, rollenArt:${event.rollenArt}`);
-
-        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByRolle(event.id);
-
-        //const personIdUsernameSet: Set<[PersonID, PersonUsername]> = new Set<[PersonID, PersonUsername]>();
-
-        const personIdUsernameMap: Map<PersonID, PersonUsername | undefined> = new Map<
-            PersonID,
-            PersonUsername | undefined
-        >();
-        const personIdsSet: Set<PersonID> = new Set<PersonID>();
-        personenkontexte.forEach((pk: Personenkontext<true>) => {
-            personIdsSet.add(pk.personId);
-            personIdUsernameMap.set(pk.personId, pk.username);
-        });
-        const distinctPersonIds: PersonID[] = Array.from(personIdsSet.values());
-
-        this.logger.info(`RolleUpdatedEvent affects:${distinctPersonIds.length} persons`);
-
-        const handlePersonPromises: Promise<void>[] = distinctPersonIds.map((personId: PersonID) => {
-            return this.handlePerson(personId, personIdUsernameMap.get(personId));
-        });
-
-        await Promise.all(handlePersonPromises);
     }
 
     @KafkaEventHandler(KafkaDisabledOxUserChangedEvent)

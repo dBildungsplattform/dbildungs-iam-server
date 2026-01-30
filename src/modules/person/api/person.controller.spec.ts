@@ -8,7 +8,6 @@ import {
     createPersonPermissionsMock,
     DatabaseTestModule,
     DoFactory,
-    PersonPermissionsMock,
 } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';

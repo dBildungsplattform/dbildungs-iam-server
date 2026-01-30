@@ -6,7 +6,6 @@ import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/ka
 import { KafkaImportExecutedEvent } from '../../../shared/events/kafka-import-executed.event.js';
 import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
 import { KafkaKlasseCreatedEvent } from '../../../shared/events/kafka-klasse-created.event.js';
-import { KafkaKlasseDeletedEvent } from '../../../shared/events/kafka-klasse-deleted.event.js';
 import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-updated.event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
@@ -68,7 +67,6 @@ export type KafkaEventKey =
     | 'import.executed'
     | 'group_role.created'
     | 'klasse.created'
-    | 'klasse.deleted'
     | 'klasse.updated'
     | 'rolle.updated'
     | 'schule.created'
@@ -159,11 +157,6 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
 
     'klasse.created': {
         eventClass: KafkaKlasseCreatedEvent,
-        topic: 'organisation-topic',
-        topicDlq: 'organisation-dlq-topic',
-    },
-    'klasse.deleted': {
-        eventClass: KafkaKlasseDeletedEvent,
         topic: 'organisation-topic',
         topicDlq: 'organisation-dlq-topic',
     },
