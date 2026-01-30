@@ -137,6 +137,9 @@ export class DbSeedConsole extends CommandRunner {
             case 'EmailDomain':
                 await this.dbSeedService.seedEmailDomain(fileContentAsStr);
                 break;
+            case 'Rollenerweiterung':
+                await this.dbSeedService.seedRollenerweiterung(fileContentAsStr);
+                break;
             default:
                 throw new Error(`Unsupported EntityName / EntityType: ${seedFile.entityName}`);
         }

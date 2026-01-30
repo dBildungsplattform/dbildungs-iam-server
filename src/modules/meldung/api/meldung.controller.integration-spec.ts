@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { MockedObject, vi } from 'vitest';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
@@ -23,7 +23,7 @@ import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js
 describe('Meldung Controller', () => {
     let module: TestingModule;
     let meldungController: MeldungController;
-    let meldungRepo: DeepMocked<MeldungRepo>;
+    let meldungRepo: MockedObject<MeldungRepo>;
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [

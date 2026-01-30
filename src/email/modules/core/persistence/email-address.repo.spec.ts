@@ -452,6 +452,14 @@ describe('EmailRepo', () => {
                 undefined,
             );
             await setStatus(mail1, EmailAddressStatusEnum.ACTIVE);
+            const mail2: EmailAddress<true> = await createAndSaveMail(
+                faker.internet.email(),
+                2,
+                personId,
+                oxUserCounter,
+                undefined,
+            );
+            await setStatus(mail2, EmailAddressStatusEnum.SUSPENDED);
 
             await sut.ensureStatusesAndCronDateForPerson(personId, cronDate);
 
@@ -461,6 +469,23 @@ describe('EmailRepo', () => {
                 expect.objectContaining({ status: EmailAddressStatusEnum.DEACTIVE }),
                 expect.objectContaining({ status: EmailAddressStatusEnum.ACTIVE }),
             ]);
+            expect(emailsAfterwards[1]?.sortedStatuses).toEqual([
+                expect.objectContaining({ status: EmailAddressStatusEnum.DEACTIVE }),
+                expect.objectContaining({ status: EmailAddressStatusEnum.SUSPENDED }),
+            ]);
+        });
+    });
+
+    describe('delete', () => {
+        it('should delete the email address by id', async () => {
+            const mail: EmailAddress<true> = await createAndSaveMail();
+            const found: Option<EmailAddress<true>> = await sut.findEmailAddress(mail.address);
+            expect(found).toBeDefined();
+
+            await sut.delete(mail);
+
+            const afterDelete: Option<EmailAddress<true>> = await sut.findEmailAddress(mail.address);
+            expect(afterDelete).toBeUndefined();
         });
     });
 

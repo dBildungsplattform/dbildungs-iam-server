@@ -559,7 +559,7 @@ export class OrganisationService {
         };
     }
 
-    public async findOrganisationByIdAndMatchingPermissions(
+    public async findOrganisationByIdAndAnyMatchingPermissions(
         permissions: PersonPermissions,
         organisationId: OrganisationID,
     ): Promise<Result<Organisation<true>, EntityNotFoundError | MissingPermissionsError>> {
@@ -571,7 +571,7 @@ export class OrganisationService {
                     RollenSystemRecht.SCHULEN_VERWALTEN,
                     RollenSystemRecht.KLASSEN_VERWALTEN,
                 ],
-                { organisationIds: [organisationId], limit: 1 },
+                { organisationIds: [organisationId], limit: 1, matchAllSystemrechte: false },
             );
         const organisation: Option<Organisation<true>> = organisations[0];
         if (organisation?.id !== organisationId) {

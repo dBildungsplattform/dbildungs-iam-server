@@ -16,7 +16,6 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
-import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
@@ -30,7 +29,6 @@ import { Organisation } from '../domain/organisation.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationScope } from './organisation.scope.js';
-import { KafkaKlasseDeletedEvent } from '../../../shared/events/kafka-klasse-deleted.event.js';
 import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-updated.event.js';
 import { KafkaSchuleItslearningEnabledEvent } from '../../../shared/events/kafka-schule-itslearning-enabled.event.js';
 import { KafkaSchuleCreatedEvent } from '../../../shared/events/kafka-schule-created.event.js';
@@ -75,7 +73,7 @@ export function mapOrgaEntityToAggregate(entity: OrganisationEntity): Organisati
     );
 }
 
-export type OrganisationSeachOptions = {
+export type OrganisationSearchOptions = {
     readonly kennung?: string;
     readonly name?: string;
     readonly searchString?: string;
@@ -89,6 +87,7 @@ export type OrganisationSeachOptions = {
     readonly sortField?: SortFieldOrganisation;
     readonly sortOrder?: ScopeOrder;
     readonly getChildrenRecursively?: boolean;
+    readonly matchAllSystemrechte?: boolean;
 };
 
 @Injectable()
@@ -339,9 +338,13 @@ export class OrganisationRepository {
     public async findAuthorized(
         personPermissions: PersonPermissions,
         systemrechte: RollenSystemRecht[],
-        searchOptions: OrganisationSeachOptions,
+        searchOptions: OrganisationSearchOptions,
     ): Promise<[Organisation<true>[], total: number, pageTotal: number]> {
-        const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(systemrechte, true);
+        const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(
+            systemrechte,
+            true,
+            searchOptions.matchAllSystemrechte,
+        );
         if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
             return [[], 0, 0];
         }
@@ -471,62 +474,6 @@ export class OrganisationRepository {
         }
 
         return [organisations, total + entitiesForIds.length - duplicates, pageTotal];
-    }
-
-    public async deleteKlasse(id: OrganisationID, permissions: PersonPermissions): Promise<Option<DomainError>> {
-        const organisationEntity: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
-        if (!organisationEntity) {
-            const error: EntityNotFoundError = new EntityNotFoundError('Organisation', id);
-            this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse mit der ID ${id} zu entfernen. Fehler: ${error.message}`,
-            );
-            return error;
-        }
-
-        let schoolName: string | undefined;
-        if (organisationEntity.administriertVon) {
-            const school: Option<Organisation<true>> = await this.findById(organisationEntity.administriertVon);
-            if (!school) {
-                const error: DomainError = new EntityNotFoundError('Organisation', organisationEntity.administriertVon);
-                this.logger.error(
-                    `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} zu entfernen. Fehler: ${error.message}`,
-                );
-                return error;
-            }
-            schoolName = school.name;
-        }
-        if (!schoolName) {
-            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
-                'The schoolName of a Klasse cannot be undefined.',
-            ]);
-            this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} zu entfernen. Fehler: ${error.message}`,
-            );
-            return error;
-        }
-        if (organisationEntity.typ !== OrganisationsTyp.KLASSE) {
-            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
-                'Only Klassen can be deleted.',
-            ]);
-            this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} (${schoolName}) zu entfernen. Fehler: ${error.message}`,
-            );
-            return error;
-        }
-
-        await this.em.removeAndFlush(organisationEntity);
-        this.eventService.publish(
-            new KlasseDeletedEvent(organisationEntity.id),
-            new KafkaKlasseDeletedEvent(organisationEntity.id),
-        );
-
-        if (organisationEntity.zugehoerigZu) {
-            this.logger.info(
-                `Admin: ${permissions.personFields.id}) hat eine Klasse entfernt: ${organisationEntity.name} (${schoolName}).`,
-            );
-        }
-
-        return;
     }
 
     public async updateOrganisationName(

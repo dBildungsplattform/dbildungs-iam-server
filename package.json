@@ -17,12 +17,21 @@
         "start": "nest start server",
         "start:debug": "nest start server --debug --watch",
         "start:prod": "node dist/src/server/main.js",
+<<<<<<< HEAD
         "test": "vitest",
         "test:ci": "vitest --coverage --maxWorkers=100%",
         "test:cov": "vitest --coverage --maxWorkers=50%",
         "test:watch": "vitest --maxWorkers=50% --watch",
         "test:unit": "vitest --maxWorkers=50% --selectProjects unit",
         "test:integration": "vitest --maxWorkers=50% --selectProjects integration",
+=======
+        "test": "jest",
+        "test:ci": "jest --coverage --maxWorkers=100%",
+        "test:cov": "jest --coverage --maxWorkers=50%",
+        "test:watch": "jest --maxWorkers=50% --watch",
+        "test:unit": "jest --maxWorkers=50% --selectProjects unit",
+        "test:integration": "jest --maxWorkers=50% --selectProjects integration",
+>>>>>>> main
         "test:vitest": "vitest",
         "lint": "eslint --max-warnings=0",
         "lint:fix": "eslint --fix",

@@ -783,91 +783,6 @@ describe('OrganisationRepository', () => {
         });
     });
 
-    describe('deleteKlasse', () => {
-        describe('when all validations succeed', () => {
-            it('should succeed', async () => {
-                const permissionsMock: PersonPermissions = createPersonPermissionsMock();
-                const parentOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
-                const savedParentOrganisation: Organisation<true> = await sut.save(parentOrganisation);
-                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
-                    typ: OrganisationsTyp.KLASSE,
-                    administriertVon: savedParentOrganisation.id,
-                });
-                const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
-
-                await sut.deleteKlasse(savedOrganisaiton.id, permissionsMock);
-                const exists: boolean = await sut.exists(savedOrganisaiton.id);
-
-                expect(exists).toBe(false);
-            });
-        });
-
-        describe('when organisation does not exist', () => {
-            it('should return EntityNotFoundError', async () => {
-                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-                const id: string = faker.string.uuid();
-                const result: Option<DomainError> = await sut.deleteKlasse(id, permissionsMock);
-                expect(result).toEqual(new EntityNotFoundError('Organisation', id));
-            });
-        });
-
-        describe('when parent organisation does not exist in database', () => {
-            it('should return EntityNotFoundError', async () => {
-                const permissionsMock: PersonPermissions = createPersonPermissionsMock();
-                const parentOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
-                parentOrganisation.id = faker.string.uuid();
-                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
-                    typ: OrganisationsTyp.KLASSE,
-                    administriertVon: parentOrganisation.id,
-                });
-                const savedOrganisation: Organisation<true> = await sut.save(organisation);
-
-                const result: Option<DomainError> = await sut.deleteKlasse(savedOrganisation.id, permissionsMock);
-                expect(result).toEqual(new EntityNotFoundError('Organisation', parentOrganisation.id));
-            });
-        });
-
-        describe('when parent organisation does exist in database but its name is undefined', () => {
-            it('should return EntityCouldNotBeUpdated error', async () => {
-                const permissionsMock: PersonPermissions = createPersonPermissionsMock();
-                const parentOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
-                parentOrganisation.name = '';
-                const savedParentOrganisation: Organisation<true> = await sut.save(parentOrganisation);
-                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
-                    typ: OrganisationsTyp.KLASSE,
-                    administriertVon: savedParentOrganisation.id,
-                });
-                const savedOrganisation: Organisation<true> = await sut.save(organisation);
-
-                const result: Option<DomainError> = await sut.deleteKlasse(savedOrganisation.id, permissionsMock);
-                const expectation: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated(
-                    'Organisation',
-                    savedOrganisation.id,
-                    ['The schoolName of a Klasse cannot be undefined.'],
-                );
-                expect(result).toEqual(expectation);
-            });
-        });
-
-        describe('when organisation is not a Klasse', () => {
-            it('should return EntityCouldNotBeUpdated', async () => {
-                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-                const parentOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
-                const savedParentOrganisation: Organisation<true> = await sut.save(parentOrganisation);
-                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
-                    typ: OrganisationsTyp.SONSTIGE,
-                    name: 'test',
-                    administriertVon: savedParentOrganisation.id,
-                });
-                const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
-
-                const result: Option<DomainError> = await sut.deleteKlasse(savedOrganisaiton.id, permissionsMock);
-
-                expect(result).toBeInstanceOf(EntityCouldNotBeUpdated);
-            });
-        });
-    });
-
     describe('Update Organisationsname - Klasse', () => {
         const permissionsMock: PersonPermissions = createPersonPermissionsMock();
         describe('when organisation does not exist', () => {
@@ -1602,38 +1517,45 @@ describe('OrganisationRepository', () => {
             expect(result[1]).toBe(0);
         });
 
-        it('should return all authorized organisations according to list', async () => {
-            const orgas: OrganisationEntity[] = [];
-            for (let i: number = 0; i < 5; i++) {
-                const orga: Organisation<false> | DomainError = Organisation.createNew(
-                    sut.ROOT_ORGANISATION_ID,
-                    sut.ROOT_ORGANISATION_ID,
-                    faker.string.numeric(6),
-                    faker.company.name(),
-                );
-                if (orga instanceof DomainError) {
-                    return;
+        describe.each([[true], [false]])('with matchAllSystemrechte = %s', (matchAllSystemrechte: boolean) => {
+            it('should return all authorized organisations according to list', async () => {
+                const orgas: OrganisationEntity[] = [];
+                for (let i: number = 0; i < 5; i++) {
+                    const orga: Organisation<false> | DomainError = Organisation.createNew(
+                        sut.ROOT_ORGANISATION_ID,
+                        sut.ROOT_ORGANISATION_ID,
+                        faker.string.numeric(6),
+                        faker.company.name(),
+                    );
+                    if (orga instanceof DomainError) {
+                        return;
+                    }
+                    const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
+                    await em.persistAndFlush(mappedOrga);
+                    orgas.push(mappedOrga);
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
-                orgas.push(mappedOrga);
-            }
-            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
-                all: false,
-                orgaIds: [orgas[0]!.id, orgas[3]!.id, orgas[4]!.id],
+                const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+                personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [orgas[0]!.id, orgas[3]!.id, orgas[4]!.id],
+                });
+
+                const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                    personPermissions,
+                    [RollenSystemRecht.SCHULEN_VERWALTEN],
+                    { matchAllSystemrechte },
+                );
+
+                expect(personPermissions.getOrgIdsWithSystemrecht).toHaveBeenLastCalledWith(
+                    [RollenSystemRecht.SCHULEN_VERWALTEN],
+                    true,
+                    matchAllSystemrechte,
+                );
+                expect(result[1]).toBe(3);
+                expect(result[0].some((org: Organisation<true>) => org.id === orgas[0]!.id)).toBeTruthy();
+                expect(result[0].some((org: Organisation<true>) => org.id === orgas[3]!.id)).toBeTruthy();
+                expect(result[0].some((org: Organisation<true>) => org.id === orgas[4]!.id)).toBeTruthy();
             });
-
-            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
-                personPermissions,
-                [RollenSystemRecht.SCHULEN_VERWALTEN],
-                {},
-            );
-
-            expect(result[1]).toBe(3);
-            expect(result[0].some((org: Organisation<true>) => org.id === orgas[0]!.id)).toBeTruthy();
-            expect(result[0].some((org: Organisation<true>) => org.id === orgas[3]!.id)).toBeTruthy();
-            expect(result[0].some((org: Organisation<true>) => org.id === orgas[4]!.id)).toBeTruthy();
         });
 
         it('should return all authorized organisations for searchString in name', async () => {
@@ -1959,7 +1881,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.SCHULE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Schule under Land');
+                    throw new Error('could not create Schule under Land');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -1976,7 +1898,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.TRAEGER,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Traeger');
+                    throw new Error('could not create Traeger');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -1993,7 +1915,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.SCHULE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Schule under root');
+                    throw new Error('could not create Schule under root');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -2125,7 +2047,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.SCHULE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Schule under Land');
+                    throw new Error('could not create Schule under Land');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -2142,7 +2064,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.TRAEGER,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Traeger');
+                    throw new Error('could not create Traeger');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -2159,7 +2081,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.SCHULE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Schule under root');
+                    throw new Error('could not create Schule under root');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -2195,7 +2117,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.SCHULE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Schule under Land');
+                    throw new Error('could not create Schule under Land');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -2212,7 +2134,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.TRAEGER,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Traeger');
+                    throw new Error('could not create Traeger');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -2229,7 +2151,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.KLASSE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Traeger');
+                    throw new Error('could not create Klasse');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -2340,7 +2262,7 @@ describe('OrganisationRepository', () => {
                         `Organisation ${5 - i}`, // Reverse order for testing sorting
                     );
                     if (orga instanceof DomainError) {
-                        fail('Could not create Organisation');
+                        throw new Error('Could not create Organisation');
                     }
                     const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                     await em.persistAndFlush(mappedOrga);
@@ -2430,7 +2352,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.SCHULE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('Could not create Organisation');
+                    throw new Error('Could not create Organisation');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);

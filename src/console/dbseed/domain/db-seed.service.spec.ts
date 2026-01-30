@@ -813,7 +813,7 @@ describe('DbSeedService', () => {
                     'seeding-integration-test/all',
                     '01',
                 );
-                expect(entityFileNames).toHaveLength(8);
+                expect(entityFileNames).toHaveLength(9);
             });
         });
     });

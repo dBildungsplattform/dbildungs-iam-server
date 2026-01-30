@@ -1061,7 +1061,7 @@ describe('OrganisationService', () => {
             const result: Result<
                 Organisation<true>,
                 DomainError
-            > = await organisationService.findOrganisationByIdAndMatchingPermissions(
+            > = await organisationService.findOrganisationByIdAndAnyMatchingPermissions(
                 permissionsMock,
                 faker.string.uuid(),
             );
@@ -1075,7 +1075,7 @@ describe('OrganisationService', () => {
             const result: Result<
                 Organisation<true>,
                 DomainError
-            > = await organisationService.findOrganisationByIdAndMatchingPermissions(
+            > = await organisationService.findOrganisationByIdAndAnyMatchingPermissions(
                 permissionsMock,
                 faker.string.uuid(),
             );
@@ -1090,7 +1090,7 @@ describe('OrganisationService', () => {
             const result: Result<
                 Organisation<true>,
                 DomainError
-            > = await organisationService.findOrganisationByIdAndMatchingPermissions(
+            > = await organisationService.findOrganisationByIdAndAnyMatchingPermissions(
                 permissionsMock,
                 mockOrganisation.id,
             );
@@ -1108,7 +1108,7 @@ describe('OrganisationService', () => {
             const result: Result<
                 Organisation<true>,
                 DomainError
-            > = await organisationService.findOrganisationByIdAndMatchingPermissions(
+            > = await organisationService.findOrganisationByIdAndAnyMatchingPermissions(
                 permissionsMock,
                 mockOrganisation.id,
             );
@@ -1142,7 +1142,7 @@ describe('OrganisationService', () => {
                     organisationRepositoryMock.findAuthorized.mockResolvedValue([[organisation], 1, 1]);
                     const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                     permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-                    await organisationService.findOrganisationByIdAndMatchingPermissions(
+                    await organisationService.findOrganisationByIdAndAnyMatchingPermissions(
                         permissionsMock,
                         organisation.id,
                     );
@@ -1160,7 +1160,7 @@ describe('OrganisationService', () => {
                     const result: Result<
                         Organisation<true>,
                         DomainError
-                    > = await organisationService.findOrganisationByIdAndMatchingPermissions(
+                    > = await organisationService.findOrganisationByIdAndAnyMatchingPermissions(
                         permissionsMock,
                         organisation.id,
                     );

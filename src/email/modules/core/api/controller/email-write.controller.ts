@@ -9,6 +9,8 @@ import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
 import { DeleteEmailAddressesForSpshPersonPathParams } from '../dtos/params/delete-email-addresses-for-spsh-person.pathparams.js';
 import { DeleteEmailsAddressesForSpshPersonService } from '../../domain/delete-email-adresses-for-spsh-person.service.js';
 import { SetEmailAddressForSpshPersonPathParams } from '../dtos/params/set-email-address-for-spsh-person.pathparams.js';
+import { SetEmailAddressesSuspendedPathParams } from '../dtos/params/set-email-addresses-suspended.pathparams.js';
+import { SetEmailSuspendedService } from '../../domain/set-email-suspended.service.js';
 
 @ApiTags('email')
 @Controller({ path: 'write' })
@@ -17,6 +19,7 @@ export class EmailWriteController {
     public constructor(
         private readonly setEmailAddressForSpshPersonService: SetEmailAddressForSpshPersonService,
         private readonly deleteEmailsAddressesForSpshPersonService: DeleteEmailsAddressesForSpshPersonService,
+        private readonly setEmailSuspendedService: SetEmailSuspendedService,
         private readonly logger: ClassLogger,
     ) {}
 
@@ -57,6 +60,24 @@ export class EmailWriteController {
         // void the promise, we don't care about the result and the endpoint should instantly return
         void this.deleteEmailsAddressesForSpshPersonService
             .deleteEmailAddressesForSpshPerson({ spshPersonId: params.spshPersonId })
+            .catch((err: Error) => {
+                this.logger.error(`Error in background email processing: ${err.message}`);
+            });
+    }
+
+    @Post(':spshPersonId/set-suspended')
+    @Public()
+    @ApiOperation({ description: 'Set email-address for a person to suspended.' })
+    @ApiOkResponse({
+        description: 'The email-address for the corresponding person was successfully set to suspended.',
+    })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while setting email-address for person to suspended.',
+    })
+    public setEmailsSuspended(@Param() params: SetEmailAddressesSuspendedPathParams): void {
+        // void the promise, we don't care about the result and the endpoint should instantly return
+        void this.setEmailSuspendedService
+            .setEmailsSuspended({ spshPersonId: params.spshPersonId })
             .catch((err: Error) => {
                 this.logger.error(`Error in background email processing: ${err.message}`);
             });
