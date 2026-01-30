@@ -7,9 +7,9 @@ export class PersonFile {
 
     public password?: string;
 
-    public keycloakUserId!: string;
+    public keycloakUserId?: string;
 
-    public mandant!: string;
+    public mandant?: string;
 
     public stammorganisation?: string;
 
@@ -19,7 +19,7 @@ export class PersonFile {
 
     public dataProvider?: string;
 
-    public revision!: string;
+    public revision?: string;
 
     public personalnummer?: string;
 
