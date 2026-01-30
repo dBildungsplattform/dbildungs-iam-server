@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { intersection } from 'lodash-es';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 
 @Injectable()
 export class PersonAdministrationService {
@@ -18,41 +22,66 @@ export class PersonAdministrationService {
         permissions: PersonPermissions,
         rolleName?: string,
         limit?: number,
+        organisationIds?: Array<OrganisationID>,
     ): Promise<Rolle<true>[]> {
-        let rollen: Rolle<true>[];
-
-        if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName, false);
-        } else {
-            rollen = await this.rolleRepo.find(false);
-        }
-
-        if (rollen.length === 0) {
-            return [];
-        }
-
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
 
-        //Landesadmin can view all roles.
+        /** Filters for Rollenarten and Schulstrukturknoten are derived from these. Undefined means "no filter". */
+        let relevantOrganisationIdsForFilter: Array<OrganisationID> | undefined;
         if (permittedOrgas.all) {
-            return limit ? rollen.slice(0, limit) : rollen;
+            relevantOrganisationIdsForFilter = this.hasSelectedOrgas(organisationIds) ? organisationIds : undefined;
+        } else {
+            if (permittedOrgas.orgaIds.length === 0) {
+                return [];
+            }
+            relevantOrganisationIdsForFilter = this.hasSelectedOrgas(organisationIds)
+                ? intersection(permittedOrgas.orgaIds, organisationIds)
+                : permittedOrgas.orgaIds;
         }
 
-        const allowedRollen: Rolle<true>[] = [];
-        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        (await this.organisationRepository.findByIds(permittedOrgas.orgaIds)).forEach(function (
-            orga: Organisation<true>,
-        ) {
-            rollen.forEach(function (rolle: Rolle<true>) {
-                if (organisationMatchesRollenart.isSatisfiedBy(orga, rolle) && !allowedRollen.includes(rolle)) {
-                    allowedRollen.push(rolle);
-                }
-            });
-        });
+        let rollenarten: Array<RollenArt> | undefined;
+        let schulstrukturknoten: Array<OrganisationID> | undefined;
+        if (relevantOrganisationIdsForFilter) {
+            [rollenarten, schulstrukturknoten] = await Promise.all([
+                this.getAllowedRollenArtenForOrganisationen(relevantOrganisationIdsForFilter),
+                this.getAllowedSchulstrukturknotenForRollen(relevantOrganisationIdsForFilter),
+            ]);
+        }
 
-        return limit ? allowedRollen.slice(0, limit) : allowedRollen;
+        return this.rolleRepo.findBy(rolleName, rollenarten, schulstrukturknoten, limit);
+    }
+
+    private hasSelectedOrgas(organisationIds?: Array<OrganisationID>): organisationIds is Array<OrganisationID> {
+        return (organisationIds?.length ?? 0) > 0;
+    }
+
+    private async getAllowedRollenArtenForOrganisationen(orgaIds: Array<OrganisationID>): Promise<Array<RollenArt>> {
+        const distinctOrganisationsTypen: Array<OrganisationsTyp> =
+            await this.organisationRepository.findDistinctOrganisationsTypen(orgaIds);
+
+        const allowedRollenarten: Set<RollenArt> = new Set();
+        distinctOrganisationsTypen.forEach((organisationsTyp: OrganisationsTyp) => {
+            OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organisationsTyp).forEach(
+                (allowedRollenart: RollenArt) => {
+                    allowedRollenarten.add(allowedRollenart);
+                },
+            );
+        });
+        return Array.from(allowedRollenarten);
+    }
+
+    private async getAllowedSchulstrukturknotenForRollen(
+        orgaIds: Array<OrganisationID>,
+    ): Promise<Array<OrganisationID>> {
+        const parentsOfPermittedOrgas: Array<Organisation<true>> =
+            await this.organisationRepository.findParentOrgasForIds(orgaIds);
+
+        const allowedStrukturknoten: Set<OrganisationID> = new Set(orgaIds);
+        parentsOfPermittedOrgas.forEach((o: Organisation<true>) => allowedStrukturknoten.add(o.id));
+
+        return Array.from(allowedStrukturknoten);
     }
 }

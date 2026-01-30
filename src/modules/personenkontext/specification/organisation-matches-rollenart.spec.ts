@@ -1,90 +1,66 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { OrganisationMatchesRollenart } from './organisation-matches-rollenart.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { OrganisationMatchesRollenart } from './organisation-matches-rollenart.js';
 
 describe('OrganisationMatchesRollenart specification', () => {
     const sut: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
+    const allRollenarten: RollenArt[] = Object.values(RollenArt);
 
-    describe('when rollenart is SYSADMIN', () => {
-        it('should return true, if organisation is LAND', () => {
-            const orgaMock: DeepMocked<Organisation<true>> = createMock<Organisation<true>>();
-            orgaMock.typ = OrganisationsTyp.LAND;
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
-            rolleMock.rollenart = RollenArt.SYSADMIN;
+    describe.each([
+        [
+            OrganisationsTyp.ROOT,
+            [RollenArt.SYSADMIN],
+            allRollenarten.filter((ra: RollenArt) => ra !== RollenArt.SYSADMIN),
+        ],
+        [
+            OrganisationsTyp.LAND,
+            [RollenArt.SYSADMIN],
+            allRollenarten.filter((ra: RollenArt) => ra !== RollenArt.SYSADMIN),
+        ],
+        [OrganisationsTyp.TRAEGER, allRollenarten, []],
+        [
+            OrganisationsTyp.SCHULE,
+            [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN],
+            [RollenArt.SYSADMIN, RollenArt.ORGADMIN, RollenArt.EXTERN],
+        ],
+        [OrganisationsTyp.KLASSE, [RollenArt.LERN], allRollenarten.filter((ra: RollenArt) => ra !== RollenArt.LERN)],
+        [OrganisationsTyp.ANBIETER, allRollenarten, []],
+        [OrganisationsTyp.SONSTIGE, allRollenarten, []],
+        [OrganisationsTyp.UNBEST, allRollenarten, []],
+    ])(
+        'when organisation is of type %s',
+        (organisationsTyp: OrganisationsTyp, allowedRollenarten: RollenArt[], disallowedRollenarten: RollenArt[]) => {
+            it('should be satisfied for allowed rollenarten', () => {
+                const organisation: Organisation<true> = DoFactory.createOrganisation(true, { typ: organisationsTyp });
+                allowedRollenarten.forEach((rollenart: RollenArt) => {
+                    const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart });
+                    const result: boolean = sut.isSatisfiedBy(organisation, rolle);
+                    expect(result).toBe(true);
+                });
+            });
 
-            expect(sut.isSatisfiedBy(orgaMock, rolleMock)).toBeTruthy();
-        });
+            it('should not be satisfied for disallowed rollenarten', () => {
+                const organisation: Organisation<true> = DoFactory.createOrganisation(true, { typ: organisationsTyp });
+                disallowedRollenarten.forEach((rollenart: RollenArt) => {
+                    const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart });
+                    const result: boolean = sut.isSatisfiedBy(organisation, rolle);
+                    expect(result).toBe(false);
+                });
+            });
+        },
+    );
 
-        it('should return true, if organisation is ROOT', () => {
-            const orgaMock: DeepMocked<Organisation<true>> = createMock<Organisation<true>>();
-            orgaMock.typ = OrganisationsTyp.ROOT;
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
-            rolleMock.rollenart = RollenArt.SYSADMIN;
-
-            expect(sut.isSatisfiedBy(orgaMock, rolleMock)).toBeTruthy();
-        });
-    });
-
-    describe('when rollenart is LEIT', () => {
-        it('should return true, if organisation is SCHULE', () => {
-            const orgaMock: DeepMocked<Organisation<true>> = createMock<Organisation<true>>();
-            orgaMock.typ = OrganisationsTyp.SCHULE;
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
-            rolleMock.rollenart = RollenArt.LEIT;
-
-            expect(sut.isSatisfiedBy(orgaMock, rolleMock)).toBeTruthy();
-        });
-
-        it('should return false, if organisation is NOT SCHULE', () => {
-            const orgaMock: DeepMocked<Organisation<true>> = createMock<Organisation<true>>();
-            orgaMock.typ = OrganisationsTyp.ROOT;
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
-            rolleMock.rollenart = RollenArt.LEIT;
-
-            expect(sut.isSatisfiedBy(orgaMock, rolleMock)).toBeFalsy();
-        });
-    });
-
-    describe('when rollenart is LERN', () => {
-        it('should return true, if organisation is SCHULE', () => {
-            const orgaMock: DeepMocked<Organisation<true>> = createMock<Organisation<true>>();
-            orgaMock.typ = OrganisationsTyp.SCHULE;
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
-            rolleMock.rollenart = RollenArt.LERN;
-
-            expect(sut.isSatisfiedBy(orgaMock, rolleMock)).toBeTruthy();
-        });
-
-        it('should return true, if organisation is KLASSE', () => {
-            const orgaMock: DeepMocked<Organisation<true>> = createMock<Organisation<true>>();
-            orgaMock.typ = OrganisationsTyp.KLASSE;
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
-            rolleMock.rollenart = RollenArt.LERN;
-
-            expect(sut.isSatisfiedBy(orgaMock, rolleMock)).toBeTruthy();
-        });
-    });
-
-    describe('when rollenart is LEHR', () => {
-        it('should return true, if organisation is SCHULE', () => {
-            const orgaMock: DeepMocked<Organisation<true>> = createMock<Organisation<true>>();
-            orgaMock.typ = OrganisationsTyp.SCHULE;
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
-            rolleMock.rollenart = RollenArt.LEHR;
-
-            expect(sut.isSatisfiedBy(orgaMock, rolleMock)).toBeTruthy();
-        });
-
-        it('should return false, if organisation is KLASSE', () => {
-            const orgaMock: DeepMocked<Organisation<true>> = createMock<Organisation<true>>();
-            orgaMock.typ = OrganisationsTyp.KLASSE;
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
-            rolleMock.rollenart = RollenArt.LEHR;
-
-            expect(sut.isSatisfiedBy(orgaMock, rolleMock)).toBeFalsy();
+    describe('when organisation has no type', () => {
+        it('should not be satisfied for any rollenart', () => {
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, { typ: undefined });
+            Object.values(RollenArt).forEach((rollenart: RollenArt) => {
+                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart });
+                const result: boolean = sut.isSatisfiedBy(organisation, rolle);
+                expect(result).toBe(false);
+            });
         });
     });
 });
