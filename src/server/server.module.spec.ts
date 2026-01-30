@@ -8,10 +8,11 @@ import { ConfigTestModule, LoggingTestModule } from '../../test/utils/index.js';
 
 function createRedisClientMock(overrides?: Partial<RedisClientType>): RedisClientType {
     return {
-        connect: vi.fn(),
-        disconnect: vi.fn(),
+        connect: vi.fn().mockResolvedValue(undefined),
+        disconnect: vi.fn().mockResolvedValue(undefined),
         get: vi.fn(),
         set: vi.fn(),
+        on: vi.fn().mockReturnThis(),
         ...overrides,
     } as RedisClientType;
 }
@@ -39,7 +40,9 @@ describe('ServerModule', () => {
     });
 
     afterAll(async () => {
-        await module.close();
+        if (module) {
+            await module.close();
+        }
     });
 
     it('should be defined', () => {
@@ -48,7 +51,11 @@ describe('ServerModule', () => {
 
     it('should run its configure method', async () => {
         expect(module.get(ServerModule)).toBeDefined();
-        const consumer: MiddlewareConsumer = vi.mockObject({ apply: vi.fn().mockReturnValue({}) });
+        const consumer: MiddlewareConsumer = vi.mockObject({
+            apply: vi.fn().mockReturnValue({
+                forRoutes: vi.fn(), // <- this allows the chaining
+            }),
+        });
         await module.get(ServerModule).configure(consumer);
 
         expect(consumer.apply).toHaveBeenCalled();
