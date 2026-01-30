@@ -194,7 +194,7 @@ export class DbSeedDataGeneratorConsole extends CommandRunner {
                 options.baseId + schools.length,
             );
 
-            await this.writeEntityFile(directory, '1', 'Organisation', schools, classes);
+            await this.writeEntityFile(directory, '01', 'Organisation', schools, classes);
 
             const [teachers, teacherKontexte]: [persons: PersonFile[], personenkontexte: PersonenkontextFile[]] =
                 this.generateTeachersForSchools(
@@ -216,8 +216,8 @@ export class DbSeedDataGeneratorConsole extends CommandRunner {
                     options.baseId + teachers.length,
                 );
 
-            await this.writeEntityFile(directory, '2', 'Person', teachers, students);
-            await this.writeEntityFile(directory, '3', 'Personenkontext', teacherKontexte, studentKontexte);
+            await this.writeEntityFile(directory, '02', 'Person', teachers, students);
+            await this.writeEntityFile(directory, '03', 'Personenkontext', teacherKontexte, studentKontexte);
 
             this.logger.info(`Saved data successfully under: ${directory}`);
         } catch (error) {
@@ -235,19 +235,24 @@ export class DbSeedDataGeneratorConsole extends CommandRunner {
         entityName: string,
         ...entities: T[][]
     ): Promise<void> {
-        const maxEntitiesPerFile: number = 10000;
+        const maxEntitiesPerFile: number = 5000;
 
         const flattenedEntities: T[] = entities.flat(1);
 
-        for (let start: number = 0; start < flattenedEntities.length; start += maxEntitiesPerFile) {
+        const fileCount: number = Math.ceil(flattenedEntities.length / maxEntitiesPerFile);
+        for (let i: number = 0; i < fileCount; i++) {
+            const paddedStartString: string = `${i}`.padStart(3, '0');
+
+            const entityIndex: number = i * maxEntitiesPerFile;
+
             const entityFile: EntityFile<T> = {
                 entityName,
-                entities: flattenedEntities.slice(start, start + maxEntitiesPerFile),
+                entities: flattenedEntities.slice(entityIndex, entityIndex + maxEntitiesPerFile),
             };
 
             const jsonData: string = JSON.stringify(entityFile, null, '\t');
 
-            const filepath: string = path.join(directory, `${fileprefix}_${start}_${entityName}.json`);
+            const filepath: string = path.join(directory, `${fileprefix}_${paddedStartString}_${entityName}.json`);
 
             // eslint-disable-next-line no-await-in-loop
             await fs.writeFile(filepath, jsonData);
@@ -322,7 +327,7 @@ export class DbSeedDataGeneratorConsole extends CommandRunner {
         let teacherId: number = baseId;
 
         for (let i: number = 0; i < teacherCount; i++) {
-            const username: string = `${teacherPrefix}${i + 1}`;
+            const username: string = `${teacherPrefix}${i + 1}`.toLowerCase();
 
             teachers.push({
                 id: teacherId,
@@ -359,7 +364,7 @@ export class DbSeedDataGeneratorConsole extends CommandRunner {
         let studentId: number = baseId;
 
         for (let i: number = 0; i < studentCount; i++) {
-            const username: string = `${studentPrefix}${i + 1}`;
+            const username: string = `${studentPrefix}${i + 1}`.toLowerCase();
 
             students.push({
                 id: studentId,
