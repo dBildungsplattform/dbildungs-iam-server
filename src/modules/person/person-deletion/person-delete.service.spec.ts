@@ -5,7 +5,6 @@ import { PersonDeleteService } from './person-delete.service.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';

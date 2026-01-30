@@ -46,7 +46,6 @@ import {
     PersonenkontextEventKontextData,
     PersonenkontextEventPersonData,
 } from '../../../shared/events/personenkontext-event.types.js';
-import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 
 function getEmail(address?: string, status?: EmailAddressStatus): EmailAddress<true> {
     const fakePersonId: PersonID = faker.string.uuid();

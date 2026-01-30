@@ -1,4 +1,4 @@
-import { createMock, DeepMocked} from '../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PersonenInfoService } from './personeninfo.service.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
@@ -21,6 +21,7 @@ import { Organisation } from '../../../organisation/domain/organisation.js';
 import { faker } from '@faker-js/faker';
 import { PersonEmailResponse } from '../../../person/api/person-email-response.js';
 import { SchulconnexRepo } from '../../persistence/schulconnex.repo.js';
+import { createPersonPermissionsMock } from '../../../../../test/utils/auth.mock.js';
 
 describe('PersonInfoService', () => {
     let module: TestingModule;
@@ -163,7 +164,7 @@ describe('PersonInfoService', () => {
 
             personRepositoryMock.findByPersonIds.mockResolvedValue([
                 DoFactory.createPerson(true, { id: personId1 }),
-                DoFactory.createPerson(true, { id: personId1 }),
+                DoFactory.createPerson(true, { id: personId2 }),
             ]);
             emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue(
                 new Map([
@@ -173,8 +174,8 @@ describe('PersonInfoService', () => {
             );
             dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
                 new Map([
-                    [personId1, createMock(KontextWithOrgaAndRolle[])],
-                    [personId2, createMock(KontextWithOrgaAndRolle[])],
+                    [personId1, []],
+                    [personId2, []],
                 ]),
             );
             userLockRepoMock.findByPersonIds.mockResolvedValue(
@@ -272,8 +273,8 @@ describe('PersonInfoService', () => {
             );
             dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
                 new Map([
-                    [personId1, createMock(KontextWithOrgaAndRolle[])],
-                    [personId2, createMock(KontextWithOrgaAndRolle[])],
+                    [personId1, []],
+                    [personId2, []],
                 ]),
             );
             userLockRepoMock.findByPersonIds.mockResolvedValue(
@@ -371,8 +372,8 @@ describe('PersonInfoService', () => {
             );
             dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
                 new Map([
-                    ['', createMock(KontextWithOrgaAndRolle[])],
-                    ['', createMock(KontextWithOrgaAndRolle[])],
+                    ['', []],
+                    ['', []],
                 ]),
             );
             userLockRepoMock.findByPersonIds.mockResolvedValue(

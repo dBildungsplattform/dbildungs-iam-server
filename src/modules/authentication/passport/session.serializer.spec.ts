@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Mock } from 'vitest';
-import { createMock } from '../../../../test/utils/createMock.js';
 
 import { SessionSerializer } from './session.serializer.js';
 

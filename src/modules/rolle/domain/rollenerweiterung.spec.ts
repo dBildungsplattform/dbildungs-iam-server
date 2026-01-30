@@ -1,4 +1,4 @@
-import { DeepMocked, vi } from 'vitest';
+import { vi } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
