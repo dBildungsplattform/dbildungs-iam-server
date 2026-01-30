@@ -22,6 +22,8 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 import { LoadedReference, Reference } from '@mikro-orm/core';
 import { Err, Ok } from '../../../shared/util/result.js';
+import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
+import { EmailAddress } from '../../../email/modules/core/domain/email-address.js';
 
 function createLoadedServiceProviderReferences(id?: string, name?: string): LoadedReference<ServiceProviderEntity> {
     const serviceProviderReference: Reference<ServiceProviderEntity> =
@@ -57,47 +59,25 @@ function createLoadedPersonenkontextReference(id?: string): LoadedReference<Pers
 }
 
 describe('UserExternaldataWorkflow', () => {
-    let module: TestingModule;
     let sut: UserExternaldataWorkflowAggregate;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let emailResolverServiceMock: DeepMocked<EmailResolverService>;
     let configServiceMock: DeepMocked<ConfigService>;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         configServiceMock = createMock<ConfigService>(ConfigService);
         configServiceMock.getOrThrow.mockReturnValue({});
-        module = await Test.createTestingModule({
-            imports: [LoggingTestModule, EventModule, ConfigTestModule],
-            providers: [
-                {
-                    provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(DBiamPersonenkontextRepo),
-                },
-                {
-                    provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(PersonRepository),
-                },
-                {
-                    provide: EmailResolverService,
-                    useValue: createMock<EmailResolverService>(EmailResolverService),
-                },
-                { provide: ConfigService, useValue: configServiceMock },
-            ],
-        }).compile();
-        dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
-        personRepositoryMock = module.get(PersonRepository);
-        emailResolverServiceMock = module.get(EmailResolverService);
+
+        dBiamPersonenkontextRepoMock = createMock<DBiamPersonenkontextRepo>(DBiamPersonenkontextRepo);
+        personRepositoryMock = createMock<PersonRepository>(PersonRepository);
+        emailResolverServiceMock = createMock<EmailResolverService>(EmailResolverService);
         sut = UserExternaldataWorkflowAggregate.createNew(
             dBiamPersonenkontextRepoMock,
             personRepositoryMock,
             configServiceMock,
             emailResolverServiceMock,
         );
-    });
-
-    afterAll(async () => {
-        await module.close();
     });
 
     beforeEach(() => {
@@ -147,19 +127,35 @@ describe('UserExternaldataWorkflow', () => {
                 faker.string.uuid(),
             );
             const oxLoginId: string = faker.string.uuid();
+            const oxContextId: string = 'test-context-id';
 
             personRepositoryMock.findById.mockResolvedValue(person);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
             dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue([]);
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValue(
-                Ok(createMock<EmailAddressResponse>(EmailAddressResponse, { oxLoginId: oxLoginId })),
+            const emailAddress: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                createdAt: faker.date.past(),
+                updatedAt: faker.date.recent(),
+                address: faker.internet.email(),
+                priority: 0,
+                spshPersonId: person.id,
+                oxUserCounter: undefined,
+                externalId: oxLoginId,
+                sortedStatuses: [{ status: EmailAddressStatusEnum.ACTIVE }],
+            });
+
+            const response: EmailAddressResponse = new EmailAddressResponse(
+                emailAddress,
+                EmailAddressStatusEnum.ACTIVE,
+                oxContextId,
             );
+            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValue(Ok(response));
 
             await sut.initialize(person.id);
             expect(sut.person).toBeDefined();
             expect(sut.checkedExternalPkData).toBeDefined();
-            expect(sut.oxLoginId).toBe(oxLoginId);
+            expect(sut.oxLoginId).toBe(`${oxLoginId}@${oxContextId}`);
         });
 
         it('should return entity Not found error when person not found', async () => {

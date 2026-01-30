@@ -32,6 +32,7 @@ import { EmailResolverService } from '../../email-microservice/domain/email-reso
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
 import { Ok } from '../../../shared/util/result.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
 
 function createLoadedReference<T extends object>(entity: T): LoadedReference<T> {
     const reference: Reference<T> = createMock<Reference<T>>(Reference);
@@ -299,6 +300,7 @@ describe('KeycloakInternalController', () => {
             const emailAddressResponseMock: EmailAddressResponse =
                 createMock<EmailAddressResponse>(EmailAddressResponse);
             emailAddressResponseMock.oxLoginId = `${faker.string.uuid()}@${faker.number.int({ min: 1000, max: 9999 })}`;
+            emailAddressResponseMock.status = EmailAddressStatusEnum.ACTIVE;
             emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValueOnce(
                 Ok(emailAddressResponseMock),
             );
