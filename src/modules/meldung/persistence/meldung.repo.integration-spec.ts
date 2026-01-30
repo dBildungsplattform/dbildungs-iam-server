@@ -31,8 +31,12 @@ describe('MeldungRepo', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
-        await orm.close();
-        await module.close();
+        if (orm?.close) {
+            await orm.close();
+        }
+        if (module?.close) {
+            await module.close();
+        }
     });
 
     beforeEach(async () => {
