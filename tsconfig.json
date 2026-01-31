@@ -93,7 +93,4 @@
         "skipLibCheck": true, /* Skip type checking all .d.ts files. */
         "types": ["vitest/globals", "multer", "passport"]
     },
-
-  "include": ["src/**/*.ts", "src/**/*.spec.ts"],
-  "exclude": ["node_modules", "dist"]
 }

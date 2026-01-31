@@ -2,15 +2,8 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import tseslint from 'typescript-eslint';
 import importPlugin from 'eslint-plugin-import';
 import prettier from 'eslint-plugin-prettier';
-import path from "path";
-
 // Custom rule overrides
 import type { Linter } from 'eslint';
-import fs from 'fs';
-
-const tsconfigPath = path.resolve(__dirname, './tsconfig.json');
-console.log('Resolved tsconfig path:', tsconfigPath);
-console.log('tsconfig exists?', fs.existsSync(tsconfigPath));
 
 const tsconfigRootDir = __dirname;
 
