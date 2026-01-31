@@ -29,13 +29,14 @@ import { ImportVorgang } from './import-vorgang.js';
 import { ImportPasswordEncryptor } from './import-password-encryptor.js';
 import { ImportDomainError } from './import-domain.error.js';
 import { ImportStatus } from './import.enums.js';
-import { EventModule } from '../../../core/eventbus/event.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { ImportCSVFileMaxUsersError } from './import-csv-file-max-users.error.js';
 import { ImportCSVFileContainsNoUsersError } from './import-csv-file-contains-no-users.error.js';
 import { ImportDataItemStatus } from './importDataItem.enum.js';
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 import { Mock } from 'vitest';
+import { EventModule } from '../../../core/eventbus/event.module.js';
+import { Readable } from 'stream';
 
 describe('ImportWorkflow', () => {
     let module: TestingModule;
@@ -51,7 +52,23 @@ describe('ImportWorkflow', () => {
 
     const SELECTED_ORGANISATION_ID: string = faker.string.uuid();
     const SELECTED_ROLLE_ID: string = faker.string.uuid();
-    const FILE_MOCK: Express.Multer.File = {} as Express.Multer.File;
+
+    function createFileMock(overrides: Partial<Express.Multer.File> = {}): Express.Multer.File {
+        return {
+            buffer: Buffer.from(''),
+            fieldname: 'file',
+            originalname: 'test.csv',
+            encoding: '7bit',
+            mimetype: 'text/csv',
+            size: 0,
+            destination: '',
+            filename: '',
+            path: '',
+            stream: Readable.from(Buffer.from('')),
+            ...overrides, // override any field for test-specific needs
+        };
+    }
+    const FILE_MOCK: Express.Multer.File = createFileMock();
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -206,7 +223,7 @@ describe('ImportWorkflow', () => {
         });
 
         it('should return ImportCSVFileEmptyError if the csv file is empty', async () => {
-            const file: Express.Multer.File = { buffer: Buffer.from('') } as Express.Multer.File;
+            const file: Express.Multer.File = createFileMock();
 
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
@@ -229,9 +246,9 @@ describe('ImportWorkflow', () => {
         });
 
         it('should return ImportCSVFileMaxUsersError if the csv file exceeds the number of maximum allowed users', async () => {
-            const file: Express.Multer.File = {
+            const fileWithCsv: Express.Multer.File = createFileMock({
                 buffer: Buffer.from('Nachname;Vorname;Klasse\r\nTest;Hans;1A\r\nTest;Marie;1B\r\n'),
-            } as Express.Multer.File;
+            });
 
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
@@ -244,7 +261,7 @@ describe('ImportWorkflow', () => {
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
 
             const result: DomainError | ImportUploadResultFields = await sut.validateImport(
-                file,
+                fileWithCsv,
                 SELECTED_ORGANISATION_ID,
                 SELECTED_ROLLE_ID,
                 personpermissionsMock,
@@ -254,7 +271,9 @@ describe('ImportWorkflow', () => {
         });
 
         it('should return ImportCSVFileContainsNoUsersError if the csv file contains no data items', async () => {
-            const file: Express.Multer.File = { buffer: Buffer.from('Nachname;Vorname;Klasse') } as Express.Multer.File;
+            const file: Express.Multer.File = createFileMock({
+                buffer: Buffer.from('Nachname;Vorname;Klasse'),
+            });
 
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
@@ -277,7 +296,9 @@ describe('ImportWorkflow', () => {
         });
 
         it('should return ImportCSVFileParsingError if the parser cannot parse', async () => {
-            const file: Express.Multer.File = { buffer: Buffer.from('Nachname;Vorname;Klasse') } as Express.Multer.File;
+            const file: Express.Multer.File = createFileMock({
+                buffer: Buffer.from('Nachname;Vorname;Klasse'),
+            });
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
@@ -303,7 +324,9 @@ describe('ImportWorkflow', () => {
         });
 
         it('should return ImportCSVFileInvalidHeaderError if the parser cannot parse headers', async () => {
-            const file: Express.Multer.File = { buffer: Buffer.from('asdfe') } as Express.Multer.File;
+            const file: Express.Multer.File = createFileMock({
+                buffer: Buffer.from('asdfe'),
+            });
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);

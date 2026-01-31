@@ -1,10 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ConfigService } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
-import { EventModule } from '../../../core/eventbus/event.module.js';
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
