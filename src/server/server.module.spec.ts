@@ -21,6 +21,45 @@ vi.mock('redis', () => ({
     createClient: (): RedisClientType => createRedisClientMock(),
 }));
 
+// Need to mock mikro-orm otherwise the test fails because src/**/**.entities.ts cannot be transpiled since they are imported by the module at run time
+vi.mock('@mikro-orm/nestjs', async () => {
+    const actual: Record<string, unknown> = await vi.importActual('@mikro-orm/nestjs');
+
+    const { MikroORM, EntityManager }: typeof import('@mikro-orm/core') = await import('@mikro-orm/core');
+    const { SqlEntityManager }: typeof import('@mikro-orm/postgresql') = await import('@mikro-orm/postgresql');
+    type SqlEntityManagerType = import('@mikro-orm/postgresql').SqlEntityManager;
+
+    const mockEntityManager: Partial<SqlEntityManagerType> = {};
+
+    const mockMikroORM: Partial<InstanceType<typeof MikroORM>> = {
+        em: mockEntityManager as SqlEntityManagerType,
+        close: vi.fn(),
+        getMetadata: vi.fn(),
+    };
+
+    const mikroOrmModule: object =
+        typeof actual['MikroOrmModule'] === 'object' && actual['MikroOrmModule'] !== null
+            ? actual['MikroOrmModule']
+            : {};
+
+    return {
+        ...actual,
+        MikroOrmModule: {
+            ...mikroOrmModule,
+            forRootAsync: vi.fn().mockReturnValue({
+                module: class MockMikroOrmModule {},
+                providers: [
+                    { provide: MikroORM, useValue: mockMikroORM },
+                    { provide: EntityManager, useValue: mockEntityManager },
+                    { provide: SqlEntityManager, useValue: mockEntityManager },
+                ],
+                exports: [MikroORM, EntityManager, SqlEntityManager],
+                global: true,
+            }),
+        },
+    };
+});
+
 describe('ServerModule', () => {
     let module: TestingModule;
 
@@ -52,7 +91,7 @@ describe('ServerModule', () => {
         expect(module.get(ServerModule)).toBeDefined();
         const consumer: MiddlewareConsumer = vi.mockObject({
             apply: vi.fn().mockReturnValue({
-                forRoutes: vi.fn(), // <- this allows the chaining
+                forRoutes: vi.fn(),
             }),
         });
         await module.get(ServerModule).configure(consumer);

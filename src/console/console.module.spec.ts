@@ -14,7 +14,9 @@ describe('ConsoleModule', () => {
     });
 
     afterAll(async () => {
-        await module.close();
+        if (module) {
+            await module.close();
+        }
     });
 
     it('should be defined', () => {

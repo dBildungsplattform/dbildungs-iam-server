@@ -57,6 +57,7 @@ import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js'
                     password: dbConfig.SECRET,
                     dbName: dbConfig.DB_NAME,
                     entities: ['./dist/**/*.entity.js'],
+                    entitiesTs: ['./src/**/*.entity.ts'],
                     // Needed for HealthCheck
                     driverOptions: {
                         connection: {
