@@ -88,6 +88,7 @@ describe('ServiceProvider API', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
+        personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
     });
 
     describe('/GET all service provider', () => {

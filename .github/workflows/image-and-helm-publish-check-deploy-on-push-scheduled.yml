@@ -54,7 +54,7 @@ jobs:
             echo "Deployment clearance: false"
             echo "deployment_clearance=false" >> "$GITHUB_OUTPUT"
           fi
-  
+
   codeql_analyze:
     name: "CodeQL"
     if: ${{ github.event_name == 'push' }}
@@ -71,7 +71,7 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@8
     with:
-      node_version: '18'
+      node_version: '22'
     permissions:
       contents: read
 
@@ -80,7 +80,7 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@8
     with:
-      node_version: '18'
+      node_version: '22'
       deploy_stage: 'dev'
       timeout_minutes: 30
     permissions:
@@ -162,7 +162,7 @@ jobs:
 
           echo "Adding Helm repository $REPO_URL"
           helm repo add dbildungsplattform $REPO_URL
-          
+
           echo "Checking for chart $CHART_NAME version $CHART_VERSION in $REPO_URL"
 
           for i in {1..20}; do
@@ -178,7 +178,7 @@ jobs:
           done
 
           echo "Chart $CHART_NAME:$CHART_VERSION not found after waiting."
-          exit 1 
+          exit 1
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}

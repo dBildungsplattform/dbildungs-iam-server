@@ -80,7 +80,7 @@ describe('OxSyncEventHandler', () => {
                 },
                 {
                     provide: EmailResolverService,
-                    useValue: createMock<EmailResolverService>(),
+                    useValue: createMock<EmailResolverService>(EmailResolverService),
                 },
             ],
         }).compile();

@@ -30,7 +30,6 @@ describe('ServerModule', () => {
         })
             .overrideProvider(OIDC_CLIENT)
             .useValue(
-                // createOidcClientMock(),
                 new new Issuer({
                     issuer: 'oidc',
                     jwks_uri: 'https://keycloak.example.com/nothing',
