@@ -48,7 +48,6 @@ import { KeycloakConsoleModule } from './keycloak/keycloak-console.module.js';
                     user: config.getOrThrow<DbConfig>('DB').USERNAME,
                     password: config.getOrThrow<DbConfig>('DB').SECRET,
                     entities: ['./dist/**/*.entity.js'],
-                    entitiesTs: ['./src/**/*.entity.ts'],
                     extensions: [Migrator],
                     migrations: {
                         tableName: 'mikro_orm_migrations', // name of database table with log of executed transactions

@@ -81,6 +81,7 @@ export default defineConfig(
   globalIgnores([
     'eslint.config.ts',
     'eslint.config copy.ts',
+    'vite.config.ts',
     '.eslintrc.cjs',
     '.prettierrc.cjs',
     'dist/*',
@@ -126,27 +127,4 @@ export default defineConfig(
       '@typescript-eslint/no-empty-function': 'off',
     },
   },
-
-  // Migrations
-  {
-    files: ['test-migrations/**/*.ts', 'migrations/**/*.ts'],
-    extends: [tseslint.configs.recommendedTypeChecked],
-    plugins: { tseslint, import: importPlugin, prettier },
-    languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: {
-    project: ['./tsconfig.json'],
-    tsconfigRootDir,
-    sourceType: 'module',
-    ecmaVersion: 2020,
-      },
-    },
-    rules: {
-      ...customRules,
-      'no-await-in-loop': 'off',
-      '@typescript-eslint/require-await': 'off',
-      '@typescript-eslint/explicit-member-accessibility': 'off',
-      '@typescript-eslint/no-empty-function': 'off',
-    },
-  }
 );
