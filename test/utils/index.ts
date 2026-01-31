@@ -5,6 +5,6 @@ export * from './event-system-test.module.js';
 export * from './keycloak-config-test.module.js';
 export * from './ldap-test.module.js';
 export * from './logging-test.module.js';
-export * from './person-permissions.mock.js';
+export * from './auth.mock.js';
 export * from './test-types.js';
 export * from './timeouts.js';

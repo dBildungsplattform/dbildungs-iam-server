@@ -13,7 +13,7 @@ import {
     mapAggregateToData,
 } from './email.repo.js';
 import { EmailFactory } from '../domain/email.factory.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
@@ -47,6 +47,7 @@ describe('EmailRepo', () => {
     let personRepository: PersonRepository;
     let organisationRepository: OrganisationRepository;
     let instanceConfig: EmailInstanceConfig;
+    let keycloakUserServiceMock: DeepMocked<KeycloakUserService>;
     let orm: MikroORM;
     let em: EntityManager;
 
@@ -58,33 +59,34 @@ describe('EmailRepo', () => {
     };
 
     beforeAll(async () => {
+        keycloakUserServiceMock = createMock<KeycloakUserService>(KeycloakUserService);
+        keycloakUserServiceMock.create.mockImplementation(() => {
+            return Promise.resolve({
+                ok: true,
+                value: faker.string.uuid(),
+            });
+        });
+        keycloakUserServiceMock.setPassword.mockImplementation(() => {
+            return Promise.resolve({
+                ok: true,
+                value: faker.string.alphanumeric(16),
+            });
+        });
+
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailModule],
             providers: [],
         })
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .overrideProvider(EventRoutingLegacyKafkaService)
-            .useValue(createMock<EventRoutingLegacyKafkaService>())
+            .useValue(createMock(EventRoutingLegacyKafkaService))
             .overrideProvider(EventRoutingLegacyKafkaService)
-            .useValue(createMock<EventRoutingLegacyKafkaService>())
+            .useValue(createMock(EventRoutingLegacyKafkaService))
             .overrideProvider(EmailInstanceConfig)
             .useValue(mockEmailInstanceConfig)
             .overrideProvider(KeycloakUserService)
-            .useValue(
-                createMock<KeycloakUserService>({
-                    create: () =>
-                        Promise.resolve({
-                            ok: true,
-                            value: faker.string.uuid(),
-                        }),
-                    setPassword: () =>
-                        Promise.resolve({
-                            ok: true,
-                            value: faker.string.alphanumeric(16),
-                        }),
-                }),
-            )
+            .useValue(keycloakUserServiceMock)
             .compile();
         sut = module.get(EmailRepo);
         emailFactory = module.get(EmailFactory);
@@ -873,13 +875,13 @@ describe('EmailRepo', () => {
     });
 
     describe('compareFunctions', () => {
-        const emailAddressUndefinedUpdatedAt: EmailAddressEntity = createMock<EmailAddressEntity>({
+        const emailAddressUndefinedUpdatedAt: EmailAddressEntity = createMock<EmailAddressEntity>(EmailAddressEntity, {
             updatedAt: undefined,
         });
-        const emailAddress1: EmailAddressEntity = createMock<EmailAddressEntity>({
+        const emailAddress1: EmailAddressEntity = createMock<EmailAddressEntity>(EmailAddressEntity, {
             updatedAt: faker.date.recent(),
         });
-        const emailAddress2: EmailAddressEntity = createMock<EmailAddressEntity>({
+        const emailAddress2: EmailAddressEntity = createMock<EmailAddressEntity>(EmailAddressEntity, {
             updatedAt: faker.date.past(),
         });
         describe('compareEmailAddressesByUpdatedAt', () => {

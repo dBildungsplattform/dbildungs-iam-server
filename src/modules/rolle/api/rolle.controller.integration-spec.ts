@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
@@ -10,9 +10,11 @@ import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
+    createPersonPermissionsMock,
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
+    LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
@@ -68,7 +70,12 @@ describe('Rolle API', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [RolleApiModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
+            imports: [
+                RolleApiModule,
+                LoggingTestModule,
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+            ],
             providers: [
                 {
                     provide: APP_PIPE,
@@ -79,22 +86,22 @@ describe('Rolle API', () => {
                     useValue: {
                         intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
                             const req: Request = context.switchToHttp().getRequest();
-                            req.passportUser = createMock<PassportUser>({
+                            req.passportUser = {
                                 async personPermissions() {
                                     return personpermissionsRepoMock.loadPersonPermissions('');
                                 },
-                            });
+                            } as PassportUser;
                             return next.handle();
                         },
                     },
                 },
                 {
                     provide: PersonPermissionsRepo,
-                    useValue: createMock<PersonPermissionsRepo>(),
+                    useValue: createMock(PersonPermissionsRepo),
                 },
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>({
+                    useValue: createMock<KeycloakUserService>(KeycloakUserService, {
                         create: () =>
                             Promise.resolve({
                                 ok: true,
@@ -122,7 +129,7 @@ describe('Rolle API', () => {
         personFactory = module.get(PersonFactory);
 
         const stepUpGuard: StepUpGuard = module.get(StepUpGuard);
-        stepUpGuard.canActivate = jest.fn().mockReturnValue(true);
+        stepUpGuard.canActivate = vi.fn().mockReturnValue(true);
 
         dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
@@ -132,12 +139,17 @@ describe('Rolle API', () => {
     }, 10000000);
 
     afterAll(async () => {
-        await orm.close();
-        await app.close();
+        if (await orm?.isConnected()) {
+            await orm.close();
+        }
+
+        if (app) {
+            await app.close();
+        }
     });
 
     beforeEach(async () => {
-        permissionsMock = createMock<PersonPermissions>();
+        permissionsMock = createPersonPermissionsMock();
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
         permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
         await DatabaseTestModule.clearDatabase(orm);

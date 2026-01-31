@@ -1,6 +1,7 @@
 import { Injectable, LoggerService } from '@nestjs/common';
 import util from 'util';
 import { ModuleLogger } from './module-logger.js';
+import { Logger } from 'winston';
 
 /**
  * Necessary for nest internal logging. Nest expects an implementation of LoggerService i.e. the method warn() instead of warning()
@@ -26,7 +27,8 @@ export class NestLogger implements LoggerService {
     }
 
     public debug?(message: unknown): void {
-        this.moduleLogger.getLogger().debug(this.stringifiedMessage(message));
+        const logger: Logger = this.moduleLogger.getLogger();
+        logger.debug(this.stringifiedMessage(message));
     }
 
     private stringifiedMessage(message: unknown): string {

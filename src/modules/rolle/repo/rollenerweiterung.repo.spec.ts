@@ -2,14 +2,7 @@ import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    DoFactory,
-    LoggingTestModule,
-} from '../../../../test/utils/index.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -30,6 +23,12 @@ import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../spe
 import { RolleRepo } from './rolle.repo.js';
 import { RollenerweiterungRepo } from './rollenerweiterung.repo.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 function makeN<T>(fn: () => T, n: number): Array<T> {
     return Array.from({ length: n }, fn);
@@ -59,7 +58,7 @@ describe('RollenerweiterungRepo', () => {
             ],
         })
             .overrideProvider(EventRoutingLegacyKafkaService)
-            .useValue(createMock<EventRoutingLegacyKafkaService>())
+            .useValue(createMock(EventRoutingLegacyKafkaService))
             .compile();
 
         sut = module.get(RollenerweiterungRepo);
@@ -175,7 +174,7 @@ describe('RollenerweiterungRepo', () => {
                     merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
                 }),
             );
-            permissionMock = createMock<PersonPermissions>();
+            permissionMock = createPersonPermissionsMock();
         });
 
         it.each([['root' as TestCase], ['schuladmin' as TestCase]])(
@@ -274,6 +273,7 @@ describe('RollenerweiterungRepo', () => {
         });
 
         it('should return an error if service provider is not available for rollenerweiterung', async () => {
+            permissionMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
             const updatedServiceProvider: Option<ServiceProvider<true>> = await serviceProviderRepo.findById(
                 serviceProvider.id,
             );
@@ -331,7 +331,7 @@ describe('RollenerweiterungRepo', () => {
                     3,
                 ),
             );
-            permissionMock = createMock<PersonPermissions>();
+            permissionMock = createPersonPermissionsMock();
             permissionMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
             const unpersistedRollenerweiterungen: Array<Rollenerweiterung<false>> = [];
             for (const organisation of organisations) {
@@ -426,7 +426,7 @@ describe('RollenerweiterungRepo', () => {
                     3,
                 ),
             );
-            permissionMock = createMock<PersonPermissions>();
+            permissionMock = createPersonPermissionsMock();
             permissionMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
             const unpersistedRollenerweiterungen: Array<Rollenerweiterung<false>> = [];
             for (const organisation of organisations) {

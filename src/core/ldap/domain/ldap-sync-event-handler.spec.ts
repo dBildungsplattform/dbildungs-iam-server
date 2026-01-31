@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
@@ -6,11 +7,12 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DoFactory,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 
 import { LdapModule } from '../ldap.module.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { LdapClientService, LdapPersonAttributes } from './ldap-client.service.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { ClassLogger } from '../../logging/class-logger.js';
@@ -82,25 +84,25 @@ describe('LdapSyncEventHandler', () => {
             ],
         })
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .overrideProvider(LdapClientService)
-            .useValue(createMock<LdapClientService>())
+            .useValue(createMock(LdapClientService))
             .overrideProvider(PersonRepository)
-            .useValue(createMock<PersonRepository>())
+            .useValue(createMock(PersonRepository))
             .overrideProvider(RolleRepo)
-            .useValue(createMock<RolleRepo>())
+            .useValue(createMock(RolleRepo))
             .overrideProvider(DBiamPersonenkontextRepo)
-            .useValue(createMock<DBiamPersonenkontextRepo>())
+            .useValue(createMock(DBiamPersonenkontextRepo))
             .overrideProvider(OrganisationRepository)
-            .useValue(createMock<OrganisationRepository>())
+            .useValue(createMock(OrganisationRepository))
             .overrideProvider(EmailRepo)
-            .useValue(createMock<EmailRepo>())
+            .useValue(createMock(EmailRepo))
             .overrideProvider(EventRoutingLegacyKafkaService)
-            .useValue(createMock<EventRoutingLegacyKafkaService>())
+            .useValue(createMock(EventRoutingLegacyKafkaService))
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock<ClassLogger>(ClassLogger))
             .overrideProvider(EmailResolverService)
-            .useValue(createMock<EmailResolverService>())
+            .useValue(createMock<EmailResolverService>(EmailResolverService))
             .compile();
 
         orm = module.get(MikroORM);
@@ -142,11 +144,11 @@ describe('LdapSyncEventHandler', () => {
         kennung: string = faker.string.numeric({ length: 7 }),
         typ: OrganisationsTyp = OrganisationsTyp.SCHULE,
     ): Organisation<true> {
-        return createMock<Organisation<true>>({ id: faker.string.uuid(), kennung: kennung, typ: typ });
+        return DoFactory.createOrganisation<true>(true, { kennung: kennung, typ: typ });
     }
 
     function getRolle(rollenart: RollenArt = RollenArt.LEHR): Rolle<true> {
-        return createMock<Rolle<true>>({ id: faker.string.uuid(), rollenart: rollenart });
+        return DoFactory.createRolle<true>(true, { rollenart: rollenart });
     }
 
     function getOrgaMap(...orgas: Organisation<true>[]): Map<OrganisationID, Organisation<true>> {
@@ -172,7 +174,7 @@ describe('LdapSyncEventHandler', () => {
     ): [Personenkontext<true>[], Map<OrganisationID, Organisation<true>>, Map<RolleID, Rolle<true>>] {
         const lehrRolle1: Rolle<true> = getRolle();
         const lehrOrga1: Organisation<true> = getOrga();
-        const lehrPk1: Personenkontext<true> = createMock<Personenkontext<true>>({
+        const lehrPk1: Personenkontext<true> = DoFactory.createPersonenkontext<true>(true, {
             id: faker.string.uuid(),
             organisationId: lehrOrga1.id,
             rolleId: lehrRolle1.id,
@@ -180,7 +182,7 @@ describe('LdapSyncEventHandler', () => {
         });
         const lehrRolle2: Rolle<true> = getRolle();
         const lehrOrga2: Organisation<true> = getOrga();
-        const lehrPk2: Personenkontext<true> = createMock<Personenkontext<true>>({
+        const lehrPk2: Personenkontext<true> = DoFactory.createPersonenkontext<true>(true, {
             id: faker.string.uuid(),
             organisationId: lehrOrga2.id,
             rolleId: lehrRolle2.id,
@@ -190,7 +192,7 @@ describe('LdapSyncEventHandler', () => {
         // used to cover filtering on RollenArt LEHR
         const lernRolle1: Rolle<true> = getRolle(RollenArt.LERN);
         const lernOrga1: Organisation<true> = getOrga();
-        const lernPk1: Personenkontext<true> = createMock<Personenkontext<true>>({
+        const lernPk1: Personenkontext<true> = DoFactory.createPersonenkontext<true>(true, {
             id: faker.string.uuid(),
             organisationId: lernOrga1.id,
             rolleId: lernRolle1.id,
@@ -203,7 +205,7 @@ describe('LdapSyncEventHandler', () => {
             faker.string.numeric({ length: 7 }),
             OrganisationsTyp.KLASSE,
         );
-        const lehrPKOnKlasse: Personenkontext<true> = createMock<Personenkontext<true>>({
+        const lehrPKOnKlasse: Personenkontext<true> = DoFactory.createPersonenkontext<true>(true, {
             id: faker.string.uuid(),
             organisationId: lehrOrgaForPkOnKlasse.id,
             rolleId: lehrRolleForPKOnKlasse.id,
@@ -260,18 +262,14 @@ describe('LdapSyncEventHandler', () => {
         event = new PersonExternalSystemsSyncEvent(personId);
         vorname = faker.person.firstName();
         familienname = faker.person.lastName();
-        person = createMock<Person<true>>({
+        person = DoFactory.createPerson<true>(true, {
             id: personId,
             username: username,
             vorname: vorname,
             familienname: familienname,
         });
         email = faker.internet.email();
-        enabledEmailAddress = createMock<EmailAddress<true>>({
-            get address(): string {
-                return email;
-            },
-        });
+        enabledEmailAddress = DoFactory.createEmailAddress<true>(true, email);
         givenName = faker.person.firstName();
         surName = faker.person.lastName();
         cn = faker.internet.userName();
@@ -294,8 +292,7 @@ describe('LdapSyncEventHandler', () => {
     });
 
     beforeEach(async () => {
-        jest.restoreAllMocks();
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         await DatabaseTestModule.clearDatabase(orm);
     });
 
@@ -303,7 +300,7 @@ describe('LdapSyncEventHandler', () => {
     describe('triggerLdapSync', () => {
         beforeEach(() => {
             personId = faker.string.uuid();
-            person = createMock<Person<true>>();
+            person = DoFactory.createPerson<true>(true);
         });
 
         describe('when person CANNOT be found by events personID', () => {
@@ -323,7 +320,7 @@ describe('LdapSyncEventHandler', () => {
         beforeEach(() => {
             personId = faker.string.uuid();
             event = new PersonLdapSyncEvent(personId);
-            person = createMock<Person<true>>();
+            person = DoFactory.createPerson<true>(true);
         });
 
         describe('when person CANNOT be found by events personID', () => {
@@ -349,13 +346,9 @@ describe('LdapSyncEventHandler', () => {
             personId = faker.string.uuid();
             username = faker.internet.userName();
             event = new PersonExternalSystemsSyncEvent(personId);
-            person = createMock<Person<true>>({ username: username });
+            person = DoFactory.createPerson<true>(true, { username: username });
             email = faker.internet.email();
-            enabledEmailAddress = createMock<EmailAddress<true>>({
-                get address(): string {
-                    return email;
-                },
-            });
+            enabledEmailAddress = DoFactory.createEmailAddress<true>(true, email);
             personInfo = {
                 personId: personId,
                 username: username,
@@ -377,7 +370,9 @@ describe('LdapSyncEventHandler', () => {
 
         describe('when person has NO username', () => {
             it('should log error and return without proceeding', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>({ username: undefined }));
+                personRepositoryMock.findById.mockResolvedValueOnce(
+                    DoFactory.createPerson<true>(true, { username: undefined }),
+                );
 
                 await sut.personExternalSystemSyncEventHandler(event);
 
@@ -392,6 +387,16 @@ describe('LdapSyncEventHandler', () => {
             it('should log error, return without proceeding and publish LdapSyncFailedEvent', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(undefined);
+                const emailAddress: EmailAddress<true> = new EmailAddress(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.internet.email(),
+                    EmailAddressStatus.FAILED,
+                );
+
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([emailAddress]);
 
                 await sut.personExternalSystemSyncEventHandler(event);
 
@@ -435,16 +440,8 @@ describe('LdapSyncEventHandler', () => {
                     //mock search for ENABLED EmailAddress
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(undefined);
                     //mock search for FAILED EmailAddresses
-                    const failedEmailAddress: EmailAddress<true> = createMock<EmailAddress<true>>({
-                        get address(): string {
-                            return email;
-                        },
-                        get status(): EmailAddressStatus {
-                            return EmailAddressStatus.FAILED;
-                        },
-                        get oxUserID(): string {
-                            return faker.string.numeric();
-                        },
+                    const failedEmailAddress: EmailAddress<true> = DoFactory.createEmailAddress<true>(true, email, {
+                        status: EmailAddressStatus.FAILED,
                     });
                     emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([failedEmailAddress]);
 
@@ -475,7 +472,10 @@ describe('LdapSyncEventHandler', () => {
 
                 ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: true,
-                    value: createMock<LdapPersonAttributes>(),
+                    value: {
+                        entryUUID: faker.string.uuid(),
+                        dn: 'dn',
+                    },
                 });
 
                 ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
@@ -575,18 +575,14 @@ describe('LdapSyncEventHandler', () => {
                     Map<RolleID, Rolle<true>>,
                 ] = getPkArrayOrgaMapAndRolleMap(person);
                 // hence kontexte are filtered by organisations.has, removing one organisation from map here, would not create a coverage case
-                // therefore a mocked map is used
-                const mockedMap: DeepMocked<Map<OrganisationID, Organisation<true>>> =
-                    createMock<Map<OrganisationID, Organisation<true>>>();
-                mockedMap.entries.mockImplementationOnce(() => {
-                    return orgaMap.entries();
-                });
-                mockedMap.has.mockImplementationOnce((id: string) => {
-                    return orgaMap.has(id);
-                });
-                mockedMap.get.mockImplementationOnce(() => {
-                    return undefined;
-                });
+                // therefore a second map is used
+                const mockedMap: Map<OrganisationID, Organisation<true>> = {
+                    entries: vi.fn().mockReturnValue(orgaMap.entries()),
+                    has: vi.fn().mockRejectedValue(true),
+                    get: vi.fn().mockReturnValue(undefined),
+                    delete: vi.fn(),
+                } as unknown as Map<OrganisationID, Organisation<true>>;
+
                 mockPersonenKontextRelatedRepositoryCalls(kontexte, mockedMap, rolleMap);
                 organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
                     oeffentlicheSchulenDomain,
@@ -727,11 +723,7 @@ describe('LdapSyncEventHandler', () => {
         describe('when vorname and givenName, familienname and surName, username and cn DO NOT match', () => {
             it('should log info', async () => {
                 //mock: email-addresses are equal -> no processing for mismatching emails necessary
-                enabledEmailAddress = createMock<EmailAddress<true>>({
-                    get address(): string {
-                        return mailPrimaryAddress;
-                    },
-                });
+                enabledEmailAddress = DoFactory.createEmailAddress<true>(true, mailPrimaryAddress);
                 mockPersonFoundEnabledAddressFoundDisabledAddressNotFound();
 
                 // create PKs, orgaMap and rolleMap
@@ -840,15 +832,19 @@ describe('LdapSyncEventHandler', () => {
                     personRepositoryMock.findById.mockResolvedValueOnce(person);
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
                     emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                        createMock<EmailAddress<true>>({
-                            get address(): string {
-                                return mailPrimaryAddress;
-                            },
-                            get status(): EmailAddressStatus {
-                                return EmailAddressStatus.DISABLED;
-                            },
+                        DoFactory.createEmailAddress<true>(true, mailPrimaryAddress, {
+                            status: EmailAddressStatus.DISABLED,
                         }),
                     ]);
+                    emailRepoMock.save.mockImplementation(async (emailAddress: EmailAddress<boolean>) =>
+                        Promise.resolve(
+                            DoFactory.createEmailAddress<true>(true, emailAddress.address, {
+                                personId: emailAddress.personId,
+                                status: emailAddress.status,
+                                oxUserID: emailAddress.oxUserID,
+                            }),
+                        ),
+                    );
 
                     // create PKs, orgaMap and rolleMap
                     const [kontexte, orgaMap, rolleMap]: [
@@ -890,8 +886,7 @@ describe('LdapSyncEventHandler', () => {
             const rolle1: Rolle<true> = getRolle();
             const orga1Kennung: string = faker.string.numeric({ length: 7 });
             const orga1: Organisation<true> = getOrga(orga1Kennung);
-            const pk1: Personenkontext<true> = createMock<Personenkontext<true>>({
-                id: faker.string.uuid(),
+            const pk1: Personenkontext<true> = DoFactory.createPersonenkontext<true>(true, {
                 organisationId: orga1.id,
                 rolleId: rolle1.id,
                 personId: personId,
@@ -903,11 +898,7 @@ describe('LdapSyncEventHandler', () => {
 
             it('should log warnings regarding LDAP-groups, corrupt group-dn, add missing member-relationship and remove orphan member-relationship', async () => {
                 //mock: email-addresses are equal -> no processing for mismatching emails necessary
-                enabledEmailAddress = createMock<EmailAddress<true>>({
-                    get address(): string {
-                        return mailPrimaryAddress;
-                    },
-                });
+                enabledEmailAddress = DoFactory.createEmailAddress<true>(true, mailPrimaryAddress);
                 mockPersonFoundEnabledAddressFoundDisabledAddressNotFound();
 
                 mockPersonenKontextRelatedRepositoryCalls(pks, orgaMap, rolleMap);
@@ -957,13 +948,8 @@ describe('LdapSyncEventHandler', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock<EmailAddress<true>>({
-                        get address(): string {
-                            return mailPrimaryAddress;
-                        },
-                        get status(): EmailAddressStatus {
-                            return EmailAddressStatus.DISABLED;
-                        },
+                    DoFactory.createEmailAddress<true>(true, mailPrimaryAddress, {
+                        status: EmailAddressStatus.DISABLED,
                     }),
                 ]);
 
@@ -995,13 +981,8 @@ describe('LdapSyncEventHandler', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock<EmailAddress<true>>({
-                        get address(): string {
-                            return mailPrimaryAddress;
-                        },
-                        get status(): EmailAddressStatus {
-                            return EmailAddressStatus.DISABLED;
-                        },
+                    DoFactory.createEmailAddress<true>(true, mailPrimaryAddress, {
+                        status: EmailAddressStatus.DISABLED,
                     }),
                 ]);
 

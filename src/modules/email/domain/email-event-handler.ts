@@ -342,7 +342,8 @@ export class EmailEventHandler {
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, username:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
 
-        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+        const usesEmailMicroservice: boolean = this.emailResolverService.shouldUseEmailMicroservice();
+        if (usesEmailMicroservice) {
             this.logger.info(`Ignoring Event for personId:${event.person.id} because email microservice is enabled`);
             return;
         }

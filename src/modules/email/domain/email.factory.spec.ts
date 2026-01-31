@@ -1,7 +1,8 @@
+import { vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailFactory } from './email.factory.js';
 import { EmailAddress, EmailAddressStatus } from './email-address.js';
@@ -10,9 +11,9 @@ import { Person } from '../../person/domain/person.js';
 import { EntityNotFoundError, InvalidNameError } from '../../../shared/error/index.js';
 import { EmailGenerator } from './email-generator.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 import assert from 'assert';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 
 describe('EmailFactory', () => {
     let module: TestingModule;
@@ -26,15 +27,15 @@ describe('EmailFactory', () => {
                 EmailFactory,
                 {
                     provide: EmailRepo,
-                    useValue: createMock<EmailRepo>(),
+                    useValue: createMock(EmailRepo),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
             ],
         }).compile();
@@ -63,7 +64,7 @@ describe('EmailFactory', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('construct', () => {
@@ -94,7 +95,7 @@ describe('EmailFactory', () => {
                 const person: Person<true> = getPerson();
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
 
-                jest.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
+                vi.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
                     async (vorname: string, familienname: string) => {
                         return Promise.resolve({
                             ok: true,
@@ -103,11 +104,13 @@ describe('EmailFactory', () => {
                     },
                 );
 
-                organisationRepositoryMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([
-                    createMock<Organisation<true>>({
-                        emailDomain: '@schule-sh.de',
+                organisationRepositoryMock.findById.mockResolvedValueOnce(
+                    DoFactory.createOrganisation<true>(true, {
+                        emailDomain: undefined,
                     }),
-                ]);
+                );
+
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('@schule-sh.de');
 
                 const creationResult: Result<EmailAddress<false>> = await sut.createNew(person.id, faker.string.uuid());
 
@@ -152,11 +155,15 @@ describe('EmailFactory', () => {
             it('should return EmailDomainNotFoundError', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(getPerson());
                 organisationRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Organisation<true>>({ emailDomain: undefined }),
+                    DoFactory.createOrganisation<true>(true, { emailDomain: undefined }),
                 );
                 organisationRepositoryMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([
-                    createMock<Organisation<true>>({ emailDomain: undefined }),
+                    DoFactory.createOrganisation<true>(true, { emailDomain: undefined }),
                 ]);
+                organisationRepositoryMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([
+                    DoFactory.createOrganisation<true>(true, { emailDomain: undefined }),
+                ]);
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(undefined);
 
                 const creationResult: Result<EmailAddress<false>> = await sut.createNew(
                     faker.string.uuid(),
@@ -172,11 +179,11 @@ describe('EmailFactory', () => {
             it('should return error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(getPerson());
                 organisationRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Organisation<true>>({ emailDomain: undefined }),
+                    DoFactory.createOrganisation<true>(true, { emailDomain: undefined }),
                 );
                 organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(faker.internet.email());
 
-                jest.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
+                vi.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
                     async (vorname: string, familienname: string) => {
                         return Promise.resolve({
                             ok: false,
@@ -203,7 +210,7 @@ describe('EmailFactory', () => {
                 const person: Person<true> = getPerson();
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
 
-                jest.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
+                vi.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
                     async (vorname: string, familienname: string) => {
                         return Promise.resolve({
                             ok: true,
@@ -242,7 +249,7 @@ describe('EmailFactory', () => {
             it('should return error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(getPerson());
 
-                jest.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
+                vi.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
                     async (vorname: string, familienname: string) => {
                         return Promise.resolve({
                             ok: false,

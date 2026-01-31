@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -9,6 +9,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { PersonAdministrationService } from './person-administration.service.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('PersonAdministrationService', () => {
     let module: TestingModule;
@@ -23,15 +24,15 @@ describe('PersonAdministrationService', () => {
                 PersonAdministrationService,
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: PersonPermissions,
-                    useValue: createMock<PersonPermissions>(),
+                    useValue: createPersonPermissionsMock(),
                 },
             ],
         }).compile();
@@ -46,7 +47,7 @@ describe('PersonAdministrationService', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {

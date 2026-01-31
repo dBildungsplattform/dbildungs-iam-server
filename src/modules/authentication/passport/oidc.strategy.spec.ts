@@ -1,10 +1,15 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthorizationParameters, Client, Issuer, Strategy, TokenSet, UserinfoResponse } from 'openid-client';
 
-import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    createUserinfoResponseMock,
+    DoFactory,
+    LoggingTestModule,
+} from '../../../../test/utils/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
 import {
     extractStepUpLevelFromJWT,
@@ -19,6 +24,8 @@ import { Person } from '../../person/domain/person.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
 import { Request } from 'express';
 import { sign } from 'jsonwebtoken';
+import { createRequestMock } from '../../../../test/utils/http.mocks.js';
+import { Mock } from 'vitest';
 
 describe('OpenIdConnectStrategy', () => {
     let module: TestingModule;
@@ -55,7 +62,7 @@ describe('OpenIdConnectStrategy', () => {
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
             ],
         }).compile();
@@ -70,7 +77,7 @@ describe('OpenIdConnectStrategy', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -79,8 +86,9 @@ describe('OpenIdConnectStrategy', () => {
 
     describe('validate', () => {
         it('should call client.userinfo', async () => {
-            jest.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createMock<UserinfoResponse>());
-            const request: Request = createMock<Request>();
+            vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createUserinfoResponseMock());
+            const request: Request = createRequestMock();
+            personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(DoFactory.createPerson(true));
             await sut.validate(request, new TokenSet());
 
             expect(openIdClient.userinfo).toHaveBeenCalled();
@@ -92,9 +100,9 @@ describe('OpenIdConnectStrategy', () => {
                 access_token: faker.string.alpha(32),
                 refresh_token: faker.string.alpha(32),
             });
-            const userinfo: UserinfoResponse = createMock<UserinfoResponse>();
-            jest.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(userinfo);
-            const request: Request = createMock<Request>();
+            const userinfo: UserinfoResponse = createUserinfoResponseMock();
+            vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(userinfo);
+            const request: Request = createRequestMock();
             personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(createPerson());
 
             const result: AuthorizationParameters = await sut.validate(request, tokenSet);
@@ -103,32 +111,32 @@ describe('OpenIdConnectStrategy', () => {
         });
 
         it('should throw UnauthorizedException if userinfo fails', async () => {
-            jest.spyOn(openIdClient, 'userinfo').mockRejectedValueOnce(new Error());
-            const request: Request = createMock<Request>();
+            vi.spyOn(openIdClient, 'userinfo').mockRejectedValueOnce(new Error());
+            const request: Request = createRequestMock();
             await expect(sut.validate(request, new TokenSet())).rejects.toThrow(UnauthorizedException);
         });
 
         it('should set personPermissions to return rejected promise', async () => {
-            jest.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createMock<UserinfoResponse>());
+            vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createUserinfoResponseMock());
             personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(createPerson());
-            const request: Request = createMock<Request>();
+            const request: Request = createRequestMock();
             const user: AuthorizationParameters & PassportUser = await sut.validate(request, new TokenSet());
 
             await expect(user.personPermissions()).rejects.toThrow('Permissions not loaded');
         });
 
         it('should throw KeycloakUserNotFoundError if keycloak-user does not exist', async () => {
-            jest.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createMock<UserinfoResponse>());
+            vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createUserinfoResponseMock());
             personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
-            const request: Request = createMock<Request>();
+            const request: Request = createRequestMock();
             await expect(sut.validate(request, new TokenSet())).rejects.toThrow(KeycloakUserNotFoundError);
         });
 
         it('should revoke token if keycloak-user does not exist', async () => {
-            jest.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createMock<UserinfoResponse>());
-            jest.spyOn(openIdClient, 'revoke').mockResolvedValueOnce(undefined);
+            vi.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createUserinfoResponseMock());
+            vi.spyOn(openIdClient, 'revoke').mockResolvedValueOnce(undefined);
             personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
-            const request: Request = createMock<Request>();
+            const request: Request = createRequestMock();
             await expect(sut.validate(request, new TokenSet({ access_token: faker.string.alpha(32) }))).rejects.toThrow(
                 KeycloakUserNotFoundError,
             );
@@ -137,21 +145,21 @@ describe('OpenIdConnectStrategy', () => {
     });
 
     describe('authenticate', () => {
-        let superPassportSpy: jest.SpyInstance;
+        let superPassportSpy: Mock;
         beforeEach(() => {
-            jest.restoreAllMocks();
-            superPassportSpy = jest.spyOn(Strategy.prototype, 'authenticate').mockImplementation(() => {});
+            vi.restoreAllMocks();
+            superPassportSpy = vi.spyOn(Strategy.prototype, 'authenticate').mockImplementation(() => {});
         });
 
         it('should call super.authenticate with options', () => {
-            const request: Request = createMock<Request>();
+            const request: Request = createRequestMock();
             sut.authenticate(request);
 
             expect(superPassportSpy).toHaveBeenCalledWith(request, { acr_values: 'silver' });
         });
 
         it('should call super.authenticate with options', () => {
-            const request: Request = createMock<Request>();
+            const request: Request = createRequestMock();
             request.session.requiredStepupLevel = StepUpLevel.GOLD;
             sut.authenticate(request);
 
@@ -160,13 +168,13 @@ describe('OpenIdConnectStrategy', () => {
     });
 
     const mockTime = (time: number): void => {
-        jest.useFakeTimers();
-        jest.setSystemTime(time);
+        vi.useFakeTimers();
+        vi.setSystemTime(time);
     };
 
     describe('Step-Up Utilities', () => {
         afterEach(() => {
-            jest.useRealTimers();
+            vi.useRealTimers();
         });
         describe('isStepUpTimeOver', () => {
             it('should return false if lastRouteChangeTime is undefined', () => {
@@ -181,7 +189,7 @@ describe('OpenIdConnectStrategy', () => {
 
                 const timeout: number = 10;
                 expect(isStepUpTimeOver(req, timeout)).toBe(false);
-                jest.restoreAllMocks();
+                vi.restoreAllMocks();
             });
 
             it('should return false if time since lastRouteChangeTime is under the threshold', () => {
@@ -190,7 +198,7 @@ describe('OpenIdConnectStrategy', () => {
 
                 const timeout: number = 10;
                 expect(isStepUpTimeOver(req, timeout)).toBe(false);
-                jest.restoreAllMocks();
+                vi.restoreAllMocks();
             });
         });
 
@@ -204,7 +212,7 @@ describe('OpenIdConnectStrategy', () => {
                 updateAndGetStepUpLevel(req, timeout);
 
                 expect(req.session.lastRouteChangeTime).toBe(currentTime);
-                jest.restoreAllMocks();
+                vi.restoreAllMocks();
             });
 
             it('should reset stepUpLevel if step-up time is over', () => {
@@ -220,7 +228,7 @@ describe('OpenIdConnectStrategy', () => {
                 expect(req.passportUser!.stepUpLevel).toBe(StepUpLevel.SILVER);
                 expect(result).toBe(StepUpLevel.SILVER);
                 expect(req.session.lastRouteChangeTime).toBe(12000);
-                jest.restoreAllMocks();
+                vi.restoreAllMocks();
             });
 
             it('should not reset stepUpLevel if step-up time is not over', () => {
@@ -236,7 +244,7 @@ describe('OpenIdConnectStrategy', () => {
                 expect(req.passportUser!.stepUpLevel).toBe(StepUpLevel.GOLD);
                 expect(result).toBe(StepUpLevel.GOLD);
                 expect(req.session.lastRouteChangeTime).toBe(8000);
-                jest.restoreAllMocks();
+                vi.restoreAllMocks();
             });
 
             it('should return lowest step-up level if passportUser is undefined', () => {
@@ -247,7 +255,7 @@ describe('OpenIdConnectStrategy', () => {
                 const result: StepUpLevel = updateAndGetStepUpLevel(req, timeout);
 
                 expect(result).toBe(StepUpLevel.SILVER);
-                jest.restoreAllMocks();
+                vi.restoreAllMocks();
             });
         });
     });

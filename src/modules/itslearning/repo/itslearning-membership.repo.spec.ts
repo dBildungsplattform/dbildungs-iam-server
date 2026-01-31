@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
@@ -44,7 +44,7 @@ describe('Itslearning Membership Repo', () => {
                 ItslearningMembershipRepo,
                 {
                     provide: ItsLearningIMSESService,
-                    useValue: createMock<ItsLearningIMSESService>(),
+                    useValue: createMock(ItsLearningIMSESService),
                 },
             ],
         }).compile();
@@ -166,8 +166,11 @@ describe('Itslearning Membership Repo', () => {
             );
 
             const result: Option<DomainError> = await sut.createMemberships(memberships);
+            const expectedError: ItsLearningError = new ItsLearningError('1 of 1 Requests failed', [
+                makeFailureStatus('Some Error'),
+            ]);
 
-            expect(result).toEqual(new ItsLearningError('1 of 1 Requests failed', makeFailureStatus('Some Error')));
+            expect(result).toEqual(expectedError);
         });
 
         it('should return error on fail', async () => {
@@ -251,7 +254,7 @@ describe('Itslearning Membership Repo', () => {
 
             const result: Option<DomainError> = await sut.removeMemberships(memberships);
 
-            expect(result).toEqual(new ItsLearningError('1 of 1 Requests failed', makeFailureStatus('Some Error')));
+            expect(result).toEqual(new ItsLearningError('1 of 1 Requests failed', [makeFailureStatus('Some Error')]));
         });
 
         it('should return error on fail', async () => {

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -28,23 +28,23 @@ describe('PersonPermissionRepo', () => {
                 PersonPermissionsRepo,
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: RollenerweiterungRepo,
-                    useValue: createMock<RollenerweiterungRepo>(),
+                    useValue: createMock(RollenerweiterungRepo),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
             ],
         }).compile();

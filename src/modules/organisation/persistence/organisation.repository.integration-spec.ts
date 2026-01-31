@@ -1,10 +1,12 @@
+import { vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
+    createPersonPermissionsMock,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
@@ -45,7 +47,7 @@ describe('OrganisationRepository', () => {
                 OrganisationRepository,
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
             ],
         }).compile();
@@ -68,7 +70,7 @@ describe('OrganisationRepository', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -782,7 +784,7 @@ describe('OrganisationRepository', () => {
     });
 
     describe('Update Organisationsname - Klasse', () => {
-        const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
+        const permissionsMock: PersonPermissions = createPersonPermissionsMock();
         describe('when organisation does not exist', () => {
             it('should return EntityNotFoundError', async () => {
                 const id: string = faker.string.uuid();
@@ -834,7 +836,12 @@ describe('OrganisationRepository', () => {
                     1,
                     permissionsMock,
                 );
-                expect(result).toEqual(new EntityCouldNotBeUpdated('Organisation', savedOrganisation.id));
+                const expectation: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated(
+                    'Organisation',
+                    savedOrganisation.id,
+                    ['The schoolName of a Klasse cannot be undefined.'],
+                );
+                expect(result).toEqual(expectation);
             });
         });
 
@@ -1003,7 +1010,7 @@ describe('OrganisationRepository', () => {
     });
 
     describe('updateOrganisationName - Schulträger', () => {
-        const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
+        const permissionsMock: PersonPermissions = createPersonPermissionsMock();
 
         describe('when organisation is a Schulträger', () => {
             let savedOeffentlich: OrganisationEntity;
@@ -1140,7 +1147,8 @@ describe('OrganisationRepository', () => {
             const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
             await em.persistAndFlush(mappedOrga);
 
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
             const result: Organisation<true> | DomainError = await sut.setEnabledForitslearning(
@@ -1155,7 +1163,7 @@ describe('OrganisationRepository', () => {
         });
 
         it('should return error if permissions are not sufficient to edit organisation', async () => {
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
 
             const fakeId: string = faker.string.uuid();
@@ -1168,7 +1176,7 @@ describe('OrganisationRepository', () => {
         });
 
         it('should throw error if organisation CANNOT be found by id', async () => {
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
 
             const fakeId: string = faker.string.uuid();
@@ -1196,8 +1204,9 @@ describe('OrganisationRepository', () => {
             const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
             await em.persistAndFlush(mappedOrga);
 
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
 
             const result: Organisation<true> | DomainError = await sut.setEnabledForitslearning(
                 personPermissions,
@@ -1468,7 +1477,7 @@ describe('OrganisationRepository', () => {
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
             const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
@@ -1496,7 +1505,7 @@ describe('OrganisationRepository', () => {
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
 
             const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
@@ -1525,7 +1534,7 @@ describe('OrganisationRepository', () => {
                     await em.persistAndFlush(mappedOrga);
                     orgas.push(mappedOrga);
                 }
-                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                     all: false,
                     orgaIds: [orgas[0]!.id, orgas[3]!.id, orgas[4]!.id],
@@ -1579,7 +1588,7 @@ describe('OrganisationRepository', () => {
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
                 orgaIds: [orgas[0]!.id, orgas[2]!.id, orgas[4]!.id],
@@ -1626,7 +1635,7 @@ describe('OrganisationRepository', () => {
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
                 orgaIds: [orgas[0]!.id, orgas[2]!.id, orgas[4]!.id],
@@ -1675,7 +1684,7 @@ describe('OrganisationRepository', () => {
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: true,
             });
@@ -1722,7 +1731,7 @@ describe('OrganisationRepository', () => {
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: true,
             });
@@ -1770,7 +1779,7 @@ describe('OrganisationRepository', () => {
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
                 orgaIds: [orgas[0]!.id, orgas[1]!.id],
@@ -1819,7 +1828,7 @@ describe('OrganisationRepository', () => {
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: true,
             });
@@ -1872,7 +1881,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.SCHULE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Schule under Land');
+                    throw new Error('could not create Schule under Land');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -1889,7 +1898,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.TRAEGER,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Traeger');
+                    throw new Error('could not create Traeger');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -1906,13 +1915,13 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.SCHULE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Schule under root');
+                    throw new Error('could not create Schule under root');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: true,
             });
@@ -1985,7 +1994,7 @@ describe('OrganisationRepository', () => {
                 orgas.push(orga);
             }
 
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: true,
             });
@@ -2038,7 +2047,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.SCHULE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Schule under Land');
+                    throw new Error('could not create Schule under Land');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -2055,7 +2064,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.TRAEGER,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Traeger');
+                    throw new Error('could not create Traeger');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -2072,13 +2081,13 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.SCHULE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Schule under root');
+                    throw new Error('could not create Schule under root');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: true,
             });
@@ -2108,7 +2117,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.SCHULE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Schule under Land');
+                    throw new Error('could not create Schule under Land');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -2125,7 +2134,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.TRAEGER,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Traeger');
+                    throw new Error('could not create Traeger');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -2142,13 +2151,13 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.KLASSE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('could not create Traeger');
+                    throw new Error('could not create Klasse');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
                 orgaIds: [orgas[0]!.id, orgas[2]!.id, orgas[3]!.id, orgas[4]!.id],
@@ -2182,7 +2191,7 @@ describe('OrganisationRepository', () => {
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
             const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
@@ -2225,7 +2234,7 @@ describe('OrganisationRepository', () => {
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
                 orgaIds: [orgas[0]!.id, orgas[2]!.id, orgas[4]!.id],
@@ -2253,7 +2262,7 @@ describe('OrganisationRepository', () => {
                         `Organisation ${5 - i}`, // Reverse order for testing sorting
                     );
                     if (orga instanceof DomainError) {
-                        fail('Could not create Organisation');
+                        throw new Error('Could not create Organisation');
                     }
                     const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                     await em.persistAndFlush(mappedOrga);
@@ -2262,7 +2271,7 @@ describe('OrganisationRepository', () => {
             });
 
             it('should return organisations sorted by name in ascending order', async () => {
-                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
                 const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
@@ -2277,7 +2286,7 @@ describe('OrganisationRepository', () => {
             });
 
             it('should return organisations sorted by name in descending order', async () => {
-                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
                 const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
@@ -2295,7 +2304,7 @@ describe('OrganisationRepository', () => {
             });
 
             it('should return organisations sorted by kennung in ascending order', async () => {
-                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
                 const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
@@ -2310,7 +2319,7 @@ describe('OrganisationRepository', () => {
             });
 
             it('should return organisations sorted by kennung in descending order', async () => {
-                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
                 const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
@@ -2343,7 +2352,7 @@ describe('OrganisationRepository', () => {
                     OrganisationsTyp.SCHULE,
                 );
                 if (orga instanceof DomainError) {
-                    fail('Could not create Organisation');
+                    throw new Error('Could not create Organisation');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
@@ -2364,7 +2373,7 @@ describe('OrganisationRepository', () => {
                 finalOrgas.push(orgaAggregate);
             }
 
-            jest.spyOn(sut, 'findBy').mockResolvedValueOnce([
+            vi.spyOn(sut, 'findBy').mockResolvedValueOnce([
                 finalOrgas.filter((orga: Organisation<true>) => permittedOrgaIds.includes(orga.id)),
                 2,
             ]);

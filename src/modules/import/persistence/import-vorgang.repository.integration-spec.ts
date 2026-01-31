@@ -7,16 +7,11 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
 } from '../../../../test/utils/index.js';
-import {
-    ImportQueryOptions,
-    ImportVorgangRepository,
-    mapAggregateToData,
-    mapEntityToAggregate,
-} from './import-vorgang.repository.js';
+import { ImportVorgangRepository, mapAggregateToData, mapEntityToAggregate } from './import-vorgang.repository.js';
 import { ImportVorgang } from '../domain/import-vorgang.js';
 import { ImportVorgangEntity } from './import-vorgang.entity.js';
 import { ImportStatus } from '../domain/import.enums.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -45,6 +40,7 @@ describe('ImportVorgangRepository', () => {
     let personFactory: PersonFactory;
     let personRepository: PersonRepository;
     let rolleRepo: RolleRepo;
+    let keycloakUserServiceMock: DeepMocked<KeycloakUserService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -55,50 +51,54 @@ describe('ImportVorgangRepository', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],
             providers: [
+                {
+                    provide: KeycloakUserService,
+                    useValue: createMock(KeycloakUserService),
+                },
                 ImportVorgangRepository,
                 PersonFactory,
                 PersonRepository,
                 UsernameGeneratorService,
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
-                },
-                {
-                    provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>({
-                        create: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.uuid(),
-                            }),
-                        setPassword: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.alphanumeric(16),
-                            }),
-                    }),
+                    useValue: createMock(ClassLogger),
                 },
                 {
                     provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
+                    useValue: createMock(UserLockRepository),
                 },
                 {
                     provide: OxUserBlacklistRepo,
-                    useValue: createMock<OxUserBlacklistRepo>(),
+                    useValue: createMock(OxUserBlacklistRepo),
                 },
             ],
-        }).compile();
+        })
+            .overrideProvider(KeycloakUserService)
+            .useValue(createMock<KeycloakUserService>(KeycloakUserService))
+            .compile();
         sut = module.get(ImportVorgangRepository);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         personFactory = module.get(PersonFactory);
         personRepository = module.get(PersonRepository);
         rolleRepo = module.get(RolleRepo);
-
+        keycloakUserServiceMock = module.get(KeycloakUserService);
+        keycloakUserServiceMock.create.mockImplementation(() =>
+            Promise.resolve({
+                ok: true,
+                value: faker.string.uuid(),
+            }),
+        );
+        keycloakUserServiceMock.setPassword.mockImplementation(() =>
+            Promise.resolve({
+                ok: true,
+                value: faker.string.alphanumeric(16),
+            }),
+        );
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
@@ -320,7 +320,7 @@ describe('ImportVorgangRepository', () => {
             });
 
             it('when search by importByPersonId', async () => {
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                 permissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(permissions, {
@@ -332,7 +332,7 @@ describe('ImportVorgangRepository', () => {
             });
 
             it('when search by rolleIds', async () => {
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                 permissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(permissions, {
@@ -344,7 +344,7 @@ describe('ImportVorgangRepository', () => {
             });
 
             it('when search by organisationIds', async () => {
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                 permissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(permissions, {
@@ -356,7 +356,7 @@ describe('ImportVorgangRepository', () => {
             });
 
             it('should return import history when search by status', async () => {
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                 permissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(permissions, {
@@ -370,20 +370,17 @@ describe('ImportVorgangRepository', () => {
 
         describe('Should return empty array', () => {
             it('when admin des not have IMPORT_DURCHFUEHREN rights', async () => {
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                 permissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
 
-                const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(
-                    permissions,
-                    createMock<ImportQueryOptions>(),
-                );
+                const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(permissions, {});
 
                 expect(result).toEqual([]);
                 expect(total).toBe(0);
             });
 
             it('if no import transaction was found', async () => {
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
                 permissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(permissions, {

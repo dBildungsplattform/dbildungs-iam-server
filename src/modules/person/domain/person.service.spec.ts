@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
@@ -18,7 +18,7 @@ describe('PersonService', () => {
                 PersonService,
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
             ],
         }).compile();
@@ -31,7 +31,7 @@ describe('PersonService', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {

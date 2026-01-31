@@ -1,7 +1,8 @@
+import { vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsernameGeneratorService } from './username-generator.service.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { FindUserFilter, KeycloakUserService, User } from '../../keycloak-administration/index.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { FindUserFilter, KeycloakUserService } from '../../keycloak-administration/index.js';
 import {
     DomainError,
     EntityNotFoundError,
@@ -16,6 +17,7 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     ConfigTestModule,
+    DoFactory,
 } from '../../../../test/utils/index.js';
 import { MikroORM } from '@mikro-orm/core';
 import { OxUserBlacklistRepo } from '../persistence/ox-user-blacklist.repo.js';
@@ -37,11 +39,11 @@ describe('UsernameGeneratorService', () => {
                 OxUserBlacklistRepo,
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>(),
+                    useValue: createMock(KeycloakUserService),
                 },
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock(ClassLogger),
                 },
             ],
         }).compile();
@@ -64,7 +66,7 @@ describe('UsernameGeneratorService', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should give an all lowercase username', async () => {
@@ -136,7 +138,7 @@ describe('UsernameGeneratorService', () => {
 
     it('should add a number when username already exists', async () => {
         kcUserService.findOne
-            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() })
+            .mockResolvedValueOnce({ ok: true, value: DoFactory.createUser(true) })
             .mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError('Not found') });
         const generatedUsername: Result<string, DomainError> = await service.generateUsername('Max', 'Meyer');
         expect(loggerMock.info).toHaveBeenLastCalledWith(`Next Available Username Is:mmeyer1`);
@@ -146,7 +148,7 @@ describe('UsernameGeneratorService', () => {
     it('should increment the counter when a username would exist more than twice', async () => {
         kcUserService.findOne.mockImplementation((userFilter: FindUserFilter) => {
             if (userFilter.username === 'mmeyer' || userFilter.username === 'mmeyer1') {
-                return Promise.resolve({ ok: true, value: createMock<User<true>>() });
+                return Promise.resolve({ ok: true, value: DoFactory.createUser(true) });
             } else {
                 return Promise.resolve({ ok: false, error: new EntityNotFoundError('Not found') });
             }
@@ -158,11 +160,11 @@ describe('UsernameGeneratorService', () => {
 
     it("Should fill 'holes' in the counter if there are any", async () => {
         kcUserService.findOne
-            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() })
-            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() })
-            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() })
+            .mockResolvedValueOnce({ ok: true, value: DoFactory.createUser(true) })
+            .mockResolvedValueOnce({ ok: true, value: DoFactory.createUser(true) })
+            .mockResolvedValueOnce({ ok: true, value: DoFactory.createUser(true) })
             .mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError('Not found') })
-            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() });
+            .mockResolvedValueOnce({ ok: true, value: DoFactory.createUser(true) });
         const generatedUsername: Result<string, DomainError> = await service.generateUsername('Renate', 'Bergmann');
         expect(loggerMock.info).toHaveBeenLastCalledWith(`Next Available Username Is:rbergmann3`);
         expect(generatedUsername).toEqual({ ok: true, value: 'rbergmann3' });

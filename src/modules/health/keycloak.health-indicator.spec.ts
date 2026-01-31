@@ -1,26 +1,33 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock } from '../../../test/utils/createMock.js';
 import { BaseClient } from 'openid-client';
 import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';
 import { HealthIndicatorResult, HealthIndicatorStatus } from '@nestjs/terminus';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../shared/config/index.js';
-import { ConfigTestModule, KeycloakConfigTestModule } from '../../../test/utils/index.js';
+import { ConfigTestModule, createOidcClientMock, KeycloakConfigTestModule } from '../../../test/utils/index.js';
 
 let error: Error | string | undefined = undefined;
 
-jest.mock('../authentication/services/oidc-client.service.js', () => {
-    return {
-        tryGetClient: function (): Promise<BaseClient> {
-            if (error === undefined) {
-                return Promise.resolve(createMock<BaseClient>());
-            } else {
-                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-                return Promise.reject(error);
-            }
-        },
-    };
-});
+type importType = typeof import('../authentication/services/oidc-client.service.js');
+
+vi.mock<importType>(
+    import('../authentication/services/oidc-client.service.js'),
+    async (importOriginal: () => Promise<importType>) => {
+        const original: importType = await importOriginal();
+        return {
+            ...original,
+            tryGetClient: function (): Promise<BaseClient> {
+                if (error === undefined) {
+                    return Promise.resolve(createOidcClientMock());
+                } else {
+                    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                    return Promise.reject(error);
+                }
+            },
+        };
+    },
+);
 
 describe('Keycloak health indicator', () => {
     let module: TestingModule;
@@ -31,7 +38,7 @@ describe('Keycloak health indicator', () => {
                 KeycloakHealthIndicator,
                 {
                     provide: ConfigService<ServerConfig>,
-                    useValue: createMock<ConfigService<ServerConfig>>(),
+                    useValue: createMock<ConfigService>(ConfigService<ServerConfig>),
                 },
             ],
         }).compile();

@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { HttpException, NotImplementedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory } from '../../../../test/utils/index.js';
+import { createPersonPermissionsMock, DoFactory } from '../../../../test/utils/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { Personenstatus, SichtfreigabeType } from '../domain/personenkontext.enums.js';
@@ -29,6 +29,8 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { PersonApiMapper } from '../../person/mapper/person-api.mapper.js';
+import { DomainErrorMock } from '../../../../test/utils/error.mock.js';
+import { MockedObject } from 'vitest';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -45,27 +47,27 @@ describe('PersonenkontextController', () => {
                 PersonenkontextController,
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: PersonenkontextService,
-                    useValue: createMock<PersonenkontextService>(),
+                    useValue: createMock(PersonenkontextService),
                 },
                 {
                     provide: PersonService,
-                    useValue: createMock<PersonService>(),
+                    useValue: createMock(PersonService),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: OrganisationService,
-                    useValue: createMock<OrganisationService>(),
+                    useValue: createMock(OrganisationService),
                 },
                 PersonApiMapper,
             ],
@@ -82,7 +84,7 @@ describe('PersonenkontextController', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -92,21 +94,25 @@ describe('PersonenkontextController', () => {
     describe('findPersonenkontextById', () => {
         describe('when finding personenkontext with id', () => {
             it('should return personenkontext response', async () => {
+                const personenKontextMock: MockedObject<Personenkontext<true>> = vi.mockObject(
+                    DoFactory.createPersonenkontext(true),
+                );
+                personenKontextMock.getRolle.mockResolvedValue(DoFactory.createRolle(true));
                 // Mock Auth check
                 personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
                     ok: true,
-                    value: createMock(),
+                    value: personenKontextMock,
                 });
 
                 const params: FindPersonenkontextByIdParams = {
                     personenkontextId: faker.string.uuid(),
                 };
 
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
                 const personResultMock: Result<Person<true>, DomainError> = {
                     ok: true,
-                    value: createMock<Person<true>>(),
+                    value: DoFactory.createPerson(true),
                 };
 
                 personService.findPersonById.mockResolvedValue(personResultMock);
@@ -127,7 +133,7 @@ describe('PersonenkontextController', () => {
                 // Mock Auth check
                 personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
                     ok: true,
-                    value: createMock<Personenkontext<true>>(),
+                    value: DoFactory.createPersonenkontext(true),
                 });
                 const params: FindPersonenkontextByIdParams = {
                     personenkontextId: faker.string.uuid(),
@@ -135,10 +141,10 @@ describe('PersonenkontextController', () => {
 
                 personService.findPersonById.mockResolvedValue({
                     ok: false,
-                    error: createMock<DomainError>(),
+                    error: new DomainErrorMock(),
                 });
 
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
                 await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toThrow(HttpException);
             });
@@ -147,12 +153,12 @@ describe('PersonenkontextController', () => {
                 // Mock Auth check
                 personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
                     ok: true,
-                    value: createMock(),
+                    value: DoFactory.createPersonenkontext(true),
                 });
                 const params: FindPersonenkontextByIdParams = {
                     personenkontextId: faker.string.uuid(),
                 };
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
                 personenkontextService.findPersonenkontextById.mockRejectedValue(new Error());
 
@@ -162,7 +168,7 @@ describe('PersonenkontextController', () => {
 
         describe('when not authorized', () => {
             it('should throw error', async () => {
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 const params: FindPersonenkontextByIdParams = {
                     personenkontextId: faker.string.uuid(),
                 };
@@ -182,23 +188,23 @@ describe('PersonenkontextController', () => {
                 // Mock Auth check
                 personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
                     ok: true,
-                    value: createMock(),
+                    value: DoFactory.createPersonenkontext(true),
                 });
 
                 const params: FindPersonenkontextByIdParams = {
                     personenkontextId: faker.string.uuid(),
                 };
 
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
                 const personenkontextResultMock: Result<Personenkontext<true>, DomainError> = {
                     ok: true,
-                    value: createMock<Personenkontext<true>>(),
+                    value: DoFactory.createPersonenkontext(true),
                 };
 
                 const personResultMock: Result<Person<true>, DomainError> = {
                     ok: false,
-                    error: createMock<DomainError>(),
+                    error: new DomainErrorMock(),
                 };
 
                 personenkontextService.findPersonenkontextById.mockResolvedValue(personenkontextResultMock);
@@ -236,7 +242,7 @@ describe('PersonenkontextController', () => {
                     items: [mockPersonenkontext],
                 };
 
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                     all: false,
                     orgaIds: [mockPersonenkontext.organisationId],
@@ -280,7 +286,7 @@ describe('PersonenkontextController', () => {
                     items: [mockPersonenkontext],
                 };
 
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                     all: true,
                 });
@@ -320,13 +326,13 @@ describe('PersonenkontextController', () => {
                 // Mock Auth check
                 personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
                     ok: true,
-                    value: createMock(),
+                    value: DoFactory.createPersonenkontext(true),
                 });
                 personenkontextService.deletePersonenkontextById.mockResolvedValue({
                     ok: true,
                     value: undefined,
                 });
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
                 const response: void = await sut.deletePersonenkontextById(idParams, bodyParams, permissionsMock);
 
@@ -340,13 +346,13 @@ describe('PersonenkontextController', () => {
                 // Mock Auth check
                 personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
                     ok: true,
-                    value: createMock(),
+                    value: DoFactory.createPersonenkontext(true),
                 });
                 personenkontextService.deletePersonenkontextById.mockResolvedValue({
                     ok: false,
                     error: new MissingPermissionsError(''),
                 });
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
                 await expect(sut.deletePersonenkontextById(idParams, bodyParams, permissionsMock)).rejects.toThrow(
                     HttpException,
@@ -362,7 +368,7 @@ describe('PersonenkontextController', () => {
                     ok: false,
                     error: new MissingPermissionsError(''),
                 });
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
                 await expect(sut.deletePersonenkontextById(idParams, bodyParams, permissionsMock)).rejects.toThrow(
                     HttpException,

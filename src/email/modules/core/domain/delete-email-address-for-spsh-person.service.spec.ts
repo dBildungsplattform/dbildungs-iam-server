@@ -1,5 +1,6 @@
+import { vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { LoggingTestModule } from '../../../../../test/utils/logging-test.module.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
@@ -27,20 +28,20 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
                 DeleteEmailsAddressesForSpshPersonService,
                 {
                     provide: EmailAddressRepo,
-                    useValue: createMock<EmailAddressRepo>(),
+                    useValue: createMock(EmailAddressRepo),
                 },
                 {
                     provide: OxService,
-                    useValue: createMock<OxService>(),
+                    useValue: createMock(OxService),
                 },
                 {
                     provide: LdapClientService,
-                    useValue: createMock<LdapClientService>(),
+                    useValue: createMock(LdapClientService),
                 },
             ],
         })
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .compile();
 
         sut = module.get(DeleteEmailsAddressesForSpshPersonService);
@@ -55,8 +56,8 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
-        jest.restoreAllMocks();
+        vi.resetAllMocks();
+        vi.restoreAllMocks();
     });
 
     function makeEmail(): EmailAddress<true> {
@@ -94,7 +95,7 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
         const email: EmailAddress<true> = makeEmail();
         email.oxUserCounter = oxUserCounter;
         email.externalId = externalId;
-        jest.spyOn(email, 'getDomain').mockReturnValue(domain);
+        vi.spyOn(email, 'getDomain').mockReturnValue(domain);
 
         emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([email]);
         emailAddressRepoMock.save.mockResolvedValue(Ok(email));
@@ -125,7 +126,7 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
         const email: EmailAddress<true> = makeEmail();
         email.oxUserCounter = undefined;
         email.externalId = externalId;
-        jest.spyOn(email, 'getDomain').mockReturnValue(domain);
+        vi.spyOn(email, 'getDomain').mockReturnValue(domain);
 
         emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([email]);
         emailAddressRepoMock.save.mockResolvedValue(Ok(email));
@@ -148,7 +149,7 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
         const email: EmailAddress<true> = makeEmail();
         email.oxUserCounter = oxUserCounter;
         email.externalId = externalId;
-        jest.spyOn(email, 'getDomain').mockReturnValue(undefined);
+        vi.spyOn(email, 'getDomain').mockReturnValue(undefined);
 
         emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([email]);
         emailAddressRepoMock.save.mockResolvedValue(Ok(email));
@@ -172,7 +173,7 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
         const email: EmailAddress<true> = makeEmail();
         email.oxUserCounter = oxUserCounter;
         email.externalId = externalId;
-        jest.spyOn(email, 'getDomain').mockReturnValue(domain);
+        vi.spyOn(email, 'getDomain').mockReturnValue(domain);
 
         emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([email]);
         emailAddressRepoMock.save.mockResolvedValue(Ok(email));
@@ -195,7 +196,7 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
         const email: EmailAddress<true> = makeEmail();
         email.oxUserCounter = oxUserCounter;
         email.externalId = externalId;
-        jest.spyOn(email, 'getDomain').mockReturnValue(domain);
+        vi.spyOn(email, 'getDomain').mockReturnValue(domain);
 
         emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([email]);
         emailAddressRepoMock.save.mockResolvedValue(Ok(email));
@@ -218,7 +219,7 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
         const email: EmailAddress<true> = makeEmail();
         email.oxUserCounter = oxUserCounter;
         email.externalId = externalId;
-        jest.spyOn(email, 'getDomain').mockReturnValue(domain);
+        vi.spyOn(email, 'getDomain').mockReturnValue(domain);
 
         emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([email]);
         emailAddressRepoMock.save.mockResolvedValue(Ok(email));

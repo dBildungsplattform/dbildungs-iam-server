@@ -1,4 +1,5 @@
 // eslint-disable-next-line max-classes-per-file
+import { Mock, vi } from 'vitest';
 import { Controller, Injectable } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
@@ -63,12 +64,12 @@ describe('EventModule (integration test)', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('publish', () => {
         it('should call event handlers with correct context', () => {
-            const mockCallback: jest.Mock = jest.fn();
+            const mockCallback: Mock = vi.fn();
 
             eventService.publish(new TestEvent(mockCallback));
 

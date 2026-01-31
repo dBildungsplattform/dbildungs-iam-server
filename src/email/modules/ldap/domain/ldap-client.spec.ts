@@ -51,7 +51,7 @@ describe('LDAP Client', () => {
     });
 
     beforeEach(async () => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         await DatabaseTestModule.clearDatabase(orm);
     });
 

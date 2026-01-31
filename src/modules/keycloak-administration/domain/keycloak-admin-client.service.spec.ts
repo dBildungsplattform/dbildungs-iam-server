@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 
@@ -18,7 +18,7 @@ describe('KeycloakAdminClientService', () => {
                 KeycloakAdministrationService,
                 {
                     provide: KeycloakAdminClient,
-                    useValue: createMock<KeycloakAdminClient>(),
+                    useValue: createMock(KeycloakAdminClient),
                 },
             ],
         }).compile();
@@ -33,7 +33,7 @@ describe('KeycloakAdminClientService', () => {
 
     afterEach(() => {
         service.resetLastAuthorizationTime();
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('getAuthedKcAdminClient', () => {
@@ -54,21 +54,21 @@ describe('KeycloakAdminClientService', () => {
             });
 
             it('should authorize only once per minute', async () => {
-                jest.useFakeTimers();
+                vi.useFakeTimers();
 
                 // set timer
-                jest.setSystemTime(new Date(2020, 1, 1, 0, 0, 0));
+                vi.setSystemTime(new Date(2020, 1, 1, 0, 0, 0));
                 await service.getAuthedKcAdminClient();
                 kcAdminClient.auth.mockClear();
 
                 await service.getAuthedKcAdminClient();
                 expect(kcAdminClient.auth).not.toHaveBeenCalled();
 
-                jest.setSystemTime(new Date(2020, 1, 1, 0, 1, 0));
+                vi.setSystemTime(new Date(2020, 1, 1, 0, 1, 0));
                 await service.getAuthedKcAdminClient();
                 expect(kcAdminClient.auth).toHaveBeenCalled();
 
-                jest.useRealTimers();
+                vi.useRealTimers();
             });
         });
 

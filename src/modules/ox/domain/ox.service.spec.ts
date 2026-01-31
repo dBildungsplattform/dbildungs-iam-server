@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosResponse } from 'axios';
@@ -15,13 +15,23 @@ import { ConfigService } from '@nestjs/config';
 import assert from 'assert';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 
+class OxActionMock extends OxBaseAction<unknown, string> {
+    public override action: string = 'MockAction';
+    public override soapServiceName: string = 'MockServiceName';
+    public override buildRequest(): object {
+        throw new Error('Method not implemented.');
+    }
+    public override parseBody(): Result<string, DomainError> {
+        throw new Error('Method not implemented.');
+    }
+}
+
 describe('OxServiceConstructor', () => {
     it('should set default retries', () => {
-        const configServiceMock: DeepMocked<ConfigService<unknown>> = createMock<ConfigService>({
-            getOrThrow: () => ({}), // Empty OX config
-        });
+        const configServiceMock: DeepMocked<ConfigService<unknown>> = createMock<ConfigService>(ConfigService);
+        configServiceMock.getOrThrow.mockReturnValue({});
 
-        const sut: OxService = new OxService(createMock(), createMock(), configServiceMock);
+        const sut: OxService = new OxService(createMock(HttpService), createMock(ClassLogger), configServiceMock);
 
         expect(configServiceMock.getOrThrow).toHaveBeenCalledTimes(1);
         expect((sut as unknown as { max_retries: number }).max_retries).toBe(3);
@@ -42,11 +52,11 @@ describe('OxService', () => {
                 OxService,
                 {
                     provide: HttpService,
-                    useValue: createMock<HttpService>(),
+                    useValue: createMock(HttpService),
                 },
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock(ClassLogger),
                 },
             ],
         }).compile();
@@ -66,7 +76,7 @@ describe('OxService', () => {
 
     describe('send', () => {
         it('should call HttpService.post', async () => {
-            const mockAction: DeepMocked<OxBaseAction<unknown, unknown>> = createMock<OxBaseAction<unknown, unknown>>();
+            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock(OxActionMock);
             mockAction.buildRequest.mockReturnValueOnce({});
             mockAction.action = 'testAction';
             mockAction.soapServiceName = 'TestService';
@@ -87,7 +97,7 @@ describe('OxService', () => {
         });
 
         it('should call parseResponse of action and return result', async () => {
-            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock<OxBaseAction<unknown, string>>();
+            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock(OxActionMock);
             mockAction.buildRequest.mockReturnValueOnce({});
             mockAction.parseResponse.mockReturnValueOnce({ ok: true, value: 'TestResult' });
             mockAction.action = 'testAction';
@@ -104,7 +114,7 @@ describe('OxService', () => {
         });
 
         it('should return result if a retry succeeds', async () => {
-            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock<OxBaseAction<unknown, string>>();
+            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock(OxActionMock);
             mockAction.buildRequest.mockReturnValueOnce({});
             mockAction.parseResponse.mockReturnValueOnce({ ok: true, value: 'TestResult' });
             mockAction.action = 'testAction';
@@ -128,7 +138,7 @@ describe('OxService', () => {
 
         it('should return OxError if request failed and response is NOT a specific OX-Error-response', async () => {
             const error: Error = new Error('AxiosError');
-            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock<OxBaseAction<unknown, string>>();
+            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock(OxActionMock);
             httpServiceMock.post.mockReturnValueOnce(throwError(() => error));
             httpServiceMock.post.mockReturnValueOnce(throwError(() => error)); // Retry
 
@@ -162,7 +172,7 @@ describe('OxService', () => {
                 },
             };
 
-            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock<OxBaseAction<unknown, string>>();
+            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock(OxActionMock);
             httpServiceMock.post.mockReturnValueOnce(throwError(() => error));
             httpServiceMock.post.mockReturnValueOnce(throwError(() => error)); // Retry
 
@@ -193,7 +203,7 @@ describe('OxService', () => {
                 },
             };
 
-            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock<OxBaseAction<unknown, string>>();
+            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock(OxActionMock);
             httpServiceMock.post.mockReturnValueOnce(throwError(() => faultyErrorWithMissingFaultString));
             httpServiceMock.post.mockReturnValueOnce(throwError(() => faultyErrorWithMissingFaultString)); // Retry
 
@@ -227,7 +237,7 @@ describe('OxService', () => {
                         '</soap:Envelope>',
                 },
             };
-            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock<OxBaseAction<unknown, string>>();
+            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock(OxActionMock);
             httpServiceMock.post.mockReturnValueOnce(throwError(() => error));
 
             const result: Result<string, DomainError> = await sut.send(mockAction);

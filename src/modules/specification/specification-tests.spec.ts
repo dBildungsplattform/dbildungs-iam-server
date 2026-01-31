@@ -1,5 +1,4 @@
 /* eslint-disable max-classes-per-file */
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrganisationsTyp } from '../organisation/domain/organisation.enums.js';
 import {

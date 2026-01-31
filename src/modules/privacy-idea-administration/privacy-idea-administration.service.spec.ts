@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosError, AxiosHeaders, AxiosResponse } from 'axios';
@@ -11,7 +10,6 @@ import { ServiceProviderService } from '../service-provider/domain/service-provi
 import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
 import { SoftwareTokenVerificationError } from './api/error/software-token-verification.error.js';
 import { TokenResetError } from './api/error/token-reset.error.js';
-import { TokenError } from './api/error/token.error.js';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import {
     AssignTokenResponse,
@@ -29,6 +27,8 @@ import { SoftwareTokenInitializationError } from './api/error/software-token-ini
 import { TokenStateError } from './api/error/token-state.error.js';
 import { PIUnavailableError } from './api/error/pi-unavailable.error.js';
 import { PersonUsername } from '../../shared/types/aggregate-ids.types.js';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
+import { Mock } from 'vitest';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -316,9 +316,9 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             imports: [ConfigTestModule, LoggingTestModule],
             providers: [
                 PrivacyIdeaAdministrationService,
-                { provide: HttpService, useValue: createMock<HttpService>() },
-                { provide: ServiceProviderService, useValue: createMock<ServiceProviderService>() },
-                { provide: PersonenkontextService, useValue: createMock<PersonenkontextService>() },
+                { provide: HttpService, useValue: createMock(HttpService) },
+                { provide: ServiceProviderService, useValue: createMock(ServiceProviderService) },
+                { provide: PersonenkontextService, useValue: createMock(PersonenkontextService) },
             ],
         }).compile();
 
@@ -452,7 +452,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         });
 
         it(`should throw an error if getJWTToken throws a non-Error object`, async () => {
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { getJWTToken: () => Promise<string> },
                 'getJWTToken',
             ).mockImplementationOnce(() => {
@@ -505,7 +505,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         });
 
         it(`should throw an error if the getUserTokens causes non error throw`, async () => {
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { getUserTokens: () => Promise<string> },
                 'getUserTokens',
             ).mockImplementationOnce(() => {
@@ -549,18 +549,21 @@ describe(`PrivacyIdeaAdministrationService`, () => {
     describe('resetToken', () => {
         const mockResetUser: string = 'testUser';
         const mockJWTToken: string = 'mockJWTToken';
-        const mockTwoAuthState: PrivacyIdeaToken = createMock<PrivacyIdeaToken>({ info: { tokenkind: 'hardware' } });
-        const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
+        const mockTwoAuthState: PrivacyIdeaToken = {
+            info: { tokenkind: 'hardware' },
+        } as PrivacyIdeaToken;
+
+        const mockResetTokenResponse: ResetTokenResponse = {} as ResetTokenResponse;
+
         it('should reset token successfully', async () => {
-            jest.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
-            jest.spyOn(
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
+            vi.spyOn(
                 service as unknown as { getTwoAuthState: (user: string) => Promise<PrivacyIdeaToken | null> },
                 'getTwoAuthState',
             ).mockResolvedValueOnce(mockTwoAuthState);
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { unassignToken: (serial: string, token: string) => Promise<ResetTokenResponse> },
                 'unassignToken',
             ).mockResolvedValueOnce(mockResetTokenResponse);
@@ -572,11 +575,10 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         });
 
         it('should throw an error if twoAuthState is not found', async () => {
-            jest.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
-            jest.spyOn(
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
+            vi.spyOn(
                 service as unknown as { getTwoAuthState: (user: string) => Promise<PrivacyIdeaToken | null> },
                 'getTwoAuthState',
             ).mockResolvedValueOnce(null);
@@ -585,30 +587,30 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         });
 
         it('should throw an error if unassignToken fails', async () => {
-            jest.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
-            jest.spyOn(
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
+            vi.spyOn(
                 service as unknown as { getTwoAuthState: (user: string) => Promise<PrivacyIdeaToken | null> },
                 'getTwoAuthState',
             ).mockResolvedValueOnce(mockTwoAuthState);
-            jest.spyOn(service, 'unassignToken').mockRejectedValue(new Error('unassignToken error'));
+            vi.spyOn(service, 'unassignToken').mockRejectedValue(new Error('unassignToken error'));
 
             await expect(service.resetToken(mockResetUser)).rejects.toThrow(new TokenResetError());
         });
 
         it('should delete token on unassing if token isnt hotp', async () => {
-            const totpToken: PrivacyIdeaToken = createMock<PrivacyIdeaToken>({ info: { tokenkind: 'software' } });
-            jest.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
-            jest.spyOn(
+            const totpToken: PrivacyIdeaToken = {
+                info: { tokenkind: 'software' },
+            } as PrivacyIdeaToken;
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
+            vi.spyOn(
                 service as unknown as { getTwoAuthState: (user: string) => Promise<PrivacyIdeaToken | null> },
                 'getTwoAuthState',
             ).mockResolvedValueOnce(totpToken);
-            const deleteSpy: jest.SpyInstance = jest
+            const deleteSpy: Mock<(serial: string) => Promise<ResetTokenResponse>> = vi
                 .spyOn(
                     service as unknown as { deleteToken: (serial: string) => Promise<ResetTokenResponse> },
                     'deleteToken',
@@ -626,7 +628,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         it('should unassign token successfully', async () => {
             const mockSerial: string = 'mockSerial';
             const mockToken: string = 'mockJWTToken';
-            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
+            const mockResetTokenResponse: ResetTokenResponse = {} as ResetTokenResponse;
             const mockResetTokenResponsePromise: AxiosResponse<ResetTokenResponse> = {
                 data: mockResetTokenResponse,
                 status: 200,
@@ -666,10 +668,10 @@ describe(`PrivacyIdeaAdministrationService`, () => {
     });
 
     describe('assignHardwareToken', () => {
-        let getTokenToVerifySpy: jest.SpyInstance;
+        let getTokenToVerifySpy: Mock;
 
         beforeEach(() => {
-            getTokenToVerifySpy = jest
+            getTokenToVerifySpy = vi
                 .spyOn(
                     service as unknown as { getTokenToVerify: () => Promise<PrivacyIdeaToken | undefined> },
                     'getTokenToVerify',
@@ -679,12 +681,12 @@ describe(`PrivacyIdeaAdministrationService`, () => {
 
         afterEach(() => {
             getTokenToVerifySpy.mockRestore();
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should assign hardware token successfully', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValueOnce(true);
@@ -697,12 +699,12 @@ describe(`PrivacyIdeaAdministrationService`, () => {
 
         it('should assign hardware token successfully and create a new user', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValueOnce(false);
 
-            jest.spyOn(service as unknown as { addUser: () => Promise<void> }, 'addUser').mockResolvedValueOnce();
+            vi.spyOn(service as unknown as { addUser: () => Promise<void> }, 'addUser').mockResolvedValueOnce();
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenVerificationResponse } as AxiosResponse));
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenOTPSerialResponse } as AxiosResponse));
             httpServiceMock.post.mockReturnValueOnce(of({ data: mockAssignTokenResponse } as AxiosResponse));
@@ -712,7 +714,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
 
         it('should throw token-not-found error', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValueOnce(true);
@@ -721,16 +723,13 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             );
 
             await expect(service.assignHardwareToken('INVALID_SERIAL', 'otp', 'test-user')).rejects.toThrow(
-                new TokenError(
-                    'Die eingegebene Seriennummer konnte leider nicht gefunden werden. Vergewissern Sie sich bitte, das Sie eine korrekte Seriennummer eingegeben haben.',
-                    'token-not-found',
-                ),
+                'Die eingegebene Seriennummer konnte leider nicht gefunden werden.',
             );
         });
 
         it('should throw token-already-assigned error', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValueOnce(true);
@@ -739,16 +738,13 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             );
 
             await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
-                new TokenError(
-                    'Die eingegebene Seriennummer wird bereits aktiv verwendet. Bitte überprüfen Sie ihre Eingabe und versuchen Sie es erneut.',
-                    'token-already-assigned',
-                ),
+                'Die eingegebene Seriennummer wird bereits aktiv verwendet. Bitte überprüfen Sie ihre Eingabe und versuchen Sie es erneut.',
             );
         });
 
         it('should throw token-otp-not-valid error', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValueOnce(true);
@@ -756,29 +752,26 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenOTPSerialResponseInvalid } as AxiosResponse));
 
             await expect(service.assignHardwareToken('ABC123456', 'invalid-otp', 'test-user')).rejects.toThrow(
-                new TokenError('Ungültiger Code. Bitte versuchen Sie es erneut.', 'token-otp-not-valid'),
+                'Ungültiger Code. Bitte versuchen Sie es erneut.',
             );
         });
 
         it('should throw general-token-error on verifyTokenStatus error', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValueOnce(true);
             httpServiceMock.get.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
 
             await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
-                new TokenError(
-                    'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
-                    'general-token-error',
-                ),
+                'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
             );
         });
 
         it('should throw general-token-error on getSerialWithOTP error', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValueOnce(true);
@@ -786,16 +779,13 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
 
             await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
-                new TokenError(
-                    'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
-                    'general-token-error',
-                ),
+                'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
             );
         });
 
         it('should throw general-token-error on assignToken error', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValueOnce(true);
@@ -805,17 +795,14 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.post.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
 
             await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
-                new TokenError(
-                    'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
-                    'general-token-error',
-                ),
+                'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
             );
         });
 
         it('should delete verify token when requesting to assign hardware token', async () => {
             getTokenToVerifySpy.mockRestore();
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValue(true);
@@ -826,10 +813,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.post.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
 
             await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
-                new TokenError(
-                    'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
-                    'general-token-error',
-                ),
+                'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
             );
         });
     });
@@ -876,7 +860,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         });
 
         it(`should throw an error if there is no token to verify`, async () => {
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { getTokenToVerify: () => Promise<PrivacyIdeaToken | undefined> },
                 'getTokenToVerify',
             ).mockResolvedValueOnce(undefined);
@@ -916,7 +900,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             ]);
         });
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it.each([true, false])('should return %s depending on 2fa requirement', async (requires2fa: boolean) => {
@@ -936,10 +920,9 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         let mockJWTToken: string;
         beforeEach(() => {
             mockJWTToken = faker.string.alpha();
-            jest.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
         });
 
         it(`should delete user`, async () => {
@@ -980,35 +963,34 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const newUserName: string = 'newUser';
             const mockUserTokens: PrivacyIdeaToken[] = [mockPrivacyIdeaToken];
             const mockJWTToken: string = 'mockJWTToken';
-            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
+            const mockResetTokenResponse: ResetTokenResponse = {} as ResetTokenResponse;
 
-            jest.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
-            jest.spyOn(
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
+            vi.spyOn(
                 service as unknown as { getUserTokens: () => Promise<PrivacyIdeaToken[]> },
                 'getUserTokens',
             ).mockResolvedValueOnce(mockUserTokens);
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { unassignToken: (serial: string, token: string) => Promise<ResetTokenResponse> },
                 'unassignToken',
             ).mockResolvedValueOnce(mockResetTokenResponse);
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValueOnce(false);
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { addUser: (username: string) => Promise<void> },
                 'addUser',
             ).mockResolvedValueOnce();
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as {
                     assignToken: (serial: string, token: string, username: string) => Promise<AssignTokenResponse>;
                 },
                 'assignToken',
             ).mockResolvedValueOnce(mockAssignTokenResponse);
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { deleteUser: () => Promise<Result<void, DomainError>> },
                 'deleteUser',
             ).mockResolvedValueOnce({ ok: true, value: undefined });
@@ -1024,7 +1006,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const oldUserName: string = 'oldUser';
             const newUserName: string = 'newUser';
 
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValueOnce(true);
@@ -1038,29 +1020,28 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const newUserName: string = 'newUser';
             const mockUserTokens: PrivacyIdeaToken[] = [mockPrivacyIdeaToken];
             const mockJWTToken: string = 'mockJWTToken';
-            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
+            const mockResetTokenResponse: ResetTokenResponse = {} as ResetTokenResponse;
 
-            jest.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
-            jest.spyOn(
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
+            vi.spyOn(
                 service as unknown as { getUserTokens: () => Promise<PrivacyIdeaToken[]> },
                 'getUserTokens',
             ).mockResolvedValueOnce(mockUserTokens);
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { unassignToken: (serial: string, token: string) => Promise<ResetTokenResponse> },
                 'unassignToken',
             ).mockResolvedValueOnce(mockResetTokenResponse);
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValueOnce(false);
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { addUser: (username: string) => Promise<void> },
                 'addUser',
             ).mockResolvedValueOnce();
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as {
                     assignToken: (serial: string, token: string, username: string) => Promise<AssignTokenResponse>;
                 },
@@ -1075,29 +1056,28 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const newUserName: string = 'newUser';
             const mockUserTokens: PrivacyIdeaToken[] = [mockPrivacyIdeaToken];
             const mockJWTToken: string = 'mockJWTToken';
-            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
+            const mockResetTokenResponse: ResetTokenResponse = {} as ResetTokenResponse;
 
-            jest.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
-            jest.spyOn(
+            vi.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValueOnce(
+                mockJWTToken,
+            );
+            vi.spyOn(
                 service as unknown as { getUserTokens: () => Promise<PrivacyIdeaToken[]> },
                 'getUserTokens',
             ).mockResolvedValueOnce(mockUserTokens);
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { unassignToken: (serial: string, token: string) => Promise<ResetTokenResponse> },
                 'unassignToken',
             ).mockResolvedValueOnce(mockResetTokenResponse);
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValueOnce(false);
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as { addUser: (username: string) => Promise<void> },
                 'addUser',
             ).mockResolvedValueOnce();
-            jest.spyOn(
+            vi.spyOn(
                 service as unknown as {
                     assignToken: (serial: string, token: string, username: string) => Promise<AssignTokenResponse>;
                 },

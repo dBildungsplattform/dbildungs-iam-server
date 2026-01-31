@@ -1,8 +1,7 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -12,7 +11,6 @@ import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
 import { RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
-import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { RolleController } from './rolle.controller.js';
@@ -26,6 +24,10 @@ import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -44,31 +46,31 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: OrganisationService,
-                    useValue: createMock<OrganisationService>(),
+                    useValue: createMock(OrganisationService),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: ServiceProviderRepo,
-                    useValue: createMock<ServiceProviderRepo>(),
+                    useValue: createMock(ServiceProviderRepo),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: OrganisationService,
-                    useValue: createMock<OrganisationService>(),
+                    useValue: createMock(OrganisationService),
                 },
                 {
                     provide: RollenerweiterungRepo,
-                    useValue: createMock<RollenerweiterungRepo>(),
+                    useValue: createMock(RollenerweiterungRepo),
                 },
                 RolleController,
                 RolleFactory,
@@ -84,7 +86,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('/PUT rolleId/serviceProviders mocked SP-repo', () => {
@@ -99,7 +101,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     version: 1,
                 };
                 //mock get-rolle
-                rolleRepoMock.findById.mockResolvedValueOnce(createMock<Rolle<true>>());
+                rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle<true>(true));
 
                 // Mock the call to find service providers by IDs, returning an empty map
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map());
@@ -113,7 +115,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
 
     describe('/GET rolle mocked Rolle-repo', () => {
         describe('createRolle', () => {
-            const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
+            const permissionsMock: PersonPermissions = createPersonPermissionsMock();
             it('should throw an HTTP exception when rolleFactory.createNew returns DomainError', async () => {
                 const createRolleParams: CreateRolleBodyParams = {
                     name: ' SuS',
@@ -146,7 +148,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     rolleId: faker.string.uuid(),
                     serviceProviderId: faker.string.uuid(),
                 };
-                permissions = createMock<PersonPermissions>();
+                permissions = createPersonPermissionsMock();
             });
 
             it('should return the response', async () => {

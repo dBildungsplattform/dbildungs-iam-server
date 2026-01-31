@@ -1,5 +1,5 @@
 import { ArgumentsHost } from '@nestjs/common';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-vitest';
 import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { EmailExceptionFilter } from './email-exception-filter.js';
@@ -15,7 +15,7 @@ describe('EmailExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new EmailExceptionFilter();
-        responseMock = createMock<Response>();
+        responseMock = createMock(Response);
         argumentsHost = createMock<ArgumentsHost>({
             switchToHttp: () =>
                 createMock<HttpArgumentsHost>({

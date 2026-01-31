@@ -1,4 +1,5 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { vi } from 'vitest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { xorBy } from 'lodash-es';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
@@ -51,9 +52,9 @@ type TestData = {
 };
 
 describe('OnlyAssignableServiceProviders', () => {
-    const serviceProviderRepoMock: DeepMocked<ServiceProviderRepo> = createMock<ServiceProviderRepo>();
+    const serviceProviderRepoMock: DeepMocked<ServiceProviderRepo> = createMock(ServiceProviderRepo);
     beforeEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('when sps have not changed', () => {

@@ -1,4 +1,5 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { Mock } from 'vitest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { InternalCommunicationApiKeyStrategy } from './internalcommunicationapikey.strategy.js';
 import { ConfigService } from '@nestjs/config';
 import { UnauthorizedException } from '@nestjs/common';
@@ -6,11 +7,11 @@ import { UnauthorizedException } from '@nestjs/common';
 describe('Internal Communication ApiKey Strategy', () => {
     let configServiceMock: DeepMocked<ConfigService>;
     let sut: InternalCommunicationApiKeyStrategy;
-    let doneFunction: jest.Mock;
+    let doneFunction: Mock;
 
     beforeEach(() => {
-        configServiceMock = createMock<ConfigService>();
-        doneFunction = jest.fn();
+        configServiceMock = createMock(ConfigService);
+        doneFunction = vi.fn();
     });
 
     it('should validate the API key successfully', () => {

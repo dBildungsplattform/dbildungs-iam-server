@@ -19,11 +19,11 @@ describe('Keycloak API Clients', () => {
     }, 10000000);
 
     beforeEach(() => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
     });
 
     afterEach(() => {
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     it('should get access token', async () => {
@@ -35,7 +35,7 @@ describe('Keycloak API Clients', () => {
     it('should get another access token after the first has expired', async () => {
         const firstAccessToken: string | undefined = await serviceClient.getAccessToken();
 
-        jest.advanceTimersByTime(60 * 60 * 1000); // One hour
+        vi.advanceTimersByTime(60 * 60 * 1000); // One hour
 
         const secondAccessToken: string | undefined = await serviceClient.getAccessToken();
 

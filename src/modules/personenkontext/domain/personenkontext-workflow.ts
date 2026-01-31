@@ -82,42 +82,36 @@ export class PersonenkontextWorkflowAggregate {
             return [];
         }
 
-        let allOrganisationsExceptKlassen: Organisation<true>[] = [];
+        let organisationsExceptKlassen: Organisation<true>[] = [];
 
         // Fetch organisations based on the permitted organization IDs and the search string
-        allOrganisationsExceptKlassen =
-            await this.organisationRepository.findByNameOrKennungAndExcludeByOrganisationType(
-                OrganisationsTyp.KLASSE,
-                organisationName,
-                permittedOrgas.all ? undefined : permittedOrgas.orgaIds, // Only fetch permitted organizations if restricted
-                limit,
-            );
+        organisationsExceptKlassen = await this.organisationRepository.findByNameOrKennungAndExcludeByOrganisationType(
+            OrganisationsTyp.KLASSE,
+            organisationName,
+            permittedOrgas.all ? undefined : permittedOrgas.orgaIds, // Only fetch permitted organizations if restricted
+            limit,
+        );
 
         // If no organizations were found, return an empty array
-        if (allOrganisationsExceptKlassen.length === 0) {
+        if (organisationsExceptKlassen.length === 0) {
             return [];
         }
-
-        // Return only the orgas that the admin have rights on
-        let filteredOrganisations: Organisation<boolean>[] = allOrganisationsExceptKlassen.filter(
-            (orga: Organisation<true>) => permittedOrgas.all || permittedOrgas.orgaIds.includes(orga.id),
-        );
 
         // If organisationId is provided and it's not in the filtered results, fetch it explicitly
         if (
             this.selectedOrganisationId &&
-            !filteredOrganisations.find((orga: Organisation<true>) => orga.id === organisationId)
+            !organisationsExceptKlassen.find((orga: Organisation<true>) => orga.id === organisationId)
         ) {
             const selectedOrg: Option<Organisation<true>> = await this.organisationRepository.findById(
                 this.selectedOrganisationId,
             );
             if (selectedOrg) {
-                filteredOrganisations = [selectedOrg, ...filteredOrganisations]; // Add the selected org at the beginning
+                organisationsExceptKlassen = [selectedOrg, ...organisationsExceptKlassen]; // Add the selected org at the beginning
             }
         }
 
         // Sort the filtered organizations, handling undefined kennung and name
-        filteredOrganisations.sort((a: Organisation<boolean>, b: Organisation<boolean>) => {
+        organisationsExceptKlassen.sort((a: Organisation<boolean>, b: Organisation<boolean>) => {
             if (a.name && b.name) {
                 const aTitle: string = a.kennung ? `${a.kennung} (${a.name})` : a.name;
                 const bTitle: string = b.kennung ? `${b.kennung} (${b.name})` : b.name;
@@ -134,7 +128,7 @@ export class PersonenkontextWorkflowAggregate {
         });
 
         // Return the organizations that the admin has rights to
-        return filteredOrganisations;
+        return organisationsExceptKlassen;
     }
 
     public async findRollenForOrganisation(

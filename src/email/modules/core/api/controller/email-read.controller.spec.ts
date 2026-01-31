@@ -1,5 +1,6 @@
+import { vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
@@ -35,7 +36,7 @@ describe('EmailReadController', () => {
             ],
         })
             .overrideProvider(EmailAddressRepo)
-            .useValue(createMock<EmailAddressRepo>())
+            .useValue(createMock(EmailAddressRepo))
             .compile();
 
         emailReadController = module.get(EmailReadController);
@@ -43,7 +44,7 @@ describe('EmailReadController', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('findEmailAddress', () => {

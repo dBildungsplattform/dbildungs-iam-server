@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { KeycloakClientError } from '../../../shared/error/index.js';
 import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
@@ -11,8 +11,8 @@ describe('CreateGroupAndRoleHandler', () => {
     let createGroupAndRoleHandler: CreateGroupAndRoleHandler;
 
     beforeEach(() => {
-        keycloakGroupRoleServiceMock = createMock<KeycloakGroupRoleService>();
-        loggerMock = createMock<ClassLogger>();
+        keycloakGroupRoleServiceMock = createMock(KeycloakGroupRoleService);
+        loggerMock = createMock(ClassLogger);
         createGroupAndRoleHandler = new CreateGroupAndRoleHandler(keycloakGroupRoleServiceMock, loggerMock);
     });
 

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
@@ -42,27 +42,27 @@ describe('ItsLearning Persons Event Handler', () => {
                 ItsLearningSyncEventHandler,
                 {
                     provide: ItslearningPersonRepo,
-                    useValue: createMock<ItslearningPersonRepo>(),
+                    useValue: createMock(ItslearningPersonRepo),
                 },
                 {
                     provide: ItslearningMembershipRepo,
-                    useValue: createMock<ItslearningMembershipRepo>(),
+                    useValue: createMock(ItslearningMembershipRepo),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
             ],
         }).compile();
@@ -86,7 +86,7 @@ describe('ItsLearning Persons Event Handler', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('personExternalSystemSyncEventHandler', () => {
@@ -166,6 +166,10 @@ describe('ItsLearning Persons Event Handler', () => {
 
             it('should create or update user', async () => {
                 itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined);
+                itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
+                    ok: true,
+                    value: { deleted: 0, updated: 0 },
+                });
 
                 const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
                 await sut.personExternalSystemSyncEventHandler(event);

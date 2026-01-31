@@ -5,6 +5,7 @@ import { ImportVorgang } from '../domain/import-vorgang.js';
 import { ImportStatus } from '../domain/import.enums.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export function mapAggregateToData(importVorgang: ImportVorgang<boolean>): RequiredEntityData<ImportVorgangEntity> {
     return {
@@ -46,7 +47,10 @@ export type ImportQueryOptions = {
 
 @Injectable()
 export class ImportVorgangRepository {
-    public constructor(private readonly em: EntityManager) {}
+    public constructor(
+        private readonly em: EntityManager,
+        private readonly logger: ClassLogger,
+    ) {}
 
     public async save(importVorgang: ImportVorgang<boolean>): Promise<ImportVorgang<true>> {
         if (importVorgang.id) {
@@ -101,9 +105,12 @@ export class ImportVorgangRepository {
 
     private async create(importVorgang: ImportVorgang<false>): Promise<ImportVorgang<true>> {
         const entity: ImportVorgangEntity = this.em.create(ImportVorgangEntity, mapAggregateToData(importVorgang));
-
-        await this.em.persistAndFlush(entity);
-
+        try {
+            await this.em.persistAndFlush(entity);
+        } catch (error) {
+            this.logger.error('Error creating ImportVorgang entity', error);
+            throw error;
+        }
         return mapEntityToAggregate(entity);
     }
 

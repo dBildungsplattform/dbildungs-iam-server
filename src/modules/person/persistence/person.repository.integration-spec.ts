@@ -1,10 +1,12 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { vi } from 'vitest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Collection, EntityManager, MikroORM, ref, RequiredEntityData } from '@mikro-orm/core';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
+    createPersonPermissionsMock,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
@@ -103,19 +105,19 @@ describe('PersonRepository Integration', () => {
                 ConfigService,
                 {
                     provide: EmailRepo,
-                    useValue: createMock<EmailRepo>(),
+                    useValue: createMock(EmailRepo),
                 },
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 {
                     provide: UsernameGeneratorService,
-                    useValue: createMock<UsernameGeneratorService>(),
+                    useValue: createMock(UsernameGeneratorService),
                 },
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>(),
+                    useValue: createMock(KeycloakUserService),
                 },
                 // the following are required to prepare the test for findByIds()
                 OrganisationRepository,
@@ -128,12 +130,12 @@ describe('PersonRepository Integration', () => {
             ],
         })
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .compile();
         sut = module.get(PersonRepository);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        personPermissionsMock = createMock<PersonPermissions>();
+        personPermissionsMock = createPersonPermissionsMock();
 
         kcUserServiceMock = module.get(KeycloakUserService);
         usernameGeneratorService = module.get(UsernameGeneratorService);
@@ -156,7 +158,7 @@ describe('PersonRepository Integration', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -763,7 +765,7 @@ describe('PersonRepository Integration', () => {
     describe('update', () => {
         describe('when updating personalnummer to duplicate value', () => {
             beforeEach(() => {
-                jest.restoreAllMocks();
+                vi.restoreAllMocks();
             });
             it('should return DuplicatePersonalnummerError', async () => {
                 usernameGeneratorService.generateUsername.mockResolvedValueOnce({
@@ -1093,7 +1095,7 @@ describe('PersonRepository Integration', () => {
         });
         describe('when username is undefined', () => {
             beforeEach(() => {
-                jest.restoreAllMocks();
+                vi.restoreAllMocks();
             });
 
             it('should return an error if the username generator fails', async () => {
@@ -1139,7 +1141,7 @@ describe('PersonRepository Integration', () => {
                     ok: false,
                     error: new InvalidCharacterSetError('name.vorname', 'DIN-91379A'),
                 });
-                jest.spyOn(sut, 'getUsername').mockReturnValueOnce(undefined);
+                vi.spyOn(sut, 'getUsername').mockReturnValueOnce(undefined);
 
                 const result: Person<true> | DomainError = await sut.update(personConstructed);
                 expect(result).toBeInstanceOf(DomainError);
@@ -1186,7 +1188,7 @@ describe('PersonRepository Integration', () => {
                     faker.lorem.word(),
                 );
                 usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'newtestusername' });
-                jest.spyOn(sut, 'getUsername').mockReturnValueOnce(undefined);
+                vi.spyOn(sut, 'getUsername').mockReturnValueOnce(undefined);
                 const result: Person<true> | DomainError = await sut.update(personConstructed);
                 expect(result).toBeInstanceOf(Person);
                 if (result instanceof Person) {
@@ -1439,9 +1441,8 @@ describe('PersonRepository Integration', () => {
                 faker.string.uuid(),
             );
 
-            const personEntity: PersonEntity = createMock<PersonEntity>(
-                DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() }),
-            );
+            const personEntity: PersonEntity = createMock<PersonEntity>(PersonEntity);
+            personEntity.keycloakUserId = faker.string.uuid();
             const personAfterUpdate: Person<true> = mapEntityToAggregateInplace(personEntity, person);
 
             expect(personAfterUpdate).toBeInstanceOf(Person);
@@ -2385,7 +2386,7 @@ describe('PersonRepository Integration', () => {
 
     describe('save', () => {
         beforeEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
         describe('when person has an id', () => {
             it('should call the update method and return the updated person', async () => {
@@ -2792,6 +2793,10 @@ describe('PersonRepository Integration', () => {
                 ok: true,
                 value: undefined,
             });
+            kcUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            });
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 person.id,
                 newFamilienname,
@@ -3089,7 +3094,7 @@ describe('PersonRepository Integration', () => {
             }
 
             // personenKontext where createdAt exceeds the time-limit
-            jest.useFakeTimers({ now: daysAgo });
+            vi.useFakeTimers({ now: daysAgo });
             const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                 personId: person1.id,
                 rolleId: rolle1Result.id,
@@ -3113,7 +3118,7 @@ describe('PersonRepository Integration', () => {
             await dbiamPersonenkontextRepoInternal.save(personenKontext3);
 
             // personenKontext where createdAt is within the time-limit
-            jest.useRealTimers();
+            vi.useRealTimers();
 
             const personenKontext4: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                 personId: person3.id,

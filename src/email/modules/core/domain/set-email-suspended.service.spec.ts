@@ -44,8 +44,8 @@ describe('SetEmailSuspendedService', () => {
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
 
-        jest.resetAllMocks();
-        jest.restoreAllMocks();
+        vi.resetAllMocks();
+        vi.restoreAllMocks();
     });
 
     const buildEmail = async (

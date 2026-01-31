@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { OxService } from './ox.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { faker } from '@faker-js/faker';
@@ -52,35 +52,35 @@ describe('OxSyncEventHandler', () => {
                 OxEventService,
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: EmailRepo,
-                    useValue: createMock<EmailRepo>(),
+                    useValue: createMock(EmailRepo),
                 },
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 {
                     provide: OxService,
-                    useValue: createMock<OxService>(),
+                    useValue: createMock(OxService),
                 },
                 {
                     provide: EmailResolverService,
-                    useValue: createMock<EmailResolverService>(),
+                    useValue: createMock<EmailResolverService>(EmailResolverService),
                 },
             ],
         }).compile();
@@ -120,11 +120,11 @@ describe('OxSyncEventHandler', () => {
         kennung: string = faker.string.numeric({ length: 7 }),
         typ: OrganisationsTyp = OrganisationsTyp.SCHULE,
     ): Organisation<true> {
-        return createMock<Organisation<true>>({ id: faker.string.uuid(), kennung: kennung, typ: typ });
+        return DoFactory.createOrganisation(true, { kennung: kennung, typ: typ });
     }
 
     function getRolle(rollenart: RollenArt = RollenArt.LEHR): Rolle<true> {
-        return createMock<Rolle<true>>({ id: faker.string.uuid(), rollenart: rollenart });
+        return DoFactory.createRolle(true, { rollenart: rollenart });
     }
 
     function getOrgaMap(...orgas: Organisation<true>[]): Map<OrganisationID, Organisation<true>> {
@@ -150,16 +150,14 @@ describe('OxSyncEventHandler', () => {
     ): [Personenkontext<true>[], Map<OrganisationID, Organisation<true>>, Map<RolleID, Rolle<true>>] {
         const lehrRolle1: Rolle<true> = getRolle();
         const lehrOrga1: Organisation<true> = getOrga();
-        const lehrPk1: Personenkontext<true> = createMock<Personenkontext<true>>({
-            id: faker.string.uuid(),
+        const lehrPk1: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
             organisationId: lehrOrga1.id,
             rolleId: lehrRolle1.id,
             personId: pkPerson.id,
         });
         const lehrRolle2: Rolle<true> = getRolle();
         const lehrOrga2: Organisation<true> = getOrga();
-        const lehrPk2: Personenkontext<true> = createMock<Personenkontext<true>>({
-            id: faker.string.uuid(),
+        const lehrPk2: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
             organisationId: lehrOrga2.id,
             rolleId: lehrRolle2.id,
             personId: pkPerson.id,
@@ -168,8 +166,7 @@ describe('OxSyncEventHandler', () => {
         // used to cover filtering on RollenArt LEHR
         const lernRolle1: Rolle<true> = getRolle(RollenArt.LERN);
         const lernOrga1: Organisation<true> = getOrga();
-        const lernPk1: Personenkontext<true> = createMock<Personenkontext<true>>({
-            id: faker.string.uuid(),
+        const lernPk1: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
             organisationId: lernOrga1.id,
             rolleId: lernRolle1.id,
             personId: pkPerson.id,
@@ -181,8 +178,7 @@ describe('OxSyncEventHandler', () => {
             faker.string.numeric({ length: 7 }),
             OrganisationsTyp.KLASSE,
         );
-        const lehrPKOnKlasse: Personenkontext<true> = createMock<Personenkontext<true>>({
-            id: faker.string.uuid(),
+        const lehrPKOnKlasse: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
             organisationId: lehrOrgaForPkOnKlasse.id,
             rolleId: lehrRolleForPKOnKlasse.id,
             personId: pkPerson.id,
@@ -257,7 +253,7 @@ describe('OxSyncEventHandler', () => {
 
     beforeEach(() => {
         sut.ENABLED = true;
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('changeOxUser', () => {
@@ -270,7 +266,7 @@ describe('OxSyncEventHandler', () => {
         let address: string;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             oxUserId = faker.string.numeric({ length: 5 });
@@ -279,7 +275,7 @@ describe('OxSyncEventHandler', () => {
                 username: username,
             };
             event = new LdapSyncCompletedEvent(personId, username);
-            person = createMock<Person<true>>({
+            person = DoFactory.createPerson(true, {
                 email: faker.internet.email(),
                 username: faker.internet.userName(),
                 oxUserId: oxUserId,
@@ -322,7 +318,10 @@ describe('OxSyncEventHandler', () => {
 
         describe('when persons username is NOT defined', () => {
             it('should log error and return without proceeding', async () => {
-                person = createMock<Person<true>>({ username: undefined });
+                person = DoFactory.createPerson(false, {
+                    id: faker.string.uuid(),
+                    username: undefined,
+                }) as unknown as Person<true>; //necessary because persisted persons have a username
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
 
                 await sut.ldapSyncCompletedEventHandler(event);
@@ -336,7 +335,7 @@ describe('OxSyncEventHandler', () => {
 
         describe('when person does NOT have an oxUserId', () => {
             it('should log error and return without proceeding', async () => {
-                person = createMock<Person<true>>({ oxUserId: undefined });
+                person = DoFactory.createPerson(true, { oxUserId: undefined });
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
 
                 await sut.ldapSyncCompletedEventHandler(event);
@@ -353,6 +352,8 @@ describe('OxSyncEventHandler', () => {
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
                 //mock search for REQUESTED EAs
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([ea]);
+                //mock search for DISABLED EAs
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
 
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: true,
@@ -566,12 +567,12 @@ describe('OxSyncEventHandler', () => {
         let address: string;
 
         beforeEach(() => {
-            jest.resetAllMocks();
+            vi.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             oxUserId = faker.string.numeric({ length: 5 });
             event = new LdapSyncCompletedEvent(personId, username);
-            person = createMock<Person<true>>({
+            person = DoFactory.createPerson(true, {
                 email: faker.internet.email(),
                 username: faker.internet.userName(),
                 oxUserId: oxUserId,
@@ -604,8 +605,17 @@ describe('OxSyncEventHandler', () => {
             ] = getPkArrayOrgaMapAndRolleMap(person);
             // hence kontexte are filtered by organisations.has, removing one organisation from map here, would not create a coverage case
             // therefore a mocked map is used
-            const mockedMap: DeepMocked<Map<OrganisationID, Organisation<true>>> =
-                createMock<Map<OrganisationID, Organisation<true>>>();
+            const mockedMap: DeepMocked<Map<OrganisationID, Organisation<true>>> = createMock(
+                Map<OrganisationID, Organisation<true>>,
+                {
+                    entries: vi.fn(),
+                    has: vi.fn(),
+                    get: vi.fn(),
+                    delete: vi.fn(),
+                    set: vi.fn(),
+                    clear: vi.fn(),
+                },
+            );
             mockedMap.entries.mockImplementationOnce(() => {
                 return orgaMap.entries();
             });

@@ -17,7 +17,7 @@ describe('EmailAddress Aggregate', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         personId = faker.string.uuid();
     });
 

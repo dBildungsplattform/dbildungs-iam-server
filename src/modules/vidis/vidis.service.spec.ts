@@ -1,4 +1,3 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpService } from '@nestjs/axios';
 import { TestingModule, Test } from '@nestjs/testing';
 import { VidisService } from './vidis.service.js';
@@ -8,6 +7,7 @@ import { AxiosResponse } from 'axios';
 import { ConfigTestModule } from '../../../test/utils/config-test.module.js';
 import { VidisAngebot } from './domain/vidis-angebot.js';
 import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 
 const mockVidisRegionName: string = 'test-region';
 
@@ -79,7 +79,7 @@ describe(`VidisService`, () => {
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [ConfigTestModule, LoggingTestModule],
-            providers: [VidisService, { provide: HttpService, useValue: createMock<HttpService>() }],
+            providers: [VidisService, { provide: HttpService, useValue: createMock(HttpService) }],
         }).compile();
 
         sut = module.get<VidisService>(VidisService);

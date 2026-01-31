@@ -16,14 +16,14 @@ describe('MetricsController', () => {
                 {
                     provide: Registry,
                     useValue: {
-                        metrics: jest.fn().mockResolvedValue('metrics result'),
-                        registerMetric: jest.fn(),
+                        metrics: vi.fn().mockResolvedValue('metrics result'),
+                        registerMetric: vi.fn(),
                     },
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
                     useValue: {
-                        getPersonenkontextRollenCount: jest.fn().mockResolvedValue([
+                        getPersonenkontextRollenCount: vi.fn().mockResolvedValue([
                             { rollenart: 'LERN', count: '5' },
                             { rollenart: 'LEIT', count: '8' },
                             { rollenart: 'LEHR', count: '10' },
@@ -33,7 +33,7 @@ describe('MetricsController', () => {
                 {
                     provide: ReporterService,
                     useValue: {
-                        gauge: jest.fn(),
+                        gauge: vi.fn(),
                     },
                 },
             ],

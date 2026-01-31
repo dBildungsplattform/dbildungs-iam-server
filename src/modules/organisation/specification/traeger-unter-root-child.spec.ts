@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/index.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { Organisation } from '../domain/organisation.js';
@@ -10,7 +10,7 @@ describe('TraegerUnterRootChild Specification', () => {
     let sut: TraegerUnterRootChild<true>;
     let orgaRepoMock: DeepMocked<OrganisationRepository>;
     beforeEach(() => {
-        orgaRepoMock = createMock<OrganisationRepository>();
+        orgaRepoMock = createMock(OrganisationRepository);
         sut = new TraegerUnterRootChild(orgaRepoMock);
     });
 

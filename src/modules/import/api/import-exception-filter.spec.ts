@@ -1,7 +1,6 @@
 import { ArgumentsHost } from '@nestjs/common';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { DeepMocked } from '../../../../test/utils/createMock.js';
 import { Response } from 'express';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { ImportExceptionFilter } from './import-exception-filter.js';
 import { DbiamImportError, ImportErrorI18nTypes } from './dbiam-import.error.js';
 import { ImportDomainError } from '../domain/import-domain.error.js';
@@ -19,13 +18,14 @@ describe('ImportExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new ImportExceptionFilter();
-        responseMock = createMock<Response>();
-        argumentsHost = createMock<ArgumentsHost>({
-            switchToHttp: () =>
-                createMock<HttpArgumentsHost>({
-                    getResponse: () => responseMock,
-                }),
-        });
+        responseMock = { status: vi.fn(), json: vi.fn() } as unknown as DeepMocked<Response>;
+        argumentsHost = {
+            switchToHttp: () => ({
+                getRequest: vi.fn(),
+                getResponse: vi.fn().mockReturnValue(responseMock),
+                getNext: vi.fn(),
+            }),
+        } as unknown as DeepMocked<ArgumentsHost>;
     });
 
     describe('catch', () => {

@@ -1,14 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock } from '@golevelup/ts-jest';
 import { ResultInterceptor } from './result-interceptor.js';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { Observable, of } from 'rxjs';
 import { ConfigTestModule } from '../../../test/utils/index.js';
 import { EntityNotFoundError, KeycloakClientError } from '../error/index.js';
+import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
+import { Response } from 'express';
 
 describe('ResultInterceptor', () => {
     let module: TestingModule;
     let sut: ResultInterceptor<string>;
+    let responseMock: Partial<Response>;
+    let contextMock: Partial<ExecutionContext>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -23,7 +26,7 @@ describe('ResultInterceptor', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -31,9 +34,20 @@ describe('ResultInterceptor', () => {
     });
 
     describe('intercept', () => {
+        beforeEach(() => {
+            responseMock = {
+                setHeader: vi.fn().mockReturnThis(),
+            };
+            const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
+                getResponse: vi.fn().mockImplementation(<T>() => responseMock as unknown as T),
+            };
+            contextMock = {
+                switchToHttp: vi.fn(() => httpArgumentsHostMock as HttpArgumentsHost),
+                getHandler: vi.fn(() => (): void => {}),
+            };
+        });
         describe('when result of intercepted method is ok:true, value:string', () => {
             it('should be defined', () => {
-                const executionContext: ExecutionContext = createMock<ExecutionContext>();
                 const callHandler: CallHandler<Result<string>> = {
                     handle(): Observable<Result<string>> {
                         return of({
@@ -42,7 +56,7 @@ describe('ResultInterceptor', () => {
                         });
                     },
                 };
-                const result: Observable<string> = sut.intercept(executionContext, callHandler);
+                const result: Observable<string> = sut.intercept(contextMock as ExecutionContext, callHandler);
                 result.subscribe((data: string) => {
                     expect(data).toBeDefined();
                 });
@@ -52,7 +66,6 @@ describe('ResultInterceptor', () => {
         describe('when result of intercepted method is ok:false, error', () => {
             describe('when error is EntityNotFoundError', () => {
                 it('should be defined', () => {
-                    const executionContext: ExecutionContext = createMock<ExecutionContext>();
                     const callHandler: CallHandler<Result<string>> = {
                         handle(): Observable<Result<string>> {
                             return of({
@@ -61,7 +74,7 @@ describe('ResultInterceptor', () => {
                             });
                         },
                     };
-                    const result: Observable<string> = sut.intercept(executionContext, callHandler);
+                    const result: Observable<string> = sut.intercept(contextMock as ExecutionContext, callHandler);
                     result.subscribe(
                         (data: string) => {
                             expect(data).toBeDefined();
@@ -73,7 +86,6 @@ describe('ResultInterceptor', () => {
             });
             describe('when error is other error', () => {
                 it('should be defined', () => {
-                    const executionContext: ExecutionContext = createMock<ExecutionContext>();
                     const callHandler: CallHandler<Result<string>> = {
                         handle(): Observable<Result<string>> {
                             return of({
@@ -82,7 +94,7 @@ describe('ResultInterceptor', () => {
                             });
                         },
                     };
-                    const result: Observable<string> = sut.intercept(executionContext, callHandler);
+                    const result: Observable<string> = sut.intercept(contextMock as ExecutionContext, callHandler);
                     result.subscribe(
                         (data: string) => {
                             expect(data).toBeDefined();

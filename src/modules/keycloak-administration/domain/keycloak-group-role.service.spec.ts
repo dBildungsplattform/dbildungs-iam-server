@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 
@@ -8,39 +8,29 @@ import { DomainError, KeycloakClientError } from '../../../shared/error/index.js
 import { PersonService } from '../../person/domain/person.service.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { KeycloakGroupRoleService } from './keycloak-group-role.service.js';
+import { Groups } from '@keycloak/keycloak-admin-client/lib/resources/groups.js';
+import { Roles } from '@keycloak/keycloak-admin-client/lib/resources/roles.js';
 
 describe('KeycloakGroupRoleService', () => {
     let module: TestingModule;
     let service: KeycloakGroupRoleService;
     let adminService: DeepMocked<KeycloakAdministrationService>;
-    let kcGroupsMock: DeepMocked<KeycloakAdminClient['groups']>;
-    let kcRolesMock: DeepMocked<KeycloakAdminClient['roles']>;
+    let adminClient: DeepMocked<KeycloakAdminClient>;
+    let kcGroupsMock: DeepMocked<Groups>;
+    let kcRolesMock: DeepMocked<Roles>;
 
     beforeAll(async () => {
-        kcGroupsMock = createMock<KeycloakAdminClient['groups']>();
-        kcRolesMock = createMock<KeycloakAdminClient['roles']>();
-
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, LoggingTestModule],
             providers: [
                 KeycloakGroupRoleService,
                 {
                     provide: KeycloakAdministrationService,
-                    useValue: createMock<KeycloakAdministrationService>({
-                        getAuthedKcAdminClient() {
-                            return Promise.resolve({
-                                ok: true,
-                                value: createMock<KeycloakAdminClient>({
-                                    groups: kcGroupsMock,
-                                    roles: kcRolesMock,
-                                }),
-                            });
-                        },
-                    }),
+                    useValue: createMock<KeycloakAdministrationService>(KeycloakAdministrationService),
                 },
                 {
                     provide: PersonService,
-                    useValue: createMock<PersonService>(),
+                    useValue: createMock(PersonService),
                 },
             ],
         }).compile();
@@ -49,7 +39,25 @@ describe('KeycloakGroupRoleService', () => {
     });
 
     beforeEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
+        kcGroupsMock = createMock(Groups, {
+            addRealmRoleMappings: () => Promise.resolve(),
+            create: () => Promise.resolve({ id: faker.string.uuid() }),
+            find: () => Promise.resolve([]),
+        });
+        kcRolesMock = createMock(Roles, {
+            create: () => Promise.resolve({ roleName: faker.internet.userName() }),
+            findOneByName: () => Promise.resolve({ id: faker.string.uuid(), name: faker.internet.userName() }),
+        });
+        adminClient = createMock<KeycloakAdminClient>(KeycloakAdminClient);
+        (adminClient.groups as unknown as Groups) = kcGroupsMock;
+        (adminClient.roles as unknown as Roles) = kcRolesMock;
+        adminService.getAuthedKcAdminClient.mockImplementation(() => {
+            return Promise.resolve({
+                ok: true,
+                value: adminClient,
+            });
+        });
     });
 
     afterAll(async () => {
@@ -205,14 +213,15 @@ describe('KeycloakGroupRoleService', () => {
 
         describe('when role does not exist or id/name is undefined', () => {
             it('should return an error result', async () => {
-                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
-                    ok: true,
-                    value: createMock<KeycloakAdminClient>({
-                        roles: {
-                            findOneByName: jest.fn().mockResolvedValueOnce(undefined),
-                        },
-                    }),
-                });
+                // adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                //     ok: true,
+                //     value: createMock<KeycloakAdminClient>({
+                //         roles: {
+                //             findOneByName: vi.fn().mockResolvedValueOnce(undefined),
+                //         },
+                //     }),
+                // });
+                adminClient.roles.findOneByName.mockResolvedValueOnce(undefined);
 
                 const result: Result<boolean, DomainError> = await service.addRoleToGroup(groupId, roleName);
 
@@ -225,17 +234,19 @@ describe('KeycloakGroupRoleService', () => {
 
         describe('when role is successfully added to group', () => {
             it('should return true', async () => {
-                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
-                    ok: true,
-                    value: createMock<KeycloakAdminClient>({
-                        roles: {
-                            findOneByName: jest.fn().mockResolvedValueOnce({ id: faker.string.uuid(), name: roleName }),
-                        },
-                        groups: {
-                            addRealmRoleMappings: jest.fn().mockResolvedValueOnce(undefined),
-                        },
-                    }),
-                });
+                // adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                //     ok: true,
+                //     value: createMock<KeycloakAdminClient>({
+                //         roles: {
+                //             findOneByName: vi.fn().mockResolvedValueOnce({ id: faker.string.uuid(), name: roleName }),
+                //         },
+                //         groups: {
+                //             addRealmRoleMappings: vi.fn().mockResolvedValueOnce(undefined),
+                //         },
+                //     }),
+                // });
+                adminClient.roles.findOneByName.mockResolvedValueOnce({ id: faker.string.uuid(), name: roleName });
+                adminClient.groups.addRealmRoleMappings.mockResolvedValueOnce(undefined);
 
                 const result: Result<boolean, DomainError> = await service.addRoleToGroup(groupId, roleName);
 
@@ -248,19 +259,8 @@ describe('KeycloakGroupRoleService', () => {
 
         describe('when an error occurs during adding role to group', () => {
             it('should return an error result', async () => {
-                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
-                    ok: true,
-                    value: createMock<KeycloakAdminClient>({
-                        roles: {
-                            findOneByName: jest.fn().mockResolvedValueOnce({ id: faker.string.uuid(), name: roleName }),
-                        },
-                        groups: {
-                            addRealmRoleMappings: jest
-                                .fn()
-                                .mockRejectedValueOnce(new Error('Add role to group failed')),
-                        },
-                    }),
-                });
+                adminClient.roles.findOneByName.mockResolvedValueOnce({ id: faker.string.uuid(), name: roleName });
+                adminClient.groups.addRealmRoleMappings.mockRejectedValueOnce(new Error('Add role to group failed'));
 
                 const result: Result<boolean, DomainError> = await service.addRoleToGroup(groupId, roleName);
 

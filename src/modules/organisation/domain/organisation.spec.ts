@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
@@ -25,7 +25,7 @@ describe('Organisation', () => {
             providers: [
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
             ],
         }).compile();
@@ -37,7 +37,7 @@ describe('Organisation', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('construct', () => {
@@ -319,7 +319,7 @@ describe('Organisation', () => {
         describe('TraegerNameUniqueInSubtree', () => {
             let traeger: Organisation<true>;
             beforeEach(() => {
-                jest.restoreAllMocks();
+                vi.restoreAllMocks();
                 // Setup a unique Schultraeger
                 traeger = DoFactory.createOrganisationAggregate(true, {
                     zugehoerigZu: oeffentlich.id,

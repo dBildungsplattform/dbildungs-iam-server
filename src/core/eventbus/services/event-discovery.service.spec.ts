@@ -1,6 +1,6 @@
 // eslint-disable-next-line max-classes-per-file
 import { DiscoveryModule } from '@golevelup/nestjs-discovery';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Controller, Injectable } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
@@ -45,7 +45,7 @@ describe('EventService', () => {
     let module: TestingModule;
 
     async function setupModule(useKafka: boolean = false): Promise<void> {
-        const configService: DeepMocked<ConfigService> = createMock<ConfigService>();
+        const configService: DeepMocked<ConfigService> = createMock(ConfigService);
         configService.getOrThrow.mockReturnValueOnce({ ENABLED: useKafka });
 
         module = await Test.createTestingModule({
@@ -53,8 +53,8 @@ describe('EventService', () => {
             providers: [
                 EventDiscoveryService,
                 TestProvider,
-                { provide: EventService, useValue: createMock<EventService>() },
-                { provide: KafkaEventService, useValue: createMock<KafkaEventService>() },
+                { provide: EventService, useValue: createMock(EventService) },
+                { provide: KafkaEventService, useValue: createMock(KafkaEventService) },
                 { provide: ConfigService, useValue: configService },
             ],
             controllers: [TestController],
@@ -68,7 +68,7 @@ describe('EventService', () => {
     }
 
     afterEach(async () => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         await module.close();
     });
 

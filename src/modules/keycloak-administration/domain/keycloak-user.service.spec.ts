@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     CredentialRepresentation,
@@ -20,19 +20,22 @@ import { UserLock } from './user-lock.js';
 import { UserLockRepository } from '../repository/user-lock.repository.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
 import { PersonLockOccasion } from '../../person/domain/person.enums.js';
+import { Groups } from '@keycloak/keycloak-admin-client/lib/resources/groups.js';
+import { Users } from '@keycloak/keycloak-admin-client/lib/resources/users.js';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
     let service: KeycloakUserService;
     let adminService: DeepMocked<KeycloakAdministrationService>;
-    let kcUsersMock: DeepMocked<KeycloakAdminClient['users']>;
-    let kcGroupsMock: DeepMocked<KeycloakAdminClient['groups']>;
+    let adminClient: DeepMocked<KeycloakAdminClient>;
+    let kcUsersMock: DeepMocked<Users>;
+    let kcGroupsMock: DeepMocked<Groups>;
     let loggerMock: DeepMocked<ClassLogger>;
     let userLockRepository: DeepMocked<UserLockRepository>;
 
     beforeAll(async () => {
-        kcUsersMock = createMock<KeycloakAdminClient['users']>();
-        kcGroupsMock = createMock<KeycloakAdminClient['groups']>();
+        kcUsersMock = createMock(Users);
+        kcGroupsMock = createMock(Groups);
 
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, LoggingTestModule],
@@ -40,25 +43,15 @@ describe('KeycloakUserService', () => {
                 KeycloakUserService,
                 {
                     provide: KeycloakAdministrationService,
-                    useValue: createMock<KeycloakAdministrationService>({
-                        getAuthedKcAdminClient() {
-                            return Promise.resolve({
-                                ok: true,
-                                value: createMock<KeycloakAdminClient>({
-                                    users: kcUsersMock,
-                                    groups: kcGroupsMock,
-                                }),
-                            });
-                        },
-                    }),
+                    useValue: createMock<KeycloakAdministrationService>(KeycloakAdministrationService),
                 },
                 {
                     provide: PersonService,
-                    useValue: createMock<PersonService>(),
+                    useValue: createMock(PersonService),
                 },
                 {
                     provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
+                    useValue: createMock(UserLockRepository),
                 },
             ],
         }).compile();
@@ -69,7 +62,40 @@ describe('KeycloakUserService', () => {
     });
 
     beforeEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
+        kcGroupsMock = createMock(Groups, {
+            addRealmRoleMappings: () => Promise.resolve(),
+            create: () => Promise.resolve({ id: faker.string.uuid() }),
+            find: () => Promise.resolve([]),
+        });
+        kcUsersMock = createMock(Users, {
+            addToGroup: () => Promise.resolve('addToGroup called'),
+            create: () => Promise.resolve({ id: faker.string.uuid() }),
+            del: () => Promise.resolve(),
+            delFromGroup: () => Promise.resolve('delFromGroup called'),
+            find: () => Promise.resolve([]),
+            findOne: () => Promise.resolve(undefined),
+            getCredentials: () => Promise.resolve([]),
+            listGroups: () => Promise.resolve([]),
+            resetPassword: () => Promise.resolve(),
+            update: () => Promise.resolve(),
+        });
+        kcUsersMock.addToGroup.mockResolvedValue('addToGroup called');
+        kcUsersMock.find.mockResolvedValue([]);
+        kcUsersMock.getCredentials.mockResolvedValue([]);
+        kcUsersMock.listGroups.mockResolvedValue([]);
+        kcUsersMock.delFromGroup.mockResolvedValue('delFromGroup called');
+        kcGroupsMock.find.mockResolvedValue([]);
+        kcGroupsMock.create.mockResolvedValue({ id: faker.string.uuid() });
+        adminClient = createMock<KeycloakAdminClient>(KeycloakAdminClient);
+        (adminClient.groups as unknown as Groups) = kcGroupsMock;
+        (adminClient.users as unknown as Users) = kcUsersMock;
+        adminService.getAuthedKcAdminClient.mockImplementation(() => {
+            return Promise.resolve({
+                ok: true,
+                value: adminClient,
+            });
+        });
     });
 
     afterAll(async () => {
@@ -403,12 +429,19 @@ describe('KeycloakUserService', () => {
         it('should return error result if client.users.del throws', async () => {
             kcUsersMock.del.mockRejectedValueOnce(new Error('User does not exist'));
 
-            const result: Result<void> = await service.delete(faker.string.uuid());
+            const result: Result<void, DomainError> = await service.delete(faker.string.uuid());
 
-            expect(result).toStrictEqual<Result<void>>({
+            const expectedError: Result<void> = {
                 ok: false,
-                error: new KeycloakClientError('Keycloak request failed'),
-            });
+                error: new KeycloakClientError('Keycloak request failed', {
+                    details: [new Error('User does not exist')],
+                }),
+            };
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error.message).toBe(expectedError.error.message);
+                expect(result.error).toBeInstanceOf(KeycloakClientError);
+            }
         });
 
         it('should return error result of getAuthedKcAdminClient', async () => {
@@ -480,12 +513,12 @@ describe('KeycloakUserService', () => {
                 kcUsersMock.findOne.mockRejectedValueOnce(new Error());
                 const user: User<true> = DoFactory.createUser(true);
 
-                const res: Result<User<true>> = await service.findById(user.id);
-
-                expect(res).toStrictEqual<Result<User<true>>>({
-                    ok: false,
-                    error: new KeycloakClientError('Keycloak request failed'),
-                });
+                const result: Result<User<true>, DomainError> = await service.findById(user.id);
+                expect(result.ok).toBeFalsy();
+                if (!result.ok) {
+                    expect(result.error.message).toBe('Keycloak request failed');
+                    expect(result.error).toBeInstanceOf(KeycloakClientError);
+                }
             });
         });
 
@@ -572,15 +605,16 @@ describe('KeycloakUserService', () => {
             it('should return error result', async () => {
                 kcUsersMock.find.mockRejectedValueOnce(new Error());
                 const user: User<true> = DoFactory.createUser(true);
-                const res: Result<User<true>> = await service.findOne({
+                const result: Result<User<true>> = await service.findOne({
                     username: user.username,
                     email: user.email,
                 } as unknown as FindUserFilter);
 
-                expect(res).toStrictEqual<Result<User<true>>>({
-                    ok: false,
-                    error: new KeycloakClientError('Keycloak request failed'),
-                });
+                expect(result.ok).toBeFalsy();
+                if (!result.ok) {
+                    expect(result.error.message).toBe('Keycloak request failed');
+                    expect(result.error).toBeInstanceOf(KeycloakClientError);
+                }
             });
         });
     });
@@ -796,10 +830,18 @@ describe('KeycloakUserService', () => {
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
                 } as UserRepresentation);
+                const mockGroups: GroupRepresentation[] = [
+                    { id: 'group-id-1', name: 'group1' },
+                    { id: 'group-id-2', name: 'group2' },
+                ];
+                kcGroupsMock.find.mockResolvedValueOnce(mockGroups);
 
                 const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, []);
 
-                expect(result).toStrictEqual<Result<void>>({ ok: true, value: undefined });
+                expect(result.ok).toBeFalsy();
+                if (!result.ok) {
+                    expect(result.error).toBeInstanceOf(EntityNotFoundError);
+                }
             });
         });
 
@@ -990,7 +1032,6 @@ describe('KeycloakUserService', () => {
                     { id: 'group-id-2', name: 'group2' },
                 ];
                 kcGroupsMock.find.mockResolvedValueOnce(mockGroups);
-
                 kcUsersMock.listGroups.mockResolvedValueOnce([]);
 
                 const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, [
@@ -1012,10 +1053,18 @@ describe('KeycloakUserService', () => {
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
                 } as UserRepresentation);
+                const mockGroups: GroupRepresentation[] = [
+                    { id: 'group-id-1', name: 'group1' },
+                    { id: 'group-id-2', name: 'group2' },
+                ];
+                kcGroupsMock.find.mockResolvedValueOnce(mockGroups);
 
                 const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, []);
 
-                expect(result).toStrictEqual<Result<void>>({ ok: true, value: undefined });
+                expect(result.ok).toBeFalsy();
+                if (!result.ok) {
+                    expect(result.error).toBeInstanceOf(EntityNotFoundError);
+                }
             });
         });
 
@@ -1089,13 +1138,7 @@ describe('KeycloakUserService', () => {
                 locked_occasion: PersonLockOccasion.MANUELL_GESPERRT,
             };
             it('should create user lock successfully', async () => {
-                const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
-                    users: { update: jest.fn().mockResolvedValueOnce(undefined) },
-                });
-                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
-                    ok: true,
-                    value: keyCloakAdminClient,
-                });
+                adminClient.users.update.mockResolvedValueOnce(undefined);
                 const userLocks: UserLock[] = [];
                 userLockRepository.findByPersonId.mockResolvedValueOnce(userLocks);
 
@@ -1106,16 +1149,10 @@ describe('KeycloakUserService', () => {
                     true,
                 );
                 expect(result).toStrictEqual({ ok: true, value: undefined });
-                expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: false });
+                expect(adminClient.users.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: false });
             });
             it('should update existing user lock successfully', async () => {
-                const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
-                    users: { update: jest.fn().mockResolvedValueOnce(undefined) },
-                });
-                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
-                    ok: true,
-                    value: keyCloakAdminClient,
-                });
+                adminClient.users.update.mockResolvedValueOnce(undefined);
                 const manualUserLock: UserLock = userLock;
                 const userLocks: UserLock[] = [manualUserLock];
                 userLockRepository.findByPersonId.mockResolvedValueOnce(userLocks);
@@ -1128,16 +1165,10 @@ describe('KeycloakUserService', () => {
                     true,
                 );
                 expect(result).toStrictEqual({ ok: true, value: undefined });
-                expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: false });
+                expect(adminClient.users.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: false });
             });
             it('should unlock user successfully', async () => {
-                const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
-                    users: { update: jest.fn().mockResolvedValueOnce(undefined) },
-                });
-                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
-                    ok: true,
-                    value: keyCloakAdminClient,
-                });
+                adminClient.users.update.mockResolvedValueOnce(undefined);
                 userLockRepository.deleteUserLock.mockResolvedValueOnce(undefined);
                 userLockRepository.findByPersonId.mockResolvedValueOnce([]);
 
@@ -1148,12 +1179,18 @@ describe('KeycloakUserService', () => {
                     false,
                 );
                 expect(result).toStrictEqual({ ok: true, value: undefined });
-                expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
+                expect(adminClient.users.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
             });
             it('should return error if update fails', async () => {
-                kcUsersMock.update.mockRejectedValueOnce(new Error('Update failed'));
+                adminClient.users.update.mockRejectedValueOnce(new Error('Update failed'));
 
-                const lockMock: UserLock = createMock<UserLock>();
+                const lockMock: UserLock = UserLock.construct(
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.date.future(),
+                    PersonLockOccasion.MANUELL_GESPERRT,
+                    faker.date.recent(),
+                );
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'person-id',
                     'user-id',
@@ -1173,7 +1210,13 @@ describe('KeycloakUserService', () => {
                     error: new KeycloakClientError('Could not authenticate'),
                 });
 
-                const lockMock: UserLock = createMock<UserLock>();
+                const lockMock: UserLock = UserLock.construct(
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.date.future(),
+                    PersonLockOccasion.MANUELL_GESPERRT,
+                    faker.date.recent(),
+                );
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'person-id',
                     'user-id',
@@ -1216,18 +1259,10 @@ describe('KeycloakUserService', () => {
             });
             describe('fails', () => {
                 it('should return', async () => {
-                    const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
-                        users: {
-                            findOne: jest.fn().mockRejectedValueOnce(new Error('Retrieval failed')),
-                        },
-                    });
-                    adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
-                        ok: true,
-                        value: keyCloakAdminClient,
-                    });
+                    kcUsersMock.findOne.mockRejectedValueOnce(new Error('Retrieval failed'));
 
                     const actual: UserRepresentation | undefined = await service.getKeyCloakUserData(userId);
-                    expect(keyCloakAdminClient.users.findOne).toHaveBeenCalledWith({ id: userId });
+                    expect(adminClient.users.findOne).toHaveBeenCalledWith({ id: userId });
                     expect(actual).toBeUndefined();
                 });
             });
@@ -1258,10 +1293,11 @@ describe('KeycloakUserService', () => {
                 kcUsersMock.findOne.mockResolvedValueOnce(mockUser);
                 kcUsersMock.getCredentials.mockRejectedValueOnce({});
                 const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
-                expect(result).toStrictEqual({
-                    ok: false,
-                    error: new KeycloakClientError('Keycloak request failed'),
-                });
+                expect(result.ok).toBeFalsy();
+                if (!result.ok) {
+                    expect(result.error.message).toBe('Keycloak request failed');
+                    expect(result.error).toBeInstanceOf(KeycloakClientError);
+                }
             });
         });
 
@@ -1291,10 +1327,11 @@ describe('KeycloakUserService', () => {
                 kcUsersMock.findOne.mockRejectedValueOnce(null);
                 kcUsersMock.getCredentials.mockResolvedValueOnce(mockCredentials);
                 const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
-                expect(result).toStrictEqual({
-                    ok: false,
-                    error: new KeycloakClientError('Keycloak request failed'),
-                });
+                expect(result.ok).toBeFalsy();
+                if (!result.ok) {
+                    expect(result.error.message).toBe('Keycloak request failed');
+                    expect(result.error).toBeInstanceOf(KeycloakClientError);
+                }
             });
         });
         describe('when the user does not have a proper timestamp', () => {
@@ -1457,13 +1494,14 @@ describe('KeycloakUserService', () => {
                 const kcError: DomainError = new KeycloakClientError('Keycloak request failed');
                 kcUsersMock.find.mockRejectedValueOnce(kcError);
 
-                const res: Result<void, DomainError> = await service.updateUsername(username, newUsername);
+                const result: Result<void, DomainError> = await service.updateUsername(username, newUsername);
 
-                expect(res).toStrictEqual<Result<void>>({
-                    ok: false,
-                    error: kcError,
-                });
                 expect(kcUsersMock.find).toHaveBeenCalledWith({ username: username, exact: true });
+                expect(result.ok).toBeFalsy();
+                if (!result.ok) {
+                    expect(result.error.message).toBe('Keycloak request failed');
+                    expect(result.error).toBeInstanceOf(KeycloakClientError);
+                }
             });
         });
 

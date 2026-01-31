@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { KeycloackServiceProviderHandler } from './keycloack-service-provider.event-handler.js';
 import { KeycloakUserService } from '../keycloak-administration/index.js';
@@ -27,11 +27,11 @@ describe('KeycloackServiceProviderHandler', () => {
                 KeycloackServiceProviderHandler,
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>(),
+                    useValue: createMock(KeycloakUserService),
                 },
             ],
         }).compile();
@@ -46,7 +46,7 @@ describe('KeycloackServiceProviderHandler', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should update user roles when new roles are added', async () => {
@@ -57,15 +57,14 @@ describe('KeycloackServiceProviderHandler', () => {
         const newKeycloakRole: string = faker.string.uuid();
         const currentKeycloakRole: string = faker.string.uuid();
 
-        const personenkontextUpdatedEventMock: DeepMocked<PersonenkontextUpdatedEvent> =
-            createMock<PersonenkontextUpdatedEvent>({
-                person: {
-                    keycloakUserId,
-                } as PersonenkontextUpdatedPersonData,
-                newKontexte: [{ rolleId: newRolleId } as PersonenkontextUpdatedData],
-                removedKontexte: [],
-                currentKontexte: [{ rolleId: currentRolleId } as PersonenkontextUpdatedData],
-            });
+        const personenkontextUpdatedEventMock: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+            {
+                keycloakUserId,
+            } as PersonenkontextUpdatedPersonData,
+            [{ rolleId: newRolleId } as PersonenkontextUpdatedData],
+            [],
+            [{ rolleId: currentRolleId } as PersonenkontextUpdatedData],
+        );
 
         rolleRepoMock.findByIds.mockResolvedValueOnce(
             new Map([[newRolleId, { serviceProviderData: [{ keycloakGroup: newKeycloakRole }] } as Rolle<true>]]),
@@ -105,15 +104,14 @@ describe('KeycloackServiceProviderHandler', () => {
         rolleRepoMock.findByIds.mockResolvedValueOnce(new Map([[newRolleId, rolleWithoutServiceProvider]]));
         rolleRepoMock.findByIds.mockResolvedValueOnce(new Map([[currentRolleId, rolleWithoutServiceProvider2]]));
 
-        const personenkontextUpdatedEventMock: DeepMocked<PersonenkontextUpdatedEvent> =
-            createMock<PersonenkontextUpdatedEvent>({
-                person: {
-                    keycloakUserId: faker.string.uuid(),
-                } as PersonenkontextUpdatedPersonData,
-                newKontexte: [{ rolleId: newRolleId } as PersonenkontextUpdatedData],
-                removedKontexte: [],
-                currentKontexte: [{ rolleId: currentRolleId } as PersonenkontextUpdatedData],
-            });
+        const personenkontextUpdatedEventMock: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+            {
+                keycloakUserId: faker.string.uuid(),
+            } as PersonenkontextUpdatedPersonData,
+            [{ rolleId: newRolleId } as PersonenkontextUpdatedData],
+            [],
+            [{ rolleId: currentRolleId } as PersonenkontextUpdatedData],
+        );
 
         await sut.handlePersonenkontextUpdatedEvent(personenkontextUpdatedEventMock);
 

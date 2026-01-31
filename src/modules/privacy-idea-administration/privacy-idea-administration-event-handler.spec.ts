@@ -1,4 +1,3 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 import { PrivacyIdeaAdministrationEventHandler } from './privacy-idea-administration-event-handler.js';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
@@ -9,6 +8,7 @@ import { PersonDeletedEvent } from '../../shared/events/person-deleted.event.js'
 import { ResetTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
 import { TokenResetError } from './api/error/token-reset.error.js';
 import { PersonUsername } from '../../shared/types/aggregate-ids.types.js';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 
 export const mockPrivacyIdeaToken: PrivacyIdeaToken = {
     active: true,
@@ -55,7 +55,7 @@ describe('PrivacyIdeaAdministration Event Handler', () => {
                 PrivacyIdeaAdministrationEventHandler,
                 {
                     provide: PrivacyIdeaAdministrationService,
-                    useValue: createMock<PrivacyIdeaAdministrationService>(),
+                    useValue: createMock(PrivacyIdeaAdministrationService),
                 },
             ],
         }).compile();
@@ -70,7 +70,7 @@ describe('PrivacyIdeaAdministration Event Handler', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('handlePersonDeletedEvent', () => {
@@ -85,7 +85,7 @@ describe('PrivacyIdeaAdministration Event Handler', () => {
             username = faker.string.alpha();
             emailAddress = faker.internet.email();
             event = new PersonDeletedEvent(personId, username, emailAddress);
-            mockResetTokenResponse = createMock<ResetTokenResponse>();
+            mockResetTokenResponse = {} as ResetTokenResponse;
         });
 
         describe('when person has privacyIDEA tokens', () => {

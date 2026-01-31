@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { OxService } from './ox.service';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
@@ -20,6 +20,7 @@ import { Err, Ok } from '../../../../shared/util/result';
 import { OXGroup } from '../actions/group/ox-group.types';
 import { OxError } from '../../../../shared/error/ox.error';
 import { ListGroupsForUserResponse } from '../actions/group/list-groups-for-user.action';
+import { Mock } from 'vitest';
 
 describe('OxService', () => {
     let module: TestingModule;
@@ -35,7 +36,7 @@ describe('OxService', () => {
                 OxService,
                 {
                     provide: OxSendService,
-                    useValue: createMock<OxSendService>(),
+                    useValue: createMock(OxSendService),
                 },
             ],
         }).compile();
@@ -43,7 +44,7 @@ describe('OxService', () => {
         sut = module.get(OxService);
         oxSendService = module.get(OxSendService);
         loggerMock = module.get(ClassLogger);
-        jest.useFakeTimers();
+        vi.useFakeTimers();
     });
 
     afterAll(async () => {
@@ -51,8 +52,8 @@ describe('OxService', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
-        jest.restoreAllMocks();
+        vi.resetAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('createOxGroup', () => {
@@ -96,7 +97,7 @@ describe('OxService', () => {
         const oxGroupId: string = faker.string.alphanumeric({ length: 6 });
 
         it('should log error if group lookup fails', async () => {
-            jest.spyOn(sut, 'getExistingOxGroupByNameOrCreateOxGroup').mockResolvedValueOnce({
+            vi.spyOn(sut, 'getExistingOxGroupByNameOrCreateOxGroup').mockResolvedValueOnce({
                 ok: false,
                 error: new Error('fail'),
             });
@@ -109,11 +110,11 @@ describe('OxService', () => {
         });
 
         it('should log error if adding member fails with non-OxMemberAlreadyInGroupError', async () => {
-            jest.spyOn(sut, 'getExistingOxGroupByNameOrCreateOxGroup').mockResolvedValueOnce({
+            vi.spyOn(sut, 'getExistingOxGroupByNameOrCreateOxGroup').mockResolvedValueOnce({
                 ok: true,
                 value: oxGroupId,
             });
-            jest.spyOn(sut, 'createAddMemberToGroupAction').mockReturnValue({} as AddMemberToGroupAction);
+            vi.spyOn(sut, 'createAddMemberToGroupAction').mockReturnValue({} as AddMemberToGroupAction);
             oxSendService.send.mockResolvedValueOnce({ ok: false, error: new OxGroupNotFoundError('') });
 
             await sut.addOxUserToGroup(oxUserId, schuleDstrNr);
@@ -129,11 +130,11 @@ describe('OxService', () => {
         });
 
         it('should not log error if adding member fails with OxMemberAlreadyInGroupError', async () => {
-            jest.spyOn(sut, 'getExistingOxGroupByNameOrCreateOxGroup').mockResolvedValueOnce({
+            vi.spyOn(sut, 'getExistingOxGroupByNameOrCreateOxGroup').mockResolvedValueOnce({
                 ok: true,
                 value: oxGroupId,
             });
-            jest.spyOn(sut, 'createAddMemberToGroupAction').mockReturnValue({} as AddMemberToGroupAction);
+            vi.spyOn(sut, 'createAddMemberToGroupAction').mockReturnValue({} as AddMemberToGroupAction);
             oxSendService.send.mockResolvedValueOnce({
                 ok: false,
                 error: new OxMemberAlreadyInGroupError('already in group'),
@@ -152,11 +153,11 @@ describe('OxService', () => {
         });
 
         it('should add user to group and log info on success', async () => {
-            jest.spyOn(sut, 'getExistingOxGroupByNameOrCreateOxGroup').mockResolvedValueOnce({
+            vi.spyOn(sut, 'getExistingOxGroupByNameOrCreateOxGroup').mockResolvedValueOnce({
                 ok: true,
                 value: oxGroupId,
             });
-            jest.spyOn(sut, 'createAddMemberToGroupAction').mockReturnValue({} as AddMemberToGroupAction);
+            vi.spyOn(sut, 'createAddMemberToGroupAction').mockReturnValue({} as AddMemberToGroupAction);
             oxSendService.send.mockResolvedValueOnce({ ok: true, value: {} });
 
             await sut.addOxUserToGroup(oxUserId, schuleDstrNr);
@@ -174,7 +175,7 @@ describe('OxService', () => {
         const displayName: string = faker.string.alphanumeric({ length: 6 });
 
         it('should return ok:true if group exists', async () => {
-            jest.spyOn(sut, 'getOxGroupByName').mockResolvedValueOnce({ ok: true, value: 'groupId' });
+            vi.spyOn(sut, 'getOxGroupByName').mockResolvedValueOnce({ ok: true, value: 'groupId' });
 
             const result: Result<OXGroupID, Error> = await sut.getExistingOxGroupByNameOrCreateOxGroup(
                 oxGroupName,
@@ -184,11 +185,11 @@ describe('OxService', () => {
         });
 
         it('should create group if not found', async () => {
-            jest.spyOn(sut, 'getOxGroupByName').mockResolvedValueOnce({
+            vi.spyOn(sut, 'getOxGroupByName').mockResolvedValueOnce({
                 ok: false,
                 error: new OxGroupNotFoundError(oxGroupName),
             });
-            jest.spyOn(sut, 'createOxGroup').mockResolvedValueOnce({ ok: true, value: 'newGroupId' });
+            vi.spyOn(sut, 'createOxGroup').mockResolvedValueOnce({ ok: true, value: 'newGroupId' });
 
             const result: Result<OXGroupID, Error> = await sut.getExistingOxGroupByNameOrCreateOxGroup(
                 oxGroupName,
@@ -199,7 +200,7 @@ describe('OxService', () => {
 
         it('should return error if getOxGroupByName returns DomainError (not NotFound)', async () => {
             const error: OxGroupNameAmbiguousError = new OxGroupNameAmbiguousError(oxGroupName);
-            jest.spyOn(sut, 'getOxGroupByName').mockResolvedValueOnce({ ok: false, error });
+            vi.spyOn(sut, 'getOxGroupByName').mockResolvedValueOnce({ ok: false, error });
 
             const result: Result<OXGroupID, Error> = await sut.getExistingOxGroupByNameOrCreateOxGroup(
                 oxGroupName,
@@ -377,10 +378,10 @@ describe('OxService', () => {
 
             // Only one group to remove, and it will fail
             oxSendService.send.mockResolvedValueOnce(Ok({ groups: [oldGroup] }));
-            const addOxUserToGroupSpy: jest.SpyInstance = jest
+            const addOxUserToGroupSpy: Mock = vi
                 .spyOn(sut, 'addOxUserToGroup')
                 .mockResolvedValue({ ok: true, value: undefined });
-            const removeOxUserFromGroupSpy: jest.SpyInstance = jest
+            const removeOxUserFromGroupSpy: Mock = vi
                 .spyOn(sut, 'removeOxUserFromGroup')
                 .mockResolvedValueOnce(errorResult);
 
@@ -397,10 +398,10 @@ describe('OxService', () => {
             const groups: OXGroup[] = [oldGroup];
             const oxUser: string = faker.string.numeric(5);
 
-            const addOxUserToGroupSpy: jest.SpyInstance = jest
+            const addOxUserToGroupSpy: Mock = vi
                 .spyOn(sut, 'addOxUserToGroup')
                 .mockResolvedValueOnce({ ok: true, value: undefined });
-            const removeOxUserFromGroupSpy: jest.SpyInstance = jest
+            const removeOxUserFromGroupSpy: Mock = vi
                 .spyOn(sut, 'removeOxUserFromGroup')
                 .mockResolvedValueOnce({ ok: true, value: undefined });
 

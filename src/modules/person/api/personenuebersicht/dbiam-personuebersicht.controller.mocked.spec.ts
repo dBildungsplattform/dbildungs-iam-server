@@ -2,6 +2,7 @@ import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
+    createPersonPermissionsMock,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
@@ -10,7 +11,7 @@ import {
 import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
 import { PersonApiModule } from '../../person-api.module.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { faker } from '@faker-js/faker';
 import { RolleFactory } from '../../../rolle/domain/rolle.factory.js';
 import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
@@ -28,6 +29,7 @@ import { PersonenuebersichtBodyParams } from './personenuebersicht-body.params.j
 import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
 import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
 import { PersonLandesbediensteterSearchService } from '../../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
+import { PersonID } from '../../../../shared/types/aggregate-ids.types.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -88,15 +90,15 @@ describe('Personenuebersicht API Mocked', () => {
             providers: [ServiceProviderRepo, RolleFactory, OrganisationRepository],
         })
             .overrideProvider(DBiamPersonenkontextRepo)
-            .useValue(createMock<DBiamPersonenkontextRepo>())
+            .useValue(createMock(DBiamPersonenkontextRepo))
             .overrideProvider(RolleRepo)
-            .useValue(createMock<RolleRepo>())
+            .useValue(createMock(RolleRepo))
             .overrideProvider(OrganisationRepository)
-            .useValue(createMock<OrganisationRepository>())
+            .useValue(createMock(OrganisationRepository))
             .overrideProvider(PersonRepository)
-            .useValue(createMock<PersonRepository>())
+            .useValue(createMock(PersonRepository))
             .overrideProvider(PersonLandesbediensteterSearchService)
-            .useValue(createMock<PersonLandesbediensteterSearchService>())
+            .useValue(createMock(PersonLandesbediensteterSearchService))
             .compile();
 
         sut = module.get(DBiamPersonenuebersichtController);
@@ -104,11 +106,11 @@ describe('Personenuebersicht API Mocked', () => {
         organisationRepositoryMock = module.get(OrganisationRepository);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personRepositoryMock = module.get(PersonRepository);
-        personPermissionsMock = createMock<PersonPermissions>();
+        personPermissionsMock = createPersonPermissionsMock();
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('/GET personenuebersicht', () => {
@@ -258,12 +260,18 @@ describe('Personenuebersicht API Mocked', () => {
                 },
             );
 
-            jest.spyOn(DbiamPersonenuebersicht.prototype, 'createZuordnungenForKontexte').mockImplementation(() => {
+            vi.spyOn(DbiamPersonenuebersicht.prototype, 'createZuordnungenForKontexte').mockImplementation(() => {
                 return Promise.resolve(new EntityNotFoundError('Some message here'));
             });
 
+            const personkontextMap: Map<PersonID, Personenkontext<true>[]> = new Map<
+                PersonID,
+                Personenkontext<true>[]
+            >();
+            personkontextMap.set(person.id, [pk]);
             personRepositoryMock.findByIds.mockResolvedValueOnce([person]);
             dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
+            dBiamPersonenkontextRepoMock.findByPersonIds.mockResolvedValueOnce(personkontextMap);
             rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
             organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
             personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [orga.id] });
