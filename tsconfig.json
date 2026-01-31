@@ -91,7 +91,7 @@
         /* Completeness */
         // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
         "skipLibCheck": true, /* Skip type checking all .d.ts files. */
-        "types": ["vitest/globals", "Multer", "passport"]
+        "types": ["vitest/globals", "multer", "passport"]
     },
 
   "include": ["src/**/*.ts", "src/**/*.spec.ts"],
