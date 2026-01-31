@@ -65,8 +65,8 @@ describe('ImportWorkflow', () => {
             filename: '',
             path: '',
             stream: Readable.from(Buffer.from('')),
-            ...overrides, // override any field for test-specific needs
-        };
+            ...overrides,
+        } satisfies Express.Multer.File;
     }
     const FILE_MOCK: Express.Multer.File = createFileMock();
 
