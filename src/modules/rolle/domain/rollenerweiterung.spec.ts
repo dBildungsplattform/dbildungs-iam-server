@@ -8,6 +8,8 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RollenerweiterungFactory } from './rollenerweiterung.factory.js';
 import { Rollenerweiterung } from './rollenerweiterung.js';
+import { Rolle } from './rolle.js';
+import { RollenArt } from './rolle.enums.js';
 
 describe('Rollenerweiterung Aggregate', () => {
     let module: TestingModule;
@@ -20,20 +22,21 @@ describe('Rollenerweiterung Aggregate', () => {
         module = await Test.createTestingModule({
             providers: [
                 RollenerweiterungFactory,
+                OrganisationRepository,
                 {
                     provide: ServiceProviderRepo,
                     useValue: createMock<ServiceProviderRepo>(),
-                },
-                {
-                    provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
                 },
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
                 },
             ],
-        }).compile();
+        })
+            .overrideProvider(OrganisationRepository)
+            .useValue(createMock<OrganisationRepository>())
+            .compile();
+
         rollenerweiterungFactory = module.get(RollenerweiterungFactory);
         organisationRepo = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
@@ -58,11 +61,63 @@ describe('Rollenerweiterung Aggregate', () => {
                 faker.string.uuid(),
                 faker.string.uuid(),
             );
+            organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
             organisationRepo.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
-            rolleRepo.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
+
+            const rolle: Rolle<true> = Rolle.construct(
+                organisationRepo,
+                serviceProviderRepoMock,
+                faker.string.uuid(),
+                faker.date.anytime(),
+                faker.date.anytime(),
+                1,
+                faker.string.alpha(10),
+                faker.string.uuid(),
+                RollenArt.LEHR,
+                [],
+                [],
+                [],
+                false,
+                undefined,
+            );
+            rolleRepo.findById.mockResolvedValueOnce(rolle);
             serviceProviderRepoMock.findById.mockResolvedValueOnce(DoFactory.createServiceProvider(true));
 
             await expect(rollenerweiterung.checkReferences()).resolves.toBe(undefined);
+        });
+
+        it('should return Error, if references are valid but rolle is not on or above orga in tree ', async () => {
+            const rollenerweiterung: Rollenerweiterung<true> = rollenerweiterungFactory.construct(
+                faker.string.uuid(),
+                faker.date.anytime(),
+                faker.date.anytime(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+            );
+            organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(false);
+            organisationRepo.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+
+            const rolle: Rolle<true> = Rolle.construct(
+                organisationRepo,
+                serviceProviderRepoMock,
+                faker.string.uuid(),
+                faker.date.anytime(),
+                faker.date.anytime(),
+                1,
+                faker.string.alpha(10),
+                faker.string.uuid(),
+                RollenArt.LEHR,
+                [],
+                [],
+                [],
+                false,
+                undefined,
+            );
+            rolleRepo.findById.mockResolvedValueOnce(rolle);
+            serviceProviderRepoMock.findById.mockResolvedValueOnce(DoFactory.createServiceProvider(true));
+
+            await expect(rollenerweiterung.checkReferences()).resolves.toBeInstanceOf(EntityNotFoundError);
         });
 
         type RollenerweiterungReference = 'organisation' | 'rolle' | 'serviceProvider';
@@ -71,6 +126,7 @@ describe('Rollenerweiterung Aggregate', () => {
             ['rolle' as RollenerweiterungReference],
             ['serviceProvider' as RollenerweiterungReference],
         ])('should return error, if %s reference is invalid', async (reference: RollenerweiterungReference) => {
+            organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
             const rollenerweiterung: Rollenerweiterung<true> = rollenerweiterungFactory.construct(
                 faker.string.uuid(),
                 faker.date.anytime(),
@@ -82,7 +138,26 @@ describe('Rollenerweiterung Aggregate', () => {
             organisationRepo.findById.mockResolvedValueOnce(
                 reference === 'organisation' ? undefined : DoFactory.createOrganisation(true),
             );
-            rolleRepo.findById.mockResolvedValueOnce(reference === 'rolle' ? undefined : DoFactory.createRolle(true));
+            rolleRepo.findById.mockResolvedValueOnce(
+                reference === 'rolle'
+                    ? undefined
+                    : Rolle.construct(
+                          organisationRepo,
+                          serviceProviderRepoMock,
+                          faker.string.uuid(),
+                          faker.date.anytime(),
+                          faker.date.anytime(),
+                          1,
+                          faker.string.alpha(10),
+                          faker.string.uuid(),
+                          RollenArt.LEHR,
+                          [],
+                          [],
+                          [],
+                          false,
+                          undefined,
+                      ),
+            );
             serviceProviderRepoMock.findById.mockResolvedValueOnce(
                 reference === 'serviceProvider' ? undefined : DoFactory.createServiceProvider(true),
             );
@@ -93,6 +168,7 @@ describe('Rollenerweiterung Aggregate', () => {
 
     describe('getOrganisation', () => {
         it('should return organisation, if exists', async () => {
+            organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
             const rollenerweiterung: Rollenerweiterung<true> = rollenerweiterungFactory.construct(
                 faker.string.uuid(),
                 faker.date.anytime(),

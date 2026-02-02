@@ -86,9 +86,11 @@ export class Rollenerweiterung<WasPersisted extends boolean> {
         if (!rolle) {
             return new EntityNotFoundError('Rolle', this.rolleId);
         }
+
         if (!(await rolle.canBeAssignedToOrga(this.organisationId))) {
             return new EntityNotFoundError('Rolle', this.rolleId);
         }
+
         if (!serviceProvider) {
             return new EntityNotFoundError('ServiceProvider', this.serviceProviderId);
         }
