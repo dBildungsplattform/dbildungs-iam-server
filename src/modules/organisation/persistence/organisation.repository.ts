@@ -3,6 +3,7 @@ import {
     EntityManager,
     Loaded,
     QBFilterQuery,
+    QueryBuilder,
     RawQueryFragment,
     RequiredEntityData,
     sql,
@@ -15,8 +16,14 @@ import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { KafkaKlasseCreatedEvent } from '../../../shared/events/kafka-klasse-created.event.js';
+import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-updated.event.js';
+import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
+import { KafkaSchuleCreatedEvent } from '../../../shared/events/kafka-schule-created.event.js';
+import { KafkaSchuleItslearningEnabledEvent } from '../../../shared/events/kafka-schule-itslearning-enabled.event.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
+import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
@@ -29,12 +36,6 @@ import { Organisation } from '../domain/organisation.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationScope } from './organisation.scope.js';
-import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-updated.event.js';
-import { KafkaSchuleItslearningEnabledEvent } from '../../../shared/events/kafka-schule-itslearning-enabled.event.js';
-import { KafkaSchuleCreatedEvent } from '../../../shared/events/kafka-schule-created.event.js';
-import { KafkaKlasseCreatedEvent } from '../../../shared/events/kafka-klasse-created.event.js';
-import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
-import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
 
 export function mapOrgaAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -720,5 +721,17 @@ export class OrganisationRepository {
         await this.em.removeAndFlush(entity);
 
         this.logger.info(`Organisation ${entity.name} vom Typ ${entity.typ} entfernt.`);
+    }
+
+    public async findDistinctOrganisationsTypen(organisationIds: OrganisationID[]): Promise<OrganisationsTyp[]> {
+        if (organisationIds.length === 0) {
+            return [];
+        }
+        const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity, 'organisation');
+        const result: Pick<Required<OrganisationEntity>, 'typ'>[] = await qb
+            .select('typ', true)
+            .where({ id: { $in: organisationIds }, typ: { $ne: null } })
+            .execute();
+        return result.map((r: Pick<Required<OrganisationEntity>, 'typ'>) => r.typ);
     }
 }

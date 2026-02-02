@@ -1,20 +1,20 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { Personenkontext } from './personenkontext.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
-import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { MockedObject } from 'vitest';
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
@@ -72,18 +72,18 @@ describe('Personenkontext aggregate', () => {
 
         it('should return no error if all references are valid', async () => {
             personRepoMock.exists.mockResolvedValueOnce(true);
-            const orgaMock: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
-            organisationRepoMock.findById.mockResolvedValueOnce(orgaMock);
-            const rolleMock: MockedObject<Rolle<true>> = vi.mockObject<Rolle<true>>(
-                DoFactory.createRolle(true, { rollenart: RollenArt.LEHR, merkmale: [] }),
-            );
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
-            rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
+            const orga: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
+            organisationRepoMock.findById.mockResolvedValueOnce(orga);
+            const rolle: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.LEIT,
+                administeredBySchulstrukturknoten: orga.id,
+            });
+            rolleRepoMock.findById.mockResolvedValueOnce(rolle);
 
             const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
                 faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
+                orga.id,
+                rolle.id,
             );
 
             const result: Option<DomainError> = await personenkontext.checkReferences();
