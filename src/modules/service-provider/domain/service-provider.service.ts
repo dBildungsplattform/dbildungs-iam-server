@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { uniq } from 'lodash-es';
 
@@ -105,7 +105,7 @@ export class ServiceProviderService {
             RollenSystemRecht.ROLLEN_ERWEITERN,
         );
         if (!hasPermission) {
-            throw new MissingPermissionsError('Rollen Erweitern Systemrecht Required For This Endpoint');
+            throw new ForbiddenException('Rollen Erweitern Systemrecht Required For This Endpoint');
         }
         const parents: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds([organisationId]);
         const organisationWithParentsIds: OrganisationID[] = [
