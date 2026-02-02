@@ -366,12 +366,12 @@ describe('ServiceProviderService', () => {
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('throws MissingPermissionsError if person lacks required system rights', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechtAtOrganisation = jest.fn().mockResolvedValue(false);
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(false);
 
             await expect(
                 service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions),
@@ -382,8 +382,8 @@ describe('ServiceProviderService', () => {
 
         it('returns authorized serviceProviders when person has rights and includes parent organisation ids', async () => {
             const parentOrga: Organisation<true> = DoFactory.createOrganisation(true);
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechteAtOrganisation = jest.fn().mockResolvedValue(true);
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(true);
 
             organisationRepo.findParentOrgasForIds.mockResolvedValue([parentOrga]);
             serviceProviderRepo.findByOrgasWithMerkmal.mockResolvedValue([[serviceProvider], 1]);
@@ -403,8 +403,8 @@ describe('ServiceProviderService', () => {
 
         it('returns authorized serviceProviders when person has rights and includes parent organisation ids (limit & offset)', async () => {
             const parentOrga: Organisation<true> = DoFactory.createOrganisation(true);
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechteAtOrganisation = jest.fn().mockResolvedValue(true);
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(true);
 
             const limit: number = 10;
             const offset: number = 5;
