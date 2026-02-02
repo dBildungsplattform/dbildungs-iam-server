@@ -29,7 +29,7 @@ import {
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { ForbiddenException } from '@nestjs/common';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -369,13 +369,13 @@ describe('ServiceProviderService', () => {
             jest.restoreAllMocks();
         });
 
-        it('throws MissingPermissionsError if person lacks required system rights', async () => {
+        it('throws ForbiddenException if person lacks required system rights', async () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.hasSystemrechtAtOrganisation = jest.fn().mockResolvedValue(false);
 
             await expect(
                 service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions),
-            ).rejects.toThrow(MissingPermissionsError);
+            ).rejects.toThrow(ForbiddenException);
             expect(organisationRepo.findParentOrgasForIds).not.toHaveBeenCalled();
             expect(serviceProviderRepo.findByOrgasWithMerkmal).not.toHaveBeenCalled();
         });
