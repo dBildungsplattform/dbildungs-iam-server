@@ -30,7 +30,6 @@ import {
 } from './types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 
 @Injectable()
 export class ServiceProviderService {
