@@ -38,7 +38,9 @@ describe('PersonAdministrationController Integration Test', () => {
     let personPermissionsMock: DeepMocked<PersonPermissions>;
 
     beforeAll(async () => {
-        personPermissionsMock = createPersonPermissionsMock();
+        personpermissionsRepoMock = {
+            loadPersonPermissions: vi.fn(),
+        } as DeepMocked<PersonPermissionsRepo>;
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
@@ -75,6 +77,8 @@ describe('PersonAdministrationController Integration Test', () => {
         rolleRepo = module.get(RolleRepo);
         organisationRepo = module.get(OrganisationRepository);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
+        personPermissionsMock = createPersonPermissionsMock();
+        personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
