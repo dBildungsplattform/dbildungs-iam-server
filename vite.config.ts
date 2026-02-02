@@ -13,43 +13,13 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'node',
-        testTimeout: 1000000,
-        include: ['**/*spec.ts'],
-        // include: [
-        //     '**/authentication/**/*spec.ts',
-        //     '**/cron/**/*spec.ts',
-        //     '**/email/**/*spec.ts',
-        //     '**/email-microservice/**/*spec.ts',
-        //     '**/health/**/*spec.ts',
-        //     '**/import/**/*spec.ts',
-        //     '**/itslearning/**/*spec.ts',
-        //     '**/kc-db-health/**/*spec.ts',
-        //     '**/keycloak-administration/**/*spec.ts',
-        //     '**/keycloak-handler/**/*spec.ts',
-        //     '**/landesbediensteter/**/*spec.ts',
-        //     '**/meldung/**/*spec.ts',
-        //     '**/metrics/**/*spec.ts',
-        //     '**/organisation/**/*spec.ts',
-        //     '**/person/**/*spec.ts',
-        //     '**/personenkontext/**/*spec.ts',
-        //     '**/rolle/**/*spec.ts',
-        //     '**/eventbus/**/*spec.ts',
-        //     '**/ldap/**/*spec.ts',
-        //     '**/logging/**/*spec.ts',
-        //     '**/ox/**/*spec.ts',
-        //     '**/privacy-idea-administration/**/*spec.ts',
-        //     '**/schulconnex/**/*spec.ts',
-        //     '**/service-provider/**/*spec.ts',
-        //     '**/specification/**/*spec.ts',
-        //     '**/spshconfig/**/*spec.ts',
-        //     '**/status/**/*spec.ts',
-        //     '**/vidis/**/*spec.ts',
-        //     '**/shared/**/*spec.ts',
-        // ],
+        hookTimeout: 60000, // 1 minute for setup/teardown
+        testTimeout: 30000, // 30 seconds default timeout
         coverage: {
             provider: 'v8',
             reporter: ['text', 'lcov', 'html','json'],
             reportsDirectory: 'coverage',
+            reportOnFailure: true,
             include: ['src/**/*.ts'],
             exclude: ['**/*.spec.ts', '**/test/**', '**/*.d.ts', 'vite.config.ts'],
             thresholds: {
@@ -59,6 +29,34 @@ export default defineConfig({
                 statements: 98.39,
             },
         },
+        projects: [
+            {
+                test: {
+                    name: 'unit',
+                    include: ['**/*.spec.ts'],
+                    maxWorkers: '90%',
+                    hookTimeout: 20000, // 20 seconds for setup/teardown
+                    testTimeout: 20000, // 20 seconds for unit tests
+                    sequence: {
+                        groupOrder: 0,
+                    },
+                },
+                extends: true,
+            },
+            {
+                test: {
+                    name: 'integration',
+                    include: ['**/*.integration-spec.ts'],
+                    maxWorkers: '50%', // limit the workers to leave CPU threads for test containers
+                    hookTimeout: 300000, // 5 minutes for setup/teardown
+                    testTimeout: 90000, // 1.5 minutes for integration tests
+                    sequence: {
+                        groupOrder: 1,
+                    },
+                },
+                extends: true,
+            },
+        ],
     },
     resolve: {
         alias: {

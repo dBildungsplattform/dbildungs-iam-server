@@ -69,22 +69,6 @@ describe('LDAP Client Service', () => {
         };
     }
 
-    // function makeMockClient(cb: (client: DeepMocked<Client>) => void): void {
-    //     clientMock = createMock(Client); // Always create a fresh mock
-    //     cb(clientMock);
-    //     ldapClientMock.getClient.mockReturnValue(clientMock);
-    // }
-
-    // function mockBind(error?: unknown): void {
-    //     makeMockClient((client: DeepMocked<Client>) => {
-    //         if (error) {
-    //             client.bind.mockRejectedValueOnce(error);
-    //         } else {
-    //             client.bind.mockResolvedValueOnce();
-    //         }
-    //     });
-    // }
-
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
