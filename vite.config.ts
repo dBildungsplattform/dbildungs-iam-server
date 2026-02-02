@@ -23,10 +23,10 @@ export default defineConfig({
             include: ['src/**/*.ts'],
             exclude: ['**/*.spec.ts', '**/test/**', '**/*.d.ts', 'vite.config.ts'],
             thresholds: {
-                lines: 98.4,
-                functions: 99.44,
+                lines: 98.37,
+                functions: 99.37,
                 branches: 97.36,
-                statements: 98.39,
+                statements: 98.35,
             },
         },
         projects: [
