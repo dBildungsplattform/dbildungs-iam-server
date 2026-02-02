@@ -9,5 +9,5 @@ export class RollenerweiterungByServiceProvidersIdQueryParams extends PagedQuery
         required: false,
         nullable: true,
     })
-    public organisationId?: string;
+    public readonly organisationId?: string;
 }
