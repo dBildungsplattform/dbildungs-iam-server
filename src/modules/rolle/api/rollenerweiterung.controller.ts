@@ -28,6 +28,7 @@ import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/mi
 import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
 import { ApplyRollenerweiterungWorkflowAggregate } from '../domain/apply-rollenerweiterungen-workflow.js';
 import { ApplyRollenerweiterungWorkflowFactory } from '../domain/apply-rollenerweiterungen-workflow.factory.js';
+import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -90,6 +91,10 @@ export class RollenerweiterungController {
         const applyRollenerweiterungenWorkflow: ApplyRollenerweiterungWorkflowAggregate =
             this.applyRollenerweiterungWorkflowFactory.createNew();
         await applyRollenerweiterungenWorkflow.initialize(orgaId, angebotId);
-        await applyRollenerweiterungenWorkflow.applyRollenerweiterungChanges(body, permissions);
+        const result: Result<null, ApplyRollenerweiterungRolesError> =
+            await applyRollenerweiterungenWorkflow.applyRollenerweiterungChanges(body, permissions);
+        if (!result.ok) {
+            throw result.error;
+        }
     }
 }

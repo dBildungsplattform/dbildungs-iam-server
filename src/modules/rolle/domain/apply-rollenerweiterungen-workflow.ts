@@ -7,7 +7,7 @@ import { uniq } from 'lodash-es';
 import { Rolle } from './rolle.js';
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { Rollenerweiterung } from './rollenerweiterung.js';
-import { Err } from '../../../shared/util/result.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { ApplyRollenerweiterungBodyParams } from '../api/applyRollenerweiterung.body.params.js';
 import { ApplyRollenerweiterungRolesError } from '../api/apply-rollenerweiterung-roles.error.js';
@@ -74,7 +74,7 @@ export class ApplyRollenerweiterungWorkflowAggregate {
     public async applyRollenerweiterungChanges(
         body: ApplyRollenerweiterungBodyParams,
         permissions: PersonPermissions,
-    ): Promise<void> {
+    ): Promise<Result<null, ApplyRollenerweiterungRolesError>> {
         await this.rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId(this.orgaId, this.angebotId);
         const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(
             uniq([...body.addErweiterungenForRolleIds, ...body.removeErweiterungenForRolleIds]),
@@ -87,10 +87,13 @@ export class ApplyRollenerweiterungWorkflowAggregate {
         const errors: TerrorResultForRolle[] = results.filter(isErrorResult);
 
         if (errors.length > 0) {
-            throw new ApplyRollenerweiterungRolesError(
-                errors.map((e: TerrorResultForRolle) => ({ rolleId: e.rolleId, error: e.result.error })),
+            return Err(
+                new ApplyRollenerweiterungRolesError(
+                    errors.map((e: TerrorResultForRolle) => ({ rolleId: e.rolleId, error: e.result.error })),
+                ),
             );
         }
+        return Ok(null);
     }
 
     private handleRemoveErweiterungen(
