@@ -383,7 +383,7 @@ describe('Provider Controller Test', () => {
 
     describe('getManageableServiceProvidersForOrganisationId', () => {
         it('should throw MissingPermissionsError when user lacks permission', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             const params: DeepMocked<ManageableServiceProvidersForOrganisationParams> = {
                 organisationId: 'org-1',
                 limit: 10,
