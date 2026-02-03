@@ -17,6 +17,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/index.js';
+import { OrganisationID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
@@ -2407,6 +2408,45 @@ describe('OrganisationRepository', () => {
                 const result: void | DomainError = await sut.delete(id);
                 expect(result).toBeInstanceOf(EntityNotFoundError);
                 expect(eventServiceMock.publish).not.toHaveBeenCalled();
+            });
+        });
+    });
+
+    describe('findDistinctOrganisationsTypen', () => {
+        describe.each([[0], [2]])('when filter contains %s ids', (numberOfIds: number) => {
+            it('should return the correct organisation types', async () => {
+                const organisationIds: OrganisationID[] = Array.from({ length: numberOfIds }, () =>
+                    faker.string.uuid(),
+                );
+                const orgas: OrganisationEntity[] = organisationIds.map((orgaId: OrganisationID) => {
+                    return Object.assign(
+                        new OrganisationEntity(),
+                        DoFactory.createOrganisation<true>(true, { id: orgaId }),
+                    );
+                });
+                await em.persistAndFlush(orgas);
+
+                const expectedTypen: Set<OrganisationsTyp> = new Set(
+                    orgas.map((o: OrganisationEntity) => o.typ).filter(Boolean),
+                );
+
+                const result: OrganisationsTyp[] = await sut.findDistinctOrganisationsTypen(organisationIds);
+                expect(result).toHaveLength(expectedTypen.size);
+                expect(result).toEqual(expect.arrayContaining(Array.from(expectedTypen)));
+            });
+        });
+
+        describe('when typ is undefined', () => {
+            it('should filter the orga out', async () => {
+                const orga: OrganisationEntity = Object.assign(
+                    new OrganisationEntity(),
+                    DoFactory.createOrganisation<true>(true, { typ: undefined }),
+                );
+                await em.persistAndFlush(orga);
+
+                const result: OrganisationsTyp[] = await sut.findDistinctOrganisationsTypen([orga.id]);
+                expect(result).not.toContain(undefined);
+                expect(result).toHaveLength(0);
             });
         });
     });
