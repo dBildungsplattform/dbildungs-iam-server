@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { uniq } from 'lodash-es';
 
@@ -30,6 +30,7 @@ import {
 } from './types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -98,7 +99,7 @@ export class ServiceProviderService {
         permissions: PersonPermissions,
         limit?: number,
         offset?: number,
-    ): Promise<Result<Counted<ServiceProvider<true>>, ForbiddenException>> {
+    ): Promise<Result<Counted<ServiceProvider<true>>, MissingPermissionsError>> {
         const hasPermission: boolean = await permissions.hasSystemrechtAtOrganisation(
             organisationId,
             RollenSystemRecht.ROLLEN_ERWEITERN,
@@ -106,7 +107,7 @@ export class ServiceProviderService {
         if (!hasPermission) {
             return {
                 ok: false,
-                error: new ForbiddenException('Rollen Erweitern Systemrecht Required For This Endpoint'),
+                error: new MissingPermissionsError('Rollen Erweitern Systemrecht Required For This Endpoint'),
             };
         }
         const parents: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds([organisationId]);

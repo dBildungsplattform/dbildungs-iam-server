@@ -29,7 +29,7 @@ import {
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { ForbiddenException } from '@nestjs/common';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -375,7 +375,7 @@ describe('ServiceProviderService', () => {
 
             const result: Result<
                 Counted<ServiceProvider<true>>,
-                ForbiddenException
+                MissingPermissionsError
             > = await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions);
 
             expect(result.ok).toBe(false);
@@ -393,7 +393,7 @@ describe('ServiceProviderService', () => {
 
             const result: Result<
                 Counted<ServiceProvider<true>>,
-                ForbiddenException
+                MissingPermissionsError
             > = await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions);
 
             expect(serviceProviderRepo.findByOrgasWithMerkmal).toHaveBeenCalledWith(
@@ -422,7 +422,7 @@ describe('ServiceProviderService', () => {
 
             const result: Result<
                 Counted<ServiceProvider<true>>,
-                ForbiddenException
+                MissingPermissionsError
             > = await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
                 organisation.id,
                 permissions,

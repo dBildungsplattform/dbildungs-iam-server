@@ -1,7 +1,6 @@
 import {
     Body,
     Controller,
-    ForbiddenException,
     Get,
     Param,
     Post,
@@ -269,7 +268,7 @@ export class ProviderController {
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
         const result: Result<
             Counted<ServiceProvider<true>>,
-            ForbiddenException
+            MissingPermissionsError
         > = await this.serviceProviderService.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
             params.organisationId,
             permissions,
@@ -278,7 +277,11 @@ export class ProviderController {
         );
 
         if (!result.ok) {
-            throw result.error;
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Rollen Erweitern Systemrecht Required For This Endpoint'),
+                ),
+            );
         }
 
         const serviceProviders: ServiceProvider<true>[] = result.value[0];
