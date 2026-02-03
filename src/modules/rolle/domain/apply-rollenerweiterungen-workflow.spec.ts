@@ -1,5 +1,4 @@
 import { ApplyRollenerweiterungWorkflowAggregate } from './apply-rollenerweiterungen-workflow.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -13,6 +12,7 @@ import { Ok } from '../../../shared/util/result.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { ApplyRollenerweiterungRolesError } from '../api/apply-rollenerweiterung-roles.error.js';
 import { faker } from '@faker-js/faker';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 
 describe('ApplyRollenerweiterungWorkflowAggregate', () => {
     let logger: DeepMocked<ClassLogger>;
@@ -23,11 +23,11 @@ describe('ApplyRollenerweiterungWorkflowAggregate', () => {
     let workflow: ApplyRollenerweiterungWorkflowAggregate;
 
     beforeEach(() => {
-        logger = createMock<ClassLogger>();
-        serviceProviderRepo = createMock<ServiceProviderRepo>();
-        organisationRepo = createMock<OrganisationRepository>();
-        rolleRepo = createMock<RolleRepo>();
-        rollenerweiterungRepo = createMock<RollenerweiterungRepo>();
+        logger = createMock<ClassLogger>(ClassLogger);
+        serviceProviderRepo = createMock<ServiceProviderRepo>(ServiceProviderRepo);
+        organisationRepo = createMock<OrganisationRepository>(OrganisationRepository);
+        rolleRepo = createMock<RolleRepo>(RolleRepo);
+        rollenerweiterungRepo = createMock<RollenerweiterungRepo>(RollenerweiterungRepo);
         workflow = ApplyRollenerweiterungWorkflowAggregate.createNew(
             logger,
             serviceProviderRepo,
@@ -39,7 +39,7 @@ describe('ApplyRollenerweiterungWorkflowAggregate', () => {
 
     it('should initialize with existing Erweiterungen', async () => {
         rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId.mockResolvedValueOnce([
-            createMock<Rollenerweiterung<true>>(),
+            createMock<Rollenerweiterung<true>>(Rollenerweiterung, {}),
         ]);
         const orgaId: string = faker.string.uuid();
         const angebotId: string = faker.string.uuid();
@@ -56,11 +56,13 @@ describe('ApplyRollenerweiterungWorkflowAggregate', () => {
         const rolleIdAdd: string = faker.string.uuid();
         const rolleIdRemove: string = faker.string.uuid();
 
-        const existingErw: Rollenerweiterung<true> = createMock<Rollenerweiterung<true>>({ rolleId: rolleIdRemove });
+        const existingErw: Rollenerweiterung<true> = createMock<Rollenerweiterung<true>>(Rollenerweiterung, {
+            rolleId: rolleIdRemove,
+        });
         rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId.mockResolvedValue([existingErw]);
 
-        const rolleAdd: Rolle<true> = createMock<Rolle<true>>();
-        const rolleRemove: Rolle<true> = createMock<Rolle<true>>();
+        const rolleAdd: Rolle<true> = createMock<Rolle<true>>(Rolle);
+        const rolleRemove: Rolle<true> = createMock<Rolle<true>>(Rolle);
         rolleRepo.findByIds.mockResolvedValue(
             new Map([
                 [rolleIdAdd, rolleAdd],
@@ -68,7 +70,9 @@ describe('ApplyRollenerweiterungWorkflowAggregate', () => {
             ]),
         );
 
-        rollenerweiterungRepo.createAuthorized.mockResolvedValue(Ok(createMock<Rollenerweiterung<true>>()));
+        rollenerweiterungRepo.createAuthorized.mockResolvedValue(
+            Ok(createMock<Rollenerweiterung<true>>(Rollenerweiterung)),
+        );
         rollenerweiterungRepo.deleteByComposedId.mockResolvedValue(Ok(null));
 
         await workflow.initialize(orgaId, angebotId);
@@ -77,7 +81,7 @@ describe('ApplyRollenerweiterungWorkflowAggregate', () => {
             addErweiterungenForRolleIds: [rolleIdAdd],
             removeErweiterungenForRolleIds: [rolleIdRemove],
         };
-        const permissions: PersonPermissions = createMock<PersonPermissions>();
+        const permissions: PersonPermissions = createMock<PersonPermissions>(PersonPermissions);
 
         const result: Result<null, ApplyRollenerweiterungRolesError> = await workflow.applyRollenerweiterungChanges(
             body,
@@ -101,7 +105,7 @@ describe('ApplyRollenerweiterungWorkflowAggregate', () => {
             addErweiterungenForRolleIds: [rolleId],
             removeErweiterungenForRolleIds: [],
         };
-        const permissions: PersonPermissions = createMock<PersonPermissions>();
+        const permissions: PersonPermissions = createMock<PersonPermissions>(PersonPermissions);
 
         const result: Result<null, ApplyRollenerweiterungRolesError> = await workflow.applyRollenerweiterungChanges(
             body,
@@ -118,7 +122,9 @@ describe('ApplyRollenerweiterungWorkflowAggregate', () => {
 
     it('should return error if Rolle not found for remove', async () => {
         const rolleIdRemove: string = faker.string.uuid();
-        const existingErw: Rollenerweiterung<true> = createMock<Rollenerweiterung<true>>({ rolleId: rolleIdRemove });
+        const existingErw: Rollenerweiterung<true> = createMock<Rollenerweiterung<true>>(Rollenerweiterung, {
+            rolleId: rolleIdRemove,
+        });
         rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId.mockResolvedValue([existingErw]);
         rolleRepo.findByIds.mockResolvedValue(new Map());
 
@@ -130,7 +136,7 @@ describe('ApplyRollenerweiterungWorkflowAggregate', () => {
             addErweiterungenForRolleIds: [],
             removeErweiterungenForRolleIds: [rolleIdRemove],
         };
-        const permissions: PersonPermissions = createMock<PersonPermissions>();
+        const permissions: PersonPermissions = createMock<PersonPermissions>(PersonPermissions);
 
         const result: Result<null, ApplyRollenerweiterungRolesError> = await workflow.applyRollenerweiterungChanges(
             body,
