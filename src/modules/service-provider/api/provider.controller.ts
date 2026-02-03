@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    ForbiddenException,
     Get,
     Param,
     Post,
@@ -266,13 +267,23 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Query() params: ManageableServiceProvidersForOrganisationParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
-        const [serviceProviders, total]: Counted<ServiceProvider<true>> =
-            await this.serviceProviderService.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
-                params.organisationId,
-                permissions,
-                params.limit,
-                params.offset,
-            );
+        const result: Result<
+            Counted<ServiceProvider<true>>,
+            ForbiddenException
+        > = await this.serviceProviderService.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
+            params.organisationId,
+            permissions,
+            params.limit,
+            params.offset,
+        );
+
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        const serviceProviders: ServiceProvider<true>[] = result.value[0];
+        const total: number = result.value[1];
+
         const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects[] =
             await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
                 serviceProviders,

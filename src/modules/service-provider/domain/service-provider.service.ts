@@ -98,25 +98,29 @@ export class ServiceProviderService {
         permissions: PersonPermissions,
         limit?: number,
         offset?: number,
-    ): Promise<Counted<ServiceProvider<true>>> {
+    ): Promise<Result<Counted<ServiceProvider<true>>, ForbiddenException>> {
         const hasPermission: boolean = await permissions.hasSystemrechtAtOrganisation(
             organisationId,
             RollenSystemRecht.ROLLEN_ERWEITERN,
         );
         if (!hasPermission) {
-            throw new ForbiddenException('Rollen Erweitern Systemrecht Required For This Endpoint');
+            return {
+                ok: false,
+                error: new ForbiddenException('Rollen Erweitern Systemrecht Required For This Endpoint'),
+            };
         }
         const parents: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds([organisationId]);
         const organisationWithParentsIds: OrganisationID[] = [
             organisationId,
             ...parents.map((orga: Organisation<true>) => orga.id),
         ];
-        return this.serviceProviderRepo.findByOrgasWithMerkmal(
+        const result: Counted<ServiceProvider<true>> = await this.serviceProviderRepo.findByOrgasWithMerkmal(
             organisationWithParentsIds,
             ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
             limit,
             offset,
         );
+        return { ok: true, value: result };
     }
 
     public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(
