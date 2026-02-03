@@ -13,7 +13,7 @@ import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { PersonAdministrationService } from '../domain/person-administration.service.js';
-import { FindPersonenkontextRollenBodyParams } from './param/find-personenkontext-rollen.body.params.js';
+import { FindPersonenkontextRollenQueryParams } from './param/find-personenkontext-rollen.query.params.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { FindRollenResponse } from './response/find-rollen.response.js';
 
@@ -36,13 +36,14 @@ export class PersonAdministrationController {
         description: 'Internal server error while getting rollen for the logged-in user.',
     })
     public async findRollen(
-        @Query() params: FindPersonenkontextRollenBodyParams,
+        @Query() params: FindPersonenkontextRollenQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<FindRollenResponse> {
         const rollen: Rolle<true>[] = await this.personAdministrationService.findAuthorizedRollen(
             permissions,
             params.rolleName,
             params.limit,
+            params.organisationIds,
         );
         const response: FindRollenResponse = new FindRollenResponse(rollen, rollen.length);
 

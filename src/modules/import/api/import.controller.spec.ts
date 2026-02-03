@@ -1,9 +1,14 @@
 import { faker } from '@faker-js/faker';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    createPersonPermissionsMock,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    LoggingTestModule,
+} from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 
 import { ImportController } from './import.controller.js';
 import { ImportWorkflowFactory } from '../domain/import-workflow.factory.js';
@@ -17,6 +22,12 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { ImportPasswordEncryptor } from '../domain/import-password-encryptor.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { ConfigService } from '@nestjs/config';
 
 describe('Import API with mocked ImportWorkflow', () => {
     let sut: ImportController;
@@ -24,28 +35,45 @@ describe('Import API with mocked ImportWorkflow', () => {
     let ImportWorkflowMock: DeepMocked<ImportWorkflow>;
 
     beforeAll(async () => {
+        const configService: DeepMocked<ConfigService> = createMock(ConfigService);
+        configService.getOrThrow.mockReturnValue({ CSV_MAX_NUMBER_OF_USERS: 1000 });
+        const importWorkflowInstance: ImportWorkflow = ImportWorkflow.createNew(
+            null as unknown as RolleRepo,
+            null as unknown as OrganisationRepository,
+            null as unknown as ImportDataRepository,
+            null as unknown as ImportVorgangRepository,
+            null as unknown as ImportPasswordEncryptor,
+            null as unknown as EventRoutingLegacyKafkaService,
+            null as unknown as ClassLogger,
+            configService,
+        );
+
         const module: TestingModule = await Test.createTestingModule({
-            imports: [LoggingTestModule],
+            imports: [LoggingTestModule, ConfigTestModule],
             providers: [
                 {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
                 },
+                // {
+                //     provide: ConfigService,
+                //     useValue: configService,
+                // },
                 {
                     provide: ImportWorkflowFactory,
-                    useValue: createMock<ImportWorkflowFactory>(),
+                    useValue: createMock<ImportWorkflowFactory>(ImportWorkflowFactory),
                 },
                 {
                     provide: ImportWorkflow,
-                    useValue: createMock<ImportWorkflow>(),
+                    useValue: vi.mockObject<ImportWorkflow>(importWorkflowInstance),
                 },
                 {
                     provide: ImportVorgangRepository,
-                    useValue: createMock<ImportVorgangRepository>(),
+                    useValue: createMock<ImportVorgangRepository>(ImportVorgangRepository),
                 },
                 {
                     provide: ImportDataRepository,
-                    useValue: createMock<ImportDataRepository>(),
+                    useValue: createMock<ImportDataRepository>(ImportDataRepository),
                 },
                 ImportController,
             ],
@@ -57,7 +85,7 @@ describe('Import API with mocked ImportWorkflow', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('/POST download the import result', () => {
@@ -66,9 +94,9 @@ describe('Import API with mocked ImportWorkflow', () => {
                 const params: ImportvorgangByIdBodyParams = {
                     importvorgangId: faker.string.uuid(),
                 };
-                const responseMock: DeepMocked<Response> = createMock();
+                const responseMock: Response = {} as unknown as Response;
 
-                const personpermissionsMock: DeepMocked<PersonPermissions> = createMock();
+                const personpermissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 ImportWorkflowMock.downloadFile.mockResolvedValueOnce({
@@ -91,7 +119,7 @@ describe('Import API with mocked ImportWorkflow', () => {
                     importvorgangId: faker.string.uuid(),
                 };
 
-                const personpermissionsMock: DeepMocked<PersonPermissions> = createMock();
+                const personpermissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
 
                 ImportWorkflowMock.cancelOrCompleteImport.mockResolvedValueOnce({

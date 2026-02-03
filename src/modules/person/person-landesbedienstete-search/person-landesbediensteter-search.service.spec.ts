@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { faker } from '@faker-js/faker';
 
 import { PersonLandesbediensteterSearchService } from './person-landesbediensteter-search.service.js';
@@ -41,11 +41,11 @@ describe('PersonLandesbediensteterSearchService', () => {
         module = await Test.createTestingModule({
             providers: [
                 PersonLandesbediensteterSearchService,
-                { provide: PersonRepository, useValue: createMock<PersonRepository>() },
-                { provide: DBiamPersonenkontextRepo, useValue: createMock<DBiamPersonenkontextRepo>() },
-                { provide: EmailRepo, useValue: createMock<EmailRepo>() },
-                { provide: UserLockRepository, useValue: createMock<UserLockRepository>() },
-                { provide: EmailResolverService, useValue: createMock<EmailResolverService>() },
+                { provide: PersonRepository, useValue: createMock(PersonRepository) },
+                { provide: DBiamPersonenkontextRepo, useValue: createMock(DBiamPersonenkontextRepo) },
+                { provide: EmailRepo, useValue: createMock(EmailRepo) },
+                { provide: UserLockRepository, useValue: createMock(UserLockRepository) },
+                { provide: EmailResolverService, useValue: createMock(EmailResolverService) },
             ],
         }).compile();
 
@@ -62,7 +62,7 @@ describe('PersonLandesbediensteterSearchService', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
     });
 
@@ -207,7 +207,7 @@ describe('PersonLandesbediensteterSearchService', () => {
                     rolle: rolle,
                 } satisfies KontextWithOrgaAndRolle,
             ];
-            personRepositoryMock.findByUsername.mockResolvedValueOnce([person]);
+            personRepositoryMock.findByPersonalnummer.mockResolvedValueOnce([person]);
             userLockRepositoryMock.findByPersonId.mockResolvedValueOnce([]);
             emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
             personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);
@@ -284,7 +284,7 @@ describe('PersonLandesbediensteterSearchService', () => {
                     rolle: rolle,
                 } satisfies KontextWithOrgaAndRolle,
             ];
-            personRepositoryMock.findByUsername.mockResolvedValueOnce([person]);
+            personRepositoryMock.findByPrimaryEmailAddress.mockResolvedValueOnce([person]);
             userLockRepositoryMock.findByPersonId.mockResolvedValueOnce([]);
             emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
             personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);
@@ -328,7 +328,7 @@ describe('PersonLandesbediensteterSearchService', () => {
                     rolle: rolle,
                 } satisfies KontextWithOrgaAndRolle,
             ];
-            personRepositoryMock.findByUsername.mockResolvedValueOnce([person]);
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
             userLockRepositoryMock.findByPersonId.mockResolvedValueOnce([]);
             emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
             personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);
@@ -461,7 +461,7 @@ describe('PersonLandesbediensteterSearchService', () => {
                     rolle: rolle,
                 } satisfies KontextWithOrgaAndRolle,
             ];
-            personRepositoryMock.findByUsername.mockResolvedValueOnce([person]);
+            personRepositoryMock.findByFullName.mockResolvedValueOnce([person]);
             userLockRepositoryMock.findByPersonId.mockResolvedValueOnce([]);
             emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
             personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);

@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClassLogger } from '../core/logging/class-logger.js';
 import { DbConsole } from './db.console.js';
@@ -7,7 +7,7 @@ describe('DbConsole', () => {
     let module: TestingModule;
     let sut: DbConsole;
 
-    const classloggerMock: DeepMocked<ClassLogger> = createMock<ClassLogger>();
+    const classloggerMock: DeepMocked<ClassLogger> = createMock(ClassLogger);
 
     beforeAll(async () => {
         module = await Test.createTestingModule({

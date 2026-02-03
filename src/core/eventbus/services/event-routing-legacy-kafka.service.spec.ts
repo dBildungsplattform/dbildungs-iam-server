@@ -1,4 +1,6 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+// eslint-disable-next-line max-classes-per-file
+import { vi } from 'vitest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 
@@ -16,6 +18,12 @@ function flushPromises(): Promise<void> {
     });
 }
 
+class BaseEventMock extends BaseEvent {}
+
+class KafkaEventMock implements KafkaEvent {
+    public kafkaKey: string | undefined;
+}
+
 describe('EventRoutingLegacyKafkaService', () => {
     let sut: EventRoutingLegacyKafkaService;
     let eventServiceMock: DeepMocked<EventService>;
@@ -25,15 +33,15 @@ describe('EventRoutingLegacyKafkaService', () => {
     let module: TestingModule;
 
     async function setupModule(kafkaEnabled: boolean = false): Promise<void> {
-        configServiceMock = createMock<ConfigService>();
+        configServiceMock = createMock(ConfigService);
         configServiceMock.getOrThrow.mockReturnValue({ ENABLED: kafkaEnabled });
 
         module = await Test.createTestingModule({
             imports: [LoggingTestModule],
             providers: [
                 EventRoutingLegacyKafkaService,
-                { provide: EventService, useValue: createMock<EventService>() },
-                { provide: KafkaEventService, useValue: createMock<KafkaEventService>() },
+                { provide: EventService, useValue: createMock(EventService) },
+                { provide: KafkaEventService, useValue: createMock(KafkaEventService) },
                 { provide: ConfigService, useValue: configServiceMock },
             ],
         }).compile();
@@ -47,7 +55,7 @@ describe('EventRoutingLegacyKafkaService', () => {
     }
 
     afterEach(async () => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         if (module) {
             await module.close();
         }
@@ -62,8 +70,8 @@ describe('EventRoutingLegacyKafkaService', () => {
         it('should publish to kafka when kafka is enabled and kafka event is provided', async () => {
             await setupModule(true);
 
-            const legacyEvent: DeepMocked<BaseEvent> = createMock<BaseEvent>();
-            const kafkaEvent: DeepMocked<KafkaEvent> = createMock<KafkaEvent>();
+            const legacyEvent: DeepMocked<BaseEvent> = createMock(BaseEventMock);
+            const kafkaEvent: DeepMocked<KafkaEvent> = createMock(KafkaEventMock);
             kafkaEventServiceMock.publish.mockResolvedValue(undefined);
 
             sut.publish(legacyEvent, kafkaEvent);
@@ -76,8 +84,8 @@ describe('EventRoutingLegacyKafkaService', () => {
         it('should publish to legacy event service when kafka is disabled', async () => {
             await setupModule(false);
 
-            const legacyEvent: DeepMocked<BaseEvent> = createMock<BaseEvent>();
-            const kafkaEvent: DeepMocked<KafkaEvent> = createMock<KafkaEvent>();
+            const legacyEvent: DeepMocked<BaseEvent> = createMock(BaseEventMock);
+            const kafkaEvent: DeepMocked<KafkaEvent> = createMock(KafkaEventMock);
 
             sut.publish(legacyEvent, kafkaEvent);
 
@@ -88,7 +96,7 @@ describe('EventRoutingLegacyKafkaService', () => {
         it('should publish to legacy event service when kafka event is not provided', async () => {
             await setupModule(true);
 
-            const legacyEvent: DeepMocked<BaseEvent> = createMock<BaseEvent>();
+            const legacyEvent: DeepMocked<BaseEvent> = createMock(BaseEventMock);
 
             sut.publish(legacyEvent);
 
@@ -99,8 +107,8 @@ describe('EventRoutingLegacyKafkaService', () => {
         it('should log error if publish throws error', async () => {
             await setupModule(true);
 
-            const legacyEvent: DeepMocked<BaseEvent> = createMock<BaseEvent>();
-            const kafkaEvent: DeepMocked<KafkaEvent> = createMock<KafkaEvent>();
+            const legacyEvent: DeepMocked<BaseEvent> = createMock(BaseEventMock);
+            const kafkaEvent: DeepMocked<KafkaEvent> = createMock(KafkaEventMock);
 
             const error: Error = new Error('Kafka publish failed');
             kafkaEventServiceMock.publish.mockRejectedValue(error);

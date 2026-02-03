@@ -11,7 +11,7 @@ import { OxUserBlacklistEntry } from '../domain/ox-user-blacklist-entry.js';
 import { OxUserBlacklistEntity } from './ox-user-blacklist.entity.js';
 import { OXEmail, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock } from '../../../../test/utils/createMock.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
@@ -28,7 +28,7 @@ describe('OxUserBlacklistRepo', () => {
                 OxUserBlacklistRepo,
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock(ClassLogger),
                 },
             ],
         }).compile();
@@ -131,7 +131,7 @@ describe('OxUserBlacklistRepo', () => {
 
     describe('save', () => {
         beforeEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
         describe('when OxUserBlacklistEntry has an id and can be found', () => {
             it('should call the update method and return the updated OxUserBlacklistEntry', async () => {

@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
 import {
     PersonenkontextCreationService,
@@ -27,6 +26,7 @@ import { ImportDataItemStatus } from './importDataItem.enum.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('ImportEventHandler', () => {
     let module: TestingModule;
@@ -46,27 +46,27 @@ describe('ImportEventHandler', () => {
                 ImportEventHandler,
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: ImportDataRepository,
-                    useValue: createMock<ImportDataRepository>(),
+                    useValue: createMock(ImportDataRepository),
                 },
                 {
                     provide: PersonenkontextCreationService,
-                    useValue: createMock<PersonenkontextCreationService>(),
+                    useValue: createMock(PersonenkontextCreationService),
                 },
                 {
                     provide: ImportVorgangRepository,
-                    useValue: createMock<ImportVorgangRepository>(),
+                    useValue: createMock(ImportVorgangRepository),
                 },
                 {
                     provide: ImportPasswordEncryptor,
-                    useValue: createMock<ImportPasswordEncryptor>(),
+                    useValue: createMock(ImportPasswordEncryptor),
                 },
                 {
                     provide: PersonPermissionsRepo,
-                    useValue: createMock<PersonPermissionsRepo>(),
+                    useValue: createMock(PersonPermissionsRepo),
                 },
             ],
         }).compile();
@@ -85,8 +85,8 @@ describe('ImportEventHandler', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
-        permissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(createMock<PersonPermissions>());
+        vi.resetAllMocks();
+        permissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(createPersonPermissionsMock());
     });
 
     it('should be defined', () => {
@@ -98,7 +98,12 @@ describe('ImportEventHandler', () => {
         let event: ImportExecutedEvent;
 
         beforeEach(() => {
-            event = createMock<ImportExecutedEvent>({ importVorgangId: importvorgangId });
+            event = new ImportExecutedEvent(
+                importvorgangId,
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+            );
         });
 
         it('should return EntityNotFoundError if a ImportVorgang does not exist', async () => {
