@@ -1,15 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { DeepMocked } from '../../../test/utils/createMock.js';
 import { HealthIndicatorResult, HealthIndicatorStatus } from '@nestjs/terminus';
 import { ConfigTestModule } from '../../../test/utils/index.js';
 import { RedisHealthIndicator } from './redis.health-indicator.js';
 import { RedisClientOptions, RedisClientType } from 'redis';
 import EventEmitter from 'node:events';
 
-const redisClient: DeepMocked<RedisClientType> = createMock<RedisClientType>();
+const redisClient: DeepMocked<RedisClientType> = {
+    on: vi.fn(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as any as DeepMocked<RedisClientType>;
 const clientEventEmitter: EventEmitter = new EventEmitter();
 
-jest.mock('redis', () => {
+vi.mock('redis', () => {
     return {
         createClient: function (_options: RedisClientOptions): RedisClientType {
             redisClient.on.mockImplementation((eventName: string | symbol, listener: (...args: unknown[]) => void) => {

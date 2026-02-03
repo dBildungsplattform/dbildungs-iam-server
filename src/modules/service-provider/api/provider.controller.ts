@@ -283,13 +283,27 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Query() params: ManageableServiceProvidersForOrganisationParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
-        const [serviceProviders, total]: Counted<ServiceProvider<true>> =
-            await this.serviceProviderService.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
-                params.organisationId,
-                permissions,
-                params.limit,
-                params.offset,
+        const result: Result<
+            Counted<ServiceProvider<true>>,
+            MissingPermissionsError
+        > = await this.serviceProviderService.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
+            params.organisationId,
+            permissions,
+            params.limit,
+            params.offset,
+        );
+
+        if (!result.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Rollen Erweitern Systemrecht Required For This Endpoint'),
+                ),
             );
+        }
+
+        const serviceProviders: ServiceProvider<true>[] = result.value[0];
+        const total: number = result.value[1];
+
         const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects[] =
             await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
                 serviceProviders,

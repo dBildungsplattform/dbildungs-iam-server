@@ -6,7 +6,7 @@ import {
     InvalidCharacterSetError,
     InvalidNameError,
 } from '../../../shared/error/index.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EmailGenerator } from './email-generator.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailAddressGenerationAttemptsExceededError } from '../error/email-address-generation-attempts-exceeded.error.js';
@@ -21,7 +21,7 @@ describe('EmailGenerator', () => {
             providers: [
                 {
                     provide: EmailRepo,
-                    useValue: createMock<EmailRepo>(),
+                    useValue: createMock(EmailRepo),
                 },
             ],
         }).compile();
@@ -34,7 +34,7 @@ describe('EmailGenerator', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('isEqual', () => {

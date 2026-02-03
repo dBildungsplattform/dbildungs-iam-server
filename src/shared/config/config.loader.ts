@@ -1,4 +1,4 @@
-import fs, { readFileSync } from 'fs';
+import fs from 'fs';
 import { plainToInstance } from 'class-transformer';
 import { validateSync, ValidationError } from 'class-validator';
 import { JsonConfig } from './json.config.js';
@@ -8,8 +8,8 @@ import { getEmailConfig } from './email-config.env.js';
 import { EmailAppConfig } from './email-app.config.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function parseFileToJSON(path: string): any {
-    const file: string = readFileSync(path, { encoding: 'utf8' });
+export function parseFileToJSON(path: string): any {
+    const file: string = fs.readFileSync(path, { encoding: 'utf8' }) as unknown as string;
     return JSON.parse(file);
 }
 
@@ -27,6 +27,7 @@ export function loadConfigFiles(): JsonConfig {
     // Environmental override
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const env: any = EnvConfig();
+
     let merged: unknown;
     if (secrets != null) {
         merged = merge(json, secrets, env);
@@ -35,7 +36,6 @@ export function loadConfigFiles(): JsonConfig {
     }
 
     const mergedConfig: JsonConfig = plainToInstance(JsonConfig, merged, { enableImplicitConversion: false });
-
     const errors: ValidationError[] = validateSync(mergedConfig, {
         skipMissingProperties: false,
         whitelist: true,

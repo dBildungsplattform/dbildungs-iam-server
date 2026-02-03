@@ -14,8 +14,8 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { createMock } from '@golevelup/ts-jest';
-import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { KeycloakUserService, User } from '../../keycloak-administration/index.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
@@ -43,8 +43,21 @@ describe('Schulconnex Repo', () => {
     let serviceProviderRepo: ServiceProviderRepo;
     let rolleRepo: RolleRepo;
     let rollenErweiterungRepo: RollenerweiterungRepo;
-
     let personenkontextFactory: PersonenkontextFactory;
+
+    const keycloakServiceMock: DeepMocked<KeycloakUserService> = createMock(KeycloakUserService);
+    keycloakServiceMock.create = vi.fn((_user: User<false>, _password?: string) =>
+        Promise.resolve({
+            ok: true,
+            value: faker.string.uuid(),
+        } as Result<string, DomainError>),
+    );
+    keycloakServiceMock.setPassword = vi.fn((_userId: string, _password: string) =>
+        Promise.resolve({
+            ok: true,
+            value: faker.string.alphanumeric(16),
+        } as Result<string, DomainError>),
+    );
 
     function createPersonenkontext<WasPersisted extends boolean>(
         this: void,
@@ -92,25 +105,12 @@ describe('Schulconnex Repo', () => {
                 KeycloakUserService,
                 {
                     provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
+                    useValue: createMock(UserLockRepository),
                 },
             ],
         })
             .overrideProvider(KeycloakUserService)
-            .useValue(
-                createMock<KeycloakUserService>({
-                    create: () =>
-                        Promise.resolve({
-                            ok: true,
-                            value: faker.string.uuid(),
-                        }),
-                    setPassword: () =>
-                        Promise.resolve({
-                            ok: true,
-                            value: faker.string.alphanumeric(16),
-                        }),
-                }),
-            )
+            .useValue(keycloakServiceMock)
             .compile();
 
         sut = module.get(SchulconnexRepo);

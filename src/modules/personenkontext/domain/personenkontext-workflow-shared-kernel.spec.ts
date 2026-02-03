@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -17,8 +17,8 @@ describe('PersonenkontextWorkflowSharedKernel', () => {
 
     let sut: PersonenkontextWorkflowSharedKernel;
 
-    const rolleRepoMock: DeepMocked<RolleRepo> = createMock();
-    const organisationRepoMock: DeepMocked<OrganisationRepository> = createMock();
+    const rolleRepoMock: DeepMocked<RolleRepo> = createMock(RolleRepo);
+    const organisationRepoMock: DeepMocked<OrganisationRepository> = createMock(OrganisationRepository);
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -35,7 +35,7 @@ describe('PersonenkontextWorkflowSharedKernel', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         sut = new PersonenkontextWorkflowSharedKernel(rolleRepoMock, organisationRepoMock);
     });
 

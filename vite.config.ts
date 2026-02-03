@@ -13,12 +13,50 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'node',
-        // include: ['**/*.spec.ts'],
-        include: ['**/meldung/**/*spec.ts'],
+        hookTimeout: 60000, // 1 minute for setup/teardown
+        testTimeout: 30000, // 30 seconds default timeout
         coverage: {
-            reporter: ['lcov', 'text'],
+            provider: 'v8',
+            reporter: ['text', 'lcov'],
+            reportsDirectory: 'coverage',
+            reportOnFailure: true,
+            include: ['src/**/*.ts'],
+            exclude: ['**/*.spec.ts', '**/test/**', '**/*.d.ts', 'vite.config.ts'],
+            thresholds: {
+                lines: 98.37,
+                functions: 99.37,
+                branches: 97.36,
+                statements: 98.35,
+            },
         },
-        outputFile: 'coverage/sonar-report.xml',
+        projects: [
+            {
+                test: {
+                    name: 'unit',
+                    include: ['**/*.spec.ts'],
+                    maxWorkers: '90%',
+                    hookTimeout: 20000, // 20 seconds for setup/teardown
+                    testTimeout: 20000, // 20 seconds for unit tests
+                    sequence: {
+                        groupOrder: 0,
+                    },
+                },
+                extends: true,
+            },
+            {
+                test: {
+                    name: 'integration',
+                    include: ['**/*.integration-spec.ts'],
+                    maxWorkers: '50%', // limit the workers to leave CPU threads for test containers
+                    hookTimeout: 300000, // 5 minutes for setup/teardown
+                    testTimeout: 90000, // 1.5 minutes for integration tests
+                    sequence: {
+                        groupOrder: 1,
+                    },
+                },
+                extends: true,
+            },
+        ],
     },
     resolve: {
         alias: {

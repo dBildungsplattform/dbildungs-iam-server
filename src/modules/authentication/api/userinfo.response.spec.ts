@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock } from '../../../../test/utils/createMock.js';
 import 'reflect-metadata';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
@@ -15,9 +15,9 @@ import { UserinfoExtension, UserinfoResponse } from './userinfo.response.js';
 
 describe('UserinfoResponse', () => {
     const permissions: PersonPermissions = new PersonPermissions(
-        createMock<DBiamPersonenkontextRepo>(),
-        createMock<OrganisationRepository>(),
-        createMock<RolleRepo>(),
+        createMock(DBiamPersonenkontextRepo),
+        createMock(OrganisationRepository),
+        createMock(RolleRepo),
         DoFactory.createPerson(true),
     );
     const pk: PersonenkontextRolleFieldsResponse = {

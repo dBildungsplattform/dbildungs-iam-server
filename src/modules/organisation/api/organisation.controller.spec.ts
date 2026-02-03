@@ -1,9 +1,9 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { HttpException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DoFactory, ConfigTestModule } from '../../../../test/utils/index.js';
+import { DoFactory, ConfigTestModule, createPersonPermissionsMock } from '../../../../test/utils/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
@@ -51,7 +51,7 @@ describe('OrganisationController', () => {
     let organisationServiceMock: DeepMocked<OrganisationService>;
     let organisationDeleteServiceMock: DeepMocked<OrganisationDeleteService>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
-    const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+    const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -60,23 +60,23 @@ describe('OrganisationController', () => {
                 OrganisationController,
                 {
                     provide: OrganisationService,
-                    useValue: createMock<OrganisationService>(),
+                    useValue: createMock(OrganisationService),
                 },
                 {
                     provide: OrganisationDeleteService,
-                    useValue: createMock<OrganisationDeleteService>(),
+                    useValue: createMock(OrganisationDeleteService),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
             ],
         }).compile();
@@ -91,7 +91,7 @@ describe('OrganisationController', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         permissionsMock.hasOrgVerwaltenRechtAtOrga.mockResolvedValue(true);
     });
 
@@ -169,7 +169,7 @@ describe('OrganisationController', () => {
             try {
                 await organisationController.createOrganisation(permissionsMock, params);
 
-                fail('Expected error was not thrown');
+                throw new Error('Expected error was not thrown');
             } catch (error) {
                 expect(error).toBeInstanceOf(KennungForOrganisationWithTrailingSpaceError);
             }
@@ -327,6 +327,10 @@ describe('OrganisationController', () => {
                 const returnedValue: Organisation<true> = DoFactory.createOrganisation(true);
 
                 organisationServiceMock.updateOrganisation.mockResolvedValue({ ok: true, value: returnedValue });
+                organisationRepositoryMock.findById.mockResolvedValueOnce(
+                    DoFactory.createOrganisation(true, { id: returnedValue.id }),
+                );
+
                 await expect(
                     organisationController.updateOrganisation(params, body, permissionsMock),
                 ).resolves.not.toThrow();

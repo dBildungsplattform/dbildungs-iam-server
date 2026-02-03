@@ -2,7 +2,7 @@ import { EmailAppConfig, getEmailConfig } from './email-config.env.js';
 
 describe('Config Loader For Email App', () => {
     beforeEach(() => {
-        jest.resetModules();
+        vi.resetModules();
         process.env = {};
     });
 

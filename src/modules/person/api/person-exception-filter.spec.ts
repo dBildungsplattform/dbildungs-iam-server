@@ -1,16 +1,16 @@
 import { ArgumentsHost } from '@nestjs/common';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Response } from 'express';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { PersonDomainError } from '../domain/person-domain.error.js';
 import { DbiamPersonError, PersonErrorI18nTypes } from './dbiam-person.error.js';
 import { PersonExceptionFilter } from './person-exception-filter.js';
+import { createArgumentsHostMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
+import { MockedObject } from 'vitest';
 
 describe('PersonExceptionFilter', () => {
     let filter: PersonExceptionFilter;
     const statusCode: number = 500;
-    let responseMock: DeepMocked<Response>;
-    let argumentsHost: DeepMocked<ArgumentsHost>;
+    let responseMock: MockedObject<Response>;
+    let argumentsHost: MockedObject<ArgumentsHost>;
 
     const generalBadRequestError: DbiamPersonError = new DbiamPersonError({
         code: 500,
@@ -19,13 +19,8 @@ describe('PersonExceptionFilter', () => {
 
     beforeEach(() => {
         filter = new PersonExceptionFilter();
-        responseMock = createMock<Response>();
-        argumentsHost = createMock<ArgumentsHost>({
-            switchToHttp: () =>
-                createMock<HttpArgumentsHost>({
-                    getResponse: () => responseMock,
-                }),
-        });
+        responseMock = createResponseMock();
+        argumentsHost = createArgumentsHostMock({ response: responseMock });
     });
 
     describe('catch', () => {

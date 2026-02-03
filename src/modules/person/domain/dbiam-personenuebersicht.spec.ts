@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PersonService } from './person.service.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -12,7 +12,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { DBiamPersonenzuordnungResponse } from '../api/personenuebersicht/dbiam-personenzuordnung.response.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { ConfigTestModule, DatabaseTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
 import { faker } from '@faker-js/faker';
 
 describe('DbiamPersonenUebersicht', () => {
@@ -30,23 +30,23 @@ describe('DbiamPersonenUebersicht', () => {
             providers: [
                 {
                     provide: PersonService,
-                    useValue: createMock<PersonService>(),
+                    useValue: createMock(PersonService),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
             ],
         }).compile();
@@ -64,7 +64,7 @@ describe('DbiamPersonenUebersicht', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -86,15 +86,15 @@ describe('DbiamPersonenUebersicht', () => {
         beforeEach(() => {
             fakeRolleId = faker.string.uuid();
             fakeOrganisationId = faker.string.uuid();
-            rolle = createMock<Rolle<true>>({ id: fakeRolleId });
-            organisation = createMock<Organisation<true>>({ id: fakeOrganisationId });
+            rolle = DoFactory.createRolle<true>(true, { id: fakeRolleId });
+            organisation = DoFactory.createOrganisation<true>(true, { id: fakeOrganisationId });
             latestPKUpdatedAt = faker.date.recent();
-            personenkontextPast = createMock<Personenkontext<true>>({
+            personenkontextPast = DoFactory.createPersonenkontext<true>(true, {
                 rolleId: rolle.id,
                 organisationId: organisation.id,
                 updatedAt: faker.date.past(),
             });
-            personenkontextRecent = createMock<Personenkontext<true>>({
+            personenkontextRecent = DoFactory.createPersonenkontext<true>(true, {
                 rolleId: rolle.id,
                 organisationId: organisation.id,
                 updatedAt: latestPKUpdatedAt,

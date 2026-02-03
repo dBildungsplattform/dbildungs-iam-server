@@ -1,6 +1,6 @@
+import { Mock, vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { createMock } from '@golevelup/ts-jest';
-import { DeepPartial, EntityManager, EntityName, MikroORM } from '@mikro-orm/core';
+import { EntityManager, EntityName, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import {
@@ -29,7 +29,6 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { RolleModule } from '../../rolle/rolle.module.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
@@ -49,6 +48,8 @@ import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.j
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { RollenerweiterungFactory } from '../../rolle/domain/rollenerweiterung.factory.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -64,6 +65,7 @@ describe('dbiam Personenkontext Repo', () => {
     let serviceProviderRepo: ServiceProviderRepo;
     let rollenerweiterungRepo: RollenerweiterungRepo;
     let rolleFactory: RolleFactory;
+    let keycloakUserService: DeepMocked<KeycloakUserService>;
 
     let personenkontextFactory: PersonenkontextFactory;
 
@@ -88,11 +90,23 @@ describe('dbiam Personenkontext Repo', () => {
     }
 
     beforeAll(async () => {
+        keycloakUserService = createMock<KeycloakUserService>(KeycloakUserService);
+        keycloakUserService.create.mockImplementation(() => {
+            return Promise.resolve({
+                ok: true,
+                value: faker.string.uuid(),
+            });
+        });
+        keycloakUserService.setPassword.mockResolvedValue({
+            ok: true,
+            value: faker.string.alphanumeric(16),
+        });
+
         module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                RolleModule,
+                // RolleModule,
                 OrganisationModule,
                 LoggingTestModule,
             ],
@@ -107,26 +121,16 @@ describe('dbiam Personenkontext Repo', () => {
                 RolleRepo,
                 ServiceProviderRepo,
                 RollenerweiterungRepo,
+                RollenerweiterungFactory,
                 PersonenkontextFactory,
                 EntityAggregateMapper,
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>({
-                        create: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.uuid(),
-                            }),
-                        setPassword: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.alphanumeric(16),
-                            }),
-                    }),
+                    useValue: keycloakUserService,
                 },
                 {
                     provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
+                    useValue: createMock(UserLockRepository),
                 },
             ],
         }).compile();
@@ -143,7 +147,6 @@ describe('dbiam Personenkontext Repo', () => {
         rolleFactory = module.get(RolleFactory);
         rollenerweiterungRepo = module.get(RollenerweiterungRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
-
         await DatabaseTestModule.setupDatabase(orm);
     }, 10000000);
 
@@ -324,41 +327,36 @@ describe('dbiam Personenkontext Repo', () => {
             );
 
             // Mock the ORM response for rolle.serviceProvider.getItems()
-            const mockServiceProvider: DeepPartial<ServiceProviderEntity> = createMock<
-                DeepPartial<ServiceProviderEntity>
-            >({
-                id: faker.string.uuid(),
-                name: 'Mocked Service Provider',
-                vidisAngebotId: faker.string.uuid(),
-            });
-            const mockRolleServiceProviderEntity: RolleServiceProviderEntity = createMock<RolleServiceProviderEntity>({
-                serviceProvider: mockServiceProvider,
-            });
+            const mockServiceProvider: DeepMocked<ServiceProviderEntity> =
+                createMock<ServiceProviderEntity>(ServiceProviderEntity);
+            mockServiceProvider.name = 'Mocked Service Provider';
+            mockServiceProvider.vidisAngebotId = faker.string.uuid();
+            const mockRolleServiceProviderEntity: RolleServiceProviderEntity =
+                createMock<RolleServiceProviderEntity>(RolleServiceProviderEntity);
+            mockRolleServiceProviderEntity.serviceProvider = mockServiceProvider;
 
-            const findSpy: jest.SpyInstance = jest
-                .spyOn(sut['em'], 'find')
-                .mockImplementation(<T>(entityClass: EntityName<T>) => {
-                    if (entityClass === PersonenkontextEntity) {
-                        return Promise.resolve([
-                            {
-                                id: 'pk-123',
-                                rolleId: {
-                                    unwrap: () => ({
-                                        rollenart: rolleA.rollenart,
-                                        serviceProvider: {
-                                            getItems: () => [mockRolleServiceProviderEntity],
-                                        },
-                                    }),
-                                },
-                                organisationId: {
-                                    unwrap: () => ({ kennung: organisationA.kennung }),
-                                },
+            const findSpy: Mock = vi.spyOn(sut['em'], 'find').mockImplementation(<T>(entityClass: EntityName<T>) => {
+                if (entityClass === PersonenkontextEntity) {
+                    return Promise.resolve([
+                        {
+                            id: 'pk-123',
+                            rolleId: {
+                                unwrap: () => ({
+                                    rollenart: rolleA.rollenart,
+                                    serviceProvider: {
+                                        getItems: () => [mockRolleServiceProviderEntity],
+                                    },
+                                }),
                             },
-                        ]);
-                    }
+                            organisationId: {
+                                unwrap: () => ({ kennung: organisationA.kennung }),
+                            },
+                        },
+                    ]);
+                }
 
-                    return Promise.resolve([]);
-                });
+                return Promise.resolve([]);
+            });
 
             const result: ExternalPkData[] = await sut.findExternalPkData(person.id);
 

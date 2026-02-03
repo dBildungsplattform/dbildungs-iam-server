@@ -14,7 +14,6 @@ import { OrganisationModule } from '../../organisation/organisation.module.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
-import { createMock } from '@golevelup/ts-jest';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
@@ -23,6 +22,7 @@ import { generatePassword } from '../../../shared/util/password-generator.js';
 import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -34,6 +34,7 @@ describe('dbiam Personenkontext Repo', () => {
     let personRepo: PersonRepository;
     let rolleRepo: RolleRepo;
     let organisationRepository: OrganisationRepository;
+    let keycloakUserService: DeepMocked<KeycloakUserService>;
 
     let personenkontextFactory: PersonenkontextFactory;
 
@@ -58,6 +59,15 @@ describe('dbiam Personenkontext Repo', () => {
     }
 
     beforeAll(async () => {
+        keycloakUserService = createMock<KeycloakUserService>(KeycloakUserService);
+        keycloakUserService.create.mockResolvedValue({
+            ok: true,
+            value: faker.string.uuid(),
+        });
+        keycloakUserService.setPassword.mockResolvedValue({
+            ok: true,
+            value: faker.string.alphanumeric(16),
+        });
         module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
@@ -79,22 +89,11 @@ describe('dbiam Personenkontext Repo', () => {
                 PersonenkontextFactory,
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>({
-                        create: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.uuid(),
-                            }),
-                        setPassword: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.alphanumeric(16),
-                            }),
-                    }),
+                    useValue: keycloakUserService,
                 },
                 {
                     provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
+                    useValue: createMock<UserLockRepository>(UserLockRepository),
                 },
             ],
         }).compile();
