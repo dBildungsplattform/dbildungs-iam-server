@@ -192,14 +192,20 @@ export class RollenerweiterungRepo {
         serviceProviderId: ServiceProviderID,
         offset?: number,
         limit?: number,
+        organisationId?: OrganisationID,
     ): Promise<Counted<Rollenerweiterung<true>>> {
         // Get paginated unique organisation IDs using QueryBuilder
         const qb: QueryBuilder<RollenerweiterungEntity> = this.em.createQueryBuilder(RollenerweiterungEntity, 're');
         qb.select(['re.organisation_id', 'o.kennung'])
             .distinct()
             .innerJoin('re.organisationId', 'o')
-            .where({ serviceProviderId })
-            .orderBy({ 'o.kennung': 'ASC' })
+            .where({ serviceProviderId });
+
+        if (organisationId) {
+            qb.andWhere({ organisationId });
+        }
+
+        qb.orderBy({ 'o.kennung': 'ASC' })
             .limit(limit ?? 999999)
             .offset(offset ?? 0);
 
@@ -214,6 +220,10 @@ export class RollenerweiterungRepo {
         countQb
             .count('re.organisationId', true) // true for DISTINCT
             .where({ serviceProviderId });
+
+        if (organisationId) {
+            countQb.andWhere({ organisationId });
+        }
 
         const countResult: { count: string | number } = await countQb.execute('get', true);
         const totalUniqueOrgs: number = Number(countResult.count);

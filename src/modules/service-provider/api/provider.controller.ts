@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    ForbiddenException,
     Get,
     Param,
     Post,
@@ -178,11 +179,24 @@ export class ProviderController {
             throw new UnauthorizedException('NOT_AUTHORIZED');
         }
 
+        if (queryParams.organisationId) {
+            const allowed: boolean =
+                permittedOrgas.all || permittedOrgas.orgaIds.includes(queryParams.organisationId as OrganisationID);
+            if (!allowed) {
+                throw new ForbiddenException('Insufficient permissions for the requested organisationId');
+            }
+        }
+
+        const organisationIdForQuery: OrganisationID | undefined = queryParams.organisationId
+            ? (queryParams.organisationId as OrganisationID)
+            : undefined;
+
         const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
             await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrgaKennung(
                 pathParams.angebotId,
                 queryParams.offset,
                 queryParams.limit,
+                organisationIdForQuery,
             );
 
         const rolleIds: RolleID[] = uniq(rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.rolleId));
