@@ -1,7 +1,5 @@
 # dBildungs IAM Server
 
-We have the strategic goal SG-02 "stand-alone system". We want to succeed this goal, therefore we need to set the ErWIn system separate to the dBC. This repository is used for the development the separate ErWIn system to achieve this goal.
-
 ## Prerequisites
 
 - Node in the version stated in the `package.json`

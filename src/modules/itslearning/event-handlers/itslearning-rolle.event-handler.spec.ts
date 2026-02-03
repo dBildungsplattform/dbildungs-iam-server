@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
@@ -57,23 +57,23 @@ describe('ItsLearning Rolle Event Handler', () => {
                 ItsLearningRolleEventHandler,
                 {
                     provide: ItslearningPersonRepo,
-                    useValue: createMock<ItslearningPersonRepo>(),
+                    useValue: createMock(ItslearningPersonRepo),
                 },
                 {
                     provide: ItslearningMembershipRepo,
-                    useValue: createMock<ItslearningMembershipRepo>(),
+                    useValue: createMock(ItslearningMembershipRepo),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: ServiceProviderRepo,
-                    useValue: createMock<ServiceProviderRepo>(),
+                    useValue: createMock(ServiceProviderRepo),
                 },
             ],
         }).compile();
@@ -96,7 +96,7 @@ describe('ItsLearning Rolle Event Handler', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('rolleUpdatedEventHandler', () => {

@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { TestingModule, Test } from '@nestjs/testing';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import PersonTimeLimitService from './person-time-limit-info.service.js';
@@ -26,15 +26,15 @@ describe('PersonTimeLimitInfoService', () => {
                 PersonTimeLimitService,
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: DBiamPersonenkontextService,
-                    useValue: createMock<DBiamPersonenkontextService>(),
+                    useValue: createMock(DBiamPersonenkontextService),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
             ],
         }).compile();
@@ -49,7 +49,7 @@ describe('PersonTimeLimitInfoService', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {

@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker';
-import { createMock } from '@golevelup/ts-jest';
 import { Collection, EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
@@ -25,6 +24,7 @@ import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
 import { ServiceProviderRepo } from './service-provider.repo.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
@@ -42,11 +42,11 @@ describe('ServiceProviderRepo', () => {
                 RolleFactory,
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 {
                     provide: RolleFactory,
-                    useValue: createMock<RolleFactory>(),
+                    useValue: createMock(RolleFactory),
                 },
             ],
         }).compile();
@@ -208,9 +208,9 @@ describe('ServiceProviderRepo', () => {
                     ),
                 ]);
 
-                const permissions: PersonPermissions = createMock<PersonPermissions>({
-                    getOrgIdsWithSystemrecht: jest.fn().mockReturnValue(permittedOrgas),
-                });
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+                permissions.getOrgIdsWithSystemrecht = vi.fn().mockReturnValue(permittedOrgas);
+
                 const [serviceProviderResult, count]: Counted<ServiceProvider<true>> = await sut.findAuthorized(
                     permissions,
                     5,
@@ -232,9 +232,8 @@ describe('ServiceProviderRepo', () => {
             const total: number = 10;
             await Promise.all(Array.from({ length: total }, () => sut.save(DoFactory.createServiceProvider(false))));
             const permittedOrgas: PermittedOrgas = { all: true };
-            const permissions: PersonPermissions = createMock<PersonPermissions>({
-                getOrgIdsWithSystemrecht: jest.fn().mockReturnValue(permittedOrgas),
-            });
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            permissions.getOrgIdsWithSystemrecht = vi.fn().mockReturnValue(permittedOrgas);
             const limit: number = 5;
             const [serviceProviderWithoutOffsetResult, countWithoutOffset]: Counted<ServiceProvider<true>> =
                 await sut.findAuthorized(permissions, limit, 0);
@@ -268,9 +267,8 @@ describe('ServiceProviderRepo', () => {
                 ),
             );
             const permittedOrgas: PermittedOrgas = { all: true };
-            const permissions: PersonPermissions = createMock<PersonPermissions>({
-                getOrgIdsWithSystemrecht: jest.fn().mockReturnValue(permittedOrgas),
-            });
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            permissions.getOrgIdsWithSystemrecht = vi.fn().mockReturnValue(permittedOrgas);
             const [serviceProviderResult]: Counted<ServiceProvider<true>> = await sut.findAuthorized(permissions, 5, 0);
             [
                 ServiceProviderKategorie.EMAIL,
@@ -422,9 +420,8 @@ describe('ServiceProviderRepo', () => {
                     ),
                 ]);
 
-                const permissions: PersonPermissions = createMock<PersonPermissions>({
-                    getOrgIdsWithSystemrecht: jest.fn().mockReturnValue(permittedOrgas),
-                });
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+                permissions.getOrgIdsWithSystemrecht = vi.fn().mockReturnValue(permittedOrgas);
                 const serviceProviderResult: Option<ServiceProvider<true>> = await sut.findAuthorizedById(
                     permissions,
                     serviceProviders[0]!.id,
@@ -540,23 +537,28 @@ describe('ServiceProviderRepo', () => {
             // Arrange
             const roleId: RolleID = faker.string.uuid();
 
-            const serviceProviderEntityMock: ServiceProviderEntity = createMock<ServiceProviderEntity>({
+            const serviceProviderEntityMock: ServiceProviderEntity = createMock(ServiceProviderEntity, {
                 id: faker.string.uuid(),
                 name: faker.company.name(),
                 target: ServiceProviderTarget.SCHULPORTAL_ADMINISTRATION,
                 providedOnSchulstrukturknoten: faker.string.uuid(),
                 kategorie: ServiceProviderKategorie.VERWALTUNG,
-                merkmale: createMock<Collection<ServiceProviderMerkmalEntity>>({
-                    map: () => [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
-                }),
             });
+
+            serviceProviderEntityMock.merkmale = {
+                map: () => [
+                    {
+                        merkmal: ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
+                    } as ServiceProviderMerkmalEntity,
+                ],
+            } as unknown as Collection<ServiceProviderMerkmalEntity>;
 
             const rolleServiceProviderEntityMock: RolleServiceProviderEntity = {
                 rolle: { id: roleId } as RolleEntity,
                 serviceProvider: serviceProviderEntityMock,
             } as RolleServiceProviderEntity;
 
-            jest.spyOn(em, 'find').mockResolvedValue([rolleServiceProviderEntityMock]);
+            vi.spyOn(em, 'find').mockResolvedValue([rolleServiceProviderEntityMock]);
 
             const result: ServiceProvider<true>[] = await sut.fetchRolleServiceProvidersWithoutPerson(roleId);
 

@@ -13,8 +13,8 @@ describe('ReporterService', () => {
                 {
                     provide: MetricsService,
                     useValue: {
-                        incCounter: jest.fn(),
-                        setGauge: jest.fn(),
+                        incCounter: vi.fn(),
+                        setGauge: vi.fn(),
                     },
                 },
             ],

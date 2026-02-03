@@ -4,7 +4,7 @@ import { PersonenKontextApiModule } from './personenkontext-api.module.js';
 import { PersonenkontextController } from './api/personenkontext.controller.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock } from '../../../test/utils/createMock.js';
 import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
 
 describe('PersonenKontextApiModule', () => {
@@ -15,11 +15,11 @@ describe('PersonenKontextApiModule', () => {
             providers: [
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
             ],
             imports: [

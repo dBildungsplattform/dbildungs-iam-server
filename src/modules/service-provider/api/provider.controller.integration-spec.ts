@@ -1,12 +1,9 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { MikroORM } from '@mikro-orm/core';
-import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Request } from 'express';
-import { Client } from 'openid-client';
-import { Observable } from 'rxjs';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 
@@ -19,7 +16,6 @@ import { RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
-import { PassportUser } from '../../authentication/types/user.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -31,6 +27,12 @@ import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
+import {
+    createAuthInterceptorMock,
+    createOidcClientMock,
+    createPersonPermissionsMock,
+} from '../../../../test/utils/auth.mock.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 
 describe('ServiceProvider API', () => {
@@ -40,7 +42,7 @@ describe('ServiceProvider API', () => {
     let rolleRepo: RolleRepo;
     let rollenerweiterungRepo: RollenerweiterungRepo;
     let organisationRepo: OrganisationRepository;
-    let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
+    const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -56,25 +58,15 @@ describe('ServiceProvider API', () => {
                 },
                 {
                     provide: OIDC_CLIENT,
-                    useValue: createMock<Client>(),
+                    useValue: createOidcClientMock(),
                 },
                 {
                     provide: PersonPermissionsRepo,
-                    useValue: createMock<PersonPermissionsRepo>(),
+                    useValue: createMock(PersonPermissionsRepo),
                 },
                 {
                     provide: APP_INTERCEPTOR,
-                    useValue: {
-                        intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-                            const req: Request = context.switchToHttp().getRequest();
-                            req.passportUser = createMock<PassportUser>({
-                                async personPermissions() {
-                                    return personpermissionsRepoMock.loadPersonPermissions('');
-                                },
-                            });
-                            return next.handle();
-                        },
-                    },
+                    useValue: createAuthInterceptorMock(personPermissions),
                 },
             ],
         }).compile();
@@ -84,7 +76,6 @@ describe('ServiceProvider API', () => {
         rolleRepo = module.get(RolleRepo);
         rollenerweiterungRepo = module.get(RollenerweiterungRepo);
         organisationRepo = module.get(OrganisationRepository);
-        personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
@@ -98,6 +89,7 @@ describe('ServiceProvider API', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
+        personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
     });
 
     describe('/GET all service provider', () => {
@@ -266,7 +258,7 @@ describe('ServiceProvider API', () => {
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should return manageable service provider for organisation', async () => {

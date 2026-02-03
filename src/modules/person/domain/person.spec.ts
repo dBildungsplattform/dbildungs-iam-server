@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Person, PersonCreationParams } from './person.js';
 import { DomainError, InvalidCharacterSetError } from '../../../shared/error/index.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
@@ -19,7 +19,7 @@ describe('Person', () => {
             providers: [
                 {
                     provide: UsernameGeneratorService,
-                    useValue: createMock<UsernameGeneratorService>(),
+                    useValue: createMock(UsernameGeneratorService),
                 },
             ],
         }).compile();
@@ -31,7 +31,7 @@ describe('Person', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('resetPassword', () => {

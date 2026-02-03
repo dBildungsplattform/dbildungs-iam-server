@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock } from '../../../../../test/utils/createMock.js';
 import { MikroORM } from '@mikro-orm/core';
 import { EmailAddressRepo } from './email-address.repo.js';
 import {
@@ -25,7 +25,7 @@ describe('EmailDomainRepo', () => {
             providers: [EmailAddressRepo, ClassLogger],
         })
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .compile();
 
         sut = module.get(EmailDomainRepo);
