@@ -23,7 +23,6 @@
         "test:watch": "vitest --watch",
         "test:unit": "vitest --project unit",
         "test:integration": "vitest --project integration",
-        "test:vitest": "vitest",
         "lint": "eslint --max-warnings=0",
         "lint:fix": "eslint --fix",
         "start:console": "nest start console --",
