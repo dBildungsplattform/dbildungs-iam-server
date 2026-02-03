@@ -183,7 +183,11 @@ export class ProviderController {
             const allowed: boolean =
                 permittedOrgas.all || permittedOrgas.orgaIds.includes(queryParams.organisationId as OrganisationID);
             if (!allowed) {
-                throw new ForbiddenException('Insufficient permissions for the requested organisationId');
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                        new MissingPermissionsError('Insufficient permissions for the requested organisationId'),
+                    ),
+                );
             }
         }
 

@@ -548,5 +548,26 @@ describe('RollenerweiterungRepo', () => {
             expect(result).toHaveLength(2);
             expect(count).toBe(3);
         });
+
+        it('should return only service provider for organisationId', async () => {
+            const erweiterungen: Rollenerweiterung<false>[] = [
+                factory.createNew(organisation1.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation2.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation3.id, rolle.id, serviceProvider.id),
+            ];
+            await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
+
+            const [result, count]: Counted<Rollenerweiterung<true>> =
+                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(
+                    serviceProvider.id,
+                    0,
+                    10,
+                    organisation2.id,
+                );
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(1);
+            expect(count).toBe(1);
+            expect(result[0]!.organisationId).toBe(organisation2.id);
+        });
     });
 });
