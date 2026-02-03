@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { zip } from 'lodash-es';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
@@ -215,12 +215,12 @@ describe('ServiceProviderService', () => {
             imports: [LoggingTestModule, ConfigTestModule],
             providers: [
                 ServiceProviderService,
-                { provide: RolleRepo, useValue: createMock<RolleRepo>() },
-                { provide: RollenerweiterungRepo, useValue: createMock<RollenerweiterungRepo>() },
-                { provide: ServiceProviderRepo, useValue: createMock<ServiceProviderRepo>() },
-                { provide: OrganisationRepository, useValue: createMock<OrganisationRepository>() },
-                { provide: VidisService, useValue: createMock<VidisService>() },
-                { provide: OrganisationServiceProviderRepo, useValue: createMock<OrganisationServiceProviderRepo>() },
+                { provide: RolleRepo, useValue: createMock(RolleRepo) },
+                { provide: RollenerweiterungRepo, useValue: createMock(RollenerweiterungRepo) },
+                { provide: ServiceProviderRepo, useValue: createMock(ServiceProviderRepo) },
+                { provide: OrganisationRepository, useValue: createMock(OrganisationRepository) },
+                { provide: VidisService, useValue: createMock(VidisService) },
+                { provide: OrganisationServiceProviderRepo, useValue: createMock(OrganisationServiceProviderRepo) },
             ],
         }).compile();
         service = module.get<ServiceProviderService>(ServiceProviderService);
@@ -268,7 +268,7 @@ describe('ServiceProviderService', () => {
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('returns serviceProviders', async () => {
@@ -335,7 +335,7 @@ describe('ServiceProviderService', () => {
                 });
             });
             afterEach(() => {
-                jest.restoreAllMocks();
+                vi.restoreAllMocks();
             });
             it('returns a list of service providers', async () => {
                 const result: Array<ServiceProvider<true>> = await service.getServiceProvidersByOrganisationenAndRollen(
@@ -366,12 +366,12 @@ describe('ServiceProviderService', () => {
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('throws MissingPermissionsError if person lacks required system rights', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechtAtOrganisation = jest.fn().mockResolvedValue(false);
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(false);
 
             await expect(
                 service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions),
@@ -382,8 +382,8 @@ describe('ServiceProviderService', () => {
 
         it('returns authorized serviceProviders when person has rights and includes parent organisation ids', async () => {
             const parentOrga: Organisation<true> = DoFactory.createOrganisation(true);
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechteAtOrganisation = jest.fn().mockResolvedValue(true);
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(true);
 
             organisationRepo.findParentOrgasForIds.mockResolvedValue([parentOrga]);
             serviceProviderRepo.findByOrgasWithMerkmal.mockResolvedValue([[serviceProvider], 1]);
@@ -403,8 +403,8 @@ describe('ServiceProviderService', () => {
 
         it('returns authorized serviceProviders when person has rights and includes parent organisation ids (limit & offset)', async () => {
             const parentOrga: Organisation<true> = DoFactory.createOrganisation(true);
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechteAtOrganisation = jest.fn().mockResolvedValue(true);
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(true);
 
             const limit: number = 10;
             const offset: number = 5;
@@ -449,7 +449,7 @@ describe('ServiceProviderService', () => {
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should return referenced objects for serviceProviders', async () => {
@@ -493,7 +493,7 @@ describe('ServiceProviderService', () => {
 
     describe('getRollenerweiterungenForManageableServiceProvider', () => {
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should return rollenerweiterungen for display', async () => {
@@ -520,7 +520,7 @@ describe('ServiceProviderService', () => {
 
     describe('updateServiceProvidersForVidis', () => {
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should update ServiceProvider for VIDIS Angebote if ServiceProvider in VIDIS Angebot response already exists in SPSH.', async () => {
@@ -533,6 +533,7 @@ describe('ServiceProviderService', () => {
             if (mockExistingSchulen[0]) {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
+            serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
             organisationServiceProviderRepo.save.mockResolvedValue();
 
             await service.updateServiceProvidersForVidis();
@@ -558,7 +559,7 @@ describe('ServiceProviderService', () => {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
             organisationServiceProviderRepo.save.mockResolvedValue();
-
+            serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
             await service.updateServiceProvidersForVidis();
 
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);

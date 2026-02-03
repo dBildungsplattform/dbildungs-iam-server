@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { HealthIndicatorResult } from '@nestjs/terminus';
 import { ConfigService } from '@nestjs/config';
 import { EmailHealthIndicator } from './email-health-indicator.js';
@@ -22,12 +22,12 @@ describe('Email health indicator', () => {
                 EmailHealthIndicator,
                 {
                     provide: ConfigService<ServerConfig>,
-                    useValue: createMock<ConfigService<ServerConfig>>(),
+                    useValue: createMock(ConfigService<ServerConfig>),
                 },
             ],
         })
             .overrideProvider(HttpService)
-            .useValue(createMock<HttpService>())
+            .useValue(createMock(HttpService))
             .compile();
 
         httpServiceMock = module.get(HttpService);

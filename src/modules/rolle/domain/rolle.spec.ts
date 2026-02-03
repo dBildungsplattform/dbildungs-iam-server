@@ -1,12 +1,13 @@
+import { vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { DoFactory } from '../../../../test/utils/index.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { RollenArt, RollenMerkmal } from './rolle.enums.js';
 import { RollenSystemRecht } from './systemrecht.js';
 import { Rolle } from './rolle.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RolleFactory } from './rolle.factory.js';
@@ -30,23 +31,23 @@ describe('Rolle Aggregate', () => {
                 PersonenkontextFactory,
                 {
                     provide: ServiceProviderRepo,
-                    useValue: createMock<ServiceProviderRepo>(),
+                    useValue: createMock(ServiceProviderRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
             ],
         }).compile();
@@ -60,7 +61,7 @@ describe('Rolle Aggregate', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('canBeAssignedToOrga', () => {

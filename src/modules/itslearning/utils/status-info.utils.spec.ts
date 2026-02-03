@@ -67,14 +67,16 @@ describe('StatusInfoHelpers', () => {
         });
 
         it('should return error result, if input is okay but failure status exist', () => {
+            const failedStatus: FailureStatusInfo = makeFailureStatus('some error');
             const input: Result<MassResult<string>, DomainError> = Ok({
-                status: [makeFailureStatus('some error')],
+                status: [failedStatus],
                 value: 'will not succeed',
             });
 
             const result: Result<string, DomainError> = StatusInfoHelpers.unpackMassResult(input);
+            const expectedError: ItsLearningError = new ItsLearningError('1 of 1 Requests failed', [failedStatus]);
 
-            expect(result).toEqual(Err(new ItsLearningError('1 of 1 Requests failed')));
+            expect(result).toEqual(Err(expectedError));
         });
 
         it('should return error result, if input is already an error result', () => {

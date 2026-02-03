@@ -1,4 +1,4 @@
-import { createMock } from '@golevelup/ts-jest';
+import { createMock } from './createMock.js';
 import { Global, Module } from '@nestjs/common';
 import { ClassLogger } from '../../src/core/logging/class-logger.js';
 
@@ -7,7 +7,7 @@ import { ClassLogger } from '../../src/core/logging/class-logger.js';
     providers: [
         {
             provide: ClassLogger,
-            useValue: createMock<ClassLogger>(),
+            useValue: createMock(ClassLogger),
         },
     ],
     exports: [ClassLogger],

@@ -1,11 +1,21 @@
+import { vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock } from '@golevelup/ts-jest';
 import { RedisClientType } from 'redis';
 import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../test/utils/index.js';
 import { EmailModule } from './email.module.js';
 
-jest.mock('redis', () => ({
-    createClient: (): RedisClientType => createMock<RedisClientType>(),
+function createRedisClientMock(overrides?: Partial<RedisClientType>): RedisClientType {
+    return {
+        connect: vi.fn(),
+        disconnect: vi.fn(),
+        get: vi.fn(),
+        set: vi.fn(),
+        ...overrides,
+    } as RedisClientType;
+}
+
+vi.mock('redis', () => ({
+    createClient: (): RedisClientType => createRedisClientMock(),
 }));
 
 describe('EmailModule', () => {

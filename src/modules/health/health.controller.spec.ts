@@ -6,7 +6,7 @@ import {
     HttpHealthIndicator,
     MikroOrmHealthIndicator,
 } from '@nestjs/terminus';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { ConfigService } from '@nestjs/config';
 import { KeycloakConfig } from '../../shared/config/index.js';
 import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';
@@ -36,12 +36,12 @@ describe('HealthController', () => {
     let configService: DeepMocked<ConfigService>;
 
     beforeEach(async () => {
-        healthCheckService = createMock<HealthCheckService>();
-        mikroOrmHealthIndicator = createMock<MikroOrmHealthIndicator>();
-        httpHealthIndicator = createMock<HttpHealthIndicator>();
-        configService = createMock<ConfigService>();
-        keycloakHealthIndicator = createMock<KeycloakHealthIndicator>();
-        redisHealthIndicator = createMock<RedisHealthIndicator>();
+        healthCheckService = createMock(HealthCheckService);
+        mikroOrmHealthIndicator = createMock(MikroOrmHealthIndicator);
+        httpHealthIndicator = createMock(HttpHealthIndicator);
+        configService = createMock(ConfigService);
+        keycloakHealthIndicator = createMock(KeycloakHealthIndicator);
+        redisHealthIndicator = createMock(RedisHealthIndicator);
 
         configService.getOrThrow.mockReturnValue(keycloakConfig);
 

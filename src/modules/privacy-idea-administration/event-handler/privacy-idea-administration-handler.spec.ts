@@ -3,7 +3,7 @@ import { PrivacyIdeaAdministrationServiceHandler } from './privacy-idea-administ
 import { PrivacyIdeaAdministrationService } from '../privacy-idea-administration.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ConfigTestModule, DatabaseTestModule } from '../../../../test/utils/index.js';
 
 describe('PrivacyIdeaAdministrationServiceHandler', () => {
@@ -18,11 +18,11 @@ describe('PrivacyIdeaAdministrationServiceHandler', () => {
                 PrivacyIdeaAdministrationServiceHandler,
                 {
                     provide: PrivacyIdeaAdministrationService,
-                    useValue: createMock<PrivacyIdeaAdministrationService>(),
+                    useValue: createMock(PrivacyIdeaAdministrationService),
                 },
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock(ClassLogger),
                 },
             ],
         }).compile();
@@ -33,7 +33,7 @@ describe('PrivacyIdeaAdministrationServiceHandler', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('handlePersonRenamedEvent', () => {

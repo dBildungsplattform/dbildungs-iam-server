@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
@@ -15,7 +15,6 @@ import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkont
 import { Rolle } from '../../rolle/domain/rolle';
 import { RollenArt } from '../../rolle/domain/rolle.enums';
 import { RolleRepo } from '../../rolle/repo/rolle.repo';
-import { ServiceProvider } from '../../service-provider/domain/service-provider';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum';
 import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailMicroserviceEventHandler } from './email-microservice-event-handler';
@@ -55,15 +54,15 @@ describe('EmailMicroserviceEventHandler', () => {
             .overrideModule(EventModule)
             .useModule(EventSystemTestModule)
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .overrideProvider(EmailResolverService)
-            .useValue(createMock<EmailResolverService>())
+            .useValue(createMock(EmailResolverService))
             .overrideProvider(RolleRepo)
-            .useValue(createMock<RolleRepo>())
+            .useValue(createMock(RolleRepo))
             .overrideProvider(DBiamPersonenkontextRepo)
-            .useValue(createMock<DBiamPersonenkontextRepo>())
+            .useValue(createMock<DBiamPersonenkontextRepo>(DBiamPersonenkontextRepo))
             .overrideProvider(PersonRepository)
-            .useValue(createMock<PersonRepository>())
+            .useValue(createMock<PersonRepository>(PersonRepository))
             .compile();
 
         sut = module.get(EmailMicroserviceEventHandler);
@@ -82,7 +81,7 @@ describe('EmailMicroserviceEventHandler', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -100,14 +99,16 @@ describe('EmailMicroserviceEventHandler', () => {
                 lastName: faker.person.lastName(),
                 spshServiceProviderId: mockServiceProviderId,
             } satisfies SetEmailAddressForSpshPersonBodyParams;
-            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
-                person: {
+            const mockEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
                     id: spshPersonId,
                     vorname: params.firstName,
                     familienname: params.lastName,
                     username: params.spshUsername,
                 },
-                currentKontexte: [
+                [],
+                [],
+                [
                     {
                         id: 'pk1',
                         rolleId: 'r1',
@@ -118,15 +119,11 @@ describe('EmailMicroserviceEventHandler', () => {
                         serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
                     },
                 ],
-                removedKontexte: [],
-                newKontexte: [],
-                createdAt: new Date(),
-                eventID: '',
-            });
-            const mockRolle: Rolle<true> = createMock<Rolle<true>>({
+            );
+            const mockRolle: Rolle<true> = DoFactory.createRolle(true, {
                 id: faker.string.uuid(),
                 serviceProviderData: [
-                    createMock<ServiceProvider<true>>({
+                    DoFactory.createServiceProvider(true, {
                         id: mockServiceProviderId,
                         externalSystem: ServiceProviderSystem.EMAIL,
                     }),
@@ -156,14 +153,16 @@ describe('EmailMicroserviceEventHandler', () => {
                 lastName: faker.person.lastName(),
                 spshServiceProviderId: mockServiceProviderId,
             } satisfies SetEmailAddressForSpshPersonBodyParams;
-            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
-                person: {
+            const mockEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
                     id: spshPersonId,
                     vorname: params.firstName,
                     familienname: params.lastName,
                     username: undefined,
                 },
-                currentKontexte: [
+                [],
+                [],
+                [
                     {
                         id: 'pk1',
                         rolleId: 'r1',
@@ -174,15 +173,11 @@ describe('EmailMicroserviceEventHandler', () => {
                         serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
                     },
                 ],
-                removedKontexte: [],
-                newKontexte: [],
-                createdAt: new Date(),
-                eventID: '',
-            });
-            const mockRolle: Rolle<true> = createMock<Rolle<true>>({
+            );
+            const mockRolle: Rolle<true> = DoFactory.createRolle(true, {
                 id: faker.string.uuid(),
                 serviceProviderData: [
-                    createMock<ServiceProvider<true>>({
+                    DoFactory.createServiceProvider(true, {
                         id: mockServiceProviderId,
                         externalSystem: ServiceProviderSystem.EMAIL,
                     }),
@@ -202,17 +197,17 @@ describe('EmailMicroserviceEventHandler', () => {
         });
 
         it('should not call emailResolverService when microservice is disabled', async () => {
-            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
-                person: {
+            const mockEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
                     username: faker.internet.userName(),
                 },
-                newKontexte: [{}, {}],
-                removedKontexte: [{}],
-                currentKontexte: [{}],
-            });
+                [{} as PersonenkontextEventKontextData, {} as PersonenkontextEventKontextData],
+                [{} as PersonenkontextEventKontextData],
+                [{} as PersonenkontextEventKontextData],
+            );
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(false);
 
             await sut.handlePersonenkontextUpdatedEvent(mockEvent);
@@ -226,14 +221,16 @@ describe('EmailMicroserviceEventHandler', () => {
         it('should log and return early when no email service provider is found', async () => {
             const mockPersonId: string = faker.string.uuid();
             const mockRolleId: string = 'r1';
-            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
-                person: {
+            const mockEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
                     id: mockPersonId,
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
                     username: 'testuser',
                 },
-                currentKontexte: [
+                [],
+                [],
+                [
                     {
                         id: 'pk1',
                         rolleId: mockRolleId,
@@ -243,15 +240,11 @@ describe('EmailMicroserviceEventHandler', () => {
                         serviceProviderExternalSystems: [],
                     },
                 ],
-                removedKontexte: [],
-                newKontexte: [],
-                createdAt: new Date(),
-                eventID: '',
-            });
-            const mockRolle: Rolle<true> = createMock<Rolle<true>>({
+            );
+            const mockRolle: Rolle<true> = DoFactory.createRolle(true, {
                 id: mockRolleId,
                 serviceProviderData: [
-                    createMock<ServiceProvider<true>>({
+                    DoFactory.createServiceProvider(true, {
                         id: faker.string.uuid(),
                         externalSystem: ServiceProviderSystem.NONE,
                     }),
@@ -275,14 +268,16 @@ describe('EmailMicroserviceEventHandler', () => {
         it('should resolve correct email service provider and call setEmailForSpshPerson', async () => {
             const mockPersonId: string = faker.string.uuid();
             const mockServiceProviderId: string = faker.string.uuid();
-            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
-                person: {
+            const mockEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
                     id: mockPersonId,
                     username: 'testuser',
                     vorname: 'Max',
                     familienname: 'Mustermann',
                 },
-                currentKontexte: [
+                [],
+                [],
+                [
                     {
                         id: 'pk1',
                         rolleId: 'r1',
@@ -293,15 +288,11 @@ describe('EmailMicroserviceEventHandler', () => {
                         serviceProviderExternalSystems: [],
                     },
                 ],
-                removedKontexte: [],
-                newKontexte: [],
-                createdAt: new Date(),
-                eventID: '',
-            });
-            const mockRolle: Rolle<true> = createMock<Rolle<true>>({
+            );
+            const mockRolle: Rolle<true> = DoFactory.createRolle(true, {
                 id: faker.string.uuid(),
                 serviceProviderData: [
-                    createMock<ServiceProvider<true>>({
+                    DoFactory.createServiceProvider(true, {
                         id: mockServiceProviderId,
                         externalSystem: ServiceProviderSystem.EMAIL,
                     }),
@@ -309,6 +300,8 @@ describe('EmailMicroserviceEventHandler', () => {
             });
 
             rolleRepoMock.findByIds.mockResolvedValue(new Map([['r1', mockRolle]]));
+
+            vi.spyOn(emailResolverServiceMock, 'setEmailForSpshPerson').mockResolvedValue();
 
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
 
@@ -330,25 +323,17 @@ describe('EmailMicroserviceEventHandler', () => {
             const rolleId2: string = faker.string.uuid();
             const mockServiceProviderId1: string = faker.string.uuid();
             const mockServiceProviderId2: string = faker.string.uuid();
-            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
-                person: {
+            const mockEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
                     id: mockPersonId,
                     username: 'testuser',
                     vorname: 'Max',
                     familienname: 'Mustermann',
                 },
-                currentKontexte: [
-                    {
-                        id: 'pk1',
-                        rolleId: rolleId1,
-                        rolle: RollenArt.LERN,
-                        orgaId: orgaId,
-                        orgaKennung: '0706054',
-                        isItslearningOrga: false,
-                        serviceProviderExternalSystems: [ServiceProviderSystem.NONE],
-                    },
-                ],
-                removedKontexte: [
+                // new kontexte
+                [],
+                // removed kontexte
+                [
                     {
                         id: 'pk2',
                         rolleId: rolleId2,
@@ -359,23 +344,32 @@ describe('EmailMicroserviceEventHandler', () => {
                         serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
                     },
                 ],
-                newKontexte: [],
-                createdAt: new Date(),
-                eventID: '',
-            });
-            const mockRolle1: Rolle<true> = createMock<Rolle<true>>({
+                // current kontexte
+                [
+                    {
+                        id: 'pk1',
+                        rolleId: rolleId1,
+                        rolle: RollenArt.LERN,
+                        orgaId: orgaId,
+                        orgaKennung: '0706054',
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [ServiceProviderSystem.NONE],
+                    },
+                ],
+            );
+            const mockRolle1: Rolle<true> = DoFactory.createRolle(true, {
                 id: rolleId1,
                 serviceProviderData: [
-                    createMock<ServiceProvider<true>>({
+                    DoFactory.createServiceProvider(true, {
                         id: mockServiceProviderId1,
                         externalSystem: ServiceProviderSystem.NONE,
                     }),
                 ],
             });
-            const mockRolle2: Rolle<true> = createMock<Rolle<true>>({
+            const mockRolle2: Rolle<true> = DoFactory.createRolle(true, {
                 id: rolleId2,
                 serviceProviderData: [
-                    createMock<ServiceProvider<true>>({
+                    DoFactory.createServiceProvider(true, {
                         id: mockServiceProviderId2,
                         externalSystem: ServiceProviderSystem.EMAIL,
                     }),
@@ -424,24 +418,22 @@ describe('EmailMicroserviceEventHandler', () => {
                 serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
             };
 
-            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
-                person: {
+            const mockEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
                     id: spshPersonId,
                     vorname: 'Max',
                     familienname: 'Mustermann',
                     username: 'testuser',
                 },
-                currentKontexte: [kontextToKeep, kontextToRemove],
-                removedKontexte: [kontextToRemove],
-                newKontexte: [],
-                createdAt: new Date(),
-                eventID: '',
-            });
+                [],
+                [kontextToRemove],
+                [kontextToKeep, kontextToRemove],
+            );
 
-            const mockRolle: Rolle<true> = createMock<Rolle<true>>({
+            const mockRolle: Rolle<true> = DoFactory.createRolle(true, {
                 id: 'r1',
                 serviceProviderData: [
-                    createMock<ServiceProvider<true>>({
+                    DoFactory.createServiceProvider(true, {
                         id: mockServiceProviderId,
                         externalSystem: ServiceProviderSystem.EMAIL,
                     }),
@@ -471,14 +463,16 @@ describe('EmailMicroserviceEventHandler', () => {
                 spshServiceProviderId: mockServiceProviderId,
             } satisfies SetEmailAddressForSpshPersonBodyParams;
 
-            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
-                person: {
+            const mockEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
                     id: spshPersonId,
                     vorname: params.firstName,
                     familienname: params.lastName,
                     username: params.spshUsername,
                 },
-                currentKontexte: [
+                [],
+                [],
+                [
                     {
                         id: 'pk1',
                         rolleId: 'r1',
@@ -498,16 +492,12 @@ describe('EmailMicroserviceEventHandler', () => {
                         serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
                     },
                 ],
-                removedKontexte: [],
-                newKontexte: [],
-                createdAt: new Date(),
-                eventID: '',
-            });
+            );
 
-            const mockRolle: Rolle<true> = createMock<Rolle<true>>({
+            const mockRolle: Rolle<true> = DoFactory.createRolle(true, {
                 id: 'r2',
                 serviceProviderData: [
-                    createMock<ServiceProvider<true>>({
+                    DoFactory.createServiceProvider(true, {
                         id: mockServiceProviderId,
                         externalSystem: ServiceProviderSystem.EMAIL,
                     }),
@@ -533,14 +523,16 @@ describe('EmailMicroserviceEventHandler', () => {
             const mockServiceProviderId: string = faker.string.uuid();
             const spshPersonId: string = faker.string.uuid();
 
-            const mockEvent: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>({
-                person: {
+            const mockEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
                     id: spshPersonId,
                     vorname: 'Max',
                     familienname: 'Mustermann',
                     username: 'testuser',
                 },
-                currentKontexte: [
+                [],
+                [],
+                [
                     {
                         id: 'pk1',
                         rolleId: 'r1',
@@ -551,16 +543,12 @@ describe('EmailMicroserviceEventHandler', () => {
                         serviceProviderExternalSystems: [ServiceProviderSystem.EMAIL],
                     },
                 ],
-                removedKontexte: [],
-                newKontexte: [],
-                createdAt: new Date(),
-                eventID: '',
-            });
+            );
 
-            const mockRolle: Rolle<true> = createMock<Rolle<true>>({
+            const mockRolle: Rolle<true> = DoFactory.createRolle(true, {
                 id: 'r1',
                 serviceProviderData: [
-                    createMock<ServiceProvider<true>>({
+                    DoFactory.createServiceProvider(true, {
                         id: mockServiceProviderId,
                         externalSystem: ServiceProviderSystem.EMAIL,
                     }),

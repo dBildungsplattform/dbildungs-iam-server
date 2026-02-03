@@ -1,5 +1,6 @@
+import { vi, Mock } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
@@ -51,11 +52,11 @@ describe('ItsLearning Persons Event Handler', () => {
                 ItsLearningPersonsEventHandler,
                 {
                     provide: ItslearningPersonRepo,
-                    useValue: createMock<ItslearningPersonRepo>(),
+                    useValue: createMock(ItslearningPersonRepo),
                 },
                 {
                     provide: ItslearningMembershipRepo,
-                    useValue: createMock<ItslearningMembershipRepo>(),
+                    useValue: createMock(ItslearningMembershipRepo),
                 },
             ],
         }).compile();
@@ -75,7 +76,7 @@ describe('ItsLearning Persons Event Handler', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('updateMemberships', () => {
@@ -310,7 +311,7 @@ describe('ItsLearning Persons Event Handler', () => {
                 const { username, ...personWithoutUsername }: PersonenkontextUpdatedPersonData = person;
                 const eventID: string = faker.string.uuid();
 
-                await sut.updatePerson(personWithoutUsername, [createMock()], eventID);
+                await sut.updatePerson(personWithoutUsername, [], eventID);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `[EventID: ${eventID}] Person with ID ${person.id} has no username!`,
@@ -378,9 +379,9 @@ describe('ItsLearning Persons Event Handler', () => {
                 [],
             );
 
-            jest.spyOn(sut, 'updatePerson').mockResolvedValueOnce(undefined);
-            jest.spyOn(sut, 'updateMemberships').mockResolvedValueOnce(undefined);
-            jest.spyOn(sut, 'deletePerson').mockResolvedValueOnce(undefined);
+            vi.spyOn(sut, 'updatePerson').mockResolvedValueOnce(undefined);
+            vi.spyOn(sut, 'updateMemberships').mockResolvedValueOnce(undefined);
+            vi.spyOn(sut, 'deletePerson').mockResolvedValueOnce(undefined);
 
             await sut.updatePersonenkontexteEventHandler(event);
         });
@@ -393,9 +394,9 @@ describe('ItsLearning Persons Event Handler', () => {
                 [makeKontextEventData({ serviceProviderExternalSystems: [ServiceProviderSystem.ITSLEARNING] })],
             );
 
-            const updatePersonSpy: jest.SpyInstance = jest.spyOn(sut, 'updatePerson').mockResolvedValueOnce(undefined);
-            jest.spyOn(sut, 'updateMemberships').mockResolvedValueOnce(undefined);
-            jest.spyOn(sut, 'deletePerson').mockResolvedValueOnce(undefined);
+            const updatePersonSpy: Mock = vi.spyOn(sut, 'updatePerson').mockResolvedValueOnce(undefined);
+            vi.spyOn(sut, 'updateMemberships').mockResolvedValueOnce(undefined);
+            vi.spyOn(sut, 'deletePerson').mockResolvedValueOnce(undefined);
 
             await sut.updatePersonenkontexteEventHandler(event);
 
@@ -420,11 +421,9 @@ describe('ItsLearning Persons Event Handler', () => {
                 [schoolKontext, klasseKontext],
             );
 
-            jest.spyOn(sut, 'updatePerson').mockResolvedValueOnce(undefined);
-            const updateMembershipsSpy: jest.SpyInstance = jest
-                .spyOn(sut, 'updateMemberships')
-                .mockResolvedValueOnce(undefined);
-            jest.spyOn(sut, 'deletePerson').mockResolvedValueOnce(undefined);
+            vi.spyOn(sut, 'updatePerson').mockResolvedValueOnce(undefined);
+            const updateMembershipsSpy: Mock = vi.spyOn(sut, 'updateMemberships').mockResolvedValueOnce(undefined);
+            vi.spyOn(sut, 'deletePerson').mockResolvedValueOnce(undefined);
 
             await sut.updatePersonenkontexteEventHandler(event);
 
@@ -459,9 +458,9 @@ describe('ItsLearning Persons Event Handler', () => {
                 ],
             );
 
-            const updatePersonSpy: jest.SpyInstance = jest.spyOn(sut, 'updatePerson').mockResolvedValueOnce(undefined);
-            jest.spyOn(sut, 'updateMemberships').mockResolvedValueOnce(undefined);
-            jest.spyOn(sut, 'deletePerson').mockResolvedValueOnce(undefined);
+            const updatePersonSpy: Mock = vi.spyOn(sut, 'updatePerson').mockResolvedValueOnce(undefined);
+            vi.spyOn(sut, 'updateMemberships').mockResolvedValueOnce(undefined);
+            vi.spyOn(sut, 'deletePerson').mockResolvedValueOnce(undefined);
 
             await sut.updatePersonenkontexteEventHandler(event);
 

@@ -6,6 +6,8 @@ import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
+    createPassportUserMock,
+    createPersonPermissionsMock,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     LoggingTestModule,
@@ -15,7 +17,7 @@ import { ServiceProviderRepo } from '../../../service-provider/repo/service-prov
 import { PersonApiModule } from '../../person-api.module.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
 import { UsernameGeneratorService } from '../../domain/username-generator.service.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { Person, PersonCreationParams } from '../../domain/person.js';
 import { faker } from '@faker-js/faker';
 import { DomainError } from '../../../../shared/error/index.js';
@@ -32,7 +34,6 @@ import { PagedResponse } from '../../../../shared/paging/index.js';
 import { PersonPermissionsRepo } from '../../../authentication/domain/person-permission.repo.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 import { Request } from 'express';
-import { PassportUser } from '../../../authentication/types/user.js';
 import { Observable } from 'rxjs';
 import { PersonenkontextFactory } from '../../../personenkontext/domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
@@ -56,15 +57,19 @@ describe('Personenuebersicht API', () => {
     let dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let organisationRepository: OrganisationRepository;
+    let personPermissions: DeepMocked<PersonPermissions>;
 
     beforeAll(async () => {
-        const keycloakUserServiceMock: KeycloakUserService = createMock<KeycloakUserService>({
-            create: jest.fn().mockImplementation(() => {
+        const keycloakUserServiceMock: KeycloakUserService = createMock<KeycloakUserService>(KeycloakUserService, {
+            create: vi.fn().mockImplementation(() => {
                 return { ok: true, value: faker.string.uuid() };
             }),
-            setPassword: jest.fn().mockResolvedValue({ ok: true, value: '' }),
-            delete: jest.fn().mockResolvedValue({ ok: true }),
+            setPassword: vi.fn().mockResolvedValue({ ok: true, value: '' }),
+            delete: vi.fn().mockResolvedValue({ ok: true }),
         });
+
+        personPermissions = createPersonPermissionsMock();
+        personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
         const module: TestingModule = await Test.createTestingModule({
             imports: [
@@ -81,19 +86,19 @@ describe('Personenuebersicht API', () => {
                 },
                 {
                     provide: UsernameGeneratorService,
-                    useValue: createMock<UsernameGeneratorService>(),
+                    useValue: createMock(UsernameGeneratorService),
                 },
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>(),
+                    useValue: createMock(KeycloakUserService),
                 },
                 {
                     provide: PersonPermissionsRepo,
-                    useValue: createMock<PersonPermissionsRepo>(),
+                    useValue: createMock(PersonPermissionsRepo),
                 },
                 {
                     provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
+                    useValue: createMock(UserLockRepository),
                 },
                 ServiceProviderRepo,
                 PersonRepository,
@@ -108,11 +113,12 @@ describe('Personenuebersicht API', () => {
                     useValue: {
                         intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
                             const req: Request = context.switchToHttp().getRequest();
-                            req.passportUser = createMock<PassportUser>({
-                                async personPermissions() {
-                                    return personpermissionsRepoMock.loadPersonPermissions('');
-                                },
-                            });
+                            req.passportUser = createPassportUserMock(personPermissions);
+                            //  createMock<PassportUser>({
+                            //     async personPermissions() {
+                            //         return personpermissionsRepoMock.loadPersonPermissions('');
+                            //     },
+                            // });
                             return next.handle();
                         },
                     },
@@ -126,7 +132,7 @@ describe('Personenuebersicht API', () => {
         orm = module.get<MikroORM>(MikroORM);
         personRepository = module.get<PersonRepository>(PersonRepository);
         usernameGeneratorService = module.get(UsernameGeneratorService);
-        usernameGeneratorService.generateUsername = jest.fn().mockResolvedValue({ ok: true, value: 'mockUsername' });
+        usernameGeneratorService.generateUsername = vi.fn().mockResolvedValue({ ok: true, value: 'mockUsername' });
         rolleFactory = module.get(RolleFactory);
         rolleRepo = module.get(RolleRepo);
         dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
@@ -459,10 +465,7 @@ describe('Personenuebersicht API', () => {
         });
 
         it('should return personuebersichten with zuordnungen for if admin has same organisation', async () => {
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                 all: false,
                 orgaIds: [savedOrganisation1.id, savedOrganisation2.id],
             });
@@ -494,7 +497,7 @@ describe('Personenuebersicht API', () => {
         });
 
         it('should return personuebersichten with zuordnungen for if admin has rights on root', async () => {
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({

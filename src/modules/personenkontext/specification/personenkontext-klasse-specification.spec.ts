@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { UpdateInvalidRollenartForLernError } from '../domain/error/update-invalid-rollenart-for-lern.error.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { GleicheRolleAnKlasseWieSchuleError } from './error/gleiche-rolle-an-klasse-wie-schule.error.js';
@@ -29,35 +29,35 @@ describe('PersonenkontextKlasseSpecification Integration', () => {
             providers: [
                 {
                     provide: NurLehrUndLernAnKlasse,
-                    useValue: createMock<NurLehrUndLernAnKlasse>(),
+                    useValue: createMock(NurLehrUndLernAnKlasse),
                 },
                 {
                     provide: GleicheRolleAnKlasseWieSchule,
-                    useValue: createMock<GleicheRolleAnKlasseWieSchule>(),
+                    useValue: createMock(GleicheRolleAnKlasseWieSchule),
                 },
                 {
                     provide: CheckRollenartSpecification,
-                    useValue: createMock<CheckRollenartSpecification>(),
+                    useValue: createMock(CheckRollenartSpecification),
                 },
                 {
                     provide: CheckBefristungSpecification,
-                    useValue: createMock<CheckBefristungSpecification>(),
+                    useValue: createMock(CheckBefristungSpecification),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 PersonenkontextKlasseSpecification,
             ],
@@ -71,7 +71,7 @@ describe('PersonenkontextKlasseSpecification Integration', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     afterAll(async () => {
@@ -89,7 +89,7 @@ describe('PersonenkontextKlasseSpecification Integration', () => {
             checkRollenartSpecificationMock,
             befristungRequiredMock,
         );
-        const personenkontextMock: DeepMocked<Personenkontext<boolean>> = createMock<Personenkontext<boolean>>();
+        const personenkontextMock: DeepMocked<Personenkontext<boolean>> = createMock(Personenkontext<boolean>);
 
         checkRollenartSpecificationMock.checkRollenart.mockResolvedValueOnce(false);
         nurLehrUndLernAnKlasseMock.isSatisfiedBy.mockResolvedValueOnce(true);
@@ -108,7 +108,7 @@ describe('PersonenkontextKlasseSpecification Integration', () => {
             checkRollenartSpecificationMock,
             befristungRequiredMock,
         );
-        const personenkontextMock: DeepMocked<Personenkontext<boolean>> = createMock<Personenkontext<boolean>>();
+        const personenkontextMock: DeepMocked<Personenkontext<boolean>> = createMock(Personenkontext<boolean>);
 
         checkRollenartSpecificationMock.checkRollenart.mockResolvedValue(true);
         nurLehrUndLernAnKlasseMock.isSatisfiedBy.mockResolvedValue(false);
@@ -127,7 +127,7 @@ describe('PersonenkontextKlasseSpecification Integration', () => {
             checkRollenartSpecificationMock,
             befristungRequiredMock,
         );
-        const personenkontextMock: DeepMocked<Personenkontext<boolean>> = createMock<Personenkontext<boolean>>();
+        const personenkontextMock: DeepMocked<Personenkontext<boolean>> = createMock(Personenkontext<boolean>);
 
         checkRollenartSpecificationMock.checkRollenart.mockResolvedValue(true);
         nurLehrUndLernAnKlasseMock.isSatisfiedBy.mockResolvedValue(true);
@@ -146,7 +146,7 @@ describe('PersonenkontextKlasseSpecification Integration', () => {
             checkRollenartSpecificationMock,
             befristungRequiredMock,
         );
-        const personenkontextMock: DeepMocked<Personenkontext<boolean>> = createMock<Personenkontext<boolean>>();
+        const personenkontextMock: DeepMocked<Personenkontext<boolean>> = createMock(Personenkontext<boolean>);
 
         checkRollenartSpecificationMock.checkRollenart.mockResolvedValue(true);
         nurLehrUndLernAnKlasseMock.isSatisfiedBy.mockResolvedValue(true);
@@ -164,7 +164,7 @@ describe('PersonenkontextKlasseSpecification Integration', () => {
             checkRollenartSpecificationMock,
             befristungRequiredMock,
         );
-        const personenkontextMock: DeepMocked<Personenkontext<boolean>> = createMock<Personenkontext<boolean>>();
+        const personenkontextMock: DeepMocked<Personenkontext<boolean>> = createMock(Personenkontext<boolean>);
 
         checkRollenartSpecificationMock.checkRollenart.mockResolvedValueOnce(true);
         nurLehrUndLernAnKlasseMock.isSatisfiedBy.mockResolvedValueOnce(true);

@@ -1,8 +1,9 @@
+import { vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { faker } from '@faker-js/faker';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { EmailAddressGenerator } from './email-address-generator.js';
 import {
     InvalidAttributeLengthError,
@@ -21,7 +22,7 @@ describe('EmailAddressGenerator', () => {
             providers: [
                 {
                     provide: EmailAddressRepo,
-                    useValue: createMock<EmailAddressRepo>(),
+                    useValue: createMock(EmailAddressRepo),
                 },
             ],
         }).compile();
@@ -34,7 +35,7 @@ describe('EmailAddressGenerator', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('isEqual', () => {

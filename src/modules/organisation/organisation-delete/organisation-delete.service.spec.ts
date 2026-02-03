@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DoFactory } from '../../../../test/utils';
@@ -34,23 +34,23 @@ describe('OrganisationDeleteService', () => {
                 OrganisationDeleteService,
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: ServiceProviderRepo,
-                    useValue: createMock<ServiceProviderRepo>(),
+                    useValue: createMock(ServiceProviderRepo),
                 },
                 {
                     provide: RollenerweiterungRepo,
-                    useValue: createMock<RollenerweiterungRepo>(),
+                    useValue: createMock(RollenerweiterungRepo),
                 },
             ],
         }).compile();
@@ -67,7 +67,7 @@ describe('OrganisationDeleteService', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('deleteOrganisation', () => {

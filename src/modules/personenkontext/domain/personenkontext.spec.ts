@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
@@ -15,6 +15,8 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { Personenkontext } from './personenkontext.js';
+import { MockedObject } from 'vitest';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('Personenkontext aggregate', () => {
     let module: TestingModule;
@@ -30,15 +32,15 @@ describe('Personenkontext aggregate', () => {
                 PersonenkontextFactory,
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
             ],
         }).compile();
@@ -50,7 +52,7 @@ describe('Personenkontext aggregate', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('checkReferences', () => {
@@ -91,8 +93,8 @@ describe('Personenkontext aggregate', () => {
 
         it('should return EntityNotFoundError if person does not exist', async () => {
             personRepoMock.exists.mockResolvedValueOnce(false);
-            organisationRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>());
-            rolleRepoMock.findById.mockResolvedValueOnce(createMock<Rolle<true>>());
+            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
 
             const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
                 faker.string.uuid(),
@@ -108,7 +110,7 @@ describe('Personenkontext aggregate', () => {
         it('should return EntityNotFoundError if organisation does not exist', async () => {
             personRepoMock.exists.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(undefined);
-            rolleRepoMock.findById.mockResolvedValueOnce(createMock<Rolle<true>>());
+            rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
 
             const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
                 faker.string.uuid(),
@@ -123,7 +125,7 @@ describe('Personenkontext aggregate', () => {
 
         it('should return EntityNotFoundError if rolle does not exist', async () => {
             personRepoMock.exists.mockResolvedValueOnce(true);
-            organisationRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>());
+            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
             rolleRepoMock.findById.mockResolvedValueOnce(undefined);
 
             const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
@@ -139,8 +141,8 @@ describe('Personenkontext aggregate', () => {
 
         it('should return EntityNotFoundError if rolle can not be assigned to orga', async () => {
             personRepoMock.exists.mockResolvedValueOnce(true);
-            organisationRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>());
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
+            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            const rolleMock: MockedObject<Rolle<true>> = vi.mockObject<Rolle<true>>(DoFactory.createRolle(true));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(false);
 
@@ -157,11 +159,11 @@ describe('Personenkontext aggregate', () => {
 
         it('should return PersonenkontextAnlageError if rolle does not match orga', async () => {
             personRepoMock.exists.mockResolvedValueOnce(true);
-            const orgaMock: DeepMocked<Organisation<true>> = createMock<Organisation<true>>();
-            orgaMock.typ = OrganisationsTyp.SCHULE;
+            const orgaMock: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
             organisationRepoMock.findById.mockResolvedValueOnce(orgaMock);
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
-            rolleMock.rollenart = RollenArt.SYSADMIN;
+            const rolleMock: MockedObject<Rolle<true>> = vi.mockObject<Rolle<true>>(
+                DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
+            );
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
 
@@ -179,7 +181,7 @@ describe('Personenkontext aggregate', () => {
 
     describe('checkPermissions', () => {
         it('should return MissingPermissionsError, if logged in user is not authorized at organisation', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false); // Check orga permissions
 
             const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
@@ -198,9 +200,9 @@ describe('Personenkontext aggregate', () => {
         });
 
         it('should return MissingPermissionsError, if target person can not be modified by logged in user', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true); // Check orga permissions
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
+            const rolleMock: MockedObject<Rolle<true>> = vi.mockObject<Rolle<true>>(DoFactory.createRolle(true));
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true); // Check rolle<->orga validity
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             permissions.canModifyPerson.mockResolvedValueOnce(false); // Check person permissions
@@ -217,9 +219,9 @@ describe('Personenkontext aggregate', () => {
         });
 
         it('should not return an error, if kontext is valid', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true); // Check orga permissions
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
+            const rolleMock: MockedObject<Rolle<true>> = vi.mockObject<Rolle<true>>(DoFactory.createRolle(true));
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true); // Check rolle<->orga validity
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             permissions.canModifyPerson.mockResolvedValueOnce(true); // Check person permissions
@@ -236,7 +238,7 @@ describe('Personenkontext aggregate', () => {
 
     describe('getOrganisation', () => {
         it('should return the Organisation', async () => {
-            const orgaMock: DeepMocked<Organisation<true>> = createMock<Organisation<true>>();
+            const orgaMock: Organisation<true> = DoFactory.createOrganisation(true);
             organisationRepoMock.findById.mockResolvedValueOnce(orgaMock);
 
             const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(

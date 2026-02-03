@@ -1,13 +1,19 @@
 import { localFormatter } from './module-logger.js';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock } from '../../../test/utils/createMock.js';
 import winston from 'winston';
+
+class TransformableInfoMock {
+    [key: string]: unknown;
+    public level: string = 'info';
+    public message: unknown;
+}
 
 describe('Module Logger', () => {
     describe('when a log message is produced', () => {
         let tfi: winston.Logform.TransformableInfo;
 
         beforeEach(() => {
-            tfi = createMock<winston.Logform.TransformableInfo>();
+            tfi = createMock(TransformableInfoMock) as winston.Logform.TransformableInfo;
             tfi.level = 'info';
         });
 
