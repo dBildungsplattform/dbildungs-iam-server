@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { INestApplication, UnauthorizedException } from '@nestjs/common';
+import { HttpException, INestApplication, UnauthorizedException } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Client } from 'openid-client';
@@ -36,6 +36,8 @@ import {
     ServiceProviderKategorie,
     ServiceProviderSystem,
 } from '../domain/service-provider.enum.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
@@ -378,6 +380,29 @@ describe('Provider Controller Test', () => {
             },
         );
     });
+
+    describe('getManageableServiceProvidersForOrganisationId', () => {
+        it('should throw MissingPermissionsError when user lacks permission', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            const params: DeepMocked<ManageableServiceProvidersForOrganisationParams> = {
+                organisationId: 'org-1',
+                limit: 10,
+                offset: 0,
+            };
+
+            serviceProviderServiceMock.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung.mockResolvedValueOnce(
+                {
+                    ok: false,
+                    error: new MissingPermissionsError('Rollen Erweitern Systemrecht Required For This Endpoint'),
+                },
+            );
+
+            await expect(
+                providerController.getManageableServiceProvidersForOrganisationId(permissions, params),
+            ).rejects.toThrow(HttpException);
+        });
+    });
+
     describe('createServiceProvider', () => {
         beforeEach(() => {
             vi.clearAllMocks();
