@@ -25,7 +25,7 @@ describe('ImportPasswordEncryptor', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('encryptPassword', () => {

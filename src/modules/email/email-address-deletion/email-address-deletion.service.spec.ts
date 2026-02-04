@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailAddressDeletionService } from './email-address-deletion.service.js';
@@ -12,6 +12,8 @@ import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import assert from 'assert';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 const EMAIL_ADDRESSES_DELETE_LIMIT: number = 10;
 
@@ -30,19 +32,19 @@ describe('EmailAddressDeletionService', () => {
                 EmailAddressDeletionService,
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock(ClassLogger),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: EmailRepo,
-                    useValue: createMock<EmailRepo>(),
+                    useValue: createMock(EmailRepo),
                 },
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
             ],
         }).compile();
@@ -70,25 +72,18 @@ describe('EmailAddressDeletionService', () => {
     ): EmailAddress<true> {
         const dateInPast: Date = new Date();
         dateInPast.setDate(dateInPast.getDate() - 180);
-        const emailAddress: EmailAddress<true> = createMock<EmailAddress<true>>({
-            get status(): EmailAddressStatus {
-                return status;
-            },
-            get address(): string {
-                if (person) {
-                    return person.vorname + '.' + person.familienname + '@schule-sh.de';
-                }
-                return faker.internet.email();
-            },
-            get personId(): PersonID | undefined {
-                return person?.id ?? undefined;
-            },
-            get oxUserID(): Option<string> {
-                return oxUserId;
-            },
-            updatedAt: updatedAt ?? dateInPast,
+        let address: string;
+        if (person) {
+            address = person.vorname + '.' + person.familienname + '@schule-sh.de';
+        } else {
+            address = faker.internet.email();
+        }
+        const emailAddress: EmailAddress<true> = DoFactory.createEmailAddress<true>(true, address, {
+            status,
+            personId: person?.id,
+            oxUserID: oxUserId,
+            updatedAt,
         });
-
         return emailAddress;
     }
 
@@ -105,7 +100,7 @@ describe('EmailAddressDeletionService', () => {
     function createPersons(size: number = 3): Person<true>[] {
         const list: Person<true>[] = [];
         for (let i: number = 0; i < size; i++) {
-            const person: Person<true> = createMock<Person<true>>({
+            const person: Person<true> = DoFactory.createPerson<true>(true, {
                 id: faker.string.uuid(),
                 username: faker.internet.userName(),
                 vorname: faker.person.firstName(),
@@ -138,7 +133,7 @@ describe('EmailAddressDeletionService', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -150,11 +145,15 @@ describe('EmailAddressDeletionService', () => {
             it('should log error about that', async () => {
                 const [persons, emailAddresses]: [Person<true>[], EmailAddress<true>[]] =
                     createPersonsAndEmailAddresses();
-                const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
-                const emailAddressWithUnknownPersonId: EmailAddress<true> = createEmailAddress(
+                const permissionsMock: PersonPermissions = createPersonPermissionsMock();
+                const emailAddressWithUnknownPersonId: EmailAddress<true> = EmailAddress.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    undefined,
+                    faker.internet.email(),
                     EmailAddressStatus.DISABLED,
                     faker.string.numeric(),
-                    undefined,
                 );
                 emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline.mockResolvedValueOnce([
                     emailAddresses.concat([emailAddressWithUnknownPersonId]),
@@ -176,7 +175,7 @@ describe('EmailAddressDeletionService', () => {
             it('should log error about that', async () => {
                 const [persons, emailAddresses]: [Person<true>[], EmailAddress<true>[]] =
                     createPersonsAndEmailAddresses();
-                const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
+                const permissionsMock: PersonPermissions = createPersonPermissionsMock();
                 emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline.mockResolvedValueOnce([
                     emailAddresses,
                     emailAddresses.length,
@@ -199,12 +198,16 @@ describe('EmailAddressDeletionService', () => {
             it('should log error about that', async () => {
                 const [persons, emailAddresses]: [Person<true>[], EmailAddress<true>[]] =
                     createPersonsAndEmailAddresses();
-                const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
+                const permissionsMock: PersonPermissions = createPersonPermissionsMock();
                 assert(persons[0]);
-                const emailAddressWithoutOxUserId: EmailAddress<true> = createEmailAddress(
+                const emailAddressWithoutOxUserId: EmailAddress<true> = EmailAddress.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    persons[0].id,
+                    faker.internet.email(),
                     EmailAddressStatus.DISABLED,
                     undefined,
-                    persons[0],
                 );
                 emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline.mockResolvedValueOnce([
                     emailAddresses.concat([emailAddressWithoutOxUserId]),

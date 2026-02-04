@@ -1,9 +1,14 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { HttpException, NotImplementedException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    createPersonPermissionsMock,
+    DatabaseTestModule,
+    DoFactory,
+} from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
 import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
@@ -68,6 +73,10 @@ describe('PersonController', () => {
     let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
 
+    const rootOrgaId: string = faker.string.uuid();
+    const configServiceMock: DeepMocked<ConfigService> = createMock(ConfigService);
+    configServiceMock.getOrThrow.mockReturnValue({ ROOT_ORGANISATION_ID: rootOrgaId });
+
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
@@ -77,82 +86,82 @@ describe('PersonController', () => {
                 PersonApiMapper,
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock(ClassLogger),
                 },
                 {
                     provide: UsernameGeneratorService,
-                    useValue: createMock<UsernameGeneratorService>(),
+                    useValue: createMock(UsernameGeneratorService),
                 },
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>(),
+                    useValue: createMock(KeycloakUserService),
                 },
                 {
                     provide: PersonDeleteService,
-                    useValue: createMock<PersonDeleteService>(),
+                    useValue: createMock(PersonDeleteService),
                 },
                 {
                     provide: PersonLandesbediensteterSearchService,
-                    useValue: createMock<PersonLandesbediensteterSearchService>(),
+                    useValue: createMock(PersonLandesbediensteterSearchService),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: UsernameGeneratorService,
-                    useValue: createMock<UsernameGeneratorService>(),
+                    useValue: createMock(UsernameGeneratorService),
                 },
                 {
                     provide: ConfigService,
-                    useValue: createMock<ConfigService>(),
+                    useValue: configServiceMock,
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: PersonenkontextService,
-                    useValue: createMock<PersonenkontextService>(),
+                    useValue: createMock(PersonenkontextService),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: DBiamPersonenkontextService,
-                    useValue: createMock<DBiamPersonenkontextService>(),
+                    useValue: createMock(DBiamPersonenkontextService),
                 },
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock(ClassLogger),
                 },
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 {
                     provide: EmailRepo,
-                    useValue: createMock<EmailRepo>(),
+                    useValue: createMock(EmailRepo),
                 },
                 {
                     provide: LdapClientService,
-                    useValue: createMock<LdapClientService>(),
+                    useValue: createMock(LdapClientService),
                 },
                 {
                     provide: LdapSyncEventHandler,
-                    useValue: createMock<LdapSyncEventHandler>(),
+                    useValue: createMock(LdapSyncEventHandler),
                 },
                 {
                     provide: EmailResolverService,
-                    useValue: createMock<EmailResolverService>(),
+                    useValue: createMock(EmailResolverService),
                 },
             ],
         })
             .overrideProvider(EventRoutingLegacyKafkaService)
-            .useValue(createMock<EventRoutingLegacyKafkaService>())
+            .useValue(createMock(EventRoutingLegacyKafkaService))
             .overrideProvider(KeycloakUserService)
-            .useValue(createMock<KeycloakUserService>())
+            .useValue(createMock(KeycloakUserService))
             .compile();
         logger = module.get(ClassLogger);
         personController = module.get(PersonController);
@@ -202,7 +211,8 @@ describe('PersonController', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        personPermissionsMock = createPersonPermissionsMock();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -363,12 +373,12 @@ describe('PersonController', () => {
         };
 
         beforeEach(() => {
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createPersonPermissionsMock();
         });
 
         it('should return search result when permissions are sufficient', async () => {
             const responseMock: PersonLandesbediensteterSearchResponse =
-                createMock<PersonLandesbediensteterSearchResponse>();
+                PersonLandesbediensteterSearchResponse.createNew(DoFactory.createPerson(true), [], undefined);
             personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                 all: true,
             });
@@ -428,7 +438,7 @@ describe('PersonController', () => {
                     offset: 0,
                     limit: 1,
                 };
-                personPermissionsMock = createMock<PersonPermissions>();
+                personPermissionsMock = createPersonPermissionsMock();
 
                 personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue(personenkontextDtos);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: getPerson() });
@@ -462,7 +472,7 @@ describe('PersonController', () => {
                     offset: 0,
                     limit: 1,
                 };
-                personPermissionsMock = createMock<PersonPermissions>();
+                personPermissionsMock = createPersonPermissionsMock();
 
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: false,
@@ -482,7 +492,7 @@ describe('PersonController', () => {
                 personId: faker.string.uuid(),
             };
             const person: Person<true> = getPerson();
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createPersonPermissionsMock();
 
             it('should reset password for person', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
@@ -501,7 +511,7 @@ describe('PersonController', () => {
                 personId: faker.string.uuid(),
             };
             const person: Person<true> = getPerson();
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createPersonPermissionsMock();
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
@@ -520,7 +530,7 @@ describe('PersonController', () => {
                 personId: faker.string.uuid(),
             };
             const person: Person<true> = getPerson();
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createPersonPermissionsMock();
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findBy.mockResolvedValue([[], 0]);
@@ -542,7 +552,7 @@ describe('PersonController', () => {
                 personId: faker.string.uuid(),
             };
             const person: Person<true> = getPerson();
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createPersonPermissionsMock();
 
             it('should throw HttpNotFoundException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(undefined);
@@ -573,7 +583,7 @@ describe('PersonController', () => {
             },
             revision: '1',
         };
-        personPermissionsMock = createMock<PersonPermissions>();
+        personPermissionsMock = createPersonPermissionsMock();
 
         describe('when updating a person is successful', () => {
             const person: Person<true> = getPerson();
@@ -672,7 +682,7 @@ describe('PersonController', () => {
         const params: PersonByIdParams = {
             personId: faker.string.uuid(),
         };
-        personPermissionsMock = createMock<PersonPermissions>();
+        personPermissionsMock = createPersonPermissionsMock();
 
         describe('when locking a user is successful', () => {
             const person: Person<true> = getPerson();
@@ -803,7 +813,7 @@ describe('PersonController', () => {
         const params: PersonByIdParams = {
             personId: faker.string.uuid(),
         };
-        personPermissionsMock = createMock<PersonPermissions>();
+        personPermissionsMock = createPersonPermissionsMock();
 
         describe('when person exists and user has permissions', () => {
             const person: Person<true> = getPerson();
@@ -822,7 +832,7 @@ describe('PersonController', () => {
 
         describe('when person does not exists or user is missing permissions', () => {
             it('should return error', async () => {
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: false, error: createMock() });
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: false, error: new Error() });
 
                 const syncPromise: Promise<void> = personController.syncPerson(params.personId, personPermissionsMock);
 
@@ -921,7 +931,7 @@ describe('PersonController', () => {
             const params: PersonByIdParams = {
                 personId: faker.string.uuid(),
             };
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createPersonPermissionsMock();
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findBy.mockResolvedValue([[], 0]);
@@ -941,7 +951,7 @@ describe('PersonController', () => {
             const params: PersonByIdParams = {
                 personId: faker.string.uuid(),
             };
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createPersonPermissionsMock();
 
             it('should throw HttpNotFoundException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(undefined);
@@ -961,13 +971,13 @@ describe('PersonController', () => {
             const params: PersonByIdParams = {
                 personId: faker.string.uuid(),
             };
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createPersonPermissionsMock();
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findBy.mockResolvedValue([[], 0]);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
-                    value: createMock<Person<true>>({ username: undefined }),
+                    value: DoFactory.createPerson<true>(true, { username: undefined }),
                 });
 
                 await expect(
@@ -982,13 +992,17 @@ describe('PersonController', () => {
                 personId: faker.string.uuid(),
             };
             const person: Person<true> = getPerson();
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createPersonPermissionsMock();
 
             it('should reset UEM-password for person', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
                     value: person,
+                });
+                ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
+                    ok: true,
+                    value: person.id,
                 });
 
                 await expect(
@@ -1007,7 +1021,7 @@ describe('PersonController', () => {
                 personId: faker.string.uuid(),
             };
             const person: Person<true> = getPerson();
-            personPermissionsMock = createMock<PersonPermissions>();
+            personPermissionsMock = createPersonPermissionsMock();
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
@@ -1034,9 +1048,12 @@ describe('PersonController', () => {
 
     describe('resetUEMPassword', () => {
         describe('when person does not exist', () => {
-            personPermissionsMock = createMock<PersonPermissions>();
-
             it('should throw HttpException', async () => {
+                personPermissionsMock = createPersonPermissionsMock({ id: '' });
+                ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
+                    ok: false,
+                    error: new HttpException('Person not found', 404),
+                });
                 await expect(personController.resetUEMPassword(personPermissionsMock)).rejects.toThrow(HttpException);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
@@ -1047,9 +1064,9 @@ describe('PersonController', () => {
             person.username = undefined;
             person.username = undefined;
             const permissions: PersonPermissions = new PersonPermissions(
-                createMock<DBiamPersonenkontextRepo>(),
-                createMock<OrganisationRepository>(),
-                createMock<RolleRepo>(),
+                createMock(DBiamPersonenkontextRepo),
+                createMock(OrganisationRepository),
+                createMock(RolleRepo),
                 person,
             );
 
@@ -1062,9 +1079,9 @@ describe('PersonController', () => {
         describe('when resetting UEM-password for self', () => {
             const person: Person<true> = getPerson();
             const permissions: PersonPermissions = new PersonPermissions(
-                createMock<DBiamPersonenkontextRepo>(),
-                createMock<OrganisationRepository>(),
-                createMock<RolleRepo>(),
+                createMock(DBiamPersonenkontextRepo),
+                createMock(OrganisationRepository),
+                createMock(RolleRepo),
                 person,
             );
 
@@ -1086,9 +1103,9 @@ describe('PersonController', () => {
         describe('when setting password in LDAP fails', () => {
             const person: Person<true> = getPerson();
             const permissions: PersonPermissions = new PersonPermissions(
-                createMock<DBiamPersonenkontextRepo>(),
-                createMock<OrganisationRepository>(),
-                createMock<RolleRepo>(),
+                createMock(DBiamPersonenkontextRepo),
+                createMock(OrganisationRepository),
+                createMock(RolleRepo),
                 person,
             );
 

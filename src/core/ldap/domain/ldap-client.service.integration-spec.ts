@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
@@ -14,7 +15,7 @@ import { LdapModule } from '../ldap.module.js';
 import { faker } from '@faker-js/faker';
 import { LdapClientService, LdapPersonAttributes, PersonData } from './ldap-client.service.js';
 import { Person } from '../../../modules/person/domain/person.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { LdapClient } from './ldap-client.js';
 import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
 import { PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
@@ -33,6 +34,15 @@ import { LdapModifyUserPasswordError } from '../error/ldap-modify-user-password.
 import assert from 'assert';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { LdapDeleteOrganisationError } from '../error/ldap-delete-organisation.error.js';
+class PublicExecuteWithRetry {
+    public async executeWithRetry<T>(
+        _func: () => Promise<Result<T>>,
+        _retries: number,
+        _delay: number = 15000,
+    ): Promise<Result<T>> {
+        return _func();
+    }
+}
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -68,14 +78,23 @@ describe('LDAP Client Service', () => {
         mailPrimaryAddress?: string,
         mailAlternativeAddress?: string,
     ): Entry {
-        return createMock<Entry>({
-            dn: dn,
-            givenName: givenName,
-            sn: sn,
-            cn: cn,
-            mailPrimaryAddress: mailPrimaryAddress,
-            mailAlternativeAddress: mailAlternativeAddress,
-        });
+        const entry: Entry = { dn: dn };
+        if (givenName !== undefined) {
+            entry['givenName'] = givenName;
+        }
+        if (sn !== undefined) {
+            entry['sn'] = sn;
+        }
+        if (cn !== undefined) {
+            entry['cn'] = cn;
+        }
+        if (mailPrimaryAddress !== undefined) {
+            entry['mailPrimaryAddress'] = mailPrimaryAddress;
+        }
+        if (mailAlternativeAddress !== undefined) {
+            entry['mailAlternativeAddress'] = mailAlternativeAddress;
+        }
+        return entry;
     }
 
     /**
@@ -100,7 +119,7 @@ describe('LDAP Client Service', () => {
 
     function makeMockClient(cb: (client: DeepMocked<Client>) => void): void {
         ldapClientMock.getClient.mockImplementationOnce(() => {
-            const client: DeepMocked<Client> = createMock<Client>();
+            const client: DeepMocked<Client> = createMock(Client);
 
             cb(client);
 
@@ -123,17 +142,22 @@ describe('LDAP Client Service', () => {
             mockBind();
 
             // Organisation Unit check
-            client.search.mockResolvedValueOnce(
-                createMock<SearchResult>({
-                    searchEntries: [{}],
-                }),
-            );
+            client.search.mockResolvedValueOnce({
+                searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }],
+                searchReferences: [],
+            });
 
             // Organisation Role check
-            client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [{}] }));
+            client.search.mockResolvedValueOnce({
+                searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }],
+                searchReferences: [],
+            });
 
             // Group of Names check
-            client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [{}] }));
+            client.search.mockResolvedValueOnce({
+                searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }],
+                searchReferences: [],
+            });
 
             // Add user to group
             client.modify.mockResolvedValueOnce();
@@ -162,11 +186,11 @@ describe('LDAP Client Service', () => {
             .overrideModule(LdapConfigModule)
             .useModule(LdapTestModule.forRoot({ isLdapRequired: true }))
             .overrideProvider(LdapClient)
-            .useValue(createMock<LdapClient>())
+            .useValue(createMock(LdapClient))
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .overrideProvider(EventRoutingLegacyKafkaService)
-            .useValue(createMock<EventRoutingLegacyKafkaService>())
+            .useValue(createMock(EventRoutingLegacyKafkaService))
             .overrideProvider(LdapInstanceConfig)
             .useValue(mockLdapInstanceConfig)
             .compile();
@@ -177,7 +201,7 @@ describe('LDAP Client Service', () => {
         ldapClientMock = module.get(LdapClient);
         loggerMock = module.get(ClassLogger);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
-        clientMock = createMock<Client>();
+        clientMock = createMock(Client);
         instanceConfig = module.get(LdapInstanceConfig);
 
         person = Person.construct(
@@ -202,20 +226,21 @@ describe('LDAP Client Service', () => {
         await DatabaseTestModule.clearDatabase(orm);
         await orm.close();
         await app.close();
-        jest.clearAllTimers();
+        vi.clearAllTimers();
     });
 
     beforeEach(async () => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         await DatabaseTestModule.clearDatabase(orm);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        jest.spyOn(ldapClientService as any, 'executeWithRetry').mockImplementation((...args: unknown[]) => {
-            //Needed To globally mock the private executeWithRetry function (otherwise test run too long)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const func: () => Promise<Result<any>> = args[0] as () => Promise<Result<any>>;
-            return func();
-        });
+        vi.spyOn(ldapClientService as unknown as PublicExecuteWithRetry, 'executeWithRetry').mockImplementation(
+            (...args: unknown[]) => {
+                //Needed To globally mock the private executeWithRetry function (otherwise test run too long)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const func: () => Promise<Result<any>> = args[0] as () => Promise<Result<any>>;
+                return func();
+            },
+        );
     });
 
     it('should be defined', () => {
@@ -229,12 +254,12 @@ describe('LDAP Client Service', () => {
         const fakeGroupDn: string = 'cn=lehrer-group,' + mockLdapInstanceConfig.BASE_DN;
 
         beforeEach(() => {
-            jest.clearAllMocks();
+            vi.clearAllMocks();
         });
 
         it('should update member DN in all groups successfully', async () => {
             const clientMock2: Client = {
-                search: jest.fn().mockResolvedValueOnce({
+                search: vi.fn().mockResolvedValueOnce({
                     searchEntries: [
                         {
                             dn: fakeGroupDn,
@@ -243,7 +268,7 @@ describe('LDAP Client Service', () => {
                     ],
                     searchReferences: [],
                 }),
-                modify: jest.fn().mockResolvedValueOnce({}),
+                modify: vi.fn().mockResolvedValueOnce({}),
             } as unknown as Client;
 
             const result: Result<string, Error> = await ldapClientService.updateMemberDnInGroups(
@@ -270,11 +295,11 @@ describe('LDAP Client Service', () => {
 
         it('should return a message when no groups are found', async () => {
             const clientMock3: Client = {
-                search: jest.fn().mockResolvedValueOnce({
+                search: vi.fn().mockResolvedValueOnce({
                     searchEntries: [],
                     searchReferences: [],
                 }),
-                modify: jest.fn().mockResolvedValueOnce({}),
+                modify: vi.fn().mockResolvedValueOnce({}),
             } as unknown as Client;
 
             const result: Result<string, Error> = await ldapClientService.updateMemberDnInGroups(
@@ -291,7 +316,7 @@ describe('LDAP Client Service', () => {
 
         it('should handle errors when updating group membership fails', async () => {
             const clientMock5: Client = {
-                search: jest.fn().mockResolvedValueOnce({
+                search: vi.fn().mockResolvedValueOnce({
                     searchEntries: [
                         {
                             dn: fakeGroupDn,
@@ -300,7 +325,7 @@ describe('LDAP Client Service', () => {
                     ],
                     searchReferences: [],
                 }),
-                modify: jest.fn().mockRejectedValueOnce(new Error('Modify error')),
+                modify: vi.fn().mockRejectedValueOnce(new Error('Modify error')),
             } as unknown as Client;
 
             const result: Result<string, Error> = await ldapClientService.updateMemberDnInGroups(
@@ -318,11 +343,11 @@ describe('LDAP Client Service', () => {
 
         it('should handle groups with empty or undefined member lists', async () => {
             const clientMock4: Client = {
-                search: jest.fn().mockResolvedValueOnce({
+                search: vi.fn().mockResolvedValueOnce({
                     searchEntries: undefined,
                     searchReferences: [],
                 }),
-                modify: jest.fn().mockResolvedValueOnce({}),
+                modify: vi.fn().mockResolvedValueOnce({}),
             } as unknown as Client;
 
             const result: Result<string, Error> = await ldapClientService.updateMemberDnInGroups(
@@ -447,7 +472,10 @@ describe('LDAP Client Service', () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValue();
                 clientMock.add.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                clientMock.search.mockResolvedValueOnce({
+                    searchEntries: [],
+                    searchReferences: [],
+                });
                 return clientMock;
             });
             const result: Result<boolean> = await ldapClientService.isLehrerExisting('user123', 'wrong-domain.de');
@@ -460,7 +488,10 @@ describe('LDAP Client Service', () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValue();
                 clientMock.add.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                clientMock.search.mockResolvedValueOnce({
+                    searchEntries: [],
+                    searchReferences: [],
+                });
                 return clientMock;
             });
 
@@ -496,9 +527,10 @@ describe('LDAP Client Service', () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValue();
                 clientMock.add.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(
-                    createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }),
-                );
+                clientMock.search.mockResolvedValueOnce({
+                    searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }],
+                    searchReferences: [],
+                });
                 return clientMock;
             });
             const result: Result<boolean> = await ldapClientService.isLehrerExisting('user123', fakeEmailDomain);
@@ -512,7 +544,7 @@ describe('LDAP Client Service', () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValue();
                 clientMock.add.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                clientMock.search.mockResolvedValueOnce({ searchEntries: [], searchReferences: [] });
                 return clientMock;
             });
             const result: Result<boolean> = await ldapClientService.isLehrerExisting('user123', fakeEmailDomain);
@@ -555,13 +587,13 @@ describe('LDAP Client Service', () => {
                 clientMock.bind.mockResolvedValueOnce();
                 clientMock.search
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }), // Search for organizationalUnit
+                        { searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }], searchReferences: [] }, // Search for organizationalUnit
                     )
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }), // Search for organizationalRole
+                        { searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }], searchReferences: [] }, // Search for organizationalRole
                     )
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>({ dn: fakeGroupDn })] }), // Search for groupOfNames
+                        { searchEntries: [{ dn: fakeGroupDn }], searchReferences: [] }, // Search for groupOfNames
                     );
                 clientMock.modify.mockResolvedValueOnce();
 
@@ -594,13 +626,13 @@ describe('LDAP Client Service', () => {
                 clientMock.bind.mockResolvedValueOnce();
                 clientMock.search
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [] }), // No organizationalUnit found
+                        { searchEntries: [], searchReferences: [] }, // No organizationalUnit found
                     )
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }), // Search for organizationalRole
+                        { searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }], searchReferences: [] }, // Search for organizationalRole
                     )
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }), // Search for groupOfNames
+                        { searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }], searchReferences: [] }, // Search for groupOfNames
                     );
                 clientMock.add.mockResolvedValueOnce(); // Add organizationalUnit
                 clientMock.modify.mockResolvedValueOnce();
@@ -626,13 +658,13 @@ describe('LDAP Client Service', () => {
                 clientMock.bind.mockResolvedValueOnce();
                 clientMock.search
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }), // Search for organizationalUnit
+                        { searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }], searchReferences: [] }, // Search for organizationalUnit
                     )
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }), // Search for organizationalRole
+                        { searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }], searchReferences: [] }, // Search for organizationalRole
                     )
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [] }), // No groupOfNames found
+                        { searchEntries: [], searchReferences: [] }, // No groupOfNames found
                     );
                 clientMock.add.mockResolvedValueOnce(); // Add group
                 clientMock.modify.mockResolvedValueOnce();
@@ -662,13 +694,13 @@ describe('LDAP Client Service', () => {
                 clientMock.bind.mockResolvedValueOnce();
                 clientMock.search
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }), // Search for organizationalUnit
+                        { searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }], searchReferences: [] }, // Search for organizationalUnit
                     )
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }), // Search for organizationalRole
+                        { searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }], searchReferences: [] }, // Search for organizationalRole
                     )
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [] }), // No groupOfNames found
+                        { searchEntries: [], searchReferences: [] }, // No groupOfNames found
                     );
                 clientMock.add.mockRejectedValueOnce(new Error('Group creation failed'));
 
@@ -693,13 +725,13 @@ describe('LDAP Client Service', () => {
                 clientMock.bind.mockResolvedValueOnce();
                 clientMock.search
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }), // Search for organizationalUnit
+                        { searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }], searchReferences: [] }, // Search for organizationalUnit
                     )
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }), // Search for organizationalRole
+                        { searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }], searchReferences: [] }, // Search for organizationalRole
                     )
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }), // Group found
+                        { searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }], searchReferences: [] }, // Group found
                     );
                 clientMock.modify.mockRejectedValueOnce(new Error('Modify error'));
 
@@ -739,18 +771,18 @@ describe('LDAP Client Service', () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValueOnce();
                 clientMock.search
-                    .mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }))
-                    .mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }))
-                    .mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [
-                                createMock<Entry>({
-                                    dn: fakeGroupDn,
-                                    member: [fakeLehrerUid],
-                                }),
-                            ],
-                        }),
-                    );
+                    .mockResolvedValueOnce({
+                        searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }],
+                        searchReferences: [],
+                    })
+                    .mockResolvedValueOnce({
+                        searchEntries: [{ dn: 'ou=123,dc=example,dc=com' }],
+                        searchReferences: [],
+                    })
+                    .mockResolvedValueOnce({
+                        searchEntries: [{ dn: fakeGroupDn, member: [fakeLehrerUid] }],
+                        searchReferences: [],
+                    });
 
                 return clientMock;
             });
@@ -780,7 +812,10 @@ describe('LDAP Client Service', () => {
                 makeMockClient((client: DeepMocked<Client>) => {
                     mockBind();
 
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    client.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                 });
 
                 const result: Result<boolean> = await ldapClientService.removeMailAlternativeAddress(
@@ -819,7 +854,10 @@ describe('LDAP Client Service', () => {
                 makeMockClient((client: DeepMocked<Client>) => {
                     mockBind(bindError);
 
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    client.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                 });
 
                 const result: Result<boolean> = await ldapClientService.removeMailAlternativeAddress(
@@ -839,7 +877,10 @@ describe('LDAP Client Service', () => {
                 makeMockClient((client: DeepMocked<Client>) => {
                     mockBind();
 
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    client.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                 });
 
                 const result: Result<boolean> = await ldapClientService.removeMailAlternativeAddress(
@@ -860,7 +901,7 @@ describe('LDAP Client Service', () => {
                 makeMockClient((client: DeepMocked<Client>) => {
                     mockBind();
 
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [entry] }));
+                    client.search.mockResolvedValueOnce({ searchEntries: [entry], searchReferences: [] });
                 });
 
                 const result: Result<boolean> = await ldapClientService.removeMailAlternativeAddress(
@@ -891,7 +932,7 @@ describe('LDAP Client Service', () => {
                 makeMockClient((client: DeepMocked<Client>) => {
                     mockBind();
 
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [entry] }));
+                    client.search.mockResolvedValueOnce({ searchEntries: [entry], searchReferences: [] });
                     client.modify.mockRejectedValueOnce(modifyError);
                 });
 
@@ -923,7 +964,7 @@ describe('LDAP Client Service', () => {
                 makeMockClient((client: DeepMocked<Client>) => {
                     mockBind();
 
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [entry] }));
+                    client.search.mockResolvedValueOnce({ searchEntries: [entry], searchReferences: [] });
                     client.modify.mockRejectedValueOnce(modifyError);
                 });
 
@@ -957,7 +998,7 @@ describe('LDAP Client Service', () => {
                 makeMockClient((client: DeepMocked<Client>) => {
                     mockBind();
 
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [entry] }));
+                    client.search.mockResolvedValueOnce({ searchEntries: [entry], searchReferences: [] });
                     client.modify.mockResolvedValueOnce();
                 });
 
@@ -978,7 +1019,7 @@ describe('LDAP Client Service', () => {
 
     describe('executeWithRetry', () => {
         beforeEach(() => {
-            jest.restoreAllMocks(); //Needed To Reset the global executeWithRetry Mock
+            vi.restoreAllMocks(); //Needed To Reset the global executeWithRetry Mock
         });
 
         it('when operation succeeds should return value', async () => {
@@ -1088,21 +1129,24 @@ describe('LDAP Client Service', () => {
                     mockAddPersonToGroup();
 
                     // exists check
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    client.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
 
                     // Add
                     client.add.mockResolvedValueOnce();
 
                     // Get EntryUUID
-                    client.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [
-                                createMock<Entry>({
-                                    entryUUID: faker.string.uuid(),
-                                }),
-                            ],
-                        }),
-                    );
+                    client.search.mockResolvedValueOnce({
+                        searchEntries: [
+                            {
+                                entryUUID: faker.string.uuid(),
+                                dn: '',
+                            },
+                        ],
+                        searchReferences: [],
+                    });
                 });
 
                 const testLehrer: PersonData = getPersonData();
@@ -1124,21 +1168,19 @@ describe('LDAP Client Service', () => {
                     mockAddPersonToGroup();
 
                     // exists check
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    client.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
 
                     // Add
                     client.add.mockResolvedValueOnce();
 
                     // Get EntryUUID
-                    client.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [
-                                createMock<Entry>({
-                                    entryUUID: faker.string.uuid(),
-                                }),
-                            ],
-                        }),
-                    );
+                    client.search.mockResolvedValueOnce({
+                        searchEntries: [{ dn: '', entryUUID: faker.string.uuid() }],
+                        searchReferences: [],
+                    });
                 });
 
                 const testLehrer: PersonData = getPersonData();
@@ -1159,12 +1201,24 @@ describe('LDAP Client Service', () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.bind.mockResolvedValue();
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>());
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                     clientMock.add.mockResolvedValueOnce();
                     clientMock.add.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                     clientMock.add.mockResolvedValueOnce();
                     clientMock.add.mockRejectedValueOnce(error);
 
@@ -1193,21 +1247,19 @@ describe('LDAP Client Service', () => {
                     mockAddPersonToGroup();
 
                     // exists check
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    client.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
 
                     // Add
                     client.add.mockResolvedValueOnce();
 
                     // Get EntryUUID
-                    client.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [
-                                createMock<Entry>({
-                                    entryUUID: faker.string.uuid(),
-                                }),
-                            ],
-                        }),
-                    );
+                    client.search.mockResolvedValueOnce({
+                        searchEntries: [{ dn: '', entryUUID: faker.string.uuid() }],
+                        searchReferences: [],
+                    });
                 });
 
                 const testLehrer: PersonData = getPersonData();
@@ -1232,15 +1284,10 @@ describe('LDAP Client Service', () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [
-                                createMock<Entry>({
-                                    dn: lehrerUid,
-                                }),
-                            ],
-                        }),
-                    ); //mock: lehrer already exists
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [{ dn: lehrerUid }],
+                        searchReferences: [],
+                    });
 
                     return clientMock;
                 });
@@ -1258,7 +1305,10 @@ describe('LDAP Client Service', () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] })); //mock: lehrer not present
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    }); //mock: lehrer not present
 
                     return clientMock;
                 });
@@ -1294,17 +1344,19 @@ describe('LDAP Client Service', () => {
                     mockAddPersonToGroup();
 
                     // exists check
-                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    client.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
 
                     // Add
                     client.add.mockResolvedValueOnce();
 
                     // Get EntryUUID
-                    client.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [createMock<Entry>({})],
-                        }),
-                    );
+                    client.search.mockResolvedValueOnce({
+                        searchEntries: [{ dn: '' }],
+                        searchReferences: [],
+                    });
                 });
 
                 const testLehrer: PersonData = getPersonData();
@@ -1339,12 +1391,15 @@ describe('LDAP Client Service', () => {
 
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                     clientMock.add.mockRejectedValueOnce(new Error('Group addition failed'));
                     return clientMock;
                 });
 
-                jest.spyOn(ldapClientService, 'addPersonToGroup').mockResolvedValue({
+                vi.spyOn(ldapClientService, 'addPersonToGroup').mockResolvedValue({
                     ok: false,
                     error: new Error('Group addition failed'),
                 });
@@ -1375,12 +1430,14 @@ describe('LDAP Client Service', () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
                     clientMock.del.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>());
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [createMock<Entry>()],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [{ dn: '' }],
+                        searchReferences: [],
+                    });
                     return clientMock;
                 });
 
@@ -1397,12 +1454,14 @@ describe('LDAP Client Service', () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
                     clientMock.del.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>());
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                     return clientMock;
                 });
 
@@ -1419,12 +1478,14 @@ describe('LDAP Client Service', () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
                     clientMock.del.mockRejectedValueOnce(new Error());
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>());
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [createMock<Entry>()],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [{ dn: '' }],
+                        searchReferences: [],
+                    });
                     return clientMock;
                 });
 
@@ -1487,11 +1548,10 @@ describe('LDAP Client Service', () => {
             it('should return truthy result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [createMock<Entry>()],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [{ dn: '' }],
+                        searchReferences: [],
+                    });
                     clientMock.del.mockResolvedValueOnce();
 
                     return clientMock;
@@ -1510,11 +1570,10 @@ describe('LDAP Client Service', () => {
             it('should return error when lehrer cannot be found', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                     clientMock.del.mockResolvedValueOnce();
 
                     return clientMock;
@@ -1530,11 +1589,10 @@ describe('LDAP Client Service', () => {
             it('should return truthy when lehrer cannot be found', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                     clientMock.del.mockResolvedValueOnce();
 
                     return clientMock;
@@ -1584,11 +1642,10 @@ describe('LDAP Client Service', () => {
             it('should return LdapSearchError', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                     return clientMock;
                 });
 
@@ -1607,15 +1664,10 @@ describe('LDAP Client Service', () => {
             beforeEach(() => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [
-                                createMock<Entry>({
-                                    dn: faker.string.numeric(8),
-                                }),
-                            ],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [{ dn: '' }],
+                        searchReferences: [],
+                    });
                     clientMock.modify.mockResolvedValue();
 
                     return clientMock;
@@ -1677,7 +1729,7 @@ describe('LDAP Client Service', () => {
                     const oldUsername: PersonUsername = faker.internet.userName();
                     const newUid: string = faker.string.alphanumeric(6);
 
-                    jest.spyOn(ldapClientService, 'updateMemberDnInGroups').mockResolvedValue({
+                    vi.spyOn(ldapClientService, 'updateMemberDnInGroups').mockResolvedValue({
                         ok: false,
                         error: new Error('Failed to update groups'),
                     });
@@ -1714,11 +1766,10 @@ describe('LDAP Client Service', () => {
         function mockEntryCanBeFound(): void {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(
-                    createMock<SearchResult>({
-                        searchEntries: [entry],
-                    }),
-                );
+                clientMock.search.mockResolvedValueOnce({
+                    searchEntries: [entry],
+                    searchReferences: [],
+                });
                 return clientMock;
             });
         }
@@ -1749,11 +1800,10 @@ describe('LDAP Client Service', () => {
                     const bindError: Error = Error('Bind failed');
                     ldapClientMock.getClient.mockImplementation(() => {
                         clientMock.bind.mockResolvedValueOnce();
-                        clientMock.search.mockResolvedValueOnce(
-                            createMock<SearchResult>({
-                                searchEntries: [],
-                            }),
-                        );
+                        clientMock.search.mockResolvedValueOnce({
+                            searchEntries: [],
+                            searchReferences: [],
+                        });
                         clientMock.bind.mockRejectedValueOnce(bindError);
 
                         return clientMock;
@@ -1785,11 +1835,10 @@ describe('LDAP Client Service', () => {
                     const invalidEmailDomain: string = 'not-a-valid-domain.de';
                     ldapClientMock.getClient.mockImplementation(() => {
                         clientMock.bind.mockResolvedValueOnce();
-                        clientMock.search.mockResolvedValueOnce(
-                            createMock<SearchResult>({
-                                searchEntries: [],
-                            }),
-                        );
+                        clientMock.search.mockResolvedValueOnce({
+                            searchEntries: [],
+                            searchReferences: [],
+                        });
 
                         return clientMock;
                     });
@@ -1821,22 +1870,20 @@ describe('LDAP Client Service', () => {
             describe('when implicit creation of empty PersonEntry succeeds', () => {
                 it('should log info and return DN for PersonEntry', async () => {
                     const newEntryUUID: string = faker.string.uuid();
-                    const entryUUIDSearchEntry: Entry = createMock<Entry>({
+                    const entryUUIDSearchEntry: Entry = {
                         dn: dn,
                         entryUUID: newEntryUUID,
-                    });
+                    };
                     ldapClientMock.getClient.mockImplementation(() => {
                         clientMock.bind.mockResolvedValueOnce();
-                        clientMock.search.mockResolvedValueOnce(
-                            createMock<SearchResult>({
-                                searchEntries: [],
-                            }),
-                        );
-                        clientMock.search.mockResolvedValueOnce(
-                            createMock<SearchResult>({
-                                searchEntries: [entryUUIDSearchEntry],
-                            }),
-                        );
+                        clientMock.search.mockResolvedValueOnce({
+                            searchEntries: [],
+                            searchReferences: [],
+                        });
+                        clientMock.search.mockResolvedValueOnce({
+                            searchEntries: [entryUUIDSearchEntry],
+                            searchReferences: [],
+                        });
 
                         return clientMock;
                     });
@@ -1869,17 +1916,15 @@ describe('LDAP Client Service', () => {
                 it('should log error about failing fetch of entryUUID and return DN for PersonEntry', async () => {
                     ldapClientMock.getClient.mockImplementation(() => {
                         clientMock.bind.mockResolvedValueOnce();
-                        clientMock.search.mockResolvedValueOnce(
-                            createMock<SearchResult>({
-                                searchEntries: [],
-                            }),
-                        );
+                        clientMock.search.mockResolvedValueOnce({
+                            searchEntries: [],
+                            searchReferences: [],
+                        });
                         //mock: 2. search-request == entryUUID-search return no result
-                        clientMock.search.mockResolvedValueOnce(
-                            createMock<SearchResult>({
-                                searchEntries: [],
-                            }),
-                        );
+                        clientMock.search.mockResolvedValueOnce({
+                            searchEntries: [],
+                            searchReferences: [],
+                        });
 
                         return clientMock;
                     });
@@ -1915,11 +1960,10 @@ describe('LDAP Client Service', () => {
                 it('should log error and return Result with Error', async () => {
                     ldapClientMock.getClient.mockImplementation(() => {
                         clientMock.bind.mockResolvedValueOnce();
-                        clientMock.search.mockResolvedValueOnce(
-                            createMock<SearchResult>({
-                                searchEntries: [],
-                            }),
-                        );
+                        clientMock.search.mockResolvedValueOnce({
+                            searchEntries: [],
+                            searchReferences: [],
+                        });
                         clientMock.add.mockRejectedValueOnce(ldapAddError);
 
                         return clientMock;
@@ -2131,11 +2175,10 @@ describe('LDAP Client Service', () => {
             it('should log error and return', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
 
                     return clientMock;
                 });
@@ -2164,11 +2207,10 @@ describe('LDAP Client Service', () => {
                 const thrownError: Error = new Error();
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [entry],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [entry],
+                        searchReferences: [],
+                    });
                     clientMock.modify.mockRejectedValueOnce(new Error());
 
                     return clientMock;
@@ -2198,11 +2240,10 @@ describe('LDAP Client Service', () => {
             it('should log info and return PersonId', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [entry],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [entry],
+                        searchReferences: [],
+                    });
 
                     return clientMock;
                 });
@@ -2256,11 +2297,10 @@ describe('LDAP Client Service', () => {
             it('should return LdapSearchError', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                     return clientMock;
                 });
                 const result: Result<string[]> = await ldapClientService.getGroupsForPerson(personId, username);
@@ -2277,16 +2317,14 @@ describe('LDAP Client Service', () => {
             it('should return error', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [entry],
-                        }),
-                    );
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: undefined,
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [entry],
+                        searchReferences: [],
+                    });
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: undefined,
+                        searchReferences: [],
+                    } as unknown as SearchResult);
                     return clientMock;
                 });
                 const result: Result<string[]> = await ldapClientService.getGroupsForPerson(personId, username);
@@ -2305,16 +2343,14 @@ describe('LDAP Client Service', () => {
             it('should return empty list', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [entry],
-                        }),
-                    );
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [entry],
+                        searchReferences: [],
+                    });
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                     return clientMock;
                 });
 
@@ -2332,25 +2368,23 @@ describe('LDAP Client Service', () => {
         });
 
         describe('when groups were found', () => {
-            const groupEntry1: Entry = createMock<Entry>({
+            const groupEntry1: Entry = {
                 dn: 'group1',
-            });
-            const groupEntry2: Entry = createMock<Entry>({
+            };
+            const groupEntry2: Entry = {
                 dn: 'group2',
-            });
+            };
             it('should return group-names as list', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [entry],
-                        }),
-                    );
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [groupEntry1, groupEntry2],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [entry],
+                        searchReferences: [],
+                    });
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [groupEntry1, groupEntry2],
+                        searchReferences: [],
+                    });
                     return clientMock;
                 });
 
@@ -2431,11 +2465,10 @@ describe('LDAP Client Service', () => {
             it('should return LdapSearchError', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                     return clientMock;
                 });
 
@@ -2458,16 +2491,10 @@ describe('LDAP Client Service', () => {
                 const error: Error = new Error();
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [
-                                createMock<Entry>({
-                                    dn: fakeDN,
-                                    mailPrimaryAddress: currentEmailAddress,
-                                }),
-                            ],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [{ dn: fakeDN, mailPrimaryAddress: currentEmailAddress }],
+                        searchReferences: [],
+                    });
                     clientMock.modify.mockRejectedValueOnce(new Error());
 
                     return clientMock;
@@ -2493,16 +2520,10 @@ describe('LDAP Client Service', () => {
                 it('should set mailAlternativeAddress as current mailPrimaryAddress and throw LdapPersonEntryChangedEvent', async () => {
                     ldapClientMock.getClient.mockImplementation(() => {
                         clientMock.bind.mockResolvedValueOnce();
-                        clientMock.search.mockResolvedValueOnce(
-                            createMock<SearchResult>({
-                                searchEntries: [
-                                    createMock<Entry>({
-                                        dn: fakeDN,
-                                        mailPrimaryAddress: currentEmailAddress,
-                                    }),
-                                ],
-                            }),
-                        );
+                        clientMock.search.mockResolvedValueOnce({
+                            searchEntries: [{ dn: fakeDN, mailPrimaryAddress: currentEmailAddress }],
+                            searchReferences: [],
+                        });
                         clientMock.modify.mockResolvedValue();
 
                         return clientMock;
@@ -2538,16 +2559,10 @@ describe('LDAP Client Service', () => {
                     it('should set mailAlternativeAddress as current mailPrimaryAddress and throw LdapPersonEntryChangedEvent', async () => {
                         ldapClientMock.getClient.mockImplementation(() => {
                             clientMock.bind.mockResolvedValueOnce();
-                            clientMock.search.mockResolvedValueOnce(
-                                createMock<SearchResult>({
-                                    searchEntries: [
-                                        createMock<Entry>({
-                                            dn: fakeDN,
-                                            mailPrimaryAddress: [currentEmailAddress],
-                                        }),
-                                    ],
-                                }),
-                            );
+                            clientMock.search.mockResolvedValueOnce({
+                                searchEntries: [{ dn: fakeDN, mailPrimaryAddress: currentEmailAddress }],
+                                searchReferences: [],
+                            });
                             clientMock.modify.mockResolvedValue();
 
                             return clientMock;
@@ -2583,16 +2598,10 @@ describe('LDAP Client Service', () => {
                 it('should set mailAlternativeAddress to current address and throw LdapPersonEntryChangedEvent', async () => {
                     ldapClientMock.getClient.mockImplementation(() => {
                         clientMock.bind.mockResolvedValueOnce();
-                        clientMock.search.mockResolvedValueOnce(
-                            createMock<SearchResult>({
-                                searchEntries: [
-                                    createMock<Entry>({
-                                        dn: fakeDN,
-                                        mailPrimaryAddress: undefined,
-                                    }),
-                                ],
-                            }),
-                        );
+                        clientMock.search.mockResolvedValueOnce({
+                            searchEntries: [{ dn: fakeDN, mailPrimaryAddress: currentEmailAddress }],
+                            searchReferences: [],
+                        });
                         clientMock.modify.mockResolvedValue();
 
                         return clientMock;
@@ -2624,16 +2633,10 @@ describe('LDAP Client Service', () => {
                 it('should set mailAlternativeAddress to undefined when currentEmailAddress is undefined and throw LdapPersonEntryChangedEvent', async () => {
                     ldapClientMock.getClient.mockImplementation(() => {
                         clientMock.bind.mockResolvedValueOnce();
-                        clientMock.search.mockResolvedValueOnce(
-                            createMock<SearchResult>({
-                                searchEntries: [
-                                    createMock<Entry>({
-                                        dn: fakeDN,
-                                        mailPrimaryAddress: undefined,
-                                    }),
-                                ],
-                            }),
-                        );
+                        clientMock.search.mockResolvedValueOnce({
+                            searchEntries: [{ dn: fakeDN, mailPrimaryAddress: currentEmailAddress }],
+                            searchReferences: [],
+                        });
                         clientMock.modify.mockResolvedValue();
 
                         return clientMock;
@@ -2678,19 +2681,15 @@ describe('LDAP Client Service', () => {
         it('should successfully remove person from group with multiple members', async () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(
-                    createMock<SearchResult>({
-                        searchEntries: [
-                            createMock<Entry>({
-                                dn: fakeGroupDn,
-                                member: [
-                                    `${fakeLehrerUid}`,
-                                    'uid=otherUser,ou=users,' + mockLdapInstanceConfig.BASE_DN,
-                                ],
-                            }),
-                        ],
-                    }),
-                );
+                clientMock.search.mockResolvedValueOnce({
+                    searchEntries: [
+                        {
+                            dn: fakeGroupDn,
+                            member: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,' + mockLdapInstanceConfig.BASE_DN],
+                        },
+                    ],
+                    searchReferences: [],
+                });
                 clientMock.modify.mockResolvedValueOnce();
 
                 return clientMock;
@@ -2719,16 +2718,15 @@ describe('LDAP Client Service', () => {
         it('should delete the group when only one member is present', async () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(
-                    createMock<SearchResult>({
-                        searchEntries: [
-                            createMock<Entry>({
-                                dn: fakeGroupDn,
-                                member: `${fakeLehrerUid}`,
-                            }),
-                        ],
-                    }),
-                );
+                clientMock.search.mockResolvedValueOnce({
+                    searchEntries: [
+                        {
+                            dn: fakeGroupDn,
+                            member: `${fakeLehrerUid}`,
+                        },
+                    ],
+                    searchReferences: [],
+                });
                 clientMock.del.mockResolvedValueOnce();
 
                 return clientMock;
@@ -2750,11 +2748,10 @@ describe('LDAP Client Service', () => {
         it('should return error when group is not found', async () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(
-                    createMock<SearchResult>({
-                        searchEntries: [],
-                    }),
-                );
+                clientMock.search.mockResolvedValueOnce({
+                    searchEntries: [],
+                    searchReferences: [],
+                });
 
                 return clientMock;
             });
@@ -2786,19 +2783,15 @@ describe('LDAP Client Service', () => {
         it('should return error when modification fails', async () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(
-                    createMock<SearchResult>({
-                        searchEntries: [
-                            createMock<Entry>({
-                                dn: fakeGroupDn,
-                                member: [
-                                    `${fakeLehrerUid}`,
-                                    'uid=otherUser,ou=users,' + mockLdapInstanceConfig.BASE_DN,
-                                ],
-                            }),
-                        ],
-                    }),
-                );
+                clientMock.search.mockResolvedValueOnce({
+                    searchEntries: [
+                        {
+                            dn: fakeGroupDn,
+                            member: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,' + mockLdapInstanceConfig.BASE_DN],
+                        },
+                    ],
+                    searchReferences: [],
+                });
                 clientMock.modify.mockRejectedValueOnce(new Error('Modify error'));
 
                 return clientMock;
@@ -2942,19 +2935,18 @@ describe('LDAP Client Service', () => {
         it('should successfully remove person from group with multiple members', async () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(
-                    createMock<SearchResult>({
-                        searchEntries: [
-                            createMock<Entry>({
-                                dn: fakeGroupDn,
-                                member: [
-                                    `${fakeLehrerUid}`,
-                                    'uid=otherUser,ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN,
-                                ],
-                            }),
-                        ],
-                    }),
-                );
+                clientMock.search.mockResolvedValueOnce({
+                    searchEntries: [
+                        {
+                            dn: fakeGroupDn,
+                            member: [
+                                `${fakeLehrerUid}`,
+                                'uid=otherUser,ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN,
+                            ],
+                        },
+                    ],
+                    searchReferences: [],
+                });
                 clientMock.modify.mockResolvedValueOnce();
 
                 return clientMock;
@@ -2984,19 +2976,18 @@ describe('LDAP Client Service', () => {
         it('should return error when getting root-name fails', async () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(
-                    createMock<SearchResult>({
-                        searchEntries: [
-                            createMock<Entry>({
-                                dn: fakeGroupDn,
-                                member: [
-                                    `${fakeLehrerUid}`,
-                                    'uid=otherUser,ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN,
-                                ],
-                            }),
-                        ],
-                    }),
-                );
+                clientMock.search.mockResolvedValueOnce({
+                    searchEntries: [
+                        {
+                            dn: fakeGroupDn,
+                            member: [
+                                `${fakeLehrerUid}`,
+                                'uid=otherUser,ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN,
+                            ],
+                        },
+                    ],
+                    searchReferences: [],
+                });
                 clientMock.modify.mockResolvedValueOnce();
 
                 return clientMock;
@@ -3040,11 +3031,10 @@ describe('LDAP Client Service', () => {
             it('should return LdapSearchError', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [],
+                        searchReferences: [],
+                    });
                     return clientMock;
                 });
 
@@ -3070,15 +3060,14 @@ describe('LDAP Client Service', () => {
                 const error: Error = new Error();
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [
-                                createMock<Entry>({
-                                    dn: fakeDN,
-                                }),
-                            ],
-                        }),
-                    );
+                    clientMock.search.mockResolvedValueOnce({
+                        searchEntries: [
+                            {
+                                dn: fakeDN,
+                            },
+                        ],
+                        searchReferences: [],
+                    });
                     clientMock.modify.mockRejectedValueOnce(error);
 
                     return clientMock;
@@ -3110,15 +3099,14 @@ describe('LDAP Client Service', () => {
                 it('should publish event and return new (UEM) userPassword', async () => {
                     ldapClientMock.getClient.mockImplementation(() => {
                         clientMock.bind.mockResolvedValueOnce();
-                        clientMock.search.mockResolvedValueOnce(
-                            createMock<SearchResult>({
-                                searchEntries: [
-                                    createMock<Entry>({
-                                        dn: fakeDN,
-                                    }),
-                                ],
-                            }),
-                        );
+                        clientMock.search.mockResolvedValueOnce({
+                            searchEntries: [
+                                {
+                                    dn: fakeDN,
+                                },
+                            ],
+                            searchReferences: [],
+                        });
                         clientMock.modify.mockResolvedValueOnce(undefined);
 
                         return clientMock;

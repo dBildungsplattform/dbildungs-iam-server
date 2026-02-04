@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { faker } from '@faker-js/faker';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
-import { PersonID, RolleID } from '../../../shared/types/index.js';
+import { PersonID } from '../../../shared/types/index.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.error.js';
@@ -20,7 +20,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { UpdatePersonNotFoundError } from './error/update-person-not-found.error.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { DoFactory, PersonPermissionsMock } from '../../../../test/utils/index.js';
+import { createPersonPermissionsMock, DoFactory, PersonPermissionsMock } from '../../../../test/utils/index.js';
 import { Person } from '../../person/domain/person.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
@@ -35,19 +35,25 @@ import { DuplicateKlassenkontextError } from './error/update-invalid-duplicate-k
 import { UpdateLernNotAtSchuleAndKlasseError } from './error/update-lern-not-at-schule-and-klasse.error.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
-    const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>({
-        personId: personId,
-        organisationId: faker.string.uuid(),
-        rolleId: faker.string.uuid(),
-        befristung: faker.date.future(),
-    });
+    const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>(
+        DbiamPersonenkontextBodyParams,
+        {
+            personId: personId,
+            organisationId: faker.string.uuid(),
+            rolleId: faker.string.uuid(),
+            befristung: faker.date.future(),
+        },
+    );
 
-    const secondCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>({
-        personId: personId,
-        organisationId: faker.string.uuid(),
-        rolleId: faker.string.uuid(),
-        befristung: faker.date.future(),
-    });
+    const secondCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>(
+        DbiamPersonenkontextBodyParams,
+        {
+            personId: personId,
+            organisationId: faker.string.uuid(),
+            rolleId: faker.string.uuid(),
+            befristung: faker.date.future(),
+        },
+    );
 
     return [firstCreatePKBodyParams, secondCreatePKBodyParams];
 }
@@ -75,31 +81,31 @@ describe('PersonenkontexteUpdate', () => {
             providers: [
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock(ClassLogger),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: DBiamPersonenkontextRepoInternal,
-                    useValue: createMock<DBiamPersonenkontextRepoInternal>(),
+                    useValue: createMock(DBiamPersonenkontextRepoInternal),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
+                    useValue: createMock(RolleRepo),
                 },
                 {
                     provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                    useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 DbiamPersonenkontextFactory,
                 PersonenkontextFactory,
@@ -112,32 +118,36 @@ describe('PersonenkontexteUpdate', () => {
         dbiamPersonenkontextFactory = module.get(DbiamPersonenkontextFactory);
         personId = faker.string.uuid();
         lastModified = faker.date.recent();
-        bodyParam1 = createMock<DbiamPersonenkontextBodyParams>({
+        bodyParam1 = createMock<DbiamPersonenkontextBodyParams>(DbiamPersonenkontextBodyParams, {
             personId: personId,
             organisationId: faker.string.uuid(),
             rolleId: faker.string.uuid(),
             befristung: undefined,
         });
-        bodyParam2 = createMock<DbiamPersonenkontextBodyParams>({
+        bodyParam2 = createMock<DbiamPersonenkontextBodyParams>(DbiamPersonenkontextBodyParams, {
             personId: personId,
             organisationId: faker.string.uuid(),
             rolleId: faker.string.uuid(),
             befristung: faker.date.future(),
         });
-        pk1 = createMock<Personenkontext<true>>({
-            updatedAt: lastModified,
-            personId: bodyParam1.personId,
-            organisationId: bodyParam1.organisationId,
-            rolleId: bodyParam1.rolleId,
-            befristung: bodyParam1.befristung,
-        });
-        pk2 = createMock<Personenkontext<true>>({
-            updatedAt: faker.date.past(),
-            personId: bodyParam2.personId,
-            organisationId: bodyParam2.organisationId,
-            rolleId: bodyParam2.rolleId,
-            befristung: bodyParam2.befristung,
-        });
+        pk1 = vi.mockObject<Personenkontext<true>>(
+            DoFactory.createPersonenkontext<true>(true, {
+                updatedAt: lastModified,
+                personId: bodyParam1.personId,
+                organisationId: bodyParam1.organisationId,
+                rolleId: bodyParam1.rolleId,
+                befristung: bodyParam1.befristung,
+            }),
+        );
+        pk2 = vi.mockObject<Personenkontext<true>>(
+            DoFactory.createPersonenkontext<true>(true, {
+                updatedAt: faker.date.past(),
+                personId: bodyParam2.personId,
+                organisationId: bodyParam2.organisationId,
+                rolleId: bodyParam2.rolleId,
+                befristung: bodyParam2.befristung,
+            }),
+        );
         personPermissionsMock = new PersonPermissionsMock();
         rolleRepoMock = module.get(RolleRepo);
         loggerMock = module.get(ClassLogger);
@@ -148,7 +158,7 @@ describe('PersonenkontexteUpdate', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -169,7 +179,7 @@ describe('PersonenkontexteUpdate', () => {
                 );
             });
 
-            it('should return PersonenkontextSpecificationError', async () => {
+            it('should return array of all persisted Personenkontext', async () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(null);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(null); //mock pk2 is not found => therefore handled as new
@@ -177,20 +187,24 @@ describe('PersonenkontexteUpdate', () => {
 
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); // mock while checking the existing PKs
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock the return values in the end of update method
-                const mapRollen: Map<string, Rolle<true>> = createMock<Map<string, Rolle<true>>>({
-                    get: () =>
-                        DoFactory.createRolle(true, {
-                            rollenart: RollenArt.LEHR,
-                            merkmale: [RollenMerkmal.KOPERS_PFLICHT],
-                            id: pk1.rolleId,
-                            serviceProviderData: [DoFactory.createServiceProvider(true)],
-                        }),
+                const rolle: Rolle<true> = DoFactory.createRolle(true, {
+                    rollenart: RollenArt.LEHR,
+                    merkmale: [RollenMerkmal.KOPERS_PFLICHT],
+                    id: pk1.rolleId,
+                    serviceProviderData: [DoFactory.createServiceProvider(true)],
                 });
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
+                mapRollen.set(pk1.rolleId, rolle);
+                mapRollen.set(pk2.rolleId, DoFactory.createRolle(true, { id: pk2.rolleId, rollenart: RollenArt.LEHR }));
+                const mapOrgas: Map<string, Organisation<true>> = new Map<string, Organisation<true>>();
+                mapOrgas.set(pk1.organisationId, DoFactory.createOrganisation(true, { id: pk1.organisationId }));
+                mapOrgas.set(pk2.organisationId, DoFactory.createOrganisation(true, { id: pk2.organisationId }));
+                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
+                organisationRepoMock.findByIds.mockResolvedValue(mapOrgas);
+                personRepoMock.findById.mockResolvedValue(DoFactory.createPerson(true, { id: personId }));
+                dBiamPersonenkontextRepoInternalMock.save.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoInternalMock.save.mockResolvedValueOnce(pk2);
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -212,36 +226,31 @@ describe('PersonenkontexteUpdate', () => {
             it('should delete the personenkontext', async () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock pk1 and pk2 is found as existing in DB
-                const newPerson: Person<true> = createMock<Person<true>>({ id: pk1.personId });
+                const newPerson: Person<true> = DoFactory.createPerson(true, { id: pk1.personId });
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
 
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); // mock while checking the existing PKs
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]); //mock the return values in the end of update method
-                const mapRollen: Map<string, Rolle<true>> = createMock<Map<string, Rolle<true>>>({
-                    get: (id: RolleID) => {
-                        if (id === pk1.rolleId) {
-                            return DoFactory.createRolle(true, {
-                                rollenart: RollenArt.LEHR,
-                                merkmale: [RollenMerkmal.KOPERS_PFLICHT],
-                                id: pk1.rolleId,
-                                serviceProviderData: [DoFactory.createServiceProvider(true)],
-                            });
-                        } else if (id === pk2.rolleId) {
-                            return DoFactory.createRolle(true, {
-                                rollenart: RollenArt.LEHR,
-                                merkmale: [RollenMerkmal.KOPERS_PFLICHT],
-                                id: pk2.rolleId,
-                                serviceProviderData: [DoFactory.createServiceProvider(true)],
-                            });
-                        }
-                        return undefined;
-                    },
+                const rolle: Rolle<true> = DoFactory.createRolle(true, {
+                    rollenart: RollenArt.LEHR,
+                    merkmale: [RollenMerkmal.KOPERS_PFLICHT],
+                    id: pk1.rolleId,
+                    serviceProviderData: [DoFactory.createServiceProvider(true)],
                 });
+
+                const mapRollen: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
+                mapRollen.set(pk1.rolleId, rolle);
+                mapRollen.set(pk2.rolleId, DoFactory.createRolle(true, { id: pk2.rolleId, rollenart: RollenArt.LEHR }));
+                const mapOrgas: Map<string, Organisation<true>> = new Map<string, Organisation<true>>();
+                mapOrgas.set(pk1.organisationId, DoFactory.createOrganisation(true, { id: pk1.organisationId }));
+                mapOrgas.set(pk2.organisationId, DoFactory.createOrganisation(true, { id: pk2.organisationId }));
                 rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                organisationRepoMock.findByIds.mockResolvedValue(mapOrgas);
+                personRepoMock.findById.mockResolvedValue(DoFactory.createPerson(true, { id: personId }));
+                dBiamPersonenkontextRepoInternalMock.save.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoInternalMock.save.mockResolvedValueOnce(pk2);
 
                 dBiamPersonenkontextRepoInternalMock.delete.mockResolvedValueOnce();
-                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -251,35 +260,29 @@ describe('PersonenkontexteUpdate', () => {
             it('should log if delete from DB fails', async () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock pk1 and pk2 is found as existing in DB
-                const newPerson: Person<true> = createMock<Person<true>>({ id: pk1.personId });
+                const newPerson: Person<true> = DoFactory.createPerson(true, { id: pk1.personId });
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
 
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); // mock while checking the existing PKs
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]); //mock the return values in the end of update method
-                const mapRollen: Map<string, Rolle<true>> = createMock<Map<string, Rolle<true>>>({
-                    get: (id: RolleID) => {
-                        if (id === pk1.rolleId) {
-                            return DoFactory.createRolle(true, {
-                                rollenart: RollenArt.LEHR,
-                                merkmale: [RollenMerkmal.KOPERS_PFLICHT],
-                                id: pk1.rolleId,
-                                serviceProviderData: [DoFactory.createServiceProvider(true)],
-                            });
-                        } else if (id === pk2.rolleId) {
-                            return DoFactory.createRolle(true, {
-                                rollenart: RollenArt.LEHR,
-                                merkmale: [RollenMerkmal.KOPERS_PFLICHT],
-                                id: pk2.rolleId,
-                                serviceProviderData: [DoFactory.createServiceProvider(true)],
-                            });
-                        }
-                        return undefined;
-                    },
-                });
-                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
-                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
+                const mapRollen: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
+                mapRollen.set(
+                    pk1.rolleId,
+                    DoFactory.createRolle(true, { id: pk1.rolleId, rollenart: RollenArt.LEHR, merkmale: [] }),
+                );
+                mapRollen.set(
+                    pk2.rolleId,
+                    DoFactory.createRolle(true, { id: pk2.rolleId, rollenart: RollenArt.LEHR, merkmale: [] }),
+                );
+                const mapOrgas: Map<string, Organisation<true>> = new Map<string, Organisation<true>>();
+                mapOrgas.set(pk1.organisationId, DoFactory.createOrganisation(true, { id: pk1.organisationId }));
+                mapOrgas.set(pk2.organisationId, DoFactory.createOrganisation(true, { id: pk2.organisationId }));
+                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
+                organisationRepoMock.findByIds.mockResolvedValue(mapOrgas);
+                personRepoMock.findById.mockResolvedValue(DoFactory.createPerson(true, { id: personId }));
+                dBiamPersonenkontextRepoInternalMock.save.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoInternalMock.save.mockResolvedValueOnce(pk2);
 
                 dBiamPersonenkontextRepoInternalMock.delete.mockRejectedValueOnce(new Error('DB Error'));
 
@@ -318,7 +321,7 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(new Map());
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); // mock while checking the existing PKs
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
 
@@ -376,7 +379,7 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return UpdateCountError', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
@@ -400,7 +403,7 @@ describe('PersonenkontexteUpdate', () => {
 
         describe('when most recent updated PK time does not match lastModified time', () => {
             beforeAll(() => {
-                const wrongLastModified: Date = faker.date.past();
+                const wrongLastModified: Date = faker.date.past({ refDate: lastModified });
                 const count: number = 2;
                 sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
                     personId,
@@ -412,7 +415,7 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return UpdateOutdatedError', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
@@ -477,7 +480,7 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return null asc order', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
@@ -503,7 +506,7 @@ describe('PersonenkontexteUpdate', () => {
 
             // This test only test for right sorting by date of PKs, pk2 and pk1 are switched in retrieval order
             it('should return null', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
@@ -539,7 +542,7 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return empty', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
@@ -569,7 +572,7 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return UpdateOutdatedError', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
@@ -590,7 +593,7 @@ describe('PersonenkontexteUpdate', () => {
 
         describe('when permissions are insufficient', () => {
             it('should return MissingPermissionsError if the target person can not be modified', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
@@ -607,7 +610,7 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
-                const permissions: DeepMocked<PersonPermissions> = createMock();
+                const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 permissions.canModifyPerson.mockResolvedValueOnce(false);
                 const pkUpdate: PersonenkontexteUpdate = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
                     personId,
@@ -621,8 +624,8 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return MissingPermissionsError if the user can not modify persons at organisation', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
-                const pk1Changed: Personenkontext<true> = createMock<Personenkontext<true>>({
+                const newPerson: Person<true> = DoFactory.createPerson(true);
+                const pk1Changed: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                     updatedAt: lastModified,
                     personId: pk1.personId,
                     organisationId: bodyParam1.organisationId,
@@ -645,7 +648,7 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
-                const permissions: DeepMocked<PersonPermissions> = createMock();
+                const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 permissions.canModifyPerson.mockResolvedValueOnce(true);
                 permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
                 const pkUpdate: PersonenkontexteUpdate = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
@@ -661,7 +664,7 @@ describe('PersonenkontexteUpdate', () => {
         });
         describe('when personalnummer is provided', () => {
             it('should update the personalnummer of the person', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
 
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
@@ -708,7 +711,7 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return UpdateInvalidRollenartForLernError, if new personenkontext is not a Rolle with rollenart LERN', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
@@ -728,7 +731,7 @@ describe('PersonenkontexteUpdate', () => {
                 expect(updateError).toBeInstanceOf(UpdateInvalidRollenartForLernError);
             });
             it('should return UpdateInvalidRollenartForLernError if new personenkontext roles mix LERN with other types', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
@@ -749,7 +752,7 @@ describe('PersonenkontexteUpdate', () => {
                 expect(updateError).toBeInstanceOf(UpdateInvalidRollenartForLernError);
             });
             it('Should not throw any Update invalid Rollenart error', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
@@ -774,7 +777,7 @@ describe('PersonenkontexteUpdate', () => {
                 expect(updateError).toBeDefined();
             });
             it('should return PersonenkontextBefristungRequiredError if new personenkontext roles mix LERN with other types', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
                     personId,
                     lastModified,
@@ -824,7 +827,7 @@ describe('PersonenkontexteUpdate', () => {
                 expect(updateError).toBeInstanceOf(PersonenkontextBefristungRequiredError);
             });
             it('should return DuplicatePersonalnummerError when saving person with personalnummer fails', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>({
+                const newPerson: Person<true> = DoFactory.createPerson(true, {
                     id: personId,
                     personalnummer: 'old-number',
                 });
@@ -876,7 +879,7 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('Should not throw any PersonenkontextBefristungRequiredError', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
@@ -897,7 +900,7 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
-                jest.spyOn(CheckBefristungSpecification.prototype, 'checkBefristung').mockResolvedValue(true);
+                vi.spyOn(CheckBefristungSpecification.prototype, 'checkBefristung').mockResolvedValue(true);
 
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -905,7 +908,7 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return LernHatKeineKlasseError when user has pk at schule but not klasse', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 const administriertVonId: string = faker.string.uuid();
                 const schuleId: string = faker.string.uuid();
                 const rolleId: string = faker.string.uuid();
@@ -981,7 +984,7 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return DuplicateKlassenkontextError when user has duplicate Klassenkontext with same Rolle under same administering organisation', async () => {
-                const newPerson: Person<true> = createMock<Person<true>>();
+                const newPerson: Person<true> = DoFactory.createPerson(true);
                 const administriertVonId: string = faker.string.uuid();
                 const rolleId: string = faker.string.uuid();
                 const klasse1Id: string = faker.string.uuid();

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 
 import { DoFactory } from '../../../../test/utils/index.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
@@ -12,7 +12,7 @@ describe('NurKlasseKursUnterSchule Specification', () => {
     let orgaRepoMock: DeepMocked<OrganisationRepository>;
 
     beforeEach(() => {
-        orgaRepoMock = createMock<OrganisationRepository>();
+        orgaRepoMock = createMock(OrganisationRepository);
         sut = new NurKlasseKursUnterSchule(orgaRepoMock);
     });
 

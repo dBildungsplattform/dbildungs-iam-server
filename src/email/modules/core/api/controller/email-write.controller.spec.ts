@@ -1,10 +1,11 @@
+import { vi } from 'vitest';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../../../shared/validation/global-validation.pipe.js';
 import { faker } from '@faker-js/faker';
 import { EmailWriteController } from './email-write.controller.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../../../test/utils/createMock.js';
 import { SetEmailAddressForSpshPersonService } from '../../domain/set-email-address-for-spsh-person.service.js';
 import { SetEmailAddressForSpshPersonBodyParams } from '../dtos/params/set-email-address-for-spsh-person.bodyparams.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
@@ -33,13 +34,13 @@ describe('Email Write Controller', () => {
             ],
         })
             .overrideProvider(SetEmailAddressForSpshPersonService)
-            .useValue(createMock<SetEmailAddressForSpshPersonService>())
+            .useValue(createMock(SetEmailAddressForSpshPersonService))
             .overrideProvider(DeleteEmailsAddressesForSpshPersonService)
-            .useValue(createMock<DeleteEmailsAddressesForSpshPersonService>())
+            .useValue(createMock<DeleteEmailsAddressesForSpshPersonService>(DeleteEmailsAddressesForSpshPersonService))
             .overrideProvider(SetEmailSuspendedService)
-            .useValue(createMock<SetEmailSuspendedService>())
+            .useValue(createMock<SetEmailSuspendedService>(SetEmailSuspendedService))
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock<ClassLogger>(ClassLogger))
             .compile();
 
         emailWriteController = module.get(EmailWriteController);
@@ -49,11 +50,11 @@ describe('Email Write Controller', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
     });
 
     afterEach(() => {
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     describe('setEmailAddressForSpshPerson', () => {
@@ -69,7 +70,7 @@ describe('Email Write Controller', () => {
             setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson.mockResolvedValue();
             const result: void = emailWriteController.setEmailForPerson({ spshPersonId: spshPersonId }, bodyParams);
             expect(result).toBeUndefined();
-            jest.runAllTimers();
+            vi.runAllTimers();
             expect(setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson).toHaveBeenCalledWith({
                 spshPersonId: spshPersonId,
                 ...bodyParams,
@@ -90,7 +91,7 @@ describe('Email Write Controller', () => {
             );
             const result: void = emailWriteController.setEmailForPerson({ spshPersonId: spshPersonId }, bodyParams);
             expect(result).toBeUndefined();
-            jest.runAllTimers();
+            vi.runAllTimers();
             expect(setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson).toHaveBeenCalledWith({
                 spshPersonId: spshPersonId,
                 ...bodyParams,
@@ -105,7 +106,7 @@ describe('Email Write Controller', () => {
 
             const result: void = emailWriteController.deleteEmailsForPerson({ spshPersonId });
             expect(result).toBeUndefined();
-            jest.runAllTimers();
+            vi.runAllTimers();
             expect(
                 deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
             ).toHaveBeenCalledWith({ spshPersonId });
@@ -118,7 +119,7 @@ describe('Email Write Controller', () => {
 
             const result: void = emailWriteController.deleteEmailsForPerson({ spshPersonId });
             expect(result).toBeUndefined();
-            jest.runAllTimers();
+            vi.runAllTimers();
             expect(
                 deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
             ).toHaveBeenCalledWith({ spshPersonId });
@@ -131,7 +132,7 @@ describe('Email Write Controller', () => {
             setEmailSuspendedServiceMock.setEmailsSuspended.mockResolvedValue();
             const result: void = emailWriteController.setEmailsSuspended({ spshPersonId: spshPersonId });
             expect(result).toBeUndefined();
-            jest.runAllTimers();
+            vi.runAllTimers();
             expect(setEmailSuspendedServiceMock.setEmailsSuspended).toHaveBeenCalledWith({
                 spshPersonId: spshPersonId,
             });
@@ -142,7 +143,7 @@ describe('Email Write Controller', () => {
             setEmailSuspendedServiceMock.setEmailsSuspended.mockRejectedValue(new Error('Test error'));
             const result: void = emailWriteController.setEmailsSuspended({ spshPersonId: spshPersonId });
             expect(result).toBeUndefined();
-            jest.runAllTimers();
+            vi.runAllTimers();
             expect(setEmailSuspendedServiceMock.setEmailsSuspended).toHaveBeenCalledWith({
                 spshPersonId: spshPersonId,
             });

@@ -1,5 +1,6 @@
+import { vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
@@ -62,21 +63,21 @@ describe('LdapEventHandler', () => {
             ],
         })
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .overrideProvider(LdapClientService)
-            .useValue(createMock<LdapClientService>())
+            .useValue(createMock(LdapClientService))
             .overrideProvider(PersonRepository)
-            .useValue(createMock<PersonRepository>())
+            .useValue(createMock(PersonRepository))
             .overrideProvider(PersonenkontextFactory)
             .useClass(PersonenkontextFactory)
             .overrideProvider(RolleRepo)
-            .useValue(createMock<RolleRepo>())
+            .useValue(createMock(RolleRepo))
             .overrideProvider(DBiamPersonenkontextRepo)
-            .useValue(createMock<DBiamPersonenkontextRepo>())
+            .useValue(createMock(DBiamPersonenkontextRepo))
             .overrideProvider(OrganisationRepository)
-            .useValue(createMock<OrganisationRepository>())
+            .useValue(createMock(OrganisationRepository))
             .overrideProvider(EventRoutingLegacyKafkaService)
-            .useValue(createMock<EventRoutingLegacyKafkaService>())
+            .useValue(createMock(EventRoutingLegacyKafkaService))
             .compile();
 
         orm = module.get(MikroORM);
@@ -99,7 +100,7 @@ describe('LdapEventHandler', () => {
     });
 
     beforeEach(async () => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         await DatabaseTestModule.clearDatabase(orm);
     });
 
@@ -112,7 +113,7 @@ describe('LdapEventHandler', () => {
                 };
                 ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce(deletionResult);
 
-                await ldapEventHandler.handlePersonDeletedEvent(createMock<PersonDeletedEvent>());
+                await ldapEventHandler.handlePersonDeletedEvent(createMock(PersonDeletedEvent));
 
                 expect(loggerMock.error).toHaveBeenCalledTimes(0);
             });
@@ -127,7 +128,7 @@ describe('LdapEventHandler', () => {
                 };
                 ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce(deletionResult);
 
-                await ldapEventHandler.handlePersonDeletedEvent(createMock<PersonDeletedEvent>());
+                await ldapEventHandler.handlePersonDeletedEvent(createMock(PersonDeletedEvent));
 
                 expect(loggerMock.error).toHaveBeenCalledTimes(1);
                 expect(loggerMock.error).toHaveBeenCalledWith(error.message);
@@ -145,7 +146,7 @@ describe('LdapEventHandler', () => {
                 ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce(deletionResult);
 
                 await ldapEventHandler.handlePersonDeletedAfterDeadlineExceededEvent(
-                    createMock<PersonDeletedAfterDeadlineExceededEvent>(),
+                    createMock(PersonDeletedAfterDeadlineExceededEvent),
                 );
 
                 expect(loggerMock.error).toHaveBeenCalledTimes(0);
@@ -162,7 +163,7 @@ describe('LdapEventHandler', () => {
                 ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce(deletionResult);
 
                 await ldapEventHandler.handlePersonDeletedAfterDeadlineExceededEvent(
-                    createMock<PersonDeletedAfterDeadlineExceededEvent>(),
+                    createMock(PersonDeletedAfterDeadlineExceededEvent),
                 );
 
                 expect(loggerMock.error).toHaveBeenCalledTimes(1);
@@ -179,7 +180,7 @@ describe('LdapEventHandler', () => {
                     value: faker.internet.userName(),
                 };
                 ldapClientServiceMock.modifyPersonAttributes.mockResolvedValueOnce(modifyResult);
-                await ldapEventHandler.personRenamedEventHandler(createMock<PersonRenamedEvent>());
+                await ldapEventHandler.personRenamedEventHandler(createMock(PersonRenamedEvent));
                 expect(loggerMock.error).toHaveBeenCalledTimes(0);
             });
         });
@@ -191,7 +192,7 @@ describe('LdapEventHandler', () => {
                     error: error,
                 };
                 ldapClientServiceMock.modifyPersonAttributes.mockResolvedValueOnce(modifyResult);
-                await ldapEventHandler.personRenamedEventHandler(createMock<PersonRenamedEvent>());
+                await ldapEventHandler.personRenamedEventHandler(createMock(PersonRenamedEvent));
                 expect(loggerMock.error).toHaveBeenCalledWith(error.message);
             });
         });
@@ -730,9 +731,9 @@ describe('LdapEventHandler', () => {
             organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
             ldapClientServiceMock.createLehrer.mockResolvedValueOnce({
                 ok: true,
-                value: createMock<PersonData>({
+                value: {
                     ldapEntryUUID: entryUUID,
-                }),
+                } as PersonData,
             });
 
             personRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createPerson(true));
@@ -779,9 +780,9 @@ describe('LdapEventHandler', () => {
             organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
             ldapClientServiceMock.createLehrer.mockResolvedValueOnce({
                 ok: true,
-                value: createMock<PersonData>({
+                value: {
                     ldapEntryUUID: entryUUID,
-                }),
+                } as PersonData,
             });
 
             personRepositoryMock.findById.mockResolvedValueOnce(undefined);

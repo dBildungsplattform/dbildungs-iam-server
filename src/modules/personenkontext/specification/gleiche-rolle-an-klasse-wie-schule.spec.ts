@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 
 import { DoFactory } from '../../../../test/utils/index.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
@@ -10,12 +10,12 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 import { GleicheRolleAnKlasseWieSchule } from './gleiche-rolle-an-klasse-wie-schule.js';
 
 describe('GleicheRolleAnKlasseWieSchule specification', () => {
-    const organisationRepoMock: DeepMocked<OrganisationRepository> = createMock();
-    const personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo> = createMock();
-    const rolleRepoMock: DeepMocked<RolleRepo> = createMock();
+    const organisationRepoMock: DeepMocked<OrganisationRepository> = createMock(OrganisationRepository);
+    const personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo> = createMock(DBiamPersonenkontextRepo);
+    const rolleRepoMock: DeepMocked<RolleRepo> = createMock(RolleRepo);
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should return true, if all checks pass', async () => {

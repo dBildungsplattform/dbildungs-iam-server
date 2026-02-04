@@ -5,7 +5,7 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
 } from '../../../../test/utils/index.js';
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EventModule } from '../../../core/eventbus/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
@@ -59,15 +59,15 @@ describe('EmailAddressDeletionHandler', () => {
             providers: [],
         })
             .overrideProvider(EmailRepo)
-            .useValue(createMock<EmailRepo>())
+            .useValue(createMock(EmailRepo))
             .overrideProvider(EmailAddressDeletionHandler)
             .useClass(EmailAddressDeletionHandler)
             .overrideProvider(EventRoutingLegacyKafkaService)
-            .useValue(createMock<EventRoutingLegacyKafkaService>())
+            .useValue(createMock(EventRoutingLegacyKafkaService))
             .overrideProvider(EmailAddressDeletionService)
-            .useValue(createMock<EmailAddressDeletionService>())
+            .useValue(createMock(EmailAddressDeletionService))
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .compile();
 
         sut = module.get(EmailAddressDeletionHandler);
@@ -96,7 +96,7 @@ describe('EmailAddressDeletionHandler', () => {
     }
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('handleLdapEmailAddressDeletedEvent', () => {

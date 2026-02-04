@@ -1,14 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Client } from 'openid-client';
+import { Client, Issuer } from 'openid-client';
 
 import { ConfigTestModule, KeycloakConfigTestModule } from '../../../../test/utils/index.js';
 import { OIDCClientProvider, OIDC_CLIENT } from './oidc-client.service.js';
 
-jest.mock('openid-client', () => ({
-    Issuer: {
-        discover: jest.fn(() => Promise.resolve({ Client: Object })),
-    },
-}));
+// vi.mock('openid-client', () => ({
+//     Issuer: {
+//         discover: vi.fn(() => Promise.resolve({ Client: Object })),
+//     },
+// }));
+
+type importType = typeof import('openid-client');
+vi.mock<importType>(import('openid-client'), async (importOriginal: () => Promise<importType>) => {
+    const originalModule: importType = await importOriginal();
+    const mockedModule: importType = {
+        ...originalModule,
+        Issuer: {
+            discover: vi.fn(() => Promise.resolve({ Client: Object })),
+        } as unknown as typeof Issuer,
+    };
+    return mockedModule;
+});
 
 describe('OIDCClientProvider', () => {
     let module: TestingModule;
@@ -28,7 +40,7 @@ describe('OIDCClientProvider', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {

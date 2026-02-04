@@ -20,7 +20,7 @@ import { DbSeedModule } from './db-seed.module.js';
 import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
 import { OxUserBlacklistRepo } from '../../modules/person/persistence/ox-user-blacklist.repo.js';
 import { EntityAggregateMapper } from '../../modules/person/mapper/entity-aggregate.mapper.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 
 describe('DbSeedConsoleIntegration', () => {
@@ -49,7 +49,7 @@ describe('DbSeedConsoleIntegration', () => {
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
             .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .useValue(createMock(ClassLogger))
             .compile();
         sut = module.get(DbSeedConsole);
         orm = module.get(MikroORM);

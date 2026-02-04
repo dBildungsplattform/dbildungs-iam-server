@@ -1,16 +1,14 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { faker } from '@faker-js/faker';
 import { PersonDeleteService } from './person-delete.service.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/index.js';
 
 describe('PersonDeleteService', () => {
     let module: TestingModule;
@@ -26,15 +24,15 @@ describe('PersonDeleteService', () => {
                 PersonDeleteService,
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock(ClassLogger),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
             ],
         }).compile();
@@ -50,7 +48,7 @@ describe('PersonDeleteService', () => {
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -64,7 +62,7 @@ describe('PersonDeleteService', () => {
 
                 const res: Result<void, DomainError> = await sut.deletePerson(
                     faker.string.uuid(),
-                    createMock<PersonPermissions>(),
+                    createPersonPermissionsMock(),
                 );
 
                 expect(res.ok).toBeFalsy();
@@ -77,19 +75,15 @@ describe('PersonDeleteService', () => {
 
         describe('when referenced rolle cannot be loaded for any PK', () => {
             it('should log error', async () => {
-                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
-                    createMock<Personenkontext<true>>({
-                        id: 'dummy-id',
-                        // eslint-disable-next-line @typescript-eslint/require-await
-                        async getRolle(): Promise<Option<Rolle<true>>> {
-                            return undefined;
-                        },
-                    }),
-                ]);
+                const personenkontextMock: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    id: 'dummy-id',
+                });
+                personenkontextMock.getRolle = vi.fn().mockResolvedValueOnce(undefined);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([personenkontextMock]);
 
                 const res: Result<void, DomainError> = await sut.deletePerson(
                     faker.string.uuid(),
-                    createMock<PersonPermissions>({}),
+                    createPersonPermissionsMock(),
                 );
 
                 expect(res.ok).toBeFalsy();
@@ -102,17 +96,15 @@ describe('PersonDeleteService', () => {
 
         describe('when getting referenced rolle for PK is resulting in rejection of promise', () => {
             it('should log error', async () => {
-                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
-                    createMock<Personenkontext<true>>({
-                        async getRolle(): Promise<Option<Rolle<true>>> {
-                            return Promise.reject(new Error('reason'));
-                        },
-                    }),
-                ]);
+                const personenkontextMock: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    id: 'dummy-id',
+                });
+                personenkontextMock.getRolle = vi.fn().mockRejectedValueOnce(new Error('reason'));
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([personenkontextMock]);
 
                 const res: Result<void, DomainError> = await sut.deletePerson(
                     faker.string.uuid(),
-                    createMock<PersonPermissions>({}),
+                    createPersonPermissionsMock(),
                 );
 
                 expect(res.ok).toBeFalsy();
@@ -125,23 +117,21 @@ describe('PersonDeleteService', () => {
 
         describe('when no error during loading of personenkontexte', () => {
             it('should succeed', async () => {
-                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
-                    createMock<Personenkontext<true>>({
-                        // eslint-disable-next-line @typescript-eslint/require-await
-                        async getRolle(): Promise<Option<Rolle<true>>> {
-                            return DoFactory.createRolle(true, {
-                                serviceProviderData: [DoFactory.createServiceProvider(true)],
-                            });
-                        },
-                        getOrganisation(): Promise<Option<Organisation<true>>> {
-                            return Promise.resolve(DoFactory.createOrganisation(true));
-                        },
+                const personenkontextMock: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    id: 'dummy-id',
+                });
+                personenkontextMock.getRolle = vi.fn().mockResolvedValueOnce(
+                    DoFactory.createRolle(true, {
+                        serviceProviderData: [DoFactory.createServiceProvider(true)],
                     }),
-                ]);
+                );
+                personenkontextMock.getOrganisation = vi.fn().mockResolvedValueOnce(DoFactory.createOrganisation(true));
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([personenkontextMock]);
+                personRepositoryMock.deletePerson.mockResolvedValueOnce({ ok: true, value: undefined });
 
                 const res: Result<void, DomainError> = await sut.deletePerson(
                     faker.string.uuid(),
-                    createMock<PersonPermissions>({}),
+                    createPersonPermissionsMock(),
                 );
 
                 expect(res.ok).toBeTruthy();
@@ -157,7 +147,7 @@ describe('PersonDeleteService', () => {
 
                 const res: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
                     faker.string.uuid(),
-                    createMock<PersonPermissions>(),
+                    createPersonPermissionsMock(),
                 );
 
                 expect(res.ok).toBeFalsy();
@@ -170,23 +160,24 @@ describe('PersonDeleteService', () => {
 
         describe('when getPersonkontextData succeeds', () => {
             it('should call deletePersonAfterDeadlineExceeded in PersonRepository', async () => {
-                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
-                    createMock<Personenkontext<true>>({
-                        // eslint-disable-next-line @typescript-eslint/require-await
-                        async getRolle(): Promise<Option<Rolle<true>>> {
-                            return DoFactory.createRolle(true, {
-                                serviceProviderData: [DoFactory.createServiceProvider(true)],
-                            });
-                        },
-                        getOrganisation(): Promise<Option<Organisation<true>>> {
-                            return Promise.resolve(DoFactory.createOrganisation(true));
-                        },
+                const personenkontextMock: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    id: 'dummy-id',
+                });
+                personenkontextMock.getRolle = vi.fn().mockResolvedValueOnce(
+                    DoFactory.createRolle(true, {
+                        serviceProviderData: [DoFactory.createServiceProvider(true)],
                     }),
-                ]);
+                );
+                personenkontextMock.getOrganisation = vi.fn().mockResolvedValueOnce(DoFactory.createOrganisation(true));
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([personenkontextMock]);
+                personRepositoryMock.deletePersonAfterDeadlineExceeded.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
 
                 const res: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
                     faker.string.uuid(),
-                    createMock<PersonPermissions>({}),
+                    createPersonPermissionsMock(),
                 );
 
                 expect(res.ok).toBeTruthy();

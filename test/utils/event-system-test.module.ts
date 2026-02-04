@@ -1,4 +1,4 @@
-import { createMock } from '@golevelup/ts-jest';
+import { createMock } from './createMock.js';
 import { Global, Module } from '@nestjs/common';
 import { EventService } from '../../src/core/eventbus/index.js';
 import { EventRoutingLegacyKafkaService } from '../../src/core/eventbus/services/event-routing-legacy-kafka.service.js';
@@ -9,15 +9,15 @@ import { KafkaEventService } from '../../src/core/eventbus/services/kafka-event.
     providers: [
         {
             provide: EventService,
-            useValue: createMock<EventService>(),
+            useValue: createMock(EventService),
         },
         {
             provide: KafkaEventService,
-            useValue: createMock<KafkaEventService>(),
+            useValue: createMock(KafkaEventService),
         },
         {
             provide: EventRoutingLegacyKafkaService,
-            useValue: createMock<EventRoutingLegacyKafkaService>(),
+            useValue: createMock(EventRoutingLegacyKafkaService),
         },
     ],
     exports: [EventService, KafkaEventService, EventRoutingLegacyKafkaService],
