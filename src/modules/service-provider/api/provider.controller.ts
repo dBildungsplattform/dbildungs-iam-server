@@ -178,16 +178,16 @@ export class ProviderController {
             throw new UnauthorizedException('NOT_AUTHORIZED');
         }
 
-        if (queryParams.organisationId) {
-            const allowed: boolean =
-                permittedOrgas.all || permittedOrgas.orgaIds.includes(queryParams.organisationId as OrganisationID);
-            if (!allowed) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                        new MissingPermissionsError('Insufficient permissions for the requested organisationId'),
-                    ),
-                );
-            }
+        if (
+            queryParams.organisationId &&
+            !permittedOrgas.all &&
+            !permittedOrgas.orgaIds.includes(queryParams.organisationId as OrganisationID)
+        ) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Insufficient permissions for the requested organisationId'),
+                ),
+            );
         }
 
         const organisationIdForQuery: OrganisationID | undefined = queryParams.organisationId
