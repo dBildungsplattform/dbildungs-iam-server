@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
 
 export class RollenerweiterungByServiceProvidersIdQueryParams extends PagedQueryParams {
+    @IsOptional()
     @IsUUID()
     @ApiProperty({
         description: 'The id of the organisation',
