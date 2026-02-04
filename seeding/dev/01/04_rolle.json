@@ -204,6 +204,16 @@
             "merkmale": [],
             "systemrechte": [],
             "serviceProviderIds": [13, 14]
+        },
+        {
+            "id": 202,
+            "administeredBySchulstrukturknoten": 0,
+            "name": "Technical User DaTUM",
+            "rollenart": "SYSADMIN",
+            "merkmale": [],
+            "systemrechte": ["PERSONEN_LESEN"],
+            "serviceProviderIds": [13, 14],
+            "istTechnisch": true
         }
     ]
 }
