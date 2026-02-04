@@ -56,7 +56,7 @@ export class OrganisationEntity extends TimestampedEntity<OrganisationEntity, 'i
 
 #### Domain Object
 ```typescript
-export class OrganisationDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
+export class Organisation<WasPersisted extends boolean> implements DoBase<WasPersisted> {
 
   public constructor() {
   }
@@ -83,42 +83,13 @@ export class OrganisationService {
     public constructor(private readonly organisationRepo: OrganisationRepo) {}
 
     public async createOrganisation(
-        organisationDo: OrganisationDo<false>,
-    ): Promise<Result<OrganisationDo<true>, DomainError>> {
-        const organisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
+        organisation: OrganisationDo<false>,
+    ): Promise<Result<Organisation<true>, DomainError>> {
+        const organisation: Organisation<true> = await this.organisationRepo.save(organisation);
         if (organisation) {
             return { ok: true, value: organisation };
         }
         return { ok: false, error: new EntityCouldNotBeCreated(`Organization could not be created`) };
-    }
-}
-```
-#### Uc
-```typescript
-@Injectable()
-export class OrganisationUc {
-public constructor(
-private readonly organisationService: OrganisationService,
-@Inject(getMapperToken()) private readonly mapper: Mapper,
-) {}
-
-    public async createOrganisation(
-        organisationDto: CreateOrganisationDto,
-    ): Promise<CreatedOrganisationDto | SchulConnexError> {
-        const organisationDo: OrganisationDo<false> = this.mapper.map(
-            organisationDto,
-            CreateOrganisationDto,
-            OrganisationDo,
-        );
-        const result: Result<OrganisationDo<true>, DomainError> = await this.organisationService.createOrganisation(
-            organisationDo,
-        );
-
-        if (result.ok) {
-            return this.mapper.map(result.value, OrganisationDo, CreatedOrganisationDto);
-        }
-
-        return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 }
 ```
@@ -129,7 +100,7 @@ private readonly organisationService: OrganisationService,
 @Controller({ path: 'organisation' })
 export class OrganisationController {
     public constructor(
-        private readonly uc: OrganisationUc,
+        private readonly repo: OrganisationRepo,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -145,7 +116,7 @@ export class OrganisationController {
             CreateOrganisationBodyParams,
             CreateOrganisationDto,
         );
-        const result: CreatedOrganisationDto | SchulConnexError = await this.uc.createOrganisation(organisationDto);
+        const result: CreatedOrganisationDto | SchulConnexError = await this.repo.createOrganisation(organisationDto);
 
         if (result instanceof CreatedOrganisationDto) {
             return this.mapper.map(result, CreatedOrganisationDto, OrganisationResponse);

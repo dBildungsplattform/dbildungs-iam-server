@@ -1,5 +1,11 @@
 # EventModule
 
+**!!! Deprecated Information !!!**
+
+See [Kafka](./kafka.md) for updated information about the event bus.
+
+## This is how it was done before Kafka
+
 The [`EventModule`](/src/core/eventbus/event.module.ts) can be used to listen to and publish events across the whole application. This can be used for decoupling logic.
 
 The event system stores a `RXJS.Subject` for every event that is subscribed to.
