@@ -190,14 +190,10 @@ export class ProviderController {
             );
         }
 
-        const organisationIdForQuery: OrganisationID | undefined = queryParams.organisationId
-            ? queryParams.organisationId
-            : undefined;
-
         const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
             await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrgaKennung(
                 pathParams.angebotId,
-                organisationIdForQuery,
+                queryParams.organisationId,
                 queryParams.offset,
                 queryParams.limit,
             );
