@@ -19,6 +19,7 @@ import { faker } from '@faker-js/faker';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ApplyRollenerweiterungWorkflowAggregate } from '../domain/apply-rollenerweiterungen-workflow.js';
+import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
 
 describe('RollenerweiterungController', () => {
     let controller: RollenerweiterungController;
@@ -91,6 +92,36 @@ describe('RollenerweiterungController', () => {
             );
 
             await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).resolves.toBeUndefined();
+        });
+
+        it('should throw if ApplyRollenerweiterungWorkflowAggregate returns error', async () => {
+            const params: ApplyRollenerweiterungPathParams = {
+                angebotId: faker.string.uuid(),
+                organisationId: faker.string.uuid(),
+            };
+            const body: ApplyRollenerweiterungBodyParams = {
+                addErweiterungenForRolleIds: [],
+                removeErweiterungenForRolleIds: [],
+            };
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            serviceProviderRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createServiceProvider(true, {
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+            );
+            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            applyRollenerweiterungWorkflowFactoryMock.createNew.mockReturnValue(
+                createMock<ApplyRollenerweiterungWorkflowAggregate>(ApplyRollenerweiterungWorkflowAggregate, {
+                    initialize: vi.fn().mockResolvedValueOnce(undefined),
+                    applyRollenerweiterungChanges: vi
+                        .fn()
+                        .mockRejectedValueOnce({ ok: false, error: new ApplyRollenerweiterungRolesError([]) }),
+                }),
+            );
+
+            await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow();
         });
         it('should throw if permissions are missing', async () => {
             const params: ApplyRollenerweiterungPathParams = {
