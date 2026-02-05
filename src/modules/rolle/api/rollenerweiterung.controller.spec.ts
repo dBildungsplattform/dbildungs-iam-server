@@ -1,7 +1,7 @@
+import { vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { APP_PIPE } from '@nestjs/core';
-import { DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
+import { createPersonPermissionsMock, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { RollenerweiterungController } from './rollenerweiterung.controller.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
@@ -17,11 +17,14 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { faker } from '@faker-js/faker';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { ApplyRollenerweiterungWorkflowAggregate } from '../domain/apply-rollenerweiterungen-workflow.js';
 
 describe('RollenerweiterungController', () => {
     let controller: RollenerweiterungController;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
+    let applyRollenerweiterungWorkflowFactoryMock: DeepMocked<ApplyRollenerweiterungWorkflowFactory>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -33,19 +36,19 @@ describe('RollenerweiterungController', () => {
                 },
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock<ClassLogger>(ClassLogger),
                 },
                 {
                     provide: ServiceProviderRepo,
-                    useValue: createMock<ServiceProviderRepo>(),
+                    useValue: createMock<ServiceProviderRepo>(ServiceProviderRepo),
                 },
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock<OrganisationRepository>(OrganisationRepository),
                 },
                 {
                     provide: ApplyRollenerweiterungWorkflowFactory,
-                    useValue: createMock<ApplyRollenerweiterungWorkflowFactory>(),
+                    useValue: createMock<ApplyRollenerweiterungWorkflowFactory>(ApplyRollenerweiterungWorkflowFactory),
                 },
                 RollenerweiterungController,
             ],
@@ -54,10 +57,11 @@ describe('RollenerweiterungController', () => {
         controller = module.get(RollenerweiterungController);
         serviceProviderRepoMock = module.get(ServiceProviderRepo);
         organisationRepoMock = module.get(OrganisationRepository);
+        applyRollenerweiterungWorkflowFactoryMock = module.get(ApplyRollenerweiterungWorkflowFactory);
     });
 
     beforeEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('applyRollenerweiterungChanges', () => {
@@ -70,7 +74,7 @@ describe('RollenerweiterungController', () => {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
             serviceProviderRepoMock.findById.mockResolvedValueOnce(
@@ -79,6 +83,12 @@ describe('RollenerweiterungController', () => {
                 }),
             );
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            applyRollenerweiterungWorkflowFactoryMock.createNew.mockReturnValue(
+                createMock<ApplyRollenerweiterungWorkflowAggregate>(ApplyRollenerweiterungWorkflowAggregate, {
+                    initialize: vi.fn().mockResolvedValueOnce(undefined),
+                    applyRollenerweiterungChanges: vi.fn().mockResolvedValueOnce({ ok: true, value: null }),
+                }),
+            );
 
             await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).resolves.toBeUndefined();
         });
@@ -91,7 +101,7 @@ describe('RollenerweiterungController', () => {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
 
             await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow(
@@ -112,7 +122,7 @@ describe('RollenerweiterungController', () => {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
             serviceProviderRepoMock.findById.mockResolvedValueOnce(
@@ -140,7 +150,7 @@ describe('RollenerweiterungController', () => {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
             serviceProviderRepoMock.findById.mockResolvedValueOnce(undefined);
@@ -164,7 +174,7 @@ describe('RollenerweiterungController', () => {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
             serviceProviderRepoMock.findById.mockResolvedValueOnce(

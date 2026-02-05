@@ -26,7 +26,7 @@ describe('Rollenerweiterung Aggregate', () => {
                 OrganisationRepository,
                 {
                     provide: ServiceProviderRepo,
-                    useValue: createMock(ServiceProviderRepo),
+                    useValue: createMock<ServiceProviderRepo>(ServiceProviderRepo),
                 },
                 {
                     provide: RolleRepo,
@@ -35,7 +35,7 @@ describe('Rollenerweiterung Aggregate', () => {
             ],
         })
             .overrideProvider(OrganisationRepository)
-            .useValue(createMock<OrganisationRepository>())
+            .useValue(createMock<OrganisationRepository>(OrganisationRepository))
             .compile();
 
         rollenerweiterungFactory = module.get(RollenerweiterungFactory);
