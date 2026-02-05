@@ -9,7 +9,7 @@ import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { Rollenerweiterung } from './rollenerweiterung.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
-import { ApplyRollenerweiterungBodyParams } from '../api/applyRollenerweiterung.body.params.js';
+import { ApplyRollenerweiterungBodyParams } from '../api/apply-rollenerweiterung.body.params.js';
 import { ApplyRollenerweiterungRolesError } from '../api/apply-rollenerweiterung-roles.error.js';
 
 type TunknownResultForRolle = {

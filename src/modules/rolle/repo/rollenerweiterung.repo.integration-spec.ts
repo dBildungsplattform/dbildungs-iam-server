@@ -22,7 +22,7 @@ import { NoRedundantRollenerweiterungError } from '../specification/error/no-red
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
 import { RolleRepo } from './rolle.repo.js';
 import { RollenerweiterungRepo } from './rollenerweiterung.repo.js';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
@@ -212,6 +212,96 @@ describe('RollenerweiterungRepo', () => {
                 return;
             }
             expect(result.error).toBeInstanceOf(EntityNotFoundError);
+        });
+    });
+
+    describe('findByServiceProviderIds', () => {
+        let organisations: Array<Organisation<true>>;
+        let rollen: Array<Rolle<true>>;
+        let serviceProviders: Array<ServiceProvider<true>>;
+        let factory: RollenerweiterungFactory;
+
+        beforeEach(async () => {
+            const parentOrga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            organisations = await Promise.all(
+                [0, 1].map(() =>
+                    organisationRepo.save(DoFactory.createOrganisation(false, { administriertVon: parentOrga.id })),
+                ),
+            );
+            rollen = (
+                await Promise.all(
+                    [0, 1].map(() =>
+                        rolleRepo.save(
+                            DoFactory.createRolle(false, {
+                                administeredBySchulstrukturknoten: parentOrga.id,
+                            }),
+                        ),
+                    ),
+                )
+            ).filter((rolle: Rolle<true> | DomainError): rolle is Rolle<true> => {
+                if (rolle instanceof Rolle) {
+                    return true;
+                } else {
+                    throw rolle;
+                }
+            });
+            serviceProviders = await Promise.all(
+                [0, 1, 2].map(() =>
+                    serviceProviderRepo.save(
+                        DoFactory.createServiceProvider(false, {
+                            merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                        }),
+                    ),
+                ),
+            );
+            factory = module.get(RollenerweiterungFactory);
+
+            await Promise.all([
+                sut.create(factory.createNew(organisations[0]!.id, rollen[0]!.id, serviceProviders[0]!.id)),
+                sut.create(factory.createNew(organisations[0]!.id, rollen[1]!.id, serviceProviders[0]!.id)),
+                sut.create(factory.createNew(organisations[1]!.id, rollen[0]!.id, serviceProviders[1]!.id)),
+                sut.create(factory.createNew(organisations[1]!.id, rollen[1]!.id, serviceProviders[2]!.id)),
+            ]);
+        });
+
+        it('should return a map with arrays of rollenerweiterungen for each serviceProviderId', async () => {
+            const ids: string[] = [serviceProviders[0]!.id, serviceProviders[1]!.id, serviceProviders[2]!.id];
+            const result: Map<ServiceProviderID, Rollenerweiterung<true>[]> = await sut.findByServiceProviderIds(ids);
+
+            expect(result).toBeInstanceOf(Map);
+            expect(result.size).toBe(3);
+
+            expect(result.get(serviceProviders[0]!.id)).toBeInstanceOf(Array);
+            expect(result.get(serviceProviders[0]!.id)).toHaveLength(2);
+            expect(result.get(serviceProviders[1]!.id)).toHaveLength(1);
+            expect(result.get(serviceProviders[2]!.id)).toHaveLength(1);
+
+            for (const id of ids) {
+                for (const re of result.get(id)!) {
+                    expect(re.serviceProviderId).toBe(id);
+                }
+            }
+        });
+
+        it('should return empty arrays for serviceProviderIds with no rollenerweiterungen', async () => {
+            const unusedServiceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false, {
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+            );
+            const ids: string[] = [unusedServiceProvider.id];
+            const result: Map<ServiceProviderID, Rollenerweiterung<true>[]> = await sut.findByServiceProviderIds(ids);
+
+            expect(result).toBeInstanceOf(Map);
+            expect(result.size).toBe(1);
+            expect(result.get(unusedServiceProvider.id)).toBeInstanceOf(Array);
+            expect(result.get(unusedServiceProvider.id)).toHaveLength(0);
+        });
+
+        it('should return an empty map if input array is empty', async () => {
+            const result: Map<ServiceProviderID, Rollenerweiterung<true>[]> = await sut.findByServiceProviderIds([]);
+            expect(result).toBeInstanceOf(Map);
+            expect(result.size).toBe(0);
         });
     });
 

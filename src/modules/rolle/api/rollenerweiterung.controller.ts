@@ -14,13 +14,13 @@ import { AuthenticationExceptionFilter } from '../../authentication/api/authenti
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { ApplyRollenerweiterungPathParams } from './applyRollenerweiterungChanges.path.params.js';
+import { ApplyRollenerweiterungPathParams } from './apply-rollenerweiterung-changes.path.params.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { ApplyRollenerweiterungBodyParams } from './applyRollenerweiterung.body.params.js';
+import { ApplyRollenerweiterungBodyParams } from './apply-rollenerweiterung.body.params.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { RollenerweiterungExceptionFilter } from './rollenerweiterung-exception-filter.js';

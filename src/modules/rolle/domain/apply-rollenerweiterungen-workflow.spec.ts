@@ -5,7 +5,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { ApplyRollenerweiterungBodyParams } from '../api/applyRollenerweiterung.body.params.js';
+import { ApplyRollenerweiterungBodyParams } from '../api/apply-rollenerweiterung.body.params.js';
 import { Rollenerweiterung } from './rollenerweiterung.js';
 import { Rolle } from './rolle.js';
 import { Ok } from '../../../shared/util/result.js';
