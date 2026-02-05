@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { Mock, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { APP_PIPE } from '@nestjs/core';
 import { createPersonPermissionsMock, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
@@ -20,6 +20,7 @@ import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/mi
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ApplyRollenerweiterungWorkflowAggregate } from '../domain/apply-rollenerweiterungen-workflow.js';
 import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
+import { DomainError } from '../../../shared/error/index.js';
 
 describe('RollenerweiterungController', () => {
     let controller: RollenerweiterungController;
@@ -92,6 +93,64 @@ describe('RollenerweiterungController', () => {
             );
 
             await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).resolves.toBeUndefined();
+        });
+
+        it('should log error with failed and successful rollen ids when ApplyRollenerweiterungWorkflowAggregate returns error', async () => {
+            const params: ApplyRollenerweiterungPathParams = {
+                angebotId: faker.string.uuid(),
+                organisationId: faker.string.uuid(),
+            };
+            const body: ApplyRollenerweiterungBodyParams = {
+                addErweiterungenForRolleIds: ['rollenId1', 'rollenId2', 'rollenId3'],
+                removeErweiterungenForRolleIds: ['rollenId4'],
+            };
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            serviceProviderRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createServiceProvider(true, {
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+            );
+            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+
+            const errorRollenId2: { id: string; error: DomainError } = {
+                id: 'rollenId2',
+                error: new EntityNotFoundError('Rolle', 'rollenId2'),
+            };
+            const errorRollenId4: { id: string; error: DomainError } = {
+                id: 'rollenId4',
+                error: new EntityNotFoundError('Rolle', 'rollenId4'),
+            };
+            const error: ApplyRollenerweiterungRolesError = new ApplyRollenerweiterungRolesError([
+                { rolleId: 'rollenId2', error: errorRollenId2 as unknown as DomainError },
+                { rolleId: 'rollenId4', error: errorRollenId4 as unknown as DomainError },
+            ]);
+            const loggerInfoSpy: Mock<(message: string, trace?: unknown) => void> = vi.spyOn(
+                controller['logger'],
+                'info',
+            );
+            const loggerErrorSpy: Mock<(message: string, trace?: unknown) => void> = vi.spyOn(
+                controller['logger'],
+                'error',
+            );
+
+            applyRollenerweiterungWorkflowFactoryMock.createNew.mockReturnValue(
+                createMock<ApplyRollenerweiterungWorkflowAggregate>(ApplyRollenerweiterungWorkflowAggregate, {
+                    initialize: vi.fn().mockResolvedValueOnce(undefined),
+                    applyRollenerweiterungChanges: vi.fn().mockResolvedValueOnce({ ok: false, error }),
+                }),
+            );
+
+            await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow();
+
+            expect(loggerInfoSpy).toHaveBeenCalledWith(
+                `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} with 3 x ADD (rollenId1, rollenId2, rollenId3) and 1 x REMOVE (rollenId4).`,
+            );
+
+            expect(loggerErrorSpy).toHaveBeenCalledWith(
+                expect.stringContaining(`success for rollen: rollenId1, rollenId3`),
+            );
         });
 
         it('should throw if ApplyRollenerweiterungWorkflowAggregate returns error', async () => {
