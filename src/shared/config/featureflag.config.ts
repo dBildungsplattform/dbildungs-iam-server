@@ -12,4 +12,8 @@ export class FeatureFlagConfig {
     @IsBoolean()
     @IsNotEmpty()
     public readonly FEATURE_FLAG_ROLLE_ERWEITERN!: boolean;
+
+    @IsBoolean()
+    @IsNotEmpty()
+    public readonly FEATURE_FLAG_SET_UEM_PASSWORD!: boolean;
 }
