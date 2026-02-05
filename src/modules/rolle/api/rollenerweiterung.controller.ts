@@ -22,13 +22,14 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { ApplyRollenerweiterungBodyParams } from './apply-rollenerweiterung.body.params.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
-import { EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { RollenerweiterungExceptionFilter } from './rollenerweiterung-exception-filter.js';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
 import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
 import { ApplyRollenerweiterungWorkflowAggregate } from '../domain/apply-rollenerweiterungen-workflow.js';
 import { ApplyRollenerweiterungWorkflowFactory } from '../domain/apply-rollenerweiterungen-workflow.factory.js';
 import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
+import { uniq } from 'lodash-es';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -63,7 +64,7 @@ export class RollenerweiterungController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
         this.logger.info(
-            `applyRollenerweiterungChanges called by ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} with ${body.addErweiterungenForRolleIds.length} additions and ${body.removeErweiterungenForRolleIds.length} removals.`,
+            `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} with ${body.addErweiterungenForRolleIds.length} x ADD (${[...body.addErweiterungenForRolleIds].map((id: string) => id).join(', ')}) and ${body.removeErweiterungenForRolleIds.length} x REMOVE (${[...body.removeErweiterungenForRolleIds].map((id: string) => id).join(', ')}).`,
         );
         const angebotId: string = params.angebotId;
         const orgaId: string = params.organisationId;
@@ -75,17 +76,26 @@ export class RollenerweiterungController {
         const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(angebotId);
         const organisation: Option<Organisation<true>> = await this.organisationRepo.findById(orgaId);
         if (!organisation) {
+            this.logger.error(
+                `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for not existing organisation ${params.organisationId}`,
+            );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Orga', orgaId)),
             );
         }
         if (!serviceProvider) {
+            this.logger.error(
+                `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for not existing angebot ${params.angebotId}`,
+            );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Angebot', angebotId)),
             );
         }
 
         if (!serviceProvider.merkmale.includes(ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG)) {
+            this.logger.error(
+                `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for existing angebot ${params.angebotId} which is not verfuegbar for rollenerweiterung`,
+            );
             throw new MissingMerkmalVerfuegbarFuerRollenerweiterungError();
         }
         const applyRollenerweiterungenWorkflow: ApplyRollenerweiterungWorkflowAggregate =
@@ -94,7 +104,26 @@ export class RollenerweiterungController {
         const result: Result<null, ApplyRollenerweiterungRolesError> =
             await applyRollenerweiterungenWorkflow.applyRollenerweiterungChanges(body, permissions);
         if (!result.ok) {
+            this.logger.error(
+                `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} completed with error for rollen: ${result.error.errors
+                    .map((e: { id: string | undefined; error: DomainError }) => `${e.id} (${e.error.message})`)
+                    .join(', ')}.
+                    and success for rollen: ${uniq([
+                        ...body.addErweiterungenForRolleIds,
+                        ...body.removeErweiterungenForRolleIds,
+                    ])
+                        .filter(
+                            (id: string) =>
+                                !result.error.errors
+                                    .map((e: { id: string | undefined; error: DomainError }) => e.id)
+                                    .includes(id),
+                        )
+                        .join(', ')}.`,
+            );
             throw result.error;
         }
+        this.logger.info(
+            `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} completed with complete success.`,
+        );
     }
 }
