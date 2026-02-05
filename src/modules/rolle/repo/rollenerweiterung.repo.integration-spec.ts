@@ -543,7 +543,7 @@ describe('RollenerweiterungRepo', () => {
             await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
 
             const [result, count]: Counted<Rollenerweiterung<true>> =
-                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id, 1, 2);
+                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id, undefined, 1, 2);
             expect(result).toBeInstanceOf(Array);
             expect(result).toHaveLength(2);
             expect(count).toBe(3);
@@ -560,9 +560,9 @@ describe('RollenerweiterungRepo', () => {
             const [result, count]: Counted<Rollenerweiterung<true>> =
                 await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(
                     serviceProvider.id,
+                    organisation2.id,
                     0,
                     10,
-                    organisation2.id,
                 );
             expect(result).toBeInstanceOf(Array);
             expect(result).toHaveLength(1);

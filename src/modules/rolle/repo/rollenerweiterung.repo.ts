@@ -190,9 +190,9 @@ export class RollenerweiterungRepo {
     */
     public async findByServiceProviderIdPagedAndSortedByOrgaKennung(
         serviceProviderId: ServiceProviderID,
+        organisationId?: OrganisationID,
         offset?: number,
         limit?: number,
-        organisationId?: OrganisationID,
     ): Promise<Counted<Rollenerweiterung<true>>> {
         // Get paginated unique organisation IDs using QueryBuilder
         const qb: QueryBuilder<RollenerweiterungEntity> = this.em.createQueryBuilder(RollenerweiterungEntity, 're');

@@ -181,7 +181,7 @@ export class ProviderController {
         if (
             queryParams.organisationId &&
             !permittedOrgas.all &&
-            !permittedOrgas.orgaIds.includes(queryParams.organisationId as OrganisationID)
+            !permittedOrgas.orgaIds.includes(queryParams.organisationId)
         ) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
@@ -191,15 +191,15 @@ export class ProviderController {
         }
 
         const organisationIdForQuery: OrganisationID | undefined = queryParams.organisationId
-            ? (queryParams.organisationId as OrganisationID)
+            ? queryParams.organisationId
             : undefined;
 
         const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
             await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrgaKennung(
                 pathParams.angebotId,
+                organisationIdForQuery,
                 queryParams.offset,
                 queryParams.limit,
-                organisationIdForQuery,
             );
 
         const rolleIds: RolleID[] = uniq(rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.rolleId));

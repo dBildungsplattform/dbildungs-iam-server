@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsUUID } from 'class-validator';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 
 export class RollenerweiterungByServiceProvidersIdQueryParams extends PagedQueryParams {
     @IsOptional()
@@ -10,5 +11,5 @@ export class RollenerweiterungByServiceProvidersIdQueryParams extends PagedQuery
         required: false,
         nullable: true,
     })
-    public readonly organisationId?: string;
+    public readonly organisationId?: OrganisationID;
 }

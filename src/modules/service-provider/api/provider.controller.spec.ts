@@ -128,7 +128,7 @@ describe('Provider Controller Test', () => {
             ).rejects.toBeInstanceOf(UnauthorizedException);
         });
 
-        it('should throw MissingPermissionsError when user lacks permission', async () => {
+        it('should throw MissingPermissionsError when user lacks permission when filtering for orga', async () => {
             const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                 all: false,
