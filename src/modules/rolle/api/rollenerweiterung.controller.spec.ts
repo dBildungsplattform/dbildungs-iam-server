@@ -117,7 +117,7 @@ describe('RollenerweiterungController', () => {
                     initialize: vi.fn().mockResolvedValueOnce(undefined),
                     applyRollenerweiterungChanges: vi
                         .fn()
-                        .mockRejectedValueOnce({ ok: false, error: new ApplyRollenerweiterungRolesError([]) }),
+                        .mockResolvedValueOnce({ ok: false, error: new ApplyRollenerweiterungRolesError([]) }),
                 }),
             );
 
