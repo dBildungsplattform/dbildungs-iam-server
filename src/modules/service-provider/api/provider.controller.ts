@@ -335,7 +335,7 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Param() params: AngebotByIdParams,
     ): Promise<ManageableServiceProviderResponse> {
-        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findAuthorizedById(
+        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderService.findManageableById(
             permissions,
             params.angebotId,
         );

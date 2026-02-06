@@ -28,7 +28,7 @@ import {
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 
@@ -122,6 +122,30 @@ export class ServiceProviderService {
             offset,
         );
         return { ok: true, value: result };
+    }
+
+    public async findManageableById(
+        permissions: PersonPermissions,
+        id: ServiceProviderID,
+    ): Promise<Option<ServiceProvider<true>>> {
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ROLLEN_ERWEITERN],
+            true,
+            false,
+        );
+        let permittedOrgasIds: OrganisationID[];
+        if (permittedOrgas.all) {
+            permittedOrgasIds = [];
+        } else {
+            permittedOrgasIds = permittedOrgas.orgaIds;
+        }
+        const parents: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds(permittedOrgasIds);
+        const organisationWithParentsIds: OrganisationID[] = [
+            ...permittedOrgasIds,
+            ...parents.map((orga: Organisation<true>) => orga.id as OrganisationID),
+        ];
+
+        return this.serviceProviderRepo.findByIdAuthorized(id, organisationWithParentsIds);
     }
 
     public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(
