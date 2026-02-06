@@ -21,6 +21,7 @@ import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ApplyRollenerweiterungWorkflowAggregate } from '../domain/apply-rollenerweiterungen-workflow.js';
 import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
 import { DomainError } from '../../../shared/error/index.js';
+import { ApplyRollenerweiterungWorkflowNotInitializedError } from '../domain/apply-rollenerweiterung-workflow-not-initialized.error.js';
 
 describe('RollenerweiterungController', () => {
     let controller: RollenerweiterungController;
@@ -153,7 +154,7 @@ describe('RollenerweiterungController', () => {
             );
         });
 
-        it('should throw if ApplyRollenerweiterungWorkflowAggregate returns error', async () => {
+        it('should throw if ApplyRollenerweiterungWorkflowAggregate returns ApplyRollenerweiterungRolesError error', async () => {
             const params: ApplyRollenerweiterungPathParams = {
                 angebotId: faker.string.uuid(),
                 organisationId: faker.string.uuid(),
@@ -177,6 +178,37 @@ describe('RollenerweiterungController', () => {
                     applyRollenerweiterungChanges: vi
                         .fn()
                         .mockResolvedValueOnce({ ok: false, error: new ApplyRollenerweiterungRolesError([]) }),
+                }),
+            );
+
+            await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow();
+        });
+
+        it('should throw if ApplyRollenerweiterungWorkflowAggregate returns ApplyRollenerweiterungWorkflowNotInitializedError error', async () => {
+            const params: ApplyRollenerweiterungPathParams = {
+                angebotId: faker.string.uuid(),
+                organisationId: faker.string.uuid(),
+            };
+            const body: ApplyRollenerweiterungBodyParams = {
+                addErweiterungenForRolleIds: [],
+                removeErweiterungenForRolleIds: [],
+            };
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            serviceProviderRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createServiceProvider(true, {
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+            );
+            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            applyRollenerweiterungWorkflowFactoryMock.createNew.mockReturnValue(
+                createMock<ApplyRollenerweiterungWorkflowAggregate>(ApplyRollenerweiterungWorkflowAggregate, {
+                    initialize: vi.fn().mockResolvedValueOnce(undefined),
+                    applyRollenerweiterungChanges: vi.fn().mockResolvedValueOnce({
+                        ok: false,
+                        error: new ApplyRollenerweiterungWorkflowNotInitializedError(),
+                    }),
                 }),
             );
 

@@ -13,6 +13,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { ApplyRollenerweiterungRolesError } from '../api/apply-rollenerweiterung-roles.error.js';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { ApplyRollenerweiterungWorkflowNotInitializedError } from './apply-rollenerweiterung-workflow-not-initialized.error.js';
 
 describe('ApplyRollenerweiterungWorkflowAggregate', () => {
     let logger: DeepMocked<ClassLogger>;
@@ -50,6 +51,46 @@ describe('ApplyRollenerweiterungWorkflowAggregate', () => {
         );
     });
 
+    it('should return Error if apply called without initializing Workflow before', async () => {
+        const rolleIdAdd: string = faker.string.uuid();
+        const rolleIdRemove: string = faker.string.uuid();
+
+        const existingErw: Rollenerweiterung<true> = createMock<Rollenerweiterung<true>>(Rollenerweiterung, {
+            rolleId: rolleIdRemove,
+        });
+        rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId.mockResolvedValue([existingErw]);
+
+        const rolleAdd: Rolle<true> = createMock<Rolle<true>>(Rolle);
+        const rolleRemove: Rolle<true> = createMock<Rolle<true>>(Rolle);
+        rolleRepo.findByIds.mockResolvedValue(
+            new Map([
+                [rolleIdAdd, rolleAdd],
+                [rolleIdRemove, rolleRemove],
+            ]),
+        );
+
+        rollenerweiterungRepo.createAuthorized.mockResolvedValue(
+            Ok(createMock<Rollenerweiterung<true>>(Rollenerweiterung)),
+        );
+        rollenerweiterungRepo.deleteByComposedId.mockResolvedValue(Ok(null));
+
+        const body: ApplyRollenerweiterungBodyParams = {
+            addErweiterungenForRolleIds: [rolleIdAdd],
+            removeErweiterungenForRolleIds: [rolleIdRemove],
+        };
+        const permissions: PersonPermissions = createMock<PersonPermissions>(PersonPermissions);
+
+        const result: Result<
+            null,
+            ApplyRollenerweiterungRolesError | ApplyRollenerweiterungWorkflowNotInitializedError
+        > = await workflow.applyRollenerweiterungChanges(body, permissions);
+        expect(result.ok).toBe(false);
+        if (result.ok) {
+            return;
+        }
+        expect(result.error).toBeInstanceOf(ApplyRollenerweiterungWorkflowNotInitializedError);
+    });
+
     it('should add and remove Erweiterungen successfully', async () => {
         const orgaId: string = faker.string.uuid();
         const angebotId: string = faker.string.uuid();
@@ -83,10 +124,10 @@ describe('ApplyRollenerweiterungWorkflowAggregate', () => {
         };
         const permissions: PersonPermissions = createMock<PersonPermissions>(PersonPermissions);
 
-        const result: Result<null, ApplyRollenerweiterungRolesError> = await workflow.applyRollenerweiterungChanges(
-            body,
-            permissions,
-        );
+        const result: Result<
+            null,
+            ApplyRollenerweiterungRolesError | ApplyRollenerweiterungWorkflowNotInitializedError
+        > = await workflow.applyRollenerweiterungChanges(body, permissions);
         expect(result.ok).toBe(true);
         expect(rollenerweiterungRepo.createAuthorized).toHaveBeenCalled();
         expect(rollenerweiterungRepo.deleteByComposedId).toHaveBeenCalled();
@@ -107,15 +148,18 @@ describe('ApplyRollenerweiterungWorkflowAggregate', () => {
         };
         const permissions: PersonPermissions = createMock<PersonPermissions>(PersonPermissions);
 
-        const result: Result<null, ApplyRollenerweiterungRolesError> = await workflow.applyRollenerweiterungChanges(
-            body,
-            permissions,
-        );
+        const result: Result<
+            null,
+            ApplyRollenerweiterungRolesError | ApplyRollenerweiterungWorkflowNotInitializedError
+        > = await workflow.applyRollenerweiterungChanges(body, permissions);
         expect(result.ok).toBe(false);
         if (result.ok) {
             return;
         }
         expect(result.error).toBeInstanceOf(ApplyRollenerweiterungRolesError);
+        if (result.error instanceof ApplyRollenerweiterungWorkflowNotInitializedError) {
+            return;
+        }
         expect(result.error.errors[0]?.id).toBe(rolleId);
         expect(result.error.errors[0]?.error).toBeInstanceOf(EntityNotFoundError);
     });
@@ -138,15 +182,18 @@ describe('ApplyRollenerweiterungWorkflowAggregate', () => {
         };
         const permissions: PersonPermissions = createMock<PersonPermissions>(PersonPermissions);
 
-        const result: Result<null, ApplyRollenerweiterungRolesError> = await workflow.applyRollenerweiterungChanges(
-            body,
-            permissions,
-        );
+        const result: Result<
+            null,
+            ApplyRollenerweiterungRolesError | ApplyRollenerweiterungWorkflowNotInitializedError
+        > = await workflow.applyRollenerweiterungChanges(body, permissions);
         expect(result.ok).toBe(false);
         if (result.ok) {
             return;
         }
         expect(result.error).toBeInstanceOf(ApplyRollenerweiterungRolesError);
+        if (result.error instanceof ApplyRollenerweiterungWorkflowNotInitializedError) {
+            return;
+        }
         expect(result.error.errors[0]?.id).toBe(rolleIdRemove);
         expect(result.error.errors[0]?.error).toBeInstanceOf(EntityNotFoundError);
     });

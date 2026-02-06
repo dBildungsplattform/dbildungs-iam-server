@@ -30,6 +30,7 @@ import { ApplyRollenerweiterungWorkflowAggregate } from '../domain/apply-rollene
 import { ApplyRollenerweiterungWorkflowFactory } from '../domain/apply-rollenerweiterungen-workflow.factory.js';
 import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
 import { uniq } from 'lodash-es';
+import { ApplyRollenerweiterungWorkflowNotInitializedError } from '../domain/apply-rollenerweiterung-workflow-not-initialized.error.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -101,25 +102,35 @@ export class RollenerweiterungController {
         const applyRollenerweiterungenWorkflow: ApplyRollenerweiterungWorkflowAggregate =
             this.applyRollenerweiterungWorkflowFactory.createNew();
         await applyRollenerweiterungenWorkflow.initialize(orgaId, angebotId);
-        const result: Result<null, ApplyRollenerweiterungRolesError> =
-            await applyRollenerweiterungenWorkflow.applyRollenerweiterungChanges(body, permissions);
+        const result: Result<
+            null,
+            ApplyRollenerweiterungRolesError | ApplyRollenerweiterungWorkflowNotInitializedError
+        > = await applyRollenerweiterungenWorkflow.applyRollenerweiterungChanges(body, permissions);
         if (!result.ok) {
-            this.logger.error(
-                `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} completed with error for rollen: ${result.error.errors
-                    .map((e: { id: string | undefined; error: DomainError }) => `${e.id} (${e.error.message})`)
-                    .join(', ')}.
+            const err: ApplyRollenerweiterungRolesError | ApplyRollenerweiterungWorkflowNotInitializedError =
+                result.error;
+            if (err instanceof ApplyRollenerweiterungRolesError) {
+                this.logger.error(
+                    `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} completed with error for rollen: ${err.errors
+                        .map((e: { id: string | undefined; error: DomainError }) => `${e.id} (${e.error.message})`)
+                        .join(', ')}.
                     and success for rollen: ${uniq([
                         ...body.addErweiterungenForRolleIds,
                         ...body.removeErweiterungenForRolleIds,
                     ])
                         .filter(
                             (id: string) =>
-                                !result.error.errors
+                                !err.errors
                                     .map((e: { id: string | undefined; error: DomainError }) => e.id)
                                     .includes(id),
                         )
                         .join(', ')}.`,
-            );
+                );
+            } else {
+                this.logger.error(
+                    `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} could not be applied because workflow was not initialized.`,
+                );
+            }
             throw result.error;
         }
         this.logger.info(

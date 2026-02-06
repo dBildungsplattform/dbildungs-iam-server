@@ -11,6 +11,7 @@ import { Err, Ok } from '../../../shared/util/result.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { ApplyRollenerweiterungBodyParams } from '../api/apply-rollenerweiterung.body.params.js';
 import { ApplyRollenerweiterungRolesError } from '../api/apply-rollenerweiterung-roles.error.js';
+import { ApplyRollenerweiterungWorkflowNotInitializedError } from './apply-rollenerweiterung-workflow-not-initialized.error.js';
 
 type TunknownResultForRolle = {
     rolleId: string;
@@ -32,9 +33,9 @@ function isErrorResult<T>(r: {
 }
 
 export class ApplyRollenerweiterungWorkflowAggregate {
-    private orgaId: string = '';
+    private orgaId: string | undefined = undefined;
 
-    private angebotId: string = '';
+    private angebotId: string | undefined = undefined;
 
     private existingErweiterungen: Array<Rollenerweiterung<true>> = [];
 
@@ -74,14 +75,32 @@ export class ApplyRollenerweiterungWorkflowAggregate {
     public async applyRollenerweiterungChanges(
         body: ApplyRollenerweiterungBodyParams,
         permissions: PersonPermissions,
-    ): Promise<Result<null, ApplyRollenerweiterungRolesError>> {
+    ): Promise<Result<null, ApplyRollenerweiterungRolesError | ApplyRollenerweiterungWorkflowNotInitializedError>> {
+        if (!this.orgaId || !this.angebotId) {
+            return Err(new ApplyRollenerweiterungWorkflowNotInitializedError());
+        }
         await this.rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId(this.orgaId, this.angebotId);
         const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(
             uniq([...body.addErweiterungenForRolleIds, ...body.removeErweiterungenForRolleIds]),
         );
         const [addResults, removeResults]: [TunknownResultForRolle[], TunknownResultForRolle[]] = await Promise.all([
-            Promise.all(this.handleAddErweiterungen(body.addErweiterungenForRolleIds, rollen, permissions)),
-            Promise.all(this.handleRemoveErweiterungen(body.removeErweiterungenForRolleIds, rollen)),
+            Promise.all(
+                this.handleAddErweiterungen(
+                    this.orgaId,
+                    this.angebotId,
+                    body.addErweiterungenForRolleIds,
+                    rollen,
+                    permissions,
+                ),
+            ),
+            Promise.all(
+                this.handleRemoveErweiterungen(
+                    this.orgaId,
+                    this.angebotId,
+                    body.removeErweiterungenForRolleIds,
+                    rollen,
+                ),
+            ),
         ]);
         const results: TunknownResultForRolle[] = [...addResults, ...removeResults];
         const errors: TerrorResultForRolle[] = results.filter(isErrorResult);
@@ -97,6 +116,8 @@ export class ApplyRollenerweiterungWorkflowAggregate {
     }
 
     private handleRemoveErweiterungen(
+        orgaId: string,
+        angebotId: string,
         removeErweiterungenForRolleIds: string[],
         rollen: Map<string, Rolle<true>>,
     ): Promise<{ rolleId: string; result: Result<null, DomainError> }>[] {
@@ -119,9 +140,9 @@ export class ApplyRollenerweiterungWorkflowAggregate {
                     }
                     return this.rollenerweiterungRepo
                         .deleteByComposedId({
-                            organisationId: this.orgaId,
+                            organisationId: orgaId,
                             rolleId: rolleId,
-                            serviceProviderId: this.angebotId,
+                            serviceProviderId: angebotId,
                         })
                         .then((result: Result<null, DomainError>) => ({ rolleId, result }));
                 });
@@ -129,6 +150,8 @@ export class ApplyRollenerweiterungWorkflowAggregate {
     }
 
     private handleAddErweiterungen(
+        orgaId: string,
+        angebotId: string,
         addErweiterungenForRolleIds: string[],
         rollen: Map<string, Rolle<true>>,
         permissions: PersonPermissions,
@@ -159,9 +182,9 @@ export class ApplyRollenerweiterungWorkflowAggregate {
                             this.organisationRepo,
                             this.rolleRepo,
                             this.serviceProviderRepo,
-                            this.orgaId,
+                            orgaId,
                             rolleId,
-                            this.angebotId,
+                            angebotId,
                         ),
                         permissions,
                     )
