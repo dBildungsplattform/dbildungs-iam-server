@@ -12,25 +12,17 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { ApplyRollenerweiterungPathParams } from './apply-rollenerweiterung-changes.path.params.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 import { ApplyRollenerweiterungBodyParams } from './apply-rollenerweiterung.body.params.js';
-import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { RollenerweiterungExceptionFilter } from './rollenerweiterung-exception-filter.js';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
 import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
-import { ApplyRollenerweiterungWorkflowAggregate } from '../domain/apply-rollenerweiterungen-workflow.js';
-import { ApplyRollenerweiterungWorkflowFactory } from '../domain/apply-rollenerweiterungen-workflow.factory.js';
+import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterungen-service.js';
 import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
 import { uniq } from 'lodash-es';
-import { ApplyRollenerweiterungWorkflowNotInitializedError } from '../domain/apply-rollenerweiterung-workflow-not-initialized.error.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -45,9 +37,7 @@ import { ApplyRollenerweiterungWorkflowNotInitializedError } from '../domain/app
 export class RollenerweiterungController {
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly serviceProviderRepo: ServiceProviderRepo,
-        private readonly organisationRepo: OrganisationRepository,
-        private readonly applyRollenerweiterungWorkflowFactory: ApplyRollenerweiterungWorkflowFactory,
+        private readonly applyRollenerweiterungService: ApplyRollenerweiterungService,
     ) {}
 
     @Post('/angebot/:angebotId/organisation/:organisationId/apply')
@@ -69,46 +59,24 @@ export class RollenerweiterungController {
         );
         const angebotId: string = params.angebotId;
         const orgaId: string = params.organisationId;
-        if (!(await permissions.hasSystemrechtAtOrganisation(orgaId, RollenSystemRecht.ROLLEN_ERWEITERN))) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new MissingPermissionsError('Not authorized')),
-            );
-        }
-        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(angebotId);
-        const organisation: Option<Organisation<true>> = await this.organisationRepo.findById(orgaId);
-        if (!organisation) {
-            this.logger.error(
-                `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for not existing organisation ${params.organisationId}`,
-            );
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Orga', orgaId)),
-            );
-        }
-        if (!serviceProvider) {
-            this.logger.error(
-                `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for not existing angebot ${params.angebotId}`,
-            );
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Angebot', angebotId)),
-            );
-        }
-
-        if (!serviceProvider.merkmale.includes(ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG)) {
-            this.logger.error(
-                `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for existing angebot ${params.angebotId} which is not verfuegbar for rollenerweiterung`,
-            );
-            throw new MissingMerkmalVerfuegbarFuerRollenerweiterungError();
-        }
-        const applyRollenerweiterungenWorkflow: ApplyRollenerweiterungWorkflowAggregate =
-            this.applyRollenerweiterungWorkflowFactory.createNew();
-        await applyRollenerweiterungenWorkflow.initialize(orgaId, angebotId);
         const result: Result<
             null,
-            ApplyRollenerweiterungRolesError | ApplyRollenerweiterungWorkflowNotInitializedError
-        > = await applyRollenerweiterungenWorkflow.applyRollenerweiterungChanges(body, permissions);
+            | ApplyRollenerweiterungRolesError
+            | EntityNotFoundError
+            | MissingPermissionsError
+            | MissingMerkmalVerfuegbarFuerRollenerweiterungError
+        > = await this.applyRollenerweiterungService.applyRollenerweiterungChanges(
+            orgaId,
+            angebotId,
+            body,
+            permissions,
+        );
         if (!result.ok) {
-            const err: ApplyRollenerweiterungRolesError | ApplyRollenerweiterungWorkflowNotInitializedError =
-                result.error;
+            const err:
+                | ApplyRollenerweiterungRolesError
+                | EntityNotFoundError
+                | MissingPermissionsError
+                | MissingMerkmalVerfuegbarFuerRollenerweiterungError = result.error;
             if (err instanceof ApplyRollenerweiterungRolesError) {
                 this.logger.error(
                     `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} completed with error for rollen: ${err.errors
@@ -126,12 +94,14 @@ export class RollenerweiterungController {
                         )
                         .join(', ')}.`,
                 );
-            } else {
-                this.logger.error(
-                    `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} could not be applied because workflow was not initialized.`,
+                throw result.error;
+            } else if (err instanceof MissingPermissionsError || err instanceof EntityNotFoundError) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(err),
                 );
+            } else {
+                throw result.error;
             }
-            throw result.error;
         }
         this.logger.info(
             `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} completed with complete success.`,

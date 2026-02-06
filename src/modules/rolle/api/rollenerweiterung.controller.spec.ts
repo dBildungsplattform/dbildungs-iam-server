@@ -7,27 +7,24 @@ import { RollenerweiterungController } from './rollenerweiterung.controller.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { ApplyRollenerweiterungWorkflowFactory } from '../domain/apply-rollenerweiterungen-workflow.factory.js';
 import { ApplyRollenerweiterungPathParams } from './apply-rollenerweiterung-changes.path.params.js';
 import { ApplyRollenerweiterungBodyParams } from './apply-rollenerweiterung.body.params.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { faker } from '@faker-js/faker';
-import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { ApplyRollenerweiterungWorkflowAggregate } from '../domain/apply-rollenerweiterungen-workflow.js';
+import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterungen-service.js';
 import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
-import { DomainError } from '../../../shared/error/index.js';
-import { ApplyRollenerweiterungWorkflowNotInitializedError } from '../domain/apply-rollenerweiterung-workflow-not-initialized.error.js';
+import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
+import { HttpException } from '@nestjs/common';
 
 describe('RollenerweiterungController', () => {
     let controller: RollenerweiterungController;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
-    let applyRollenerweiterungWorkflowFactoryMock: DeepMocked<ApplyRollenerweiterungWorkflowFactory>;
+    let applyRollenerweiterungServiceMock: DeepMocked<ApplyRollenerweiterungService>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -50,8 +47,8 @@ describe('RollenerweiterungController', () => {
                     useValue: createMock<OrganisationRepository>(OrganisationRepository),
                 },
                 {
-                    provide: ApplyRollenerweiterungWorkflowFactory,
-                    useValue: createMock<ApplyRollenerweiterungWorkflowFactory>(ApplyRollenerweiterungWorkflowFactory),
+                    provide: ApplyRollenerweiterungService,
+                    useValue: createMock<ApplyRollenerweiterungService>(ApplyRollenerweiterungService),
                 },
                 RollenerweiterungController,
             ],
@@ -60,7 +57,7 @@ describe('RollenerweiterungController', () => {
         controller = module.get(RollenerweiterungController);
         serviceProviderRepoMock = module.get(ServiceProviderRepo);
         organisationRepoMock = module.get(OrganisationRepository);
-        applyRollenerweiterungWorkflowFactoryMock = module.get(ApplyRollenerweiterungWorkflowFactory);
+        applyRollenerweiterungServiceMock = module.get(ApplyRollenerweiterungService);
     });
 
     beforeEach(() => {
@@ -80,18 +77,10 @@ describe('RollenerweiterungController', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            serviceProviderRepoMock.findById.mockResolvedValueOnce(
-                DoFactory.createServiceProvider(true, {
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
-            applyRollenerweiterungWorkflowFactoryMock.createNew.mockReturnValue(
-                createMock<ApplyRollenerweiterungWorkflowAggregate>(ApplyRollenerweiterungWorkflowAggregate, {
-                    initialize: vi.fn().mockResolvedValueOnce(undefined),
-                    applyRollenerweiterungChanges: vi.fn().mockResolvedValueOnce({ ok: true, value: null }),
-                }),
-            );
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChanges.mockResolvedValueOnce({
+                ok: true,
+                value: null,
+            });
 
             await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).resolves.toBeUndefined();
         });
@@ -123,10 +112,6 @@ describe('RollenerweiterungController', () => {
                 id: 'rollenId4',
                 error: new EntityNotFoundError('Rolle', 'rollenId4'),
             };
-            const error: ApplyRollenerweiterungRolesError = new ApplyRollenerweiterungRolesError([
-                { rolleId: 'rollenId2', error: errorRollenId2 as unknown as DomainError },
-                { rolleId: 'rollenId4', error: errorRollenId4 as unknown as DomainError },
-            ]);
             const loggerInfoSpy: Mock<(message: string, trace?: unknown) => void> = vi.spyOn(
                 controller['logger'],
                 'info',
@@ -136,12 +121,13 @@ describe('RollenerweiterungController', () => {
                 'error',
             );
 
-            applyRollenerweiterungWorkflowFactoryMock.createNew.mockReturnValue(
-                createMock<ApplyRollenerweiterungWorkflowAggregate>(ApplyRollenerweiterungWorkflowAggregate, {
-                    initialize: vi.fn().mockResolvedValueOnce(undefined),
-                    applyRollenerweiterungChanges: vi.fn().mockResolvedValueOnce({ ok: false, error }),
-                }),
-            );
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChanges.mockResolvedValueOnce({
+                ok: false,
+                error: new ApplyRollenerweiterungRolesError([
+                    { rolleId: 'rollenId2', error: errorRollenId2 as unknown as DomainError },
+                    { rolleId: 'rollenId4', error: errorRollenId4 as unknown as DomainError },
+                ]),
+            });
 
             await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow();
 
@@ -154,161 +140,102 @@ describe('RollenerweiterungController', () => {
             );
         });
 
-        it('should throw if ApplyRollenerweiterungWorkflowAggregate returns ApplyRollenerweiterungRolesError error', async () => {
+        it('should throw if ApplyRollenerweiterungService returns ApplyRollenerweiterungRolesError error', async () => {
             const params: ApplyRollenerweiterungPathParams = {
                 angebotId: faker.string.uuid(),
                 organisationId: faker.string.uuid(),
             };
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             const body: ApplyRollenerweiterungBodyParams = {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-            serviceProviderRepoMock.findById.mockResolvedValueOnce(
-                DoFactory.createServiceProvider(true, {
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
-            applyRollenerweiterungWorkflowFactoryMock.createNew.mockReturnValue(
-                createMock<ApplyRollenerweiterungWorkflowAggregate>(ApplyRollenerweiterungWorkflowAggregate, {
-                    initialize: vi.fn().mockResolvedValueOnce(undefined),
-                    applyRollenerweiterungChanges: vi
-                        .fn()
-                        .mockResolvedValueOnce({ ok: false, error: new ApplyRollenerweiterungRolesError([]) }),
-                }),
-            );
-
-            await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow();
-        });
-
-        it('should throw if ApplyRollenerweiterungWorkflowAggregate returns ApplyRollenerweiterungWorkflowNotInitializedError error', async () => {
-            const params: ApplyRollenerweiterungPathParams = {
-                angebotId: faker.string.uuid(),
-                organisationId: faker.string.uuid(),
-            };
-            const body: ApplyRollenerweiterungBodyParams = {
-                addErweiterungenForRolleIds: [],
-                removeErweiterungenForRolleIds: [],
-            };
-            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-            serviceProviderRepoMock.findById.mockResolvedValueOnce(
-                DoFactory.createServiceProvider(true, {
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
-            applyRollenerweiterungWorkflowFactoryMock.createNew.mockReturnValue(
-                createMock<ApplyRollenerweiterungWorkflowAggregate>(ApplyRollenerweiterungWorkflowAggregate, {
-                    initialize: vi.fn().mockResolvedValueOnce(undefined),
-                    applyRollenerweiterungChanges: vi.fn().mockResolvedValueOnce({
-                        ok: false,
-                        error: new ApplyRollenerweiterungWorkflowNotInitializedError(),
-                    }),
-                }),
-            );
-
-            await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow();
-        });
-        it('should throw if permissions are missing', async () => {
-            const params: ApplyRollenerweiterungPathParams = {
-                angebotId: faker.string.uuid(),
-                organisationId: faker.string.uuid(),
-            };
-            const body: ApplyRollenerweiterungBodyParams = {
-                addErweiterungenForRolleIds: [],
-                removeErweiterungenForRolleIds: [],
-            };
-            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChanges.mockResolvedValueOnce({
+                ok: false,
+                error: new ApplyRollenerweiterungRolesError([]),
+            });
 
             await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow(
-                SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                        new MissingPermissionsError('Not authorized'),
-                    ),
-                ),
+                ApplyRollenerweiterungRolesError,
             );
         });
 
-        it('should throw if organisation not found', async () => {
+        it('should throw if ApplyRollenerweiterungService returns EntityNotFoundError error', async () => {
             const params: ApplyRollenerweiterungPathParams = {
                 angebotId: faker.string.uuid(),
                 organisationId: faker.string.uuid(),
             };
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             const body: ApplyRollenerweiterungBodyParams = {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-            serviceProviderRepoMock.findById.mockResolvedValueOnce(
-                DoFactory.createServiceProvider(true, {
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
-            organisationRepoMock.findById.mockResolvedValueOnce(undefined);
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChanges.mockResolvedValueOnce({
+                ok: false,
+                error: new EntityNotFoundError(),
+            });
 
             await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow(
-                SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                        new EntityNotFoundError('Orga', params.organisationId),
-                    ),
-                ),
-            );
+                HttpException,
+            ); //Mapped to SchulConnexHttpException
         });
 
-        it('should throw if service provider not found', async () => {
+        it('should throw if ApplyRollenerweiterungService returns MissingPermissionsError error', async () => {
             const params: ApplyRollenerweiterungPathParams = {
                 angebotId: faker.string.uuid(),
                 organisationId: faker.string.uuid(),
             };
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             const body: ApplyRollenerweiterungBodyParams = {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-            serviceProviderRepoMock.findById.mockResolvedValueOnce(undefined);
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChanges.mockResolvedValueOnce({
+                ok: false,
+                error: new MissingPermissionsError(''),
+            });
 
             await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow(
-                SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                        new EntityNotFoundError('Angebot', params.angebotId),
-                    ),
-                ),
-            );
+                HttpException,
+            ); //Mapped to SchulConnexHttpException
         });
 
-        it('should throw if service provider found but not verfuegbar fuer rollenerweiterung', async () => {
+        it('should throw if ApplyRollenerweiterungService returns MissingMerkmalVerfuegbarFuerRollenerweiterungError error', async () => {
             const params: ApplyRollenerweiterungPathParams = {
                 angebotId: faker.string.uuid(),
                 organisationId: faker.string.uuid(),
             };
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             const body: ApplyRollenerweiterungBodyParams = {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-            serviceProviderRepoMock.findById.mockResolvedValueOnce(
-                DoFactory.createServiceProvider(true, {
-                    merkmale: [],
-                }),
-            );
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChanges.mockResolvedValueOnce({
+                ok: false,
+                error: new MissingMerkmalVerfuegbarFuerRollenerweiterungError(),
+            });
 
             await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow(
                 MissingMerkmalVerfuegbarFuerRollenerweiterungError,
             );
+        });
+
+        it('should throw if ApplyRollenerweiterungService returns unknown error', async () => {
+            const params: ApplyRollenerweiterungPathParams = {
+                angebotId: faker.string.uuid(),
+                organisationId: faker.string.uuid(),
+            };
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            const body: ApplyRollenerweiterungBodyParams = {
+                addErweiterungenForRolleIds: [],
+                removeErweiterungenForRolleIds: [],
+            };
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChanges.mockResolvedValueOnce({
+                ok: false,
+                error: new Error() as unknown as MissingMerkmalVerfuegbarFuerRollenerweiterungError,
+            });
+
+            await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow();
         });
     });
 });
