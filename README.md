@@ -2,21 +2,22 @@
 
 ## Prerequisites
 
-- Node in the version stated in the `package.json`
-- Container Runtime like Docker or Podman
+- Node in the version stated in the [package.json](./package.json)
+- Container Runtime [Rancher-Desktop](https://www.rancher.com/products/rancher-desktop), Docker or Podman
     - Is required for local setup and integration tests
 
 ## Local Setup
 
-1. Run `npm ci` to install all dependencies
-2. Start the required services from the `compose.yaml` file
+1. Clone this repository. Make sure that `git autorcrlf` is set to `false`. You can set this with `git config --global core.autocrlf false`. Otherwise Kafke will not run properly in the later steps.
+2. Run `npm ci` to install all dependencies ([What's that?](https://docs.npmjs.com/cli/v9/commands/npm-ci))
+3. Start the required services from the `compose.yaml` file with `docker compose --profile third-party up` ([What's that?](https://docs.docker.com/compose/))
     - db
     - keycloak
     - redis
-3. Create a `.env` file and set the required environment variables from `env.config.ts`
 4. run `npm run setup` to initialize the DB and seed data
-5. Run `npm run start:debug` to start the server
+5. Run `npm run start` to start the server
 6. Server runs on the url printed in the console
+7. The client and how to run it is described in the [client repo](https://github.com/dBildungsplattform/schulportal-client)
 
 ## Scripts for Development
 
