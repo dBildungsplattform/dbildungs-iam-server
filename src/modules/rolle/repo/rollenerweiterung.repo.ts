@@ -227,6 +227,7 @@ export class RollenerweiterungRepo {
     */
     public async findByServiceProviderIdPagedAndSortedByOrgaKennung(
         serviceProviderId: ServiceProviderID,
+        organisationIds?: string[],
         offset?: number,
         limit?: number,
     ): Promise<Counted<Rollenerweiterung<true>>> {
@@ -240,6 +241,10 @@ export class RollenerweiterungRepo {
             .limit(limit ?? 999999)
             .offset(offset ?? 0);
 
+        if (organisationIds && organisationIds.length > 0) {
+            qb.andWhere({ organisationId: { $in: organisationIds } });
+        }
+
         const pagedOrgIdsResult: Array<{ organisationId: string; kennung: string }> = await qb.execute();
         const pagedOrgIds: string[] = pagedOrgIdsResult.map((row: { organisationId: string }) => row.organisationId);
 
@@ -251,6 +256,10 @@ export class RollenerweiterungRepo {
         countQb
             .count('re.organisationId', true) // true for DISTINCT
             .where({ serviceProviderId });
+
+        if (organisationIds && organisationIds.length > 0) {
+            countQb.andWhere({ organisationId: { $in: organisationIds } });
+        }
 
         const countResult: { count: string | number } = await countQb.execute('get', true);
         const totalUniqueOrgs: number = Number(countResult.count);

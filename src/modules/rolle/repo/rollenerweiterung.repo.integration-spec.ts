@@ -798,9 +798,48 @@ describe('RollenerweiterungRepo', () => {
             await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
 
             const [result, count]: Counted<Rollenerweiterung<true>> =
-                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id, 1, 2);
+                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id, undefined, 1, 2);
             expect(result).toBeInstanceOf(Array);
             expect(result).toHaveLength(2);
+            expect(count).toBe(3);
+        });
+
+        it('should return only rollenerweiterungen for the given organisationIds', async () => {
+            const erweiterungen: Rollenerweiterung<false>[] = [
+                factory.createNew(organisation1.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation2.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation3.id, rolle.id, serviceProvider.id),
+            ];
+            await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
+
+            // Only organisation1 and organisation3 should be included
+            const orgaIds: string[] = [organisation1.id, organisation3.id];
+            const [result, count]: Counted<Rollenerweiterung<true>> =
+                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id, orgaIds);
+
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(2);
+            expect(count).toBe(2);
+            expect(result.map((r: Rollenerweiterung<true>) => r.organisationId).sort()).toEqual(orgaIds.sort());
+            for (const erweiterung of result) {
+                expect(orgaIds).toContain(erweiterung.organisationId);
+                expect(erweiterung.serviceProviderId).toBe(serviceProvider.id);
+            }
+        });
+
+        it('should return rollenerweiterungen for all organisationIds', async () => {
+            const erweiterungen: Rollenerweiterung<false>[] = [
+                factory.createNew(organisation1.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation2.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation3.id, rolle.id, serviceProvider.id),
+            ];
+            await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
+
+            const [result, count]: Counted<Rollenerweiterung<true>> =
+                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id, undefined);
+
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(3);
             expect(count).toBe(3);
         });
     });
