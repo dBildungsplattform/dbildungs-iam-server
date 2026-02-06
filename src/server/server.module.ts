@@ -41,6 +41,8 @@ import { MeldungModule } from '../modules/meldung/meldung.module.js';
 import { MapperModule } from '../modules/person/mapper/mapper.module.js';
 import { LandesbediensteterModule } from '../modules/landesbediensteter/landesbediensteter.module.js';
 import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js';
+import { CacheModule } from '@nestjs/cache-manager';
+import { redisStore } from 'cache-manager-redis-yet';
 
 @Module({
     imports: [
@@ -74,6 +76,20 @@ import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js'
             defaultStrategy: ['api-key', 'jwt', 'oidc'],
             keepSessionInfo: true,
             property: 'passportUser',
+        }),
+        CacheModule.registerAsync({
+            isGlobal: true,
+            inject: [ConfigService],
+            useFactory: async (config: ConfigService) => {
+                const redis: RedisConfig = config.getOrThrow<RedisConfig>('REDIS');
+                return {
+                    store: await redisStore({
+                        url: `redis://:${redis.PASSWORD}@localhost:${redis.PORT}`,
+                        username: redis.USERNAME,
+                        password: redis.PASSWORD,
+                    }),
+                };
+            },
         }),
         LoggerModule.register(ServerModule.name),
         EventModule,
