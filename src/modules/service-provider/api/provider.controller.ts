@@ -181,6 +181,7 @@ export class ProviderController {
         const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
             await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrgaKennung(
                 pathParams.angebotId,
+                permittedOrgas.all ? undefined : permittedOrgas.orgaIds,
                 queryParams.offset,
                 queryParams.limit,
             );
