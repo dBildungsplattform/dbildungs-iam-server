@@ -10,106 +10,65 @@
 
 ### General Configuration
 
-There is a general configuration which is used for local development and testing purposes. This configuration is passed trough JSON-Files located in the following place
+There is are multiple 'base'-configurations, that are used for local development and testing purposes. These json files follow the structure of the classes in (src/shared/config/json.config.ts)[../src/shared/config/json.config.ts]
 
-```bash
-./config/config.json
-```
+- Used when starting the backend locally [config/config.json](../config/config.json)
+- Used when starting the email microservice locally [config/email-config.json](../config/email-config.json)
+- Used when starting the backend using docker-compose [config/docker-config.json](../config/email-config.json)
 
 There are effectively three layers to the configuration
 
-1. A configuration file (config.json) meant to contain anything that is publicly viewable
-2. A secrets file (secrets.json) containing values which should be kept safe from prying eyes. At least in production
-3. Environment variables for **some** not all values from the config to provide an override to be used in helm charts. The base for this might either be a key from a config map or a secret
+1. A configuration file (config.json/email-config.json) meant to contain anything that is publicly viewable
+2. A secrets file (secrets.json) containing values which should not be checked in.
+3. Environment variables for **some** values from the config to provide an override to be used in helm charts. The base for this might either be a key from a config map or a secret
 
 Please always **remember** that anything that can be overridden in the environment also has an equivalent in the config files.
 
-at the moment of writing those are:
-
-|Environment Variable Name|Purpose|Needs to come from a Kubernetes Secret|
-| ----------------------- | ------|--------------------------------------|
-|DB_NAME|Name of the Database to use (everything else is configured as fix in the deployment|No|
-|DB_USERNAME|Database Username|Yes|
-|DB_SECRET|Database Password|Yes|
-|DB_CLIENT_URL|Everything for the DB connection which is neither Name nor Password|No|
-|KC_ADMIN_SECRET|Admin Secret for Keycloak|Yes|
-|KC_CLIENT_SECRET|Client Secret for Keycloak|Yes|
-|KC_SERVICE_CLIENT_PRIVATE_JWKS|Service Client private JWKS|Yes|
-|FRONTEND_SESSION_SECRET|Encryption secret for session handling in the frontend|Yes|
-
-#### Data Model
-
-```json
-{
-  "HOST": {
-    "PORT": <this is the server port>
-  },
-  "DB": {
-    "CLIENT_URL": "<here goes your connection string>",
-    "DB_NAME": "<here goes your db name>"
-  },
-  "KEYCLOAK": {
-    "BASE_URL": "<URL of keycloak>",
-    "ADMIN_REALM_NAME": "<name of the admin realm>",
-    "ADMIN_CLIENT_ID": "<id of the admin client>",
-    "REALM_NAME": "<name of the client realm>",
-    "CLIENT_ID": "<id of the client>",
-  },
-  "FRONTEND": {
-    "PORT": "<this is the bff port>",
-    "TRUST_PROXY": "<optional, see https://expressjs.com/en/guide/behind-proxies.html>",
-    "SECURE_COOKIE": <Enables/Disables HTTPS for cookie>,
-    "BACKEND_ADDRESS": "<address of backend server>",
-    "SESSION_TTL_MS": <Time in milliseconds after which the session expires>,
-    "OIDC_CALLBACK_URL": "<callback that is passed to keycloak>",
-    "DEFAULT_LOGIN_REDIRECT": "<default redirect after auth is complete>",
-    "LOGOUT_REDIRECT": "<where to redirect user after logout"
-  },
-  "REDIS": {
-    "HOST": "<host of the redis server>",
-    "PORT": <port of the redis server>,
-    "USERNAME": "<redis username>",
-    "USE_TLS": <use TLS for connection>
-  }
-}
-```
+The environment variables can be found in [src/shared/config/config.env.ts](../src/shared/config/config.env.ts)
 
 ### Secrets Configuration
 
 Secrets are provided inside the application in the same way as the static configuration.
 
-```bash
-./config/secrets.json
-```
+- Used when starting the backend locally [config/secrets.json](../config/secrets.json)
+- Used when starting the email microservice locally [config/email-secrets.json](../config/email-secrets.json)
 
 There are however a few special rules applied to them:
 
 -   This file is NEVER checked-in into the repository
 -   There is a secrets.json.template file however from which a secrets file can be derrived
--   This file is created by the CI/CD pipeline with appropriate information for the given stage
 
-#### Data Model
+### Deployment
 
-```json
-{
-    "DB": {
-        "SECRET": "<here goes your secret>"
-    },
-    "KEYCLOAK": {
-        "ADMIN_SECRET": "<secret token for the admin client>",
-        "CLIENT_SECRET": "<secret token for the client>"
-    },
-    "FRONTEND": {
-        "SESSION_SECRET": "<is used to encrypt the session cookie>"
-    },
-    "REDIS": {
-        "PASSWORD": "<redis password>",
-        "PRIVATE_KEY": "<optional: private key in PEM format>",
-        "CERT_CHAINS": "<optional: certificate chains in PEM format>",
-        "CERTIFICATE_AUTHORITIES": "<optional: trusted certificate authorities>"
-    }
-}
-```
+When deploying to any stage, the base configuration will be taken from the configs in the `/charts/dbildungs-iam-server/config`-folder
+
+- [charts/dbildungs-iam-server/config/config.json](../charts/dbildungs-iam-server/config/config.json)
+- [charts/dbildungs-iam-server/config/email-config.json](../charts/dbildungs-iam-server/config/email-config.json)
+
+Additionally, environment variables might be set using helm templates.
+The helm templates also have two seperate layers.
+
+#### General configuration
+
+There are multiple `ConfigMap`s that take values from the general `values.yaml` and inject them as environment variables
+
+- Backend [charts/dbildungs-iam-server/templates/configmap.yaml](../charts/dbildungs-iam-server/templates/configmap.yaml)
+- Email-Microservice [charts/dbildungs-iam-server/templates/email-configmap.yaml](../charts/dbildungs-iam-server/templates/email-configmap.yaml)
+
+> [!CAUTION]
+> Should we link this private repo?
+
+Values from the `values.yaml` might be overridden with values from the private repository, depending on the cluster they are deployed to [https://github.com/dBildungsplattform/spsh-app-release](https://github.com/dBildungsplattform/spsh-app-release)
+
+#### Secrets
+
+Some environment variables will be loaded from kubernetes secrets, that are filled using 1Password.
+
+The template files for this are
+
+- [charts/dbildungs-iam-server/templates/_dbildungs-iam-server-envs.tpl](../charts/dbildungs-iam-server/templates/_dbildungs-iam-server-envs.tpl)
+- [charts/dbildungs-iam-server/templates/_dbildungs-iam-email-server-envs.tpl](../charts/dbildungs-iam-server/templates/_dbildungs-iam-email-server-envs.tpl)
+
 
 ## Developer Guide
 
@@ -162,12 +121,12 @@ class MyClass {
 ## How to expand the configuration?
 
 -   Where to put the new config value?
-    -   If it's something like a feature flag, than put it into the `JsonConfig`
+    -   If it's something like a feature flag, then put it into the `JsonConfig`
         -   Annotate the new property with the desired decorators
--   Do I want to expand an existing config class like `DbConfig`? If yes, than do the following steps:
+-   Do I want to expand an existing config class like `DbConfig`? If yes, then do the following steps:
     -   Put the new configuration value in the desired class
     -   Annotate the new property with the desired decorators
--   I wan to add configuration for a new feature
+-   I want to add configuration for a new feature
     -   Use the `DbConfig` as reference
         -   [ ] Create a new class in the `src/shared/config` folder
         -   [ ] Annotate the properties with the desired decorators
@@ -176,3 +135,9 @@ class MyClass {
         -   [ ] Add default values to the environment specific json files
 - If the new value needs to be configurable on deployment, consider expanding config.env.ts with read logic for environment variables and set those
 in the helm chart
+- Make sure to update both the local `*-config.json` as well as the one in the `charts/dbildungs-iam-server/config/` folder.
+
+### Secrets
+
+- If you want to add new secrets, you need to edit the helm templates accordingly (compare with existing secrets)
+- Make sure the value exists in 1Password for *EVERY* stage (ask others if you don't have access to all stages)
