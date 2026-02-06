@@ -597,7 +597,8 @@ describe('OrganisationController', () => {
     describe('getParents', () => {
         it('should return the parent organisations', async () => {
             const ids: Array<string> = [faker.string.uuid(), faker.string.uuid(), faker.string.uuid()];
-            const mockBody: ParentOrganisationsByIdsBodyParams = { organisationIds: ids };
+            const mockBody: ParentOrganisationsByIdsBodyParams = new ParentOrganisationsByIdsBodyParams();
+            Object.assign(mockBody, { organisationIds: ids });
             const mockedRepoResponse: Array<Organisation<true>> = ids.map((id: string) =>
                 Organisation.construct(
                     id,
@@ -648,9 +649,10 @@ describe('OrganisationController', () => {
             organisationId: faker.string.uuid(),
         };
 
-        const queryParams: OrganisationByNameQueryParams = {
+        const queryParams: OrganisationByNameQueryParams = new OrganisationByNameQueryParams();
+        Object.assign(queryParams, {
             searchFilter: undefined,
-        };
+        });
 
         describe('when usecase returns a OrganisationResponse', () => {
             it('should return all organizations that match', async () => {
@@ -805,10 +807,11 @@ describe('OrganisationController', () => {
                 const params: OrganisationByIdParams = {
                     organisationId: faker.string.uuid(),
                 };
-                const body: OrganisationByNameBodyParams = {
+                const body: OrganisationByNameBodyParams = new OrganisationByNameBodyParams();
+                Object.assign(body, {
                     name: faker.company.name(),
                     version: faker.number.int(),
-                };
+                });
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(oeffentlich);
@@ -824,10 +827,11 @@ describe('OrganisationController', () => {
                 const params: OrganisationByIdParams = {
                     organisationId: faker.string.uuid(),
                 };
-                const body: OrganisationByNameBodyParams = {
+                const body: OrganisationByNameBodyParams = new OrganisationByNameBodyParams();
+                Object.assign(body, {
                     name: faker.company.name(),
                     version: faker.number.int(),
-                };
+                });
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
 
                 await expect(
@@ -841,10 +845,11 @@ describe('OrganisationController', () => {
                 const params: OrganisationByIdParams = {
                     organisationId: faker.string.uuid(),
                 };
-                const body: OrganisationByNameBodyParams = {
+                const body: OrganisationByNameBodyParams = new OrganisationByNameBodyParams();
+                Object.assign(body, {
                     name: faker.company.name(),
                     version: faker.number.int(),
-                };
+                });
                 organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(
                     new NameRequiredForKlasseError(),
                 );
@@ -861,10 +866,11 @@ describe('OrganisationController', () => {
                 const params: OrganisationByIdParams = {
                     organisationId: faker.string.uuid(),
                 };
-                const body: OrganisationByNameBodyParams = {
+                const body: OrganisationByNameBodyParams = new OrganisationByNameBodyParams();
+                Object.assign(body, {
                     name: faker.company.name(),
                     version: faker.number.int(),
-                };
+                });
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(new EntityNotFoundError());
@@ -896,10 +902,11 @@ describe('OrganisationController', () => {
                 const params: OrganisationByIdParams = {
                     organisationId: faker.string.uuid(),
                 };
-                const body: OrganisationByNameBodyParams = {
+                const body: OrganisationByNameBodyParams = new OrganisationByNameBodyParams();
+                Object.assign(body, {
                     name: faker.company.name(),
                     version: faker.number.int(),
-                };
+                });
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(oeffentlich);
@@ -915,7 +922,8 @@ describe('OrganisationController', () => {
                 const params: OrganisationByIdParams = {
                     organisationId: faker.string.uuid(),
                 };
-                const body: OrganisationByNameBodyParams = {
+                const body: OrganisationByNameBodyParams = new OrganisationByNameBodyParams();
+                Object.assign(body, {
                     name: faker.company.name(),
                     version: faker.number.int(),
                 };
@@ -935,10 +943,11 @@ describe('OrganisationController', () => {
                 const params: OrganisationByIdParams = {
                     organisationId: faker.string.uuid(),
                 };
-                const body: OrganisationByNameBodyParams = {
+                const body: OrganisationByNameBodyParams = new OrganisationByNameBodyParams();
+                Object.assign(body, {
                     name: faker.company.name(),
                     version: faker.number.int(),
-                };
+                });
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(new EntityNotFoundError());

@@ -21,7 +21,16 @@ export default defineConfig({
             reportsDirectory: 'coverage',
             reportOnFailure: true,
             include: ['src/**/*.ts'],
-            exclude: ['**/*.spec.ts', '**/test/**', '**/*.d.ts', 'vite.config.ts'],
+            exclude: [
+                '**/main.ts',
+                '**/index.ts',
+                '**/*.spec.ts',
+                '**/*.integration-spec.ts',
+                '**/test/**',
+                '**/*.d.ts',
+                '**/*.types.ts',
+                'vite.config.ts',
+            ],
             thresholds: {
                 lines: 98.37,
                 functions: 99.37,

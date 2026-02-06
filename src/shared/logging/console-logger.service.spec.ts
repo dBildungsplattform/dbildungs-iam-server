@@ -1,10 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConsoleLoggerService } from './console-logger.service.js';
 import { Mock } from 'vitest';
+import { LoggerService } from './index.js';
 
 describe('ConsoleLoggerService', () => {
     let module: TestingModule;
-    let sut: ConsoleLoggerService;
+    let sut: LoggerService;
 
     const traceSpy: Mock = vi.spyOn(console, 'trace').mockImplementation(() => {});
     const debugSpy: Mock = vi.spyOn(console, 'debug').mockImplementation(() => {});
