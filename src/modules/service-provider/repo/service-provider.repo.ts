@@ -75,6 +75,8 @@ type ServiceProviderFindOptions = {
     withLogo?: boolean;
 };
 
+type SPWithMerkmale = Loaded<ServiceProviderEntity, 'merkmale'>;
+
 @Injectable()
 export class ServiceProviderRepo {
     public constructor(
@@ -197,10 +199,16 @@ export class ServiceProviderRepo {
         id: ServiceProviderID,
         organisationIds: OrganisationID[],
     ): Promise<Option<ServiceProvider<true>>> {
-        const entity: Loaded<ServiceProviderEntity> | null = await this.em.findOne(ServiceProviderEntity, {
-            id,
-            providedOnSchulstrukturknoten: { $in: organisationIds },
-        });
+        const entity: SPWithMerkmale | null = await this.em.findOne(
+            ServiceProviderEntity,
+            {
+                id,
+                providedOnSchulstrukturknoten: { $in: organisationIds },
+            },
+            {
+                populate: ['merkmale'],
+            },
+        );
 
         if (!entity) {
             return null;
