@@ -5,7 +5,7 @@ import { Injectable } from '@nestjs/common';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
 import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
-import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
@@ -74,6 +74,8 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
 type ServiceProviderFindOptions = {
     withLogo?: boolean;
 };
+
+type SPWithMerkmale = Loaded<ServiceProviderEntity, 'merkmale'>;
 
 @Injectable()
 export class ServiceProviderRepo {
@@ -193,6 +195,28 @@ export class ServiceProviderRepo {
         return [entities.map(mapEntityToAggregate), count];
     }
 
+    public async findByIdAuthorized(
+        id: ServiceProviderID,
+        organisationIds: OrganisationID[],
+    ): Promise<Option<ServiceProvider<true>>> {
+        const entity: SPWithMerkmale | null = await this.em.findOne(
+            ServiceProviderEntity,
+            {
+                id,
+                providedOnSchulstrukturknoten: { $in: organisationIds },
+            },
+            {
+                populate: ['merkmale'],
+            },
+        );
+
+        if (!entity) {
+            return null;
+        }
+
+        return mapEntityToAggregate(entity);
+    }
+
     public async findByOrgasWithMerkmal(
         organisationIds: OrganisationID[],
         merkmal: ServiceProviderMerkmal,
@@ -223,8 +247,9 @@ export class ServiceProviderRepo {
         id: string,
     ): Promise<Option<ServiceProvider<true>>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.ANGEBOTE_VERWALTEN],
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ROLLEN_ERWEITERN],
             true,
+            false,
         );
         const entity: Option<ServiceProviderEntity> = await this.em.findOne(
             ServiceProviderEntity,

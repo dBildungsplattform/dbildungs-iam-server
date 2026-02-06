@@ -543,10 +543,31 @@ describe('RollenerweiterungRepo', () => {
             await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
 
             const [result, count]: Counted<Rollenerweiterung<true>> =
-                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id, 1, 2);
+                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id, undefined, 1, 2);
             expect(result).toBeInstanceOf(Array);
             expect(result).toHaveLength(2);
             expect(count).toBe(3);
+        });
+
+        it('should return only service provider for organisationId', async () => {
+            const erweiterungen: Rollenerweiterung<false>[] = [
+                factory.createNew(organisation1.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation2.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation3.id, rolle.id, serviceProvider.id),
+            ];
+            await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
+
+            const [result, count]: Counted<Rollenerweiterung<true>> =
+                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(
+                    serviceProvider.id,
+                    organisation2.id,
+                    0,
+                    10,
+                );
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(1);
+            expect(count).toBe(1);
+            expect(result[0]!.organisationId).toBe(organisation2.id);
         });
     });
 });

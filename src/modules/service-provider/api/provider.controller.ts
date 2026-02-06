@@ -178,9 +178,22 @@ export class ProviderController {
             throw new UnauthorizedException('NOT_AUTHORIZED');
         }
 
+        if (
+            queryParams.organisationId &&
+            !permittedOrgas.all &&
+            !permittedOrgas.orgaIds.includes(queryParams.organisationId)
+        ) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Insufficient permissions for the requested organisationId'),
+                ),
+            );
+        }
+
         const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
             await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrgaKennung(
                 pathParams.angebotId,
+                queryParams.organisationId,
                 queryParams.offset,
                 queryParams.limit,
             );
@@ -322,7 +335,7 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Param() params: AngebotByIdParams,
     ): Promise<ManageableServiceProviderResponse> {
-        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findAuthorizedById(
+        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderService.findManageableById(
             permissions,
             params.angebotId,
         );
