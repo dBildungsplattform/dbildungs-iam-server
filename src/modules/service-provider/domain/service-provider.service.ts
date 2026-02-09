@@ -130,22 +130,20 @@ export class ServiceProviderService {
     ): Promise<Option<ServiceProvider<true>>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ROLLEN_ERWEITERN],
-            true,
+            false,
             false,
         );
-        let permittedOrgasIds: OrganisationID[];
         if (permittedOrgas.all) {
-            permittedOrgasIds = [];
+            return this.serviceProviderRepo.findById(id);
         } else {
-            permittedOrgasIds = permittedOrgas.orgaIds;
-        }
-        const parents: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds(permittedOrgasIds);
-        const organisationWithParentsIds: OrganisationID[] = [
-            ...permittedOrgasIds,
-            ...parents.map((orga: Organisation<true>) => orga.id as OrganisationID),
-        ];
+            const parents: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds(
+                permittedOrgas.orgaIds,
+            );
+            const parentOrgaIds: OrganisationID[] = parents.map((orga: Organisation<true>) => orga.id);
+            const organisationWithParentsIds: OrganisationID[] = permittedOrgas.orgaIds.concat(parentOrgaIds);
 
-        return this.serviceProviderRepo.findByIdAuthorized(id, organisationWithParentsIds);
+            return this.serviceProviderRepo.findByIdAuthorized(id, organisationWithParentsIds);
+        }
     }
 
     public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(

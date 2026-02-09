@@ -444,6 +444,101 @@ describe('ServiceProviderService', () => {
         });
     });
 
+    describe('findManageableById', () => {
+        let organisation: Organisation<true>;
+        let serviceProvider: ServiceProvider<true>;
+        let permissions: DeepMocked<PersonPermissions>;
+
+        beforeEach(() => {
+            organisation = DoFactory.createOrganisation(true);
+            serviceProvider = DoFactory.createServiceProvider(true, {
+                providedOnSchulstrukturknoten: organisation.id,
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+            permissions = createMock(PersonPermissions);
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('returns service provider when user has "all" permissions', async () => {
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            serviceProviderRepo.findById.mockResolvedValue(serviceProvider);
+
+            const result: Option<ServiceProvider<true>> = await service.findManageableById(
+                permissions,
+                serviceProvider.id,
+            );
+
+            expect(serviceProviderRepo.findById).toHaveBeenCalledWith(serviceProvider.id);
+            expect(result).toEqual(serviceProvider);
+            expect(serviceProviderRepo.findByIdAuthorized).not.toHaveBeenCalled();
+        });
+
+        it('returns service provider via authorized query when user has limited permissions', async () => {
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+
+            const parent: Organisation<true> = DoFactory.createOrganisation(true, {
+                administriertVon: organisation.id,
+            });
+            organisationRepo.findParentOrgasForIds.mockResolvedValue([parent]);
+
+            serviceProviderRepo.findByIdAuthorized.mockResolvedValue(serviceProvider);
+
+            const result: Option<ServiceProvider<true>> = await service.findManageableById(
+                permissions,
+                serviceProvider.id,
+            );
+
+            expect(organisationRepo.findParentOrgasForIds).toHaveBeenCalledWith([organisation.id]);
+            expect(serviceProviderRepo.findByIdAuthorized).toHaveBeenCalledWith(serviceProvider.id, [
+                organisation.id,
+                parent.id,
+            ]);
+            expect(result).toEqual(serviceProvider);
+        });
+
+        it('returns None when user has "all" permissions but provider does not exist', async () => {
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            serviceProviderRepo.findById.mockResolvedValue(null);
+
+            const result: Option<ServiceProvider<true>> = await service.findManageableById(
+                permissions,
+                'nonexistent-id',
+            );
+
+            expect(result).toBe(null);
+        });
+
+        it('returns None when authorized fetch does not find provider', async () => {
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+
+            organisationRepo.findParentOrgasForIds.mockResolvedValue([]);
+
+            serviceProviderRepo.findByIdAuthorized.mockResolvedValue(null);
+
+            const result: Option<ServiceProvider<true>> = await service.findManageableById(
+                permissions,
+                serviceProvider.id,
+            );
+
+            expect(result).toBe(null);
+        });
+    });
+
     describe('getOrganisationRollenAndRollenerweiterungenForServiceProviders', () => {
         let serviceProvider: ServiceProvider<true>;
         let organisation: Organisation<true>;
