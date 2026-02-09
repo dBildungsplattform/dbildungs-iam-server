@@ -926,7 +926,7 @@ describe('OrganisationController', () => {
                 Object.assign(body, {
                     name: faker.company.name(),
                     version: faker.number.int(),
-                };
+                });
                 organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(
                     new NameRequiredForKlasseError(),
                 );
