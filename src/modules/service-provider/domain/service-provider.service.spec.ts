@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { zip } from 'lodash-es';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
@@ -16,13 +16,20 @@ import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 import { VidisService } from '../../vidis/vidis.service.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
-import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
+import {
+    ServiceProviderKategorie,
+    ServiceProviderMerkmal,
+    ServiceProviderSystem,
+    ServiceProviderTarget,
+} from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import { ServiceProviderService } from './service-provider.service.js';
 import {
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -208,12 +215,12 @@ describe('ServiceProviderService', () => {
             imports: [LoggingTestModule, ConfigTestModule],
             providers: [
                 ServiceProviderService,
-                { provide: RolleRepo, useValue: createMock<RolleRepo>() },
-                { provide: RollenerweiterungRepo, useValue: createMock<RollenerweiterungRepo>() },
-                { provide: ServiceProviderRepo, useValue: createMock<ServiceProviderRepo>() },
-                { provide: OrganisationRepository, useValue: createMock<OrganisationRepository>() },
-                { provide: VidisService, useValue: createMock<VidisService>() },
-                { provide: OrganisationServiceProviderRepo, useValue: createMock<OrganisationServiceProviderRepo>() },
+                { provide: RolleRepo, useValue: createMock(RolleRepo) },
+                { provide: RollenerweiterungRepo, useValue: createMock(RollenerweiterungRepo) },
+                { provide: ServiceProviderRepo, useValue: createMock(ServiceProviderRepo) },
+                { provide: OrganisationRepository, useValue: createMock(OrganisationRepository) },
+                { provide: VidisService, useValue: createMock(VidisService) },
+                { provide: OrganisationServiceProviderRepo, useValue: createMock(OrganisationServiceProviderRepo) },
             ],
         }).compile();
         service = module.get<ServiceProviderService>(ServiceProviderService);
@@ -261,7 +268,7 @@ describe('ServiceProviderService', () => {
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('returns serviceProviders', async () => {
@@ -328,7 +335,7 @@ describe('ServiceProviderService', () => {
                 });
             });
             afterEach(() => {
-                jest.restoreAllMocks();
+                vi.restoreAllMocks();
             });
             it('returns a list of service providers', async () => {
                 const result: Array<ServiceProvider<true>> = await service.getServiceProvidersByOrganisationenAndRollen(
@@ -343,6 +350,97 @@ describe('ServiceProviderService', () => {
                     haveRollenerweiterungen ? organisations.length + serviceProviders.length : serviceProviders.length,
                 );
             });
+        });
+    });
+
+    describe('getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung', () => {
+        let organisation: Organisation<true>;
+        let serviceProvider: ServiceProvider<true>;
+
+        beforeEach(() => {
+            organisation = DoFactory.createOrganisation(true);
+            serviceProvider = DoFactory.createServiceProvider(true, {
+                providedOnSchulstrukturknoten: organisation.id,
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('throws MissingPermissionsError if person lacks required system rights', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(false);
+
+            const result: Result<
+                Counted<ServiceProvider<true>>,
+                MissingPermissionsError
+            > = await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions);
+
+            expect(result.ok).toBe(false);
+            expect(organisationRepo.findParentOrgasForIds).not.toHaveBeenCalled();
+            expect(serviceProviderRepo.findByOrgasWithMerkmal).not.toHaveBeenCalled();
+        });
+
+        it('returns authorized serviceProviders when person has rights and includes parent organisation ids', async () => {
+            const parentOrga: Organisation<true> = DoFactory.createOrganisation(true);
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(true);
+
+            organisationRepo.findParentOrgasForIds.mockResolvedValue([parentOrga]);
+            serviceProviderRepo.findByOrgasWithMerkmal.mockResolvedValue([[serviceProvider], 1]);
+
+            const result: Result<
+                Counted<ServiceProvider<true>>,
+                MissingPermissionsError
+            > = await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions);
+
+            expect(serviceProviderRepo.findByOrgasWithMerkmal).toHaveBeenCalledWith(
+                [organisation.id, parentOrga.id],
+                ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+                undefined,
+                undefined,
+            );
+            if (!result.ok) {
+                throw result.error;
+            }
+            expect(result.value[0]).toContain(serviceProvider);
+            expect(result.value[1]).toBe(1);
+        });
+
+        it('returns authorized serviceProviders when person has rights and includes parent organisation ids (limit & offset)', async () => {
+            const parentOrga: Organisation<true> = DoFactory.createOrganisation(true);
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(true);
+
+            const limit: number = 10;
+            const offset: number = 5;
+
+            organisationRepo.findParentOrgasForIds.mockResolvedValue([parentOrga]);
+            serviceProviderRepo.findByOrgasWithMerkmal.mockResolvedValue([[serviceProvider], 1]);
+
+            const result: Result<
+                Counted<ServiceProvider<true>>,
+                MissingPermissionsError
+            > = await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
+                organisation.id,
+                permissions,
+                limit,
+                offset,
+            );
+
+            expect(serviceProviderRepo.findByOrgasWithMerkmal).toHaveBeenCalledWith(
+                [organisation.id, parentOrga.id],
+                ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+                limit,
+                offset,
+            );
+            if (!result.ok) {
+                throw result.error;
+            }
+            expect(result.value[0]).toContain(serviceProvider);
+            expect(result.value[1]).toBe(1);
         });
     });
 
@@ -364,7 +462,7 @@ describe('ServiceProviderService', () => {
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should return referenced objects for serviceProviders', async () => {
@@ -408,7 +506,7 @@ describe('ServiceProviderService', () => {
 
     describe('getRollenerweiterungenForManageableServiceProvider', () => {
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should return rollenerweiterungen for display', async () => {
@@ -435,7 +533,7 @@ describe('ServiceProviderService', () => {
 
     describe('updateServiceProvidersForVidis', () => {
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should update ServiceProvider for VIDIS Angebote if ServiceProvider in VIDIS Angebot response already exists in SPSH.', async () => {
@@ -448,6 +546,7 @@ describe('ServiceProviderService', () => {
             if (mockExistingSchulen[0]) {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
+            serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
             organisationServiceProviderRepo.save.mockResolvedValue();
 
             await service.updateServiceProvidersForVidis();
@@ -473,7 +572,7 @@ describe('ServiceProviderService', () => {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
             organisationServiceProviderRepo.save.mockResolvedValue();
-
+            serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
             await service.updateServiceProvidersForVidis();
 
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);

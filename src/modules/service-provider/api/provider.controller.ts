@@ -1,4 +1,14 @@
-import { Controller, Get, Param, Query, StreamableFile, UnauthorizedException, UseFilters } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Param,
+    Post,
+    Query,
+    StreamableFile,
+    UnauthorizedException,
+    UseFilters,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -45,6 +55,11 @@ import { uniq } from 'lodash-es';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
+import { MissingPermissionsError } from '../../../shared/error/index.js';
+import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
+import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
+import { ServiceProviderSystem } from '../domain/service-provider.enum.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
@@ -54,6 +69,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 export class ProviderController {
     public constructor(
         private readonly streamableFileFactory: StreamableFileFactory,
+        private readonly serviceProviderFactory: ServiceProviderFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
@@ -218,6 +234,63 @@ export class ProviderController {
         const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects[] =
             await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
                 serviceProviders,
+                1,
+            );
+
+        return new RawPagedResponse({
+            offset: params.offset ?? 0,
+            limit: params.limit ?? total,
+            total,
+            items: serviceProvidersWithRollenAndErweiterungen.map(
+                (spWithData: ManageableServiceProviderWithReferencedObjects) =>
+                    new ManageableServiceProviderListEntryResponse(
+                        spWithData.serviceProvider,
+                        spWithData.organisation,
+                        spWithData.rollen,
+                        spWithData.rollenerweiterungen,
+                    ),
+            ),
+        });
+    }
+
+    @Get('manageable-by-organisation')
+    @ApiOperation({ description: 'Get service-providers the logged-in user is allowed to manage for an Organisation.' })
+    @ApiOkResponsePaginated(ManageableServiceProviderListEntryResponse, {
+        description:
+            'The service providers were successfully returned. WARNING: This endpoint returns all service providers as default when no paging parameters were set.',
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
+    public async getManageableServiceProvidersForOrganisationId(
+        @Permissions() permissions: PersonPermissions,
+        @Query() params: ManageableServiceProvidersForOrganisationParams,
+    ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
+        const result: Result<
+            Counted<ServiceProvider<true>>,
+            MissingPermissionsError
+        > = await this.serviceProviderService.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
+            params.organisationId,
+            permissions,
+            params.limit,
+            params.offset,
+        );
+
+        if (!result.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Rollen Erweitern Systemrecht Required For This Endpoint'),
+                ),
+            );
+        }
+
+        const serviceProviders: ServiceProvider<true>[] = result.value[0];
+        const total: number = result.value[1];
+
+        const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects[] =
+            await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
+                serviceProviders,
+                5,
             );
 
         return new RawPagedResponse({
@@ -278,5 +351,53 @@ export class ProviderController {
             serviceProviderWithOrganisationRollenAndErweiterungen.rollen,
             rollenerweiterungenWithNames.length > 0,
         );
+    }
+
+    @Post()
+    @ApiOperation({ description: 'Create a new service-provider (Angebot).' })
+    @ApiOkResponse({
+        description: 'The service-provider was successfully created.',
+        type: ServiceProviderResponse,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions.' })
+    @ApiBadRequestResponse({ description: 'Invalid request body.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+    public async createServiceProvider(
+        @Permissions() permissions: PersonPermissions,
+        @Body() body: CreateServiceProviderBodyParams,
+    ): Promise<ServiceProviderResponse> {
+        if (
+            !(await permissions.hasSystemrechtAtOrganisation(body.organisationId, RollenSystemRecht.ANGEBOTE_VERWALTEN))
+        ) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Not authorized to manage Service Providers at this organisation!'),
+                ),
+            );
+        }
+
+        // Convert base64 to Buffer (if provided)
+        const logoBuffer: Buffer | undefined = body.logoBase64 ? Buffer.from(body.logoBase64, 'base64') : undefined;
+
+        const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
+            body.name,
+            body.target,
+            body.url,
+            body.kategorie,
+            body.organisationId,
+            logoBuffer,
+            body.logoMimeType,
+            undefined, // keycloakGroup
+            undefined, // keycloakRole
+            ServiceProviderSystem.NONE,
+            body.requires2fa,
+            body.vidisAngebotId,
+            body.merkmale,
+        );
+
+        const result: ServiceProvider<true> = await this.serviceProviderRepo.save(serviceProvider);
+
+        return new ServiceProviderResponse(result);
     }
 }

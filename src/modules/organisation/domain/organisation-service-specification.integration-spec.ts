@@ -4,7 +4,7 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MikroORM } from '@mikro-orm/core';
-import { LoggingTestModule, PersonPermissionsMock } from '../../../../test/utils/index.js';
+import { createPersonPermissionsMock, LoggingTestModule } from '../../../../test/utils/index.js';
 import { ZyklusInOrganisationenError } from '../specification/error/zyklus-in-organisationen.error.js';
 import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
 import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
@@ -14,7 +14,7 @@ import { EventModule } from '../../../core/eventbus/index.js';
 import { Organisation } from './organisation.js';
 import { OrganisationsTyp } from './organisation.enums.js';
 import { mapOrgaAggregateToData, OrganisationRepository } from '../persistence/organisation.repository.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { DeepMocked } from '../../../../test/utils/createMock.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationsOnDifferentSubtreesError } from '../specification/error/organisations-on-different-subtrees.error.js';
@@ -62,7 +62,7 @@ describe('OrganisationServiceSpecificationTest', () => {
     });
 
     beforeEach(async () => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
         await DatabaseTestModule.clearDatabase(orm);
         root = DoFactory.createOrganisation(true, {
             name: 'Root',
@@ -102,7 +102,7 @@ describe('OrganisationServiceSpecificationTest', () => {
     });
 
     describe('create', () => {
-        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+        const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
         it('should return DomainError, when KlasseNurVonSchuleAdministriert specificaton is not satisfied and type is KLASSE', async () => {
             const klasseDo: Organisation<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Klasse',
@@ -156,7 +156,7 @@ describe('OrganisationServiceSpecificationTest', () => {
     });
 
     describe('update', () => {
-        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+        const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
         it('should return DomainError, when klasse specifications are not satisfied and type is klasse', async () => {
             const klasse: Organisation<boolean> = DoFactory.createOrganisation(false, {
                 name: 'klasse',
@@ -194,7 +194,7 @@ describe('OrganisationServiceSpecificationTest', () => {
                     zugehoerigZu: oeffentlich.id,
                 }),
             );
-            const permissions: IPersonPermissions = new PersonPermissionsMock();
+            const permissions: IPersonPermissions = createPersonPermissionsMock();
 
             const result: Result<void> = await organisationService.setZugehoerigZu(traeger.id, school.id, permissions);
 
@@ -219,7 +219,7 @@ describe('OrganisationServiceSpecificationTest', () => {
                     zugehoerigZu: ersatz.id,
                 }),
             );
-            const permissions: IPersonPermissions = new PersonPermissionsMock();
+            const permissions: IPersonPermissions = createPersonPermissionsMock();
 
             const result: Result<void> = await organisationService.setZugehoerigZu(traeger.id, school.id, permissions);
 
@@ -244,7 +244,7 @@ describe('OrganisationServiceSpecificationTest', () => {
                     zugehoerigZu: oeffentlich.id,
                 }),
             );
-            const permissions: IPersonPermissions = new PersonPermissionsMock();
+            const permissions: IPersonPermissions = createPersonPermissionsMock();
 
             const result: Result<void> = await organisationService.setZugehoerigZu(school2.id, school.id, permissions);
 
@@ -269,7 +269,7 @@ describe('OrganisationServiceSpecificationTest', () => {
                     zugehoerigZu: school.id,
                 }),
             );
-            const permissions: IPersonPermissions = new PersonPermissionsMock();
+            const permissions: IPersonPermissions = createPersonPermissionsMock();
 
             const result: Result<void> = await organisationService.setZugehoerigZu(traeger.id, school.id, permissions);
 

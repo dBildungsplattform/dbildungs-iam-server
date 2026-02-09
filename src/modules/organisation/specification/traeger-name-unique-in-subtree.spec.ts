@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/index.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { Organisation } from '../domain/organisation.js';
@@ -12,7 +12,7 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
     let sut: TraegerNameUniqueInSubtree<true>;
     let orgaRepoMock: DeepMocked<OrganisationRepository>;
     beforeEach(() => {
-        orgaRepoMock = createMock<OrganisationRepository>();
+        orgaRepoMock = createMock(OrganisationRepository);
         sut = new TraegerNameUniqueInSubtree(orgaRepoMock);
     });
 
@@ -77,12 +77,14 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
     it('when no traeger with same name exists, it should return true', async () => {
         const traeger: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.TRAEGER });
         orgaRepoMock.findBy.mockResolvedValueOnce([[], 0]);
+        orgaRepoMock.findRootDirectChildren.mockResolvedValueOnce([undefined, undefined]);
         await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(true);
     });
 
     it('when only traeger itself has the name, it should return true', async () => {
         const traeger: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.TRAEGER });
         orgaRepoMock.findBy.mockResolvedValueOnce([[traeger], 1]);
+        orgaRepoMock.findRootDirectChildren.mockResolvedValueOnce([undefined, undefined]);
         await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(true);
     });
 

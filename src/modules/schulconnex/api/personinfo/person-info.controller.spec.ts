@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../../test/utils/do-factory.js';
@@ -49,36 +49,36 @@ describe('PersonInfoController', () => {
                 PersonInfoController,
                 {
                     provide: PersonApiMapper,
-                    useValue: createMock<PersonApiMapper>(),
+                    useValue: createMock(PersonApiMapper),
                 },
                 {
                     provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    useValue: createMock(ClassLogger),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
+                    useValue: createMock(PersonRepository),
                 },
                 {
                     provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
+                    useValue: createMock(UserLockRepository),
                 },
                 {
                     provide: EmailRepo,
-                    useValue: createMock<EmailRepo>(),
+                    useValue: createMock(EmailRepo),
                 },
                 {
                     provide: EmailResolverService,
-                    useValue: createMock<EmailResolverService>(),
+                    useValue: createMock(EmailResolverService),
                 },
             ],
         })
             .overrideProvider(UserLockRepository)
-            .useValue(createMock<UserLockRepository>())
+            .useValue(createMock(UserLockRepository))
             .compile();
 
         sut = module.get<PersonInfoController>(PersonInfoController);
@@ -96,7 +96,7 @@ describe('PersonInfoController', () => {
     });
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should be defined', () => {
@@ -141,7 +141,7 @@ describe('PersonInfoController', () => {
                         return Promise.resolve(orga);
                     },
                 });
-                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
 
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
@@ -193,7 +193,7 @@ describe('PersonInfoController', () => {
                         return Promise.resolve(orga);
                     },
                 });
-                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
 
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
@@ -248,7 +248,7 @@ describe('PersonInfoController', () => {
                         return Promise.resolve(orga);
                     },
                 });
-                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
 
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
@@ -302,7 +302,7 @@ describe('PersonInfoController', () => {
                         return Promise.resolve(orga);
                     },
                 });
-                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
 
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
@@ -366,9 +366,9 @@ describe('PersonInfoController', () => {
                         return Promise.resolve(orgaLand);
                     },
                 });
-                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
 
-                userLockRepoMock.findByPersonId.mockResolvedValue([createMock<UserLock>()]);
+                userLockRepoMock.findByPersonId.mockResolvedValue([createMock(UserLock)]);
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
@@ -416,9 +416,9 @@ describe('PersonInfoController', () => {
                         return Promise.resolve(orgaLand);
                     },
                 });
-                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
 
-                userLockRepoMock.findByPersonId.mockResolvedValue([createMock<UserLock>()]);
+                userLockRepoMock.findByPersonId.mockResolvedValue([createMock(UserLock)]);
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
@@ -467,7 +467,7 @@ describe('PersonInfoController', () => {
                         return Promise.resolve(orga);
                     },
                 });
-                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
 
                 userLockRepoMock.findByPersonId.mockResolvedValue([]);
                 personRepoMock.findById.mockResolvedValue(person);
@@ -518,7 +518,7 @@ describe('PersonInfoController', () => {
                         return Promise.resolve(orga);
                     },
                 });
-                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
 
                 userLockRepoMock.findByPersonId.mockResolvedValue([]);
                 personRepoMock.findById.mockResolvedValue(person);
@@ -591,7 +591,7 @@ describe('PersonInfoController', () => {
                         return Promise.resolve(klasse2);
                     },
                 });
-                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
 
                 userLockRepoMock.findByPersonId.mockResolvedValue([]);
                 personRepoMock.findById.mockResolvedValue(person);

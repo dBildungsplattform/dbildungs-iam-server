@@ -14,7 +14,7 @@ import {
     SichtfreigabeType,
 } from '../../src/modules/personenkontext/domain/personenkontext.enums.js';
 import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
-import { RollenArt, RollenMerkmal } from '../../src/modules/rolle/domain/rolle.enums.js';
+import { RollenArt } from '../../src/modules/rolle/domain/rolle.enums.js';
 import { RollenSystemRecht } from '../../src/modules/rolle/domain/systemrecht.js';
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
 import {
@@ -25,6 +25,8 @@ import {
 import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
 import { Rollenerweiterung } from '../../src/modules/rolle/domain/rollenerweiterung.js';
+import { EmailAddress, EmailAddressStatus } from '../../src/modules/email/domain/email-address.js';
+import { EmailDomain } from '../../src/email/modules/core/domain/email-domain.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -53,6 +55,7 @@ export class DoFactory {
             personalnummer: faker.string.numeric({ length: 7 }),
             revision: '1',
             externalIds: {},
+            username: withId ? faker.internet.userName() : undefined,
         };
         person.istTechnisch = false;
         return Object.assign(Object.create(Person.prototype) as Person<boolean>, person, props);
@@ -129,7 +132,7 @@ export class DoFactory {
             name: faker.person.jobTitle(),
             administeredBySchulstrukturknoten: faker.string.uuid(),
             rollenart: faker.helpers.enumValue(RollenArt),
-            merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+            merkmale: [],
             systemrechte: [RollenSystemRecht.PERSONEN_VERWALTEN],
             serviceProviderIds: [],
             id: withId ? faker.string.uuid() : undefined,
@@ -269,5 +272,44 @@ export class DoFactory {
             rollenerweiterung,
             props,
         );
+    }
+
+    public static createEmailAddress<WasPersisted extends boolean>(
+        withId: WasPersisted,
+        address?: string,
+        props?: Partial<EmailAddress<WasPersisted>>,
+    ): EmailAddress<WasPersisted> {
+        let emailAddress: EmailAddress<WasPersisted>;
+        if (withId) {
+            emailAddress = new EmailAddress(
+                props?.id ?? faker.string.uuid(),
+                props?.createdAt ?? faker.date.past(),
+                props?.updatedAt ?? faker.date.recent(),
+                props?.personId ?? faker.string.uuid(),
+                address ?? faker.internet.email(),
+                props?.status ?? faker.helpers.enumValue(EmailAddressStatus),
+                props?.oxUserID ?? faker.string.uuid(),
+            );
+        } else {
+            emailAddress = EmailAddress.createNew(
+                props?.personId ?? faker.string.uuid(),
+                address ?? faker.internet.email(),
+                props?.status ?? faker.helpers.enumValue(EmailAddressStatus),
+            ) as EmailAddress<WasPersisted>;
+        }
+        return emailAddress;
+    }
+
+    public static createEmailDomain<WasPersisted extends boolean>(
+        withId: WasPersisted,
+        props?: Partial<EmailDomain<WasPersisted>>,
+    ): EmailDomain<WasPersisted> {
+        return EmailDomain.construct({
+            id: props?.id ?? (withId ? faker.string.uuid() : (undefined as unknown as string)),
+            createdAt: props?.createdAt ?? faker.date.past(),
+            updatedAt: props?.updatedAt ?? faker.date.recent(),
+            domain: props?.domain ?? faker.internet.domainName(),
+            spshServiceProviderId: props?.spshServiceProviderId ?? faker.string.uuid(),
+        }) as EmailDomain<WasPersisted>;
     }
 }

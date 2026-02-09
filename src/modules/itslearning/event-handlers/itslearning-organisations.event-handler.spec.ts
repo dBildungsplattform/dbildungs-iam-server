@@ -1,22 +1,20 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
-import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
 import { OrganisationsTyp, RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { CreateGroupParams } from '../actions/create-group.params.js';
-import { GroupResponse } from '../actions/read-group.action.js';
 import { ItslearningGroupRepo } from '../repo/itslearning-group.repo.js';
 import { ItsLearningOrganisationsEventHandler } from './itslearning-organisations.event-handler.js';
 import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
+import { DomainErrorMock } from '../../../../test/utils/error.mock.js';
 
 describe('ItsLearning Organisations Event Handler', () => {
     let module: TestingModule;
@@ -33,11 +31,11 @@ describe('ItsLearning Organisations Event Handler', () => {
                 ItsLearningOrganisationsEventHandler,
                 {
                     provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
+                    useValue: createMock(OrganisationRepository),
                 },
                 {
                     provide: ItslearningGroupRepo,
-                    useValue: createMock<ItslearningGroupRepo>(),
+                    useValue: createMock(ItslearningGroupRepo),
                 },
             ],
         }).compile();
@@ -54,7 +52,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
     beforeEach(() => {
         sut.ENABLED = true;
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('createKlasseEventHandler', () => {
@@ -64,8 +62,14 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.alphanumeric(),
                 faker.string.uuid(),
             );
-            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(createMock<GroupResponse>()); // ReadGroupAction
-            orgaRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>({ itslearningEnabled: true }));
+            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce({
+                name: faker.string.alphanumeric(),
+                parentId: faker.string.uuid(),
+                type: 'Unspecified',
+            }); // ReadGroupAction
+            orgaRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { itslearningEnabled: true }),
+            );
             itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined); // CreateGroupAction
 
             await sut.createKlasseEventHandler(event);
@@ -90,8 +94,14 @@ describe('ItsLearning Organisations Event Handler', () => {
                 'Klasse with a name that is way too long should be truncated',
                 faker.string.uuid(),
             );
-            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(createMock<GroupResponse>()); // ReadGroupAction
-            orgaRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>({ itslearningEnabled: true }));
+            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce({
+                name: faker.string.alphanumeric(),
+                parentId: faker.string.uuid(),
+                type: 'Unspecified',
+            }); // ReadGroupAction
+            orgaRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { itslearningEnabled: true }),
+            );
             itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined); // CreateGroupAction
 
             await sut.createKlasseEventHandler(event);
@@ -153,7 +163,9 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.alphanumeric(),
                 faker.string.uuid(),
             );
-            orgaRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>({ itslearningEnabled: false }));
+            orgaRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { itslearningEnabled: false }),
+            );
 
             await sut.createKlasseEventHandler(event);
 
@@ -168,10 +180,10 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.alphanumeric(),
                 faker.string.uuid(),
             );
-            orgaRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>({ itslearningEnabled: true }));
-            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(
-                createMock<DomainError>({ message: 'Error' }),
-            ); // CreateGroupAction
+            orgaRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { itslearningEnabled: true }),
+            );
+            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(new DomainErrorMock('Error')); // CreateGroupAction
 
             await sut.createKlasseEventHandler(event);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
@@ -187,7 +199,9 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.alphanumeric(),
                 faker.string.uuid(),
             );
-            orgaRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>({ itslearningEnabled: true }));
+            orgaRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { itslearningEnabled: true }),
+            );
 
             await sut.updatedKlasseEventHandler(event);
 
@@ -249,7 +263,9 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.alphanumeric(),
                 faker.string.uuid(),
             );
-            orgaRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>({ itslearningEnabled: false }));
+            orgaRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { itslearningEnabled: false }),
+            );
 
             await sut.updatedKlasseEventHandler(event);
 
@@ -264,53 +280,15 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.alphanumeric(),
                 faker.string.uuid(),
             );
-            orgaRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>({ itslearningEnabled: true }));
-            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(
-                createMock<DomainError>({ message: 'Error' }),
-            ); // UpdateGroupAction
+            orgaRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { itslearningEnabled: true }),
+            );
+            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(new DomainErrorMock('Error')); // UpdateGroupAction
 
             await sut.updatedKlasseEventHandler(event);
 
             expect(loggerMock.error).toHaveBeenLastCalledWith(
                 `[EventID: ${event.eventID}] Could not update Klasse in itsLearning: Error`,
-            );
-        });
-    });
-
-    describe('deletedKlasseEventHandler', () => {
-        it('should log on success', async () => {
-            const event: KlasseDeletedEvent = new KlasseDeletedEvent(faker.string.uuid());
-            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(undefined); // DeleteGroupAction
-
-            await sut.deletedKlasseEventHandler(event);
-
-            expect(itslearningGroupRepoMock.deleteGroup).toHaveBeenLastCalledWith(
-                event.organisationId,
-                `${event.eventID}-KLASSE-DELETED`,
-            );
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Klasse with ID ${event.organisationId} was deleted.`,
-            );
-        });
-
-        it('should skip event, if not enabled', async () => {
-            sut.ENABLED = false;
-            const event: KlasseDeletedEvent = new KlasseDeletedEvent(faker.string.uuid());
-
-            await sut.deletedKlasseEventHandler(event);
-
-            expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
-            expect(itslearningGroupRepoMock.deleteGroup).not.toHaveBeenCalled();
-        });
-
-        it('should log error on failed delete', async () => {
-            const event: KlasseDeletedEvent = new KlasseDeletedEvent(faker.string.uuid());
-            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(createMock<DomainError>({ message: 'Error' })); // DeleteGroupAction
-
-            await sut.deletedKlasseEventHandler(event);
-
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Could not delete Klasse in itsLearning: Error`,
             );
         });
     });
@@ -375,9 +353,7 @@ describe('ItsLearning Organisations Event Handler', () => {
                 RootDirectChildrenType.OEFFENTLICH,
             );
             orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
-            itslearningGroupRepoMock.createOrUpdateGroups.mockResolvedValueOnce(
-                createMock<DomainError>({ message: 'Error' }),
-            );
+            itslearningGroupRepoMock.createOrUpdateGroups.mockResolvedValueOnce(new DomainErrorMock('Error'));
 
             await sut.schuleItslearningEnabledEventHandler(event);
 
@@ -546,7 +522,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             expect(itslearningGroupRepoMock.deleteGroup).not.toHaveBeenCalled();
         });
 
-        it('should log error, if organisation is not a schule', async () => {
+        it('should log error, if organisation is not a schule or klasse', async () => {
             const event: OrganisationDeletedEvent = new OrganisationDeletedEvent(
                 faker.string.uuid(),
                 faker.word.noun(),
@@ -557,26 +533,9 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.organisationDeletedEventHandler(event);
 
             expect(loggerMock.error).toHaveBeenCalledWith(
-                `[EventID: ${event.eventID}] The organisation with ID ${event.organisationId} is not of type "SCHULE"!`,
+                `[EventID: ${event.eventID}] The organisation with ID ${event.organisationId} is not of type "SCHULE" or "KLASSE"!`,
             );
             expect(itslearningGroupRepoMock.createOrUpdateGroups).not.toHaveBeenCalled();
-        });
-
-        it('should skip event, when schule is ersatzschule', async () => {
-            const event: OrganisationDeletedEvent = new OrganisationDeletedEvent(
-                faker.string.uuid(),
-                faker.word.noun(),
-                faker.string.numeric(7),
-                OrganisationsTyp.SCHULE,
-            );
-            orgaRepoMock.findOrganisationZuordnungErsatzOderOeffentlich.mockResolvedValueOnce(
-                RootDirectChildrenType.ERSATZ,
-            );
-
-            await sut.organisationDeletedEventHandler(event);
-
-            expect(loggerMock.error).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Ersatzschule, ignoring.`);
-            expect(itslearningGroupRepoMock.deleteGroup).not.toHaveBeenCalled();
         });
 
         it('should log error, if deletion failed', async () => {
@@ -586,11 +545,8 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.numeric(7),
                 OrganisationsTyp.SCHULE,
             );
-            orgaRepoMock.findOrganisationZuordnungErsatzOderOeffentlich.mockResolvedValueOnce(
-                RootDirectChildrenType.OEFFENTLICH,
-            );
             orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
-            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(createMock<DomainError>({ message: 'Error' }));
+            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(new DomainErrorMock('Error'));
 
             await sut.organisationDeletedEventHandler(event);
 
@@ -606,9 +562,6 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.numeric(7),
                 OrganisationsTyp.SCHULE,
             );
-            orgaRepoMock.findOrganisationZuordnungErsatzOderOeffentlich.mockResolvedValueOnce(
-                RootDirectChildrenType.OEFFENTLICH,
-            );
             itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(undefined);
 
             await sut.organisationDeletedEventHandler(event);
@@ -616,7 +569,10 @@ describe('ItsLearning Organisations Event Handler', () => {
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} was deleted.`,
             );
-            expect(itslearningGroupRepoMock.deleteGroup).toHaveBeenCalledWith(event.organisationId);
+            expect(itslearningGroupRepoMock.deleteGroup).toHaveBeenCalledWith(
+                event.organisationId,
+                `${event.eventID}-ORGANISATION-DELETED`,
+            );
         });
     });
 });

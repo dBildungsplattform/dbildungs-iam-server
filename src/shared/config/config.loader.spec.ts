@@ -1,16 +1,15 @@
 import 'reflect-metadata'; // some decorators use reflect-metadata in the background
-
 import fs from 'fs';
 import { PathLike } from 'node:fs';
-
 import { DeepPartial } from '../../../test/utils/index.js';
 import { EmailAppConfig } from './email-app.config.js';
 import { JsonConfig, loadConfigFiles, loadEmailAppConfigFiles } from './index.js';
+import { Mock } from 'vitest';
 
 describe('configloader', () => {
     describe('loadConfigFiles', () => {
         describe('when config is valid', () => {
-            let readFileSyncSpy: jest.SpyInstance;
+            let readFileSyncSpy: Mock;
 
             const config: DeepPartial<JsonConfig> = {
                 HOST: {
@@ -166,16 +165,18 @@ describe('configloader', () => {
             };
 
             beforeEach(() => {
-                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
-                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(secrets));
+                readFileSyncSpy = vi.spyOn(fs, 'readFileSync');
+                readFileSyncSpy
+                    .mockReturnValueOnce(JSON.stringify(config))
+                    .mockReturnValueOnce(JSON.stringify(secrets));
             });
 
             afterEach(() => {
-                jest.clearAllMocks();
+                vi.clearAllMocks();
             });
 
             it('should return validated JsonConfig', () => {
-                jest.spyOn(fs, 'existsSync').mockReturnValueOnce(true);
+                vi.spyOn(fs, 'existsSync').mockReturnValue(true);
                 const validatedConfig: JsonConfig = loadConfigFiles();
                 expect(validatedConfig).toBeInstanceOf(JsonConfig);
                 expect(readFileSyncSpy).toHaveBeenCalledTimes(2);
@@ -184,7 +185,7 @@ describe('configloader', () => {
 
         describe('When there is no secrets config', () => {
             beforeAll(() => {
-                jest.clearAllMocks();
+                vi.clearAllMocks();
             });
 
             const config: DeepPartial<JsonConfig> = {
@@ -330,22 +331,20 @@ describe('configloader', () => {
             };
 
             it("should not load the secrets file if it can't find it", () => {
-                const existsSyncSpy: jest.SpyInstance = jest
-                    .spyOn(fs, 'existsSync')
-                    .mockImplementation((name: PathLike): boolean => {
-                        if (name === './config/secrets.json') {
-                            return false;
-                        }
-                        fail(`Unknown file ${name.toString()}`);
-                    });
-                jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
+                const existsSyncSpy: Mock = vi.spyOn(fs, 'existsSync').mockImplementation((name: PathLike): boolean => {
+                    if (name === './config/secrets.json') {
+                        return false;
+                    }
+                    throw new Error(`Unknown file ${name.toString()}`);
+                });
+                vi.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
                 loadConfigFiles();
                 expect(existsSyncSpy).toHaveBeenCalledTimes(1);
             });
         });
 
         describe('when config is invalid', () => {
-            let readFileSyncSpy: jest.SpyInstance;
+            let readFileSyncSpy: Mock;
 
             const config: DeepPartial<JsonConfig> = {
                 HOST: {
@@ -369,11 +368,11 @@ describe('configloader', () => {
             };
 
             beforeEach(() => {
-                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+                readFileSyncSpy = vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
             });
 
             afterEach(() => {
-                jest.clearAllMocks();
+                vi.clearAllMocks();
             });
 
             it('should throw', () => {
@@ -385,7 +384,7 @@ describe('configloader', () => {
 
     describe('loadEmailAppConfigFiles', () => {
         describe('when config is valid', () => {
-            let readFileSyncSpy: jest.SpyInstance;
+            let readFileSyncSpy: Mock;
 
             const config: DeepPartial<EmailAppConfig> = {
                 HOST: {
@@ -428,16 +427,16 @@ describe('configloader', () => {
             };
 
             beforeEach(() => {
-                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
-                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(secrets));
+                readFileSyncSpy = vi.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
+                readFileSyncSpy = vi.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(secrets));
             });
 
             afterEach(() => {
-                jest.clearAllMocks();
+                vi.clearAllMocks();
             });
 
             it('should return validated JsonConfig', () => {
-                jest.spyOn(fs, 'existsSync').mockReturnValueOnce(true);
+                vi.spyOn(fs, 'existsSync').mockReturnValueOnce(true);
                 const validatedConfig: EmailAppConfig = loadEmailAppConfigFiles();
                 expect(validatedConfig).toBeInstanceOf(EmailAppConfig);
                 expect(readFileSyncSpy).toHaveBeenCalledTimes(2);
@@ -446,7 +445,7 @@ describe('configloader', () => {
 
         describe('When there is no secrets config', () => {
             beforeAll(() => {
-                jest.clearAllMocks();
+                vi.clearAllMocks();
             });
 
             const config: DeepPartial<EmailAppConfig> = {
@@ -485,22 +484,20 @@ describe('configloader', () => {
             };
 
             it("should not load the secrets file if it can't find it", () => {
-                const existsSyncSpy: jest.SpyInstance = jest
-                    .spyOn(fs, 'existsSync')
-                    .mockImplementation((name: PathLike): boolean => {
-                        if (name === './config/email-secrets.json') {
-                            return false;
-                        }
-                        fail(`Unknown file ${name.toString()}`);
-                    });
-                jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
+                const existsSyncSpy: Mock = vi.spyOn(fs, 'existsSync').mockImplementation((name: PathLike): boolean => {
+                    if (name === './config/email-secrets.json') {
+                        return false;
+                    }
+                    throw new Error(`Unknown file ${name.toString()}`);
+                });
+                vi.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
                 loadEmailAppConfigFiles();
                 expect(existsSyncSpy).toHaveBeenCalledTimes(1);
             });
         });
 
         describe('when config is invalid', () => {
-            let readFileSyncSpy: jest.SpyInstance;
+            let readFileSyncSpy: Mock;
 
             const config: DeepPartial<EmailAppConfig> = {
                 HOST: {
@@ -509,11 +506,11 @@ describe('configloader', () => {
             };
 
             beforeEach(() => {
-                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+                readFileSyncSpy = vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
             });
 
             afterEach(() => {
-                jest.clearAllMocks();
+                vi.clearAllMocks();
             });
 
             it('should throw', () => {

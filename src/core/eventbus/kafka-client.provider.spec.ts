@@ -1,5 +1,6 @@
+import { vi } from 'vitest';
 import { KafkaJS } from '@confluentinc/kafka-javascript';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
@@ -120,11 +121,11 @@ describe('KafkaProvider', () => {
         if (module) {
             await module.close();
         }
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should return Kafka instance when enabled', async () => {
-        configService = createMock<ConfigService>();
+        configService = createMock(ConfigService);
         configService.getOrThrow.mockReturnValue(kafkaConfigEnabled);
 
         module = await Test.createTestingModule({
@@ -139,7 +140,7 @@ describe('KafkaProvider', () => {
     });
 
     it('should return Kafka instance when enabled', async () => {
-        configService = createMock<ConfigService>();
+        configService = createMock(ConfigService);
         configService.getOrThrow.mockReturnValue(kafkaConfigSslEnabled);
 
         module = await Test.createTestingModule({
@@ -154,7 +155,7 @@ describe('KafkaProvider', () => {
     });
 
     it('should return null when Kafka is disabled', async () => {
-        configService = createMock<ConfigService>();
+        configService = createMock(ConfigService);
         configService.getOrThrow.mockReturnValue(kafkaConfigDisabled);
 
         module = await Test.createTestingModule({

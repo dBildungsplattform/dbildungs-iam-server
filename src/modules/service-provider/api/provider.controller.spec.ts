@@ -1,10 +1,9 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { INestApplication, UnauthorizedException } from '@nestjs/common';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { HttpException, INestApplication, UnauthorizedException } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Client } from 'openid-client';
-
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
@@ -29,13 +28,28 @@ import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
+import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
+import {
+    ServiceProviderTarget,
+    ServiceProviderKategorie,
+    ServiceProviderSystem,
+} from '../domain/service-provider.enum.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
+    let serviceProviderFactoryMock: DeepMocked<ServiceProviderFactory>;
     let providerController: ProviderController;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
+    const oidcClientMock: DeepMocked<Client> = {
+        grant: vi.fn(),
+        userinfo: vi.fn(),
+    } as DeepMocked<Client>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -51,20 +65,23 @@ describe('Provider Controller Test', () => {
                 },
                 {
                     provide: OIDC_CLIENT,
-                    useValue: createMock<Client>(),
+                    useValue: oidcClientMock,
                 },
             ],
         })
             .overrideProvider(ServiceProviderService)
-            .useValue(createMock<ServiceProviderService>())
+            .useValue(createMock(ServiceProviderService))
             .overrideProvider(ServiceProviderRepo)
-            .useValue(createMock<ServiceProviderRepo>())
+            .useValue(createMock<ServiceProviderRepo>(ServiceProviderRepo))
+            .overrideProvider(ServiceProviderFactory)
+            .useValue(createMock<ServiceProviderFactory>(ServiceProviderFactory))
             .compile();
 
         serviceProviderServiceMock = module.get<DeepMocked<ServiceProviderService>>(ServiceProviderService);
         serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
+        serviceProviderFactoryMock = module.get<DeepMocked<ServiceProviderFactory>>(ServiceProviderFactory);
         providerController = module.get(ProviderController);
-        personPermissionsMock = createMock<PersonPermissions>();
+        personPermissionsMock = createPersonPermissionsMock();
 
         app = module.createNestApplication();
         await app.init();
@@ -82,14 +99,15 @@ describe('Provider Controller Test', () => {
         let providerController: ProviderController;
 
         beforeEach(() => {
-            permissionsMock = createMock<PersonPermissions>();
-            rollenerweiterungRepoMock = createMock<RollenerweiterungRepo>();
-            rolleRepoMock = createMock<RolleRepo>();
-            organisationRepositoryMock = createMock<OrganisationRepository>();
+            permissionsMock = createPersonPermissionsMock();
+            rollenerweiterungRepoMock = createMock(RollenerweiterungRepo);
+            rolleRepoMock = createMock(RolleRepo);
+            organisationRepositoryMock = createMock(OrganisationRepository);
             providerController = new ProviderController(
-                createMock<StreamableFileFactory>(),
-                createMock<ServiceProviderRepo>(),
-                createMock<ServiceProviderService>(),
+                createMock(StreamableFileFactory),
+                createMock(ServiceProviderFactory),
+                createMock(ServiceProviderRepo),
+                createMock(ServiceProviderService),
                 rollenerweiterungRepoMock,
                 rolleRepoMock,
                 organisationRepositoryMock,
@@ -201,6 +219,28 @@ describe('Provider Controller Test', () => {
                 1,
             ]);
 
+            rolleRepoMock.findByIds.mockResolvedValue(
+                new Map([
+                    [
+                        rollenerweiterung.rolleId,
+                        DoFactory.createRolle(true, { id: rollenerweiterung.rolleId, name: faker.person.firstName() }),
+                    ],
+                ]),
+            );
+
+            organisationRepositoryMock.findByIds.mockResolvedValue(
+                new Map([
+                    [
+                        rollenerweiterung.organisationId,
+                        DoFactory.createOrganisation(true, {
+                            id: rollenerweiterung.organisationId,
+                            name: faker.company.name(),
+                            kennung: faker.string.alphanumeric(10),
+                        }),
+                    ],
+                ]),
+            );
+
             const result: RawPagedResponse<RollenerweiterungWithExtendedDataResponse> =
                 await providerController.findRollenerweiterungenByServiceProviderId(
                     permissionsMock,
@@ -269,7 +309,7 @@ describe('Provider Controller Test', () => {
             spId = faker.string.uuid();
             sp = DoFactory.createServiceProvider(true, { id: spId });
             pk = DoFactory.createPersonenkontext(true, { rolleId });
-            personPermissions = createMock<PersonPermissions>({});
+            personPermissions = createMock(PersonPermissions);
             personPermissions.getPersonenkontextIds.mockResolvedValueOnce([
                 { organisationId: pk.organisationId, rolleId: pk.rolleId },
             ]);
@@ -339,5 +379,143 @@ describe('Provider Controller Test', () => {
                 expect(result.items[0]).toBeInstanceOf(ManageableServiceProviderListEntryResponse);
             },
         );
+    });
+
+    describe('getManageableServiceProvidersForOrganisationId', () => {
+        it('should throw MissingPermissionsError when user lacks permission', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            const params: DeepMocked<ManageableServiceProvidersForOrganisationParams> = {
+                organisationId: 'org-1',
+                limit: 10,
+                offset: 0,
+            };
+
+            serviceProviderServiceMock.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung.mockResolvedValueOnce(
+                {
+                    ok: false,
+                    error: new MissingPermissionsError('Rollen Erweitern Systemrecht Required For This Endpoint'),
+                },
+            );
+
+            await expect(
+                providerController.getManageableServiceProvidersForOrganisationId(permissions, params),
+            ).rejects.toThrow(HttpException);
+        });
+    });
+
+    describe('createServiceProvider', () => {
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+        it('should create a new service provider when user has permission', async () => {
+            const tinyPngBase64: string =
+                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBg0GwHjcAAAAASUVORK5CYII=';
+
+            const body: CreateServiceProviderBodyParams = {
+                name: faker.company.name(),
+                target: ServiceProviderTarget.EMAIL,
+                url: faker.internet.url(),
+                kategorie: ServiceProviderKategorie.EMAIL,
+                logoBase64: tinyPngBase64,
+                requires2fa: false,
+                vidisAngebotId: undefined,
+                merkmale: [],
+                organisationId: faker.string.uuid(),
+            };
+
+            const createdDomainSp: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const persistedSp: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+
+            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            serviceProviderFactoryMock.createNew.mockReturnValueOnce(createdDomainSp);
+            serviceProviderRepoMock.save.mockResolvedValueOnce(persistedSp);
+
+            const result: ServiceProviderResponse = await providerController.createServiceProvider(
+                personPermissionsMock,
+                body,
+            );
+
+            expect(result).toBeDefined();
+            expect(serviceProviderFactoryMock.createNew).toHaveBeenCalledWith(
+                body.name,
+                body.target,
+                body.url,
+                body.kategorie,
+                body.organisationId,
+                Buffer.from(tinyPngBase64, 'base64'),
+                undefined,
+                undefined,
+                undefined,
+                ServiceProviderSystem.NONE,
+                body.requires2fa,
+                body.vidisAngebotId,
+                body.merkmale,
+            );
+            expect(serviceProviderRepoMock.save).toHaveBeenCalledWith(createdDomainSp);
+            expect(result).toBeInstanceOf(ServiceProviderResponse);
+        });
+
+        it('should create a new service provider without logo when user has permission', async () => {
+            const body: CreateServiceProviderBodyParams = {
+                name: faker.company.name(),
+                target: ServiceProviderTarget.EMAIL,
+                url: faker.internet.url(),
+                kategorie: ServiceProviderKategorie.EMAIL,
+                logoBase64: undefined,
+                requires2fa: false,
+                vidisAngebotId: undefined,
+                merkmale: [],
+                organisationId: faker.string.uuid(),
+            };
+
+            const createdDomainSp: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const persistedSp: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+
+            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            serviceProviderFactoryMock.createNew.mockReturnValueOnce(createdDomainSp);
+            serviceProviderRepoMock.save.mockResolvedValueOnce(persistedSp);
+
+            const result: ServiceProviderResponse = await providerController.createServiceProvider(
+                personPermissionsMock,
+                body,
+            );
+
+            expect(result).toBeDefined();
+            expect(serviceProviderFactoryMock.createNew).toHaveBeenCalledWith(
+                body.name,
+                body.target,
+                body.url,
+                body.kategorie,
+                body.organisationId,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                ServiceProviderSystem.NONE,
+                body.requires2fa,
+                body.vidisAngebotId,
+                body.merkmale,
+            );
+            expect(serviceProviderRepoMock.save).toHaveBeenCalledWith(createdDomainSp);
+            expect(result).toBeInstanceOf(ServiceProviderResponse);
+        });
+
+        it('should throw forbidden error when user lacks permission', async () => {
+            const body: CreateServiceProviderBodyParams = {
+                name: faker.company.name(),
+                target: ServiceProviderTarget.EMAIL,
+                url: undefined,
+                kategorie: ServiceProviderKategorie.ANGEBOTE,
+                requires2fa: false,
+                vidisAngebotId: undefined,
+                merkmale: [],
+                organisationId: faker.string.uuid(),
+            };
+
+            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+            await expect(providerController.createServiceProvider(personPermissionsMock, body)).rejects.toBeDefined();
+            expect(serviceProviderRepoMock.save).not.toHaveBeenCalled();
+        });
     });
 });
