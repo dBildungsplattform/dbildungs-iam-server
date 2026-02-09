@@ -1,18 +1,18 @@
-import { CacheInterceptor } from '@nestjs/cache-manager';
-import { ExecutionContext, Injectable, CallHandler } from '@nestjs/common';
-import { Observable, from, firstValueFrom } from 'rxjs';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import { ExecutionContext, Injectable, CallHandler, NestInterceptor, Inject } from '@nestjs/common';
+import { Observable, from, firstValueFrom, of } from 'rxjs';
 import * as crypto from 'crypto';
 
 @Injectable()
-export class ExternalDataCacheInterceptor extends CacheInterceptor {
-    private inflight = new Map<string, Promise<any>>();
+export class ExternalDataCacheInterceptor implements NestInterceptor {
+    private inflight: Map<string, Promise<any>> = new Map<string, Promise<any>>();
 
-    public override trackBy(context: ExecutionContext): string | undefined {
+    public constructor(@Inject(CACHE_MANAGER) private readonly cache: Cache) {
+        console.log('[ExternalDataCacheInterceptor] constructor');
+    }
+
+    public trackBy(context: ExecutionContext): string | undefined {
         const req = context.switchToHttp().getRequest();
-
-        if (req.method !== 'POST' || !req.url.includes('/keycloakinternal/externaldata')) {
-            return undefined;
-        }
 
         const bodyHash: string = crypto
             .createHash('sha1')
@@ -22,28 +22,38 @@ export class ExternalDataCacheInterceptor extends CacheInterceptor {
         return `kc-externaldata:${bodyHash}`;
     }
 
-    public override async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+    public async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
         const key: string | undefined = this.trackBy(context);
 
         if (!key) {
             return next.handle();
         }
 
-        if (this.inflight.has(key)) {
-            return from(this.inflight.get(key)!);
+        const cached = await this.cache.get(key);
+        if (cached !== undefined) {
+            console.log('[CACHE HIT]', key);
+            return of(cached);
         }
 
-        Reflect.defineMetadata('cache:cacheKey', key, context.getHandler());
+        const inflight: Promise<any> | undefined = this.inflight.get(key);
+        if (inflight) {
+            console.log('[INFLIGHT JOIN]', key);
+            return from(inflight);
+        }
 
-        const result$: Observable<any> = await super.intercept(context, next);
+        console.log('[CACHE MISS]', key);
 
-        const promise: Promise<unknown> = firstValueFrom(result$);
+        //Reflect.defineMetadata('cache:cacheKey', key, context.getHandler());
+        //const result$: Observable<any> = await super.intercept(context, next);
+
+        const promise: Promise<unknown> = firstValueFrom(next.handle());
 
         this.inflight.set(key, promise);
 
-        await promise.finally(() => {
-            this.inflight.delete(key);
-        });
+        console.log('Cache key:', key);
+        console.log('Inflight keys:', this.inflight.size);
+
+        void promise.then((value) => this.cache.set(key, value, 10_000)).finally(() => this.inflight.delete(key));
 
         return from(promise);
     }

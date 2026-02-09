@@ -84,7 +84,11 @@ import { redisStore } from 'cache-manager-redis-yet';
                 const redis: RedisConfig = config.getOrThrow<RedisConfig>('REDIS');
                 return {
                     store: await redisStore({
-                        url: `redis://:${redis.PASSWORD}@localhost:${redis.PORT}`,
+                        socket: {
+                            host: redis.HOST,
+                            port: redis.PORT,
+                        },
+
                         username: redis.USERNAME,
                         password: redis.PASSWORD,
                     }),
