@@ -19,6 +19,7 @@ import { SoftwareTokenInitializationError } from './api/error/software-token-ini
 import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
 import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
+import { TokenVerifyBodyParams } from './token-verify.params.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -413,7 +414,9 @@ describe('PrivacyIdeaAdministrationController', () => {
                 value: person,
             });
 
-            await sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock);
+            const tokenVerifyBodyParams: TokenVerifyBodyParams = new TokenVerifyBodyParams();
+            Object.assign(tokenVerifyBodyParams, { personId: 'user1', otp: '123456' });
+            await expect(sut.verifyToken(tokenVerifyBodyParams, personPermissionsMock)).resolves.not.toThrow();
         });
         it('should throw an error when trying to verify', async () => {
             personPermissionsMock = createPersonPermissionsMock();

@@ -1,3 +1,5 @@
+// /* v8 ignore file -- @preserve */
+// type definitions only can not be covered by v8
 import { PersonID, PersonUsername } from '../../shared/types/aggregate-ids.types.js';
 import { OXUserID, OXUserName } from '../../shared/types/ox-ids.types.js';
 import { Person } from '../../modules/person/domain/person.js';

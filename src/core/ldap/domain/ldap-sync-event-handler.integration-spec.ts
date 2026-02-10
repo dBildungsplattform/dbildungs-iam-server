@@ -461,6 +461,7 @@ describe('LdapSyncEventHandler', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValue('example.org');
 
                 // create PKs, orgaMap and rolleMap
                 const [kontexte, orgaMap, rolleMap]: [
@@ -487,6 +488,10 @@ describe('LdapSyncEventHandler', () => {
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `No DISABLED EmailAddress(es) for Person with ID ${event.personId}`,
+                );
+                expect(eventServiceMock.publish).toBeCalledWith(
+                    expect.objectContaining({ personId, username }),
+                    expect.objectContaining({ personId, username }),
                 );
             });
         });
