@@ -1,6 +1,5 @@
 import {
     EntityData,
-    EntityManager,
     EntityName,
     ForeignKeyConstraintViolationException,
     Loaded,
@@ -15,25 +14,27 @@ import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/type
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
-import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
+import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
 import { RolleServiceProviderEntity } from '../entity/rolle-service-provider.entity.js';
 import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 
+import { EntityManager } from '@mikro-orm/postgresql';
 import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderMerkmalEntity } from '../../service-provider/repo/service-provider-merkmal.entity.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-service-providers.specification.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { RolleScope } from './rolle.scope.js';
 
 export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
     const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
@@ -256,41 +257,10 @@ export class RolleRepo {
         return rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory));
     }
 
-    public async findBy(
-        searchString?: string,
-        rollenarten?: RollenArt[],
-        schulstrukturknoten?: OrganisationID[],
-        limit?: number,
-        offset?: number,
-    ): Promise<Rolle<true>[]> {
-        const nameQuery: Record<string, unknown> = searchString ? { name: { $ilike: '%' + searchString + '%' } } : {};
-        const technischeQuery: { istTechnisch: false } = { istTechnisch: false };
-        const rollenartQuery: Record<string, unknown> =
-            rollenarten && rollenarten.length > 0 ? { rollenart: { $in: rollenarten } } : {};
-        const schulstrukturknotenQuery: Record<string, unknown> =
-            schulstrukturknoten && schulstrukturknoten.length > 0
-                ? { administeredBySchulstrukturknoten: { $in: schulstrukturknoten } }
-                : {};
+    public async findBy(scope: RolleScope): Promise<Counted<Rolle<true>>> {
+        const [rollen, total]: Counted<RolleEntity> = await scope.executeQuery(this.em);
 
-        const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, {
-            populate: [
-                'merkmale',
-                'systemrechte',
-                'serviceProvider.serviceProvider',
-                'serviceProvider.serviceProvider.merkmale',
-            ] as const,
-            exclude: ['serviceProvider.serviceProvider.logo'] as const,
-            where: {
-                ...nameQuery,
-                ...technischeQuery,
-                ...rollenartQuery,
-                ...schulstrukturknotenQuery,
-            },
-            limit: limit,
-            offset: offset,
-        });
-
-        return rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory));
+        return [rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory)), total];
     }
 
     public async findRollenAuthorized(
@@ -299,7 +269,7 @@ export class RolleRepo {
         searchStr?: string,
         limit?: number,
         offset?: number,
-    ): Promise<[Option<Rolle<true>[]>, number]> {
+    ): Promise<[Rolle<true>[], number]> {
         const orgIdsWithRecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ROLLEN_VERWALTEN],
             true,
@@ -311,7 +281,7 @@ export class RolleRepo {
 
         const technischeQuery: { istTechnisch?: false } = includeTechnische ? {} : { istTechnisch: false };
 
-        const [rollen, total]: [Option<RolleEntity[]>, number] = await this.em.findAndCount(
+        const [rollen, total]: [RolleEntity[], number] = await this.em.findAndCount(
             this.entityName,
             {
                 ...(searchStr ? { name: { $ilike: '%' + searchStr + '%' } } : {}),

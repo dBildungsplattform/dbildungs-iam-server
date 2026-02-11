@@ -10,6 +10,8 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
+import { RolleScope } from '../../rolle/repo/rolle.scope.js';
+import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 
 @Injectable()
 export class PersonAdministrationService {
@@ -42,16 +44,22 @@ export class PersonAdministrationService {
                 : permittedOrgas.orgaIds;
         }
 
-        let rollenarten: Array<RollenArt> | undefined;
-        let schulstrukturknoten: Array<OrganisationID> | undefined;
+        const scope: RolleScope = new RolleScope().setScopeWhereOperator(ScopeOperator.AND).paged(0, limit);
+
         if (relevantOrganisationIdsForFilter) {
-            [rollenarten, schulstrukturknoten] = await Promise.all([
+            const [rollenarten, schulstrukturknoten]: [Array<RollenArt>, Array<OrganisationID>] = await Promise.all([
                 this.getAllowedRollenArtenForOrganisationen(relevantOrganisationIdsForFilter),
                 this.getAllowedSchulstrukturknotenForRollen(relevantOrganisationIdsForFilter),
             ]);
+            scope.findByRollenArten(rollenarten).findByOrganisationen(schulstrukturknoten);
         }
 
-        return this.rolleRepo.findBy(rolleName, rollenarten, schulstrukturknoten, limit);
+        if (rolleName) {
+            scope.findBySubstring(['name'], rolleName);
+        }
+
+        const [rollen, _]: Counted<Rolle<true>> = await this.rolleRepo.findBy(scope);
+        return rollen;
     }
 
     private hasSelectedOrgas(organisationIds?: Array<OrganisationID>): organisationIds is Array<OrganisationID> {

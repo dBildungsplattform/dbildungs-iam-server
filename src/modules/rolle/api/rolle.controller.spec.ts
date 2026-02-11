@@ -113,7 +113,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
         });
     });
 
-    describe('/GET rolle mocked Rolle-repo', () => {
+    describe('/POST rolle mocked Rolle-repo', () => {
         describe('createRolle', () => {
             const permissionsMock: PersonPermissions = createPersonPermissionsMock();
             it('should throw an HTTP exception when rolleFactory.createNew returns DomainError', async () => {

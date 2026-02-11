@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
@@ -8,6 +7,7 @@ import { Request } from 'express';
 import { Observable } from 'rxjs';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import {
     ConfigTestModule,
     createPersonPermissionsMock,
@@ -40,8 +40,8 @@ import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persiste
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
-import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { Rolle } from '../domain/rolle.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RolleApiModule } from '../rolle-api.module.js';
@@ -52,8 +52,8 @@ import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.pa
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 import { RolleResponse } from './rolle.response.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
-import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
+import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -524,6 +524,103 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/rolle')
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(2);
+        });
+
+        it('should return rollen available for erweiterung if systemrecht is set', async () => {
+            const orgaIds: string[] = (
+                await Promise.all([
+                    rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: false })),
+                    rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: false })),
+                    rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: false })),
+                ])
+            ).map((r: Rolle<true> | DomainError) => {
+                if (r instanceof DomainError) {
+                    throw Error();
+                }
+                return r.administeredBySchulstrukturknoten;
+            });
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgaIds.slice(0, 2) });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle?systemrecht=ROLLEN_ERWEITERN')
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(2);
+        });
+
+        it('should return rollen available for erweiterung if systemrecht and orgaIds are set', async () => {
+            const traeger: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.TRAEGER }),
+            );
+            const schule: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE, administriertVon: traeger.id }),
+            );
+            await Promise.all([
+                rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: false })),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        administeredBySchulstrukturknoten: traeger.id,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, { istTechnisch: false, administeredBySchulstrukturknoten: schule.id }),
+                ),
+            ]);
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [schule.id] });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle?systemrecht=ROLLEN_ERWEITERN&organisationId=${schule.id}`)
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(2);
+        });
+
+        it('should return rollen available for erweiterung if systemrecht and rollenarten are set', async () => {
+            const administeredBySchulstrukturknoten: string = faker.string.uuid();
+            const rollenart: RollenArt = RollenArt.LERN;
+            await Promise.all([
+                rolleRepo.save(
+                    DoFactory.createRolle(false, { istTechnisch: false, rollenart, administeredBySchulstrukturknoten }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, { istTechnisch: false, rollenart, administeredBySchulstrukturknoten }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        rollenart: RollenArt.SYSADMIN,
+                        administeredBySchulstrukturknoten,
+                    }),
+                ),
+            ]);
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [administeredBySchulstrukturknoten],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(
+                    `/rolle?systemrecht=ROLLEN_ERWEITERN&rollenarten=${rollenart}&organisationId=${administeredBySchulstrukturknoten}`,
+                )
                 .send();
 
             expect(response.status).toBe(200);
