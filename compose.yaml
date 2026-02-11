@@ -23,6 +23,7 @@ services:
       - PI_REALM=defrealm
       - PI_BASE_URL=http://privacy-idea:8080
       - STATUS_REDIRECT_URL=https://status.dev.spsh.dbildungsplattform.de/
+      - INTERNAL_COMMUNICATION_API_KEY=api-key
     env_file:
       - .env
     entrypoint: '/opt/keycloak/bin/kc.sh start-dev'

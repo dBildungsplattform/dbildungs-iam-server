@@ -41,7 +41,7 @@ export class KeycloakInternalController {
 
     @UseInterceptors(ExternalDataCacheInterceptor)
     @Post('externaldata')
-    @CacheTTL(10)
+    @CacheTTL(200)
     @HttpCode(200)
     @Public()
     @UseGuards(AccessApiKeyGuard)
