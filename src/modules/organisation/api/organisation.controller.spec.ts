@@ -36,9 +36,10 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { OrganisationHasChildrenError } from '../organisation-delete/errors/organisation-has-children.error.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
-    const params: OrganisationByIdParams = {
+    const params: OrganisationByIdParams = new OrganisationByIdParams();
+    Object.assign(params, {
         organisationId: faker.string.uuid(),
-    };
+    });
     const body: OrganisationByIdBodyParams = {
         organisationId: faker.string.uuid(),
     };

@@ -17,13 +17,14 @@ export default defineConfig({
         testTimeout: 30000, // 30 seconds default timeout
         coverage: {
             provider: 'v8',
-            reporter: [['text', { maxCols: 150 }], 'lcov'],
+            reporter: [['text', { maxCols: 150 }], 'html', 'lcov'],
             reportsDirectory: 'coverage',
             reportOnFailure: true,
             include: ['src/**/*.ts'],
             exclude: [
                 '**/main.ts',
                 '**/index.ts',
+                '**/*.module.ts',
                 '**/*.spec.ts',
                 '**/*.integration-spec.ts',
                 '**/test/**',
@@ -32,10 +33,10 @@ export default defineConfig({
                 'vite.config.ts',
             ],
             thresholds: {
-                lines: 98.37,
-                functions: 99.37,
-                branches: 97.36,
-                statements: 98.35,
+                statements: 99,
+                branches: 97.5,
+                functions: 99.5,
+                lines: 99,
             },
         },
         projects: [
@@ -43,7 +44,7 @@ export default defineConfig({
                 test: {
                     name: 'unit',
                     include: ['**/*.spec.ts'],
-                    maxWorkers: '90%',
+                    maxWorkers: '70%',
                     hookTimeout: 20000, // 20 seconds for setup/teardown
                     testTimeout: 20000, // 20 seconds for unit tests
                     sequence: {
@@ -56,7 +57,7 @@ export default defineConfig({
                 test: {
                     name: 'integration',
                     include: ['**/*.integration-spec.ts'],
-                    maxWorkers: '50%', // limit the workers to leave CPU threads for test containers
+                    maxWorkers: '30%', // limit the workers to leave CPU threads for test containers
                     hookTimeout: 300000, // 5 minutes for setup/teardown
                     testTimeout: 90000, // 1.5 minutes for integration tests
                     sequence: {
