@@ -172,7 +172,7 @@ export class ProviderController {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ROLLEN_ERWEITERN, RollenSystemRecht.ANGEBOTE_VERWALTEN],
             false,
-            true,
+            false,
         );
         if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
             throw new UnauthorizedException('NOT_AUTHORIZED');
