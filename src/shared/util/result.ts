@@ -1,10 +1,12 @@
 /**
  * Creates an Okay-Result from the specified value
  */
-export function Ok<T, E>(value: T): Result<T, E> {
+export function Ok<E>(): Result<void, E>;
+export function Ok<T, E>(value: T): Result<T, E>;
+export function Ok<T, E>(value?: unknown): Result<T, E> {
     return {
         ok: true,
-        value,
+        value: value as T,
     };
 }
 
