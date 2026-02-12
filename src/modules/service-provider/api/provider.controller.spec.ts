@@ -118,13 +118,14 @@ describe('Provider Controller Test', () => {
 
         it('should throw UnauthorizedException if user has no permitted orgas', async () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
+            const pathParams: RollenerweiterungByServiceProvidersIdPathParams =
+                new RollenerweiterungByServiceProvidersIdPathParams();
+            Object.assign(pathParams, { angebotId: faker.string.uuid() });
+            const bodyParams: ManageableServiceProvidersParams = new ManageableServiceProvidersParams();
+            Object.assign(bodyParams, { offset: 0, limit: 10 });
 
             await expect(
-                providerController.findRollenerweiterungenByServiceProviderId(
-                    permissionsMock,
-                    { angebotId: faker.string.uuid() },
-                    { offset: 0, limit: faker.number.int({ min: 1, max: 100 }) },
-                ),
+                providerController.findRollenerweiterungenByServiceProviderId(permissionsMock, pathParams, bodyParams),
             ).rejects.toBeInstanceOf(UnauthorizedException);
         });
 
@@ -179,11 +180,17 @@ describe('Provider Controller Test', () => {
                 ]),
             );
 
+            const pathParams: RollenerweiterungByServiceProvidersIdPathParams =
+                new RollenerweiterungByServiceProvidersIdPathParams();
+            Object.assign(pathParams, { angebotId: faker.string.uuid() });
+            const bodyParams: ManageableServiceProvidersParams = new ManageableServiceProvidersParams();
+            Object.assign(bodyParams, { offset, limit });
+
             const result: RawPagedResponse<RollenerweiterungWithExtendedDataResponse> =
                 await providerController.findRollenerweiterungenByServiceProviderId(
                     permissionsMock,
-                    { angebotId: faker.string.uuid() },
-                    { offset: offset, limit: limit },
+                    pathParams,
+                    bodyParams,
                 );
 
             expect(result).toBeInstanceOf(RawPagedResponse);
@@ -212,11 +219,17 @@ describe('Provider Controller Test', () => {
             const offset: number = faker.number.int({ min: 1, max: 100 });
             const limit: number = faker.number.int({ min: 1, max: 100 });
 
+            const pathParams: RollenerweiterungByServiceProvidersIdPathParams =
+                new RollenerweiterungByServiceProvidersIdPathParams();
+            Object.assign(pathParams, { angebotId: faker.string.uuid() });
+            const bodyParams: ManageableServiceProvidersParams = new ManageableServiceProvidersParams();
+            Object.assign(bodyParams, { offset, limit });
+
             const result: RawPagedResponse<RollenerweiterungWithExtendedDataResponse> =
                 await providerController.findRollenerweiterungenByServiceProviderId(
                     permissionsMock,
-                    { angebotId: faker.string.uuid() },
-                    { offset: offset, limit: limit },
+                    pathParams,
+                    bodyParams,
                 );
 
             expect(result).toBeInstanceOf(RawPagedResponse);
@@ -261,11 +274,16 @@ describe('Provider Controller Test', () => {
                 ]),
             );
 
+            const pathParams: RollenerweiterungByServiceProvidersIdPathParams =
+                new RollenerweiterungByServiceProvidersIdPathParams();
+            Object.assign(pathParams, { angebotId: faker.string.uuid() });
+            const bodyParams: ManageableServiceProvidersParams = new ManageableServiceProvidersParams();
+
             const result: RawPagedResponse<RollenerweiterungWithExtendedDataResponse> =
                 await providerController.findRollenerweiterungenByServiceProviderId(
                     permissionsMock,
-                    { angebotId: faker.string.uuid() },
-                    {},
+                    pathParams,
+                    bodyParams,
                 );
 
             expect(result.offset).toBe(0);
@@ -431,7 +449,8 @@ describe('Provider Controller Test', () => {
             const tinyPngBase64: string =
                 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBg0GwHjcAAAAASUVORK5CYII=';
 
-            const body: CreateServiceProviderBodyParams = {
+            const body: CreateServiceProviderBodyParams = new CreateServiceProviderBodyParams();
+            Object.assign(body, {
                 name: faker.company.name(),
                 target: ServiceProviderTarget.EMAIL,
                 url: faker.internet.url(),
@@ -441,7 +460,7 @@ describe('Provider Controller Test', () => {
                 vidisAngebotId: undefined,
                 merkmale: [],
                 organisationId: faker.string.uuid(),
-            };
+            });
 
             const createdDomainSp: ServiceProvider<false> = DoFactory.createServiceProvider(false);
             const persistedSp: ServiceProvider<true> = DoFactory.createServiceProvider(true);
@@ -476,7 +495,8 @@ describe('Provider Controller Test', () => {
         });
 
         it('should create a new service provider without logo when user has permission', async () => {
-            const body: CreateServiceProviderBodyParams = {
+            const body: CreateServiceProviderBodyParams = new CreateServiceProviderBodyParams();
+            Object.assign(body, {
                 name: faker.company.name(),
                 target: ServiceProviderTarget.EMAIL,
                 url: faker.internet.url(),
@@ -486,7 +506,7 @@ describe('Provider Controller Test', () => {
                 vidisAngebotId: undefined,
                 merkmale: [],
                 organisationId: faker.string.uuid(),
-            };
+            });
 
             const createdDomainSp: ServiceProvider<false> = DoFactory.createServiceProvider(false);
             const persistedSp: ServiceProvider<true> = DoFactory.createServiceProvider(true);
@@ -521,7 +541,8 @@ describe('Provider Controller Test', () => {
         });
 
         it('should throw forbidden error when user lacks permission', async () => {
-            const body: CreateServiceProviderBodyParams = {
+            const body: CreateServiceProviderBodyParams = new CreateServiceProviderBodyParams();
+            Object.assign(body, {
                 name: faker.company.name(),
                 target: ServiceProviderTarget.EMAIL,
                 url: undefined,
@@ -530,7 +551,7 @@ describe('Provider Controller Test', () => {
                 vidisAngebotId: undefined,
                 merkmale: [],
                 organisationId: faker.string.uuid(),
-            };
+            });
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
 

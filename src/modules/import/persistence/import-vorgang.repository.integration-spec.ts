@@ -218,6 +218,20 @@ describe('ImportVorgangRepository', () => {
             expect(result.id).toBeDefined();
         });
 
+        it('should create a new ImportVorgang with status FAILED', async () => {
+            const organisationId: string = await createOrga();
+            const rolle: Rolle<true> = await createRolle(organisationId);
+
+            const importVorgang: ImportVorgang<false> = DoFactory.createImportVorgang(false, {
+                importByPersonId: faker.string.uuid(),
+                rolleId: rolle.id,
+                organisationId: organisationId,
+                status: ImportStatus.FAILED,
+            });
+
+            await expect(sut.save(importVorgang)).rejects.toThrow();
+        });
+
         it('should update an existing ImportVorgang', async () => {
             const person: Person<true> = await createPerson();
             const organisationId: string = await createOrga();

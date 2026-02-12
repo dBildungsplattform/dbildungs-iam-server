@@ -17,16 +17,26 @@ export default defineConfig({
         testTimeout: 30000, // 30 seconds default timeout
         coverage: {
             provider: 'v8',
-            reporter: ['text', 'lcov'],
+            reporter: [['text', { maxCols: 150 }], 'html', 'lcov'],
             reportsDirectory: 'coverage',
             reportOnFailure: true,
             include: ['src/**/*.ts'],
-            exclude: ['**/*.spec.ts', '**/test/**', '**/*.d.ts', 'vite.config.ts'],
+            exclude: [
+                '**/main.ts',
+                '**/index.ts',
+                '**/*.module.ts',
+                '**/*.spec.ts',
+                '**/*.integration-spec.ts',
+                '**/test/**',
+                '**/*.d.ts',
+                '**/*.types.ts',
+                'vite.config.ts',
+            ],
             thresholds: {
-                lines: 98.37,
-                functions: 99.37,
-                branches: 97.36,
-                statements: 98.35,
+                statements: 99.7,
+                branches: 97.6,
+                functions: 99.9,
+                lines: 99.7,
             },
         },
         projects: [

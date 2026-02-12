@@ -152,9 +152,10 @@ describe('DbSeedService', () => {
                 );
                 const entities: DataProviderFile[] = dbSeedService.readDataProvider(fileContentAsStr);
                 const entity: DataProviderFile | undefined = entities[0];
-                const dataProvider: Partial<DataProviderFile> = {
+                const dataProvider: Partial<DataProviderFile> = new DataProviderFile();
+                Object.assign(dataProvider, {
                     id: '431d8433-759c-4dbe-aaab-00b9a781f467',
-                };
+                });
                 expect(entities).toHaveLength(1);
                 expect(entity).toEqual(dataProvider);
             });

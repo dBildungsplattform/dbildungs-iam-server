@@ -289,9 +289,7 @@ export class RolleController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError()),
             );
         }
-        return {
-            serviceProviderIds: rolle.serviceProviderIds,
-        };
+        return new RolleServiceProviderResponse(rolle.serviceProviderIds);
     }
 
     @Put(':rolleId/serviceProviders')

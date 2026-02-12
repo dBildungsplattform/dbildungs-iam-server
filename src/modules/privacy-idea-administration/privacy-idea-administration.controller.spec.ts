@@ -19,6 +19,7 @@ import { SoftwareTokenInitializationError } from './api/error/software-token-ini
 import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
 import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
+import { TokenVerifyBodyParams } from './token-verify.params.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -307,7 +308,7 @@ describe('PrivacyIdeaAdministrationController', () => {
 
     describe('PrivacyIdeaAdministrationController assignHardwareToken', () => {
         it('should successfully assign a hardware token', async () => {
-            const mockParams: AssignHardwareTokenBodyParams = createMock(AssignHardwareTokenBodyParams);
+            const mockParams: AssignHardwareTokenBodyParams = new AssignHardwareTokenBodyParams();
             const mockAssignTokenResponse: AssignTokenResponse = {
                 id: 1,
                 jsonrpc: '2.0',
@@ -344,7 +345,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return forbidden if permissions are insufficient', async () => {
-            const mockParams: AssignHardwareTokenBodyParams = createMock(AssignHardwareTokenBodyParams);
+            const mockParams: AssignHardwareTokenBodyParams = new AssignHardwareTokenBodyParams();
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: false,
@@ -357,7 +358,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return user not found if username is undefined', async () => {
-            const mockParams: AssignHardwareTokenBodyParams = createMock(AssignHardwareTokenBodyParams);
+            const mockParams: AssignHardwareTokenBodyParams = new AssignHardwareTokenBodyParams();
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
@@ -370,7 +371,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should throw TokenError if service throws it', async () => {
-            const mockParams: AssignHardwareTokenBodyParams = createMock(AssignHardwareTokenBodyParams);
+            const mockParams: AssignHardwareTokenBodyParams = new AssignHardwareTokenBodyParams();
             const tokenError: TokenError = new TokenError('Something went wrong', 'Error');
             const person: Person<true> = getPerson();
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
@@ -384,7 +385,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return mapped internal server error for unexpected error', async () => {
-            const mockParams: AssignHardwareTokenBodyParams = createMock(AssignHardwareTokenBodyParams);
+            const mockParams: AssignHardwareTokenBodyParams = new AssignHardwareTokenBodyParams();
             const unexpectedError: Error = new Error('Unexpected error');
             const entityCouldNotBeCreatedError: EntityCouldNotBeCreated = createMock(EntityCouldNotBeCreated);
             const person: Person<true> = getPerson();
@@ -413,7 +414,9 @@ describe('PrivacyIdeaAdministrationController', () => {
                 value: person,
             });
 
-            await sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock);
+            const tokenVerifyBodyParams: TokenVerifyBodyParams = new TokenVerifyBodyParams();
+            Object.assign(tokenVerifyBodyParams, { personId: 'user1', otp: '123456' });
+            await expect(sut.verifyToken(tokenVerifyBodyParams, personPermissionsMock)).resolves.not.toThrow();
         });
         it('should throw an error when trying to verify', async () => {
             personPermissionsMock = createPersonPermissionsMock();
