@@ -156,7 +156,10 @@ export class ProviderController {
     }
 
     @Get(':angebotId/rollenerweiterung')
-    @ApiOperation({ description: 'Get rollenerweiterungen for service-provider with provided id.' })
+    @ApiOperation({
+        description:
+            'Get rollenerweiterungen for service-provider with provided id. Total is the amount of organisation.',
+    })
     @ApiOkResponsePaginated(RollenerweiterungWithExtendedDataResponse, {
         description:
             'The rollenerweiterungen were successfully returned. WARNING: This endpoint returns all rollenerweiterungen of the service-provider as default when no paging parameters were set.',
