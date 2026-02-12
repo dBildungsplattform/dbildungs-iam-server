@@ -104,9 +104,10 @@ describe('PersonenkontextController', () => {
                     value: personenKontextMock,
                 });
 
-                const params: FindPersonenkontextByIdParams = {
+                const params: FindPersonenkontextByIdParams = new FindPersonenkontextByIdParams();
+                Object.assign(params, {
                     personenkontextId: faker.string.uuid(),
-                };
+                });
 
                 const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
@@ -135,9 +136,10 @@ describe('PersonenkontextController', () => {
                     ok: true,
                     value: DoFactory.createPersonenkontext(true),
                 });
-                const params: FindPersonenkontextByIdParams = {
+                const params: FindPersonenkontextByIdParams = new FindPersonenkontextByIdParams();
+                Object.assign(params, {
                     personenkontextId: faker.string.uuid(),
-                };
+                });
 
                 personService.findPersonById.mockResolvedValue({
                     ok: false,
@@ -155,9 +157,10 @@ describe('PersonenkontextController', () => {
                     ok: true,
                     value: DoFactory.createPersonenkontext(true),
                 });
-                const params: FindPersonenkontextByIdParams = {
+                const params: FindPersonenkontextByIdParams = new FindPersonenkontextByIdParams();
+                Object.assign(params, {
                     personenkontextId: faker.string.uuid(),
-                };
+                });
                 const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
                 personenkontextService.findPersonenkontextById.mockRejectedValue(new Error());
@@ -169,9 +172,10 @@ describe('PersonenkontextController', () => {
         describe('when not authorized', () => {
             it('should throw error', async () => {
                 const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-                const params: FindPersonenkontextByIdParams = {
+                const params: FindPersonenkontextByIdParams = new FindPersonenkontextByIdParams();
+                Object.assign(params, {
                     personenkontextId: faker.string.uuid(),
-                };
+                });
                 personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
                     ok: false,
                     error: new MissingPermissionsError(''),
@@ -191,9 +195,10 @@ describe('PersonenkontextController', () => {
                     value: DoFactory.createPersonenkontext(true),
                 });
 
-                const params: FindPersonenkontextByIdParams = {
+                const params: FindPersonenkontextByIdParams = new FindPersonenkontextByIdParams();
+                Object.assign(params, {
                     personenkontextId: faker.string.uuid(),
-                };
+                });
 
                 const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
@@ -313,9 +318,10 @@ describe('PersonenkontextController', () => {
     });
 
     describe('deletePersonenkontextById', () => {
-        const idParams: FindPersonenkontextByIdParams = {
+        const idParams: FindPersonenkontextByIdParams = new FindPersonenkontextByIdParams();
+        Object.assign(idParams, {
             personenkontextId: faker.string.uuid(),
-        };
+        });
 
         const bodyParams: DeleteRevisionBodyParams = new DeleteRevisionBodyParams();
         Object.assign(bodyParams, {

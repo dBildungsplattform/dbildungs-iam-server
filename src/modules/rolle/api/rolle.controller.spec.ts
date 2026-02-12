@@ -143,11 +143,12 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
             let createRollenerweiterungParams: CreateRollenerweiterungBodyParams;
             let permissions: PersonPermissions;
             beforeEach(() => {
-                createRollenerweiterungParams = {
+                createRollenerweiterungParams = new CreateRollenerweiterungBodyParams();
+                Object.assign(createRollenerweiterungParams, {
                     organisationId: faker.string.uuid(),
                     rolleId: faker.string.uuid(),
                     serviceProviderId: faker.string.uuid(),
-                };
+                });
                 permissions = createPersonPermissionsMock();
             });
 

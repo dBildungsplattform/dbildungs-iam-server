@@ -112,10 +112,12 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     personenkontextWorkflowMock.findRollenForOrganisation.mockResolvedValueOnce([rolle]);
 
                     personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams = {
+                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
+                        new FindDbiamPersonenkontextWorkflowBodyParams();
+                    Object.assign(params, {
                         operationContext,
                         organisationId: organisation.id,
-                    };
+                    });
 
                     const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
 
@@ -133,10 +135,12 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
                     personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
 
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams = {
+                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
+                        new FindDbiamPersonenkontextWorkflowBodyParams();
+                    Object.assign(params, {
                         operationContext,
                         organisationName: randomName,
-                    };
+                    });
 
                     const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
 
@@ -157,10 +161,12 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     personenkontextWorkflowMock.findRollenForOrganisation.mockResolvedValueOnce([rolle]);
                     personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([]);
                     personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams = {
+                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
+                        new FindDbiamPersonenkontextWorkflowBodyParams();
+                    Object.assign(params, {
                         operationContext,
                         organisationId: organisation.id,
-                    };
+                    });
 
                     const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
 
@@ -177,10 +183,12 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([]);
                     personenkontextWorkflowMock.findRollenForOrganisation.mockResolvedValueOnce([]);
                     personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams = {
+                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
+                        new FindDbiamPersonenkontextWorkflowBodyParams();
+                    Object.assign(params, {
                         operationContext,
                         organisationId: organisation.id,
-                    };
+                    });
 
                     const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
 
@@ -200,14 +208,16 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
 
                     const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams = {
+                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
+                        new FindDbiamPersonenkontextWorkflowBodyParams();
+                    Object.assign(params, {
                         operationContext,
                         organisationId,
                         rollenIds,
                         organisationName: undefined,
                         rolleName: undefined,
                         limit: undefined,
-                    };
+                    });
                     personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([]);
                     personenkontextWorkflowMock.findRollenForOrganisation.mockResolvedValue([rolle]);
                     personenkontextWorkflowMock.canCommit.mockResolvedValue(true);
@@ -236,11 +246,12 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
                     personenkontextWorkflowMock.findRollenForOrganisation.mockResolvedValueOnce([rolle]);
                     personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams = {
+                    const params: FindDbiamPersonenkontextWorkflowBodyParams = new FindDbiamPersonenkontextWorkflowBodyParams();
+                    Object.assign(params, {
                         operationContext,
                         organisationId: organisation.id,
                         requestedWithSystemrecht: RollenSystemRechtEnum.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
-                    };
+                    });
 
                     const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
 
@@ -273,11 +284,12 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
                     personenkontextWorkflowMock.findRollenForOrganisation.mockResolvedValueOnce([rolle]);
                     personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams = {
+                    const params: FindDbiamPersonenkontextWorkflowBodyParams = new FindDbiamPersonenkontextWorkflowBodyParams();
+                    Object.assign(params, {
                         operationContext,
                         organisationId: organisation.id,
                         requestedWithSystemrecht: RollenSystemRechtEnum.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
-                    };
+                    });
 
                     const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
 
@@ -296,12 +308,14 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
         describe('/PUT commit', () => {
             describe('when errors occur', () => {
                 it('should throw BadRequestException if updateResult is an instance of PersonenkontexteUpdateError', async () => {
-                    const params: DBiamFindPersonenkontexteByPersonIdParams = { personId: faker.string.uuid() };
-                    const bodyParams: DbiamUpdatePersonenkontexteBodyParams = {
+                    const params: DBiamFindPersonenkontexteByPersonIdParams = new DBiamFindPersonenkontexteByPersonIdParams();
+                    Object.assign(params, { personId: faker.string.uuid() });
+                    const bodyParams: DbiamUpdatePersonenkontexteBodyParams = new DbiamUpdatePersonenkontexteBodyParams();
+                    Object.assign(params, {
                         count: 1,
                         lastModified: new Date(),
                         personenkontexte: [],
-                    };
+                    });
                     const queryParams: DbiamUpdatePersonenkontexteQueryParams = {
                         personalnummer: '1234',
                     };
