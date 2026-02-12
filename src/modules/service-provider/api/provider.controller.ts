@@ -158,7 +158,7 @@ export class ProviderController {
     @Get(':angebotId/rollenerweiterung')
     @ApiOperation({
         description:
-            'Get rollenerweiterungen for service-provider with provided id. Total is the amount of organisation.',
+            'Get rollenerweiterungen for service-provider with provided id. Total is the amount of organisations.',
     })
     @ApiOkResponsePaginated(RollenerweiterungWithExtendedDataResponse, {
         description:
