@@ -16,7 +16,6 @@ import { NewOxParams, OldOxParams } from './externaldata/user-externaldata-ox.re
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
-import { CacheTTL } from '@nestjs/cache-manager';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -41,7 +40,6 @@ export class KeycloakInternalController {
 
     @UseInterceptors(ExternalDataCacheInterceptor)
     @Post('externaldata')
-    @CacheTTL(200)
     @HttpCode(200)
     @Public()
     @UseGuards(AccessApiKeyGuard)

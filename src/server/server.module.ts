@@ -42,7 +42,7 @@ import { MapperModule } from '../modules/person/mapper/mapper.module.js';
 import { LandesbediensteterModule } from '../modules/landesbediensteter/landesbediensteter.module.js';
 import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js';
 import { CacheModule } from '@nestjs/cache-manager';
-import { redisStore } from 'cache-manager-redis-yet';
+import KeyvRedis from '@keyv/redis';
 
 @Module({
     imports: [
@@ -80,18 +80,12 @@ import { redisStore } from 'cache-manager-redis-yet';
         CacheModule.registerAsync({
             isGlobal: true,
             inject: [ConfigService],
-            useFactory: async (config: ConfigService) => {
+            useFactory: (config: ConfigService) => {
                 const redis: RedisConfig = config.getOrThrow<RedisConfig>('REDIS');
+                const auth: string = `${encodeURIComponent(redis.USERNAME)}:${encodeURIComponent(redis.PASSWORD)}@`;
+                const redisUrl: string = `redis://${auth}${redis.HOST}:${redis.PORT}`;
                 return {
-                    store: await redisStore({
-                        socket: {
-                            host: redis.HOST,
-                            port: redis.PORT,
-                        },
-
-                        username: redis.USERNAME,
-                        password: redis.PASSWORD,
-                    }),
+                    stores: [new KeyvRedis(redisUrl)],
                 };
             },
         }),
