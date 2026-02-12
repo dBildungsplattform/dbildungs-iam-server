@@ -18,6 +18,7 @@ import { RolleRepo } from './rolle.repo.js';
 import { RolleScope } from './rolle.scope.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('RolleScope', () => {
     let module: TestingModule;
@@ -70,7 +71,7 @@ describe('RolleScope', () => {
             const scope: RolleScope = new RolleScope();
             const [rollen]: Counted<RolleEntity> = await scope.executeQuery(em);
             expect(rollen).toHaveLength(1);
-            const fetchedRolle = rollen[0]!;
+            const fetchedRolle: RolleEntity = rollen[0]!;
             expect(fetchedRolle.merkmale).toHaveLength(2);
             expect(fetchedRolle.serviceProvider).toHaveLength(2);
             expect(fetchedRolle.serviceProvider[0]!.serviceProvider.id).toEqual(sps[0]!.id);
@@ -92,7 +93,7 @@ describe('RolleScope', () => {
             const scope: RolleScope = new RolleScope().findByRollenArten([RollenArt.SYSADMIN, RollenArt.LERN]);
             const [rollen]: Counted<RolleEntity> = await scope.executeQuery(em);
             expect(rollen).toHaveLength(2);
-            const foundArten = rollen.map((r) => r.rollenart);
+            const foundArten: RollenArt[] = rollen.map((r: RolleEntity) => r.rollenart);
             expect(foundArten).toEqual(expect.arrayContaining([RollenArt.SYSADMIN, RollenArt.LERN]));
         });
 
@@ -113,15 +114,15 @@ describe('RolleScope', () => {
                     rolleRepo.save(DoFactory.createRolle(false)),
                     rolleRepo.save(DoFactory.createRolle(false)),
                 ])
-            ).filter((r): r is Rolle<true> => !(r instanceof DomainError));
-            orgaIds = rollen.map((r) => r.administeredBySchulstrukturknoten!);
+            ).filter((r: Rolle<true> | DomainError): r is Rolle<true> => !(r instanceof DomainError));
+            orgaIds = rollen.map((r: Rolle<true>) => r.administeredBySchulstrukturknoten);
         });
 
         it('should return only roles administered by the specified organisations', async () => {
             const scope: RolleScope = new RolleScope().findByOrganisationen([orgaIds[0]!, orgaIds[2]!]);
             const [rollen]: Counted<RolleEntity> = await scope.executeQuery(em);
             expect(rollen).toHaveLength(2);
-            const foundOrgaIds = rollen.map((r) => r.administeredBySchulstrukturknoten);
+            const foundOrgaIds: OrganisationID[] = rollen.map((r: RolleEntity) => r.administeredBySchulstrukturknoten);
             expect(foundOrgaIds).toEqual(expect.arrayContaining([orgaIds[0], orgaIds[2]]));
         });
 
@@ -144,14 +145,14 @@ describe('RolleScope', () => {
         it('should exclude technische Rollen by default', async () => {
             const scope: RolleScope = new RolleScope();
             const [rollen]: Counted<RolleEntity> = await scope.executeQuery(em);
-            expect(rollen.every((r) => r.istTechnisch === false)).toBe(true);
+            expect(rollen.every((r: RolleEntity) => r.istTechnisch === false)).toBe(true);
         });
 
         it('should include technische Rollen when setIncludeTechnische(true) is called', async () => {
             const scope: RolleScope = new RolleScope().setIncludeTechnische(true);
             const [rollen]: Counted<RolleEntity> = await scope.executeQuery(em);
-            expect(rollen.some((r) => r.istTechnisch === true)).toBe(true);
-            expect(rollen.some((r) => r.istTechnisch === false)).toBe(true);
+            expect(rollen.some((r: RolleEntity) => r.istTechnisch === true)).toBe(true);
+            expect(rollen.some((r: RolleEntity) => r.istTechnisch === false)).toBe(true);
         });
     });
 });

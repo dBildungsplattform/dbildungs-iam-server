@@ -12,11 +12,12 @@ import { RolleScope } from '../repo/rolle.scope.js';
 import { QBFilterQuery } from '@mikro-orm/core';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { Rolle } from './rolle.js';
 
 function validateUsedScopeWithParams(
     scopeUsed: RolleScope,
     params: Omit<FindRollenWithPermissionsParams, 'permissions'>,
-) {
+): void {
     expect(scopeUsed).toBeInstanceOf(RolleScope);
     expect(scopeUsed['scopeWhereOperator']).toEqual(ScopeOperator.AND);
     if (params.rollenArten) {
@@ -99,7 +100,9 @@ describe('RolleService', () => {
 
         it('should return empty array if no permitted orgas', async () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-            const result = await rolleService.findRollenAvailableForErweiterung({ permissions: permissionsMock });
+            const result: Counted<Rolle<true>> = await rolleService.findRollenAvailableForErweiterung({
+                permissions: permissionsMock,
+            });
             expect(result).toEqual([[], 0]);
         });
 
@@ -113,7 +116,7 @@ describe('RolleService', () => {
             };
             await rolleService.findRollenAvailableForErweiterung(params);
             expect(rolleRepoMock.findBy).toHaveBeenCalled();
-            const scopeUsed: RolleScope = rolleRepoMock.findBy.mock.calls[0]![0]!;
+            const scopeUsed: RolleScope = rolleRepoMock.findBy.mock.calls[0]![0];
             validateUsedScopeWithParams(scopeUsed, params);
         });
 
@@ -130,7 +133,7 @@ describe('RolleService', () => {
             };
             await rolleService.findRollenAvailableForErweiterung(params);
             expect(rolleRepoMock.findBy).toHaveBeenCalled();
-            const scopeUsed: RolleScope = rolleRepoMock.findBy.mock.calls[0]![0]!;
+            const scopeUsed: RolleScope = rolleRepoMock.findBy.mock.calls[0]![0];
             validateUsedScopeWithParams(scopeUsed, params);
         });
 
@@ -146,7 +149,7 @@ describe('RolleService', () => {
             };
             await rolleService.findRollenAvailableForErweiterung(params);
             expect(rolleRepoMock.findBy).toHaveBeenCalled();
-            const scopeUsed: RolleScope = rolleRepoMock.findBy.mock.calls[0]![0]!;
+            const scopeUsed: RolleScope = rolleRepoMock.findBy.mock.calls[0]![0];
             expect(scopeUsed['queryFilters']).toEqual(
                 expect.arrayContaining([
                     expect.objectContaining({
@@ -159,11 +162,11 @@ describe('RolleService', () => {
         it('should return empty array if filtered organisationenIds is empty', async () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: ['orga-1'] });
             organisationRepoMock.findParentOrgasForIds.mockResolvedValue([]);
-            const params = {
+            const params: FindRollenWithPermissionsParams = {
                 permissions: permissionsMock,
                 organisationIds: ['orga-2'],
             };
-            const result = await rolleService.findRollenAvailableForErweiterung(params);
+            const result: Counted<Rolle<true>> = await rolleService.findRollenAvailableForErweiterung(params);
             expect(result).toEqual([[], 0]);
             expect(rolleRepoMock.findBy).not.toHaveBeenCalled();
         });
@@ -176,7 +179,7 @@ describe('RolleService', () => {
             };
             await rolleService.findRollenAvailableForErweiterung(params);
             expect(rolleRepoMock.findBy).toHaveBeenCalled();
-            const scopeUsed: RolleScope = rolleRepoMock.findBy.mock.calls[0]![0]!;
+            const scopeUsed: RolleScope = rolleRepoMock.findBy.mock.calls[0]![0];
             validateUsedScopeWithParams(scopeUsed, params);
         });
     });
@@ -187,7 +190,7 @@ describe('RolleService', () => {
             organisationRepoMock.findParentOrgasForIds.mockResolvedValue([
                 DoFactory.createOrganisation(true, { id: 'parent-1' }),
             ]);
-            const result = await rolleService['getOrganisationIdsWithParents'](orgaIds);
+            const result: OrganisationID[] = await rolleService['getOrganisationIdsWithParents'](orgaIds);
             expect(result).toEqual(expect.arrayContaining(['orga-1', 'orga-2', 'parent-1']));
         });
     });
