@@ -25,6 +25,8 @@ import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.
 import { ServiceProviderEntity } from './service-provider.entity.js';
 import { ServiceProviderRepo } from './service-provider.repo.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
@@ -32,6 +34,7 @@ describe('ServiceProviderRepo', () => {
 
     let orm: MikroORM;
     let em: EntityManager;
+    let organisationRepo: OrganisationRepository;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -40,6 +43,7 @@ describe('ServiceProviderRepo', () => {
                 ServiceProviderRepo,
                 RolleRepo,
                 RolleFactory,
+                OrganisationRepository,
                 {
                     provide: EventRoutingLegacyKafkaService,
                     useValue: createMock(EventRoutingLegacyKafkaService),
@@ -54,6 +58,7 @@ describe('ServiceProviderRepo', () => {
         sut = module.get(ServiceProviderRepo);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
+        organisationRepo = module.get(OrganisationRepository);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -279,6 +284,71 @@ describe('ServiceProviderRepo', () => {
             ].forEach((kategorie: ServiceProviderKategorie, index: number) => {
                 expect(serviceProviderResult[index]!.kategorie).toBe(kategorie);
             });
+        });
+    });
+
+    describe('findByIdAuthorized', () => {
+        let organisationA: Organisation<true>;
+        let organisationB: Organisation<true>;
+        let serviceProvider: ServiceProvider<true>;
+
+        beforeEach(async () => {
+            organisationA = await organisationRepo.save(DoFactory.createOrganisation(false));
+            organisationB = await organisationRepo.save(DoFactory.createOrganisation(false));
+
+            serviceProvider = await sut.save(
+                DoFactory.createServiceProvider(false, {
+                    providedOnSchulstrukturknoten: organisationA.id,
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+            );
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('should return the service provider when administriert at organisation', async () => {
+            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(serviceProvider.id, [
+                organisationA.id,
+            ]);
+
+            expect(result).not.toBeNull();
+            expect(result!.id).toEqual(serviceProvider.id);
+
+            expect(result!.merkmale.length).toBeGreaterThan(0);
+        });
+
+        it('should return null when the ID exists but organisationIds do not include the provider’s org', async () => {
+            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(serviceProvider.id, [
+                organisationB.id,
+            ]);
+
+            expect(result).toBeNull();
+        });
+
+        it('should return null when the service provider does not exist', async () => {
+            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(faker.string.uuid(), [
+                organisationA.id,
+            ]);
+
+            expect(result).toBeNull();
+        });
+
+        it('should return null when organisationIds list is empty', async () => {
+            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(serviceProvider.id, []);
+
+            expect(result).toBeNull();
+        });
+
+        it('should return the provider when multiple organisationIds are passed and one matches', async () => {
+            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(serviceProvider.id, [
+                organisationB.id,
+                organisationA.id,
+            ]);
+
+            expect(result).not.toBeNull();
+            expect(result!.id).toEqual(serviceProvider.id);
         });
     });
 
