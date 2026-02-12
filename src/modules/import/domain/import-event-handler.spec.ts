@@ -166,6 +166,7 @@ describe('ImportEventHandler', () => {
                 klasse: '1B',
             });
             importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[importDataItem], 1]);
+            importVorgangRepositoryMock.save.mockResolvedValueOnce(importvorgang);
 
             await sut.handleExecuteImport(event, () => undefined);
 
@@ -195,6 +196,7 @@ describe('ImportEventHandler', () => {
             });
 
             importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[importDataItem], 1]);
+            importVorgangRepositoryMock.save.mockResolvedValueOnce(importvorgang);
 
             const error: DomainError = new RolleNurAnPassendeOrganisationError();
             personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(error);
@@ -240,6 +242,7 @@ describe('ImportEventHandler', () => {
             };
             personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(pks);
             organisationRepoMock.findById.mockResolvedValueOnce(schule);
+            importVorgangRepositoryMock.save.mockResolvedValueOnce(importvorgang);
 
             await sut.handleExecuteImport(event, () => undefined);
 
@@ -288,11 +291,12 @@ describe('ImportEventHandler', () => {
             };
             importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[importDataItem], 1]);
             personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(pks);
+            importVorgangRepositoryMock.save.mockResolvedValueOnce(importvorgang);
 
             await sut.handleExecuteImport(event, () => undefined);
 
             expect(loggerMock.info).toHaveBeenCalledWith(`Created user ${person.username} (${person.id}).`);
-            expect(importVorgangRepositoryMock.save).toHaveBeenCalledTimes(1);
+            expect(importVorgangRepositoryMock.save).toHaveBeenCalledTimes(2);
         });
 
         it('should call keepAlive for every person', async () => {
@@ -335,13 +339,14 @@ describe('ImportEventHandler', () => {
             };
             importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[importDataItem], 1]);
             personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(pks);
+            importVorgangRepositoryMock.save.mockResolvedValueOnce(importvorgang);
 
             const keepAlive: () => void = vi.fn();
 
             await sut.handleExecuteImport(event, keepAlive);
 
             expect(loggerMock.info).toHaveBeenCalledWith(`Created user ${person.username} (${person.id}).`);
-            expect(importVorgangRepositoryMock.save).toHaveBeenCalledTimes(1);
+            expect(importVorgangRepositoryMock.save).toHaveBeenCalledTimes(2);
             expect(keepAlive).toHaveBeenCalledTimes(1);
         });
 
@@ -361,6 +366,7 @@ describe('ImportEventHandler', () => {
 
             const unexpectedError: Error = new Error('Unexpected error');
             personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockRejectedValueOnce(unexpectedError);
+            importVorgangRepositoryMock.save.mockResolvedValueOnce(importVorgang);
 
             await sut.handleExecuteImport(event, () => undefined);
 

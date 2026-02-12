@@ -67,7 +67,7 @@ export class ImportEventHandler {
         });
 
         const importvorgangId: string = event.importVorgangId;
-        const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
+        let importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
         if (!importVorgang) {
             throw new EntityNotFoundError('ImportVorgang', importvorgangId);
         }
@@ -78,6 +78,9 @@ export class ImportEventHandler {
                 { id: importvorgangId, status: importVorgang.status },
             );
         }
+
+        importVorgang.execute();
+        importVorgang = await this.importVorgangRepository.save(importVorgang);
 
         const [importDataItems, total]: Counted<ImportDataItem<true>> =
             await this.importDataRepository.findByImportVorgangId(importvorgangId);

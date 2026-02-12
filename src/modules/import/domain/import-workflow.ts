@@ -278,7 +278,6 @@ export class ImportWorkflow {
 
         const importVorgang: ImportVorgang<true> = importVorgangResult.value;
 
-        importVorgang.execute();
         await this.importVorgangRepository.save(importVorgang);
 
         this.eventService.publish(
