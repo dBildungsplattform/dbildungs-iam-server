@@ -24,6 +24,7 @@ import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 
 import { EntityManager } from '@mikro-orm/postgresql';
+import { xor } from 'lodash-es';
 import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderMerkmalEntity } from '../../service-provider/repo/service-provider-merkmal.entity.js';
@@ -402,11 +403,7 @@ export class RolleRepo {
         //Specifications
 
         if (isAlreadyAssigned) {
-            const willMerkmaleChange: boolean = !(
-                merkmale.length === authorizedRoleResult.value.merkmale.length &&
-                merkmale.every((m: RollenMerkmal) => authorizedRoleResult.value.merkmale.includes(m)) &&
-                authorizedRoleResult.value.merkmale.every((m: RollenMerkmal) => merkmale.includes(m))
-            );
+            const willMerkmaleChange: boolean = xor(merkmale, authorizedRoleResult.value.merkmale).length !== 0;
             if (willMerkmaleChange) {
                 return new UpdateMerkmaleError();
             }
