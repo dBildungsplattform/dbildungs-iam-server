@@ -12,7 +12,8 @@ Business logic is mainly handled within an Aggregate. If that is not possible, e
 ### Controllers
 
 To expose a Web-API we use Controllers. Controllers call Aggregates and Domain Services. Controllers expose DTOs with Decorators to generate the OpenApi Specification.<br>
-The Controllers' main purpose ist to map the API of the domain into a Web-API. Controllers might do a bit on orchestration, but it should be kept at a minimum.
+The Controllers' main purpose ist to map the API of the domain into a Web-API. Controllers might do a bit on orchestration, but it should be kept at a minimum.<br>
+Permission Checks should not be done in the controller, although occasionally it was done that way in the past.
 
 ### Repositories
 
