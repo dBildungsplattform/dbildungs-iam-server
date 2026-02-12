@@ -15,6 +15,7 @@ export default defineConfig({
         environment: 'node',
         hookTimeout: 60000, // 1 minute for setup/teardown
         testTimeout: 30000, // 30 seconds default timeout
+        onConsoleLog: () => false,
         coverage: {
             provider: 'v8',
             reporter: ['text', 'lcov'],
@@ -28,6 +29,7 @@ export default defineConfig({
                 branches: 97.36,
                 statements: 98.35,
             },
+            skipFull: true,
         },
         projects: [
             {
