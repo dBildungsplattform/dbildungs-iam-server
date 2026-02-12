@@ -65,3 +65,4 @@ data:
   CRON_PERSON_WITHOUT_ORG_LIMIT: '{{ .Values.cron.personWithoutOrgLimit }}'
   CRON_EMAIL_ADDRESSES_DELETE_LIMIT: '{{ .Values.cron.emailAddressesDeleteLimit }}'
   FEATURE_FLAG_ROLLE_ERWEITERN: '{{ .Values.featureFlags.rolleErweitern }}'
+  FEATURE_FLAG_SET_UEM_PASSWORD: '{{ .Values.featureFlags.setUemPassword }}'
