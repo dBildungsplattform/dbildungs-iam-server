@@ -10,7 +10,7 @@
 
 ### General Configuration
 
-There is are multiple 'base'-configurations, that are used for local development and testing purposes. These json files follow the structure of the classes in (src/shared/config/json.config.ts)[../src/shared/config/json.config.ts]
+There are multiple 'base'-configurations, that are used for local development and testing purposes. These json files follow the structure of the classes in [src/shared/config/json.config.ts](../src/shared/config/json.config.ts)
 
 - Used when starting the backend locally [config/config.json](../config/config.json)
 - Used when starting the email microservice locally [config/email-config.json](../config/email-config.json)
@@ -35,8 +35,8 @@ Secrets are provided inside the application in the same way as the static config
 
 There are however a few special rules applied to them:
 
--   This file is NEVER checked-in into the repository
--   There is a secrets.json.template file however from which a secrets file can be derrived
+- This file is NEVER checked-in into the repository
+- There is a secrets.json.template file however from which a secrets file can be derrived
 
 ### Deployment
 
@@ -46,7 +46,7 @@ When deploying to any stage, the base configuration will be taken from the confi
 - [charts/dbildungs-iam-server/config/email-config.json](../charts/dbildungs-iam-server/config/email-config.json)
 
 Additionally, environment variables might be set using helm templates.
-The helm templates also have two seperate layers.
+The helm templates have two seperate layers as well.
 
 #### General configuration
 
@@ -68,7 +68,6 @@ The template files for this are
 
 - [charts/dbildungs-iam-server/templates/_dbildungs-iam-server-envs.tpl](../charts/dbildungs-iam-server/templates/_dbildungs-iam-server-envs.tpl)
 - [charts/dbildungs-iam-server/templates/_dbildungs-iam-email-server-envs.tpl](../charts/dbildungs-iam-server/templates/_dbildungs-iam-email-server-envs.tpl)
-
 
 ## Developer Guide
 
@@ -106,38 +105,38 @@ class MyClass {
 
 ![Configuration Composition Structure](./img/config-structure.svg)
 
--   **General**
-    -   The configuration is loaded and validated on application startup
-    -   The validation uses decorators from the `class-validator` package
-    -   If the configuration is not valid, the application will stop with an error
-    -   The parsing from the environment and json is type safe
--   **ServerConfig**
-    -   Is the top level configuration type of JsonConfig
-    -   Should be used as the generic parameter e.g. `ConfigService<ServerConfig, true>`
--   **JsonConfig**
-    -   Is loaded form an environment specific json file
-    -   Json files can be found in the `config` folder in the repository root
+- **General**
+  - The configuration is loaded and validated on application startup
+    - The validation uses decorators from the `class-validator` package
+    - If the configuration is not valid, the application will stop with an error
+    - The parsing from the environment and json is type safe
+- **ServerConfig**
+  - Is the top level configuration type of JsonConfig
+  - Should be used as the generic parameter e.g. `ConfigService<ServerConfig, true>`
+- **JsonConfig**
+  - Is loaded form an environment specific json file
+  - Json files can be found in the `config` folder in the repository root
 
 ## How to expand the configuration?
 
--   Where to put the new config value?
-    -   If it's something like a feature flag, then put it into the `JsonConfig`
-        -   Annotate the new property with the desired decorators
--   Do I want to expand an existing config class like `DbConfig`? If yes, then do the following steps:
-    -   Put the new configuration value in the desired class
-    -   Annotate the new property with the desired decorators
--   I want to add configuration for a new feature
-    -   Use the `DbConfig` as reference
-        -   [ ] Create a new class in the `src/shared/config` folder
-        -   [ ] Annotate the properties with the desired decorators
-        -   [ ] Add your config to the `JsonConfig` class with the required decorators
-        -   [ ] Add your config class to the `src/shared/config/index.ts` file
-        -   [ ] Add default values to the environment specific json files
+- Where to put the new config value?
+  - If it's something like a feature flag, then put it into the `JsonConfig`
+    - Annotate the new property with the desired decorators
+- Do I want to expand an existing config class like `DbConfig`? If yes, then do the following steps:
+  - Put the new configuration value in the desired class
+  - Annotate the new property with the desired decorators
+- I want to add configuration for a new feature
+  - Use the `DbConfig` as reference
+    - [ ] Create a new class in the `src/shared/config` folder
+    - [ ] Annotate the properties with the desired decorators
+    - [ ] Add your config to the `JsonConfig` class with the required decorators
+    - [ ] Add your config class to the `src/shared/config/index.ts` file
+    - [ ] Add default values to the environment specific json files
 - If the new value needs to be configurable on deployment, consider expanding config.env.ts with read logic for environment variables and set those
 in the helm chart
 - Make sure to update both the local `*-config.json` as well as the one in the `charts/dbildungs-iam-server/config/` folder.
 
-### Secrets
+### Adding Secrets
 
 - If you want to add new secrets, you need to edit the helm templates accordingly (compare with existing secrets)
 - Make sure the value exists in 1Password for *EVERY* stage (ask others if you don't have access to all stages)
