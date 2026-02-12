@@ -24,6 +24,7 @@ import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event
 import { KafkaImportExecutedEvent } from '../../../shared/events/kafka-import-executed.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+import { ImportStatus } from './import.enums.js';
 
 @Injectable()
 export class ImportEventHandler {
@@ -48,7 +49,7 @@ export class ImportEventHandler {
     @KafkaEventHandler(KafkaImportExecutedEvent)
     @EventHandler(ImportExecutedEvent)
     @EnsureRequestContext()
-    public async handleExecuteImport(event: ImportExecutedEvent): Promise<void> {
+    public async handleExecuteImport(event: ImportExecutedEvent, keepAlive: () => void): Promise<void> {
         this.selectedOrganisationId = event.organisationId;
         this.selectedRolleId = event.rolleId;
 
@@ -66,10 +67,20 @@ export class ImportEventHandler {
         });
 
         const importvorgangId: string = event.importVorgangId;
-        const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
+        let importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
         if (!importVorgang) {
             throw new EntityNotFoundError('ImportVorgang', importvorgangId);
         }
+
+        if (importVorgang.status !== ImportStatus.VALID) {
+            return this.logger.logUnknownAsError(
+                'Could not start ImportVorgang, because it did not have a valid state',
+                { id: importvorgangId, status: importVorgang.status },
+            );
+        }
+
+        importVorgang.execute();
+        importVorgang = await this.importVorgangRepository.save(importVorgang);
 
         const [importDataItems, total]: Counted<ImportDataItem<true>> =
             await this.importDataRepository.findByImportVorgangId(importvorgangId);
@@ -86,6 +97,9 @@ export class ImportEventHandler {
         );
 
         for (const dataItem of importDataItems) {
+            // Make sure to call keepAlive for larger imports
+            keepAlive();
+
             // eslint-disable-next-line no-await-in-loop
             await this.savePersonWithPersonenkontext(dataItem, klassenByIDandName, permissions);
 
