@@ -602,6 +602,7 @@ describe('Import API', () => {
                     organisationId: schule.id,
                     rolleId: sus.id,
                     importByPersonId: person.id,
+                    status: ImportStatus.VALID,
                 }),
             );
             await importDataRepository.save(
