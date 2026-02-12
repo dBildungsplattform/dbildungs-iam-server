@@ -266,6 +266,16 @@ export class ImportWorkflow {
             return importVorgangResult;
         }
 
+        if (importVorgangResult.value.status !== ImportStatus.VALID) {
+            this.logger.error(
+                `Importvorgang:${importvorgangId} does not have a valid status  (${importVorgangResult.value.status})`,
+            );
+            return {
+                ok: false,
+                error: new ImportDomainError('ImportVorgang does not have a valid status', importvorgangId),
+            };
+        }
+
         const importVorgang: ImportVorgang<true> = importVorgangResult.value;
 
         importVorgang.execute();
