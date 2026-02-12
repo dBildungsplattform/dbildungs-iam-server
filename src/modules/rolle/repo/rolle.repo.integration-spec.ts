@@ -149,21 +149,38 @@ describe('RolleRepo', () => {
             expect(rollenResult).toEqual(rollen);
         });
 
-        it('should not return technische rollen if includeTechnische = false', async () => {
-            await sut.save(DoFactory.createRolle(false, { istTechnisch: true }));
-            const rolleResult: Option<Rolle<true>[]> = await sut.find(false);
+        it.each([
+            {
+                istTechnisch: true,
+                includeTechnische: false,
+                expectedLength: 0,
+                description: 'should not return technische rollen if includeTechnische = false',
+            },
+            {
+                istTechnisch: true,
+                includeTechnische: true,
+                expectedLength: 1,
+                description: 'should return technische rollen if includeTechnische = true',
+            },
+        ])(
+            '$description',
+            async ({
+                istTechnisch,
+                includeTechnische,
+                expectedLength,
+            }: {
+                istTechnisch: boolean;
+                includeTechnische: boolean;
+                expectedLength: number;
+                description: string;
+            }) => {
+                await sut.save(DoFactory.createRolle(false, { istTechnisch }));
+                const rolleResult: Option<Rolle<true>[]> = await sut.find(includeTechnische);
 
-            expect(rolleResult).toBeDefined();
-            expect(rolleResult).toHaveLength(0);
-        });
-
-        it('should return technische rollen if includeTechnische = true', async () => {
-            await sut.save(DoFactory.createRolle(false, { istTechnisch: true }));
-            const rolleResult: Option<Rolle<true>[]> = await sut.find(true);
-
-            expect(rolleResult).toBeDefined();
-            expect(rolleResult).toHaveLength(1);
-        });
+                expect(rolleResult).toBeDefined();
+                expect(rolleResult).toHaveLength(expectedLength);
+            },
+        );
 
         it('should filter rollen by rollenarten', async () => {
             const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
@@ -540,14 +557,30 @@ describe('RolleRepo', () => {
 
     describe('findBy', () => {
         it('should return rollen', async () => {
-            const rollen: (Rolle<true> | DomainError)[] = await Promise.all([
-                sut.save(DoFactory.createRolle(false)),
-                sut.save(DoFactory.createRolle(false)),
-                sut.save(DoFactory.createRolle(false)),
-            ]);
+            const rollen: Rolle<true>[] = await Promise.all(
+                DoFactory.createMany(3, false, DoFactory.createRolle<false>, { istTechnisch: false }).map(
+                    (rolle: Rolle<false>) =>
+                        sut.save(rolle).then((savedRolle: Rolle<true> | DomainError) => {
+                            if (savedRolle instanceof DomainError) {
+                                throw Error();
+                            }
+                            return savedRolle;
+                        }),
+                ),
+            );
 
-            const rollenResult: Counted<Rolle<true>> = await sut.findBy(new RolleScope());
-            expect(rollenResult).toEqual([rollen, 3]);
+            const limit: number = 3;
+
+            const scope: RolleScope = new RolleScope()
+                .findByOrganisationen(rollen.map((r: Rolle<true>) => r.administeredBySchulstrukturknoten))
+                .paged(0, limit);
+
+            const [result, count]: Counted<Rolle<true>> = await sut.findBy(scope);
+            expect(result).toHaveLength(limit);
+            expect(result.map((r: Rolle<true>) => r.id)).toEqual(
+                expect.arrayContaining(rollen.map((r: Rolle<true>) => r.id)),
+            );
+            expect(count).toEqual(limit);
         });
     });
 
