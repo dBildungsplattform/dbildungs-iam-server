@@ -1,4 +1,4 @@
-/* v8 ignore */
+/* v8 ignore file */
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 

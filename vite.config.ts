@@ -33,10 +33,10 @@ export default defineConfig({
                 'vite.config.ts',
             ],
             thresholds: {
-                statements: 99,
-                branches: 97.5,
-                functions: 99.5,
-                lines: 99,
+                statements: 99.3,
+                branches: 97.6,
+                functions: 99.9,
+                lines: 99.3,
             },
         },
         projects: [
@@ -44,7 +44,7 @@ export default defineConfig({
                 test: {
                     name: 'unit',
                     include: ['**/*.spec.ts'],
-                    maxWorkers: '70%',
+                    maxWorkers: '90%',
                     hookTimeout: 20000, // 20 seconds for setup/teardown
                     testTimeout: 20000, // 20 seconds for unit tests
                     sequence: {
@@ -57,7 +57,7 @@ export default defineConfig({
                 test: {
                     name: 'integration',
                     include: ['**/*.integration-spec.ts'],
-                    maxWorkers: '30%', // limit the workers to leave CPU threads for test containers
+                    maxWorkers: '50%', // limit the workers to leave CPU threads for test containers
                     hookTimeout: 300000, // 5 minutes for setup/teardown
                     testTimeout: 90000, // 1.5 minutes for integration tests
                     sequence: {

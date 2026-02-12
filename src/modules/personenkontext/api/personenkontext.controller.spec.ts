@@ -317,9 +317,10 @@ describe('PersonenkontextController', () => {
             personenkontextId: faker.string.uuid(),
         };
 
-        const bodyParams: DeleteRevisionBodyParams = {
+        const bodyParams: DeleteRevisionBodyParams = new DeleteRevisionBodyParams();
+        Object.assign(bodyParams, {
             revision: '1',
-        };
+        });
 
         describe('when deleting a personenkontext is successful', () => {
             it('should return nothing', async () => {
