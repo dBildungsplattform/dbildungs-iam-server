@@ -31,9 +31,7 @@ type TerrorResultForRolle = {
     };
 };
 
-function isErrorResult<T>(r: {
-    result: Result<T, DomainError>;
-}): r is { rolleId: string; result: { ok: false; error: DomainError } } {
+function isErrorResult<T>(r: { result: Result<T, DomainError> }): r is TerrorResultForRolle {
     return r.result.ok === false;
 }
 

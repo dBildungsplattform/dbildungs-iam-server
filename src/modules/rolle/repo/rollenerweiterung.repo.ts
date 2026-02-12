@@ -14,7 +14,7 @@ import { NoRedundantRollenerweiterungError } from '../specification/error/no-red
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
 import { NoRedundantRollenerweiterung } from '../specification/no-redundant-rollenerweiterung.specification.js';
 import { ServiceProviderVerfuegbarFuerRollenerweiterung } from '../specification/service-provider-verfuegbar-fuer-rollenerweiterung.specification.js';
-import { Ok } from '../../../shared/util/result.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 
 type RollenerweiterungIds = {
     organisationId: OrganisationID;
@@ -184,10 +184,7 @@ export class RollenerweiterungRepo {
         serviceProviderId: ServiceProviderID;
     }): Promise<Result<null, DomainError>> {
         if (!(await this.exists(props))) {
-            return {
-                ok: false,
-                error: new EntityNotFoundError(`Rollenerweiterung ${JSON.stringify(props)}`),
-            };
+            return Err(new EntityNotFoundError(`Rollenerweiterung ${JSON.stringify(props)}`));
         }
 
         await this.em.nativeDelete(RollenerweiterungEntity, {

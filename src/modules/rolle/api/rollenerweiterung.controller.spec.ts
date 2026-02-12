@@ -1,16 +1,13 @@
 import { Mock, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { APP_PIPE } from '@nestjs/core';
-import { createPersonPermissionsMock, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
+import { createPersonPermissionsMock, LoggingTestModule } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { RollenerweiterungController } from './rollenerweiterung.controller.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ApplyRollenerweiterungPathParams } from './apply-rollenerweiterung-changes.path.params.js';
 import { ApplyRollenerweiterungBodyParams } from './apply-rollenerweiterung.body.params.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
@@ -22,8 +19,6 @@ import { HttpException } from '@nestjs/common';
 
 describe('RollenerweiterungController', () => {
     let controller: RollenerweiterungController;
-    let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
-    let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let applyRollenerweiterungServiceMock: DeepMocked<ApplyRollenerweiterungService>;
 
     beforeAll(async () => {
@@ -39,14 +34,6 @@ describe('RollenerweiterungController', () => {
                     useValue: createMock<ClassLogger>(ClassLogger),
                 },
                 {
-                    provide: ServiceProviderRepo,
-                    useValue: createMock<ServiceProviderRepo>(ServiceProviderRepo),
-                },
-                {
-                    provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(OrganisationRepository),
-                },
-                {
                     provide: ApplyRollenerweiterungService,
                     useValue: createMock<ApplyRollenerweiterungService>(ApplyRollenerweiterungService),
                 },
@@ -55,8 +42,6 @@ describe('RollenerweiterungController', () => {
         }).compile();
 
         controller = module.get(RollenerweiterungController);
-        serviceProviderRepoMock = module.get(ServiceProviderRepo);
-        organisationRepoMock = module.get(OrganisationRepository);
         applyRollenerweiterungServiceMock = module.get(ApplyRollenerweiterungService);
     });
 
@@ -96,13 +81,6 @@ describe('RollenerweiterungController', () => {
             };
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-            serviceProviderRepoMock.findById.mockResolvedValueOnce(
-                DoFactory.createServiceProvider(true, {
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
 
             const errorRollenId2: { id: string; error: DomainError } = {
                 id: 'rollenId2',

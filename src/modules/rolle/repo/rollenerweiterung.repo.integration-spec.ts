@@ -29,6 +29,7 @@ import { DatabaseTestModule } from '../../../../test/utils/database-test.module.
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { expectErrResult } from '../../../../test/utils/index.js';
 
 function makeN<T>(fn: () => T, n: number): Array<T> {
     return Array.from({ length: n }, fn);
@@ -207,10 +208,7 @@ describe('RollenerweiterungRepo', () => {
                 rolleId: faker.string.uuid(),
                 serviceProviderId: faker.string.uuid(),
             });
-            expect(result.ok).toBe(false);
-            if (result.ok) {
-                return;
-            }
+            expectErrResult(result);
             expect(result.error).toBeInstanceOf(EntityNotFoundError);
         });
     });
