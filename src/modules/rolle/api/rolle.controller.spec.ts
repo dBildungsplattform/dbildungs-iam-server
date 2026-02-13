@@ -23,7 +23,7 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
-import { RolleService } from '../domain/rolle.service.js';
+import { RolleFindService } from '../domain/rolle-find.service.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
@@ -50,8 +50,8 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     useValue: createMock(RolleRepo),
                 },
                 {
-                    provide: RolleService,
-                    useValue: createMock(RolleService),
+                    provide: RolleFindService,
+                    useValue: createMock(RolleFindService),
                 },
                 {
                     provide: OrganisationService,

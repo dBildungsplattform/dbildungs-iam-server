@@ -8,10 +8,8 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RolleFindByParameters, RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
-import { RolleScope } from '../../rolle/repo/rolle.scope.js';
-import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 
 @Injectable()
 export class PersonAdministrationService {
@@ -44,21 +42,21 @@ export class PersonAdministrationService {
                 : permittedOrgas.orgaIds;
         }
 
-        const scope: RolleScope = new RolleScope().setScopeWhereOperator(ScopeOperator.AND).paged(0, limit);
+        const query: RolleFindByParameters = {
+            limit,
+            searchStr: rolleName,
+        };
 
         if (relevantOrganisationIdsForFilter) {
-            const [rollenarten, schulstrukturknoten]: [Array<RollenArt>, Array<OrganisationID>] = await Promise.all([
+            const [rollenarten, schulstrukturknotenIds]: [Array<RollenArt>, Array<OrganisationID>] = await Promise.all([
                 this.getAllowedRollenArtenForOrganisationen(relevantOrganisationIdsForFilter),
                 this.getAllowedSchulstrukturknotenForRollen(relevantOrganisationIdsForFilter),
             ]);
-            scope.findByRollenArten(rollenarten).findByOrganisationen(schulstrukturknoten);
+            query.rollenArten = rollenarten;
+            query.allowedOrganisationIds = schulstrukturknotenIds;
         }
 
-        if (rolleName) {
-            scope.findBySubstring(['name'], rolleName);
-        }
-
-        const [rollen, _]: Counted<Rolle<true>> = await this.rolleRepo.findBy(scope);
+        const [rollen, _]: Counted<Rolle<true>> = await this.rolleRepo.findBy(query);
         return rollen;
     }
 

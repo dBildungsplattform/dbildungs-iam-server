@@ -48,9 +48,9 @@ import { ServiceProviderResponse } from '../../service-provider/api/service-prov
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleDomainError } from '../domain/rolle-domain.error.js';
+import { RolleFindService } from '../domain/rolle-find.service.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
-import { RolleService } from '../domain/rolle.service.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
@@ -81,7 +81,7 @@ export class RolleController {
     public constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
-        private readonly rolleService: RolleService,
+        private readonly rolleFindService: RolleFindService,
         private readonly orgService: OrganisationService,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
@@ -107,7 +107,7 @@ export class RolleController {
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
         const [rollen, total]: [Rolle<true>[], number] =
             queryParams.systemrecht === RollenSystemRechtEnum.ROLLEN_ERWEITERN
-                ? await this.rolleService.findRollenAvailableForErweiterung({
+                ? await this.rolleFindService.findRollenAvailableForErweiterung({
                       permissions,
                       searchStr: queryParams.searchStr,
                       organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
@@ -121,6 +121,7 @@ export class RolleController {
                       queryParams.searchStr,
                       queryParams.limit,
                       queryParams.offset,
+                      queryParams.organisationId ? [queryParams.organisationId] : undefined,
                   );
 
         if (!rollen || rollen.length === 0) {

@@ -2,7 +2,13 @@ import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -13,21 +19,14 @@ import { ServiceProviderMerkmal } from '../../service-provider/domain/service-pr
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
-import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
+import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
-import { RolleRepo } from './rolle.repo.js';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
-import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
-import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
-import { RolleScope } from './rolle.scope.js';
+import { RolleFindByParameters, RolleRepo } from './rolle.repo.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -132,7 +131,7 @@ describe('RolleRepo', () => {
         });
     });
 
-    describe('find', () => {
+    describe('findByRollenArten', () => {
         it('should return all rollen', async () => {
             const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
                 DoFactory.createServiceProvider(false),
@@ -143,7 +142,7 @@ describe('RolleRepo', () => {
                 sut.save(DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] })),
             ]);
 
-            const rollenResult: Rolle<true>[] = await sut.find(false);
+            const rollenResult: Rolle<true>[] = await sut.findByRollenArten(false);
 
             expect(rollenResult).toHaveLength(3);
             expect(rollenResult).toEqual(rollen);
@@ -175,7 +174,7 @@ describe('RolleRepo', () => {
                 description: string;
             }) => {
                 await sut.save(DoFactory.createRolle(false, { istTechnisch }));
-                const rolleResult: Option<Rolle<true>[]> = await sut.find(includeTechnische);
+                const rolleResult: Option<Rolle<true>[]> = await sut.findByRollenArten(includeTechnische);
 
                 expect(rolleResult).toBeDefined();
                 expect(rolleResult).toHaveLength(expectedLength);
@@ -208,7 +207,7 @@ describe('RolleRepo', () => {
                 ),
             ]);
 
-            const rollenResult: Rolle<true>[] = await sut.find(false, undefined, undefined, [
+            const rollenResult: Rolle<true>[] = await sut.findByRollenArten(false, undefined, undefined, [
                 RollenArt.LEIT,
                 RollenArt.LEHR,
             ]);
@@ -556,7 +555,7 @@ describe('RolleRepo', () => {
     });
 
     describe('findBy', () => {
-        it('should return rollen', async () => {
+        it('should return rollen, when orgaIds and rollenArten are provided', async () => {
             const rollen: Rolle<true>[] = await Promise.all(
                 DoFactory.createMany(3, false, DoFactory.createRolle<false>, { istTechnisch: false }).map(
                     (rolle: Rolle<false>) =>
@@ -571,16 +570,17 @@ describe('RolleRepo', () => {
 
             const limit: number = 3;
 
-            const scope: RolleScope = new RolleScope()
-                .findByOrganisationen(rollen.map((r: Rolle<true>) => r.administeredBySchulstrukturknoten))
-                .paged(0, limit);
-
+            const scope: RolleFindByParameters = {
+                rollenArten: rollen.slice(1).map((r: Rolle<true>) => r.rollenart),
+                allowedOrganisationIds: rollen.slice(2).map((r: Rolle<true>) => r.administeredBySchulstrukturknoten),
+                limit,
+            };
             const [result, count]: Counted<Rolle<true>> = await sut.findBy(scope);
-            expect(result).toHaveLength(limit);
+            expect(result).toHaveLength(1);
             expect(result.map((r: Rolle<true>) => r.id)).toEqual(
-                expect.arrayContaining(rollen.map((r: Rolle<true>) => r.id)),
+                expect.arrayContaining(rollen.slice(2).map((r: Rolle<true>) => r.id)),
             );
-            expect(count).toEqual(limit);
+            expect(count).toEqual(1);
         });
     });
 
