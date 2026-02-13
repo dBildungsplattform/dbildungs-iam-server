@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -15,6 +15,7 @@ import { EmailResolverService } from '../../email-microservice/domain/email-reso
 import { NewOxParams, OldOxParams } from './externaldata/user-externaldata-ox.response.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
+import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -37,6 +38,7 @@ export class KeycloakInternalController {
     Trotzdem muss die Keycloak Sub übermittelt werden (Deshalb POST mit Body)
     */
 
+    @UseInterceptors(ExternalDataCacheInterceptor)
     @Post('externaldata')
     @HttpCode(200)
     @Public()
