@@ -573,11 +573,17 @@ describe('Rolle API', () => {
                     DoFactory.createRolle(false, {
                         istTechnisch: false,
                         administeredBySchulstrukturknoten: traeger.id,
+                        rollenart: RollenArt.LEHR,
                     }),
                 ),
                 rolleRepo.save(
-                    DoFactory.createRolle(false, { istTechnisch: false, administeredBySchulstrukturknoten: schule.id }),
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        administeredBySchulstrukturknoten: schule.id,
+                        rollenart: RollenArt.LERN,
+                    }),
                 ),
+                rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: false, rollenart: RollenArt.LERN })),
             ]);
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [schule.id] });
@@ -594,7 +600,8 @@ describe('Rolle API', () => {
         });
 
         it('should return rollen available for erweiterung if systemrecht and rollenarten are set', async () => {
-            const administeredBySchulstrukturknoten: string = faker.string.uuid();
+            const org: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const administeredBySchulstrukturknoten: string = org.id;
             const rollenart: RollenArt = RollenArt.LERN;
             await Promise.all([
                 rolleRepo.save(
