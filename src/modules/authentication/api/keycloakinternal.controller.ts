@@ -99,10 +99,6 @@ export class KeycloakInternalController {
                 };
             }
 
-            setTimeout(() => {
-                console.log('wait 200 ms');
-            }, 200);
-
             return UserExternalDataResponse.createNew(
                 workflow.person,
                 workflow.checkedExternalPkData,
