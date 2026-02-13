@@ -1,9 +1,10 @@
 import { EntityName } from '@mikro-orm/core';
-import { ScopeBase } from '../../../shared/persistence';
-import { RolleEntity } from '../entity/rolle.entity';
 import { EntityManager, SelectQueryBuilder } from '@mikro-orm/postgresql';
+
+import { ScopeBase } from '../../../shared/persistence/index.js';
 import { OrganisationID } from '../../../shared/types/index.js';
 import { RollenArt } from '../domain/rolle.enums.js';
+import { RolleEntity } from '../entity/rolle.entity.js';
 
 export class RolleScope extends ScopeBase<RolleEntity> {
     private includeTechnische: boolean = false;
