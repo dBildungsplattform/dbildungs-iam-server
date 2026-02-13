@@ -271,11 +271,22 @@ export class ProviderController {
                         spWithData.serviceProvider,
                         spWithData.organisation,
                         spWithData.rollen,
-                        rollenerweiterungenWithNames.map((re: RollenerweiterungForManageableServiceProvider) =>
-                            RollenerweiterungForManageableServiceProviderResponse.fromRollenerweiterungForManageableServiceProvider(
-                                re,
+                        rollenerweiterungenWithNames
+                            .filter(
+                                (re: RollenerweiterungForManageableServiceProvider) =>
+                                    re.serviceProviderId === spWithData.serviceProvider.id,
+                            )
+                            .map((re: RollenerweiterungForManageableServiceProvider) =>
+                                RollenerweiterungForManageableServiceProviderResponse.fromRollenerweiterungForManageableServiceProvider(
+                                    re,
+                                ),
+                            )
+                            .sort(
+                                (
+                                    a: RollenerweiterungForManageableServiceProviderResponse,
+                                    b: RollenerweiterungForManageableServiceProviderResponse,
+                                ) => a.rolle.name.localeCompare(b.rolle.name),
                             ),
-                        ),
                     ),
             ),
         });
@@ -349,6 +360,12 @@ export class ProviderController {
                                 RollenerweiterungForManageableServiceProviderResponse.fromRollenerweiterungForManageableServiceProvider(
                                     re,
                                 ),
+                            )
+                            .sort(
+                                (
+                                    a: RollenerweiterungForManageableServiceProviderResponse,
+                                    b: RollenerweiterungForManageableServiceProviderResponse,
+                                ) => a.rolle.name.localeCompare(b.rolle.name),
                             ),
                     ),
             ),
