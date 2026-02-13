@@ -10,7 +10,7 @@ import {
 import { ServiceProvider } from '../domain/service-provider.js';
 import { OrganisationRefResponse } from './organisation-ref.response.js';
 import { RolleRefResponse } from './rolle-ref.response.js';
-import { RollenerweiterungForManageableServiceProvider } from '../domain/types.js';
+import { RollenerweiterungForManageableServiceProviderResponse } from './RollenerweiterungForManageableServiceProviderResponse.js';
 
 export class ManageableServiceProviderListEntryResponse {
     @ApiProperty()
@@ -31,8 +31,8 @@ export class ManageableServiceProviderListEntryResponse {
     @ApiProperty({ enum: ServiceProviderMerkmal, enumName: ServiceProviderMerkmalTypName, isArray: true })
     public merkmale: ServiceProviderMerkmal[];
 
-    @ApiProperty()
-    public rollenerweiterungen: RollenerweiterungForManageableServiceProvider[];
+    @ApiProperty({ type: RollenerweiterungForManageableServiceProviderResponse, isArray: true })
+    public rollenerweiterungen: RollenerweiterungForManageableServiceProviderResponse[];
 
     @ApiProperty({ type: RolleRefResponse, isArray: true })
     public rollen: RolleRefResponse[];
@@ -41,7 +41,7 @@ export class ManageableServiceProviderListEntryResponse {
         serviceProvider: ServiceProvider<true>,
         organisation: Organisation<true>,
         rollen: Rolle<true>[],
-        rollenerweiterungen: RollenerweiterungForManageableServiceProvider[],
+        rollenerweiterungen: RollenerweiterungForManageableServiceProviderResponse[],
     ) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;

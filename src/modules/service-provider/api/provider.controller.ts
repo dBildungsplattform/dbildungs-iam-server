@@ -60,6 +60,7 @@ import { MissingPermissionsError } from '../../../shared/error/index.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProviderSystem } from '../domain/service-provider.enum.js';
+import { RollenerweiterungForManageableServiceProviderResponse } from './RollenerweiterungForManageableServiceProviderResponse.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
@@ -270,7 +271,11 @@ export class ProviderController {
                         spWithData.serviceProvider,
                         spWithData.organisation,
                         spWithData.rollen,
-                        rollenerweiterungenWithNames,
+                        rollenerweiterungenWithNames.map((re: RollenerweiterungForManageableServiceProvider) =>
+                            RollenerweiterungForManageableServiceProviderResponse.fromRollenerweiterungForManageableServiceProvider(
+                                re,
+                            ),
+                        ),
                     ),
             ),
         });
@@ -335,7 +340,11 @@ export class ProviderController {
                         spWithData.serviceProvider,
                         spWithData.organisation,
                         spWithData.rollen,
-                        rollenerweiterungenWithNames,
+                        rollenerweiterungenWithNames.map((re: RollenerweiterungForManageableServiceProvider) =>
+                            RollenerweiterungForManageableServiceProviderResponse.fromRollenerweiterungForManageableServiceProvider(
+                                re,
+                            ),
+                        ),
                     ),
             ),
         });
