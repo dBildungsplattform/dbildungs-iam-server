@@ -19,10 +19,7 @@ import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { ProviderController } from './provider.controller.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
-import {
-    ManageableServiceProviderWithReferencedObjects,
-    RollenerweiterungForManageableServiceProvider,
-} from '../domain/types.js';
+import { ManageableServiceProviderWithReferencedObjects } from '../domain/types.js';
 import { RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
@@ -377,38 +374,25 @@ describe('Provider Controller Test', () => {
                     DoFactory.createServiceProvider(true),
                 ];
 
-                const rollenerweiterungenWithNames: RollenerweiterungForManageableServiceProvider[] = [
-                    {
-                        serviceProviderId: serviceProviders[0]!.id,
-                        organisation: DoFactory.createOrganisation(true),
-                        rolle: DoFactory.createRolle(true, {
-                            serviceProviderData: [serviceProviders[0]!],
-                        }),
-                    },
-                    {
-                        serviceProviderId: serviceProviders[1]!.id,
-                        organisation: DoFactory.createOrganisation(true),
-                        rolle: DoFactory.createRolle(true, {
-                            serviceProviderData: [serviceProviders[1]!],
-                        }),
-                    },
-                ];
-
                 const manageableObjects: ManageableServiceProviderWithReferencedObjects[] = serviceProviders.map(
                     (serviceProvider: ServiceProvider<true>) => ({
                         serviceProvider: serviceProvider,
                         organisation: DoFactory.createOrganisation(true),
                         rollen: [DoFactory.createRolle(true)],
                         rollenerweiterungen: [DoFactory.createRollenerweiterung(true)],
+                        enrichedRollenerweiterungen: [
+                            {
+                                serviceProviderId: serviceProvider.id,
+                                organisation: DoFactory.createOrganisation(true),
+                                rolle: DoFactory.createRolle(true),
+                            },
+                        ],
                     }),
                 );
 
-                serviceProviderRepoMock.findAuthorized.mockResolvedValueOnce([serviceProviders, total]);
-                serviceProviderServiceMock.getOrganisationRollenAndRollenerweiterungenForServiceProviders.mockResolvedValueOnce(
+                serviceProviderRepoMock.findAuthorized.mockResolvedValue([serviceProviders, total]);
+                serviceProviderServiceMock.getOrganisationRollenAndRollenerweiterungenForServiceProviders.mockResolvedValue(
                     manageableObjects,
-                );
-                serviceProviderServiceMock.getRollenerweiterungenForManageableServiceProvider.mockResolvedValueOnce(
-                    rollenerweiterungenWithNames,
                 );
 
                 const result: RawPagedResponse<ManageableServiceProviderListEntryResponse> =
@@ -418,7 +402,6 @@ describe('Provider Controller Test', () => {
                 expect(result.offset).toBe(params.offset ?? 0);
                 expect(result.limit).toBe(params.limit ?? total);
                 expect(result.items).toHaveLength(2);
-                expect(result.items[0]?.rollenerweiterungen.length).toBeGreaterThan(0);
                 expect(result.items[0]).toBeInstanceOf(ManageableServiceProviderListEntryResponse);
             },
         );

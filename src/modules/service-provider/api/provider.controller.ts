@@ -254,13 +254,6 @@ export class ProviderController {
                 1,
             );
 
-        const rollenerweiterungenWithNames: RollenerweiterungForManageableServiceProvider[] =
-            await this.serviceProviderService.getRollenerweiterungenForManageableServiceProvider(
-                serviceProvidersWithRollenAndErweiterungen
-                    .map((spWithData: ManageableServiceProviderWithReferencedObjects) => spWithData.rollenerweiterungen)
-                    .flat(),
-            );
-
         return new RawPagedResponse({
             offset: params.offset ?? 0,
             limit: params.limit ?? total,
@@ -271,22 +264,12 @@ export class ProviderController {
                         spWithData.serviceProvider,
                         spWithData.organisation,
                         spWithData.rollen,
-                        rollenerweiterungenWithNames
-                            .filter(
-                                (re: RollenerweiterungForManageableServiceProvider) =>
-                                    re.serviceProviderId === spWithData.serviceProvider.id,
-                            )
-                            .map((re: RollenerweiterungForManageableServiceProvider) =>
+                        (spWithData.rollenerweiterungenWithName ?? []).map(
+                            (re: RollenerweiterungForManageableServiceProvider) =>
                                 RollenerweiterungForManageableServiceProviderResponse.fromRollenerweiterungForManageableServiceProvider(
                                     re,
                                 ),
-                            )
-                            .sort(
-                                (
-                                    a: RollenerweiterungForManageableServiceProviderResponse,
-                                    b: RollenerweiterungForManageableServiceProviderResponse,
-                                ) => a.rolle.name.localeCompare(b.rolle.name),
-                            ),
+                        ),
                     ),
             ),
         });
@@ -333,14 +316,6 @@ export class ProviderController {
                 params.organisationId,
             );
 
-        // Extract the names for the rollenerweiterungen to avoid multiple requests in the FE to resolve the rolleId for each rollenerweiterung
-        const rollenerweiterungenWithNames: RollenerweiterungForManageableServiceProvider[] =
-            await this.serviceProviderService.getRollenerweiterungenForManageableServiceProvider(
-                serviceProvidersWithRollenAndErweiterungen
-                    .map((spWithData: ManageableServiceProviderWithReferencedObjects) => spWithData.rollenerweiterungen)
-                    .flat(),
-            );
-
         return new RawPagedResponse({
             offset: params.offset ?? 0,
             limit: params.limit ?? total,
@@ -351,22 +326,12 @@ export class ProviderController {
                         spWithData.serviceProvider,
                         spWithData.organisation,
                         spWithData.rollen,
-                        rollenerweiterungenWithNames
-                            .filter(
-                                (re: RollenerweiterungForManageableServiceProvider) =>
-                                    re.serviceProviderId === spWithData.serviceProvider.id,
-                            )
-                            .map((re: RollenerweiterungForManageableServiceProvider) =>
+                        (spWithData.rollenerweiterungenWithName ?? []).map(
+                            (re: RollenerweiterungForManageableServiceProvider) =>
                                 RollenerweiterungForManageableServiceProviderResponse.fromRollenerweiterungForManageableServiceProvider(
                                     re,
                                 ),
-                            )
-                            .sort(
-                                (
-                                    a: RollenerweiterungForManageableServiceProviderResponse,
-                                    b: RollenerweiterungForManageableServiceProviderResponse,
-                                ) => a.rolle.name.localeCompare(b.rolle.name),
-                            ),
+                        ),
                     ),
             ),
         });
@@ -403,16 +368,11 @@ export class ProviderController {
             ])
         )[0]!;
 
-        const rollenerweiterungenWithNames: RollenerweiterungForManageableServiceProvider[] =
-            await this.serviceProviderService.getRollenerweiterungenForManageableServiceProvider(
-                serviceProviderWithOrganisationRollenAndErweiterungen.rollenerweiterungen,
-            );
-
         return new ManageableServiceProviderResponse(
             serviceProviderWithOrganisationRollenAndErweiterungen.serviceProvider,
             serviceProviderWithOrganisationRollenAndErweiterungen.organisation,
             serviceProviderWithOrganisationRollenAndErweiterungen.rollen,
-            rollenerweiterungenWithNames.length > 0,
+            serviceProviderWithOrganisationRollenAndErweiterungen.rollenerweiterungen.length > 0,
         );
     }
 
