@@ -14,6 +14,14 @@
             "vorname": "nextcloud",
             "password": "SPSHnextcloud1!",
             "familienname": "nextcloud"
+        },
+        {
+            "id": 7777779,
+            "username": "service-account-datenfabrik-poc-technicaluser",
+            "vorname": "DaTUM",
+            "password": "SPSHnextcloud1!",
+            "familienname": "datenfabrik-poc",
+            "keycloakUserId": "ef6eac58-af39-4bea-9994-43472b4bc3c0"
         }
     ]
 }
