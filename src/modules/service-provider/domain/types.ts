@@ -12,6 +12,7 @@ export type ManageableServiceProviderWithReferencedObjects = {
 };
 
 export type RollenerweiterungForManageableServiceProvider = {
+    serviceProviderId: string;
     organisation: Organisation<true>;
     rolle: Rolle<true>;
 };

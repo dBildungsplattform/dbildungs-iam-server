@@ -173,6 +173,9 @@ export class ServiceProviderService {
     public async getRollenerweiterungenForManageableServiceProvider(
         rollenerweiterungen: Rollenerweiterung<true>[],
     ): Promise<RollenerweiterungForManageableServiceProvider[]> {
+        if (rollenerweiterungen.length === 0) {
+            return [];
+        }
         const organisationen: Map<OrganisationID, Organisation<true>> = await this.organisationRepo.findByIds(
             rollenerweiterungen.map((rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.organisationId),
         );
@@ -181,6 +184,7 @@ export class ServiceProviderService {
         );
 
         return rollenerweiterungen.map((rollenerweiterung: Rollenerweiterung<true>) => ({
+            serviceProviderId: rollenerweiterung.serviceProviderId,
             organisation: organisationen.get(rollenerweiterung.organisationId)!,
             rolle: rollen.get(rollenerweiterung.rolleId)!,
         }));
