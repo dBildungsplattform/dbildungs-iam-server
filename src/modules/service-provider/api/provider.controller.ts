@@ -253,6 +253,13 @@ export class ProviderController {
                 1,
             );
 
+        const rollenerweiterungenWithNames: RollenerweiterungForManageableServiceProvider[] =
+            await this.serviceProviderService.getRollenerweiterungenForManageableServiceProvider(
+                serviceProvidersWithRollenAndErweiterungen
+                    .map((spWithData: ManageableServiceProviderWithReferencedObjects) => spWithData.rollenerweiterungen)
+                    .flat(),
+            );
+
         return new RawPagedResponse({
             offset: params.offset ?? 0,
             limit: params.limit ?? total,
@@ -263,7 +270,7 @@ export class ProviderController {
                         spWithData.serviceProvider,
                         spWithData.organisation,
                         spWithData.rollen,
-                        spWithData.rollenerweiterungen,
+                        rollenerweiterungenWithNames,
                     ),
             ),
         });
@@ -295,7 +302,7 @@ export class ProviderController {
         if (!result.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Rollen Erweitern Systemrecht Required For This Endpoint'),
+                    new MissingPermissionsError('Rollen Erweitern Systemrecht required for this endpoint'),
                 ),
             );
         }
@@ -307,6 +314,15 @@ export class ProviderController {
             await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
                 serviceProviders,
                 5,
+                params.organisationId,
+            );
+
+        // Extract the names for the rollenerweiterungen to avoid multiple requests in the FE to resolve the rolleId for each rollenerweiterung
+        const rollenerweiterungenWithNames: RollenerweiterungForManageableServiceProvider[] =
+            await this.serviceProviderService.getRollenerweiterungenForManageableServiceProvider(
+                serviceProvidersWithRollenAndErweiterungen
+                    .map((spWithData: ManageableServiceProviderWithReferencedObjects) => spWithData.rollenerweiterungen)
+                    .flat(),
             );
 
         return new RawPagedResponse({
@@ -319,7 +335,7 @@ export class ProviderController {
                         spWithData.serviceProvider,
                         spWithData.organisation,
                         spWithData.rollen,
-                        spWithData.rollenerweiterungen,
+                        rollenerweiterungenWithNames,
                     ),
             ),
         });

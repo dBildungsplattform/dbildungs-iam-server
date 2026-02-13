@@ -1,8 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
+import { Rolle } from '../../rolle/domain/rolle.js';;
 import {
     ServiceProviderKategorie,
     ServiceProviderKategorieTypName,
@@ -12,6 +10,7 @@ import {
 import { ServiceProvider } from '../domain/service-provider.js';
 import { OrganisationRefResponse } from './organisation-ref.response.js';
 import { RolleRefResponse } from './rolle-ref.response.js';
+import { RollenerweiterungForManageableServiceProvider } from '../domain/types.js';
 
 export class ManageableServiceProviderListEntryResponse {
     @ApiProperty()
@@ -33,7 +32,7 @@ export class ManageableServiceProviderListEntryResponse {
     public merkmale: ServiceProviderMerkmal[];
 
     @ApiProperty()
-    public hasRollenerweiterung: boolean;
+    public rollenerweiterungen: RollenerweiterungForManageableServiceProvider[];
 
     @ApiProperty({ type: RolleRefResponse, isArray: true })
     public rollen: RolleRefResponse[];
@@ -42,7 +41,7 @@ export class ManageableServiceProviderListEntryResponse {
         serviceProvider: ServiceProvider<true>,
         organisation: Organisation<true>,
         rollen: Rolle<true>[],
-        rollenerweiterungen: Rollenerweiterung<true>[],
+        rollenerweiterungen: RollenerweiterungForManageableServiceProvider[],
     ) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;
@@ -54,7 +53,7 @@ export class ManageableServiceProviderListEntryResponse {
         this.kategorie = serviceProvider.kategorie;
         this.requires2fa = serviceProvider.requires2fa;
         this.merkmale = serviceProvider.merkmale;
-        this.hasRollenerweiterung = rollenerweiterungen.length > 0;
+        this.rollenerweiterungen = rollenerweiterungen;
         this.rollen = rollen.map((r: Rolle<true>) => ({ id: r.id, name: r.name }));
     }
 }

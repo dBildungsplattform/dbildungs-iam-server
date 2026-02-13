@@ -8,6 +8,7 @@ export type ManageableServiceProviderWithReferencedObjects = {
     organisation: Organisation<true>;
     rollen: Rolle<true>[];
     rollenerweiterungen: Rollenerweiterung<true>[];
+    rollenerweiterungenWithName?: RollenerweiterungForManageableServiceProvider[];
 };
 
 export type RollenerweiterungForManageableServiceProvider = {

@@ -149,6 +149,7 @@ export class ServiceProviderService {
     public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(
         serviceProviders: ServiceProvider<true>[],
         limitRoles?: number,
+        organisationId?: OrganisationID,
     ): Promise<ManageableServiceProviderWithReferencedObjects[]> {
         const serviceProvidersIds: ServiceProviderID[] = serviceProviders.map((sp: ServiceProvider<true>) => sp.id);
         const rollen: Map<ServiceProviderID, Rolle<true>[]> = await this.rolleRepo.findByServiceProviderIds(
@@ -156,7 +157,7 @@ export class ServiceProviderService {
             limitRoles,
         );
         const rollenerweiterungen: Map<ServiceProviderID, Rollenerweiterung<true>[]> =
-            await this.rollenerweiterungRepo.findByServiceProviderIds(serviceProvidersIds);
+            await this.rollenerweiterungRepo.findByServiceProviderIds(serviceProvidersIds, organisationId);
         const organisationen: Map<ServiceProviderID, Organisation<true>> = await this.organisationRepo.findByIds(
             serviceProviders.map((sp: ServiceProvider<true>) => sp.providedOnSchulstrukturknoten),
         );
