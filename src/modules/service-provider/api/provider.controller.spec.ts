@@ -390,7 +390,7 @@ describe('Provider Controller Test', () => {
                     }),
                 );
 
-                serviceProviderRepoMock.findAuthorized.mockResolvedValue([serviceProviders, total]);
+                serviceProviderRepoMock.findAuthorized.mockResolvedValue([manageableObjects, total]);
                 serviceProviderServiceMock.getOrganisationRollenAndRollenerweiterungenForServiceProviders.mockResolvedValue(
                     manageableObjects,
                 );
