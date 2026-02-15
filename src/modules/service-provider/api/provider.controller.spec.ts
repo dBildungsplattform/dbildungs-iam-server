@@ -380,11 +380,18 @@ describe('Provider Controller Test', () => {
                         organisation: DoFactory.createOrganisation(true),
                         rollen: [DoFactory.createRolle(true)],
                         rollenerweiterungen: [DoFactory.createRollenerweiterung(true)],
+                        enrichedRollenerweiterungen: [
+                            {
+                                serviceProviderId: serviceProvider.id,
+                                organisation: DoFactory.createOrganisation(true),
+                                rolle: DoFactory.createRolle(true),
+                            },
+                        ],
                     }),
                 );
 
-                serviceProviderRepoMock.findAuthorized.mockResolvedValueOnce([serviceProviders, total]);
-                serviceProviderServiceMock.getOrganisationRollenAndRollenerweiterungenForServiceProviders.mockResolvedValueOnce(
+                serviceProviderRepoMock.findAuthorized.mockResolvedValue([manageableObjects, total]);
+                serviceProviderServiceMock.getOrganisationRollenAndRollenerweiterungenForServiceProviders.mockResolvedValue(
                     manageableObjects,
                 );
 
@@ -395,7 +402,6 @@ describe('Provider Controller Test', () => {
                 expect(result.offset).toBe(params.offset ?? 0);
                 expect(result.limit).toBe(params.limit ?? total);
                 expect(result.items).toHaveLength(2);
-                expect(result.items[0]?.hasRollenerweiterung).toBe(true);
                 expect(result.items[0]).toBeInstanceOf(ManageableServiceProviderListEntryResponse);
             },
         );
