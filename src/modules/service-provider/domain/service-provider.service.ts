@@ -97,14 +97,17 @@ export class ServiceProviderService {
     public async findManageableById(
         permissions: PersonPermissions,
         id: ServiceProviderID,
-    ): Promise<Option<ServiceProvider<true>>> {
+    ): Promise<Option<ManageableServiceProviderWithReferencedObjects>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ROLLEN_ERWEITERN],
             false,
             false,
         );
+
+        let serviceProvider: Option<ServiceProvider<true>>;
+
         if (permittedOrgas.all) {
-            return this.serviceProviderRepo.findById(id);
+            serviceProvider = await this.serviceProviderRepo.findById(id);
         } else {
             const parents: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds(
                 permittedOrgas.orgaIds,
@@ -112,8 +115,17 @@ export class ServiceProviderService {
             const parentOrgaIds: OrganisationID[] = parents.map((orga: Organisation<true>) => orga.id);
             const organisationWithParentsIds: OrganisationID[] = permittedOrgas.orgaIds.concat(parentOrgaIds);
 
-            return this.serviceProviderRepo.findByIdAuthorized(id, organisationWithParentsIds);
+            serviceProvider = await this.serviceProviderRepo.findByIdAuthorized(id, organisationWithParentsIds);
         }
+
+        if (!serviceProvider) {
+            return undefined;
+        }
+
+        const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
+            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider]);
+
+        return enrichedServiceProviders[0];
     }
 
     public async getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
@@ -121,7 +133,7 @@ export class ServiceProviderService {
         permissions: PersonPermissions,
         limit?: number,
         offset?: number,
-    ): Promise<Result<Counted<ServiceProvider<true>>, MissingPermissionsError>> {
+    ): Promise<Result<Counted<ManageableServiceProviderWithReferencedObjects>, MissingPermissionsError>> {
         const hasPermission: boolean = await permissions.hasSystemrechtAtOrganisation(
             organisationId,
             RollenSystemRecht.ROLLEN_ERWEITERN,
@@ -143,7 +155,17 @@ export class ServiceProviderService {
             limit,
             offset,
         );
-        return { ok: true, value: result };
+
+        const [serviceProviders, total]: [ServiceProvider<true>[], number] = result;
+
+        const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
+            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
+                serviceProviders,
+                5,
+                organisationId,
+            );
+
+        return { ok: true, value: [enrichedServiceProviders, total] };
     }
 
     public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(

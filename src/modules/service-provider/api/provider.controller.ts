@@ -243,16 +243,14 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Query() params: ManageableServiceProvidersParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
-        const [serviceProviders, total]: Counted<ServiceProvider<true>> = await this.serviceProviderRepo.findAuthorized(
+        const [
+            serviceProvidersWithRollenAndErweiterungen,
+            total,
+        ]: Counted<ManageableServiceProviderWithReferencedObjects> = await this.serviceProviderRepo.findAuthorized(
             permissions,
             params.limit,
             params.offset,
         );
-        const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects[] =
-            await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
-                serviceProviders,
-                1,
-            );
 
         return new RawPagedResponse({
             offset: params.offset ?? 0,
@@ -289,7 +287,7 @@ export class ProviderController {
         @Query() params: ManageableServiceProvidersForOrganisationParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
         const result: Result<
-            Counted<ServiceProvider<true>>,
+            Counted<ManageableServiceProviderWithReferencedObjects>,
             MissingPermissionsError
         > = await this.serviceProviderService.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
             params.organisationId,
@@ -306,15 +304,10 @@ export class ProviderController {
             );
         }
 
-        const serviceProviders: ServiceProvider<true>[] = result.value[0];
-        const total: number = result.value[1];
-
-        const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects[] =
-            await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
-                serviceProviders,
-                5,
-                params.organisationId,
-            );
+        const [serviceProvidersWithRollenAndErweiterungen, total]: [
+            ManageableServiceProviderWithReferencedObjects[],
+            number,
+        ] = result.value;
 
         return new RawPagedResponse({
             offset: params.offset ?? 0,
@@ -350,23 +343,16 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Param() params: AngebotByIdParams,
     ): Promise<ManageableServiceProviderResponse> {
-        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderService.findManageableById(
-            permissions,
-            params.angebotId,
-        );
-        if (!serviceProvider) {
+        const serviceProviderWithOrganisationRollenAndErweiterungen: Option<ManageableServiceProviderWithReferencedObjects> =
+            await this.serviceProviderService.findManageableById(permissions, params.angebotId);
+
+        if (!serviceProviderWithOrganisationRollenAndErweiterungen) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new EntityNotFoundError('ServiceProvider', params.angebotId),
                 ),
             );
         }
-
-        const serviceProviderWithOrganisationRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects = (
-            await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders([
-                serviceProvider,
-            ])
-        )[0]!;
 
         return new ManageableServiceProviderResponse(
             serviceProviderWithOrganisationRollenAndErweiterungen.serviceProvider,
