@@ -1,4 +1,4 @@
-// /* v8 ignore file -- @preserve */
+/* v8 ignore file -- @preserve */
 // abstract classes can not be covered by v8. Implementations are covered
 
 export abstract class Logger {

@@ -103,11 +103,12 @@ describe('Meldung Controller', () => {
             it('should create meldung of id is empty', async () => {
                 const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
-                const body: CreateOrUpdateMeldungBodyParams = {
+                const body: CreateOrUpdateMeldungBodyParams = new CreateOrUpdateMeldungBodyParams();
+                Object.assign(body, {
                     inhalt: faker.string.alphanumeric(100),
                     status: MeldungStatus.VEROEFFENTLICHT,
                     revision: 1,
-                };
+                });
 
                 const meldung: Meldung<true> = DoFactory.createMeldung(true);
                 meldung.inhalt = body.inhalt;
@@ -130,11 +131,12 @@ describe('Meldung Controller', () => {
             it('should fail if invalid inhalt', async () => {
                 const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
-                const body: CreateOrUpdateMeldungBodyParams = {
+                const body: CreateOrUpdateMeldungBodyParams = new CreateOrUpdateMeldungBodyParams();
+                Object.assign(body, {
                     inhalt: faker.string.alphanumeric(2001),
                     status: MeldungStatus.VEROEFFENTLICHT,
                     revision: 1,
-                };
+                });
 
                 await expect(meldungController.createOrUpdateMeldung(body, personpermissions)).rejects.toThrow(
                     MeldungInhaltError,
@@ -144,11 +146,12 @@ describe('Meldung Controller', () => {
             it('should fail if systemrechte are missing', async () => {
                 const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
-                const body: CreateOrUpdateMeldungBodyParams = {
+                const body: CreateOrUpdateMeldungBodyParams = new CreateOrUpdateMeldungBodyParams();
+                Object.assign(body, {
                     inhalt: faker.string.alphanumeric(100),
                     status: MeldungStatus.VEROEFFENTLICHT,
                     revision: 1,
-                };
+                });
 
                 await expect(meldungController.createOrUpdateMeldung(body, personpermissions)).rejects.toThrow(
                     HttpException,
@@ -160,12 +163,13 @@ describe('Meldung Controller', () => {
                 const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 const id: string = faker.string.uuid();
-                const body: CreateOrUpdateMeldungBodyParams = {
+                const body: CreateOrUpdateMeldungBodyParams = new CreateOrUpdateMeldungBodyParams();
+                Object.assign(body, {
                     id: id,
                     inhalt: faker.string.alphanumeric(100),
                     status: MeldungStatus.VEROEFFENTLICHT,
                     revision: 1,
-                };
+                });
 
                 const meldung: Meldung<true> = DoFactory.createMeldung(true);
                 meldung.id = id;
@@ -193,12 +197,13 @@ describe('Meldung Controller', () => {
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const id: string = faker.string.uuid();
-                const body: CreateOrUpdateMeldungBodyParams = {
+                const body: CreateOrUpdateMeldungBodyParams = new CreateOrUpdateMeldungBodyParams();
+                Object.assign(body, {
                     id: id,
                     inhalt: faker.string.alphanumeric(2001),
                     status: MeldungStatus.VEROEFFENTLICHT,
                     revision: 1,
-                };
+                });
 
                 const meldung: Meldung<true> = DoFactory.createMeldung(true);
                 meldung.id = id;
@@ -218,12 +223,13 @@ describe('Meldung Controller', () => {
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const id: string = faker.string.uuid();
-                const body: CreateOrUpdateMeldungBodyParams = {
+                const body: CreateOrUpdateMeldungBodyParams = new CreateOrUpdateMeldungBodyParams();
+                Object.assign(body, {
                     id: id,
                     inhalt: faker.string.alphanumeric(100),
                     status: MeldungStatus.VEROEFFENTLICHT,
                     revision: 10,
-                };
+                });
 
                 const meldung: Meldung<true> = DoFactory.createMeldung(true);
                 meldung.id = id;
@@ -243,12 +249,13 @@ describe('Meldung Controller', () => {
                 personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
                 const id: string = faker.string.uuid();
-                const body: CreateOrUpdateMeldungBodyParams = {
+                const body: CreateOrUpdateMeldungBodyParams = new CreateOrUpdateMeldungBodyParams();
+                Object.assign(body, {
                     id: id,
                     inhalt: faker.string.alphanumeric(100),
                     status: MeldungStatus.VEROEFFENTLICHT,
                     revision: 1,
-                };
+                });
 
                 meldungRepo.findById.mockResolvedValueOnce(undefined);
 

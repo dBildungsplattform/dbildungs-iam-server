@@ -136,11 +136,13 @@ describe('Provider Controller Test', () => {
                 orgaIds: ['org-2'],
             });
             const pathparams: RollenerweiterungByServiceProvidersIdPathParams = { angebotId: faker.string.uuid() };
-            const queryparams: RollenerweiterungByServiceProvidersIdQueryParams = {
+            const queryparams: RollenerweiterungByServiceProvidersIdQueryParams =
+                new RollenerweiterungByServiceProvidersIdQueryParams();
+            Object.assign(queryparams, {
                 organisationId: 'org-1',
                 limit: 10,
                 offset: 0,
-            };
+            });
 
             await expect(
                 providerController.findRollenerweiterungenByServiceProviderId(permissions, pathparams, queryparams),

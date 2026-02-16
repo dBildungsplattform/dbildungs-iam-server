@@ -34,15 +34,17 @@ import { RollenSystemRechtEnum, RollenSystemRecht } from '../../rolle/domain/sys
 import { OrganisationDeleteService } from '../organisation-delete/organisation-delete.service.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { OrganisationHasChildrenError } from '../organisation-delete/errors/organisation-has-children.error.js';
+import { CommonCreateUpdateOrganisationBodyParams } from './common-create-update.body.params.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = new OrganisationByIdParams();
     Object.assign(params, {
         organisationId: faker.string.uuid(),
     });
-    const body: OrganisationByIdBodyParams = {
+    const body: OrganisationByIdBodyParams = new OrganisationByIdBodyParams();
+    Object.assign(body, {
         organisationId: faker.string.uuid(),
-    };
+    });
     return [params, body];
 }
 
@@ -103,7 +105,9 @@ describe('OrganisationController', () => {
     describe('createOrganisation', () => {
         describe('when usecase returns a DTO', () => {
             it('should not throw an error', async () => {
-                const params: CreateOrganisationBodyParams = {
+                // using super class her for coverage of super class
+                const params: CreateOrganisationBodyParams = new CommonCreateUpdateOrganisationBodyParams();
+                Object.assign(params, {
                     kennung: faker.lorem.word(),
                     name: faker.lorem.word(),
                     namensergaenzung: faker.lorem.word(),
@@ -112,7 +116,7 @@ describe('OrganisationController', () => {
                     traegerschaft: Traegerschaft.SONSTIGE,
                     administriertVon: faker.string.uuid(),
                     zugehoerigZu: faker.string.uuid(),
-                };
+                });
                 const returnedValue: Organisation<true> = DoFactory.createOrganisation(true);
 
                 organisationServiceMock.createOrganisation.mockResolvedValueOnce({ ok: true, value: returnedValue });
@@ -121,7 +125,8 @@ describe('OrganisationController', () => {
             });
         });
         it('should throw an error if Organisation.createNew returns a DomainError', async () => {
-            const params: CreateOrganisationBodyParams = {
+            const params: CreateOrganisationBodyParams = new CreateOrganisationBodyParams();
+            Object.assign(params, {
                 administriertVon: faker.string.uuid(),
                 zugehoerigZu: faker.string.uuid(),
                 kennung: ' Test', // This should trigger the error
@@ -130,7 +135,7 @@ describe('OrganisationController', () => {
                 kuerzel: faker.lorem.word(),
                 typ: OrganisationsTyp.ANBIETER,
                 traegerschaft: undefined,
-            };
+            });
 
             const oeffentlich: Organisation<true> = Organisation.construct(
                 faker.string.uuid(),
@@ -315,7 +320,8 @@ describe('OrganisationController', () => {
                     organisationId: faker.string.uuid(),
                 };
 
-                const body: UpdateOrganisationBodyParams = {
+                const body: UpdateOrganisationBodyParams = new UpdateOrganisationBodyParams();
+                Object.assign(body, {
                     kennung: faker.lorem.word(),
                     name: faker.lorem.word(),
                     namensergaenzung: faker.lorem.word(),
@@ -324,7 +330,7 @@ describe('OrganisationController', () => {
                     traegerschaft: Traegerschaft.SONSTIGE,
                     administriertVon: faker.lorem.word(),
                     zugehoerigZu: faker.lorem.word(),
-                };
+                });
                 const returnedValue: Organisation<true> = DoFactory.createOrganisation(true);
 
                 organisationServiceMock.updateOrganisation.mockResolvedValue({ ok: true, value: returnedValue });

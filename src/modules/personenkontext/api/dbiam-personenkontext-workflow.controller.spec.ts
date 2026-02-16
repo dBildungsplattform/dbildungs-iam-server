@@ -246,7 +246,8 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
                     personenkontextWorkflowMock.findRollenForOrganisation.mockResolvedValueOnce([rolle]);
                     personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams = new FindDbiamPersonenkontextWorkflowBodyParams();
+                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
+                        new FindDbiamPersonenkontextWorkflowBodyParams();
                     Object.assign(params, {
                         operationContext,
                         organisationId: organisation.id,
@@ -284,7 +285,8 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
                     personenkontextWorkflowMock.findRollenForOrganisation.mockResolvedValueOnce([rolle]);
                     personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams = new FindDbiamPersonenkontextWorkflowBodyParams();
+                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
+                        new FindDbiamPersonenkontextWorkflowBodyParams();
                     Object.assign(params, {
                         operationContext,
                         organisationId: organisation.id,
@@ -308,9 +310,11 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
         describe('/PUT commit', () => {
             describe('when errors occur', () => {
                 it('should throw BadRequestException if updateResult is an instance of PersonenkontexteUpdateError', async () => {
-                    const params: DBiamFindPersonenkontexteByPersonIdParams = new DBiamFindPersonenkontexteByPersonIdParams();
+                    const params: DBiamFindPersonenkontexteByPersonIdParams =
+                        new DBiamFindPersonenkontexteByPersonIdParams();
                     Object.assign(params, { personId: faker.string.uuid() });
-                    const bodyParams: DbiamUpdatePersonenkontexteBodyParams = new DbiamUpdatePersonenkontexteBodyParams();
+                    const bodyParams: DbiamUpdatePersonenkontexteBodyParams =
+                        new DbiamUpdatePersonenkontexteBodyParams();
                     Object.assign(params, {
                         count: 1,
                         lastModified: new Date(),

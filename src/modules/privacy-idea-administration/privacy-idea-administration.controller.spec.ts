@@ -20,6 +20,7 @@ import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
 import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
 import { TokenVerifyBodyParams } from './token-verify.params.js';
+import { TokenInitBodyParams } from './token-init.body.params.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -83,7 +84,10 @@ describe('PrivacyIdeaAdministrationController', () => {
             });
 
             serviceMock.initializeSoftwareToken.mockResolvedValue('token123');
-            const response: string = await sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock);
+            const tokenInitBodyParams: TokenInitBodyParams = new TokenInitBodyParams();
+            Object.assign(tokenInitBodyParams, { username: 'user1' });
+
+            const response: string = await sut.initializeSoftwareToken(tokenInitBodyParams, personPermissionsMock);
             expect(response).toEqual('token123');
         });
 
@@ -92,7 +96,10 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: false,
                 error: new Error('Forbidden access'),
             });
-            await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
+            const tokenInitBodyParams: TokenInitBodyParams = new TokenInitBodyParams();
+            Object.assign(tokenInitBodyParams, { username: 'user1' });
+
+            await expect(sut.initializeSoftwareToken(tokenInitBodyParams, personPermissionsMock)).rejects.toThrow(
                 new HttpException(new Error('Forbidden access'), HttpStatus.FORBIDDEN),
             );
         });
@@ -105,7 +112,10 @@ describe('PrivacyIdeaAdministrationController', () => {
             serviceMock.initializeSoftwareToken.mockRejectedValueOnce(
                 new SoftwareTokenInitializationError('SoftwareToken Error'),
             );
-            await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
+            const tokenInitBodyParams: TokenInitBodyParams = new TokenInitBodyParams();
+            Object.assign(tokenInitBodyParams, { username: 'user1' });
+
+            await expect(sut.initializeSoftwareToken(tokenInitBodyParams, personPermissionsMock)).rejects.toThrow(
                 new SoftwareTokenInitializationError('SoftwareToken Error'),
             );
         });
