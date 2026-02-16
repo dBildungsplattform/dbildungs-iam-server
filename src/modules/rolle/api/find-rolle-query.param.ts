@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ArrayMaxSize, ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 import { RollenArt, RollenArtTypName } from '../domain/rolle.enums.js';
-import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/systemrecht.js';
+import { RollenSystemRecht, RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/systemrecht.js';
 import { IsSystemrechtForRollenAdministration } from './is-systemrecht-for-rollen-admin-validator.js';
 
 export class FindRolleQueryParams extends PagedQueryParams {
@@ -41,12 +41,14 @@ export class FindRolleQueryParams extends PagedQueryParams {
     @IsEnum(RollenArt, { each: true })
     @TransformToArray()
     @ArrayUnique()
+    @ArrayMaxSize(Object.values(RollenArt).length)
     @ApiProperty({
         enum: RollenArt,
         enumName: RollenArtTypName,
         isArray: true,
         uniqueItems: true,
         required: false,
+        maxItems: Object.values(RollenArt).length,
         description: 'Filter roles by their role types.',
     })
     public rollenarten?: RollenArt[];
