@@ -1,4 +1,4 @@
-import { UseFilters, Controller, Post, Param, Body } from '@nestjs/common';
+import { UseFilters, Controller, Post, Param, Body, HttpCode } from '@nestjs/common';
 import {
     ApiTags,
     ApiBearerAuth,
@@ -7,7 +7,6 @@ import {
     ApiInternalServerErrorResponse,
     ApiNoContentResponse,
 } from '@nestjs/swagger';
-import { Public } from 'nest-keycloak-connect';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
@@ -42,13 +41,13 @@ export class RollenerweiterungController {
 
     @Post('/angebot/:angebotId/organisation/:organisationId/apply')
     @ApiOperation({ description: 'Apply changes to rollen-erweiterung for a given angebot and organisation.' })
-    @Public()
     @ApiNoContentResponse({
         description: 'Changes applied successfully.',
     })
     @ApiInternalServerErrorResponse({
         description: 'Internal server error',
     })
+    @HttpCode(204)
     public async applyRollenerweiterungChanges(
         @Param() params: ApplyRollenerweiterungPathParams,
         @Body() body: ApplyRollenerweiterungBodyParams,
