@@ -13,8 +13,6 @@ import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
-import { ServiceProviderService } from '../domain/service-provider.service.js';
-import { ManageableServiceProviderWithReferencedObjects } from '../domain/types.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -84,7 +82,6 @@ export class ServiceProviderRepo {
     public constructor(
         private readonly em: EntityManager,
         private readonly eventService: EventRoutingLegacyKafkaService,
-        private readonly serviceProviderService: ServiceProviderService,
     ) {}
 
     public async findById(id: string, options?: ServiceProviderFindOptions): Promise<Option<ServiceProvider<true>>> {
@@ -169,41 +166,24 @@ export class ServiceProviderRepo {
         return serviceProviderMap;
     }
 
-    public async findAuthorized(
-        permissions: PersonPermissions,
+    public async findByOrganisationsWithMerkmale(
+        orgaIds: OrganisationID[] | 'all',
         limit?: number,
         offset?: number,
-    ): Promise<Counted<ManageableServiceProviderWithReferencedObjects>> {
-        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.ANGEBOTE_VERWALTEN],
-            true,
-        );
+    ): Promise<Counted<ServiceProvider<true>>> {
         const [entities, count]: Counted<ServiceProviderEntity> = await this.em.findAndCount(
             ServiceProviderEntity,
-            permittedOrgas.all
-                ? {}
-                : {
-                      providedOnSchulstrukturknoten: { $in: permittedOrgas.orgaIds },
-                  },
+            orgaIds === 'all' ? {} : { providedOnSchulstrukturknoten: { $in: orgaIds } },
             {
                 populate: ['merkmale'],
                 limit,
                 offset,
-                orderBy: {
-                    kategorie: 'ASC', // kategorie defines a custom order
-                },
+                orderBy: { kategorie: 'ASC' },
             },
         );
 
         const serviceProviders: ServiceProvider<true>[] = entities.map(mapEntityToAggregate);
-
-        const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
-            await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
-                serviceProviders,
-                1,
-            );
-
-        return [enrichedServiceProviders, count];
+        return [serviceProviders, count];
     }
 
     public async findByIdAuthorized(

@@ -128,6 +128,29 @@ export class ServiceProviderService {
         return enrichedServiceProviders[0];
     }
 
+    public async findAuthorized(
+        permissions: PersonPermissions,
+        limit?: number,
+        offset?: number,
+    ): Promise<Counted<ManageableServiceProviderWithReferencedObjects>> {
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN],
+            true,
+        );
+
+        const [serviceProviders, count]: Counted<ServiceProvider<true>> =
+            await this.serviceProviderRepo.findByOrganisationsWithMerkmale(
+                permittedOrgas.all ? 'all' : permittedOrgas.orgaIds,
+                limit,
+                offset,
+            );
+
+        const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
+            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(serviceProviders, 1);
+
+        return [enrichedServiceProviders, count];
+    }
+
     public async getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
         organisationId: OrganisationID,
         permissions: PersonPermissions,

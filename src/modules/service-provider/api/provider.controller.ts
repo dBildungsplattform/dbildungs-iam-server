@@ -243,20 +243,14 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Query() params: ManageableServiceProvidersParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
-        const [
-            serviceProvidersWithRollenAndErweiterungen,
-            total,
-        ]: Counted<ManageableServiceProviderWithReferencedObjects> = await this.serviceProviderRepo.findAuthorized(
-            permissions,
-            params.limit,
-            params.offset,
-        );
+        const [enrichedServiceProviders, total]: Counted<ManageableServiceProviderWithReferencedObjects> =
+            await this.serviceProviderService.findAuthorized(permissions, params.limit, params.offset);
 
         return new RawPagedResponse({
             offset: params.offset ?? 0,
             limit: params.limit ?? total,
             total,
-            items: serviceProvidersWithRollenAndErweiterungen.map(
+            items: enrichedServiceProviders.map(
                 (spWithData: ManageableServiceProviderWithReferencedObjects) =>
                     new ManageableServiceProviderListEntryResponse(
                         spWithData.serviceProvider,
