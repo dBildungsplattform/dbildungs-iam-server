@@ -489,6 +489,33 @@ describe('Provider Controller Test', () => {
                 providerController.getManageableServiceProvidersForOrganisationId(permissions, params),
             ).rejects.toThrow(HttpException);
         });
+
+        it('should handle undefined rollenerweiterungenWithName', async () => {
+            const params: ManageableServiceProvidersParams = { limit: 10, offset: 0 };
+            const total: number = 1;
+            const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+
+            const manageableObjects: ManageableServiceProviderWithReferencedObjects[] = [
+                {
+                    serviceProvider: serviceProvider,
+                    organisation: DoFactory.createOrganisation(true),
+                    rollen: [DoFactory.createRolle(true)],
+                    rollenerweiterungen: [DoFactory.createRollenerweiterung(true)],
+                    // rollenerweiterungenWithName is undefined (not included)
+                },
+            ];
+
+            serviceProviderServiceMock.findAuthorized.mockResolvedValue([manageableObjects, total]);
+
+            const result: RawPagedResponse<ManageableServiceProviderListEntryResponse> =
+                await providerController.getManageableServiceProviders(personPermissionsMock, params);
+
+            expect(result).toBeDefined();
+            expect(result.items).toHaveLength(1);
+            expect(result.items[0]).toBeInstanceOf(ManageableServiceProviderListEntryResponse);
+            // Verify that the empty array was used instead of undefined
+            expect(result.items[0]?.rollenerweiterungen).toEqual([]);
+        });
     });
 
     describe('createServiceProvider', () => {
