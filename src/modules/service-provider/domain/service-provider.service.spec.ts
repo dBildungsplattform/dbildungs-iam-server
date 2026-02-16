@@ -27,6 +27,7 @@ import { ServiceProviderService } from './service-provider.service.js';
 import { ManageableServiceProviderWithReferencedObjects } from './types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -582,69 +583,132 @@ describe('ServiceProviderService', () => {
         });
     });
 
-    describe('getOrganisationRollenAndRollenerweiterungenForServiceProviders', () => {
-        let serviceProvider: ServiceProvider<true>;
+    describe('findAuthorized', () => {
         let organisation: Organisation<true>;
         let rolle: Rolle<true>;
+        let serviceProvider: ServiceProvider<true>;
         let rollenerweiterung: Rollenerweiterung<true>;
+        let permissions: DeepMocked<PersonPermissions>;
 
         beforeEach(() => {
-            serviceProvider = DoFactory.createServiceProvider(true);
-            organisation = DoFactory.createOrganisation(true, {
-                id: serviceProvider.providedOnSchulstrukturknoten,
+            organisation = DoFactory.createOrganisation(true);
+            rolle = DoFactory.createRolle(true);
+            serviceProvider = DoFactory.createServiceProvider(true, {
+                providedOnSchulstrukturknoten: organisation.id,
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
             });
-            rolle = DoFactory.createRolle(true, { serviceProviderIds: [serviceProvider.id] });
-            rollenerweiterung = DoFactory.createRollenerweiterung(true, {
-                serviceProviderId: serviceProvider.id,
-            });
+            rollenerweiterung = DoFactory.createRollenerweiterung(true);
+            permissions = createMock(PersonPermissions);
         });
 
         afterEach(() => {
             vi.restoreAllMocks();
         });
 
-        it('should return referenced objects for serviceProviders', async () => {
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProvider.id, [rolle]]]));
-            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
-                new Map([[serviceProvider.id, [rollenerweiterung]]]),
-            );
+        it('returns all service providers when user has "all" permissions', async () => {
+            const serviceProvider2: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            serviceProviderRepo.findByOrganisationsWithMerkmale.mockResolvedValue([
+                [serviceProvider, serviceProvider2],
+                2,
+            ]);
             organisationRepo.findByIds.mockResolvedValue(
                 new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
             );
-            serviceProviderRepo.findByIdAuthorized.mockResolvedValue(serviceProvider);
+            rolleRepo.findByIds.mockResolvedValue(new Map([[rolle.id, rolle]]));
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(
+                new Map([
+                    [serviceProvider.id, [rolle]],
+                    [serviceProvider2.id, []],
+                ]),
+            );
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
+                new Map([
+                    [serviceProvider.id, [rollenerweiterung]],
+                    [serviceProvider2.id, []],
+                ]),
+            );
+
+            const [result, count]: Counted<ManageableServiceProviderWithReferencedObjects> =
+                await service.findAuthorized(permissions, 10, 0);
+
+            expect(permissions.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
+                [RollenSystemRecht.ANGEBOTE_VERWALTEN],
+                true,
+            );
+            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith('all', 10, 0);
+            expect(result).toHaveLength(2);
+            expect(count).toBe(2);
+            expect(rolleRepo.findByServiceProviderIds).toHaveBeenCalledWith(
+                [serviceProvider.id, serviceProvider2.id],
+                20,
+            );
+        });
+
+        it('returns filtered service providers when user has limited permissions', async () => {
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+
+            serviceProviderRepo.findByOrganisationsWithMerkmale.mockResolvedValue([[serviceProvider], 1]);
+            organisationRepo.findByIds.mockResolvedValue(
+                new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
+            );
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolle.id, rolle]]));
             rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProvider.id, [rolle]]]));
             rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
                 new Map([[serviceProvider.id, [rollenerweiterung]]]),
             );
 
-            const result: ManageableServiceProviderWithReferencedObjects[] =
-                await service.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider]);
+            const [result, count]: Counted<ManageableServiceProviderWithReferencedObjects> =
+                await service.findAuthorized(permissions, 10, 0);
 
+            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith([organisation.id], 10, 0);
             expect(result).toHaveLength(1);
-            expect(result[0]!.serviceProvider).toBe(serviceProvider);
-            expect(result[0]!.organisation).toBe(organisation);
-            expect(result[0]!.rollen).toContain(rolle);
-            expect(result[0]!.rollenerweiterungen).toContain(rollenerweiterung);
+            expect(result[0]?.serviceProvider).toEqual(serviceProvider);
+            expect(count).toBe(1);
         });
 
-        it('should return empty arrays for serviceProviders without rollen or rollenerweiterungen', async () => {
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map());
-            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map());
+        it('respects limit and offset parameters', async () => {
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            serviceProviderRepo.findByOrganisationsWithMerkmale.mockResolvedValue([[serviceProvider], 100]);
             organisationRepo.findByIds.mockResolvedValue(
                 new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
             );
+            rolleRepo.findByIds.mockResolvedValue(new Map([[rolle.id, rolle]]));
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProvider.id, [rolle]]]));
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
+                new Map([[serviceProvider.id, [rollenerweiterung]]]),
+            );
 
-            const result: ManageableServiceProviderWithReferencedObjects[] =
-                await service.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider]);
+            const limit: number = 5;
+            const offset: number = 10;
 
-            expect(result).toHaveLength(1);
-            expect(result[0]!.serviceProvider).toBe(serviceProvider);
-            expect(result[0]!.organisation).toBe(organisation);
-            expect(result[0]!.rollen).toBeInstanceOf(Array);
-            expect(result[0]!.rollen).toHaveLength(0);
-            expect(result[0]!.rollenerweiterungen).toBeInstanceOf(Array);
-            expect(result[0]!.rollenerweiterungen).toHaveLength(0);
+            await service.findAuthorized(permissions, limit, offset);
+
+            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith('all', limit, offset);
+        });
+
+        it('returns empty array when no service providers found', async () => {
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            serviceProviderRepo.findByOrganisationsWithMerkmale.mockResolvedValue([[], 0]);
+
+            const [result, count]: Counted<ManageableServiceProviderWithReferencedObjects> =
+                await service.findAuthorized(permissions);
+
+            expect(result).toHaveLength(0);
+            expect(count).toBe(0);
         });
     });
 

@@ -191,7 +191,7 @@ export class ServiceProviderService {
         return { ok: true, value: [enrichedServiceProviders, total] };
     }
 
-    public async getOrganisationRollenAndRollenerweiterungenForServiceProviders(
+    private async getOrganisationRollenAndRollenerweiterungenForServiceProviders(
         serviceProviders: ServiceProvider<true>[],
         limitRoles?: number,
         organisationId?: OrganisationID,

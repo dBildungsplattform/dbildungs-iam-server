@@ -391,9 +391,6 @@ describe('Provider Controller Test', () => {
                 );
 
                 serviceProviderServiceMock.findAuthorized.mockResolvedValue([manageableObjects, total]);
-                serviceProviderServiceMock.getOrganisationRollenAndRollenerweiterungenForServiceProviders.mockResolvedValue(
-                    manageableObjects,
-                );
 
                 const result: RawPagedResponse<ManageableServiceProviderListEntryResponse> =
                     await providerController.getManageableServiceProviders(personPermissionsMock, params);
