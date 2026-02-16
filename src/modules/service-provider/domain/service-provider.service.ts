@@ -146,7 +146,7 @@ export class ServiceProviderService {
             );
 
         const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
-            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(serviceProviders, 1);
+            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(serviceProviders, 20);
 
         return [enrichedServiceProviders, count];
     }
@@ -184,7 +184,7 @@ export class ServiceProviderService {
         const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
             await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
                 serviceProviders,
-                5,
+                20,
                 organisationId,
             );
 
