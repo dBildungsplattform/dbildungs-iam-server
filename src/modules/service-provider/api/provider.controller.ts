@@ -194,10 +194,17 @@ export class ProviderController {
             );
         }
 
+        let filteredOrgaIds: string[] | undefined = permittedOrgas.all ? undefined : permittedOrgas.orgaIds;
+        if (queryParams.organisationId) {
+            filteredOrgaIds = Array.isArray(filteredOrgaIds)
+                ? [...filteredOrgaIds, queryParams.organisationId]
+                : [queryParams.organisationId];
+        }
+
         const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
             await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrgaKennung(
                 pathParams.angebotId,
-                queryParams.organisationId,
+                filteredOrgaIds,
                 queryParams.offset,
                 queryParams.limit,
             );
