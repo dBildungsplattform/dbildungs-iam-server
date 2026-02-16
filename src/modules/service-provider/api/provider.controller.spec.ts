@@ -38,6 +38,8 @@ import {
 } from '../domain/service-provider.enum.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
+import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
+import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweiterung-by-service-provider-id.pathparams.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
@@ -184,7 +186,25 @@ describe('Provider Controller Test', () => {
             expect(result.items[0]?.organisationKennung).toBe('FixedOrgaKennung');
         });
 
-        it('should return paged response with items and correct total if user is only permitted on all orgas', async () => {
+        it('should throw MissingPermissionsError when user lacks permission when filtering for orga', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: ['org-2'],
+            });
+            const pathparams: RollenerweiterungByServiceProvidersIdPathParams = { angebotId: faker.string.uuid() };
+            const queryparams: RollenerweiterungByServiceProvidersIdQueryParams = {
+                organisationId: 'org-1',
+                limit: 10,
+                offset: 0,
+            };
+
+            await expect(
+                providerController.findRollenerweiterungenByServiceProviderId(permissions, pathparams, queryparams),
+            ).rejects.toThrow(HttpException);
+        });
+
+        it('should return paged response with items and correct total', async () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
 
             const rollenerweiterung: Rollenerweiterung<true> = DoFactory.createRollenerweiterung(true);

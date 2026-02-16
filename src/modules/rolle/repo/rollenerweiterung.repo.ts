@@ -233,8 +233,10 @@ export class RollenerweiterungRepo {
         qb.select(['re.organisation_id', 'o.kennung'])
             .distinct()
             .innerJoin('re.organisationId', 'o')
-            .where({ serviceProviderId })
-            .orderBy({ 'o.kennung': 'ASC' })
+            .where({ serviceProviderId });
+
+
+        qb.orderBy({ 'o.kennung': 'ASC' })
             .limit(limit ?? 999999)
             .offset(offset ?? 0);
 
