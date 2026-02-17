@@ -410,9 +410,29 @@ describe('ImportWorkflow', () => {
             expect(importVorgangRepositoryMock.save).not.toHaveBeenCalled();
         });
 
+        it('should return ImportDomainError if a ImportVorgang is not valid', async () => {
+            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(
+                DoFactory.createImportVorgang(true, {
+                    status: ImportStatus.INPROGRESS,
+                }),
+            );
+            const importvorgangId: string = faker.string.uuid();
+
+            const result: Result<void> = await sut.executeImport(importvorgangId, personpermissionsMock);
+
+            expect(result).toEqual({
+                ok: false,
+                error: new ImportDomainError('ImportVorgang does not have a valid status', importvorgangId),
+            });
+            expect(importVorgangRepositoryMock.save).not.toHaveBeenCalled();
+        });
+
         it('should publish ImportExecutedEvent and return the undefined', async () => {
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-            const importvorgang: ImportVorgang<true> = DoFactory.createImportVorgang(true);
+            const importvorgang: ImportVorgang<true> = DoFactory.createImportVorgang(true, {
+                status: ImportStatus.VALID,
+            });
             importVorgangRepositoryMock.findById.mockResolvedValueOnce(importvorgang);
             const importDataItem: ImportDataItem<true> = DoFactory.createImportDataItem(true, {
                 importvorgangId: importvorgang.id,
