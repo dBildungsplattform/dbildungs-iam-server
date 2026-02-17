@@ -354,7 +354,7 @@ describe('OrganisationController', () => {
                 await expect(
                     organisationController.updateOrganisation(
                         { organisationId: faker.string.uuid() } as OrganisationByIdParams,
-                        {} as UpdateOrganisationBodyParams,
+                        new UpdateOrganisationBodyParams(),
                         permissionsMock,
                     ),
                 ).rejects.toThrow(OrganisationSpecificationError);
@@ -371,7 +371,7 @@ describe('OrganisationController', () => {
                 await expect(
                     organisationController.updateOrganisation(
                         { organisationId: faker.string.uuid() } as OrganisationByIdParams,
-                        {} as UpdateOrganisationBodyParams,
+                        new UpdateOrganisationBodyParams(),
                         permissionsMock,
                     ),
                 ).rejects.toThrow(HttpException);
@@ -385,7 +385,7 @@ describe('OrganisationController', () => {
                 await expect(
                     organisationController.updateOrganisation(
                         { organisationId: organisationId } as OrganisationByIdParams,
-                        {} as UpdateOrganisationBodyParams,
+                        new UpdateOrganisationBodyParams(),
                         permissionsMock,
                     ),
                 ).rejects.toThrow(new NotFoundException(`Organisation with ID ${organisationId} not found`));
@@ -397,7 +397,8 @@ describe('OrganisationController', () => {
                 organisationId: faker.string.uuid(),
             };
 
-            const body: UpdateOrganisationBodyParams = {
+            const body: UpdateOrganisationBodyParams = new UpdateOrganisationBodyParams();
+            Object.assign(body, {
                 kennung: faker.lorem.word(),
                 name: faker.lorem.word(),
                 namensergaenzung: faker.lorem.word(),
@@ -406,7 +407,7 @@ describe('OrganisationController', () => {
                 traegerschaft: Traegerschaft.SONSTIGE,
                 administriertVon: faker.lorem.word(),
                 zugehoerigZu: faker.lorem.word(),
-            };
+            });
             organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
 
             permissionsMock.hasOrgVerwaltenRechtAtOrga.mockResolvedValueOnce(false);
