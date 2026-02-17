@@ -10,8 +10,8 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { OrganisationMatchesRollenart } from '../../rolle/domain/specification/organisation-matches-rollenart.js';
 import { RolleFindByParameters, RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
 import { PersonAdministrationService } from './person-administration.service.js';
 
 function validateFindByParams(

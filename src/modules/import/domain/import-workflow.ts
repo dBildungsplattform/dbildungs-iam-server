@@ -1,44 +1,45 @@
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { ConfigService } from '@nestjs/config';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
+import Papa, { ParseResult } from 'papaparse';
+
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { ImportConfig } from '../../../shared/config/import.config.js';
+import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
-import { OrganisationMatchesRollenart } from '../../personenkontext/specification/organisation-matches-rollenart.js';
-import Papa, { ParseResult } from 'papaparse';
-import { CSVImportDataItemDTO } from './csv-import-data-item.dto.js';
-import { ImportCSVFileParsingError } from './import-csv-file-parsing.error.js';
-import { ImportDataRepository } from '../persistence/import-data.repository.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
-import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
-import { ImportNurLernAnSchuleUndKlasseError } from './import-nur-lern-an-schule-und-klasse.error.js';
-import { ImportDomainErrorI18nTypes } from './import-i18n-errors.js';
-import { validateSync } from 'class-validator';
-import { plainToInstance } from 'class-transformer';
-import { ImportCSVFileInvalidHeaderError } from './import-csv-file-invalid-header.error.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { ImportDataItem } from './import-data-item.js';
-import { ImportVorgang } from './import-vorgang.js';
-import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
 import { ImportExecutedEvent } from '../../../shared/events/import-executed.event.js';
-import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { ImportStatus } from './import.enums.js';
-import { ImportDomainError } from './import-domain.error.js';
-import { ImportPasswordEncryptor } from './import-password-encryptor.js';
-import { ConfigService } from '@nestjs/config';
-import { ServerConfig } from '../../../shared/config/server.config.js';
-import { ImportConfig } from '../../../shared/config/import.config.js';
-import { ImportCSVFileMaxUsersError } from './import-csv-file-max-users.error.js';
-import { ImportCSVFileContainsNoUsersError } from './import-csv-file-contains-no-users.error.js';
-import { ImportResultMaxUsersError } from './import-result-max-users.error.js';
-import { ImportDataItemStatus } from './importDataItem.enum.js';
 import { KafkaImportExecutedEvent } from '../../../shared/events/kafka-import-executed.event.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { OrganisationMatchesRollenartError } from '../../rolle/domain/specification/error/organisation-matches-rollenart.error.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { ImportDataRepository } from '../persistence/import-data.repository.js';
+import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
+import { CSVImportDataItemDTO } from './csv-import-data-item.dto.js';
+import { ImportCSVFileContainsNoUsersError } from './import-csv-file-contains-no-users.error.js';
+import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
+import { ImportCSVFileInvalidHeaderError } from './import-csv-file-invalid-header.error.js';
+import { ImportCSVFileMaxUsersError } from './import-csv-file-max-users.error.js';
+import { ImportCSVFileParsingError } from './import-csv-file-parsing.error.js';
+import { ImportDataItem } from './import-data-item.js';
+import { ImportDomainError } from './import-domain.error.js';
+import { ImportDomainErrorI18nTypes } from './import-i18n-errors.js';
+import { ImportNurLernAnSchuleUndKlasseError } from './import-nur-lern-an-schule-und-klasse.error.js';
+import { ImportPasswordEncryptor } from './import-password-encryptor.js';
+import { ImportResultMaxUsersError } from './import-result-max-users.error.js';
+import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
+import { ImportVorgang } from './import-vorgang.js';
+import { ImportStatus } from './import.enums.js';
+import { ImportDataItemStatus } from './importDataItem.enum.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -458,15 +459,13 @@ export class ImportWorkflow {
         }
 
         // Can rolle be assigned at target orga
-        const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(organisationId);
-        if (!canAssignRolle) {
-            return new EntityNotFoundError('Rolle', rolleId);
-        }
-
-        //The aimed organisation needs to match the type of role to be assigned
-        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        if (!organisationMatchesRollenart.isSatisfiedBy(orga, rolle)) {
-            return new RolleNurAnPassendeOrganisationError();
+        const canAssignRolle: Result<boolean, EntityNotFoundError | OrganisationMatchesRollenartError> =
+            await rolle.canBeAssignedToOrga(orga);
+        if (!canAssignRolle.ok) {
+            if (canAssignRolle.error instanceof OrganisationMatchesRollenartError) {
+                return new RolleNurAnPassendeOrganisationError();
+            }
+            return canAssignRolle.error;
         }
 
         return {

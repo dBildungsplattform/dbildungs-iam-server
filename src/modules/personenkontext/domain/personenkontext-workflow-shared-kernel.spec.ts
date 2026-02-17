@@ -1,13 +1,15 @@
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { OrganisationMatchesRollenartError } from '../../rolle/domain/specification/error/organisation-matches-rollenart.error.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RolleNurAnPassendeOrganisationError } from '../specification/error/rolle-nur-an-passende-organisation.js';
 import { PersonenkontextWorkflowSharedKernel } from './personenkontext-workflow-shared-kernel.js';
@@ -65,7 +67,7 @@ describe('PersonenkontextWorkflowSharedKernel', () => {
         it('should return error if rolle can not be assigned', async () => {
             const orga: Organisation<true> = DoFactory.createOrganisation(true);
             const rolle: Rolle<true> = DoFactory.createRolle(true, {
-                canBeAssignedToOrga: () => Promise.resolve(false),
+                canBeAssignedToOrga: () => Promise.resolve(Err(new EntityNotFoundError('Rolle', rolle.id))),
             });
             organisationRepoMock.findById.mockResolvedValueOnce(orga);
             rolleRepoMock.findById.mockResolvedValueOnce(rolle);
@@ -79,7 +81,7 @@ describe('PersonenkontextWorkflowSharedKernel', () => {
             const orga: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
             const rolle: Rolle<true> = DoFactory.createRolle(true, {
                 rollenart: RollenArt.SYSADMIN,
-                canBeAssignedToOrga: () => Promise.resolve(true),
+                canBeAssignedToOrga: () => Promise.resolve(Err(new OrganisationMatchesRollenartError())),
             });
             organisationRepoMock.findById.mockResolvedValueOnce(orga);
             rolleRepoMock.findById.mockResolvedValueOnce(rolle);
@@ -93,7 +95,7 @@ describe('PersonenkontextWorkflowSharedKernel', () => {
             const orga: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
             const rolle: Rolle<true> = DoFactory.createRolle(true, {
                 rollenart: RollenArt.LEHR,
-                canBeAssignedToOrga: () => Promise.resolve(true),
+                canBeAssignedToOrga: () => Promise.resolve(Ok(true)),
             });
             organisationRepoMock.findById.mockResolvedValueOnce(orga);
             rolleRepoMock.findById.mockResolvedValueOnce(rolle);

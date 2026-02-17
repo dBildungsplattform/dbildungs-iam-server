@@ -123,7 +123,6 @@ export class RolleController {
                       queryParams.offset,
                       queryParams.organisationId ? [queryParams.organisationId] : undefined,
                   );
-
         if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
                 total: 0,
@@ -133,6 +132,7 @@ export class RolleController {
             };
             return new PagedResponse(pagedRolleWithServiceProvidersResponse);
         }
+
         const administeredBySchulstrukturknotenIds: string[] = rollen.map(
             (r: Rolle<true>) => r.administeredBySchulstrukturknoten,
         );

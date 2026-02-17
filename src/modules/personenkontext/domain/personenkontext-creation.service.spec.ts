@@ -30,6 +30,7 @@ import { PersonenkontextWorkflowSharedKernel } from './personenkontext-workflow-
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 import { MockedObject } from 'vitest';
 import { createPersonenkontexteUpdateMock } from '../../../../test/utils/workflow.mocks.js';
+import { Ok } from '../../../shared/util/result.js';
 
 describe('PersonenkontextCreationService', () => {
     let module: TestingModule;
@@ -207,7 +208,7 @@ describe('PersonenkontextCreationService', () => {
             const rolleMock: MockedObject<Rolle<true>> = vi.mockObject(
                 DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
             );
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             rolleRepoMock.findByIds.mockResolvedValueOnce(
                 new Map<string, Rolle<true>>([[faker.string.uuid(), rolleMock]]),
@@ -237,7 +238,7 @@ describe('PersonenkontextCreationService', () => {
             const rolleMock: MockedObject<Rolle<true>> = vi.mockObject(
                 DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
             );
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             organisationRepositoryMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND }),
@@ -266,7 +267,7 @@ describe('PersonenkontextCreationService', () => {
             const rolleMock: MockedObject<Rolle<true>> = vi.mockObject(
                 DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
             );
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             organisationRepositoryMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND }),
@@ -299,7 +300,7 @@ describe('PersonenkontextCreationService', () => {
             const rolleMock: MockedObject<Rolle<true>> = vi.mockObject(
                 DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
             );
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             organisationRepositoryMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND }),

@@ -1,5 +1,5 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
-import { RollenSystemRechtEnum } from '../domain/systemrecht';
+import { RollenSystemRechtEnum } from '../domain/systemrecht.js';
 
 export function IsSystemrechtForRollenAdministration(property: string, validationOptions?: ValidationOptions) {
     return function (object: object, propertyName: string): void {

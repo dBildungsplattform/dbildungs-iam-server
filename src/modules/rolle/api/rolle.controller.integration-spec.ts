@@ -442,6 +442,38 @@ describe('Rolle API', () => {
             expect(pagedResponse.items).toContainEqual(expect.objectContaining({ name: testRolle.name }));
         });
 
+        it('should return rollen assigned on the specified organisation', async () => {
+            const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const testRolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: orga.id }),
+            );
+            await rolleRepo.save(DoFactory.createRolle(false));
+            if (testRolle instanceof DomainError) {
+                throw Error();
+            }
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [orga.id],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .query({ organisationId: orga.id })
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(1);
+            expect(pagedResponse.items).toContainEqual(
+                expect.objectContaining({
+                    administeredBySchulstrukturknoten: orga.id,
+                } as Partial<RolleWithServiceProvidersResponse>),
+            );
+        });
+
         it('should return rollen with serviceproviders', async () => {
             const [sp1, sp2, sp3]: [ServiceProvider<true>, ServiceProvider<true>, ServiceProvider<true>] =
                 await Promise.all([

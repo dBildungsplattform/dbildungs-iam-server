@@ -8,11 +8,11 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { OrganisationMatchesRollenart } from '../../personenkontext/specification/organisation-matches-rollenart.js';
 import { RolleFindByParameters, RolleRepo } from '../repo/rolle.repo.js';
 import { FindRollenWithPermissionsParams, RolleFindService } from './rolle-find.service.js';
 import { RollenArt } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
+import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
 
 describe('RolleService', () => {
     let module: TestingModule;
@@ -167,6 +167,7 @@ describe('RolleService', () => {
         it('should narrow allowed rollenarten if requested', async () => {
             const allowedOrgas: Array<Organisation<true>> = [
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.ROOT }),
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE }),
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SONSTIGE }),
             ];
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({

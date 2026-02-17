@@ -1,42 +1,44 @@
+import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
+import Papa from 'papaparse';
+import { Readable } from 'stream';
+import { Mock } from 'vitest';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { ImportDataRepository } from '../persistence/import-data.repository.js';
-import { ImportResult, ImportUploadResultFields, ImportWorkflow } from './import-workflow.js';
-import { ImportWorkflowFactory } from './import-workflow.factory.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { EventModule } from '../../../core/eventbus/event.module.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { faker } from '@faker-js/faker';
-import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import Papa from 'papaparse';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
-import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
-import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
-import { ImportNurLernAnSchuleUndKlasseError } from './import-nur-lern-an-schule-und-klasse.error.js';
-import { ImportCSVFileParsingError } from './import-csv-file-parsing.error.js';
-import { ImportCSVFileInvalidHeaderError } from './import-csv-file-invalid-header.error.js';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
-import { ImportDataItem } from './import-data-item.js';
+import { OrganisationMatchesRollenartError } from '../../rolle/domain/specification/error/organisation-matches-rollenart.error.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { ImportDataRepository } from '../persistence/import-data.repository.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
-import { ImportVorgang } from './import-vorgang.js';
-import { ImportPasswordEncryptor } from './import-password-encryptor.js';
-import { ImportDomainError } from './import-domain.error.js';
-import { ImportStatus } from './import.enums.js';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { ImportCSVFileMaxUsersError } from './import-csv-file-max-users.error.js';
 import { ImportCSVFileContainsNoUsersError } from './import-csv-file-contains-no-users.error.js';
+import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
+import { ImportCSVFileInvalidHeaderError } from './import-csv-file-invalid-header.error.js';
+import { ImportCSVFileMaxUsersError } from './import-csv-file-max-users.error.js';
+import { ImportCSVFileParsingError } from './import-csv-file-parsing.error.js';
+import { ImportDataItem } from './import-data-item.js';
+import { ImportDomainError } from './import-domain.error.js';
+import { ImportNurLernAnSchuleUndKlasseError } from './import-nur-lern-an-schule-und-klasse.error.js';
+import { ImportPasswordEncryptor } from './import-password-encryptor.js';
+import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
+import { ImportVorgang } from './import-vorgang.js';
+import { ImportWorkflowFactory } from './import-workflow.factory.js';
+import { ImportResult, ImportUploadResultFields, ImportWorkflow } from './import-workflow.js';
+import { ImportStatus } from './import.enums.js';
 import { ImportDataItemStatus } from './importDataItem.enum.js';
-import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
-import { Mock } from 'vitest';
-import { EventModule } from '../../../core/eventbus/event.module.js';
-import { Readable } from 'stream';
 
 describe('ImportWorkflow', () => {
     let module: TestingModule;
@@ -152,7 +154,7 @@ describe('ImportWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(false);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Err(new EntityNotFoundError()));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             const result: DomainError | ImportUploadResultFields = await sut.validateImport(
                 FILE_MOCK,
@@ -170,7 +172,7 @@ describe('ImportWorkflow', () => {
             );
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LEHR;
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             const result: DomainError | ImportUploadResultFields = await sut.validateImport(
                 FILE_MOCK,
@@ -189,7 +191,7 @@ describe('ImportWorkflow', () => {
             );
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Err(new OrganisationMatchesRollenartError()));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             const result: DomainError | ImportUploadResultFields = await sut.validateImport(
                 FILE_MOCK,
@@ -208,7 +210,7 @@ describe('ImportWorkflow', () => {
             );
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
 
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
@@ -227,7 +229,7 @@ describe('ImportWorkflow', () => {
 
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
             organisationRepoMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
             );
@@ -252,7 +254,7 @@ describe('ImportWorkflow', () => {
 
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
             organisationRepoMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
             );
@@ -277,7 +279,7 @@ describe('ImportWorkflow', () => {
 
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
             organisationRepoMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
             );
@@ -301,7 +303,7 @@ describe('ImportWorkflow', () => {
             });
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
             organisationRepoMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
             );
@@ -329,7 +331,7 @@ describe('ImportWorkflow', () => {
             });
             const rolleMock: DeepMocked<Rolle<true>> = vi.mockObject(DoFactory.createRolle<true>(true));
             rolleMock.rollenart = RollenArt.LERN;
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
             organisationRepoMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
             );

@@ -17,6 +17,8 @@ import { PersonenkontextFactory } from '../../personenkontext/domain/personenkon
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { NameForRolleWithTrailingSpaceError } from './name-with-trailing-space.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 
 describe('Rolle Aggregate', () => {
     let module: TestingModule;
@@ -66,9 +68,10 @@ describe('Rolle Aggregate', () => {
 
     describe('canBeAssignedToOrga', () => {
         it('should resolve to true, if the rolle is administered by the given organisation', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
             const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
                 'test',
-                faker.string.uuid(),
+                orga.id,
                 RollenArt.LERN,
                 [],
                 [],
@@ -81,13 +84,14 @@ describe('Rolle Aggregate', () => {
                 return;
             }
 
-            await expect(rolle.canBeAssignedToOrga(rolle.administeredBySchulstrukturknoten)).resolves.toBe(true);
+            await expect(rolle.canBeAssignedToOrga(orga)).resolves.toEqual(Ok(true));
         });
 
         it('should resolve to true, if the given organisation id is a suborganisation', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
             const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
                 'test',
-                faker.string.uuid(),
+                orga.id,
                 RollenArt.LERN,
                 [],
                 [],
@@ -100,13 +104,13 @@ describe('Rolle Aggregate', () => {
                 return;
             }
 
-            const orgaId: string = faker.string.uuid();
             organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
 
-            await expect(rolle.canBeAssignedToOrga(orgaId)).resolves.toBe(true);
+            await expect(rolle.canBeAssignedToOrga(orga)).resolves.toEqual(Ok(true));
         });
 
         it('should resolve to false, if the given organisation id is not a suborganisation', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
             const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
                 'test',
                 faker.string.uuid(),
@@ -123,7 +127,9 @@ describe('Rolle Aggregate', () => {
                 return;
             }
 
-            await expect(rolle.canBeAssignedToOrga(faker.string.uuid())).resolves.toBe(false);
+            await expect(rolle.canBeAssignedToOrga(orga)).resolves.toEqual(
+                Err(new EntityNotFoundError('Rolle', rolle.id ?? 'undefined')),
+            );
         });
     });
 

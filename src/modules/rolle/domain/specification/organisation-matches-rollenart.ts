@@ -1,14 +1,14 @@
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../../organisation/domain/organisation.js';
+import { RollenArt } from '../rolle.enums.js';
+import { Rolle } from '../rolle.js';
 
 /**
  * Only needs to be checked when referenced organisation is of type KLASSE.
  * Needs to be refactored into a specification
  */
 export class OrganisationMatchesRollenart {
-    public isSatisfiedBy(organisation: Organisation<true>, rolle: Rolle<true>): boolean {
+    public isSatisfiedBy(organisation: Organisation<true | false>, rolle: Rolle<true | false>): boolean {
         if (!organisation.typ) {
             return false;
         }

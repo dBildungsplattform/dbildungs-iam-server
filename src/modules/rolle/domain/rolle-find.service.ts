@@ -13,6 +13,7 @@ import { RolleFindByParameters, RolleRepo } from '../repo/rolle.repo.js';
 import { RollenArt } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { RollenSystemRecht } from './systemrecht.js';
+import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
 
 export interface FindRollenWithPermissionsParams {
     permissions: PersonPermissions;
@@ -84,21 +85,13 @@ export class RolleFindService {
     }
 
     private mapOrganisationsTypenToRollenArten(organisationenTypen: OrganisationsTyp[]): RollenArt[] {
-        // TODO: this is duplicated from personenkontext module. find single location
         return Array.from(
             organisationenTypen.reduce<Set<RollenArt>>(
                 (rollenArten: Set<RollenArt>, organisationsTyp: OrganisationsTyp) => {
-                    switch (organisationsTyp) {
-                        case OrganisationsTyp.ROOT:
-                        case OrganisationsTyp.LAND:
-                            return rollenArten.add(RollenArt.SYSADMIN);
-                        case OrganisationsTyp.SCHULE:
-                            return rollenArten.add(RollenArt.LEIT).add(RollenArt.LEHR).add(RollenArt.LERN);
-                        case OrganisationsTyp.KLASSE:
-                            return rollenArten.add(RollenArt.LERN);
-                        default:
-                            return new Set<RollenArt>(Object.values(RollenArt));
-                    }
+                    OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organisationsTyp).forEach(
+                        (rollenart: RollenArt) => rollenArten.add(rollenart),
+                    );
+                    return rollenArten;
                 },
                 new Set<RollenArt>(),
             ),
