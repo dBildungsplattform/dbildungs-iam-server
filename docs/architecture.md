@@ -17,7 +17,7 @@ Permission Checks should not be done in the controller, although occasionally it
 
 ### Repositories
 
-Repositories persists Aggregats and thus are in the persistence layer. But Repos provide methods in the domain layer and thus are in the domain layer as well.
+Repositories persists Aggregates and thus are in the persistence layer. But Repos provide methods in the domain layer and thus are in the domain layer as well.
 Therefore a Repository must not expose any data structures related to the persistence layer i.e. DB-entities or ORM related classes or types.
 A Repository should not provide multi purpose methods. If an Aggregate or controller needs to search with specific parameters we create a method just for these specific parameters.
 
@@ -47,14 +47,14 @@ There are services for cross-cutting concerns as well like logging or configurat
 A module contains a cohesive portion of the domain. <br>
 
 A module usually contain classes for internal use only and classes that are meant to be consumed by other modules.<br>
-Take a concious decision what classes to put in the module's `exports`-array instead of defaulting to export everything "just in case". See [Authorization](#authorizationpermission-checks)
+Take a conscious decision what classes to put in the module's `exports`-array instead of defaulting to export everything "just in case". See [Authorization](#authorizationpermission-checks)
 
 ## Authorization/Permission Checks
 
 Authorization is done in the Domain Layer.<br>
 Every public method in a class that is exported by a module should check the necessary permissions.
 
-The controller methods get injected the PersonPermissions object. The PersonPermissions object is passed on to the Repositories and Services as a parameter.
+The controller methods have the PersonPermissions object injected. The PersonPermissions object is passed on to the Repositories and Services as a parameter.
 
 Authorization is done by
 
