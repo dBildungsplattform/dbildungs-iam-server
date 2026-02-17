@@ -1,6 +1,18 @@
 import swc from 'unplugin-swc';
 import { resolve } from 'path';
 import { defineConfig } from 'vitest/config';
+import { readFileSync } from 'fs';
+
+try {
+    readFileSync(resolve(__dirname, './.env'), 'utf-8')
+        .split('\n')
+        .forEach((line: string) => {
+            const [key, value]: string[] = line.split('=');
+            if (key === 'CI' && value?.toLowerCase() === 'true') {
+                process.env[key] = 'true';
+            }
+        });
+} catch {}
 
 export default defineConfig({
     plugins: [
@@ -15,7 +27,7 @@ export default defineConfig({
         environment: 'node',
         hookTimeout: 60000, // 1 minute for setup/teardown
         testTimeout: 30000, // 30 seconds default timeout
-        onConsoleLog: () => false,
+        onConsoleLog: process.env['CI'] ? () => false : undefined, // Suppress console logs in CI environment
         coverage: {
             provider: 'v8',
             reporter: ['text', 'lcov'],
@@ -49,7 +61,7 @@ export default defineConfig({
                 test: {
                     name: 'integration',
                     include: ['**/*.integration-spec.ts'],
-                    maxWorkers: '50%', // limit the workers to leave CPU threads for test containers
+                    maxWorkers: '30%', // limit the workers to leave CPU threads for test containers
                     hookTimeout: 300000, // 5 minutes for setup/teardown
                     testTimeout: 90000, // 1.5 minutes for integration tests
                     sequence: {
