@@ -18,6 +18,7 @@ import { UserExternaldataWorkflowFactory } from './domain/user-extenaldata.facto
 import { KeycloakInternalController } from './api/keycloakinternal.controller.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
 import { ExternalDataCacheInterceptor } from '../../shared/cache/external-data-cache-interceptor.js';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
     imports: [
@@ -29,6 +30,7 @@ import { ExternalDataCacheInterceptor } from '../../shared/cache/external-data-c
         RolleModule,
         KeycloakAdministrationModule,
         EmailMicroserviceModule,
+        CacheModule.register(),
     ],
     providers: [
         OpenIdConnectStrategy,
