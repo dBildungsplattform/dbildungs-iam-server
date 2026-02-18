@@ -61,7 +61,7 @@ export default defineConfig({
                 test: {
                     name: 'integration',
                     include: ['**/*.integration-spec.ts'],
-                    maxWorkers: '30%', // limit the workers to leave CPU threads for test containers
+                    maxWorkers: '50%', // limit the workers to leave CPU threads for test containers
                     hookTimeout: 300000, // 5 minutes for setup/teardown
                     testTimeout: 90000, // 1.5 minutes for integration tests
                     sequence: {
