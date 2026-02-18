@@ -81,9 +81,7 @@ describe('KeycloakInternalController', () => {
             .overrideProvider(EmailResolverService)
             .useValue(createMock(EmailResolverService))
             .overrideProvider(ExternalDataCacheInterceptor)
-            .useValue({
-                intercept: vi.fn().mockImplementation((_: unknown, next: unknown) => next.handle()),
-            })
+            .useValue(createMock(ExternalDataCacheInterceptor))
             .compile();
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
