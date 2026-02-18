@@ -13,7 +13,6 @@ export class FindRolleQueryParams extends PagedQueryParams {
     @ApiProperty({
         description: 'The name for the role.',
         required: false,
-        nullable: false,
     })
     public readonly searchStr?: string;
 
@@ -22,7 +21,6 @@ export class FindRolleQueryParams extends PagedQueryParams {
     @ApiProperty({
         description: 'The id of the organisation where the role should be available.',
         required: false,
-        nullable: false,
     })
     public readonly organisationId?: string;
 
