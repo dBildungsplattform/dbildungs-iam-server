@@ -111,6 +111,32 @@ describe('ExternalDataCacheInterceptor', () => {
             expect(result).toEqual(nextResult);
         });
 
+        it('calls next.handle() when trackBy returns undefined', async () => {
+            const nextResult: unknown = { data: 'no-key' };
+            const handle: Mock<() => Observable<unknown>> = vi.fn(
+                () =>
+                    new Observable((subscriber: Subscriber<unknown>) => {
+                        subscriber.next(nextResult);
+                        subscriber.complete();
+                    }),
+            );
+            const next: CallHandler = { handle };
+
+            vi.spyOn(sut, 'trackBy').mockReturnValueOnce(undefined);
+
+            const ctx: ExecutionContext = {
+                switchToHttp: () => ({
+                    getRequest: () => ({ body: {} }),
+                }),
+            } as unknown as ExecutionContext;
+
+            const result$: Observable<unknown> = await sut.intercept(ctx, next);
+            const result: unknown = await firstValueFrom(result$);
+
+            expect(handle).toHaveBeenCalled();
+            expect(result).toEqual(nextResult);
+        });
+
         it('joins inflight when concurrent requests share the same key', async () => {
             cacheMock.get.mockResolvedValue(undefined);
 
