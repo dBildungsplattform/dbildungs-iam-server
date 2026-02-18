@@ -201,10 +201,7 @@ describe('KafkaEventService', () => {
         } as unknown as KafkaMessage);
         await sut.handleMessage(message, () => Promise.resolve());
 
-        expect(logger.error).toHaveBeenCalledWith(
-            expect.stringContaining('Failed to parse Kafka message'),
-            expect.any(SyntaxError),
-        );
+        expect(logger.logUnknownAsError).toHaveBeenCalledWith('Failed to parse Kafka message', expect.any(SyntaxError));
     });
 
     it('should log error if handler throws an exception', async () => {
@@ -294,14 +291,15 @@ describe('KafkaEventService', () => {
     });
 
     it('should log error if Kafka producer fails during publish', async () => {
-        producer.send.mockRejectedValueOnce(new Error('Producer error'));
+        const error: Error = new Error('Producer error');
+        producer.send.mockRejectedValueOnce(error);
         const deleteEvent: KafkaPersonDeletedEvent = new KafkaPersonDeletedEvent('test', 'test');
 
         await sut.publish(deleteEvent);
 
-        expect(logger.error).toHaveBeenCalledWith(
+        expect(logger.logUnknownAsError).toHaveBeenCalledWith(
             'Error publishing event to Kafka on topic prefix.user-topic',
-            expect.any(String),
+            error,
         );
     });
 
@@ -354,11 +352,12 @@ describe('KafkaEventService', () => {
     });
 
     it('should log error in onModuleInit if Kafka consumer fails to connect', async () => {
-        consumer.connect.mockRejectedValueOnce(new Error('Consumer error'));
+        const error: Error = new Error('Consumer error');
+        consumer.connect.mockRejectedValueOnce(error);
 
         await sut.onModuleInit();
 
-        expect(logger.error).toHaveBeenCalledWith('Error in KafkaEventService', expect.any(String));
+        expect(logger.logUnknownAsError).toHaveBeenCalledWith('Error in KafkaEventService', error);
     });
 
     it('should not initialize Kafka consumer and producer if fkafka is disabled', () => {
