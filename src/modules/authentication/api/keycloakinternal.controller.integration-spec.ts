@@ -24,6 +24,7 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
+import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { KeycloakInternalController } from './keycloakinternal.controller.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
@@ -32,7 +33,7 @@ import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/respo
 import { Ok } from '../../../shared/util/result.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
-import { AuthenticationApiModule } from '../authentication-api.module.js';
+import { CacheModule } from '@nestjs/cache-manager';
 
 function createLoadedReference<T extends object>(entity: T): LoadedReference<T> {
     const reference: Reference<T> = createMock<Reference<T>>(Reference);
@@ -64,9 +65,9 @@ describe('KeycloakInternalController', () => {
                 PersonenKontextModule,
                 RolleModule,
                 EmailMicroserviceModule,
-                AuthenticationApiModule,
+                CacheModule.register(),
             ],
-            providers: [KeycloakInternalController],
+            providers: [KeycloakInternalController, UserExternaldataWorkflowFactory],
         })
             .overrideProvider(PersonRepository)
             .useValue(createMock(PersonRepository))
