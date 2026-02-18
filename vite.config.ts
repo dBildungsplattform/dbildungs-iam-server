@@ -17,7 +17,7 @@ export default defineConfig({
         testTimeout: 30000, // 30 seconds default timeout
         coverage: {
             provider: 'v8',
-            reporter: ['text', 'lcov'],
+            reporter: [['text', { maxCols: 200 }], 'lcov'],
             reportsDirectory: 'coverage',
             reportOnFailure: true,
             include: ['src/**/*.ts'],
