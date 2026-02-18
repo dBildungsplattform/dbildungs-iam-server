@@ -33,7 +33,6 @@ import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/respo
 import { Ok } from '../../../shared/util/result.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
-import { CacheModule } from '@nestjs/cache-manager';
 import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
 
 function createLoadedReference<T extends object>(entity: T): LoadedReference<T> {
@@ -66,7 +65,6 @@ describe('KeycloakInternalController', () => {
                 PersonenKontextModule,
                 RolleModule,
                 EmailMicroserviceModule,
-                CacheModule.register(),
             ],
             providers: [KeycloakInternalController, UserExternaldataWorkflowFactory],
         })
