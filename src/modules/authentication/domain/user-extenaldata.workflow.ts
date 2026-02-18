@@ -73,7 +73,7 @@ export class UserExternaldataWorkflowAggregate {
             > = await this.emailResolverService.findEmailBySpshPersonAsEmailAddressResponse(personId);
 
             if (personEmailResponse.ok) {
-                if (personEmailResponse.value?.status[0] !== EmailAddressStatusEnum.SUSPENDED) {
+                if (personEmailResponse.value?.status !== EmailAddressStatusEnum.SUSPENDED) {
                     this.oxLoginId = personEmailResponse.value?.oxLoginId;
                 }
             } else {
