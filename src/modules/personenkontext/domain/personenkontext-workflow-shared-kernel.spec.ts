@@ -95,7 +95,7 @@ describe('PersonenkontextWorkflowSharedKernel', () => {
             const orga: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
             const rolle: Rolle<true> = DoFactory.createRolle(true, {
                 rollenart: RollenArt.LEHR,
-                canBeAssignedToOrga: () => Promise.resolve(Ok(true)),
+                canBeAssignedToOrga: () => Promise.resolve(Ok(undefined)),
             });
             organisationRepoMock.findById.mockResolvedValueOnce(orga);
             rolleRepoMock.findById.mockResolvedValueOnce(rolle);

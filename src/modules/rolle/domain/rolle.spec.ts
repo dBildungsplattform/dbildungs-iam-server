@@ -84,7 +84,7 @@ describe('Rolle Aggregate', () => {
                 return;
             }
 
-            await expect(rolle.canBeAssignedToOrga(orga)).resolves.toEqual(Ok(true));
+            await expect(rolle.canBeAssignedToOrga(orga)).resolves.toEqual(Ok(undefined));
         });
 
         it('should resolve to true, if the given organisation id is a suborganisation', async () => {
@@ -106,7 +106,7 @@ describe('Rolle Aggregate', () => {
 
             organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
 
-            await expect(rolle.canBeAssignedToOrga(orga)).resolves.toEqual(Ok(true));
+            await expect(rolle.canBeAssignedToOrga(orga)).resolves.toEqual(Ok(undefined));
         });
 
         it('should resolve to false, if the given organisation id is not a suborganisation', async () => {

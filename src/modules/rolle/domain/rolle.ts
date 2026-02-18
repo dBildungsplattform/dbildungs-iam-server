@@ -152,7 +152,7 @@ export class Rolle<WasPersisted extends boolean> {
 
     public async canBeAssignedToOrga(
         orga: Organisation<true>,
-    ): Promise<Result<boolean, EntityNotFoundError | OrganisationMatchesRollenartError>> {
+    ): Promise<Result<void, EntityNotFoundError | OrganisationMatchesRollenartError>> {
         let isCorrectNodeOrSubtree: boolean;
         if (orga.id === this.administeredBySchulstrukturknoten) {
             isCorrectNodeOrSubtree = true;
@@ -170,7 +170,7 @@ export class Rolle<WasPersisted extends boolean> {
         if (!doesRollenartMatchOrga) {
             return Err(new OrganisationMatchesRollenartError());
         }
-        return Ok(true);
+        return Ok(undefined);
     }
 
     public addMerkmal(merkmal: RollenMerkmal): void {

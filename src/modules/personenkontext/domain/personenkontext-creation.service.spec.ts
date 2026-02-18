@@ -208,7 +208,7 @@ describe('PersonenkontextCreationService', () => {
             const rolleMock: MockedObject<Rolle<true>> = vi.mockObject(
                 DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
             );
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(undefined));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             rolleRepoMock.findByIds.mockResolvedValueOnce(
                 new Map<string, Rolle<true>>([[faker.string.uuid(), rolleMock]]),
@@ -238,7 +238,7 @@ describe('PersonenkontextCreationService', () => {
             const rolleMock: MockedObject<Rolle<true>> = vi.mockObject(
                 DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
             );
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(undefined));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             organisationRepositoryMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND }),
@@ -267,7 +267,7 @@ describe('PersonenkontextCreationService', () => {
             const rolleMock: MockedObject<Rolle<true>> = vi.mockObject(
                 DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
             );
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(undefined));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             organisationRepositoryMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND }),
@@ -300,7 +300,7 @@ describe('PersonenkontextCreationService', () => {
             const rolleMock: MockedObject<Rolle<true>> = vi.mockObject(
                 DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
             );
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true));
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(undefined));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             organisationRepositoryMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND }),

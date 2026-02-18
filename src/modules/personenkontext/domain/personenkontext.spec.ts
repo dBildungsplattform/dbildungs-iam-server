@@ -204,7 +204,7 @@ describe('Personenkontext aggregate', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true); // Check orga permissions
             const rolleMock: MockedObject<Rolle<true>> = vi.mockObject<Rolle<true>>(DoFactory.createRolle(true));
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true)); // Check rolle<->orga validity
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(undefined)); // Check rolle<->orga validity
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             permissions.canModifyPerson.mockResolvedValueOnce(false); // Check person permissions
 
@@ -223,7 +223,7 @@ describe('Personenkontext aggregate', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true); // Check orga permissions
             const rolleMock: MockedObject<Rolle<true>> = vi.mockObject<Rolle<true>>(DoFactory.createRolle(true));
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(true)); // Check rolle<->orga validity
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(undefined)); // Check rolle<->orga validity
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             permissions.canModifyPerson.mockResolvedValueOnce(true); // Check person permissions
 
