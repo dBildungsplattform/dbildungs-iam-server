@@ -17,8 +17,6 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
 import { UserExternaldataWorkflowFactory } from './domain/user-extenaldata.factory.js';
 import { KeycloakInternalController } from './api/keycloakinternal.controller.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
-import { ExternalDataCacheInterceptor } from '../../shared/cache/external-data-cache-interceptor.js';
-import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
     imports: [
@@ -30,7 +28,6 @@ import { CacheModule } from '@nestjs/cache-manager';
         RolleModule,
         KeycloakAdministrationModule,
         EmailMicroserviceModule,
-        CacheModule.register(),
     ],
     providers: [
         OpenIdConnectStrategy,
@@ -41,7 +38,6 @@ import { CacheModule } from '@nestjs/cache-manager';
         PersonPermissionsRepo,
         SessionAccessTokenMiddleware,
         UserExternaldataWorkflowFactory,
-        ExternalDataCacheInterceptor,
     ],
     controllers: [AuthenticationController, KeycloakInternalController],
     exports: [OIDCClientProvider, PersonPermissionsRepo],
