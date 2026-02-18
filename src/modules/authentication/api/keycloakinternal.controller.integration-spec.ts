@@ -82,7 +82,7 @@ describe('KeycloakInternalController', () => {
             .useValue(createMock(EmailResolverService))
             .overrideProvider(ExternalDataCacheInterceptor)
             .useValue({
-                intercept: vi.fn().mockImplementation((_, next: unknown) => next.handle()),
+                intercept: vi.fn().mockImplementation((_: unknown, next: unknown) => next.handle()),
             })
             .compile();
 
