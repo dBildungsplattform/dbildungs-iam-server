@@ -33,6 +33,7 @@ import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/respo
 import { Ok } from '../../../shared/util/result.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
+import { AuthenticationApiModule } from '../authentication-api.module.js';
 
 function createLoadedReference<T extends object>(entity: T): LoadedReference<T> {
     const reference: Reference<T> = createMock<Reference<T>>(Reference);
@@ -64,6 +65,7 @@ describe('KeycloakInternalController', () => {
                 PersonenKontextModule,
                 RolleModule,
                 EmailMicroserviceModule,
+                AuthenticationApiModule,
             ],
             providers: [KeycloakInternalController, UserExternaldataWorkflowFactory],
         })

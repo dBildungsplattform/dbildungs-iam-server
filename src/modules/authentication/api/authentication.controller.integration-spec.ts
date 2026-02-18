@@ -40,6 +40,7 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleModule } from '../../rolle/rolle.module.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 import { createRequestMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
+import { AuthenticationApiModule } from '../authentication-api.module.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -60,6 +61,7 @@ describe('AuthenticationController', () => {
                 PersonenKontextModule,
                 RolleModule,
                 EmailMicroserviceModule,
+                AuthenticationApiModule,
             ],
             providers: [
                 AuthenticationController,
