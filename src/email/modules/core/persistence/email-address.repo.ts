@@ -1,4 +1,4 @@
-import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EmailAddrEntity } from './email-address.entity.js';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
@@ -8,6 +8,7 @@ import { EmailAddressStatusEntity, EmailAddressStatusEnum } from './email-addres
 import { PersonID } from '../../../../shared/types/aggregate-ids.types.js';
 import { Err, Ok } from '../../../../shared/util/result.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
+import { uniq } from 'lodash-es';
 
 export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddrEntity> {
     const statuses: RequiredEntityData<EmailAddressStatusEntity, EmailAddrEntity>[] = emailAddress.sortedStatuses.map(
@@ -56,6 +57,33 @@ export class EmailAddressRepo {
         private readonly em: EntityManager,
         private readonly logger: ClassLogger,
     ) {}
+
+    public async findDistinctSpshPersonIdsSameOrEarlierThanMarkedForCronAndPrioLte1(
+        markedForCron: Date,
+    ): Promise<string[]> {
+        const entities: Loaded<EmailAddrEntity, never, 'spshPersonId', never>[] = await this.em.find(
+            EmailAddrEntity,
+            { markedForCron: { $lte: markedForCron }, priority: { $lte: 1 } },
+            {
+                fields: ['spshPersonId'],
+                orderBy: { spshPersonId: 'ASC' },
+            },
+        );
+
+        return uniq(entities.map((e: Loaded<EmailAddrEntity, never, 'spshPersonId', never>) => e.spshPersonId));
+    }
+
+    public async deleteAllMarkedForCronSameOrEarlierDayWithPriorityGte2(markedForCron: Date): Promise<number> {
+        const endOfDay: Date = new Date(markedForCron);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const deleted: number = await this.em.nativeDelete(EmailAddrEntity, {
+            markedForCron: { $ne: null, $lte: endOfDay },
+            priority: { $gte: 2 },
+        });
+
+        return deleted;
+    }
 
     public async findEmailAddress(address: string): Promise<Option<EmailAddress<true>>> {
         const emailAddressEntity: Option<EmailAddrEntity> = await this.em.findOne(EmailAddrEntity, {
