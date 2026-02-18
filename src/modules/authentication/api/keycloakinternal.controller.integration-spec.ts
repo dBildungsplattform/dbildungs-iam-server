@@ -24,7 +24,6 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
-import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { KeycloakInternalController } from './keycloakinternal.controller.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
@@ -67,7 +66,7 @@ describe('KeycloakInternalController', () => {
                 EmailMicroserviceModule,
                 AuthenticationApiModule,
             ],
-            providers: [KeycloakInternalController, UserExternaldataWorkflowFactory],
+            providers: [KeycloakInternalController],
         })
             .overrideProvider(PersonRepository)
             .useValue(createMock(PersonRepository))
