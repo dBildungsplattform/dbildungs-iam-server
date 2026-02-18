@@ -154,7 +154,7 @@ describe('UserExternaldataWorkflow', () => {
             expect(sut.oxLoginId).toBe(`${oxLoginId}@${oxContextId}`);
         });
 
-        it('should not set contextID when user has no email', async () => {
+        it('should not set contextID when user has suspended email', async () => {
             const keycloakSub: string = faker.string.uuid();
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
@@ -167,13 +167,31 @@ describe('UserExternaldataWorkflow', () => {
                 keycloakSub,
                 faker.string.uuid(),
             );
+            const oxLoginId: string = faker.string.uuid();
+            const oxContextId: string = 'test-context-id';
 
             personRepositoryMock.findById.mockResolvedValue(person);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
             dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue([]);
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+            const emailAddress: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                createdAt: faker.date.past(),
+                updatedAt: faker.date.recent(),
+                address: faker.internet.email(),
+                priority: 0,
+                spshPersonId: person.id,
+                oxUserCounter: undefined,
+                externalId: oxLoginId,
+                sortedStatuses: [{ status: EmailAddressStatusEnum.SUSPENDED }],
+            });
 
-            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValue(Ok(undefined));
+            const response: EmailAddressResponse = new EmailAddressResponse(
+                emailAddress,
+                emailAddress.getStatus()!,
+                oxContextId,
+            );
+            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValue(Ok(response));
 
             await sut.initialize(person.id);
             expect(sut.person).toBeDefined();
