@@ -28,7 +28,7 @@ export class PersonenkontextWorkflowSharedKernel {
             return new EntityNotFoundError('Rolle', rolleId);
         }
         // Can rolle be assigned at target orga
-        const canAssignRolle: Result<boolean, EntityNotFoundError | OrganisationMatchesRollenartError> =
+        const canAssignRolle: Result<void, EntityNotFoundError | OrganisationMatchesRollenartError> =
             await rolle.canBeAssignedToOrga(orga);
         if (!canAssignRolle.ok) {
             if (canAssignRolle.error instanceof OrganisationMatchesRollenartError) {

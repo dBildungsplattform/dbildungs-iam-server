@@ -24,10 +24,14 @@ function getValidationObjectForFindByParams(params: {
         limit: params.limit,
     };
     if (params.expectedRollenArten) {
-        validatorObject.rollenArten = expect.arrayContaining(params.expectedRollenArten);
+        validatorObject.rollenArten = expect.arrayContaining(
+            params.expectedRollenArten,
+        ) as typeof params.expectedRollenArten;
     }
     if (params.expectedOrganisationIds) {
-        validatorObject.allowedOrganisationIds = expect.arrayContaining(params.expectedOrganisationIds);
+        validatorObject.allowedOrganisationIds = expect.arrayContaining(
+            params.expectedOrganisationIds,
+        ) as typeof params.expectedOrganisationIds;
     }
     if (params.rolleName) {
         validatorObject.searchStr = params.rolleName;
