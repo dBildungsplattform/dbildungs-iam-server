@@ -70,6 +70,7 @@ describe('KeycloakInternalController', () => {
             providers: [
                 KeycloakInternalController,
                 UserExternaldataWorkflowFactory,
+                ExternalDataCacheInterceptor,
                 { provide: CACHE_MANAGER, useValue: { get: vi.fn(), set: vi.fn() } },
             ],
         })
@@ -80,7 +81,9 @@ describe('KeycloakInternalController', () => {
             .overrideProvider(EmailResolverService)
             .useValue(createMock(EmailResolverService))
             .overrideProvider(ExternalDataCacheInterceptor)
-            .useValue(createMock(ExternalDataCacheInterceptor))
+            .useValue({
+                intercept: vi.fn().mockImplementation((_, next: unknown) => next.handle()),
+            })
             .compile();
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
