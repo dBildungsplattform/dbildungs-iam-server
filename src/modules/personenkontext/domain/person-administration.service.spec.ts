@@ -14,31 +14,25 @@ import { OrganisationMatchesRollenart } from '../../rolle/domain/specification/o
 import { RolleFindByParameters, RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonAdministrationService } from './person-administration.service.js';
 
-function validateFindByParams(
-    findByParams: Partial<RolleFindByParameters>,
-    params: {
-        rolleName?: string;
-        limit?: number;
-        expectedOrganisationIds?: Array<OrganisationID>;
-        expectedRollenArten?: Array<RollenArt>;
-    },
-): void {
+function getValidationObjectForFindByParams(params: {
+    rolleName?: string;
+    limit?: number;
+    expectedOrganisationIds?: Array<OrganisationID>;
+    expectedRollenArten?: Array<RollenArt>;
+}): Partial<RolleFindByParameters> {
+    const validatorObject: Partial<RolleFindByParameters> = {
+        limit: params.limit,
+    };
     if (params.expectedRollenArten) {
-        expect(findByParams.rollenArten).toEqual(params.expectedRollenArten);
-    } else {
-        expect(findByParams.rollenArten).toBeUndefined();
+        validatorObject.rollenArten = expect.arrayContaining(params.expectedRollenArten);
     }
     if (params.expectedOrganisationIds) {
-        expect(findByParams.allowedOrganisationIds).toEqual(params.expectedOrganisationIds);
-    } else {
-        expect(findByParams.allowedOrganisationIds).toBeUndefined();
+        validatorObject.allowedOrganisationIds = expect.arrayContaining(params.expectedOrganisationIds);
     }
     if (params.rolleName) {
-        expect(findByParams.searchStr).toEqual(params.rolleName);
-    } else {
-        expect(findByParams.searchStr).toBeUndefined();
+        validatorObject.searchStr = params.rolleName;
     }
-    expect(findByParams.limit).toEqual(params.limit);
+    return validatorObject;
 }
 
 describe('PersonAdministrationService', () => {
@@ -98,8 +92,9 @@ describe('PersonAdministrationService', () => {
                     describe('when no organisations are selected', () => {
                         test('it should run the correct query', async () => {
                             await sut.findAuthorizedRollen(personpermissionsMock, rolleName, limit);
-                            const findByParams: RolleFindByParameters = rolleRepoMock.findBy.mock.calls[0]![0];
-                            validateFindByParams(findByParams, { rolleName, limit });
+                            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                                getValidationObjectForFindByParams({ rolleName, limit }),
+                            );
                         });
                     });
 
@@ -126,17 +121,18 @@ describe('PersonAdministrationService', () => {
                                     await sut.findAuthorizedRollen(personpermissionsMock, rolleName, limit, [
                                         organisation.id,
                                     ]);
-                                    const findByParams: RolleFindByParameters = rolleRepoMock.findBy.mock.calls[0]![0];
-                                    validateFindByParams(findByParams, {
-                                        rolleName,
-                                        limit,
-                                        expectedRollenArten: Array.from(
-                                            OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(
-                                                organisationsTyp,
+                                    expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                                        getValidationObjectForFindByParams({
+                                            rolleName,
+                                            limit,
+                                            expectedRollenArten: Array.from(
+                                                OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(
+                                                    organisationsTyp,
+                                                ),
                                             ),
-                                        ),
-                                        expectedOrganisationIds: [organisation.id, parent.id],
-                                    });
+                                            expectedOrganisationIds: [organisation.id, parent.id],
+                                        }),
+                                    );
                                 });
                             },
                         );
@@ -173,16 +169,17 @@ describe('PersonAdministrationService', () => {
                         describe('when no organisations are selected', () => {
                             test('it should run the correct query', async () => {
                                 await sut.findAuthorizedRollen(personpermissionsMock, rolleName, limit);
-                                const findByParams: RolleFindByParameters = rolleRepoMock.findBy.mock.calls[0]![0];
-                                validateFindByParams(findByParams, {
-                                    rolleName,
-                                    limit,
-                                    expectedRollenArten: [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN],
-                                    expectedOrganisationIds: [
-                                        ...schulen.map((s: Organisation<true>) => s.id),
-                                        traeger.id,
-                                    ],
-                                });
+                                expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                                    getValidationObjectForFindByParams({
+                                        rolleName,
+                                        limit,
+                                        expectedRollenArten: [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN],
+                                        expectedOrganisationIds: [
+                                            ...schulen.map((s: Organisation<true>) => s.id),
+                                            traeger.id,
+                                        ],
+                                    }),
+                                );
                             });
                         });
 
@@ -195,13 +192,14 @@ describe('PersonAdministrationService', () => {
                                     limit,
                                     organisationIds,
                                 );
-                                const findByParams: RolleFindByParameters = rolleRepoMock.findBy.mock.calls[0]![0];
-                                validateFindByParams(findByParams, {
-                                    rolleName,
-                                    limit,
-                                    expectedRollenArten: [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN],
-                                    expectedOrganisationIds: [...organisationIds, traeger.id],
-                                });
+                                expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                                    getValidationObjectForFindByParams({
+                                        rolleName,
+                                        limit,
+                                        expectedRollenArten: [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN],
+                                        expectedOrganisationIds: [...organisationIds, traeger.id],
+                                    }),
+                                );
                             });
                         });
                     });
