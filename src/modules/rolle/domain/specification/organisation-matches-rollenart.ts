@@ -8,7 +8,7 @@ import { Rolle } from '../rolle.js';
  * Needs to be refactored into a specification
  */
 export class OrganisationMatchesRollenart {
-    public isSatisfiedBy(organisation: Organisation<true | false>, rolle: Rolle<true | false>): boolean {
+    public isSatisfiedBy(organisation: Organisation<boolean>, rolle: Rolle<boolean>): boolean {
         if (!organisation.typ) {
             return false;
         }
