@@ -20,6 +20,8 @@ export class EmailAddressResponse {
 
     @ApiProperty()
     public oxLoginId: string;
+
+    @ApiProperty()
     public isPrimary: boolean;
 
     @ApiProperty({ required: false })
