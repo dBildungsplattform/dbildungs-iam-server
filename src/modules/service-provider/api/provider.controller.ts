@@ -156,7 +156,10 @@ export class ProviderController {
     }
 
     @Get(':angebotId/rollenerweiterung')
-    @ApiOperation({ description: 'Get rollenerweiterungen for service-provider with provided id.' })
+    @ApiOperation({
+        description:
+            'Get rollenerweiterungen for service-provider with provided id. Total is the amount of organisations.',
+    })
     @ApiOkResponsePaginated(RollenerweiterungWithExtendedDataResponse, {
         description:
             'The rollenerweiterungen were successfully returned. WARNING: This endpoint returns all rollenerweiterungen of the service-provider as default when no paging parameters were set.',
@@ -172,15 +175,35 @@ export class ProviderController {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ROLLEN_ERWEITERN, RollenSystemRecht.ANGEBOTE_VERWALTEN],
             false,
-            true,
+            false,
         );
         if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
             throw new UnauthorizedException('NOT_AUTHORIZED');
         }
 
+        if (
+            queryParams.organisationId &&
+            !permittedOrgas.all &&
+            !permittedOrgas.orgaIds.includes(queryParams.organisationId)
+        ) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Insufficient permissions for the requested organisationId'),
+                ),
+            );
+        }
+
+        let filteredOrgaIds: string[] | undefined = permittedOrgas.all ? undefined : permittedOrgas.orgaIds;
+        if (queryParams.organisationId) {
+            filteredOrgaIds = Array.isArray(filteredOrgaIds)
+                ? [...filteredOrgaIds, queryParams.organisationId]
+                : [queryParams.organisationId];
+        }
+
         const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
             await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrgaKennung(
                 pathParams.angebotId,
+                filteredOrgaIds,
                 queryParams.offset,
                 queryParams.limit,
             );
@@ -322,7 +345,7 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Param() params: AngebotByIdParams,
     ): Promise<ManageableServiceProviderResponse> {
-        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findAuthorizedById(
+        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderService.findManageableById(
             permissions,
             params.angebotId,
         );

@@ -95,7 +95,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
 
             await this.producer?.connect();
         } catch (err) {
-            this.logger.error('Error in KafkaEventService', util.inspect(err));
+            this.logger.logUnknownAsError('Error in KafkaEventService', err);
         }
     }
 
@@ -140,7 +140,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             }
             eventData = parsed;
         } catch (error) {
-            this.logger.error('Failed to parse Kafka message', error);
+            this.logger.logUnknownAsError('Failed to parse Kafka message', error);
             return;
         }
 
@@ -205,7 +205,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                 messages: [{ key: event.kafkaKey, value: JSON.stringify(event), headers }],
             });
         } catch (err) {
-            this.logger.error(`Error publishing event to Kafka on topic ${topic}`, util.inspect(err));
+            this.logger.logUnknownAsError(`Error publishing event to Kafka on topic ${topic}`, err);
         }
     }
 

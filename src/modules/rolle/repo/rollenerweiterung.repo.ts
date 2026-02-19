@@ -14,6 +14,7 @@ import { NoRedundantRollenerweiterungError } from '../specification/error/no-red
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
 import { NoRedundantRollenerweiterung } from '../specification/no-redundant-rollenerweiterung.specification.js';
 import { ServiceProviderVerfuegbarFuerRollenerweiterung } from '../specification/service-provider-verfuegbar-fuer-rollenerweiterung.specification.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 
 type RollenerweiterungIds = {
     organisationId: OrganisationID;
@@ -161,6 +162,39 @@ export class RollenerweiterungRepo {
         );
     }
 
+    public async findManyByOrganisationIdAndServiceProviderId(
+        organisationId: OrganisationID,
+        serviceProviderId: ServiceProviderID,
+    ): Promise<Array<Rollenerweiterung<true>>> {
+        const rollenerweiterungEntities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
+            RollenerweiterungEntity,
+            {
+                organisationId,
+                serviceProviderId,
+            },
+        );
+        return rollenerweiterungEntities.map((entity: Loaded<RollenerweiterungEntity>) =>
+            this.mapEntityToAggregate(entity),
+        );
+    }
+
+    public async deleteByComposedId(props: {
+        organisationId: OrganisationID;
+        rolleId: RolleID;
+        serviceProviderId: ServiceProviderID;
+    }): Promise<Result<null, DomainError>> {
+        if (!(await this.exists(props))) {
+            return Err(new EntityNotFoundError(`Rollenerweiterung ${JSON.stringify(props)}`));
+        }
+
+        await this.em.nativeDelete(RollenerweiterungEntity, {
+            serviceProviderId: props.serviceProviderId,
+            organisationId: props.organisationId,
+            rolleId: props.rolleId,
+        });
+        return Ok(null);
+    }
+
     public async findByServiceProviderIds(
         serviceProviderIds: ServiceProviderID[],
     ): Promise<Map<ServiceProviderID, Rollenerweiterung<true>[]>> {
@@ -190,6 +224,7 @@ export class RollenerweiterungRepo {
     */
     public async findByServiceProviderIdPagedAndSortedByOrgaKennung(
         serviceProviderId: ServiceProviderID,
+        organisationIds?: string[],
         offset?: number,
         limit?: number,
     ): Promise<Counted<Rollenerweiterung<true>>> {
@@ -198,10 +233,15 @@ export class RollenerweiterungRepo {
         qb.select(['re.organisation_id', 'o.kennung'])
             .distinct()
             .innerJoin('re.organisationId', 'o')
-            .where({ serviceProviderId })
-            .orderBy({ 'o.kennung': 'ASC' })
+            .where({ serviceProviderId });
+
+        qb.orderBy({ 'o.kennung': 'ASC' })
             .limit(limit ?? 999999)
             .offset(offset ?? 0);
+
+        if (organisationIds && organisationIds.length > 0) {
+            qb.andWhere({ organisationId: { $in: organisationIds } });
+        }
 
         const pagedOrgIdsResult: Array<{ organisationId: string; kennung: string }> = await qb.execute();
         const pagedOrgIds: string[] = pagedOrgIdsResult.map((row: { organisationId: string }) => row.organisationId);
@@ -214,6 +254,10 @@ export class RollenerweiterungRepo {
         countQb
             .count('re.organisationId', true) // true for DISTINCT
             .where({ serviceProviderId });
+
+        if (organisationIds && organisationIds.length > 0) {
+            countQb.andWhere({ organisationId: { $in: organisationIds } });
+        }
 
         const countResult: { count: string | number } = await countQb.execute('get', true);
         const totalUniqueOrgs: number = Number(countResult.count);
