@@ -66,10 +66,11 @@ describe('LandesbediensteterController', () => {
                 DoFactory.createOrganisation(true),
             ];
 
-            const params: LandesbediensteterWorkflowStepBodyParams = {
+            const params: LandesbediensteterWorkflowStepBodyParams = new LandesbediensteterWorkflowStepBodyParams();
+            Object.assign(params, {
                 organisationName: faker.string.alphanumeric(),
                 limit: faker.number.int(50),
-            };
+            });
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             workflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce(orgas);
 
@@ -98,11 +99,12 @@ describe('LandesbediensteterController', () => {
                 DoFactory.createRolle(true),
             ];
 
-            const params: LandesbediensteterWorkflowStepBodyParams = {
+            const params: LandesbediensteterWorkflowStepBodyParams = new LandesbediensteterWorkflowStepBodyParams();
+            Object.assign(params, {
                 organisationName: faker.string.alphanumeric(),
                 organisationId: faker.string.uuid(),
                 limit: faker.number.int(50),
-            };
+            });
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             workflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce(orgas);
             workflowMock.findRollenForOrganisation.mockResolvedValueOnce(rollen);
@@ -126,12 +128,13 @@ describe('LandesbediensteterController', () => {
                 DoFactory.createRolle(true),
             ];
 
-            const params: LandesbediensteterWorkflowStepBodyParams = {
+            const params: LandesbediensteterWorkflowStepBodyParams = new LandesbediensteterWorkflowStepBodyParams();
+            Object.assign(params, {
                 organisationName: faker.string.alphanumeric(),
                 organisationId: faker.string.uuid(),
                 rollenIds: [faker.string.uuid()],
                 limit: faker.number.int(50),
-            };
+            });
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             workflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce(orgas);
             workflowMock.findRollenForOrganisation.mockResolvedValueOnce(rollen);
@@ -151,9 +154,10 @@ describe('LandesbediensteterController', () => {
                 DoFactory.createPersonenkontext(true),
             ];
 
-            const params: LandesbediensteterPersonIdParams = {
+            const params: LandesbediensteterPersonIdParams = new LandesbediensteterPersonIdParams();
+            Object.assign(params, {
                 personId: faker.string.uuid(),
-            };
+            });
             const body: LandesbediensteterWorkflowCommitBodyParams = {
                 count: faker.number.int(20),
                 newPersonenkontexte: [],
@@ -179,9 +183,10 @@ describe('LandesbediensteterController', () => {
         it('should throw error', async () => {
             const error: PersonenkontexteUpdateError = new PersonenkontexteUpdateError('Test Error');
 
-            const params: LandesbediensteterPersonIdParams = {
+            const params: LandesbediensteterPersonIdParams = new LandesbediensteterPersonIdParams();
+            Object.assign(params, {
                 personId: faker.string.uuid(),
-            };
+            });
             const body: LandesbediensteterWorkflowCommitBodyParams = {
                 count: faker.number.int(20),
                 newPersonenkontexte: [],

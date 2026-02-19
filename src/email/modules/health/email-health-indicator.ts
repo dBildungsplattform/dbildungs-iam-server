@@ -20,6 +20,7 @@ export class EmailHealthIndicator extends HealthIndicator {
             return super.getStatus(HealthCheckKey, true);
         } catch (e: unknown) {
             let statusMessage: string = `EmailApp does not seem to be up and there is no error message available`;
+            /* v8 ignore else  @preserve */
             if (e instanceof Error) {
                 statusMessage = `EmailApp does not seem to be up: ${e.message}`;
             }

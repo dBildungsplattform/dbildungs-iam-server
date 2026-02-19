@@ -868,11 +868,15 @@ describe('EmailEventHandler', () => {
                             familienname: faker.person.lastName(),
                             username: faker.internet.userName(),
                         },
-                        newKontexte: [{}, {}] as PersonenkontextEventKontextData[],
-                        removedKontexte: [{}] as PersonenkontextEventKontextData[],
-                        currentKontexte: [{}] as PersonenkontextEventKontextData[],
+                        newKontexte: [],
+                        removedKontexte: [],
+                        currentKontexte: [],
                     },
                 );
+                mockEvent.newKontexte.push({} as PersonenkontextEventKontextData);
+                mockEvent.newKontexte.push({} as PersonenkontextEventKontextData);
+                mockEvent.removedKontexte.push({} as PersonenkontextEventKontextData);
+                mockEvent.currentKontexte.push({} as PersonenkontextEventKontextData);
                 emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
 
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(mockEvent);
@@ -1396,14 +1400,13 @@ describe('EmailEventHandler', () => {
                         vorname: faker.person.firstName(),
                         familienname: faker.person.lastName(),
                     },
-                    removedKontexte: [
-                        {
-                            id: fakePKId,
-                        } as PersonenkontextEventKontextData,
-                    ],
+                    removedKontexte: [],
                     newKontexte: [],
                     currentKontexte: [],
                 });
+                event.removedKontexte.push({
+                    id: fakePKId,
+                } as PersonenkontextEventKontextData);
 
                 dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
                 // mock that no rollenIds can be found

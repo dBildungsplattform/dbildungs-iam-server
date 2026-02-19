@@ -92,7 +92,7 @@ describe(`VidisService`, () => {
             const expectedVidisOfferResponse: VidisOfferResponse[] = mockVidisAngebotResponses;
             const expectedVidisAngebote: VidisAngebot[] = expectedVidisOfferResponse.map(
                 (offer: VidisOfferResponse) => {
-                    return {
+                    const vidisAngebot: VidisAngebot = {
                         angebotId: offer.offerId.toString(),
                         angebotVersion: offer.offerVersion,
                         angebotDescription: offer.offerDescription,
@@ -103,6 +103,7 @@ describe(`VidisService`, () => {
                         educationProviderOrganizationName: offer.educationProviderOrganizationName,
                         schoolActivations: offer.schoolActivations,
                     };
+                    return vidisAngebot;
                 },
             );
 

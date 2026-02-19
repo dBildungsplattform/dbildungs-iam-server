@@ -32,7 +32,6 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
@@ -289,9 +288,7 @@ export class RolleController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError()),
             );
         }
-        return {
-            serviceProviderIds: rolle.serviceProviderIds,
-        };
+        return new RolleServiceProviderResponse(rolle.serviceProviderIds);
     }
 
     @Put(':rolleId/serviceProviders')
@@ -318,37 +315,19 @@ export class RolleController {
             );
         }
 
-        const result: void | DomainError = await rolle.updateServiceProviders(spBodyParams.serviceProviderIds);
-        if (result instanceof DomainError) {
+        const result: Result<ServiceProvider<true>[], DomainError> = await rolle.updateServiceProviders(
+            spBodyParams.serviceProviderIds,
+        );
+        if (!result.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
             );
         }
         rolle.setVersionForUpdate(spBodyParams.version);
         await this.rolleRepo.save(rolle);
 
-        const serviceProviderMap: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
-            spBodyParams.serviceProviderIds,
-        );
-
-        // Check if all provided IDs are in the map
-        const missingServiceProviderIds: string[] = spBodyParams.serviceProviderIds.filter(
-            (id: string) => !serviceProviderMap.has(id),
-        );
-
-        if (missingServiceProviderIds.length > 0) {
-            // If some IDs are missing, throw an error with details about the missing IDs
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                new SchulConnexError({
-                    code: 500,
-                    subcode: '00',
-                    titel: 'Service-Provider nicht gefunden',
-                    beschreibung: `Die folgenden Service-Provider-IDs konnten nicht gefunden werden: ${missingServiceProviderIds.join(', ')}`,
-                }),
-            );
-        }
         // Convert the Map of service providers to an array of ServiceProviderResponse objects
-        const serviceProviderResponses: ServiceProviderResponse[] = Array.from(serviceProviderMap.values()).map(
+        const serviceProviderResponses: ServiceProviderResponse[] = result.value.map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );
 

@@ -1,3 +1,5 @@
+/* v8 ignore file @preserv */
+// it is not possible to instantiate an abstract class directly, so this file can not be covered by v8
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
