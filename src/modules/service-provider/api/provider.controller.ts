@@ -195,9 +195,7 @@ export class ProviderController {
 
         let filteredOrgaIds: string[] | undefined = permittedOrgas.all ? undefined : permittedOrgas.orgaIds;
         if (queryParams.organisationId) {
-            filteredOrgaIds = Array.isArray(filteredOrgaIds)
-                ? [...filteredOrgaIds, queryParams.organisationId]
-                : [queryParams.organisationId];
+            filteredOrgaIds = [queryParams.organisationId];
         }
 
         const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
