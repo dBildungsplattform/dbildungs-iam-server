@@ -249,8 +249,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -530,8 +529,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"  
           ]
         },
         "service_provider_system_enum": {
@@ -805,8 +803,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -1157,8 +1154,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"      
           ]
         },
         "service_provider_system_enum": {
@@ -1477,8 +1473,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"      
           ]
         },
         "service_provider_system_enum": {
@@ -1762,8 +1757,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -2064,8 +2058,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"     
           ]
         },
         "service_provider_system_enum": {
@@ -2481,8 +2474,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -2775,8 +2767,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -3224,8 +3215,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"    
           ]
         },
         "service_provider_system_enum": {
@@ -3572,8 +3562,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -3856,8 +3845,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -4179,8 +4167,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -4649,8 +4636,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -5039,8 +5025,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -5408,8 +5393,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -5693,8 +5677,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"           
           ]
         },
         "service_provider_system_enum": {
@@ -5994,8 +5977,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"            
           ]
         },
         "service_provider_system_enum": {
@@ -6103,8 +6085,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"           
           ],
           "mappedType": "enum"
         },
@@ -6390,8 +6371,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"           
           ]
         },
         "service_provider_system_enum": {
@@ -6672,8 +6652,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"   
           ]
         },
         "service_provider_system_enum": {
@@ -7048,8 +7027,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"    
           ]
         },
         "service_provider_system_enum": {
@@ -7330,8 +7308,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"        
           ]
         },
         "service_provider_system_enum": {
@@ -7615,8 +7592,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -7944,8 +7920,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE",
-            "ANGEBOTE"
+            "HINWEISE"          
           ]
         },
         "service_provider_system_enum": {
@@ -8164,8 +8139,7 @@
         "UNTERRICHT",
         "VERWALTUNG",
         "SCHULISCH",
-        "HINWEISE",
-        "ANGEBOTE"
+        "HINWEISE"
       ]
     },
     "service_provider_system_enum": {

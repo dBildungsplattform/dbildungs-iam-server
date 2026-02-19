@@ -705,7 +705,7 @@ describe('EmailEventHandler', () => {
         describe('when LdapSyncFailedEvent is received but no PK references role with reference to SP Email', () => {
             it('should log warning', async () => {
                 sp = DoFactory.createServiceProvider<true>(true, {
-                    kategorie: ServiceProviderKategorie.ANGEBOTE, //mock that no EMAIL SP can be found
+                    kategorie: ServiceProviderKategorie.HINWEISE, //mock that no EMAIL SP can be found
                 });
                 spMap = new Map<string, ServiceProvider<true>>();
                 spMap.set(sp.id, sp);
