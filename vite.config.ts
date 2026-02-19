@@ -33,10 +33,10 @@ export default defineConfig({
                 'vite.config.ts',
             ],
             thresholds: {
-                statements: 99.95,
+                statements: 99.97,
                 branches: 97.6,
                 functions: 100,
-                lines: 99.95,
+                lines: 99.97,
             },
         },
         projects: [

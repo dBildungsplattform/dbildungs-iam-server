@@ -95,6 +95,7 @@ describe('PersonRepository Integration', () => {
     let userLockRepository: UserLockRepository;
     let organisationRepository: OrganisationRepository;
     let serviceProviderRepository: ServiceProviderRepo;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -147,7 +148,7 @@ describe('PersonRepository Integration', () => {
         organisationRepository = module.get(OrganisationRepository);
         serviceProviderRepository = module.get(ServiceProviderRepo);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
-
+        loggerMock = module.get(ClassLogger);
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
@@ -2288,6 +2289,52 @@ describe('PersonRepository Integration', () => {
                         oxUserId: oxUserId,
                     }),
                 );
+            });
+
+            it('should log error, because person has no username', async () => {
+                const person1: Person<true> = DoFactory.createPerson(true);
+                person1.username = '';
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
+
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId!,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                    },
+                });
+
+                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+                const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
+                    person1.id,
+                    personPermissionsMock,
+                );
+
+                if (!personGetAllowed.ok) {
+                    throw new EntityNotFoundError('Person', person1.id);
+                }
+
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
+                    personGetAllowed.value.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
+                expect(result.ok).toBeTruthy();
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    expect.stringContaining(
+                        `Failure during creation of PersonDeletedAfterDeadlineExceededEvent, username UNDEFINED, personId:${person1.id}`,
+                    ),
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledOnce();
             });
 
             it('should not delete the person because of unsufficient permissions to find the person', async () => {
