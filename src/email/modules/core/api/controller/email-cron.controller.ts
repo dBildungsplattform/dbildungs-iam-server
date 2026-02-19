@@ -8,7 +8,7 @@ import { CronDeleteEmailsAddressesService } from '../../domain/cron-delete-email
 @ApiTags('email')
 @Controller({ path: 'cron' })
 @UseFilters(new EmailExceptionFilter())
-export class EmailWriteController {
+export class EmailCronController {
     public constructor(private readonly cronDeleteEmailsAddressesService: CronDeleteEmailsAddressesService) {}
 
     @Delete('delete')

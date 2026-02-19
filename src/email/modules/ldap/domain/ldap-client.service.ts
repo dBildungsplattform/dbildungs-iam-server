@@ -374,6 +374,8 @@ export class LdapClientService {
                 return bindResult;
             }
 
+            const personDn: string = this.getPersonUid(personUid, rootName.value);
+
             const changes: Change[] = [
                 new Change({
                     operation: 'replace',
@@ -393,7 +395,7 @@ export class LdapClientService {
             ];
 
             try {
-                await client.modify(personUid, changes);
+                await client.modify(personDn, changes);
                 this.logger.info(`LDAP: Modify person succeeded, uid:${personUid}, `);
                 this.logger.infoWithDetails('LDAP: Modify person succeeded', {
                     uid: personUid,

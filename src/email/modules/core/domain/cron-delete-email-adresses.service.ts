@@ -107,11 +107,13 @@ export class CronDeleteEmailsAddressesService {
             if (!changeResult.ok) {
                 this.logger.logUnknownAsError(`Could not update in ox`, changeResult.error);
                 isCanDeletePrio1FromDb = false;
+            } else {
+                this.logger.info(`Successfully updated userdata in ox for person ${spshPersonId}`);
             }
         } else {
             isCanDeletePrio1FromDb = false;
             this.logger.error(
-                `No oxUserCounter found for spshPerson ${spshPersonId} when deleting email addresses. Skipping Ox alias changes`,
+                `No oxUserCounter found for spshPerson ${spshPersonId} when deleting email addresses. Skipping Ox update`,
             );
         }
 
@@ -126,6 +128,8 @@ export class CronDeleteEmailsAddressesService {
             if (!changeResult.ok) {
                 this.logger.logUnknownAsError(`Could not update in ldap`, changeResult.error);
                 isCanDeletePrio1FromDb = false;
+            } else {
+                this.logger.info(`Successfully updated userdata in ldap for person ${spshPersonId}`);
             }
         } else {
             isCanDeletePrio1FromDb = false;
