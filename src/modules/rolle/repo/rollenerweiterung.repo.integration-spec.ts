@@ -175,6 +175,28 @@ describe('RollenerweiterungRepo', () => {
             expect(result).toBeInstanceOf(Map);
             expect(result.size).toBe(0);
         });
+
+        it('should return only rollenerweiterungen for the given organisationId', async () => {
+            const ids: string[] = [serviceProviders[0]!.id, serviceProviders[1]!.id, serviceProviders[2]!.id];
+
+            const result: Map<ServiceProviderID, Rollenerweiterung<true>[]> = await sut.findByServiceProviderIds(
+                ids,
+                organisations[0]!.id,
+            );
+
+            expect(result).toBeInstanceOf(Map);
+            expect(result.size).toBe(3);
+
+            // organisations[0] has rollenerweiterungen for sp[0] (x2 roles) but none for sp[1] or sp[2]
+            expect(result.get(serviceProviders[0]!.id)).toHaveLength(2);
+            expect(result.get(serviceProviders[1]!.id)).toHaveLength(0);
+            expect(result.get(serviceProviders[2]!.id)).toHaveLength(0);
+
+            for (const re of result.get(serviceProviders[0]!.id)!) {
+                expect(re.serviceProviderId).toBe(serviceProviders[0]!.id);
+                expect(re.organisationId).toBe(organisations[0]!.id);
+            }
+        });
     });
 
     describe('findManyByOrganisationIdAndServiceProviderId', () => {
