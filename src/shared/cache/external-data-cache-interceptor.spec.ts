@@ -48,7 +48,7 @@ describe('ExternalDataCacheInterceptor', () => {
             } as unknown as ExecutionContext;
 
             const key: string | undefined = sut.trackBy(ctx);
-            const expectedHash: string = crypto.createHash('sha1').update(JSON.stringify(body)).digest('hex');
+            const expectedHash: string = crypto.createHash('sha256').update(JSON.stringify(body)).digest('hex');
 
             expect(key).toBe(`kc-externaldata:${expectedHash}`);
         });
@@ -61,7 +61,7 @@ describe('ExternalDataCacheInterceptor', () => {
             } as unknown as ExecutionContext;
 
             const key: string | undefined = sut.trackBy(ctx);
-            const expectedHash: string = crypto.createHash('sha1').update(JSON.stringify({})).digest('hex');
+            const expectedHash: string = crypto.createHash('sha256').update(JSON.stringify({})).digest('hex');
 
             expect(key).toBe(`kc-externaldata:${expectedHash}`);
         });

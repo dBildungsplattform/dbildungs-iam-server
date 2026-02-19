@@ -19,7 +19,7 @@ export class ExternalDataCacheInterceptor implements NestInterceptor {
         const req: Request = context.switchToHttp().getRequest();
 
         const bodyHash: string = crypto
-            .createHash('sha1')
+            .createHash('sha256')
             .update(JSON.stringify(req.body ?? {}))
             .digest('hex');
 
