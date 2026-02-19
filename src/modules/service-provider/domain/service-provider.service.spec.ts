@@ -516,7 +516,7 @@ describe('ServiceProviderService', () => {
 
             expect(serviceProviderRepo.findById).toHaveBeenCalledWith(serviceProvider.id);
             expect(result?.serviceProvider).toEqual(serviceProvider);
-            expect(serviceProviderRepo.findByIdAuthorized).not.toHaveBeenCalled();
+            expect(serviceProviderRepo.findByIdForOrganisationIds).not.toHaveBeenCalled();
         });
 
         it('returns service provider via authorized query when user has limited permissions', async () => {
@@ -532,7 +532,7 @@ describe('ServiceProviderService', () => {
             organisationRepo.findByIds.mockResolvedValue(
                 new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
             );
-            serviceProviderRepo.findByIdAuthorized.mockResolvedValue(serviceProvider);
+            serviceProviderRepo.findByIdForOrganisationIds.mockResolvedValue(serviceProvider);
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolle.id, rolle]]));
             rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProvider.id, [rolle]]]));
             rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
@@ -545,7 +545,7 @@ describe('ServiceProviderService', () => {
             );
 
             expect(organisationRepo.findParentOrgasForIds).toHaveBeenCalledWith([organisation.id]);
-            expect(serviceProviderRepo.findByIdAuthorized).toHaveBeenCalledWith(serviceProvider.id, [
+            expect(serviceProviderRepo.findByIdForOrganisationIds).toHaveBeenCalledWith(serviceProvider.id, [
                 organisation.id,
                 parent.id,
             ]);
@@ -575,7 +575,7 @@ describe('ServiceProviderService', () => {
 
             organisationRepo.findParentOrgasForIds.mockResolvedValue([]);
 
-            serviceProviderRepo.findByIdAuthorized.mockResolvedValue(null);
+            serviceProviderRepo.findByIdForOrganisationIds.mockResolvedValue(null);
 
             const result: Option<ManageableServiceProviderWithReferencedObjects> = await service.findManageableById(
                 permissions,
