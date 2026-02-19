@@ -32,7 +32,6 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
