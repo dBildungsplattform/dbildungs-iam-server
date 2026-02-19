@@ -31,7 +31,6 @@ export class ServiceProviderEntity extends TimestampedEntity {
             ServiceProviderKategorie.VERWALTUNG,
             ServiceProviderKategorie.SCHULISCH,
             ServiceProviderKategorie.HINWEISE,
-            ServiceProviderKategorie.ANGEBOTE,
         ],
     })
     public kategorie!: ServiceProviderKategorie;

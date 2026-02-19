@@ -240,14 +240,9 @@ Since a usecase only contains orchestration, its tests should be decoupled from 
 <!-- -->
 > Use Spies to verify necessary steps, such as authorization checks.
 
-### Controller/API - Contract Tests
+### Controller/API
 
-<!-- TODO -->
-Currently, controllers are covered only by unit tests. But in the near future, the following will apply:
-
-Controllers will be tested with contract tests based on [pact.js](https://docs.pact.io/implementation_guides/javascript/readme). These are mandatory for every endpoint because the main deliverable that other projects can use is the API provided by dBildungsIAM.
-
-// TODO -> Contract tests should be located in the folder `?` and  named `*.?.ts`.
+Controllers are checked by unit tests and integration tests. Integration tests are recommended but not mandatory.
 
 The job of API tests is to make sure all components that interact to fulfill a specific API endpoint are wired up correctly, and fulfil the expectation set up in the documentation.
 
