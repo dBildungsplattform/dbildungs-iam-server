@@ -29,14 +29,14 @@ EW-XXX-kebab-case-short-description
 
 ```text
 EW-123 - add person endpoint (#3532)
- 
+
 In order to make sure developers in the future can find out why changes have been made,
 we would like some descriptive text here that explains what we did and why.
- 
+
 - change some important things
 - change some other things
 - refactor some existing things
- 
+
 # I dont need to mention tests, changes that didnt make it to main, linter, or other fixups
 # only leave lines that are relevant changes compared to main
 # comments like this will not actually show up in the git history
