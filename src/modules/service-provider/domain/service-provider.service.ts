@@ -115,7 +115,7 @@ export class ServiceProviderService {
             const parentOrgaIds: OrganisationID[] = parents.map((orga: Organisation<true>) => orga.id);
             const organisationWithParentsIds: OrganisationID[] = permittedOrgas.orgaIds.concat(parentOrgaIds);
 
-            serviceProvider = await this.serviceProviderRepo.findByIdAuthorized(id, organisationWithParentsIds);
+            serviceProvider = await this.serviceProviderRepo.findByIdForOrganisationIds(id, organisationWithParentsIds);
         }
 
         if (!serviceProvider) {

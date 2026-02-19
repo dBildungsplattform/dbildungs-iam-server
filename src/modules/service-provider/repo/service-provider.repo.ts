@@ -186,7 +186,7 @@ export class ServiceProviderRepo {
         return [serviceProviders, count];
     }
 
-    public async findByIdAuthorized(
+    public async findByIdForOrganisationIds(
         id: ServiceProviderID,
         organisationIds: OrganisationID[],
     ): Promise<Option<ServiceProvider<true>>> {

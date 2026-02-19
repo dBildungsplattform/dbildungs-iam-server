@@ -301,7 +301,7 @@ describe('ServiceProviderRepo', () => {
         });
 
         it('should return the service provider when administriert at organisation', async () => {
-            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(serviceProvider.id, [
+            const result: Option<ServiceProvider<true>> = await sut.findByIdForOrganisationIds(serviceProvider.id, [
                 organisationA.id,
             ]);
 
@@ -312,7 +312,7 @@ describe('ServiceProviderRepo', () => {
         });
 
         it('should return null when the ID exists but organisationIds do not include the provider’s org', async () => {
-            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(serviceProvider.id, [
+            const result: Option<ServiceProvider<true>> = await sut.findByIdForOrganisationIds(serviceProvider.id, [
                 organisationB.id,
             ]);
 
@@ -320,7 +320,7 @@ describe('ServiceProviderRepo', () => {
         });
 
         it('should return null when the service provider does not exist', async () => {
-            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(faker.string.uuid(), [
+            const result: Option<ServiceProvider<true>> = await sut.findByIdForOrganisationIds(faker.string.uuid(), [
                 organisationA.id,
             ]);
 
@@ -328,13 +328,13 @@ describe('ServiceProviderRepo', () => {
         });
 
         it('should return null when organisationIds list is empty', async () => {
-            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(serviceProvider.id, []);
+            const result: Option<ServiceProvider<true>> = await sut.findByIdForOrganisationIds(serviceProvider.id, []);
 
             expect(result).toBeNull();
         });
 
         it('should return the provider when multiple organisationIds are passed and one matches', async () => {
-            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(serviceProvider.id, [
+            const result: Option<ServiceProvider<true>> = await sut.findByIdForOrganisationIds(serviceProvider.id, [
                 organisationB.id,
                 organisationA.id,
             ]);

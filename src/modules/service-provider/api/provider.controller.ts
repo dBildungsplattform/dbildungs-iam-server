@@ -33,10 +33,7 @@ import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/p
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
-import {
-    ManageableServiceProviderWithReferencedObjects,
-    RollenerweiterungForManageableServiceProvider,
-} from '../domain/types.js';
+import { ManageableServiceProviderWithReferencedObjects } from '../domain/types.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
@@ -60,8 +57,6 @@ import { MissingPermissionsError } from '../../../shared/error/index.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProviderSystem } from '../domain/service-provider.enum.js';
-import { RollenerweiterungForManageableServiceProviderResponse } from './RollenerweiterungForManageableServiceProviderResponse.js';
-
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
 @ApiOAuth2(['openid'])
@@ -263,12 +258,7 @@ export class ProviderController {
                         spWithData.serviceProvider,
                         spWithData.organisation,
                         spWithData.rollen,
-                        (spWithData.rollenerweiterungenWithName ?? []).map(
-                            (re: RollenerweiterungForManageableServiceProvider) =>
-                                RollenerweiterungForManageableServiceProviderResponse.fromRollenerweiterungForManageableServiceProvider(
-                                    re,
-                                ),
-                        ),
+                        spWithData.rollenerweiterungenWithName ?? [],
                     ),
             ),
         });
@@ -320,12 +310,7 @@ export class ProviderController {
                         spWithData.serviceProvider,
                         spWithData.organisation,
                         spWithData.rollen,
-                        (spWithData.rollenerweiterungenWithName ?? []).map(
-                            (re: RollenerweiterungForManageableServiceProvider) =>
-                                RollenerweiterungForManageableServiceProviderResponse.fromRollenerweiterungForManageableServiceProvider(
-                                    re,
-                                ),
-                        ),
+                        spWithData.rollenerweiterungenWithName ?? [],
                     ),
             ),
         });
