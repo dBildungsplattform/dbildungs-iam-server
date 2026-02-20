@@ -10,6 +10,8 @@ import { EmailOxModule } from '../ox/email-ox.module.js';
 import { EmailLdapModule } from '../ldap/email-ldap.module.js';
 import { DeleteEmailsAddressesForSpshPersonService } from './domain/delete-email-adresses-for-spsh-person.service.js';
 import { SetEmailSuspendedService } from './domain/set-email-suspended.service.js';
+import { EmailCronController } from './api/controller/email-cron.controller.js';
+import { CronDeleteEmailsAddressesService } from './domain/cron-delete-email-adresses.service.js';
 
 @Module({
     imports: [LoggerModule.register(EmailCoreModule.name), EmailOxModule, EmailLdapModule],
@@ -20,8 +22,9 @@ import { SetEmailSuspendedService } from './domain/set-email-suspended.service.j
         EmailAddressRepo,
         EmailDomainRepo,
         EmailAddressGenerator,
+        CronDeleteEmailsAddressesService,
     ],
     exports: [EmailAddressRepo, EmailDomainRepo],
-    controllers: [EmailReadController, EmailWriteController],
+    controllers: [EmailReadController, EmailWriteController, EmailCronController],
 })
 export class EmailCoreModule {}

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Attribute, Change, Client, SearchResult } from 'ldapts';
+import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
 import { LdapPersonEntry } from './ldap.types.js';
 import { LdapClient } from './ldap-client.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
@@ -103,6 +103,22 @@ export class LdapClientService {
             () => this.updatePersonInternal(person, domain, primaryMail, alternativeEmail),
             this.getNrOfRetries(),
         );
+    }
+
+    public async updatePersonEmails(
+        personUid: string,
+        domain: string,
+        primaryMail: string,
+        alternativeEmail: string | undefined,
+    ): Promise<Result<string>> {
+        return this.executeWithRetry(
+            () => this.updatePersonEmailsInternal(personUid, domain, primaryMail, alternativeEmail),
+            this.getNrOfRetries(),
+        );
+    }
+
+    public async getPersonAttributes(personUid: string): Promise<Result<LdapPersonAttributes>> {
+        return this.executeWithRetry(() => this.getPersonAttributesInternal(personUid), this.getNrOfRetries());
     }
 
     public async isPersonExisting(uid: string, domain: string): Promise<Result<boolean>> {
@@ -339,6 +355,60 @@ export class LdapClientService {
         });
     }
 
+    private async updatePersonEmailsInternal(
+        personUid: string,
+        domain: string,
+        primaryMail: string,
+        alternativeEmail: string | undefined,
+    ): Promise<Result<string>> {
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) {
+            return rootName;
+        }
+
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: updatePerson');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) {
+                return bindResult;
+            }
+
+            const personDn: string = this.getPersonUid(personUid, rootName.value);
+
+            const changes: Change[] = [
+                new Change({
+                    operation: 'replace',
+                    modification: new Attribute({
+                        type: LdapClientService.MAIL_PRIMARY_ADDRESS,
+                        values: [primaryMail],
+                    }),
+                }),
+
+                new Change({
+                    operation: 'replace',
+                    modification: new Attribute({
+                        type: LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                        values: [alternativeEmail].filter(Boolean),
+                    }),
+                }),
+            ];
+
+            try {
+                await client.modify(personDn, changes);
+                this.logger.info(`LDAP: Modify person succeeded, uid:${personUid}, `);
+                this.logger.infoWithDetails('LDAP: Modify person succeeded', {
+                    uid: personUid,
+                });
+                return { ok: true, value: personUid };
+            } catch (err) {
+                this.logger.logUnknownAsError(`LDAP: Modify person FAILED, uid:${personUid}`, err);
+
+                return { ok: false, error: new LdapModifyPersonError() };
+            }
+        });
+    }
+
     private async isPersonExistingInternal(uid: string, domain: string): Promise<Result<boolean>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
         if (!rootName.ok) {
@@ -364,6 +434,98 @@ export class LdapClientService {
             }
             return { ok: true, value: false };
         });
+    }
+
+    private async getPersonAttributesInternal(uid: string): Promise<Result<LdapPersonAttributes>> {
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: getPersonAttributes');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) {
+                return bindResult;
+            }
+
+            const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
+                scope: 'sub',
+                filter: `(uid=${uid})`,
+                attributes: [
+                    LdapClientService.DN,
+                    LdapClientService.UID,
+                    LdapClientService.GIVEN_NAME,
+                    LdapClientService.SUR_NAME,
+                    LdapClientService.COMMON_NAME,
+                    LdapClientService.MAIL_PRIMARY_ADDRESS,
+                    LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                ],
+                returnAttributeValues: true,
+            });
+            if (!searchResult.searchEntries[0]) {
+                this.logger.error(`Fetching person-attributes FAILED, no entry for uid:${uid}`);
+                return {
+                    ok: false,
+                    error: new Error(''),
+                };
+            }
+
+            const givenName: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.GIVEN_NAME,
+            );
+            if (!givenName.ok) {
+                this.logger.warning(`GivenName was undefined, uid:${uid}`);
+            }
+            const surName: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.SUR_NAME,
+            );
+            if (!surName.ok) {
+                this.logger.warning(`Surname was undefined, uid:${uid}`);
+            }
+            const cn: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.COMMON_NAME,
+            );
+            if (!cn.ok) {
+                this.logger.warning(`CN was undefined, uid:${uid}`);
+            }
+            const mailPrimaryAddress: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.MAIL_PRIMARY_ADDRESS,
+            );
+            if (!mailPrimaryAddress.ok) {
+                this.logger.warning(`MailPrimaryAddress was undefined, uid:${uid}`);
+            }
+            const mailAlternativeAddress: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+            );
+
+            const personAttributes: LdapPersonAttributes = {
+                dn: searchResult.searchEntries[0].dn,
+                givenName: givenName.ok ? givenName.value : undefined,
+                cn: cn.ok ? cn.value : undefined,
+                surName: surName.ok ? surName.value : undefined,
+                mailPrimaryAddress: mailPrimaryAddress.ok ? mailPrimaryAddress.value : undefined,
+                mailAlternativeAddress: mailAlternativeAddress.ok ? mailAlternativeAddress.value : undefined,
+            };
+
+            return { ok: true, value: personAttributes };
+        });
+    }
+
+    private getAttributeAsStringOrError(entry: Entry, attributeName: string): Result<string> {
+        const attributeValue: unknown = entry[attributeName];
+        if (typeof attributeValue === 'string') {
+            return {
+                ok: true,
+                value: attributeValue,
+            };
+        }
+
+        return {
+            ok: false,
+            error: new Error(''),
+        };
     }
 
     private async executeWithRetry<T>(
