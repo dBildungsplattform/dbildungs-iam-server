@@ -82,14 +82,38 @@ import KeyvRedis from '@keyv/redis';
             inject: [ConfigService],
             useFactory: (config: ConfigService) => {
                 const redis: RedisConfig = config.getOrThrow<RedisConfig>('REDIS');
-                const auth: string = `${encodeURIComponent(redis.USERNAME)}:${encodeURIComponent(redis.PASSWORD)}@`;
-                const redisUrl: string = `redis://${auth}${redis.HOST}:${redis.PORT}`;
+
+                const hasAuth: boolean = Boolean(redis.USERNAME && redis.PASSWORD);
+
+                const protocol: string = redis.USE_TLS ? 'rediss' : 'redis';
+
+                const auth: string = hasAuth
+                    ? `${encodeURIComponent(redis.USERNAME)}:${encodeURIComponent(redis.PASSWORD)}@`
+                    : '';
+
+                const redisUrl: string = `${protocol}://${auth}${redis.HOST}:${redis.PORT}`;
                 const defaultTtlMs: number = 10_000;
-                const store: KeyvRedis<unknown> = new KeyvRedis(redisUrl);
+
+                const tlsOptions: object = redis.USE_TLS
+                    ? {
+                          tls: {
+                              host: redis.HOST,
+                              port: redis.PORT,
+                              tls: redis.USE_TLS,
+                              key: redis.PRIVATE_KEY,
+                              cert: redis.CERTIFICATE_AUTHORITIES,
+                          },
+                      }
+                    : {};
+
+                const store: KeyvRedis<unknown> = new KeyvRedis(redisUrl, {
+                    ...tlsOptions,
+                });
 
                 return {
                     stores: [store],
                     ttl: defaultTtlMs,
+                    namespace: 'application-cache',
                 };
             },
         }),

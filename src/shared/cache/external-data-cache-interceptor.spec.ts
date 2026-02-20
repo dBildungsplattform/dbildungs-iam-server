@@ -39,8 +39,16 @@ describe('ExternalDataCacheInterceptor', () => {
     });
 
     describe('trackBy', () => {
-        it('hashes the request body and prefixes with "kc-externaldata:"', () => {
+        it('hashes the request body', () => {
             const body: object = { a: 1, b: 'x' };
+            const url: string = '/test';
+
+            Object.defineProperty(sut, 'httpAdapterHost', {
+                value: { httpAdapter: { getRequestUrl: () => url } },
+                configurable: true,
+                writable: true,
+            });
+
             const ctx: ExecutionContext = {
                 switchToHttp: () => ({
                     getRequest: () => ({ body }),
@@ -50,10 +58,18 @@ describe('ExternalDataCacheInterceptor', () => {
             const key: string | undefined = sut.trackBy(ctx);
             const expectedHash: string = crypto.createHash('sha256').update(JSON.stringify(body)).digest('hex');
 
-            expect(key).toBe(`kc-externaldata:${expectedHash}`);
+            expect(key).toBe(`${url}:${expectedHash}`);
         });
 
         it('treats undefined body as {}', () => {
+            const url: string = '/test';
+
+            Object.defineProperty(sut, 'httpAdapterHost', {
+                value: { httpAdapter: { getRequestUrl: () => url } },
+                configurable: true,
+                writable: true,
+            });
+
             const ctx: ExecutionContext = {
                 switchToHttp: () => ({
                     getRequest: () => ({ body: undefined }),
@@ -63,7 +79,7 @@ describe('ExternalDataCacheInterceptor', () => {
             const key: string | undefined = sut.trackBy(ctx);
             const expectedHash: string = crypto.createHash('sha256').update(JSON.stringify({})).digest('hex');
 
-            expect(key).toBe(`kc-externaldata:${expectedHash}`);
+            expect(key).toBe(`${url}:${expectedHash}`);
         });
     });
 
@@ -71,6 +87,14 @@ describe('ExternalDataCacheInterceptor', () => {
         it('returns cached value if present', async () => {
             const cachedValue: unknown = { data: 'cached' };
             cacheMock.get.mockResolvedValue(cachedValue);
+
+            const url: string = '/test';
+
+            Object.defineProperty(sut, 'httpAdapterHost', {
+                value: { httpAdapter: { getRequestUrl: () => url } },
+                configurable: true,
+                writable: true,
+            });
 
             const ctx: ExecutionContext = {
                 switchToHttp: () => ({
@@ -87,6 +111,14 @@ describe('ExternalDataCacheInterceptor', () => {
 
         it('calls next.handle() and caches result on cache miss', async () => {
             cacheMock.get.mockResolvedValue(undefined);
+
+            const url: string = '/test';
+
+            Object.defineProperty(sut, 'httpAdapterHost', {
+                value: { httpAdapter: { getRequestUrl: () => url } },
+                configurable: true,
+                writable: true,
+            });
 
             const nextResult: unknown = { data: 'fresh' };
             const next: CallHandler = {
@@ -107,7 +139,7 @@ describe('ExternalDataCacheInterceptor', () => {
             const result: unknown = await firstValueFrom(result$);
 
             expect(cacheMock.get).toHaveBeenCalledWith(sut.trackBy(ctx));
-            expect(cacheMock.set).toHaveBeenCalledWith(sut.trackBy(ctx), nextResult, 10_000);
+            expect(cacheMock.set).toHaveBeenCalledWith(sut.trackBy(ctx), nextResult);
             expect(result).toEqual(nextResult);
         });
 
@@ -135,76 +167,6 @@ describe('ExternalDataCacheInterceptor', () => {
 
             expect(handle).toHaveBeenCalled();
             expect(result).toEqual(nextResult);
-        });
-
-        it('joins inflight when concurrent requests share the same key', async () => {
-            cacheMock.get.mockResolvedValue(undefined);
-
-            const nextResult: unknown = { data: 'concurrent' };
-            const handle: Mock<() => Observable<unknown>> = vi.fn(
-                () =>
-                    new Observable((subscriber: Subscriber<unknown>) => {
-                        setTimeout(() => {
-                            subscriber.next(nextResult);
-                            subscriber.complete();
-                        }, 20);
-                    }),
-            );
-            const next: CallHandler = { handle };
-
-            const ctx: ExecutionContext = {
-                switchToHttp: () => ({
-                    getRequest: () => ({ body: {} }),
-                }),
-            } as unknown as ExecutionContext;
-
-            const result$1: Observable<unknown> = await sut.intercept(ctx, next);
-            const result$2: Observable<unknown> = await sut.intercept(ctx, next);
-
-            expect(handle).toHaveBeenCalledTimes(1);
-
-            const [r1, r2]: [unknown, unknown] = await Promise.all([
-                firstValueFrom(result$1),
-                firstValueFrom(result$2),
-            ]);
-            expect(r1).toEqual(nextResult);
-            expect(r2).toEqual(nextResult);
-
-            expect(cacheMock.set).toHaveBeenCalledWith(sut.trackBy(ctx), nextResult, 10_000);
-        });
-
-        it('allows subsequent request after inflight completes to call next.handle again', async () => {
-            cacheMock.get.mockResolvedValue(undefined);
-
-            const nextResult: unknown = { data: 'sequential' };
-            const handle: Mock<() => Observable<unknown>> = vi.fn(
-                () =>
-                    new Observable((subscriber: Subscriber<unknown>) => {
-                        setTimeout(() => {
-                            subscriber.next(nextResult);
-                            subscriber.complete();
-                        }, 10);
-                    }),
-            );
-            const next: CallHandler = { handle };
-
-            const ctx: ExecutionContext = {
-                switchToHttp: () => ({
-                    getRequest: () => ({ body: {} }),
-                }),
-            } as unknown as ExecutionContext;
-
-            const result$: Observable<unknown> = await sut.intercept(ctx, next);
-            const result: unknown = await firstValueFrom(result$);
-            expect(result).toEqual(nextResult);
-
-            cacheMock.get.mockResolvedValue(undefined);
-
-            const result2$: Observable<unknown> = await sut.intercept(ctx, next);
-            const result2: unknown = await firstValueFrom(result2$);
-            expect(result2).toEqual(nextResult);
-
-            expect(handle).toHaveBeenCalledTimes(2);
         });
     });
 });

@@ -19,14 +19,7 @@ export class ExternalDataCacheInterceptor extends CacheInterceptor {
     public override trackBy(context: ExecutionContext): string | undefined {
         const request: Request = context.switchToHttp().getRequest();
         const httpAdapter: AbstractHttpAdapter | undefined = this.httpAdapterHost?.httpAdapter;
-
         if (!httpAdapter) {
-            return undefined;
-        }
-
-        const isPostRequest: boolean = httpAdapter.getRequestMethod(request) === 'POST';
-
-        if (!isPostRequest) {
             return undefined;
         }
 
@@ -36,7 +29,7 @@ export class ExternalDataCacheInterceptor extends CacheInterceptor {
             .update(JSON.stringify(request.body ?? {}))
             .digest('hex');
 
-        return `application-cache:${requestUrl}:${bodyHash}`;
+        return `${requestUrl}:${bodyHash}`;
     }
 
     public override async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
