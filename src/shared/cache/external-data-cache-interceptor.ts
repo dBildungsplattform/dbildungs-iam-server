@@ -12,7 +12,7 @@ export class ExternalDataCacheInterceptor implements NestInterceptor {
         @Inject(CACHE_MANAGER) private readonly cache: Cache,
         private readonly logger: ClassLogger,
     ) {
-        logger.debug('[ExternalDataCacheInterceptor] constructor');
+        logger.info('[ExternalDataCacheInterceptor] constructor');
     }
 
     public trackBy(context: ExecutionContext): string | undefined {
@@ -35,24 +35,24 @@ export class ExternalDataCacheInterceptor implements NestInterceptor {
 
         const cached: unknown = await this.cache.get(key);
         if (cached !== undefined) {
-            this.logger.debug('[CACHE HIT]', key);
+            this.logger.info('[CACHE HIT]', key);
             return of(cached);
         }
 
         const inflight: Promise<unknown> | undefined = this.inflight.get(key);
         if (inflight) {
-            this.logger.debug('[INFLIGHT JOIN]', key);
+            this.logger.info('[INFLIGHT JOIN]', key);
             return from(inflight);
         }
 
-        this.logger.debug('[CACHE MISS]', key);
+        this.logger.info('[CACHE MISS]', key);
 
         const promise: Promise<unknown> = firstValueFrom(next.handle());
 
         this.inflight.set(key, promise);
 
-        this.logger.debug('Cache key:', key);
-        this.logger.debug('Inflight keys:', this.inflight.size);
+        this.logger.info('Cache key:', key);
+        this.logger.info('Inflight keys:', this.inflight.size);
 
         void promise
             .then((value: unknown) => this.cache.set(key, value, 10_000))

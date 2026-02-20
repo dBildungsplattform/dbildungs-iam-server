@@ -43,6 +43,7 @@ import { LandesbediensteterModule } from '../modules/landesbediensteter/landesbe
 import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js';
 import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis from '@keyv/redis';
+import Keyv from 'keyv';
 
 @Module({
     imports: [
@@ -84,8 +85,18 @@ import KeyvRedis from '@keyv/redis';
                 const redis: RedisConfig = config.getOrThrow<RedisConfig>('REDIS');
                 const auth: string = `${encodeURIComponent(redis.USERNAME)}:${encodeURIComponent(redis.PASSWORD)}@`;
                 const redisUrl: string = `redis://${auth}${redis.HOST}:${redis.PORT}`;
+                const defaultTtlMs: number = 10_000;
+
+                const store: KeyvRedis<unknown> = new KeyvRedis(redisUrl);
+                const keyv: Keyv<unknown> = new Keyv<unknown>({
+                    store,
+                    namespace: 'application-cache',
+                    ttl: defaultTtlMs,
+                });
+
                 return {
-                    stores: [new KeyvRedis(redisUrl)],
+                    store: keyv,
+                    ttl: defaultTtlMs,
                 };
             },
         }),
