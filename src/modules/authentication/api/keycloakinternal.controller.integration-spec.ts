@@ -33,6 +33,8 @@ import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/respo
 import { Ok } from '../../../shared/util/result.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
+import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 function createLoadedReference<T extends object>(entity: T): LoadedReference<T> {
     const reference: Reference<T> = createMock<Reference<T>>(Reference);
@@ -65,7 +67,12 @@ describe('KeycloakInternalController', () => {
                 RolleModule,
                 EmailMicroserviceModule,
             ],
-            providers: [KeycloakInternalController, UserExternaldataWorkflowFactory],
+            providers: [
+                KeycloakInternalController,
+                UserExternaldataWorkflowFactory,
+                ExternalDataCacheInterceptor,
+                { provide: CACHE_MANAGER, useValue: { get: vi.fn(), set: vi.fn() } },
+            ],
         })
             .overrideProvider(PersonRepository)
             .useValue(createMock(PersonRepository))
@@ -73,6 +80,8 @@ describe('KeycloakInternalController', () => {
             .useValue(createMock(DBiamPersonenkontextRepo))
             .overrideProvider(EmailResolverService)
             .useValue(createMock(EmailResolverService))
+            .overrideProvider(ExternalDataCacheInterceptor)
+            .useValue(createMock(ExternalDataCacheInterceptor))
             .compile();
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));

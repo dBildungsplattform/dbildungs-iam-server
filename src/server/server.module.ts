@@ -41,6 +41,8 @@ import { MeldungModule } from '../modules/meldung/meldung.module.js';
 import { MapperModule } from '../modules/person/mapper/mapper.module.js';
 import { LandesbediensteterModule } from '../modules/landesbediensteter/landesbediensteter.module.js';
 import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js';
+import { CacheModule } from '@nestjs/cache-manager';
+import KeyvRedis from '@keyv/redis';
 
 @Module({
     imports: [
@@ -74,6 +76,46 @@ import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js'
             defaultStrategy: ['api-key', 'jwt', 'oidc'],
             keepSessionInfo: true,
             property: 'passportUser',
+        }),
+        CacheModule.registerAsync({
+            isGlobal: true,
+            inject: [ConfigService],
+            useFactory: (config: ConfigService) => {
+                const redis: RedisConfig = config.getOrThrow<RedisConfig>('REDIS');
+
+                const hasAuth: boolean = Boolean(redis.USERNAME && redis.PASSWORD);
+
+                const protocol: string = redis.USE_TLS ? 'rediss' : 'redis';
+
+                const auth: string = hasAuth
+                    ? `${encodeURIComponent(redis.USERNAME)}:${encodeURIComponent(redis.PASSWORD)}@`
+                    : '';
+
+                const redisUrl: string = `${protocol}://${auth}${redis.HOST}:${redis.PORT}`;
+                const defaultTtlMs: number = 10_000;
+
+                const tlsOptions: object = redis.USE_TLS
+                    ? {
+                          tls: {
+                              host: redis.HOST,
+                              port: redis.PORT,
+                              tls: redis.USE_TLS,
+                              key: redis.PRIVATE_KEY,
+                              cert: redis.CERTIFICATE_AUTHORITIES,
+                          },
+                      }
+                    : {};
+
+                const store: KeyvRedis<unknown> = new KeyvRedis(redisUrl, {
+                    ...tlsOptions,
+                });
+
+                return {
+                    stores: [store],
+                    ttl: defaultTtlMs,
+                    namespace: 'application-cache',
+                };
+            },
         }),
         LoggerModule.register(ServerModule.name),
         EventModule,

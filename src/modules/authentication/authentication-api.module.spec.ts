@@ -7,6 +7,7 @@ import { OIDC_CLIENT } from './services/oidc-client.service.js';
 import { AuthenticationApiModule } from './authentication-api.module.js';
 import { PersonModule } from '../person/person.module.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
+import { CACHE_MANAGER, CacheModule } from '@nestjs/cache-manager';
 
 describe('AuthenticationApiModule', () => {
     let module: TestingModule;
@@ -19,8 +20,9 @@ describe('AuthenticationApiModule', () => {
                 DatabaseTestModule.forRoot(),
                 PersonModule,
                 PersonenKontextModule,
+                CacheModule.register(),
             ],
-            providers: [],
+            providers: [{ provide: CACHE_MANAGER, useValue: { get: vi.fn(), set: vi.fn() } }],
         })
             .overrideProvider(OIDC_CLIENT)
             .useValue(
