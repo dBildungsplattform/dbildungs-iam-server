@@ -33,10 +33,7 @@ import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/p
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
-import {
-    ManageableServiceProviderWithReferencedObjects,
-    RollenerweiterungForManageableServiceProvider,
-} from '../domain/types.js';
+import { ManageableServiceProviderWithReferencedObjects } from '../domain/types.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
@@ -60,7 +57,6 @@ import { MissingPermissionsError } from '../../../shared/error/index.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProviderSystem } from '../domain/service-provider.enum.js';
-
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
 @ApiOAuth2(['openid'])
@@ -249,28 +245,20 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Query() params: ManageableServiceProvidersParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
-        const [serviceProviders, total]: Counted<ServiceProvider<true>> = await this.serviceProviderRepo.findAuthorized(
-            permissions,
-            params.limit,
-            params.offset,
-        );
-        const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects[] =
-            await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
-                serviceProviders,
-                1,
-            );
+        const [enrichedServiceProviders, total]: Counted<ManageableServiceProviderWithReferencedObjects> =
+            await this.serviceProviderService.findAuthorized(permissions, params.limit, params.offset);
 
         return new RawPagedResponse({
             offset: params.offset ?? 0,
             limit: params.limit ?? total,
             total,
-            items: serviceProvidersWithRollenAndErweiterungen.map(
+            items: enrichedServiceProviders.map(
                 (spWithData: ManageableServiceProviderWithReferencedObjects) =>
                     new ManageableServiceProviderListEntryResponse(
                         spWithData.serviceProvider,
                         spWithData.organisation,
                         spWithData.rollen,
-                        spWithData.rollenerweiterungen,
+                        spWithData.rollenerweiterungenWithName ?? [],
                     ),
             ),
         });
@@ -290,7 +278,7 @@ export class ProviderController {
         @Query() params: ManageableServiceProvidersForOrganisationParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
         const result: Result<
-            Counted<ServiceProvider<true>>,
+            Counted<ManageableServiceProviderWithReferencedObjects>,
             MissingPermissionsError
         > = await this.serviceProviderService.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
             params.organisationId,
@@ -302,19 +290,15 @@ export class ProviderController {
         if (!result.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Rollen Erweitern Systemrecht Required For This Endpoint'),
+                    new MissingPermissionsError('Rollen Erweitern Systemrecht required for this endpoint'),
                 ),
             );
         }
 
-        const serviceProviders: ServiceProvider<true>[] = result.value[0];
-        const total: number = result.value[1];
-
-        const serviceProvidersWithRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects[] =
-            await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
-                serviceProviders,
-                5,
-            );
+        const [serviceProvidersWithRollenAndErweiterungen, total]: [
+            ManageableServiceProviderWithReferencedObjects[],
+            number,
+        ] = result.value;
 
         return new RawPagedResponse({
             offset: params.offset ?? 0,
@@ -326,7 +310,7 @@ export class ProviderController {
                         spWithData.serviceProvider,
                         spWithData.organisation,
                         spWithData.rollen,
-                        spWithData.rollenerweiterungen,
+                        spWithData.rollenerweiterungenWithName ?? [],
                     ),
             ),
         });
@@ -345,11 +329,10 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Param() params: AngebotByIdParams,
     ): Promise<ManageableServiceProviderResponse> {
-        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderService.findManageableById(
-            permissions,
-            params.angebotId,
-        );
-        if (!serviceProvider) {
+        const serviceProviderWithOrganisationRollenAndErweiterungen: Option<ManageableServiceProviderWithReferencedObjects> =
+            await this.serviceProviderService.findManageableById(permissions, params.angebotId);
+
+        if (!serviceProviderWithOrganisationRollenAndErweiterungen) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new EntityNotFoundError('ServiceProvider', params.angebotId),
@@ -357,22 +340,11 @@ export class ProviderController {
             );
         }
 
-        const serviceProviderWithOrganisationRollenAndErweiterungen: ManageableServiceProviderWithReferencedObjects = (
-            await this.serviceProviderService.getOrganisationRollenAndRollenerweiterungenForServiceProviders([
-                serviceProvider,
-            ])
-        )[0]!;
-
-        const rollenerweiterungenWithNames: RollenerweiterungForManageableServiceProvider[] =
-            await this.serviceProviderService.getRollenerweiterungenForManageableServiceProvider(
-                serviceProviderWithOrganisationRollenAndErweiterungen.rollenerweiterungen,
-            );
-
         return new ManageableServiceProviderResponse(
             serviceProviderWithOrganisationRollenAndErweiterungen.serviceProvider,
             serviceProviderWithOrganisationRollenAndErweiterungen.organisation,
             serviceProviderWithOrganisationRollenAndErweiterungen.rollen,
-            rollenerweiterungenWithNames.length > 0,
+            serviceProviderWithOrganisationRollenAndErweiterungen.rollenerweiterungen.length > 0,
         );
     }
 
