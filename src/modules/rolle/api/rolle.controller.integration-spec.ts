@@ -611,6 +611,13 @@ describe('Rolle API', () => {
                 rolleRepo.save(
                     DoFactory.createRolle(false, {
                         istTechnisch: false,
+                        administeredBySchulstrukturknoten: traeger.id,
+                        rollenart: RollenArt.ORGADMIN,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
                         administeredBySchulstrukturknoten: schule.id,
                         rollenart: RollenArt.LERN,
                     }),

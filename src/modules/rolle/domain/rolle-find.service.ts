@@ -42,29 +42,31 @@ export class RolleFindService {
             return [[], 0];
         }
 
-        let organisationenIds: OrganisationID[] | undefined;
+        let permittedAndRequestedOrganisationenIds: OrganisationID[] | undefined;
         if (params.organisationIds && params.organisationIds.length > 0) {
-            organisationenIds = intersectPermittedAndRequestedOrgas(permittedOrgas, params.organisationIds);
+            permittedAndRequestedOrganisationenIds = intersectPermittedAndRequestedOrgas(permittedOrgas, params.organisationIds);
         } else if (permittedOrgas.all === false) {
-            organisationenIds = permittedOrgas.orgaIds;
+            permittedAndRequestedOrganisationenIds = permittedOrgas.orgaIds;
         }
-        if (organisationenIds !== undefined) {
-            organisationenIds = await this.getOrganisationIdsWithParents(organisationenIds);
-            if (organisationenIds.length === 0) {
+
+        let permittedAndRequestedOrganisationenIdsWithParents: OrganisationID[] | undefined;
+        if (permittedAndRequestedOrganisationenIds !== undefined) {
+            permittedAndRequestedOrganisationenIdsWithParents = await this.getOrganisationIdsWithParents(permittedAndRequestedOrganisationenIds);
+            if (permittedAndRequestedOrganisationenIdsWithParents.length === 0) {
                 return [[], 0];
             }
         }
 
         const queryParams: RolleFindByParameters = {
             searchStr: params.searchStr,
-            allowedOrganisationIds: organisationenIds,
+            allowedOrganisationIds: permittedAndRequestedOrganisationenIdsWithParents,
             limit: params.limit,
             offset: params.offset,
         };
 
-        if (organisationenIds !== undefined && organisationenIds.length > 0) {
+        if (permittedAndRequestedOrganisationenIds !== undefined && permittedAndRequestedOrganisationenIds.length > 0) {
             const organisationsTypen: OrganisationsTyp[] =
-                await this.organisationRepository.findDistinctOrganisationsTypen(organisationenIds);
+                await this.organisationRepository.findDistinctOrganisationsTypen(permittedAndRequestedOrganisationenIds);
             const rollenArtenForOrganisationsTypen: RollenArt[] =
                 this.mapOrganisationsTypenToRollenArten(organisationsTypen);
             queryParams.rollenArten = params.rollenArten
