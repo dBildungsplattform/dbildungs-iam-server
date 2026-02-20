@@ -253,7 +253,6 @@ describe('ServiceProviderRepo', () => {
                         ServiceProviderKategorie.VERWALTUNG,
                         ServiceProviderKategorie.HINWEISE,
                         ServiceProviderKategorie.EMAIL,
-                        ServiceProviderKategorie.ANGEBOTE,
                         ServiceProviderKategorie.UNTERRICHT,
                     ],
                     (kategorie: ServiceProviderKategorie) =>
@@ -272,7 +271,6 @@ describe('ServiceProviderRepo', () => {
                 ServiceProviderKategorie.UNTERRICHT,
                 ServiceProviderKategorie.VERWALTUNG,
                 ServiceProviderKategorie.HINWEISE,
-                ServiceProviderKategorie.ANGEBOTE,
             ].forEach((kategorie: ServiceProviderKategorie, index: number) => {
                 expect(serviceProviderResult[index]!.kategorie).toBe(kategorie);
             });
@@ -428,7 +426,6 @@ describe('ServiceProviderRepo', () => {
                     ServiceProviderKategorie.VERWALTUNG,
                     ServiceProviderKategorie.HINWEISE,
                     ServiceProviderKategorie.EMAIL,
-                    ServiceProviderKategorie.ANGEBOTE,
                     ServiceProviderKategorie.UNTERRICHT,
                 ].map((kategorie: ServiceProviderKategorie) =>
                     sut.save(
@@ -453,7 +450,6 @@ describe('ServiceProviderRepo', () => {
                 ServiceProviderKategorie.UNTERRICHT,
                 ServiceProviderKategorie.VERWALTUNG,
                 ServiceProviderKategorie.HINWEISE,
-                ServiceProviderKategorie.ANGEBOTE,
             ].forEach((kategorie: ServiceProviderKategorie, index: number) => {
                 expect(serviceProviderResult[index]!.kategorie).toBe(kategorie);
             });
