@@ -33,7 +33,11 @@ export class EmailResolverService {
     public async findEmailBySpshPerson(personId: string): Promise<Option<PersonEmailResponse>> {
         try {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
-                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`),
+                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`, {
+                    headers: {
+                        'x-api-key': this.getApiKey(),
+                    },
+                }),
             );
             if (response.data[0] !== undefined) {
                 const status: EmailAddressStatus = this.mapStatus(response.data[0]?.status);
@@ -51,7 +55,11 @@ export class EmailResolverService {
     ): Promise<Result<EmailAddressResponse | undefined, DomainError>> {
         try {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
-                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`),
+                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`, {
+                    headers: {
+                        'x-api-key': this.getApiKey(),
+                    },
+                }),
             );
             return Ok(response.data[0]);
         } catch (error) {
@@ -63,7 +71,11 @@ export class EmailResolverService {
     public async findByPrimaryAddress(emailAddress: string): Promise<Option<PersonIdWithEmailResponse>> {
         try {
             const response: AxiosResponse<Option<EmailAddressResponse>> = await lastValueFrom(
-                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/email/${emailAddress}`),
+                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/email/${emailAddress}`, {
+                    headers: {
+                        'x-api-key': this.getApiKey(),
+                    },
+                }),
             );
             if (
                 response.status === 200 &&
@@ -108,6 +120,11 @@ export class EmailResolverService {
                         lastName: params.lastName,
                         spshServiceProviderId: params.spshServiceProviderId,
                     } satisfies SetEmailAddressForSpshPersonBodyParams,
+                    {
+                        headers: {
+                            'x-api-key': this.getApiKey(),
+                        },
+                    },
                 ),
             );
         } catch (error) {
@@ -121,6 +138,11 @@ export class EmailResolverService {
             await lastValueFrom(
                 this.httpService.delete(
                     this.getEndpoint() + `${EmailResolverService.writePath}/${params.spshPersonId}/delete-emails`,
+                    {
+                        headers: {
+                            'x-api-key': this.getApiKey(),
+                        },
+                    },
                 ),
             );
         } catch (error) {
@@ -134,6 +156,11 @@ export class EmailResolverService {
             await lastValueFrom(
                 this.httpService.post(
                     this.getEndpoint() + `${EmailResolverService.writePath}/${params.spshPersonId}/set-suspended`,
+                    {
+                        headers: {
+                            'x-api-key': this.getApiKey(),
+                        },
+                    },
                 ),
             );
         } catch (error) {
@@ -153,6 +180,12 @@ export class EmailResolverService {
         const emailMicroserviceConfig: EmailMicroserviceConfig =
             this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
         return emailMicroserviceConfig.ENDPOINT;
+    }
+
+    private getApiKey(): string {
+        const emailMicroserviceConfig: EmailMicroserviceConfig =
+            this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
+        return emailMicroserviceConfig.API_KEY;
     }
 
     private mapStatus(ease: EmailAddressStatusEnum): EmailAddressStatus {

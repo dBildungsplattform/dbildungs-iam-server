@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseFilters } from '@nestjs/common';
+import { Controller, Get, Param, UseFilters, UseGuards } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiInternalServerErrorResponse,
@@ -20,12 +20,14 @@ import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
 import { EmailAddressMissingStatusError } from '../../error/email-address-missing-status.error.js';
 import { EmailAddress } from '../../domain/email-address.js';
 import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
+import { ApiKeyGuard } from '../../../../shared/auth/api-key.guard.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
 @Controller({ path: 'read' })
 @UseFilters(new EmailExceptionFilter())
+@UseGuards(ApiKeyGuard)
 export class EmailReadController {
     public constructor(
         private readonly logger: ClassLogger,

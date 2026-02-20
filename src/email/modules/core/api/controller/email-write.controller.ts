@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Post, UseFilters } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, UseFilters, UseGuards } from '@nestjs/common';
 import { ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { SetEmailAddressForSpshPersonBodyParams } from '../dtos/params/set-email-address-for-spsh-person.bodyparams.js';
@@ -11,10 +11,12 @@ import { DeleteEmailsAddressesForSpshPersonService } from '../../domain/delete-e
 import { SetEmailAddressForSpshPersonPathParams } from '../dtos/params/set-email-address-for-spsh-person.pathparams.js';
 import { SetEmailAddressesSuspendedPathParams } from '../dtos/params/set-email-addresses-suspended.pathparams.js';
 import { SetEmailSuspendedService } from '../../domain/set-email-suspended.service.js';
+import { ApiKeyGuard } from '../../../../shared/auth/api-key.guard.js';
 
 @ApiTags('email')
 @Controller({ path: 'write' })
 @UseFilters(new EmailExceptionFilter())
+@UseGuards(ApiKeyGuard)
 export class EmailWriteController {
     public constructor(
         private readonly setEmailAddressForSpshPersonService: SetEmailAddressForSpshPersonService,
