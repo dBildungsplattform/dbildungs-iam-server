@@ -1,32 +1,45 @@
-import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
-import { ExecutionContext, Injectable, CallHandler, NestInterceptor, Inject } from '@nestjs/common';
+import { CACHE_MANAGER, Cache, CacheInterceptor } from '@nestjs/cache-manager';
+import { ExecutionContext, Injectable, CallHandler, Inject } from '@nestjs/common';
 import { Observable, from, firstValueFrom, of } from 'rxjs';
 import * as crypto from 'crypto';
 import { ClassLogger } from '../../core/logging/class-logger.js';
+import { AbstractHttpAdapter, Reflector } from '@nestjs/core';
 
 @Injectable()
-export class ExternalDataCacheInterceptor implements NestInterceptor {
-    private inflight: Map<string, Promise<unknown>> = new Map<string, Promise<unknown>>();
-
+export class ExternalDataCacheInterceptor extends CacheInterceptor {
     public constructor(
         @Inject(CACHE_MANAGER) private readonly cache: Cache,
+        protected override readonly reflector: Reflector,
         private readonly logger: ClassLogger,
     ) {
+        super(cache, reflector);
         logger.info('[ExternalDataCacheInterceptor] constructor');
     }
 
-    public trackBy(context: ExecutionContext): string | undefined {
-        const req: Request = context.switchToHttp().getRequest();
+    public override trackBy(context: ExecutionContext): string | undefined {
+        const request: Request = context.switchToHttp().getRequest();
+        const httpAdapter: AbstractHttpAdapter | undefined = this.httpAdapterHost?.httpAdapter;
 
+        if (!httpAdapter) {
+            return undefined;
+        }
+
+        const isPostRequest: boolean = httpAdapter.getRequestMethod(request) === 'POST';
+
+        if (!isPostRequest) {
+            return undefined;
+        }
+
+        const requestUrl: string = httpAdapter.getRequestUrl(request);
         const bodyHash: string = crypto
             .createHash('sha256')
-            .update(JSON.stringify(req.body ?? {}))
+            .update(JSON.stringify(request.body ?? {}))
             .digest('hex');
 
-        return `kc-externaldata:${bodyHash}`;
+        return `application-cache:${requestUrl}:${bodyHash}`;
     }
 
-    public async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
+    public override async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
         const key: string | undefined = this.trackBy(context);
 
         if (!key) {
@@ -39,24 +52,13 @@ export class ExternalDataCacheInterceptor implements NestInterceptor {
             return of(cached);
         }
 
-        const inflight: Promise<unknown> | undefined = this.inflight.get(key);
-        if (inflight) {
-            this.logger.info('[INFLIGHT JOIN]', key);
-            return from(inflight);
-        }
-
         this.logger.info('[CACHE MISS]', key);
 
         const promise: Promise<unknown> = firstValueFrom(next.handle());
 
-        this.inflight.set(key, promise);
-
         this.logger.info('Cache key:', key);
-        this.logger.info('Inflight keys:', this.inflight.size);
 
-        void promise
-            .then((value: unknown) => this.cache.set(key, value, 10_000))
-            .finally(() => this.inflight.delete(key)); // 10 seconds TTL
+        void promise.then((value: unknown) => this.cache.set(key, value));
 
         return from(promise);
     }
