@@ -39,7 +39,7 @@ export async function findAllowedRollen({
 
     const rollen: Rolle<true>[] = rolleName
         ? await rolleRepo.findByName(rolleName, false, undefined, undefined, allowedRollenArten)
-        : await rolleRepo.find(false, undefined, undefined, allowedRollenArten);
+        : await rolleRepo.findByRollenArten(false, undefined, undefined, allowedRollenArten);
 
     const allowedRollen: Rolle<true>[] = (
         await Promise.all(

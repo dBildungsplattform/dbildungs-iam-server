@@ -1,13 +1,16 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityAlreadyExistsError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { NameValidator } from '../../../shared/validation/name-validator.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { RollenArt, RollenMerkmal } from './rolle.enums.js';
-import { RollenSystemRecht } from './systemrecht.js';
-import { EntityAlreadyExistsError, EntityNotFoundError } from '../../../shared/error/index.js';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { NameForRolleWithTrailingSpaceError } from './name-with-trailing-space.error.js';
+import { RollenArt, RollenMerkmal } from './rolle.enums.js';
+import { OrganisationMatchesRollenartError } from './specification/error/organisation-matches-rollenart.error.js';
+import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
+import { RollenSystemRecht } from './systemrecht.js';
 
 export class Rolle<WasPersisted extends boolean> {
     private constructor(
@@ -147,11 +150,27 @@ export class Rolle<WasPersisted extends boolean> {
         );
     }
 
-    public async canBeAssignedToOrga(orgaId: OrganisationID): Promise<boolean> {
-        if (orgaId === this.administeredBySchulstrukturknoten) {
-            return true;
+    public async canBeAssignedToOrga(
+        orga: Organisation<true>,
+    ): Promise<Result<void, EntityNotFoundError | OrganisationMatchesRollenartError>> {
+        let isCorrectNodeOrSubtree: boolean;
+        if (orga.id === this.administeredBySchulstrukturknoten) {
+            isCorrectNodeOrSubtree = true;
+        } else {
+            isCorrectNodeOrSubtree = await this.organisationRepo.isOrgaAParentOfOrgaB(
+                this.administeredBySchulstrukturknoten,
+                orga.id,
+            );
         }
-        return this.organisationRepo.isOrgaAParentOfOrgaB(this.administeredBySchulstrukturknoten, orgaId);
+        if (!isCorrectNodeOrSubtree) {
+            return Err(new EntityNotFoundError('Rolle', this.id ?? 'undefined')); // Rolle does not exist for the chosen organisation
+        }
+        const rollenartMatchesOrganisation: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
+        const doesRollenartMatchOrga: boolean = rollenartMatchesOrganisation.isSatisfiedBy(orga, this);
+        if (!doesRollenartMatchOrga) {
+            return Err(new OrganisationMatchesRollenartError());
+        }
+        return Ok(undefined);
     }
 
     public addMerkmal(merkmal: RollenMerkmal): void {

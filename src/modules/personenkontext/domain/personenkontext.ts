@@ -6,11 +6,10 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { OrganisationMatchesRollenartError } from '../../rolle/domain/specification/error/organisation-matches-rollenart.error.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
-import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from './personenkontext.enums.js';
 
 export type PersonenkontextPartial = Pick<
@@ -151,15 +150,10 @@ export class Personenkontext<WasPersisted extends boolean> {
         }
 
         // Can rolle be assigned at target orga
-        const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(this.organisationId);
-        if (!canAssignRolle) {
-            return new EntityNotFoundError('rolle', this.rolleId); // Rolle does not exist for the chosen organisation
-        }
-
-        //The aimed organisation needs to match the type of role to be assigned
-        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        if (!organisationMatchesRollenart.isSatisfiedBy(orga, rolle)) {
-            return new OrganisationMatchesRollenartError({});
+        const canAssignRolle: Result<void, EntityNotFoundError | OrganisationMatchesRollenartError> =
+            await rolle.canBeAssignedToOrga(orga);
+        if (!canAssignRolle.ok) {
+            return canAssignRolle.error;
         }
 
         return undefined;

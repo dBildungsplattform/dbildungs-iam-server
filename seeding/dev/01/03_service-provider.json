@@ -270,7 +270,7 @@
             "keycloakRole": "Hubbs-user",
             "requires2fa": false,
             "vidis_angebot_id": "hubbs-placeholder",
-            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR", "VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
         }
     ]
 }

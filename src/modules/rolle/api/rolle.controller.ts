@@ -37,6 +37,7 @@ import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulcon
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { Public } from '../../authentication/api/public.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -47,10 +48,12 @@ import { ServiceProviderResponse } from '../../service-provider/api/service-prov
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleDomainError } from '../domain/rolle-domain.error.js';
+import { RolleFindService } from '../domain/rolle-find.service.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
@@ -59,17 +62,15 @@ import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
+import { FindRolleQueryParams } from './find-rolle-query.param.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
-import { RolleNameQueryParams } from './rolle-name-query.param.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 import { RolleResponse } from './rolle.response.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
-import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
-import { Public } from '../../authentication/api/public.decorator.js';
+import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -80,6 +81,7 @@ export class RolleController {
     public constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
+        private readonly rolleFindService: RolleFindService,
         private readonly orgService: OrganisationService,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
@@ -100,17 +102,27 @@ export class RolleController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollen.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })
     public async findRollen(
-        @Query() queryParams: RolleNameQueryParams,
+        @Query() queryParams: FindRolleQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
-        const [rollen, total]: [Option<Rolle<true>[]>, number] = await this.rolleRepo.findRollenAuthorized(
-            permissions,
-            false,
-            queryParams.searchStr,
-            queryParams.limit,
-            queryParams.offset,
-        );
-
+        const [rollen, total]: [Rolle<true>[], number] =
+            queryParams.systemrecht === RollenSystemRechtEnum.ROLLEN_ERWEITERN
+                ? await this.rolleFindService.findRollenAvailableForErweiterung({
+                      permissions,
+                      searchStr: queryParams.searchStr,
+                      organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                      rollenArten: queryParams.rollenarten,
+                      limit: queryParams.limit,
+                      offset: queryParams.offset,
+                  })
+                : await this.rolleRepo.findRollenAuthorized(
+                      permissions,
+                      false,
+                      queryParams.searchStr,
+                      queryParams.limit,
+                      queryParams.offset,
+                      queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                  );
         if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
                 total: 0,
@@ -120,6 +132,7 @@ export class RolleController {
             };
             return new PagedResponse(pagedRolleWithServiceProvidersResponse);
         }
+
         const administeredBySchulstrukturknotenIds: string[] = rollen.map(
             (r: Rolle<true>) => r.administeredBySchulstrukturknoten,
         );

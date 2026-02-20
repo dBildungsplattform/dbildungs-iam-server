@@ -1,8 +1,11 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
+import { MockedObject } from 'vitest';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -10,13 +13,11 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { OrganisationMatchesRollenartError } from '../../rolle/domain/specification/error/organisation-matches-rollenart.error.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { Personenkontext } from './personenkontext.js';
-import { MockedObject } from 'vitest';
-import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('Personenkontext aggregate', () => {
     let module: TestingModule;
@@ -144,7 +145,7 @@ describe('Personenkontext aggregate', () => {
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
             const rolleMock: MockedObject<Rolle<true>> = vi.mockObject<Rolle<true>>(DoFactory.createRolle(true));
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(false);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Err(new EntityNotFoundError('Rolle', rolleMock.id)));
 
             const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
                 faker.string.uuid(),
@@ -165,7 +166,7 @@ describe('Personenkontext aggregate', () => {
                 DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN }),
             );
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Err(new OrganisationMatchesRollenartError()));
 
             const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
                 faker.string.uuid(),
@@ -203,7 +204,7 @@ describe('Personenkontext aggregate', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true); // Check orga permissions
             const rolleMock: MockedObject<Rolle<true>> = vi.mockObject<Rolle<true>>(DoFactory.createRolle(true));
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true); // Check rolle<->orga validity
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(undefined)); // Check rolle<->orga validity
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             permissions.canModifyPerson.mockResolvedValueOnce(false); // Check person permissions
 
@@ -222,7 +223,7 @@ describe('Personenkontext aggregate', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true); // Check orga permissions
             const rolleMock: MockedObject<Rolle<true>> = vi.mockObject<Rolle<true>>(DoFactory.createRolle(true));
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true); // Check rolle<->orga validity
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(Ok(undefined)); // Check rolle<->orga validity
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             permissions.canModifyPerson.mockResolvedValueOnce(true); // Check person permissions
 

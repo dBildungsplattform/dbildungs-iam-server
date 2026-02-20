@@ -1,33 +1,34 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { CreateRolleBodyParams } from './create-rolle.body.params.js';
-import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
-import { RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
+import { RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
+import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { RolleController } from './rolle.controller.js';
 
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
+import { RolleFindService } from '../domain/rolle-find.service.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
-import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -47,6 +48,10 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                 {
                     provide: RolleRepo,
                     useValue: createMock(RolleRepo),
+                },
+                {
+                    provide: RolleFindService,
+                    useValue: createMock(RolleFindService),
                 },
                 {
                     provide: OrganisationService,
@@ -113,7 +118,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
         });
     });
 
-    describe('/GET rolle mocked Rolle-repo', () => {
+    describe('/POST rolle mocked Rolle-repo', () => {
         describe('createRolle', () => {
             const permissionsMock: PersonPermissions = createPersonPermissionsMock();
             it('should throw an HTTP exception when rolleFactory.createNew returns DomainError', async () => {

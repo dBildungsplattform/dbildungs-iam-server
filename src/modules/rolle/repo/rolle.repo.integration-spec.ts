@@ -2,7 +2,13 @@ import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -13,20 +19,14 @@ import { ServiceProviderMerkmal } from '../../service-provider/domain/service-pr
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
-import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
+import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
-import { RolleRepo } from './rolle.repo.js';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
-import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
-import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { RolleFindByParameters, RolleRepo } from './rolle.repo.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -131,7 +131,7 @@ describe('RolleRepo', () => {
         });
     });
 
-    describe('find', () => {
+    describe('findByRollenArten', () => {
         it('should return all rollen', async () => {
             const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
                 DoFactory.createServiceProvider(false),
@@ -142,27 +142,44 @@ describe('RolleRepo', () => {
                 sut.save(DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] })),
             ]);
 
-            const rollenResult: Rolle<true>[] = await sut.find(false);
+            const rollenResult: Rolle<true>[] = await sut.findByRollenArten(false);
 
             expect(rollenResult).toHaveLength(3);
             expect(rollenResult).toEqual(rollen);
         });
 
-        it('should not return technische rollen if includeTechnische = false', async () => {
-            await sut.save(DoFactory.createRolle(false, { istTechnisch: true }));
-            const rolleResult: Option<Rolle<true>[]> = await sut.find(false);
+        it.each([
+            {
+                istTechnisch: true,
+                includeTechnische: false,
+                expectedLength: 0,
+                description: 'should not return technische rollen if includeTechnische = false',
+            },
+            {
+                istTechnisch: true,
+                includeTechnische: true,
+                expectedLength: 1,
+                description: 'should return technische rollen if includeTechnische = true',
+            },
+        ])(
+            '$description',
+            async ({
+                istTechnisch,
+                includeTechnische,
+                expectedLength,
+            }: {
+                istTechnisch: boolean;
+                includeTechnische: boolean;
+                expectedLength: number;
+                description: string;
+            }) => {
+                await sut.save(DoFactory.createRolle(false, { istTechnisch }));
+                const rolleResult: Option<Rolle<true>[]> = await sut.findByRollenArten(includeTechnische);
 
-            expect(rolleResult).toBeDefined();
-            expect(rolleResult).toHaveLength(0);
-        });
-
-        it('should return technische rollen if includeTechnische = true', async () => {
-            await sut.save(DoFactory.createRolle(false, { istTechnisch: true }));
-            const rolleResult: Option<Rolle<true>[]> = await sut.find(true);
-
-            expect(rolleResult).toBeDefined();
-            expect(rolleResult).toHaveLength(1);
-        });
+                expect(rolleResult).toBeDefined();
+                expect(rolleResult).toHaveLength(expectedLength);
+            },
+        );
 
         it('should filter rollen by rollenarten', async () => {
             const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
@@ -190,7 +207,7 @@ describe('RolleRepo', () => {
                 ),
             ]);
 
-            const rollenResult: Rolle<true>[] = await sut.find(false, undefined, undefined, [
+            const rollenResult: Rolle<true>[] = await sut.findByRollenArten(false, undefined, undefined, [
                 RollenArt.LEIT,
                 RollenArt.LEHR,
             ]);
@@ -538,89 +555,32 @@ describe('RolleRepo', () => {
     });
 
     describe('findBy', () => {
-        it('should return rollen matching searchstring', async () => {
-            const rollen: (Rolle<true> | DomainError)[] = await Promise.all([
-                sut.save(DoFactory.createRolle(false)),
-                sut.save(DoFactory.createRolle(false)),
-                sut.save(DoFactory.createRolle(false)),
-            ]);
-            const searchString: string = rollen[0]!.name;
-
-            const rollenResult: Rolle<true>[] = await sut.findBy(searchString);
-
-            expect(rollenResult).toHaveLength(1);
-            expect(rollenResult).toEqual([rollen[0]]);
-        });
-
-        it('should filter rollen by rollenarten', async () => {
-            await Promise.all([
-                sut.save(
-                    DoFactory.createRolle(false, {
-                        rollenart: RollenArt.LEIT,
-                    }),
+        it('should return rollen, when orgaIds and rollenArten are provided', async () => {
+            const rollen: Rolle<true>[] = await Promise.all(
+                DoFactory.createMany(3, false, DoFactory.createRolle<false>, { istTechnisch: false }).map(
+                    (rolle: Rolle<false>) =>
+                        sut.save(rolle).then((savedRolle: Rolle<true> | DomainError) => {
+                            if (savedRolle instanceof DomainError) {
+                                throw Error();
+                            }
+                            return savedRolle;
+                        }),
                 ),
-                sut.save(
-                    DoFactory.createRolle(false, {
-                        rollenart: RollenArt.LEHR,
-                    }),
-                ),
-                sut.save(
-                    DoFactory.createRolle(false, {
-                        rollenart: RollenArt.LERN,
-                    }),
-                ),
-            ]);
-
-            const rollenResult: Rolle<true>[] = await sut.findBy(undefined, [RollenArt.LEIT, RollenArt.LEHR]);
-            expect(rollenResult).toHaveLength(2);
-            const rollenarten: RollenArt[] = rollenResult.map((r: Rolle<true>) => r.rollenart);
-            expect(rollenarten).toContain(RollenArt.LEIT);
-            expect(rollenarten).toContain(RollenArt.LEHR);
-            expect(rollenarten).not.toContain(RollenArt.LERN);
-        });
-
-        it('should filter rollen by schulstrukturknoten', async () => {
-            const administeredBySchulstrukturknoten: OrganisationID = faker.string.uuid();
-            await Promise.all([
-                sut.save(
-                    DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten,
-                    }),
-                ),
-                sut.save(
-                    DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten,
-                    }),
-                ),
-                sut.save(
-                    DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten: faker.string.uuid(),
-                    }),
-                ),
-            ]);
-
-            const rollenResult: Rolle<true>[] = await sut.findBy(undefined, undefined, [
-                administeredBySchulstrukturknoten,
-            ]);
-            expect(rollenResult).toHaveLength(2);
-            expect(rollenResult.map((r: Rolle<true>) => r.administeredBySchulstrukturknoten)).toEqual(
-                expect.arrayContaining([administeredBySchulstrukturknoten, administeredBySchulstrukturknoten]),
             );
-        });
 
-        it('should respect limit and offset', async () => {
-            await Promise.all([
-                sut.save(DoFactory.createRolle(false)),
-                sut.save(DoFactory.createRolle(false)),
-                sut.save(DoFactory.createRolle(false)),
-            ]);
+            const limit: number = 3;
 
-            const rollenResult1: Rolle<true>[] = await sut.findBy(undefined, undefined, undefined, 2, 0);
-            expect(rollenResult1).toHaveLength(2);
-
-            const rollenResult2: Rolle<true>[] = await sut.findBy(undefined, undefined, undefined, 2, 1);
-            expect(rollenResult2).toHaveLength(2);
-            expect(rollenResult2).not.toEqual(rollenResult1);
+            const scope: RolleFindByParameters = {
+                rollenArten: rollen.slice(1).map((r: Rolle<true>) => r.rollenart),
+                allowedOrganisationIds: rollen.slice(2).map((r: Rolle<true>) => r.administeredBySchulstrukturknoten),
+                limit,
+            };
+            const [result, count]: Counted<Rolle<true>> = await sut.findBy(scope);
+            expect(result).toHaveLength(1);
+            expect(result.map((r: Rolle<true>) => r.id)).toEqual(
+                expect.arrayContaining(rollen.slice(2).map((r: Rolle<true>) => r.id)),
+            );
+            expect(count).toEqual(1);
         });
     });
 

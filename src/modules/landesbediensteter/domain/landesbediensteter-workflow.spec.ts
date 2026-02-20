@@ -270,7 +270,7 @@ describe('LandesbediensteterWorkflow', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(orga);
-            rolleRepoMock.find.mockResolvedValueOnce(rollen);
+            rolleRepoMock.findByRollenArten.mockResolvedValueOnce(rollen);
 
             // One of the rollen is not assignable
             personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValueOnce(undefined);
@@ -296,7 +296,7 @@ describe('LandesbediensteterWorkflow', () => {
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(orga);
 
-            rolleRepoMock.find.mockResolvedValueOnce([allowedRolle, explicitlySelectedRolle]);
+            rolleRepoMock.findByRollenArten.mockResolvedValueOnce([allowedRolle, explicitlySelectedRolle]);
 
             personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValue(undefined);
 
