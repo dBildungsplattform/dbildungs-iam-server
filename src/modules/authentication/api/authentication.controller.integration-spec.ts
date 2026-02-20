@@ -40,7 +40,7 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleModule } from '../../rolle/rolle.module.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 import { createRequestMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
-import { CACHE_MANAGER, CacheModule } from '@nestjs/cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -61,7 +61,6 @@ describe('AuthenticationController', () => {
                 PersonenKontextModule,
                 RolleModule,
                 EmailMicroserviceModule,
-                CacheModule.register(),
             ],
             providers: [
                 AuthenticationController,
