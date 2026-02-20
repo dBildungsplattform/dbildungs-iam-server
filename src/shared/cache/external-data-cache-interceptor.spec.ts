@@ -61,6 +61,18 @@ describe('ExternalDataCacheInterceptor', () => {
             expect(key).toBe(`${url}:${expectedHash}`);
         });
 
+        it('returns undefined if httpAdapter is not available', () => {
+            const ctx: ExecutionContext = {
+                switchToHttp: () => ({
+                    getRequest: () => ({ body: {} }),
+                }),
+            } as unknown as ExecutionContext;
+
+            const key: string | undefined = sut.trackBy(ctx);
+
+            expect(key).toBeUndefined();
+        });
+
         it('treats undefined body as {}', () => {
             const url: string = '/test';
 
