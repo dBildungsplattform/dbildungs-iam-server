@@ -17,13 +17,13 @@ export class ExternalDataCacheInterceptor extends CacheInterceptor {
     }
 
     public override trackBy(context: ExecutionContext): string | undefined {
-        const request: Request = context.switchToHttp().getRequest();
+        const request: Request = context.switchToHttp().getRequest<Request>();
         const httpAdapter: AbstractHttpAdapter | undefined = this.httpAdapterHost?.httpAdapter;
         if (!httpAdapter) {
             return undefined;
         }
 
-        const requestUrl: string = httpAdapter.getRequestUrl(request);
+        const requestUrl: string = String(httpAdapter.getRequestUrl(request));
         const bodyHash: string = crypto
             .createHash('sha256')
             .update(JSON.stringify(request.body ?? {}))

@@ -61,18 +61,6 @@ describe('ExternalDataCacheInterceptor', () => {
             expect(key).toBe(`${url}:${expectedHash}`);
         });
 
-        it('returns undefined if httpAdapter is not available', () => {
-            const ctx: ExecutionContext = {
-                switchToHttp: () => ({
-                    getRequest: () => ({ body: {} }),
-                }),
-            } as unknown as ExecutionContext;
-
-            const key: string | undefined = sut.trackBy(ctx);
-
-            expect(key).toBeUndefined();
-        });
-
         it('treats undefined body as {}', () => {
             const url: string = '/test';
 
@@ -92,6 +80,23 @@ describe('ExternalDataCacheInterceptor', () => {
             const expectedHash: string = crypto.createHash('sha256').update(JSON.stringify({})).digest('hex');
 
             expect(key).toBe(`${url}:${expectedHash}`);
+        });
+
+        it('returns undefined if httpAdapter is not available', () => {
+            Object.defineProperty(sut, 'httpAdapterHost', {
+                value: { httpAdapter: undefined },
+                configurable: true,
+                writable: true,
+            });
+            const ctx: ExecutionContext = {
+                switchToHttp: () => ({
+                    getRequest: () => ({ body: {} }),
+                }),
+            } as unknown as ExecutionContext;
+
+            const key: string | undefined = sut.trackBy(ctx);
+
+            expect(key).toBeUndefined();
         });
     });
 
