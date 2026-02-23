@@ -156,6 +156,7 @@ export class EmailResolverService {
             await lastValueFrom(
                 this.httpService.post(
                     this.getEndpoint() + `${EmailResolverService.writePath}/${params.spshPersonId}/set-suspended`,
+                    {},
                     {
                         headers: {
                             'x-api-key': this.getApiKey(),
