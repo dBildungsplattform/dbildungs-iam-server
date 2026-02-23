@@ -20,7 +20,7 @@ describe('AuthenticationApiModule', () => {
                 DatabaseTestModule.forRoot(),
                 PersonModule,
                 PersonenKontextModule,
-                CacheModule.register(),
+                CacheModule.register({ isGlobal: true }),
             ],
             providers: [{ provide: CACHE_MANAGER, useValue: { get: vi.fn(), set: vi.fn() } }],
         })
