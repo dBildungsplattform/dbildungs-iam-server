@@ -3,7 +3,7 @@ import { ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags } 
 
 import { Public } from '../../decorator/public.decorator.js';
 import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
-import { CronDeleteEmailsAddressesService } from '../../domain/cron-delete-email-adresses.service.js';
+import { CronDeleteEmailsAddressesService } from '../../domain/cron-delete-email-addresses.service.js';
 
 @ApiTags('email')
 @Controller({ path: 'cron' })

@@ -65,21 +65,22 @@ export class CronDeleteEmailsAddressesService {
             return;
         }
         this.logger.info(`Only The Alternative Email (Prio 2) for person ${spshPersonId} will be deleted.`);
+        const prio0ToKeep: EmailAddress<true> | undefined = allEmailsForPerson.find(
+            (e: EmailAddress<true>) => e.priority === 0,
+        );
         const emailAlternativeTemp: EmailAddress<true> | undefined = emailsToDeleteToday.at(0);
-        if (emailsToDeleteToday.length !== 1 || !emailAlternativeTemp || emailAlternativeTemp.priority !== 1) {
+        if (
+            emailsToDeleteToday.length !== 1 ||
+            !emailAlternativeTemp ||
+            emailAlternativeTemp.priority !== 1 ||
+            !prio0ToKeep
+        ) {
             this.logger.error(
-                'When not the Entire Person is deleted, the only remaining email to be deleted must be the Alternative Email (Prio 2)',
+                'When not the Entire Person is deleted, the primary Email (Prio 1) must remain and alternative Email (Prio 2) must be deleted',
             );
             return;
         }
         const prio1ToDelete: EmailAddress<true> = emailAlternativeTemp;
-        const prio0ToKeep: EmailAddress<true> | undefined = allEmailsForPerson.find(
-            (e: EmailAddress<true>) => e.priority === 0,
-        );
-        if (!prio0ToKeep) {
-            this.logger.error('When not the Entire Person is deleted, a Primary Email (Prio 1) must remain existent');
-            return;
-        }
 
         prio1ToDelete.setStatus(EmailAddressStatusEnum.TO_BE_DELETED);
         await this.emailAddressRepo.save(prio1ToDelete);
