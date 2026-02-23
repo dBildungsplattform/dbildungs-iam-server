@@ -82,39 +82,80 @@ import KeyvRedis from '@keyv/redis';
             inject: [ConfigService],
             useFactory: (config: ConfigService) => {
                 const redis: RedisConfig = config.getOrThrow<RedisConfig>('REDIS');
-
-                const hasAuth: boolean = Boolean(redis.USERNAME && redis.PASSWORD);
-
-                const protocol: string = redis.USE_TLS ? 'rediss' : 'redis';
-
-                const auth: string = hasAuth
-                    ? `${encodeURIComponent(redis.USERNAME)}:${encodeURIComponent(redis.PASSWORD)}@`
-                    : '';
-
-                const redisUrl: string = `${protocol}://${auth}${redis.HOST}:${redis.PORT}`;
                 const defaultTtlMs: number = 10_000;
 
-                const tlsOptions: object = redis.USE_TLS
-                    ? {
-                          tls: {
-                              host: redis.HOST,
-                              port: redis.PORT,
-                              tls: redis.USE_TLS,
-                              key: redis.PRIVATE_KEY,
-                              cert: redis.CERTIFICATE_AUTHORITIES,
-                          },
-                      }
-                    : {};
-
-                const store: KeyvRedis<unknown> = new KeyvRedis(redisUrl, {
-                    ...tlsOptions,
-                });
+                /*
+                let redisClient: RedisClientType | RedisClusterType;
+                if (redisConfig.CLUSTERED) {
+                    redisClient = createCluster({
+                        defaults: {
+                            username: redisConfig.USERNAME,
+                            password: redisConfig.PASSWORD,
+                        },
+                        rootNodes: [
+                            {
+                                socket: {
+                                    host: redisConfig.HOST,
+                                    port: redisConfig.PORT,
+                                    tls: redisConfig.USE_TLS,
+                                    key: redisConfig.PRIVATE_KEY,
+                                    cert: redisConfig.CERTIFICATE_AUTHORITIES,
+                                },
+                            },
+                        ],
+                    });
+                } else {
+                    redisClient = createClient({
+                        username: redisConfig.USERNAME,
+                        password: redisConfig.PASSWORD,
+                        socket: {
+                            host: redisConfig.HOST,
+                            port: redisConfig.PORT,
+                            tls: redisConfig.USE_TLS,
+                            key: redisConfig.PRIVATE_KEY,
+                            cert: redisConfig.CERTIFICATE_AUTHORITIES,
+                        },
+                    });
+                }
+                const store: KeyvRedis<unknown> = new KeyvRedis(redisClient as any);
 
                 return {
-                    stores: [store],
+                    store,
                     ttl: defaultTtlMs,
                     namespace: 'application-cache',
-                };
+                };*/
+
+                if (redis.USE_TLS) {
+                    const redisUrl: string = `rediss://${redis.HOST}:${redis.PORT}`;
+                    const tlsOptions: object = {
+                        socket: {
+                            host: redis.HOST,
+                            port: redis.PORT,
+                            tls: redis.USE_TLS,
+                            key: redis.PRIVATE_KEY,
+                            cert: redis.CERTIFICATE_AUTHORITIES,
+                        },
+                    };
+                    const store: KeyvRedis<unknown> = new KeyvRedis(redisUrl, {
+                        ...tlsOptions,
+                    });
+
+                    return {
+                        stores: [store],
+                        ttl: defaultTtlMs,
+                        namespace: 'application-cache',
+                    };
+                } else {
+                    const auth: string = `${encodeURIComponent(redis.USERNAME)}:${encodeURIComponent(redis.PASSWORD)}@`;
+                    const redisUrl: string = `redis://${auth}${redis.HOST}:${redis.PORT}`;
+                    const store: KeyvRedis<unknown> = new KeyvRedis(redisUrl);
+
+                    return {
+                        stores: [store],
+                        ttl: defaultTtlMs,
+                        namespace: 'application-cache',
+                    };
+                }
             },
         }),
         LoggerModule.register(ServerModule.name),
