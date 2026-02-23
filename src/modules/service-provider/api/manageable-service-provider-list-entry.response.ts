@@ -1,8 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderKategorieTypName,
@@ -12,6 +10,8 @@ import {
 import { ServiceProvider } from '../domain/service-provider.js';
 import { OrganisationRefResponse } from './organisation-ref.response.js';
 import { RolleRefResponse } from './rolle-ref.response.js';
+import { RollenerweiterungForManageableServiceProviderResponse } from './RollenerweiterungForManageableServiceProviderResponse.js';
+import { RollenerweiterungForManageableServiceProvider } from '../domain/types.js';
 
 export class ManageableServiceProviderListEntryResponse {
     @ApiProperty()
@@ -32,8 +32,8 @@ export class ManageableServiceProviderListEntryResponse {
     @ApiProperty({ enum: ServiceProviderMerkmal, enumName: ServiceProviderMerkmalTypName, isArray: true })
     public merkmale: ServiceProviderMerkmal[];
 
-    @ApiProperty()
-    public hasRollenerweiterung: boolean;
+    @ApiProperty({ type: RollenerweiterungForManageableServiceProviderResponse, isArray: true })
+    public rollenerweiterungen: RollenerweiterungForManageableServiceProviderResponse[];
 
     @ApiProperty({ type: RolleRefResponse, isArray: true })
     public rollen: RolleRefResponse[];
@@ -42,7 +42,7 @@ export class ManageableServiceProviderListEntryResponse {
         serviceProvider: ServiceProvider<true>,
         organisation: Organisation<true>,
         rollen: Rolle<true>[],
-        rollenerweiterungen: Rollenerweiterung<true>[],
+        rollenerweiterungen: RollenerweiterungForManageableServiceProvider[], // <-- raw type statt Response
     ) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;
@@ -54,7 +54,9 @@ export class ManageableServiceProviderListEntryResponse {
         this.kategorie = serviceProvider.kategorie;
         this.requires2fa = serviceProvider.requires2fa;
         this.merkmale = serviceProvider.merkmale;
-        this.hasRollenerweiterung = rollenerweiterungen.length > 0;
+        this.rollenerweiterungen = rollenerweiterungen.map((re: RollenerweiterungForManageableServiceProvider) =>
+            RollenerweiterungForManageableServiceProviderResponse.fromRollenerweiterungForManageableServiceProvider(re),
+        );
         this.rollen = rollen.map((r: Rolle<true>) => ({ id: r.id, name: r.name }));
     }
 }
