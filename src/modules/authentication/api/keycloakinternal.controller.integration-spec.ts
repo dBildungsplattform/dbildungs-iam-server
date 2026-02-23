@@ -337,6 +337,99 @@ describe('KeycloakInternalController', () => {
             expect(result.onlineDateiablage.personId).toEqual(person.id);
         });
 
+        it('should return user external data new Microservice without ox params', async () => {
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+            const keycloakSub: string = faker.string.uuid();
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                keycloakSub,
+                faker.string.uuid(),
+            );
+
+            const pkExternalData: ExternalPkData[] = [
+                {
+                    pkId: faker.string.uuid(),
+                    rollenart: RollenArt.LEHR,
+                    kennung: faker.lorem.word(),
+                    serviceProvider: [
+                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                            vidisAngebotId: faker.string.uuid(),
+                        }),
+                    ],
+                },
+                {
+                    pkId: faker.string.uuid(),
+                    rollenart: RollenArt.LEHR,
+                    kennung: faker.lorem.word(),
+                    serviceProvider: [
+                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                            vidisAngebotId: faker.string.uuid(),
+                        }),
+                    ],
+                },
+                {
+                    pkId: faker.string.uuid(),
+                    rollenart: RollenArt.LEHR,
+                    kennung: undefined, //To Be Filtered Out
+                    serviceProvider: [],
+                },
+            ];
+            const sp: ServiceProvider<true> = await serviceProviderRepo.save(DoFactory.createServiceProvider(false));
+
+            const pk: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                personId: person.id,
+                rolleId: faker.string.uuid(),
+                organisationId: faker.string.uuid(),
+            });
+
+            let serviceProviderEntity: ServiceProviderEntity = new ServiceProviderEntity();
+            serviceProviderEntity = Object.assign(serviceProviderEntity, sp);
+
+            let personenkontextEntity: PersonenkontextEntity = new PersonenkontextEntity();
+            personenkontextEntity = Object.assign(personenkontextEntity, pk);
+
+            const spRef: LoadedReference<Loaded<ServiceProviderEntity>> = createLoadedReference(serviceProviderEntity);
+
+            const pkRef: LoadedReference<Loaded<PersonenkontextEntity>> = createLoadedReference(personenkontextEntity);
+
+            const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = [
+                {
+                    personenkontext: pkRef,
+                    serviceProvider: spRef,
+                },
+            ];
+
+            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValueOnce(Ok(undefined));
+            personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
+            personRepoMock.findById.mockResolvedValueOnce(person);
+            dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
+            dbiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValueOnce(personenKontextErweiterungen);
+
+            const result: UserExternalDataResponse = await keycloakinternalController.getExternalData({
+                sub: keycloakSub,
+            });
+            expect(result).toBeInstanceOf(UserExternalDataResponse);
+            expect(result.ox).toBeUndefined();
+            expect(result.itslearning.personId).toEqual(person.id);
+            expect(result.vidis.personId).toEqual(person.id);
+            expect(result.vidis.vorname).toEqual(person.vorname);
+            expect(result.vidis.nachname).toEqual(person.familienname);
+            expect(result.vidis.emailAdresse).toEqual(person.email);
+            expect(result.vidis.rollenart).toEqual(pkExternalData[0]?.rollenart);
+            expect(result.vidis.dienststellenNummern.length).toEqual(2);
+            expect(result.opsh.vorname).toEqual(person.vorname);
+            expect(result.opsh.nachname).toEqual(person.familienname);
+            expect(result.opsh.emailAdresse).toEqual(person.email);
+            expect(result.opsh.personenkontexte.length).toEqual(2);
+            expect(result.onlineDateiablage.personId).toEqual(person.id);
+        });
+
         it('should throw error if aggregate doesnt initialize fields field correctly', async () => {
             const keycloakSub: string = faker.string.uuid();
             const pkExternalData: ExternalPkData[] = [
