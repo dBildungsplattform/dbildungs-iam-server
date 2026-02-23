@@ -557,6 +557,85 @@ describe('LDAP Client Service', () => {
         });
     });
 
+    describe('updatePersonEmails', () => {
+        const fakeEmailDomain: string = 'schule-sh.de';
+        it('should modify person emails in ldap', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.modify.mockResolvedValueOnce();
+                return clientMock;
+            });
+
+            const primaryMail: string = faker.internet.email();
+            const alternativeEmail: string = faker.internet.email();
+
+            const result: Result<string> = await ldapClientService.updatePersonEmails(
+                faker.string.uuid(),
+                fakeEmailDomain,
+                primaryMail,
+                alternativeEmail,
+            );
+
+            expectOkResult(result);
+            expect(result.ok).toBeTruthy();
+        });
+
+        it('should return error if domain is invalid', async () => {
+            const primaryMail: string = faker.internet.email();
+
+            const result: Result<string> = await ldapClientService.updatePersonEmails(
+                faker.string.uuid(),
+                'invalid@domain',
+                primaryMail,
+                undefined,
+            );
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(LdapEmailDomainError);
+        });
+
+        it('should return error if bind fails', async () => {
+            const bindError: Error = new Error('LDAP bind FAILED');
+            ldapClientMock.getClient.mockImplementation(() => {
+                // Mock multiple times to exhaust the retries
+                clientMock.bind.mockRejectedValueOnce(bindError);
+                clientMock.bind.mockRejectedValueOnce(bindError);
+                return clientMock;
+            });
+
+            const primaryMail: string = faker.internet.email();
+
+            const result: Result<string> = await ldapClientService.updatePersonEmails(
+                faker.string.uuid(),
+                fakeEmailDomain,
+                primaryMail,
+                undefined,
+            );
+
+            expectErrResult(result);
+            expect(result.error).toEqual(bindError);
+        });
+
+        it('should return error if modify fails', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.modify.mockRejectedValueOnce(new Error('Modify failed'));
+                return clientMock;
+            });
+
+            const primaryMail: string = faker.internet.email();
+
+            const result: Result<string> = await ldapClientService.updatePersonEmails(
+                faker.string.uuid(),
+                fakeEmailDomain,
+                primaryMail,
+                undefined,
+            );
+
+            expectErrResult(result);
+            expect(result.error).toEqual(new LdapModifyPersonError());
+        });
+    });
+
     describe('updatePerson', () => {
         const fakeEmailDomain: string = 'schule-sh.de';
 
