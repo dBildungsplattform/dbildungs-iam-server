@@ -5,7 +5,6 @@ import { createMock, DeepMocked } from '../../../../test/utils/createMock';
 import { ConfigService } from '@nestjs/config';
 import { EmailAppConfig } from '../../../shared/config/email-config.env';
 import { Test, TestingModule } from '@nestjs/testing';
-import { LoginGuard } from '../../../modules/authentication/api/login.guard';
 
 const makeContext = (headers: Record<string, unknown>): ExecutionContext =>
     ({
@@ -21,12 +20,15 @@ describe('ApiKeyGuard', () => {
     let configServiceMock: DeepMocked<ConfigService>;
 
     beforeEach(async () => {
+        configServiceMock = createMock(ConfigService<EmailAppConfig>);
+        configServiceMock.getOrThrow.mockReturnValue({ API_KEY });
+
         module = await Test.createTestingModule({
             providers: [
-                LoginGuard,
+                ApiKeyGuard,
                 {
                     provide: ConfigService<EmailAppConfig>,
-                    useValue: createMock(ConfigService<EmailAppConfig>),
+                    useValue: configServiceMock,
                 },
             ],
         }).compile();
