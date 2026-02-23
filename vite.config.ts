@@ -17,7 +17,9 @@ export default defineConfig({
         testTimeout: 30000, // 30 seconds default timeout
         coverage: {
             provider: 'v8',
-            reporter: [['text', { maxCols: 150 }], 'html', 'lcov'],
+            reporter: [['text', { maxCols: 150 }], 'lcov'],
+            // To find coverage gaps locally the html reporter is useful
+            // reporter: [['text', { maxCols: 150 }], 'html', 'lcov'],
             reportsDirectory: 'coverage',
             reportOnFailure: true,
             include: ['src/**/*.ts'],
