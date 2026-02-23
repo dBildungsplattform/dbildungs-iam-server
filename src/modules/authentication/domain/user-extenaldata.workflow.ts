@@ -18,7 +18,7 @@ import { ServiceProviderEntity } from '../../service-provider/repo/service-provi
 import { RequiredExternalPkData } from '../api/authentication.controller.js';
 import { OXContextID } from '../../../shared/types/ox-ids.types.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
-import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
 
 export class UserExternaldataWorkflowAggregate {
     public contextID: OXContextID;
@@ -73,7 +73,7 @@ export class UserExternaldataWorkflowAggregate {
             > = await this.emailResolverService.findEmailBySpshPersonAsEmailAddressResponse(personId);
 
             if (personEmailResponse.ok) {
-                if (personEmailResponse.value?.status[0] !== EmailAddressStatus.REQUESTED) {
+                if (personEmailResponse.value?.status !== EmailAddressStatusEnum.SUSPENDED) {
                     this.oxLoginId = personEmailResponse.value?.oxLoginId;
                 }
             } else {

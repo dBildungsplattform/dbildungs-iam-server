@@ -590,7 +590,7 @@ describe('Provider Controller Test', () => {
                 name: faker.company.name(),
                 target: ServiceProviderTarget.EMAIL,
                 url: undefined,
-                kategorie: ServiceProviderKategorie.ANGEBOTE,
+                kategorie: ServiceProviderKategorie.HINWEISE,
                 requires2fa: false,
                 vidisAngebotId: undefined,
                 merkmale: [],

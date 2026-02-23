@@ -66,9 +66,11 @@ export class KeycloakInternalController {
         }
 
         if (this.emailResolverService.shouldUseEmailMicroservice()) {
-            const oxParams: NewOxParams = {
-                oxLoginId: workflow.oxLoginId!,
-            };
+            let oxParams: NewOxParams | undefined;
+            if (workflow.oxLoginId) {
+                oxParams = { oxLoginId: workflow.oxLoginId };
+            }
+
             return UserExternalDataResponse.createNew(
                 workflow.person,
                 workflow.checkedExternalPkData,
