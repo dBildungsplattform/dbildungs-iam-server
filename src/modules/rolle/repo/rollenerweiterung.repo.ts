@@ -195,42 +195,39 @@ export class RollenerweiterungRepo {
         return Ok(null);
     }
 
+    // This method returns exactly 5 rollenerweiterungen per service provider, sorted by createdAt descending, to avoid performance issues with loading too many rollenerweiterungen at once.
     public async findByServiceProviderIds(
         serviceProviderIds: ServiceProviderID[],
         organisationId?: OrganisationID,
     ): Promise<Map<ServiceProviderID, Rollenerweiterung<true>[]>> {
-        const filter: Record<string, unknown> = {
-            serviceProviderId: { $in: serviceProviderIds },
-        };
+        const entries: [ServiceProviderID, Rollenerweiterung<true>[]][] = await Promise.all(
+            serviceProviderIds.map(async (serviceProviderId: ServiceProviderID) => {
+                const filter: Record<string, unknown> = {
+                    serviceProviderId,
+                };
 
-        if (organisationId) {
-            filter['organisationId'] = organisationId;
-        }
+                if (organisationId) {
+                    filter['organisationId'] = organisationId;
+                }
 
-        const findOptions: Record<string, unknown> = {};
+                const entities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
+                    RollenerweiterungEntity,
+                    filter,
+                    {
+                        limit: 5,
+                        orderBy: { createdAt: 'DESC' },
+                    },
+                );
 
-        // Limit to 5 always and not only when a organisationId is provided, because Landesadmins use this same repo method to check if there are indeed Rollenerweiterungen
-        // available for their SPs which could lead to performance issues if a SP is used by many organizations and roles and thus has many rollenerweiterungen
-        findOptions['limit'] = 5;
+                const aggregates: Rollenerweiterung<true>[] = entities.map((entity: Loaded<RollenerweiterungEntity>) =>
+                    this.mapEntityToAggregate(entity),
+                );
 
-        const rollenerweiterungEntities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
-            RollenerweiterungEntity,
-            filter,
-            findOptions,
+                return [serviceProviderId, aggregates];
+            }),
         );
 
-        const rollenerweiterungen: Rollenerweiterung<true>[] = rollenerweiterungEntities.map(
-            (entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity),
-        );
-
-        return new Map(
-            serviceProviderIds.map((id: ServiceProviderID) => [
-                id,
-                rollenerweiterungen.filter(
-                    (rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.serviceProviderId === id,
-                ),
-            ]),
-        );
+        return new Map(entries);
     }
 
     /*
