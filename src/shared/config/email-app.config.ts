@@ -6,7 +6,6 @@ import { HostConfig } from './host.config.js';
 import { LdapConfig } from './ldap.config.js';
 import { LoggingConfig } from './logging.config.js';
 import { OxConfig } from './ox.config.js';
-import { EmailMicroserviceConfig } from './email-microservice.config.js';
 
 export class EmailAppConfig {
     @ValidateNested()
@@ -32,8 +31,4 @@ export class EmailAppConfig {
     @ValidateNested()
     @Type(() => EmailConfig)
     public readonly EMAIL!: EmailConfig;
-
-    @ValidateNested()
-    @Type(() => EmailMicroserviceConfig)
-    public readonly EMAIL_MICROSERVICE!: EmailMicroserviceConfig;
 }

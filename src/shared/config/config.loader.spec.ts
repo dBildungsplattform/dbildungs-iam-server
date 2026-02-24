@@ -140,7 +140,6 @@ describe('configloader', () => {
                 EMAIL_MICROSERVICE: {
                     USE_EMAIL_MICROSERVICE: false,
                     ENDPOINT: 'http://localhost:9091/',
-                    API_KEY: '276eb6545356c433853e5f1699fe30194261a28d8893679e59db957a90e4a7d1',
                 },
                 SCHULCONNEX: {
                     LIMIT_PERSONENINFO: 2500,
@@ -327,7 +326,6 @@ describe('configloader', () => {
                 EMAIL_MICROSERVICE: {
                     USE_EMAIL_MICROSERVICE: false,
                     ENDPOINT: 'http://localhost:9091/',
-                    API_KEY: '276eb6545356c433853e5f1699fe30194261a28d8893679e59db957a90e4a7d1',
                 },
                 SCHULCONNEX: {
                     LIMIT_PERSONENINFO: 2500,
@@ -420,11 +418,6 @@ describe('configloader', () => {
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 90,
                 },
-                EMAIL_MICROSERVICE: {
-                    USE_EMAIL_MICROSERVICE: false,
-                    ENDPOINT: 'http://localhost:9091/',
-                    API_KEY: '276eb6545356c433853e5f1699fe30194261a28d8893679e59db957a90e4a7d1',
-                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -489,11 +482,6 @@ describe('configloader', () => {
                 },
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 90,
-                },
-                EMAIL_MICROSERVICE: {
-                    USE_EMAIL_MICROSERVICE: false,
-                    ENDPOINT: 'http://localhost:9091/',
-                    API_KEY: '276eb6545356c433853e5f1699fe30194261a28d8893679e59db957a90e4a7d1',
                 },
             };
 

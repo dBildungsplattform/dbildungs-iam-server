@@ -8,8 +8,4 @@ export class EmailMicroserviceConfig {
     @IsString()
     @IsNotEmpty()
     public readonly ENDPOINT!: string;
-
-    @IsString()
-    @IsNotEmpty()
-    public readonly API_KEY!: string;
 }

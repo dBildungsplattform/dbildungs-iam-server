@@ -184,9 +184,10 @@ export class EmailResolverService {
     }
 
     private getApiKey(): string {
-        const emailMicroserviceConfig: EmailMicroserviceConfig =
-            this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
-        return emailMicroserviceConfig.API_KEY;
+        //const emailMicroserviceConfig: EmailMicroserviceConfig =
+        //    this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
+        //return emailMicroserviceConfig.API_KEY;
+        return '';
     }
 
     private mapStatus(ease: EmailAddressStatusEnum): EmailAddressStatus {
