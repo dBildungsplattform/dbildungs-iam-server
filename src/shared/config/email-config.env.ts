@@ -1,4 +1,5 @@
 import { DbConfig } from './db.config.js';
+import { EmailMicroserviceConfig } from './email-microservice.config.js';
 import { EmailConfig } from './email.config.js';
 import { HostConfig } from './host.config.js';
 import { LdapConfig } from './ldap.config.js';
@@ -13,6 +14,7 @@ export type EmailAppConfig = {
     LDAP: Partial<LdapConfig>;
     OX: Partial<OxConfig>;
     EMAIL: Partial<EmailConfig>;
+    EMAIL_MICROSERVICE: Partial<EmailMicroserviceConfig>;
 };
 
 export function getEmailConfig(): EmailAppConfig {
@@ -51,6 +53,11 @@ export function getEmailConfig(): EmailAppConfig {
             NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: envToOptionalInteger(
                 'NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS',
             ),
+        },
+        EMAIL_MICROSERVICE: {
+            USE_EMAIL_MICROSERVICE: envToOptionalBoolean('EMAIL_MICROSERVICE_USE_EMAIL_MICROSERVICE'),
+            ENDPOINT: process.env['EMAIL_MICROSERVICE_ENDPOINT'],
+            API_KEY: process.env['EMAIL_MICROSERVICE_API_KEY'],
         },
     };
 }
