@@ -195,6 +195,7 @@ export class RollenerweiterungRepo {
         return Ok(null);
     }
 
+    // This method returns exactly 5 rollenerweiterungen per service provider, sorted by createdAt descending, to avoid performance issues with loading too many rollenerweiterungen at once.
     public async findByServiceProviderIds(
         serviceProviderIds: ServiceProviderID[],
         organisationId?: OrganisationID,
