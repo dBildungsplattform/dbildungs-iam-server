@@ -626,6 +626,8 @@ export class PersonRepository {
                 `Failure during creation of PersonDeletedAfterDeadlineExceededEvent, username UNDEFINED, personId:${personId}`,
             );
         }
+
+        // TODO not an error. Should be fixed when EFLK-refactor is done and the old ox-event-handler is removed.
         if (!person.oxUserId) {
             this.logger.error(
                 `Failure during creation of PersonDeletedAfterDeadlineExceededEvent, oxUserId UNDEFINED, personId:${personId}`,

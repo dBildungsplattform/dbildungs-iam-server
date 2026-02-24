@@ -222,9 +222,10 @@ describe('PersonController', () => {
 
     describe('deletePerson', () => {
         const person: Person<true> = getPerson();
-        const deleteParams: PersonByIdParams = {
+        const deleteParams: PersonByIdParams = new PersonByIdParams();
+        Object.assign(deleteParams, {
             personId: person.id,
-        };
+        });
         describe('when deleting a person is successful', () => {
             it('should return no error ', async () => {
                 personDeleteServiceMock.deletePerson.mockResolvedValueOnce({
@@ -251,9 +252,10 @@ describe('PersonController', () => {
     });
 
     describe('when getting a person', () => {
-        const params: PersonByIdParams = {
+        const params: PersonByIdParams = new PersonByIdParams();
+        Object.assign(params, {
             personId: faker.string.uuid(),
-        };
+        });
         const person: Person<true> = getPerson();
 
         it('should get a person', async () => {
@@ -364,13 +366,14 @@ describe('PersonController', () => {
     });
 
     describe('findLandesbediensteter', () => {
-        const queryParams: PersonLandesbediensteterSearchQueryParams = {
+        const queryParams: PersonLandesbediensteterSearchQueryParams = new PersonLandesbediensteterSearchQueryParams();
+        Object.assign(queryParams, {
             personalnummer: '1234567',
             primaryEmailAddress: 'test@example.com',
             username: 'tester',
             vorname: 'Tester',
             familienname: 'Testis',
-        };
+        });
 
         beforeEach(() => {
             personPermissionsMock = createPersonPermissionsMock();
@@ -421,14 +424,16 @@ describe('PersonController', () => {
     describe('findPersonenkontexte', () => {
         describe('When fetching personenkontexte is successful', () => {
             it('should get all personenkontexte', async () => {
-                const pathParams: PersonByIdParams = {
+                const pathParams: PersonByIdParams = new PersonByIdParams();
+                Object.assign(pathParams, {
                     personId: faker.string.uuid(),
-                };
-                const queryParams: PersonenkontextQueryParams = {
+                });
+                const queryParams: PersonenkontextQueryParams = new PersonenkontextQueryParams();
+                Object.assign(queryParams, {
                     username: 'username',
                     sichtfreigabe: SichtfreigabeType.NEIN,
                     personenstatus: Personenstatus.AKTIV,
-                };
+                });
                 const personenkontextResponse: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                     getRolle: () => rolleRepoMock.findById(faker.string.uuid()),
                 });
@@ -456,14 +461,16 @@ describe('PersonController', () => {
 
         describe('when permissions are insufficient to fetch personenkontexte', () => {
             it('should throw HttpNotFoundException', async () => {
-                const pathParams: PersonByIdParams = {
+                const pathParams: PersonByIdParams = new PersonByIdParams();
+                Object.assign(pathParams, {
                     personId: faker.string.uuid(),
-                };
-                const queryParams: PersonenkontextQueryParams = {
+                });
+                const queryParams: PersonenkontextQueryParams = new PersonenkontextQueryParams();
+                Object.assign(queryParams, {
                     username: 'username',
                     sichtfreigabe: SichtfreigabeType.NEIN,
                     personenstatus: Personenstatus.AKTIV,
-                };
+                });
                 const personenkontextResponse: Personenkontext<true> = DoFactory.createPersonenkontext(true);
 
                 const personenkontextDtos: Paged<Personenkontext<true>> = {
@@ -488,9 +495,10 @@ describe('PersonController', () => {
 
     describe('resetPasswordByPersonId', () => {
         describe('when resetting password for a person', () => {
-            const params: PersonByIdParams = {
+            const params: PersonByIdParams = new PersonByIdParams();
+            Object.assign(params, {
                 personId: faker.string.uuid(),
-            };
+            });
             const person: Person<true> = getPerson();
             personPermissionsMock = createPersonPermissionsMock();
 
@@ -507,9 +515,10 @@ describe('PersonController', () => {
         });
 
         describe('when resetting password for a person returns a SchulConnexError', () => {
-            const params: PersonByIdParams = {
+            const params: PersonByIdParams = new PersonByIdParams();
+            Object.assign(params, {
                 personId: faker.string.uuid(),
-            };
+            });
             const person: Person<true> = getPerson();
             personPermissionsMock = createPersonPermissionsMock();
 
@@ -526,9 +535,10 @@ describe('PersonController', () => {
         });
 
         describe('when person does not exist', () => {
-            const params: PersonByIdParams = {
+            const params: PersonByIdParams = new PersonByIdParams();
+            Object.assign(params, {
                 personId: faker.string.uuid(),
-            };
+            });
             const person: Person<true> = getPerson();
             personPermissionsMock = createPersonPermissionsMock();
 
@@ -548,9 +558,10 @@ describe('PersonController', () => {
         });
 
         describe('when permissions are insufficient to reset user-password', () => {
-            const params: PersonByIdParams = {
+            const params: PersonByIdParams = new PersonByIdParams();
+            Object.assign(params, {
                 personId: faker.string.uuid(),
-            };
+            });
             const person: Person<true> = getPerson();
             personPermissionsMock = createPersonPermissionsMock();
 
@@ -571,9 +582,10 @@ describe('PersonController', () => {
     });
 
     describe('updatePerson', () => {
-        const params: PersonByIdParams = {
+        const params: PersonByIdParams = new PersonByIdParams();
+        Object.assign(params, {
             personId: faker.string.uuid(),
-        };
+        });
         const body: UpdatePersonBodyParams = {
             stammorganisation: faker.string.uuid(),
             username: 'username',
@@ -679,9 +691,10 @@ describe('PersonController', () => {
         });
     });
     describe('lockPerson', () => {
-        const params: PersonByIdParams = {
+        const params: PersonByIdParams = new PersonByIdParams();
+        Object.assign(params, {
             personId: faker.string.uuid(),
-        };
+        });
         personPermissionsMock = createPersonPermissionsMock();
 
         describe('when locking a user is successful', () => {
@@ -690,11 +703,12 @@ describe('PersonController', () => {
             it.each([[new Date()], [undefined]])(
                 'should return a success message when locked_until is %p',
                 async (lockedUntil: Date | undefined) => {
-                    const lockUserBodyParams: LockUserBodyParams = {
+                    const lockUserBodyParams: LockUserBodyParams = new LockUserBodyParams();
+                    Object.assign(lockUserBodyParams, {
                         lock: true,
                         locked_by: 'Theo Tester',
                         locked_until: lockedUntil,
-                    };
+                    });
                     personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
                     keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
@@ -717,11 +731,12 @@ describe('PersonController', () => {
             it.each([[new Date()], [undefined]])(
                 'should return a success message when locked_until is %p',
                 async (lockedUntil: Date | undefined) => {
-                    const lockUserBodyParams: LockUserBodyParams = {
+                    const lockUserBodyParams: LockUserBodyParams = new LockUserBodyParams();
+                    Object.assign(lockUserBodyParams, {
                         lock: false,
                         locked_by: 'Theo Tester',
                         locked_until: lockedUntil,
-                    };
+                    });
                     personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
                     keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
@@ -743,11 +758,12 @@ describe('PersonController', () => {
                 { lock: false, description: 'lock is false' },
                 { lock: true, description: 'lock is true' },
             ])('should throw an error when $description', async ({ lock }: { lock: boolean }) => {
-                const lockUserBodyParams: LockUserBodyParams = {
+                const lockUserBodyParams: LockUserBodyParams = new LockUserBodyParams();
+                Object.assign(lockUserBodyParams, {
                     lock,
                     locked_by: '2024-01-01T00:00:00Z',
                     locked_until: new Date(),
-                };
+                });
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityNotFoundError('Person'),
@@ -766,11 +782,12 @@ describe('PersonController', () => {
                 { lock: false, description: 'lock is false' },
                 { lock: true, description: 'lock is true' },
             ])('should throw an error when $description', async ({ lock }: { lock: boolean }) => {
-                const lockUserBodyParams: LockUserBodyParams = {
+                const lockUserBodyParams: LockUserBodyParams = new LockUserBodyParams();
+                Object.assign(lockUserBodyParams, {
                     lock,
                     locked_by: '2024-01-01T00:00:00Z',
                     locked_until: new Date(),
-                };
+                });
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
                     value: person,
@@ -789,11 +806,12 @@ describe('PersonController', () => {
                 { lock: false, description: 'lock is false' },
                 { lock: true, description: 'lock is true' },
             ])('should throw an error when $description', async ({ lock }: { lock: boolean }) => {
-                const lockUserBodyParams: LockUserBodyParams = {
+                const lockUserBodyParams: LockUserBodyParams = new LockUserBodyParams();
+                Object.assign(lockUserBodyParams, {
                     lock,
                     locked_by: '2024-01-01T00:00:00Z',
                     locked_until: new Date(),
-                };
+                });
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
                     value: person,
@@ -810,9 +828,10 @@ describe('PersonController', () => {
     });
 
     describe('syncPerson', () => {
-        const params: PersonByIdParams = {
+        const params: PersonByIdParams = new PersonByIdParams();
+        Object.assign(params, {
             personId: faker.string.uuid(),
-        };
+        });
         personPermissionsMock = createPersonPermissionsMock();
 
         describe('when person exists and user has permissions', () => {
@@ -844,16 +863,18 @@ describe('PersonController', () => {
     });
 
     describe('updateMetadata', () => {
-        const params: PersonByIdParams = {
+        const params: PersonByIdParams = new PersonByIdParams();
+        Object.assign(params, {
             personId: faker.string.uuid(),
-        };
-        const body: PersonMetadataBodyParams = {
+        });
+        const body: PersonMetadataBodyParams = new PersonMetadataBodyParams();
+        Object.assign(body, {
             familienname: faker.person.lastName(),
             vorname: faker.person.firstName(),
             personalnummer: faker.finance.pin(7),
             lastModified: faker.date.recent(),
             revision: '1',
-        };
+        });
 
         it('should return 200 when successful', async () => {
             const person: Person<true> = getPerson();
@@ -882,13 +903,14 @@ describe('PersonController', () => {
 
         it('should throw PersonalnummerRequiredError when personalnummer was not provided and familienname or vorname did not change', async () => {
             const person: Person<true> = getPerson();
-            const bodyWithInvalidPersonalnummer: PersonMetadataBodyParams = {
+            const bodyWithInvalidPersonalnummer: PersonMetadataBodyParams = new PersonMetadataBodyParams();
+            Object.assign(bodyWithInvalidPersonalnummer, {
                 familienname: person.familienname,
                 vorname: person.vorname,
                 personalnummer: '',
                 lastModified: faker.date.recent(),
                 revision: '1',
-            };
+            });
             dBiamPersonenkontextServiceMock.isPersonalnummerRequiredForAnyPersonenkontextForPerson.mockResolvedValueOnce(
                 true,
             );
@@ -928,9 +950,10 @@ describe('PersonController', () => {
 
     describe('resetUEMPasswordByPersonId', () => {
         describe('when person does not exist', () => {
-            const params: PersonByIdParams = {
+            const params: PersonByIdParams = new PersonByIdParams();
+            Object.assign(params, {
                 personId: faker.string.uuid(),
-            };
+            });
             personPermissionsMock = createPersonPermissionsMock();
 
             it('should throw HttpException', async () => {
@@ -948,9 +971,10 @@ describe('PersonController', () => {
         });
 
         describe('when permissions are insufficient to reset user-password', () => {
-            const params: PersonByIdParams = {
+            const params: PersonByIdParams = new PersonByIdParams();
+            Object.assign(params, {
                 personId: faker.string.uuid(),
-            };
+            });
             personPermissionsMock = createPersonPermissionsMock();
 
             it('should throw HttpNotFoundException', async () => {
@@ -968,9 +992,10 @@ describe('PersonController', () => {
         });
 
         describe('when person does NOT have a defined username', () => {
-            const params: PersonByIdParams = {
+            const params: PersonByIdParams = new PersonByIdParams();
+            Object.assign(params, {
                 personId: faker.string.uuid(),
-            };
+            });
             personPermissionsMock = createPersonPermissionsMock();
 
             it('should throw HttpException', async () => {
@@ -988,9 +1013,10 @@ describe('PersonController', () => {
         });
 
         describe('when resetting UEM-password for a person by personId succeeds', () => {
-            const params: PersonByIdParams = {
+            const params: PersonByIdParams = new PersonByIdParams();
+            Object.assign(params, {
                 personId: faker.string.uuid(),
-            };
+            });
             const person: Person<true> = getPerson();
             personPermissionsMock = createPersonPermissionsMock();
 
@@ -1017,9 +1043,10 @@ describe('PersonController', () => {
         });
 
         describe('when resetting UEM-password for a person returns a SchulConnexError', () => {
-            const params: PersonByIdParams = {
+            const params: PersonByIdParams = new PersonByIdParams();
+            Object.assign(params, {
                 personId: faker.string.uuid(),
-            };
+            });
             const person: Person<true> = getPerson();
             personPermissionsMock = createPersonPermissionsMock();
 
