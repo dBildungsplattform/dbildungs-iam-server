@@ -40,7 +40,6 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleModule } from '../../rolle/rolle.module.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 import { createRequestMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -89,7 +88,6 @@ describe('AuthenticationController', () => {
                     provide: PersonTimeLimitService,
                     useValue: personTimeLimitServiceMock,
                 },
-                { provide: CACHE_MANAGER, useValue: { get: vi.fn(), set: vi.fn() } },
             ],
         })
             .overrideProvider(PersonRepository)
