@@ -13,6 +13,7 @@ import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/c
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { HeaderApiKeyConfig } from '../../../shared/config/headerapikey.config.js';
 
 export interface PersonIdWithEmailResponse {
     personId: string;
@@ -184,10 +185,10 @@ export class EmailResolverService {
     }
 
     private getApiKey(): string {
-        //const emailMicroserviceConfig: EmailMicroserviceConfig =
-        //    this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
-        //return emailMicroserviceConfig.API_KEY;
-        return '';
+        const headerApiKeyConfig: HeaderApiKeyConfig =
+            this.configService.getOrThrow<HeaderApiKeyConfig>('HEADER_API_KEY');
+        console.log('Using API key for email microservice:', headerApiKeyConfig.INTERNAL_COMMUNICATION_API_KEY);
+        return headerApiKeyConfig.INTERNAL_COMMUNICATION_API_KEY;
     }
 
     private mapStatus(ease: EmailAddressStatusEnum): EmailAddressStatus {
