@@ -199,38 +199,41 @@ export class RollenerweiterungRepo {
         serviceProviderIds: ServiceProviderID[],
         organisationId?: OrganisationID,
     ): Promise<Map<ServiceProviderID, Rollenerweiterung<true>[]>> {
-        const filter: Record<string, unknown> = {
-            serviceProviderId: { $in: serviceProviderIds },
-        };
+        const result: Map<ServiceProviderID, Rollenerweiterung<true>[]> = new Map<
+            ServiceProviderID,
+            Rollenerweiterung<true>[]
+        >();
 
-        if (organisationId) {
-            filter['organisationId'] = organisationId;
-        }
+        await Promise.all(
+            serviceProviderIds.map(async (serviceProviderId: ServiceProviderID) => {
+                const filter: Record<string, unknown> = {
+                    serviceProviderId,
+                };
 
-        const findOptions: Record<string, unknown> = {};
+                if (organisationId) {
+                    filter['organisationId'] = organisationId;
+                }
 
-        // Limit to 5 always and not only when a organisationId is provided, because Landesadmins use this same repo method to check if there are indeed Rollenerweiterungen
-        // available for their SPs which could lead to performance issues if a SP is used by many organizations and roles and thus has many rollenerweiterungen
-        findOptions['limit'] = 5;
+                const rollenerweiterungEntities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
+                    RollenerweiterungEntity,
+                    filter,
+                    {
+                    // Limit to 5 always and not only when a organisationId is provided, because Landesadmins use this same repo method to check if there are indeed Rollenerweiterungen
+                    // available for their SPs which could lead to performance issues if a SP is used by many organizations and roles and thus has many rollenerweiterungen
+                        limit: 5,
+                        orderBy: { createdAt: 'DESC' },
+                    },
+                );
 
-        const rollenerweiterungEntities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
-            RollenerweiterungEntity,
-            filter,
-            findOptions,
+                const rollenerweiterungen: Rollenerweiterung<true>[] = rollenerweiterungEntities.map(
+                    (entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity),
+                );
+
+                result.set(serviceProviderId, rollenerweiterungen);
+            }),
         );
 
-        const rollenerweiterungen: Rollenerweiterung<true>[] = rollenerweiterungEntities.map(
-            (entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity),
-        );
-
-        return new Map(
-            serviceProviderIds.map((id: ServiceProviderID) => [
-                id,
-                rollenerweiterungen.filter(
-                    (rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.serviceProviderId === id,
-                ),
-            ]),
-        );
+        return result;
     }
 
     /*
