@@ -74,11 +74,8 @@ export class EmailAddressRepo {
     }
 
     public async deleteAllMarkedForCronSameOrEarlierDayWithPriorityGte2(markedForCron: Date): Promise<number> {
-        const endOfDay: Date = new Date(markedForCron);
-        endOfDay.setHours(23, 59, 59, 999);
-
         const deleted: number = await this.em.nativeDelete(EmailAddrEntity, {
-            markedForCron: { $ne: null, $lte: endOfDay },
+            markedForCron: { $ne: null, $lte: markedForCron },
             priority: { $gte: 2 },
         });
 

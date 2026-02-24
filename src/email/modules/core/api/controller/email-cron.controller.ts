@@ -13,11 +13,13 @@ export class EmailCronController {
 
     @Delete('delete')
     @Public()
-    @ApiOperation({ description: 'Delete email-addresses for a person.' })
+    @ApiOperation({ description: 'Delete all email addresses marked for deletion by cron' })
     @ApiOkResponse({
-        description: 'All Email Adddresses marked for deletion have been deleted.',
+        description: 'All email addresses marked for deletion by cron have been deleted.',
     })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while setting email-address for person.' })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while deleting email addresses marked for cron',
+    })
     public deleteEmails(): void {
         void this.cronDeleteEmailsAddressesService.deleteEmailAddresses();
     }
