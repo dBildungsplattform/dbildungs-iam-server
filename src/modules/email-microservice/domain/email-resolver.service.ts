@@ -187,7 +187,6 @@ export class EmailResolverService {
     private getApiKey(): string {
         const headerApiKeyConfig: HeaderApiKeyConfig =
             this.configService.getOrThrow<HeaderApiKeyConfig>('HEADER_API_KEY');
-        console.log('Using API key for email microservice:', headerApiKeyConfig.INTERNAL_COMMUNICATION_API_KEY);
         return headerApiKeyConfig.INTERNAL_COMMUNICATION_API_KEY;
     }
 
