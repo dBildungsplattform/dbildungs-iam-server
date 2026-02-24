@@ -42,7 +42,7 @@ import { MapperModule } from '../modules/person/mapper/mapper.module.js';
 import { LandesbediensteterModule } from '../modules/landesbediensteter/landesbediensteter.module.js';
 import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js';
 import { CacheModule } from '@nestjs/cache-manager';
-import KeyvRedis from '@keyv/redis';
+import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis';
 
 @Module({
     imports: [
@@ -81,13 +81,14 @@ import KeyvRedis from '@keyv/redis';
             isGlobal: true,
             inject: [ConfigService],
             useFactory: (config: ConfigService) => {
-                const redis: RedisConfig = config.getOrThrow<RedisConfig>('REDIS');
+                const redisConfig: RedisConfig = config.getOrThrow<RedisConfig>('REDIS');
                 const defaultTtlMs: number = 10_000;
 
-                /*
-                let redisClient: RedisClientType | RedisClusterType;
+                let clientOptions: RedisClientOptions | RedisClusterOptions;
+
+                /* istanbul ignore next */
                 if (redisConfig.CLUSTERED) {
-                    redisClient = createCluster({
+                    clientOptions = {
                         defaults: {
                             username: redisConfig.USERNAME,
                             password: redisConfig.PASSWORD,
@@ -103,59 +104,31 @@ import KeyvRedis from '@keyv/redis';
                                 },
                             },
                         ],
-                    });
+                    } satisfies RedisClusterOptions;
                 } else {
-                    redisClient = createClient({
+                    clientOptions = {
                         username: redisConfig.USERNAME,
                         password: redisConfig.PASSWORD,
-                        socket: {
+                    } satisfies RedisClientOptions;
+
+                    if (redisConfig.USE_TLS) {
+                        clientOptions.socket = {
                             host: redisConfig.HOST,
                             port: redisConfig.PORT,
                             tls: redisConfig.USE_TLS,
                             key: redisConfig.PRIVATE_KEY,
                             cert: redisConfig.CERTIFICATE_AUTHORITIES,
-                        },
-                    });
+                        };
+                    }
                 }
-                const store: KeyvRedis<unknown> = new KeyvRedis(redisClient as any);
+
+                const store: KeyvRedis<unknown> = new KeyvRedis(clientOptions);
 
                 return {
-                    store,
+                    stores: [store],
                     ttl: defaultTtlMs,
                     namespace: 'application-cache',
-                };*/
-
-                if (redis.USE_TLS) {
-                    const redisUrl: string = `rediss://${redis.HOST}:${redis.PORT}`;
-                    const tlsOptions: object = {
-                        socket: {
-                            host: redis.HOST,
-                            port: redis.PORT,
-                            tls: redis.USE_TLS,
-                            key: redis.PRIVATE_KEY,
-                            cert: redis.CERTIFICATE_AUTHORITIES,
-                        },
-                    };
-                    const store: KeyvRedis<unknown> = new KeyvRedis(redisUrl, {
-                        ...tlsOptions,
-                    });
-
-                    return {
-                        stores: [store],
-                        ttl: defaultTtlMs,
-                        namespace: 'application-cache',
-                    };
-                } else {
-                    const auth: string = `${encodeURIComponent(redis.USERNAME)}:${encodeURIComponent(redis.PASSWORD)}@`;
-                    const redisUrl: string = `redis://${auth}${redis.HOST}:${redis.PORT}`;
-                    const store: KeyvRedis<unknown> = new KeyvRedis(redisUrl);
-
-                    return {
-                        stores: [store],
-                        ttl: defaultTtlMs,
-                        namespace: 'application-cache',
-                    };
-                }
+                };
             },
         }),
         LoggerModule.register(ServerModule.name),
