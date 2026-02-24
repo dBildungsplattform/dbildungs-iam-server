@@ -18,6 +18,7 @@ import { EmailOxModule } from '../../../ox/email-ox.module.js';
 import { EmailAddressNotFoundError } from '../../error/email-address-not-found.error.js';
 import { EmailAddressMissingStatusError } from '../../error/email-address-missing-status.error.js';
 import { EmailAddress } from '../../domain/email-address.js';
+import { FindEmailAddressPathParams } from '../dtos/params/find-email-address.pathparams.js';
 
 describe('EmailReadController', () => {
     let emailReadController: EmailReadController;
@@ -69,9 +70,10 @@ describe('EmailReadController', () => {
             });
             emailAddressRepoMock.findEmailAddress.mockResolvedValueOnce(address);
 
-            const result: Option<EmailAddressResponse> = await emailReadController.findEmailAddress({
-                emailAddress: emailAddressToSearch,
-            });
+            const params: FindEmailAddressPathParams = new FindEmailAddressPathParams();
+            Object.assign(params, { emailAddress: emailAddressToSearch });
+
+            const result: Option<EmailAddressResponse> = await emailReadController.findEmailAddress(params);
             expect(result).not.toEqual(undefined);
             expect(result?.address).toEqual(emailAddressToSearch);
         });
@@ -114,7 +116,8 @@ describe('EmailReadController', () => {
     describe('findEmailAddressesForSpshPerson', () => {
         it('should return EmailAddressResponse[] for person with addresses and statuses', async () => {
             const spshPersonId: string = faker.string.uuid();
-            const params: FindEmailAddressBySpshPersonIdPathParams = { spshPersonId };
+            const params: FindEmailAddressBySpshPersonIdPathParams = new FindEmailAddressBySpshPersonIdPathParams();
+            Object.assign(params, { spshPersonId });
             const address: EmailAddress<true> = EmailAddress.construct({
                 id: faker.string.uuid(),
                 address: 'test@example.com',
@@ -145,7 +148,8 @@ describe('EmailReadController', () => {
         // Maybe this test is now useless when we already test the right order in repo
         it('should return EmailAddressResponse[] using the latest status if multiple statuses exist', async () => {
             const spshPersonId: string = faker.string.uuid();
-            const params: FindEmailAddressBySpshPersonIdPathParams = { spshPersonId };
+            const params: FindEmailAddressBySpshPersonIdPathParams = new FindEmailAddressBySpshPersonIdPathParams();
+            Object.assign(params, { spshPersonId });
             const now: Date = new Date();
             const earlier: Date = new Date(now.getTime() - 10000);
             const address: EmailAddress<true> = EmailAddress.construct({
@@ -191,7 +195,8 @@ describe('EmailReadController', () => {
 
         it('should filter out addresses with no statuses', async () => {
             const spshPersonId: string = faker.string.uuid();
-            const params: FindEmailAddressBySpshPersonIdPathParams = { spshPersonId };
+            const params: FindEmailAddressBySpshPersonIdPathParams = new FindEmailAddressBySpshPersonIdPathParams();
+            Object.assign(params, { spshPersonId });
             const address: EmailAddress<true> = EmailAddress.construct({
                 id: faker.string.uuid(),
                 address: 'no-status@example.com',

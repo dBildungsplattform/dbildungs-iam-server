@@ -1,3 +1,6 @@
+/* v8 ignore file @preserv */
+// types can not be covered by v8, since the code does not exist at runtime
+
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
