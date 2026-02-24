@@ -720,7 +720,7 @@ describe('RolleRepo', () => {
             expect(rolleResult).toBeInstanceOf(DomainError);
         });
 
-        it('should return error when service providers doe not exist', async () => {
+        it('should return error when service providers does not exist', async () => {
             const organisationId: OrganisationID = faker.string.uuid();
             const rolle: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
@@ -790,6 +790,36 @@ describe('RolleRepo', () => {
                 expect(rolleResult).toBeInstanceOf(UpdateMerkmaleError);
             },
         );
+
+        it('should succeed when organisation has a personenkontext and merkmale are not changed', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            const rolle: Rolle<true> | DomainError = await sut.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisationId,
+                    merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
+            const newName: string = faker.company.name();
+
+            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+                rolle.id,
+                newName,
+                [RollenMerkmal.BEFRISTUNG_PFLICHT],
+                [],
+                [],
+                1,
+                true,
+                permissions,
+            );
+
+            expect(rolleResult.name).toBe(newName);
+        });
 
         it('should return error when organisation has a personenkontext and merkmale needs to be deleted', async () => {
             const organisationId: OrganisationID = faker.string.uuid();
