@@ -218,8 +218,8 @@ export class RollenerweiterungRepo {
                     RollenerweiterungEntity,
                     filter,
                     {
-                    // Limit to 5 always and not only when a organisationId is provided, because Landesadmins use this same repo method to check if there are indeed Rollenerweiterungen
-                    // available for their SPs which could lead to performance issues if a SP is used by many organizations and roles and thus has many rollenerweiterungen
+                        // Limit to 5 always and not only when a organisationId is provided, because Landesadmins use this same repo method to check if there are indeed Rollenerweiterungen
+                        // available for their SPs which could lead to performance issues if a SP is used by many organizations and roles and thus has many rollenerweiterungen
                         limit: 5,
                         orderBy: { createdAt: 'DESC' },
                     },
