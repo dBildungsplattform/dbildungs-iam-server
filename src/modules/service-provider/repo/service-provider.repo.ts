@@ -166,36 +166,27 @@ export class ServiceProviderRepo {
         return serviceProviderMap;
     }
 
-    public async findAuthorized(
-        permissions: PersonPermissions,
+    public async findByOrganisationsWithMerkmale(
+        orgaIds: OrganisationID[] | 'all',
         limit?: number,
         offset?: number,
     ): Promise<Counted<ServiceProvider<true>>> {
-        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.ANGEBOTE_VERWALTEN],
-            true,
-        );
         const [entities, count]: Counted<ServiceProviderEntity> = await this.em.findAndCount(
             ServiceProviderEntity,
-            permittedOrgas.all
-                ? {}
-                : {
-                      providedOnSchulstrukturknoten: { $in: permittedOrgas.orgaIds },
-                  },
+            orgaIds === 'all' ? {} : { providedOnSchulstrukturknoten: { $in: orgaIds } },
             {
                 populate: ['merkmale'],
                 limit,
                 offset,
-                orderBy: {
-                    kategorie: 'ASC', // kategorie defines a custom order
-                },
+                orderBy: { kategorie: 'ASC' },
             },
         );
 
-        return [entities.map(mapEntityToAggregate), count];
+        const serviceProviders: ServiceProvider<true>[] = entities.map(mapEntityToAggregate);
+        return [serviceProviders, count];
     }
 
-    public async findByIdAuthorized(
+    public async findByIdForOrganisationIds(
         id: ServiceProviderID,
         organisationIds: OrganisationID[],
     ): Promise<Option<ServiceProvider<true>>> {

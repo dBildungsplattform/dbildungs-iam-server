@@ -202,7 +202,7 @@ describe('ServiceProvider API', () => {
                 expect(entry?.kategorie).toBe(sp.kategorie);
                 expect(entry?.requires2fa).toBe(sp.requires2fa);
                 expect(entry?.merkmale).toEqual(expect.arrayContaining(serviceProvider1.merkmale));
-                expect(entry?.hasRollenerweiterung).toBe(false);
+                expect(entry?.rollenerweiterungen.length).toBe(0);
                 expect(entry?.rollen).toBeInstanceOf(Array);
                 if (rolle.serviceProviderIds.includes(sp.id)) {
                     expect(entry?.rollen.length).toBe(1);
@@ -284,7 +284,19 @@ describe('ServiceProvider API', () => {
                         kategorie: serviceProvider.kategorie,
                         requires2fa: serviceProvider.requires2fa,
                         merkmale: serviceProvider.merkmale,
-                        hasRollenerweiterung: true,
+                        rollenerweiterungen: [
+                            {
+                                organisation: {
+                                    id: organisation.id,
+                                    name: organisation.name!,
+                                    kennung: organisation.kennung!,
+                                },
+                                rolle: {
+                                    id: rolleWithErweiterung.id,
+                                    name: rolleWithErweiterung.name,
+                                },
+                            },
+                        ],
                         rollen: [
                             {
                                 id: rolle.id,
