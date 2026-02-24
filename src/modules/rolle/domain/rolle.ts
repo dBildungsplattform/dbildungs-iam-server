@@ -227,17 +227,20 @@ export class Rolle<WasPersisted extends boolean> {
         this.serviceProviderIds = this.serviceProviderIds.filter((id: string) => !serviceProviderIds.includes(id));
     }
 
-    public async updateServiceProviders(serviceProviderIds: string[]): Promise<void | DomainError> {
+    public async updateServiceProviders(
+        serviceProviderIds: string[],
+    ): Promise<Result<ServiceProvider<true>[], DomainError>> {
         const serviceProviderMap: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
             serviceProviderIds,
         );
 
         const missingIds: string[] = serviceProviderIds.filter((id: string) => !serviceProviderMap.has(id));
         if (missingIds.length > 0) {
-            return new EntityNotFoundError('ServiceProvider', missingIds.join(', '));
+            return Err(new EntityNotFoundError('ServiceProvider', missingIds.join(', ')));
         }
 
         this.serviceProviderIds = serviceProviderIds;
+        return Ok(Array.from(serviceProviderMap.values()));
     }
 
     public setVersionForUpdate(version: number): void {

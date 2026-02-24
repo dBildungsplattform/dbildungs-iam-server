@@ -79,7 +79,6 @@ describe('PersonenkontextWorkflow', () => {
         dbiamPersonenkontextFactoryMock = module.get(DbiamPersonenkontextFactory);
         personenkontextAnlageFactory = module.get(PersonenkontextWorkflowFactory);
         personenkontextKontextRepoMock = module.get(DBiamPersonenkontextRepo);
-        anlage = personenkontextAnlageFactory.createNew();
         personpermissionsMock = module.get(PersonPermissions);
         configMock = module.get(ConfigService);
         personenkontextWorkflowSharedKernelMock = module.get(PersonenkontextWorkflowSharedKernel);
@@ -90,6 +89,7 @@ describe('PersonenkontextWorkflow', () => {
     });
 
     beforeEach(() => {
+        anlage = personenkontextAnlageFactory.createNew();
         vi.resetAllMocks();
     });
 
@@ -116,6 +116,8 @@ describe('PersonenkontextWorkflow', () => {
                 orgaIds: [organisation.id],
             });
 
+            anlage.initialize('person-id', 'org-id');
+
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
@@ -125,6 +127,36 @@ describe('PersonenkontextWorkflow', () => {
                     organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mock.calls[0][2],
             ).toEqual([organisation.id]);
             expect(result.length).toBe(1);
+            expect(result[0]?.id).toBe(organisation.id);
+        });
+
+        it('should return the organisation it was initialized with as well', async () => {
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, { kennung: '7654321' });
+            const organisations: Organisation<true>[] = [organisation];
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue(organisations);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+            const selectedOrganisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                id: 'org-id',
+                kennung: '1234567',
+            });
+            organisationRepoMock.findById.mockResolvedValue(selectedOrganisation);
+
+            anlage.initialize('person-id', 'org-id');
+
+            const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+            );
+            expect(
+                organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mock.calls[0] &&
+                    organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mock.calls[0][2],
+            ).toEqual([organisation.id]);
+            expect(result.length).toBe(2);
+            expect(result[0]?.id).toBe(selectedOrganisation.id);
+            expect(result[1]?.id).toBe(organisation.id);
         });
 
         it('should return organisations based on name or kennung if provided', async () => {

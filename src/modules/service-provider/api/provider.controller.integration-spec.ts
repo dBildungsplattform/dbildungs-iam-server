@@ -173,7 +173,8 @@ describe('ServiceProvider API', () => {
                 throw rolle;
             }
 
-            const params: ManageableServiceProvidersParams = { limit: 10, offset: 0 };
+            const params: ManageableServiceProvidersParams = new ManageableServiceProvidersParams();
+            Object.assign(params, { limit: 10, offset: 0 });
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/provider/manageable')
                 .query(params)
