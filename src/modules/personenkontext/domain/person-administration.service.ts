@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { intersection } from 'lodash-es';
+
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
@@ -7,9 +8,9 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { OrganisationMatchesRollenart } from '../../rolle/domain/specification/organisation-matches-rollenart.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
+import { RolleFindByParameters, RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
 @Injectable()
 export class PersonAdministrationService {
@@ -42,16 +43,22 @@ export class PersonAdministrationService {
                 : permittedOrgas.orgaIds;
         }
 
-        let rollenarten: Array<RollenArt> | undefined;
-        let schulstrukturknoten: Array<OrganisationID> | undefined;
+        const query: RolleFindByParameters = {
+            limit,
+            searchStr: rolleName,
+        };
+
         if (relevantOrganisationIdsForFilter) {
-            [rollenarten, schulstrukturknoten] = await Promise.all([
+            const [rollenarten, schulstrukturknotenIds]: [Array<RollenArt>, Array<OrganisationID>] = await Promise.all([
                 this.getAllowedRollenArtenForOrganisationen(relevantOrganisationIdsForFilter),
                 this.getAllowedSchulstrukturknotenForRollen(relevantOrganisationIdsForFilter),
             ]);
+            query.rollenArten = rollenarten;
+            query.allowedOrganisationIds = schulstrukturknotenIds;
         }
 
-        return this.rolleRepo.findBy(rolleName, rollenarten, schulstrukturknoten, limit);
+        const [rollen, _]: Counted<Rolle<true>> = await this.rolleRepo.findBy(query);
+        return rollen;
     }
 
     private hasSelectedOrgas(organisationIds?: Array<OrganisationID>): organisationIds is Array<OrganisationID> {

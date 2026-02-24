@@ -1,16 +1,43 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { PersonAdministrationService } from './person-administration.service.js';
-import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { OrganisationMatchesRollenart } from '../../rolle/domain/specification/organisation-matches-rollenart.js';
+import { RolleFindByParameters, RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { PersonAdministrationService } from './person-administration.service.js';
+
+function getValidationObjectForFindByParams(params: {
+    rolleName?: string;
+    limit?: number;
+    expectedOrganisationIds?: Array<OrganisationID>;
+    expectedRollenArten?: Array<RollenArt>;
+}): Partial<RolleFindByParameters> {
+    const validatorObject: Partial<RolleFindByParameters> = {
+        limit: params.limit,
+    };
+    if (params.expectedRollenArten) {
+        validatorObject.rollenArten = expect.arrayContaining(
+            params.expectedRollenArten,
+        ) as typeof params.expectedRollenArten;
+    }
+    if (params.expectedOrganisationIds) {
+        validatorObject.allowedOrganisationIds = expect.arrayContaining(
+            params.expectedOrganisationIds,
+        ) as typeof params.expectedOrganisationIds;
+    }
+    if (params.rolleName) {
+        validatorObject.searchStr = params.rolleName;
+    }
+    return validatorObject;
+}
 
 describe('PersonAdministrationService', () => {
     let module: TestingModule;
@@ -61,6 +88,7 @@ describe('PersonAdministrationService', () => {
                 personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                     all: true,
                 });
+                rolleRepoMock.findBy.mockResolvedValue([[], 0]);
             });
 
             describe.each([['rollenName'], [undefined]])('when rolleName is %s', (rolleName?: string) => {
@@ -68,7 +96,9 @@ describe('PersonAdministrationService', () => {
                     describe('when no organisations are selected', () => {
                         test('it should run the correct query', async () => {
                             await sut.findAuthorizedRollen(personpermissionsMock, rolleName, limit);
-                            expect(rolleRepoMock.findBy).toHaveBeenCalledWith(rolleName, undefined, undefined, limit);
+                            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                                getValidationObjectForFindByParams({ rolleName, limit }),
+                            );
                         });
                     });
 
@@ -95,15 +125,17 @@ describe('PersonAdministrationService', () => {
                                     await sut.findAuthorizedRollen(personpermissionsMock, rolleName, limit, [
                                         organisation.id,
                                     ]);
-                                    expect(rolleRepoMock.findBy).toHaveBeenCalledWith(
-                                        rolleName,
-                                        Array.from(
-                                            OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(
-                                                organisationsTyp,
+                                    expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                                        getValidationObjectForFindByParams({
+                                            rolleName,
+                                            limit,
+                                            expectedRollenArten: Array.from(
+                                                OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(
+                                                    organisationsTyp,
+                                                ),
                                             ),
-                                        ),
-                                        expect.arrayContaining([organisation.id, parent.id]),
-                                        limit,
+                                            expectedOrganisationIds: [organisation.id, parent.id],
+                                        }),
                                     );
                                 });
                             },
@@ -133,6 +165,7 @@ describe('PersonAdministrationService', () => {
                         OrganisationsTyp.SCHULE,
                     ]);
                     organisationRepositoryMock.findParentOrgasForIds.mockResolvedValue([traeger]);
+                    rolleRepoMock.findBy.mockResolvedValue([[], 0]);
                 });
 
                 describe.each([['rollenName'], [undefined]])('when rolleName is %s', (rolleName?: string) => {
@@ -140,14 +173,16 @@ describe('PersonAdministrationService', () => {
                         describe('when no organisations are selected', () => {
                             test('it should run the correct query', async () => {
                                 await sut.findAuthorizedRollen(personpermissionsMock, rolleName, limit);
-                                expect(rolleRepoMock.findBy).toHaveBeenCalledWith(
-                                    rolleName,
-                                    [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN],
-                                    expect.arrayContaining([
-                                        ...schulen.map((s: Organisation<true>) => s.id),
-                                        traeger.id,
-                                    ]),
-                                    limit,
+                                expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                                    getValidationObjectForFindByParams({
+                                        rolleName,
+                                        limit,
+                                        expectedRollenArten: [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN],
+                                        expectedOrganisationIds: [
+                                            ...schulen.map((s: Organisation<true>) => s.id),
+                                            traeger.id,
+                                        ],
+                                    }),
                                 );
                             });
                         });
@@ -161,17 +196,20 @@ describe('PersonAdministrationService', () => {
                                     limit,
                                     organisationIds,
                                 );
-                                expect(rolleRepoMock.findBy).toHaveBeenCalledWith(
-                                    rolleName,
-                                    [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN],
-                                    expect.arrayContaining([...organisationIds, traeger.id]),
-                                    limit,
+                                expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                                    getValidationObjectForFindByParams({
+                                        rolleName,
+                                        limit,
+                                        expectedRollenArten: [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN],
+                                        expectedOrganisationIds: [...organisationIds, traeger.id],
+                                    }),
                                 );
                             });
                         });
                     });
                 });
             });
+
             describe('when no organisations are permitted', () => {
                 beforeEach(() => {
                     personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({

@@ -1,12 +1,12 @@
+import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { OrganisationMatchesRollenartError } from '../../rolle/domain/specification/error/organisation-matches-rollenart.error.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RolleNurAnPassendeOrganisationError } from '../specification/error/rolle-nur-an-passende-organisation.js';
-import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class PersonenkontextWorkflowSharedKernel {
@@ -28,15 +28,13 @@ export class PersonenkontextWorkflowSharedKernel {
             return new EntityNotFoundError('Rolle', rolleId);
         }
         // Can rolle be assigned at target orga
-        const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(organisationId);
-        if (!canAssignRolle) {
+        const canAssignRolle: Result<void, EntityNotFoundError | OrganisationMatchesRollenartError> =
+            await rolle.canBeAssignedToOrga(orga);
+        if (!canAssignRolle.ok) {
+            if (canAssignRolle.error instanceof OrganisationMatchesRollenartError) {
+                return new RolleNurAnPassendeOrganisationError();
+            }
             return new EntityNotFoundError('Rolle', rolleId); // Rolle does not exist for the chosen organisation
-        }
-
-        //The aimed organisation needs to match the type of role to be assigned
-        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        if (!organisationMatchesRollenart.isSatisfiedBy(orga, rolle)) {
-            return new RolleNurAnPassendeOrganisationError();
         }
 
         return undefined;
