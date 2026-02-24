@@ -1,16 +1,17 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
+
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { OrganisationMatchesRollenartError } from '../../rolle/domain/specification/error/organisation-matches-rollenart.error.js';
+import { GleicheRolleAnKlasseWieSchuleError } from '../specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
+import { NurLehrUndLernAnKlasseError } from '../specification/error/nur-lehr-und-lern-an-klasse.error.js';
+import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
+import { RolleNurAnPassendeOrganisationError } from '../specification/error/rolle-nur-an-passende-organisation.js';
 import {
     DbiamPersonenkontextError,
     PersonenkontextSpecificationErrorI18nTypes,
 } from './dbiam-personenkontext.error.js';
-import { NurLehrUndLernAnKlasseError } from '../specification/error/nur-lehr-und-lern-an-klasse.error.js';
-import { GleicheRolleAnKlasseWieSchuleError } from '../specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
-import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
-import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
-import { RolleNurAnPassendeOrganisationError } from '../specification/error/rolle-nur-an-passende-organisation.js';
-import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 @Catch(PersonenkontextSpecificationError, DuplicatePersonalnummerError)
 export class PersonenkontextExceptionFilter implements ExceptionFilter<PersonenkontextSpecificationError> {

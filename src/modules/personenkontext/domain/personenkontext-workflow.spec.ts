@@ -539,7 +539,7 @@ describe('PersonenkontextWorkflow', () => {
         });
 
         it('should return an empty array if no organisations with system rights are found', async () => {
-            rolleRepoMock.find.mockResolvedValue([DoFactory.createRolle(true)]);
+            rolleRepoMock.findByRollenArten.mockResolvedValue([DoFactory.createRolle(true)]);
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
@@ -552,8 +552,8 @@ describe('PersonenkontextWorkflow', () => {
 
         it('should return an empty array if the organisation is not found', async () => {
             const rolle: Rolle<true> = DoFactory.createRolle(true);
-            rolleRepoMock.find.mockResolvedValue([DoFactory.createRolle(true)]);
-            rolleRepoMock.find.mockResolvedValue([rolle]);
+            rolleRepoMock.findByRollenArten.mockResolvedValue([DoFactory.createRolle(true)]);
+            rolleRepoMock.findByRollenArten.mockResolvedValue([rolle]);
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
@@ -570,7 +570,7 @@ describe('PersonenkontextWorkflow', () => {
         it('should return an empty array if user does not have permission to view roles for the organisation', async () => {
             const rolle: Rolle<true> = DoFactory.createRolle(true);
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
-            rolleRepoMock.find.mockResolvedValue([rolle]);
+            rolleRepoMock.findByRollenArten.mockResolvedValue([rolle]);
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -606,7 +606,7 @@ describe('PersonenkontextWorkflow', () => {
             organisationRepoMock.findByIds.mockResolvedValue(
                 new Map(orgsWithRecht.map((id: string) => [id, DoFactory.createOrganisation(true, { id })])),
             );
-            rolleRepoMock.find.mockResolvedValue(rollen);
+            rolleRepoMock.findByRollenArten.mockResolvedValue(rollen);
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechteAtOrganisation.mockResolvedValue(true);
@@ -621,7 +621,7 @@ describe('PersonenkontextWorkflow', () => {
         });
 
         it('should limit allowedRollen based on set personId', async () => {
-            rolleRepoMock.find.mockResolvedValue([]);
+            rolleRepoMock.findByRollenArten.mockResolvedValue([]);
 
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             organisationRepoMock.findById.mockResolvedValue(organisation);
@@ -643,7 +643,7 @@ describe('PersonenkontextWorkflow', () => {
         });
 
         it('should limit allowedRollen based on set personId when rollenarten are passed in', async () => {
-            rolleRepoMock.find.mockResolvedValue([]);
+            rolleRepoMock.findByRollenArten.mockResolvedValue([]);
 
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             organisationRepoMock.findById.mockResolvedValue(organisation);
@@ -671,7 +671,7 @@ describe('PersonenkontextWorkflow', () => {
         });
 
         it('should handle empty roles array', async () => {
-            rolleRepoMock.find.mockResolvedValue([]);
+            rolleRepoMock.findByRollenArten.mockResolvedValue([]);
 
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             organisationRepoMock.findById.mockResolvedValue(organisation);
@@ -717,7 +717,7 @@ describe('PersonenkontextWorkflow', () => {
             organisationRepoMock.findByIds.mockResolvedValue(
                 new Map(orgsWithRecht.map((id: string) => [id, DoFactory.createOrganisation(true, { id })])),
             );
-            rolleRepoMock.find.mockResolvedValue(rollen);
+            rolleRepoMock.findByRollenArten.mockResolvedValue(rollen);
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
@@ -757,7 +757,7 @@ describe('PersonenkontextWorkflow', () => {
             organisationRepoMock.findByIds.mockResolvedValue(
                 new Map(orgsWithRecht.map((id: string) => [id, DoFactory.createOrganisation(true, { id })])),
             );
-            rolleRepoMock.find.mockResolvedValue(rollen);
+            rolleRepoMock.findByRollenArten.mockResolvedValue(rollen);
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
@@ -808,7 +808,7 @@ describe('PersonenkontextWorkflow', () => {
                 [rolle3.id, rolle3],
                 [rolle3.id, rolle3],
             ]);
-            rolleRepoMock.find.mockResolvedValue(rollen);
+            rolleRepoMock.findByRollenArten.mockResolvedValue(rollen);
             rolleRepoMock.findByIds.mockResolvedValue(rolleMap); // simulate lookup of passed rollenIds
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
