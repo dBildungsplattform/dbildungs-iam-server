@@ -86,7 +86,7 @@ export class CronDeleteEmailsAddressesService {
         await this.emailAddressRepo.save(prio1ToDelete);
 
         const externalId: string = prio1ToDelete.externalId;
-        const oxUserCounter: OXUserID | undefined = prio1ToDelete.oxUserCounter;
+        const oxUserCounter: OXUserID | undefined = prio1ToDelete.oxUserCounter ?? prio0ToKeep.oxUserCounter; //All Data for the entire ox user (since on 0 or 1 exist anymore)
         const domain: string | undefined = prio1ToDelete.getDomain();
 
         let isCanDeletePrio1FromDb: boolean = true;
@@ -112,8 +112,8 @@ export class CronDeleteEmailsAddressesService {
                 this.logger.info(`Successfully updated userdata in ox for person ${spshPersonId}`);
             }
         } else {
-            isCanDeletePrio1FromDb = false;
-            this.logger.error(
+            //Still Valid to delete in db because doesnt exist in Ox (e.g. all retries of email creation fail)
+            this.logger.warning(
                 `No oxUserCounter found for spshPerson ${spshPersonId} when deleting email addresses. Skipping Ox update`,
             );
         }

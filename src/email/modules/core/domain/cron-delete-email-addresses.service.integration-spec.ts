@@ -283,7 +283,7 @@ describe('CronDeleteEmailsAddressesService', () => {
             );
         });
 
-        it('should fail removing the alternative mail due to ox user counter not found and leave email in status TO_BE_DELETED', async () => {
+        it('should still remove the alternative mail from db if ox user counter not found', async () => {
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
             const personId1: string = faker.string.uuid();
@@ -312,25 +312,62 @@ describe('CronDeleteEmailsAddressesService', () => {
 
             const isExistsEmailPrio0: boolean = await emailAddressRepo.existsEmailAddress(email0.address);
             const isExistsEmailPrio1: boolean = await emailAddressRepo.existsEmailAddress(email1.address);
-            const emailAddress1AfterProcessing: Option<EmailAddress<true>> = await emailAddressRepo.findEmailAddress(
-                email1.address,
-            );
+            await emailAddressRepo.findEmailAddress(email1.address);
 
             expect(isExistsEmailPrio0).toBeTruthy();
-            expect(isExistsEmailPrio1).toBeTruthy();
-            expect(emailAddress1AfterProcessing).toBeDefined();
-
-            if (!emailAddress1AfterProcessing) {
-                return;
-            }
-
-            expect(emailAddress1AfterProcessing.getStatus()).toBe(EmailAddressStatusEnum.TO_BE_DELETED);
+            expect(isExistsEmailPrio1).toBeFalsy();
 
             expect(loggerMock.info).toHaveBeenCalledWith(`Processing Emails with Prio < 2 for spshPerson ${personId1}`);
             expect(
                 deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
             ).not.toHaveBeenCalled();
             expect(oxServiceMock.createChangeUserAction).not.toHaveBeenCalled();
+            expect(ldapClientServiceMock.updatePersonEmails).toHaveBeenCalledWith(
+                email0.externalId,
+                domain.domain,
+                email0.address,
+                undefined,
+            );
+        });
+
+        it('should fallback to oxUserCounter from prio 0 address if oxUserCounter from prio 1 address is missing', async () => {
+            const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+            const personId1: string = faker.string.uuid();
+            const domain: EmailDomain<true> = await setupDomain();
+
+            const email0: EmailAddress<true> = await createAndPersistEmail(
+                personId1,
+                0,
+                undefined,
+                faker.string.uuid(),
+                domain,
+            );
+            const email1: EmailAddress<true> = await createAndPersistEmail(
+                personId1,
+                1,
+                oneDayInPast,
+                undefined,
+                domain,
+            );
+
+            oxSendServiceMock.send.mockResolvedValueOnce(Ok(''));
+            ldapClientServiceMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
+
+            await sut.deleteEmailAddresses();
+
+            const isExistsEmailPrio0: boolean = await emailAddressRepo.existsEmailAddress(email0.address);
+            const isExistsEmailPrio1: boolean = await emailAddressRepo.existsEmailAddress(email1.address);
+            await emailAddressRepo.findEmailAddress(email1.address);
+
+            expect(isExistsEmailPrio0).toBeTruthy();
+            expect(isExistsEmailPrio1).toBeFalsy();
+
+            expect(loggerMock.info).toHaveBeenCalledWith(`Processing Emails with Prio < 2 for spshPerson ${personId1}`);
+            expect(
+                deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
+            ).not.toHaveBeenCalled();
+            expect(oxServiceMock.createChangeUserAction).toHaveBeenCalled();
             expect(ldapClientServiceMock.updatePersonEmails).toHaveBeenCalledWith(
                 email0.externalId,
                 domain.domain,

@@ -4,12 +4,16 @@ import { ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags } 
 import { Public } from '../../decorator/public.decorator.js';
 import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
 import { CronDeleteEmailsAddressesService } from '../../domain/cron-delete-email-addresses.service.js';
+import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 
 @ApiTags('email')
 @Controller({ path: 'cron' })
 @UseFilters(new EmailExceptionFilter())
 export class EmailCronController {
-    public constructor(private readonly cronDeleteEmailsAddressesService: CronDeleteEmailsAddressesService) {}
+    public constructor(
+        private readonly cronDeleteEmailsAddressesService: CronDeleteEmailsAddressesService,
+        private readonly logger: ClassLogger,
+    ) {}
 
     @Delete('delete')
     @Public()
@@ -21,6 +25,8 @@ export class EmailCronController {
         description: 'Internal server error while deleting email addresses marked for cron',
     })
     public deleteEmails(): void {
-        void this.cronDeleteEmailsAddressesService.deleteEmailAddresses();
+        this.cronDeleteEmailsAddressesService.deleteEmailAddresses().catch((err: unknown) => {
+            this.logger.logUnknownAsError('Unexpected Error during deleteEmailAddresses', err);
+        });
     }
 }

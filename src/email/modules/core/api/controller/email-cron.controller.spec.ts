@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { createMock } from '../../../../../../test/utils/createMock.js';
+import { createMock, DeepMocked } from '../../../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { APP_PIPE } from '@nestjs/core';
 import { GlobalValidationPipe } from '../../../../../shared/validation/global-validation.pipe.js';
@@ -11,9 +11,12 @@ import {
 import { EmailOxModule } from '../../../ox/email-ox.module.js';
 import { EmailCronController } from './email-cron.controller.js';
 import { CronDeleteEmailsAddressesService } from '../../domain/cron-delete-email-addresses.service.js';
+import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 
 describe('EmailCronController', () => {
     let emailCronController: EmailCronController;
+    let cronDeleteEmailsAddressesService: DeepMocked<CronDeleteEmailsAddressesService>;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -29,9 +32,13 @@ describe('EmailCronController', () => {
         })
             .overrideProvider(CronDeleteEmailsAddressesService)
             .useValue(createMock(CronDeleteEmailsAddressesService))
+            .overrideProvider(ClassLogger)
+            .useValue(createMock(ClassLogger))
             .compile();
 
         emailCronController = module.get(EmailCronController);
+        cronDeleteEmailsAddressesService = module.get(CronDeleteEmailsAddressesService);
+        loggerMock = module.get(ClassLogger);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
@@ -39,9 +46,22 @@ describe('EmailCronController', () => {
     });
 
     describe('findEmailAddress', () => {
-        it('should call deleteEmails', () => {
+        it('should successfully call deleteEmails', () => {
+            cronDeleteEmailsAddressesService.deleteEmailAddresses.mockResolvedValue(undefined);
             const result: void = emailCronController.deleteEmails();
             expect(result).toEqual(undefined);
+        });
+
+        it('should catch and log unexpected error from deleteEmails', async () => {
+            cronDeleteEmailsAddressesService.deleteEmailAddresses.mockRejectedValue(new Error('Unexpected Error'));
+            const result: void = emailCronController.deleteEmails();
+            await Promise.resolve();
+            expect(result).toEqual(undefined);
+
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                expect.stringContaining('Unexpected Error during deleteEmailAddresses'),
+                expect.any(Error),
+            );
         });
     });
 });
