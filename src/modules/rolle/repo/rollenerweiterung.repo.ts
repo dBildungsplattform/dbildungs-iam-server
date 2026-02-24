@@ -199,12 +199,7 @@ export class RollenerweiterungRepo {
         serviceProviderIds: ServiceProviderID[],
         organisationId?: OrganisationID,
     ): Promise<Map<ServiceProviderID, Rollenerweiterung<true>[]>> {
-        const result: Map<ServiceProviderID, Rollenerweiterung<true>[]> = new Map<
-            ServiceProviderID,
-            Rollenerweiterung<true>[]
-        >();
-
-        await Promise.all(
+        const entries: [ServiceProviderID, Rollenerweiterung<true>[]][] = await Promise.all(
             serviceProviderIds.map(async (serviceProviderId: ServiceProviderID) => {
                 const filter: Record<string, unknown> = {
                     serviceProviderId,
@@ -214,26 +209,24 @@ export class RollenerweiterungRepo {
                     filter['organisationId'] = organisationId;
                 }
 
-                const rollenerweiterungEntities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
+                const entities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
                     RollenerweiterungEntity,
                     filter,
                     {
-                        // Limit to 5 always and not only when a organisationId is provided, because Landesadmins use this same repo method to check if there are indeed Rollenerweiterungen
-                        // available for their SPs which could lead to performance issues if a SP is used by many organizations and roles and thus has many rollenerweiterungen
                         limit: 5,
                         orderBy: { createdAt: 'DESC' },
                     },
                 );
 
-                const rollenerweiterungen: Rollenerweiterung<true>[] = rollenerweiterungEntities.map(
-                    (entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity),
+                const aggregates: Rollenerweiterung<true>[] = entities.map((entity: Loaded<RollenerweiterungEntity>) =>
+                    this.mapEntityToAggregate(entity),
                 );
 
-                result.set(serviceProviderId, rollenerweiterungen);
+                return [serviceProviderId, aggregates];
             }),
         );
 
-        return result;
+        return new Map(entries);
     }
 
     /*
