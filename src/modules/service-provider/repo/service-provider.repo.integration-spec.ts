@@ -9,7 +9,7 @@ import {
     LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
@@ -191,62 +191,51 @@ describe('ServiceProviderRepo', () => {
         });
     });
 
-    describe('findAuthorized', () => {
-        describe.each([
-            {
-                all: true,
-            } as PermittedOrgas,
-            {
-                all: false,
-                orgaIds: [faker.string.uuid()],
-            } as PermittedOrgas,
-        ])('when permissions are %s', (permittedOrgas: PermittedOrgas) => {
-            it('should return all service-providers the user is allowed to manage', async () => {
-                const permittedOrgaIds: string[] = permittedOrgas.all ? [faker.string.uuid()] : permittedOrgas.orgaIds;
+    describe('findByOrganisationsWithMerkmale', () => {
+        describe.each(['all' as const, [faker.string.uuid()]])(
+            'when orgaIds is %s',
+            (orgaIds: OrganisationID[] | 'all') => {
+                it('should return service-providers filtered by organisations', async () => {
+                    const targetOrgaId: string = orgaIds === 'all' ? faker.string.uuid() : orgaIds[0]!;
 
-                const serviceProviders: ServiceProvider<true>[] = await Promise.all([
-                    sut.save(
-                        DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: permittedOrgaIds[0] }),
-                    ),
-                    sut.save(
-                        DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: faker.string.uuid() }),
-                    ),
-                ]);
+                    const serviceProviders: ServiceProvider<true>[] = await Promise.all([
+                        sut.save(
+                            DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: targetOrgaId }),
+                        ),
+                        sut.save(
+                            DoFactory.createServiceProvider(false, {
+                                providedOnSchulstrukturknoten: faker.string.uuid(),
+                            }),
+                        ),
+                    ]);
 
-                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
-                permissions.getOrgIdsWithSystemrecht = vi.fn().mockReturnValue(permittedOrgas);
+                    const [serviceProviderResult, count]: Counted<ServiceProvider<true>> =
+                        await sut.findByOrganisationsWithMerkmale(orgaIds, 5, 0);
 
-                const [serviceProviderResult, count]: Counted<ServiceProvider<true>> = await sut.findAuthorized(
-                    permissions,
-                    5,
-                    0,
-                );
-
-                if (permittedOrgas.all) {
-                    expect(serviceProviderResult).toHaveLength(serviceProviders.length);
-                    expect(count).toEqual(serviceProviders.length);
-                } else {
-                    expect(serviceProviderResult).toHaveLength(1);
-                    expect(serviceProviderResult[0]!.id).toEqual(serviceProviders[0]!.id);
-                    expect(count).toEqual(1);
-                }
-            });
-        });
+                    if (orgaIds === 'all') {
+                        expect(serviceProviderResult).toHaveLength(serviceProviders.length);
+                        expect(count).toEqual(serviceProviders.length);
+                    } else {
+                        expect(serviceProviderResult).toHaveLength(1);
+                        expect(serviceProviderResult[0]!.id).toEqual(serviceProviders[0]!.id);
+                        expect(count).toEqual(1);
+                    }
+                });
+            },
+        );
 
         it('should respect the limit and offset', async () => {
             const total: number = 10;
             await Promise.all(Array.from({ length: total }, () => sut.save(DoFactory.createServiceProvider(false))));
-            const permittedOrgas: PermittedOrgas = { all: true };
-            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
-            permissions.getOrgIdsWithSystemrecht = vi.fn().mockReturnValue(permittedOrgas);
+
             const limit: number = 5;
             const [serviceProviderWithoutOffsetResult, countWithoutOffset]: Counted<ServiceProvider<true>> =
-                await sut.findAuthorized(permissions, limit, 0);
+                await sut.findByOrganisationsWithMerkmale('all', limit, 0);
             expect(serviceProviderWithoutOffsetResult).toHaveLength(limit);
             expect(countWithoutOffset).toEqual(total);
 
             const [serviceProviderWithOffsetResult, countWithOffset]: Counted<ServiceProvider<true>> =
-                await sut.findAuthorized(permissions, limit, 5);
+                await sut.findByOrganisationsWithMerkmale('all', limit, 5);
             expect(serviceProviderWithOffsetResult).toHaveLength(limit);
             expect(countWithOffset).toEqual(total);
 
@@ -270,10 +259,13 @@ describe('ServiceProviderRepo', () => {
                         sut.save(DoFactory.createServiceProvider(false, { kategorie })),
                 ),
             );
-            const permittedOrgas: PermittedOrgas = { all: true };
-            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
-            permissions.getOrgIdsWithSystemrecht = vi.fn().mockReturnValue(permittedOrgas);
-            const [serviceProviderResult]: Counted<ServiceProvider<true>> = await sut.findAuthorized(permissions, 5, 0);
+
+            const [serviceProviderResult]: Counted<ServiceProvider<true>> = await sut.findByOrganisationsWithMerkmale(
+                'all',
+                5,
+                0,
+            );
+
             [
                 ServiceProviderKategorie.EMAIL,
                 ServiceProviderKategorie.UNTERRICHT,
@@ -307,7 +299,7 @@ describe('ServiceProviderRepo', () => {
         });
 
         it('should return the service provider when administriert at organisation', async () => {
-            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(serviceProvider.id, [
+            const result: Option<ServiceProvider<true>> = await sut.findByIdForOrganisationIds(serviceProvider.id, [
                 organisationA.id,
             ]);
 
@@ -318,7 +310,7 @@ describe('ServiceProviderRepo', () => {
         });
 
         it('should return null when the ID exists but organisationIds do not include the provider’s org', async () => {
-            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(serviceProvider.id, [
+            const result: Option<ServiceProvider<true>> = await sut.findByIdForOrganisationIds(serviceProvider.id, [
                 organisationB.id,
             ]);
 
@@ -326,7 +318,7 @@ describe('ServiceProviderRepo', () => {
         });
 
         it('should return null when the service provider does not exist', async () => {
-            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(faker.string.uuid(), [
+            const result: Option<ServiceProvider<true>> = await sut.findByIdForOrganisationIds(faker.string.uuid(), [
                 organisationA.id,
             ]);
 
@@ -334,13 +326,13 @@ describe('ServiceProviderRepo', () => {
         });
 
         it('should return null when organisationIds list is empty', async () => {
-            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(serviceProvider.id, []);
+            const result: Option<ServiceProvider<true>> = await sut.findByIdForOrganisationIds(serviceProvider.id, []);
 
             expect(result).toBeNull();
         });
 
         it('should return the provider when multiple organisationIds are passed and one matches', async () => {
-            const result: Option<ServiceProvider<true>> = await sut.findByIdAuthorized(serviceProvider.id, [
+            const result: Option<ServiceProvider<true>> = await sut.findByIdForOrganisationIds(serviceProvider.id, [
                 organisationB.id,
                 organisationA.id,
             ]);

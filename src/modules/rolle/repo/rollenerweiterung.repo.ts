@@ -195,26 +195,39 @@ export class RollenerweiterungRepo {
         return Ok(null);
     }
 
+    // This method returns exactly 5 rollenerweiterungen per service provider, sorted by createdAt descending, to avoid performance issues with loading too many rollenerweiterungen at once.
     public async findByServiceProviderIds(
         serviceProviderIds: ServiceProviderID[],
+        organisationId?: OrganisationID,
     ): Promise<Map<ServiceProviderID, Rollenerweiterung<true>[]>> {
-        const rollenerweiterungEntities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
-            RollenerweiterungEntity,
-            {
-                serviceProviderId: { $in: serviceProviderIds },
-            },
+        const entries: [ServiceProviderID, Rollenerweiterung<true>[]][] = await Promise.all(
+            serviceProviderIds.map(async (serviceProviderId: ServiceProviderID) => {
+                const filter: Record<string, unknown> = {
+                    serviceProviderId,
+                };
+
+                if (organisationId) {
+                    filter['organisationId'] = organisationId;
+                }
+
+                const entities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
+                    RollenerweiterungEntity,
+                    filter,
+                    {
+                        limit: 5,
+                        orderBy: { createdAt: 'DESC' },
+                    },
+                );
+
+                const aggregates: Rollenerweiterung<true>[] = entities.map((entity: Loaded<RollenerweiterungEntity>) =>
+                    this.mapEntityToAggregate(entity),
+                );
+
+                return [serviceProviderId, aggregates];
+            }),
         );
-        const rollenerweiterungen: Rollenerweiterung<true>[] = rollenerweiterungEntities.map(
-            (entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity),
-        );
-        return new Map(
-            serviceProviderIds.map((id: ServiceProviderID) => [
-                id,
-                rollenerweiterungen.filter(
-                    (rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.serviceProviderId === id,
-                ),
-            ]),
-        );
+
+        return new Map(entries);
     }
 
     /*
