@@ -202,13 +202,20 @@ describe('PersonenkontexteUpdate', () => {
                 mapOrgas.set(pk2.organisationId, DoFactory.createOrganisation(true, { id: pk2.organisationId }));
                 rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
                 organisationRepoMock.findByIds.mockResolvedValue(mapOrgas);
-                personRepoMock.findById.mockResolvedValue(DoFactory.createPerson(true, { id: personId }));
+                const person: Person<true> = DoFactory.createPerson(true, {
+                    id: personId,
+                    orgUnassignmentDate: faker.date.past(),
+                });
+                personRepoMock.findById.mockResolvedValue(person);
                 dBiamPersonenkontextRepoInternalMock.save.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoInternalMock.save.mockResolvedValueOnce(pk2);
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateResult).toBeInstanceOf(Array);
+                expect(personRepoMock.save).toHaveBeenCalledWith(
+                    expect.objectContaining({ id: personId, orgUnassignmentDate: undefined }),
+                );
             });
         });
 
@@ -557,6 +564,9 @@ describe('PersonenkontexteUpdate', () => {
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
                 expect(updateResult).toEqual([]);
+                expect(
+                    personRepoMock.save.mock.calls[0] && personRepoMock.save.mock.calls[0][0].orgUnassignmentDate,
+                ).toBeDefined();
             });
         });
         describe('when there are existing PKs but lastModified is undefined', () => {

@@ -17,6 +17,8 @@ import { PersonenkontextFactory } from '../../personenkontext/domain/personenkon
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { NameForRolleWithTrailingSpaceError } from './name-with-trailing-space.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 
 describe('Rolle Aggregate', () => {
     let module: TestingModule;
@@ -66,9 +68,10 @@ describe('Rolle Aggregate', () => {
 
     describe('canBeAssignedToOrga', () => {
         it('should resolve to true, if the rolle is administered by the given organisation', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
             const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
                 'test',
-                faker.string.uuid(),
+                orga.id,
                 RollenArt.LERN,
                 [],
                 [],
@@ -81,13 +84,14 @@ describe('Rolle Aggregate', () => {
                 return;
             }
 
-            await expect(rolle.canBeAssignedToOrga(rolle.administeredBySchulstrukturknoten)).resolves.toBe(true);
+            await expect(rolle.canBeAssignedToOrga(orga)).resolves.toEqual(Ok(undefined));
         });
 
         it('should resolve to true, if the given organisation id is a suborganisation', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
             const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
                 'test',
-                faker.string.uuid(),
+                orga.id,
                 RollenArt.LERN,
                 [],
                 [],
@@ -100,13 +104,13 @@ describe('Rolle Aggregate', () => {
                 return;
             }
 
-            const orgaId: string = faker.string.uuid();
             organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
 
-            await expect(rolle.canBeAssignedToOrga(orgaId)).resolves.toBe(true);
+            await expect(rolle.canBeAssignedToOrga(orga)).resolves.toEqual(Ok(undefined));
         });
 
         it('should resolve to false, if the given organisation id is not a suborganisation', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
             const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
                 'test',
                 faker.string.uuid(),
@@ -123,7 +127,9 @@ describe('Rolle Aggregate', () => {
                 return;
             }
 
-            await expect(rolle.canBeAssignedToOrga(faker.string.uuid())).resolves.toBe(false);
+            await expect(rolle.canBeAssignedToOrga(orga)).resolves.toEqual(
+                Err(new EntityNotFoundError('Rolle', rolle.id ?? 'undefined')),
+            );
         });
     });
 
@@ -483,26 +489,40 @@ describe('Rolle Aggregate', () => {
                     false,
                 );
 
-                const serviceProviderToAdd: string = faker.string.uuid();
-                const serviceProviderToRemove: string = faker.string.uuid();
-                const existingServiceProviderId: string = faker.string.uuid();
+                const serviceProviderToAdd: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+                const serviceProviderToRemove: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+                const existingServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
 
                 // Existing state
-                rolle.serviceProviderIds = [existingServiceProviderId, serviceProviderToRemove];
+                rolle.serviceProviderIds = [existingServiceProvider.id, serviceProviderToRemove.id];
 
-                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(
-                    new Map([
-                        [serviceProviderToAdd, DoFactory.createServiceProvider(true)],
-                        [serviceProviderToRemove, DoFactory.createServiceProvider(true)],
-                        [existingServiceProviderId, DoFactory.createServiceProvider(true)],
-                    ]),
-                );
+                serviceProviderRepoMock.findByIds.mockImplementation((ids: string[]) => {
+                    const fullMap: Map<string, ServiceProvider<true>> = new Map([
+                        [serviceProviderToAdd.id, serviceProviderToAdd],
+                        [serviceProviderToRemove.id, serviceProviderToRemove],
+                        [existingServiceProvider.id, existingServiceProvider],
+                    ]);
+                    const resultMap: Map<string, ServiceProvider<true>> = new Map();
+                    ids.forEach((id: string) => {
+                        resultMap.set(id, fullMap.get(id) as ServiceProvider<true>);
+                    });
+                    return Promise.resolve(resultMap);
+                });
 
                 // Call updateServiceProviders with both IDs to add and remove
-                await rolle.updateServiceProviders([existingServiceProviderId, serviceProviderToAdd]);
+                const result: Result<ServiceProvider<true>[], DomainError> = await rolle.updateServiceProviders([
+                    existingServiceProvider.id,
+                    serviceProviderToAdd.id,
+                ]);
 
-                expect(rolle.serviceProviderIds).toContain(serviceProviderToAdd);
-                expect(rolle.serviceProviderIds).not.toContain(serviceProviderToRemove);
+                expect(rolle.serviceProviderIds).toContain(serviceProviderToAdd.id);
+                expect(rolle.serviceProviderIds).not.toContain(serviceProviderToRemove.id);
+                expect(result.ok).toBeTruthy();
+                if (result.ok) {
+                    expect(result.value).toEqual(
+                        expect.arrayContaining([serviceProviderToAdd, existingServiceProvider]),
+                    );
+                }
             });
         });
 
@@ -528,12 +548,15 @@ describe('Rolle Aggregate', () => {
                 // Simulate the repository failing to find the non-existent provider
                 serviceProviderRepoMock.findByIds.mockResolvedValue(new Map());
 
-                const result: void | DomainError = await rolle.updateServiceProviders([
+                const result: Result<ServiceProvider<true>[], DomainError> = await rolle.updateServiceProviders([
                     serviceProvider1,
                     nonExistentProvider,
                 ]);
 
-                expect(result).toBeInstanceOf(EntityNotFoundError);
+                expect(result.ok).toBeFalsy();
+                if (!result.ok) {
+                    expect(result.error).toBeInstanceOf(EntityNotFoundError);
+                }
             });
         });
     });

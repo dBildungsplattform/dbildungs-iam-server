@@ -70,6 +70,14 @@ describe('EventService', () => {
             sut.publish(new TestEvent());
             expect(handler).not.toHaveBeenCalled();
         });
+
+        it('should should do nothing without subscription', () => {
+            const handler: Mock = vi.fn();
+
+            sut.unsubscribe(TestEvent, handler);
+            sut.publish(new TestEvent());
+            expect(handler).not.toHaveBeenCalled();
+        });
     });
 
     describe('publish', () => {

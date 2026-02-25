@@ -11,6 +11,9 @@ import { SetEmailAddressForSpshPersonBodyParams } from '../dtos/params/set-email
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { DeleteEmailsAddressesForSpshPersonService } from '../../domain/delete-email-adresses-for-spsh-person.service.js';
 import { SetEmailSuspendedService } from '../../domain/set-email-suspended.service.js';
+import { SetEmailAddressForSpshPersonPathParams } from '../dtos/params/set-email-address-for-spsh-person.pathparams.js';
+import { DeleteEmailAddressesForSpshPersonPathParams } from '../dtos/params/delete-email-addresses-for-spsh-person.pathparams.js';
+import { SetEmailAddressesSuspendedPathParams } from '../dtos/params/set-email-addresses-suspended.pathparams.js';
 
 describe('Email Write Controller', () => {
     let emailWriteController: EmailWriteController;
@@ -60,15 +63,18 @@ describe('Email Write Controller', () => {
     describe('setEmailAddressForSpshPerson', () => {
         it('should resolve immediatly if setEmailAddressForSpshPerson succeeds', () => {
             const spshPersonId: string = faker.string.uuid();
-            const bodyParams: SetEmailAddressForSpshPersonBodyParams = {
+            const bodyParams: SetEmailAddressForSpshPersonBodyParams = new SetEmailAddressForSpshPersonBodyParams();
+            Object.assign(bodyParams, {
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
                 spshServiceProviderId: faker.string.uuid(),
                 kennungen: [],
                 spshUsername: faker.internet.userName(),
-            };
+            });
             setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson.mockResolvedValue();
-            const result: void = emailWriteController.setEmailForPerson({ spshPersonId: spshPersonId }, bodyParams);
+            const requestParams: SetEmailAddressForSpshPersonPathParams = new SetEmailAddressForSpshPersonPathParams();
+            Object.assign(requestParams, { spshPersonId });
+            const result: void = emailWriteController.setEmailForPerson(requestParams, bodyParams);
             expect(result).toBeUndefined();
             vi.runAllTimers();
             expect(setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson).toHaveBeenCalledWith({
@@ -79,17 +85,20 @@ describe('Email Write Controller', () => {
 
         it('should resolve immediatly if setEmailAddressForSpshPerson fails', () => {
             const spshPersonId: string = faker.string.uuid();
-            const bodyParams: SetEmailAddressForSpshPersonBodyParams = {
+            const bodyParams: SetEmailAddressForSpshPersonBodyParams = new SetEmailAddressForSpshPersonBodyParams();
+            Object.assign(bodyParams, {
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
                 spshServiceProviderId: faker.string.uuid(),
                 kennungen: [],
                 spshUsername: faker.internet.userName(),
-            };
+            });
+            const requestParams: SetEmailAddressForSpshPersonPathParams = new SetEmailAddressForSpshPersonPathParams();
+            Object.assign(requestParams, { spshPersonId });
             setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson.mockRejectedValue(
                 new Error('Test error'),
             );
-            const result: void = emailWriteController.setEmailForPerson({ spshPersonId: spshPersonId }, bodyParams);
+            const result: void = emailWriteController.setEmailForPerson(requestParams, bodyParams);
             expect(result).toBeUndefined();
             vi.runAllTimers();
             expect(setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson).toHaveBeenCalledWith({
@@ -103,8 +112,10 @@ describe('Email Write Controller', () => {
         it('should resolve immediately if deleteEmailAddressesForSpshPerson succeeds', () => {
             const spshPersonId: string = faker.string.uuid();
             deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson.mockResolvedValue();
-
-            const result: void = emailWriteController.deleteEmailsForPerson({ spshPersonId });
+            const params: DeleteEmailAddressesForSpshPersonPathParams =
+                new DeleteEmailAddressesForSpshPersonPathParams();
+            Object.assign(params, { spshPersonId });
+            const result: void = emailWriteController.deleteEmailsForPerson(params);
             expect(result).toBeUndefined();
             vi.runAllTimers();
             expect(
@@ -116,8 +127,10 @@ describe('Email Write Controller', () => {
             const spshPersonId: string = faker.string.uuid();
             const error: Error = new Error('Delete failed');
             deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson.mockRejectedValue(error);
-
-            const result: void = emailWriteController.deleteEmailsForPerson({ spshPersonId });
+            const params: DeleteEmailAddressesForSpshPersonPathParams =
+                new DeleteEmailAddressesForSpshPersonPathParams();
+            Object.assign(params, { spshPersonId });
+            const result: void = emailWriteController.deleteEmailsForPerson(params);
             expect(result).toBeUndefined();
             vi.runAllTimers();
             expect(
@@ -130,7 +143,9 @@ describe('Email Write Controller', () => {
         it('should resolve immediatly if setEmailsSuspended succeeds', () => {
             const spshPersonId: string = faker.string.uuid();
             setEmailSuspendedServiceMock.setEmailsSuspended.mockResolvedValue();
-            const result: void = emailWriteController.setEmailsSuspended({ spshPersonId: spshPersonId });
+            const params: SetEmailAddressesSuspendedPathParams = new SetEmailAddressesSuspendedPathParams();
+            Object.assign(params, { spshPersonId });
+            const result: void = emailWriteController.setEmailsSuspended(params);
             expect(result).toBeUndefined();
             vi.runAllTimers();
             expect(setEmailSuspendedServiceMock.setEmailsSuspended).toHaveBeenCalledWith({
@@ -141,7 +156,9 @@ describe('Email Write Controller', () => {
         it('should resolve immediatly if setEmailsSuspended fails', () => {
             const spshPersonId: string = faker.string.uuid();
             setEmailSuspendedServiceMock.setEmailsSuspended.mockRejectedValue(new Error('Test error'));
-            const result: void = emailWriteController.setEmailsSuspended({ spshPersonId: spshPersonId });
+            const params: SetEmailAddressesSuspendedPathParams = new SetEmailAddressesSuspendedPathParams();
+            Object.assign(params, { spshPersonId });
+            const result: void = emailWriteController.setEmailsSuspended(params);
             expect(result).toBeUndefined();
             vi.runAllTimers();
             expect(setEmailSuspendedServiceMock.setEmailsSuspended).toHaveBeenCalledWith({

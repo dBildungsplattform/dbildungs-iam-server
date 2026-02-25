@@ -1,6 +1,18 @@
 import swc from 'unplugin-swc';
 import { resolve } from 'path';
 import { defineConfig } from 'vitest/config';
+import { readFileSync } from 'fs';
+
+try {
+    readFileSync(resolve(__dirname, './.env'), 'utf-8')
+        .split('\n')
+        .forEach((line: string) => {
+            const [key, value]: string[] = line.split('=');
+            if (key === 'CI' && value?.toLowerCase() === 'true') {
+                process.env[key] = 'true';
+            }
+        });
+} catch {}
 
 export default defineConfig({
     plugins: [
@@ -15,19 +27,33 @@ export default defineConfig({
         environment: 'node',
         hookTimeout: 60000, // 1 minute for setup/teardown
         testTimeout: 30000, // 30 seconds default timeout
+        onConsoleLog: process.env['CI'] ? () => false : undefined, // Suppress console logs in CI environment
         coverage: {
             provider: 'v8',
-            reporter: [['text', { maxCols: 200 }], 'lcov'],
+            reporter: [['text', { maxCols: 150 }], 'lcov'],
+            // To find coverage gaps locally the html reporter is useful
+            // reporter: [['text', { maxCols: 150 }], 'html', 'lcov'],
             reportsDirectory: 'coverage',
             reportOnFailure: true,
             include: ['src/**/*.ts'],
-            exclude: ['**/*.spec.ts', '**/test/**', '**/*.d.ts', 'vite.config.ts'],
+            exclude: [
+                '**/main.ts',
+                '**/index.ts',
+                '**/*.module.ts',
+                '**/*.spec.ts',
+                '**/*.integration-spec.ts',
+                '**/test/**',
+                '**/*.d.ts',
+                '**/*.types.ts',
+                'vite.config.ts',
+            ],
             thresholds: {
-                lines: 98.37,
-                functions: 99.37,
-                branches: 97.33,
-                statements: 98.35,
+                statements: 100,
+                branches: 97.6,
+                functions: 100,
+                lines: 100,
             },
+            skipFull: true,
         },
         projects: [
             {

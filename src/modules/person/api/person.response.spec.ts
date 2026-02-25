@@ -2,8 +2,26 @@ import { faker } from '@faker-js/faker';
 import { PersonLockOccasion } from '../domain/person.enums.js';
 import { plainToInstance } from 'class-transformer';
 import { PersonResponse } from './person.response.js';
+import { UserLockParams } from '../../keycloak-administration/api/user-lock.params.js';
 
 describe('PersonResponseDDD', () => {
+    const kopersLock: UserLockParams = new UserLockParams();
+    Object.assign(kopersLock, {
+        personId: faker.string.uuid(),
+        locked_by: 'test',
+        locked_until: undefined,
+        lock_occasion: PersonLockOccasion.KOPERS_GESPERRT,
+        created_at: new Date().toISOString(),
+    });
+    const manualLock: UserLockParams = new UserLockParams();
+    Object.assign(manualLock, {
+        personId: faker.string.uuid(),
+        locked_by: 'test',
+        locked_until: undefined,
+        lock_occasion: PersonLockOccasion.MANUELL_GESPERRT,
+        created_at: new Date().toISOString(),
+    });
+
     const personResponse: PersonResponse = {
         id: faker.string.uuid(),
         name: {
@@ -14,22 +32,7 @@ describe('PersonResponseDDD', () => {
         username: faker.string.uuid(),
         revision: '1',
         lastModified: faker.date.past(),
-        userLock: [
-            {
-                personId: faker.string.uuid(),
-                locked_by: 'test',
-                created_at: new Date().toISOString(),
-                locked_until: undefined,
-                lock_occasion: PersonLockOccasion.KOPERS_GESPERRT,
-            },
-            {
-                personId: faker.string.uuid(),
-                locked_by: 'test',
-                created_at: new Date().toISOString(),
-                locked_until: undefined,
-                lock_occasion: PersonLockOccasion.MANUELL_GESPERRT,
-            },
-        ],
+        userLock: [kopersLock, manualLock],
     };
 
     it('should convert plain object of person response to a class of person response', () => {
