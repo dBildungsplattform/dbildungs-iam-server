@@ -109,6 +109,10 @@ import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis'
                     clientOptions = {
                         username: redisConfig.USERNAME,
                         password: redisConfig.PASSWORD,
+                        socket: {
+                            host: redisConfig.HOST,
+                            port: redisConfig.PORT,
+                        },
                     } satisfies RedisClientOptions;
 
                     if (redisConfig.USE_TLS) {
@@ -118,11 +122,6 @@ import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis'
                             tls: redisConfig.USE_TLS,
                             key: redisConfig.PRIVATE_KEY,
                             cert: redisConfig.CERTIFICATE_AUTHORITIES,
-                        };
-                    } else {
-                        clientOptions.socket = {
-                            host: redisConfig.HOST,
-                            port: redisConfig.PORT,
                         };
                     }
                 }
