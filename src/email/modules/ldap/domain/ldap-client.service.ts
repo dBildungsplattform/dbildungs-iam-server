@@ -105,6 +105,18 @@ export class LdapClientService {
         );
     }
 
+    public async updatePersonEmails(
+        personUid: string,
+        domain: string,
+        primaryMail: string,
+        alternativeEmail: string | undefined,
+    ): Promise<Result<string>> {
+        return this.executeWithRetry(
+            () => this.updatePersonEmailsInternal(personUid, domain, primaryMail, alternativeEmail),
+            this.getNrOfRetries(),
+        );
+    }
+
     public async isPersonExisting(uid: string, domain: string): Promise<Result<boolean>> {
         return this.executeWithRetry(() => this.isPersonExistingInternal(uid, domain), this.getNrOfRetries());
     }
@@ -331,6 +343,60 @@ export class LdapClientService {
                     lastname: person.lastName,
                 });
                 return { ok: true, value: person };
+            } catch (err) {
+                this.logger.logUnknownAsError(`LDAP: Modify person FAILED, uid:${personUid}`, err);
+
+                return { ok: false, error: new LdapModifyPersonError() };
+            }
+        });
+    }
+
+    private async updatePersonEmailsInternal(
+        personUid: string,
+        domain: string,
+        primaryMail: string,
+        alternativeEmail: string | undefined,
+    ): Promise<Result<string>> {
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) {
+            return rootName;
+        }
+
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: updatePerson');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) {
+                return bindResult;
+            }
+
+            const personDn: string = this.getPersonUid(personUid, rootName.value);
+
+            const changes: Change[] = [
+                new Change({
+                    operation: 'replace',
+                    modification: new Attribute({
+                        type: LdapClientService.MAIL_PRIMARY_ADDRESS,
+                        values: [primaryMail],
+                    }),
+                }),
+
+                new Change({
+                    operation: 'replace',
+                    modification: new Attribute({
+                        type: LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                        values: [alternativeEmail].filter(Boolean),
+                    }),
+                }),
+            ];
+
+            try {
+                await client.modify(personDn, changes);
+                this.logger.info(`LDAP: Modify person succeeded, uid:${personUid}, `);
+                this.logger.infoWithDetails('LDAP: Modify person succeeded', {
+                    uid: personUid,
+                });
+                return { ok: true, value: personUid };
             } catch (err) {
                 this.logger.logUnknownAsError(`LDAP: Modify person FAILED, uid:${personUid}`, err);
 
