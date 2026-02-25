@@ -601,7 +601,7 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(isExistsEmailPrio1).toBeTruthy();
             expect(loggerMock.info).toHaveBeenCalledWith(`Processing Emails with Prio < 2 for spshPerson ${personId1}`);
             expect(loggerMock.error).toHaveBeenCalledWith(
-                `When not the Entire Person is deleted, the primary Email (Prio 1) must remain and alternative Email (Prio 2) must be deleted`,
+                `When not the Entire Person is deleted, the primary Email (Prio 0) must remain and alternative Email (Prio 1) must be deleted`,
             );
             expect(
                 deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,

@@ -59,12 +59,12 @@ export class CronDeleteEmailsAddressesService {
 
         if (emailsToDeleteToday.length === allEmailsForPerson.length) {
             this.logger.info(
-                `Primary (Prio 1) and Alternative (Prio 2) Emails for person ${spshPersonId} will be deleted.`,
+                `Primary (Prio 0) and Alternative (Prio 1) Emails for person ${spshPersonId} will be deleted.`,
             );
             await this.deleteEmailsAddressesForSpshPersonService.deleteEmailAddressesForSpshPerson({ spshPersonId });
             return;
         }
-        this.logger.info(`Only The Alternative Email (Prio 2) for person ${spshPersonId} will be deleted.`);
+        this.logger.info(`Only The Alternative Email (Prio 1) for person ${spshPersonId} will be deleted.`);
         const prio0ToKeep: EmailAddress<true> | undefined = allEmailsForPerson.find(
             (e: EmailAddress<true>) => e.priority === 0,
         );
@@ -76,7 +76,7 @@ export class CronDeleteEmailsAddressesService {
             !prio0ToKeep
         ) {
             this.logger.error(
-                'When not the Entire Person is deleted, the primary Email (Prio 1) must remain and alternative Email (Prio 2) must be deleted',
+                'When not the Entire Person is deleted, the primary Email (Prio 0) must remain and alternative Email (Prio 1) must be deleted',
             );
             return;
         }
