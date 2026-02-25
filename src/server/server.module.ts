@@ -119,6 +119,11 @@ import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis'
                             key: redisConfig.PRIVATE_KEY,
                             cert: redisConfig.CERTIFICATE_AUTHORITIES,
                         };
+                    } else {
+                        clientOptions.socket = {
+                            host: redisConfig.HOST,
+                            port: redisConfig.PORT,
+                        };
                     }
                 }
 
