@@ -359,7 +359,7 @@ describe('EmailResolverService', () => {
             vi.spyOn(configService, 'getOrThrow').mockReturnValue({
                 USE_EMAIL_MICROSERVICE: true,
                 ENDPOINT: 'http://email-service/',
-                API_KEY: apiKey,
+                INTERNAL_COMMUNICATION_API_KEY: apiKey,
             });
             mockHttpService.post.mockReturnValue(of(mockAxiosResponse));
             await sut.setEmailForSpshPerson({ spshPersonId: spshPersonId, ...params });
@@ -419,7 +419,7 @@ describe('EmailResolverService', () => {
             vi.spyOn(configService, 'getOrThrow').mockReturnValue({
                 USE_EMAIL_MICROSERVICE: true,
                 ENDPOINT: 'http://email-service/',
-                API_KEY: apiKey,
+                INTERNAL_COMMUNICATION_API_KEY: apiKey,
             });
             mockHttpService.post.mockReturnValue(of(mockAxiosResponse));
             await sut.setEmailsSuspendedForSpshPerson({ spshPersonId: spshPersonId });
@@ -478,7 +478,7 @@ describe('EmailResolverService', () => {
         const configService: ConfigService = module.get(ConfigService);
         configService.getOrThrow = vi.fn().mockReturnValue({
             ENDPOINT: mockEndpoint,
-            API_KEY: apiKey,
+            INTERNAL_COMMUNICATION_API_KEY: apiKey,
         });
         const spshPersonId: string = faker.string.uuid();
         const params: SetEmailAddressForSpshPersonBodyParams = {
@@ -579,7 +579,7 @@ describe('EmailResolverService', () => {
             const configService: ConfigService = module.get(ConfigService);
             configService.getOrThrow = vi.fn().mockReturnValue({
                 ENDPOINT: mockEndpoint,
-                API_KEY: apiKey,
+                INTERNAL_COMMUNICATION_API_KEY: apiKey,
             });
 
             mockHttpService.delete.mockReturnValueOnce(of({ status: 200 } as AxiosResponse));

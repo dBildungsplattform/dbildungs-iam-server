@@ -8,6 +8,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { EmailAppConfig } from '../shared/config/email-app.config.js';
 import { PassportModule } from '@nestjs/passport';
+import { InternalCommunicationApiKeyStrategy } from '../modules/authentication/passport/internalcommunicationapikey.strategy.js';
 
 @Module({
     imports: [
@@ -45,5 +46,6 @@ import { PassportModule } from '@nestjs/passport';
         EmailHealthModule,
         EmailCoreModule,
     ],
+    providers: [InternalCommunicationApiKeyStrategy],
 })
 export class EmailModule {}

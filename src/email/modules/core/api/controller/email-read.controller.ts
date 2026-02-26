@@ -20,14 +20,14 @@ import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
 import { EmailAddressMissingStatusError } from '../../error/email-address-missing-status.error.js';
 import { EmailAddress } from '../../domain/email-address.js';
 import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
-import { AccessApiKeyGuard } from '../../../../../modules/authentication/api/access.apikey.guard.js';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('email')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
 @Controller({ path: 'read' })
 @UseFilters(new EmailExceptionFilter())
-@UseGuards(AccessApiKeyGuard)
+@UseGuards(AuthGuard('api-key'))
 export class EmailReadController {
     public constructor(
         private readonly logger: ClassLogger,

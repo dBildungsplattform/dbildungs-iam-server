@@ -11,12 +11,12 @@ import { DeleteEmailsAddressesForSpshPersonService } from '../../domain/delete-e
 import { SetEmailAddressForSpshPersonPathParams } from '../dtos/params/set-email-address-for-spsh-person.pathparams.js';
 import { SetEmailAddressesSuspendedPathParams } from '../dtos/params/set-email-addresses-suspended.pathparams.js';
 import { SetEmailSuspendedService } from '../../domain/set-email-suspended.service.js';
-import { AccessApiKeyGuard } from '../../../../../modules/authentication/api/access.apikey.guard.js';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('email')
 @Controller({ path: 'write' })
 @UseFilters(new EmailExceptionFilter())
-@UseGuards(AccessApiKeyGuard)
+@UseGuards(AuthGuard('api-key'))
 export class EmailWriteController {
     public constructor(
         private readonly setEmailAddressForSpshPersonService: SetEmailAddressForSpshPersonService,
