@@ -36,7 +36,7 @@ export class EmailResolverService {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
                 this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`, {
                     headers: {
-                        'x-api-key': this.getApiKey(),
+                        'api-key': this.getApiKey(),
                     },
                 }),
             );
@@ -58,7 +58,7 @@ export class EmailResolverService {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
                 this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`, {
                     headers: {
-                        'x-api-key': this.getApiKey(),
+                        'api-key': this.getApiKey(),
                     },
                 }),
             );
@@ -74,7 +74,7 @@ export class EmailResolverService {
             const response: AxiosResponse<Option<EmailAddressResponse>> = await lastValueFrom(
                 this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/email/${emailAddress}`, {
                     headers: {
-                        'x-api-key': this.getApiKey(),
+                        'api-key': this.getApiKey(),
                     },
                 }),
             );
@@ -123,7 +123,7 @@ export class EmailResolverService {
                     } satisfies SetEmailAddressForSpshPersonBodyParams,
                     {
                         headers: {
-                            'x-api-key': this.getApiKey(),
+                            'api-key': this.getApiKey(),
                         },
                     },
                 ),
@@ -141,7 +141,7 @@ export class EmailResolverService {
                     this.getEndpoint() + `${EmailResolverService.writePath}/${params.spshPersonId}/delete-emails`,
                     {
                         headers: {
-                            'x-api-key': this.getApiKey(),
+                            'api-key': this.getApiKey(),
                         },
                     },
                 ),
@@ -160,7 +160,7 @@ export class EmailResolverService {
                     {},
                     {
                         headers: {
-                            'x-api-key': this.getApiKey(),
+                            'api-key': this.getApiKey(),
                         },
                     },
                 ),

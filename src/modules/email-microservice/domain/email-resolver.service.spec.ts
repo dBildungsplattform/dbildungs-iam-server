@@ -369,7 +369,7 @@ describe('EmailResolverService', () => {
                 { ...params },
                 {
                     headers: {
-                        'x-api-key': apiKey,
+                        'api-key': apiKey,
                     },
                 },
             );
@@ -429,7 +429,7 @@ describe('EmailResolverService', () => {
                 {},
                 {
                     headers: {
-                        'x-api-key': apiKey,
+                        'api-key': apiKey,
                     },
                 },
             );
@@ -498,7 +498,7 @@ describe('EmailResolverService', () => {
             { ...params },
             {
                 headers: {
-                    'x-api-key': apiKey,
+                    'api-key': apiKey,
                 },
             },
         );
@@ -593,7 +593,7 @@ describe('EmailResolverService', () => {
                 `${mockEndpoint}api/write/${spshPersonId}/delete-emails`,
                 {
                     headers: {
-                        'x-api-key': apiKey,
+                        'api-key': apiKey,
                     },
                 },
             );
