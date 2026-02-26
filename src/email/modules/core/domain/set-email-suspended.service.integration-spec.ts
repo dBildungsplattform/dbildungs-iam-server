@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker/locale/af_ZA';
-import { DeepMocked } from '@golevelup/ts-jest';
 import { MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../../../test/utils';
@@ -10,6 +9,7 @@ import { EmailAddressStatusEnum } from '../persistence/email-address-status.enti
 import { EmailAddressRepo } from '../persistence/email-address.repo';
 import { EmailAddress } from './email-address';
 import { SetEmailSuspendedService } from './set-email-suspended.service';
+import { DeepMocked } from '../../../../../test/utils/createMock';
 
 describe('SetEmailSuspendedService', () => {
     let module: TestingModule;

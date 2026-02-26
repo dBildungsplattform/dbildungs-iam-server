@@ -1,6 +1,6 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { defineConfig } from '@mikro-orm/postgresql';
+import { defineConfig, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DbConfig, FrontendConfig, loadConfigFiles, RedisConfig, ServerConfig } from '../shared/config/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
@@ -18,7 +18,7 @@ import { PersonenKontextApiModule } from '../modules/personenkontext/personenkon
 import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { SessionAccessTokenMiddleware } from '../modules/authentication/services/session-access-token.middleware.js';
 import { createClient, createCluster, RedisClientType, RedisClusterType } from 'redis';
-import RedisStore from 'connect-redis';
+import { RedisStore } from 'connect-redis';
 import session from 'express-session';
 import passport from 'passport';
 import { ClassLogger } from '../core/logging/class-logger.js';
@@ -64,6 +64,7 @@ import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js'
                             ssl: dbConfig.USE_SSL,
                         },
                     },
+                    driver: PostgreSqlDriver,
                     connect: false,
                 });
             },
