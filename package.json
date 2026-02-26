@@ -83,7 +83,7 @@
         "@golevelup/ts-jest": "0.5.0",
         "@golevelup/ts-vitest": "^0.5.2",
         "@mikro-orm/cli": "6.2.1",
-        "@nestjs/cli": "^10.4.9",
+        "@nestjs/cli": "^11.0.16",
         "@nestjs/testing": "^10.4.15",
         "@swc/core": "^1.15.3",
         "@testcontainers/postgresql": "^11.12.0",
