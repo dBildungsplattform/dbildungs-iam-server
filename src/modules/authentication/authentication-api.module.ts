@@ -17,6 +17,7 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
 import { UserExternaldataWorkflowFactory } from './domain/user-extenaldata.factory.js';
 import { KeycloakInternalController } from './api/keycloakinternal.controller.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
+import { ExternalDataCacheInterceptor } from '../../shared/cache/external-data-cache-interceptor.js';
 
 @Module({
     imports: [
@@ -38,6 +39,7 @@ import { EmailMicroserviceModule } from '../email-microservice/email-microservic
         PersonPermissionsRepo,
         SessionAccessTokenMiddleware,
         UserExternaldataWorkflowFactory,
+        ExternalDataCacheInterceptor,
     ],
     controllers: [AuthenticationController, KeycloakInternalController],
     exports: [OIDCClientProvider, PersonPermissionsRepo],
