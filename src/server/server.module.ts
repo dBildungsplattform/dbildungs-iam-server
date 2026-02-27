@@ -18,7 +18,7 @@ import { PersonenKontextApiModule } from '../modules/personenkontext/personenkon
 import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { SessionAccessTokenMiddleware } from '../modules/authentication/services/session-access-token.middleware.js';
 import { createClient, createCluster, RedisClientType, RedisClusterType } from 'redis';
-import RedisStore from 'connect-redis';
+import { RedisStore } from 'connect-redis';
 import session from 'express-session';
 import passport from 'passport';
 import { ClassLogger } from '../core/logging/class-logger.js';
@@ -151,7 +151,7 @@ export class ServerModule implements NestModule {
                 socket: {
                     host: redisConfig.HOST,
                     port: redisConfig.PORT,
-                    tls: redisConfig.USE_TLS,
+                    tls: redisConfig.USE_TLS || undefined,
                     key: redisConfig.PRIVATE_KEY,
                     cert: redisConfig.CERTIFICATE_AUTHORITIES,
                 },
