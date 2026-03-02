@@ -85,7 +85,7 @@ export default defineConfig(
   // Main TS files
   {
     files: ['**/*.ts'],
-    ignores: ['test-migrations/**/*.ts', 'migrations/**/*.ts'],
+    ignores: ['test-migrations/**/*.ts', 'migrations/**/*.ts', 'dist/**'],
     extends: [tseslint.configs.recommendedTypeChecked],
     plugins: { tseslint, import: importPlugin, prettier },
     languageOptions: {
