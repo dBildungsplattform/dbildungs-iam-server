@@ -94,7 +94,7 @@ export default defineConfig(
     project: ['./tsconfig.json'],
     tsconfigRootDir,
     sourceType: 'module',
-    ecmaVersion: 2020,
+    ecmaVersion: 2022,
       },
     },
     rules: customRules,
@@ -111,7 +111,7 @@ export default defineConfig(
     project: ['./tsconfig.json'],
     tsconfigRootDir,
     sourceType: 'module',
-    ecmaVersion: 2020,
+    ecmaVersion: 2022,
       },
     },
     rules: {

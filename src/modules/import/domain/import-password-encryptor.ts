@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Cipher, createCipheriv, createDecipheriv, Encoding, randomBytes, scrypt } from 'crypto';
+import { Cipheriv, createCipheriv, createDecipheriv, Encoding, randomBytes, scrypt } from 'crypto';
 import { ImportConfig } from '../../../shared/config/import.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { ConfigService } from '@nestjs/config';
@@ -27,7 +27,7 @@ export class ImportPasswordEncryptor {
         const iv: Buffer = randomBytes(16);
 
         const key: Buffer = await this.generateKey();
-        const cipher: Cipher = createCipheriv(this.ALGORITHM, key, iv);
+        const cipher: Cipheriv = createCipheriv(this.ALGORITHM, key, iv);
 
         const encryptedPassword: string =
             cipher.update(password, this.INPUT_ENCODING, this.OUTPUT_ENCODING) + cipher.final(this.OUTPUT_ENCODING);
@@ -43,7 +43,7 @@ export class ImportPasswordEncryptor {
             throw new ImportDomainError('iv for decryption not found', importvorgangId);
         }
         const key: Buffer = await this.generateKey();
-        const decipher: Cipher = createDecipheriv(this.ALGORITHM, key, Buffer.from(iv, this.OUTPUT_ENCODING));
+        const decipher: Cipheriv = createDecipheriv(this.ALGORITHM, key, Buffer.from(iv, this.OUTPUT_ENCODING));
 
         if (!encryptedPassword) {
             throw new ImportDomainError('encryptedPassword for decryption not found', importvorgangId);
