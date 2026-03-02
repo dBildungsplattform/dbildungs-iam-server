@@ -20,9 +20,7 @@ import { EmailUpdateInProgressError } from '../error/email-update-in-progress.er
 import { EmailAddressGenerationAttemptsExceededError } from '../error/email-address-generation-attempts-exceeds.error.js';
 import { uniq } from 'lodash-es';
 import { OxError } from '../../../../shared/error/ox.error.js';
-import { ConfigService } from '@nestjs/config';
 import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
-import { EmailConfig } from '../../../../shared/config/email.config.js';
 
 const MAX_EMAIL_PRIORITY: number = 99999; // E-Mails will be created with this priority before being activated
 
@@ -40,10 +38,10 @@ export class SetEmailAddressForSpshPersonService {
         private readonly oxService: OxService,
         private readonly oxSendService: OxSendService,
         private readonly ldapClientService: LdapClientService,
-        configService: ConfigService<EmailAppConfig>,
+        config: EmailAppConfig,
     ) {
         this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS =
-            configService.getOrThrow<EmailConfig>('EMAIL').NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS ?? 90;
+            config.EMAIL.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS ?? 90;
     }
 
     /**

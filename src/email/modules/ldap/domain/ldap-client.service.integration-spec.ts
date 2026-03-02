@@ -16,10 +16,10 @@ import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import assert from 'assert';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { DatabaseTestModule } from '../../../../../test/utils/database-test.module.js';
-import { ConfigTestModule } from '../../../../../test/utils/config-test.module.js';
 import { GlobalValidationPipe } from '../../../../shared/validation/index.js';
 import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    EmailConfigTestModule,
     expectErrResult,
     expectOkResult,
 } from '../../../../../test/utils/index.js';
@@ -72,7 +72,7 @@ describe('LDAP Client Service', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
-                ConfigTestModule,
+                EmailConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 EmailLdapModule,
                 EmailLdapConfigModule,
