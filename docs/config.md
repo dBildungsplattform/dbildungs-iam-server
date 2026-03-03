@@ -71,31 +71,69 @@ The template files for this are
 
 ## Developer Guide
 
-The nest configuration package provides a module which must be imported to use the `ConfigService`.
-We are using the config module as a global module, which makes the `ConfigService` globally available.
-Here comes an example:
+> [!CAUTION] The content of this collapsible should be considered deprecated, see [Injectable Config](#injectable-config) for the new solution
+
+<details>
+    <summary>[Deprecated] The old way</summary>
+
+    The nest configuration package provides a module which must be imported to use the `ConfigService`.
+    We are using the config module as a global module, which makes the `ConfigService` globally available.
+    Here comes an example:
+
+    ### Initialization
+
+    The ConfigModule is initialized in the ServerModule and can be used globally from there by injecting the ConfigService and loading the needed part of the configuration
+
+    ```ts
+    ConfigModule.forRoot({
+        isGlobal: true,
+        load: [loadConfig],
+    });
+    ```
+
+    ### Usage
+
+    ```ts
+    class MyClass {
+        public constructor(private readonly configService: ServerConfig<ServerConfig, true>) {}
+
+        public myFunction(): void {
+            // the config keys are compile time checked
+            const dbConfig: DbConfig = this.configService.getOrThrow<DbConfig>('DB');
+            const dbName: string = dbConfig.DB_NAME;
+            // ...
+        }
+    }
+    ```
+</details>
+
+### Injectable Config
+
+In an effort to seperate the configs for different microservices, we have switched to namespaced configs with helper classes for easy injection. The old way will still work inside backend-code, but the new way should be preferred (if you're working on the email-microservice, you don't have a choice)
 
 ### Initialization
 
-The ConfigModule is initialized in the ServerModule and can be used globally from there by injecting the ConfigService and loading the needed part of the configuration
+There are (currently) two modules that can just be imported to get access to the new configs. These will export multiple different configs. They are already imported in the entrypoints for the servers.
 
 ```ts
-ConfigModule.forRoot({
-    isGlobal: true,
-    load: [loadConfig],
-});
+@Module({
+    imports: [ServerConfigModule, EmailConfigModule]
+})
 ```
 
 ### Usage
 
+Just inject the configs you need and use them. Normally, you can't inject both into the same module, since they are not registered in both the backend and the email-microservice. The console-module is an exception and provides both.
+
 ```ts
 class MyClass {
-    public constructor(private readonly configService: ServerConfig<ServerConfig, true>) {}
+    public constructor(
+        private readonly config: JsonConfig, // The config for the backend server
+        private readonly config: EmailAppConfig, // The config for the email microservice
+    ) {}
 
     public myFunction(): void {
-        // the config keys are compile time checked
-        const dbConfig: DbConfig = this.configService.getOrThrow<DbConfig>('DB');
-        const dbName: string = dbConfig.DB_NAME;
+        const dbName: string = this.config.DB.DB_NAME;
         // ...
     }
 }
