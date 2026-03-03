@@ -71,7 +71,8 @@ The template files for this are
 
 ## Developer Guide
 
-> [!CAUTION] The content of this collapsible should be considered deprecated, see [Injectable Config](#injectable-config) for the new solution
+> [!CAUTION]
+> The content of this collapsible should be considered deprecated, see [Injectable Config](#injectable-config) for the new solution
 
 <details>
     <summary>[Deprecated] The old way</summary>
