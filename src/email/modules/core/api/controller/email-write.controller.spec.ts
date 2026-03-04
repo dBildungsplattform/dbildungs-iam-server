@@ -1,11 +1,7 @@
 import { vi } from 'vitest';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    LoggingTestModule,
-} from '../../../../../../test/utils/index.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../../../shared/validation/global-validation.pipe.js';
 import { faker } from '@faker-js/faker';
 import { EmailWriteController } from './email-write.controller.js';
@@ -18,6 +14,7 @@ import { SetEmailSuspendedService } from '../../domain/set-email-suspended.servi
 import { SetEmailAddressForSpshPersonPathParams } from '../dtos/params/set-email-address-for-spsh-person.pathparams.js';
 import { DeleteEmailAddressesForSpshPersonPathParams } from '../dtos/params/delete-email-addresses-for-spsh-person.pathparams.js';
 import { SetEmailAddressesSuspendedPathParams } from '../dtos/params/set-email-addresses-suspended.pathparams.js';
+import { EmailConfigTestModule } from '../../../../../../test/utils/email-config-test.module.js';
 
 describe('Email Write Controller', () => {
     let emailWriteController: EmailWriteController;
@@ -27,7 +24,7 @@ describe('Email Write Controller', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [LoggingTestModule, ConfigTestModule],
+            imports: [LoggingTestModule, EmailConfigTestModule],
             providers: [
                 {
                     provide: APP_PIPE,

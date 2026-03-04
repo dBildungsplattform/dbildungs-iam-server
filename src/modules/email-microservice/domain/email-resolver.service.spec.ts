@@ -338,7 +338,6 @@ describe('EmailResolverService', () => {
     describe('setEmailForSpshPerson', () => {
         it('should send email data to microservice successfully', async () => {
             const spshPersonId: string = faker.string.uuid();
-            const apiKey: string = faker.string.uuid();
             const params: SetEmailAddressForSpshPersonBodyParams = {
                 spshUsername: 'mmustermann',
                 kennungen: ['0706054'],
@@ -355,21 +354,15 @@ describe('EmailResolverService', () => {
                     headers: new AxiosHeaders(),
                 },
             };
-            const configService: ConfigService = module.get(ConfigService);
-            vi.spyOn(configService, 'getOrThrow').mockReturnValue({
-                USE_EMAIL_MICROSERVICE: true,
-                ENDPOINT: 'http://email-service/',
-                INTERNAL_COMMUNICATION_API_KEY: apiKey,
-            });
             mockHttpService.post.mockReturnValue(of(mockAxiosResponse));
             await sut.setEmailForSpshPerson({ spshPersonId: spshPersonId, ...params });
 
             expect(mockHttpService.post).toHaveBeenCalledWith(
-                `http://email-service/api/write/${spshPersonId}/set-email`,
+                `http://localhost:9091/api/write/${spshPersonId}/set-email`,
                 { ...params },
                 {
                     headers: {
-                        'api-key': apiKey,
+                        'api-key': 'api-key',
                     },
                 },
             );
@@ -405,7 +398,6 @@ describe('EmailResolverService', () => {
     describe('setEmailsSuspendedForSpshPerson', () => {
         it('should send data to microservice successfully', async () => {
             const spshPersonId: string = faker.string.uuid();
-            const apiKey: string = faker.string.uuid();
             const mockAxiosResponse: AxiosResponse<EmailAddressResponse[]> = {
                 data: [],
                 status: 200,
@@ -415,21 +407,15 @@ describe('EmailResolverService', () => {
                     headers: new AxiosHeaders(),
                 },
             };
-            const configService: ConfigService = module.get(ConfigService);
-            vi.spyOn(configService, 'getOrThrow').mockReturnValue({
-                USE_EMAIL_MICROSERVICE: true,
-                ENDPOINT: 'http://email-service/',
-                INTERNAL_COMMUNICATION_API_KEY: apiKey,
-            });
             mockHttpService.post.mockReturnValue(of(mockAxiosResponse));
             await sut.setEmailsSuspendedForSpshPerson({ spshPersonId: spshPersonId });
 
             expect(mockHttpService.post).toHaveBeenCalledWith(
-                `http://email-service/api/write/${spshPersonId}/set-suspended`,
+                `http://localhost:9091/api/write/${spshPersonId}/set-suspended`,
                 {},
                 {
                     headers: {
-                        'api-key': apiKey,
+                        'api-key': 'api-key',
                     },
                 },
             );
@@ -473,13 +459,6 @@ describe('EmailResolverService', () => {
     });
 
     it('should use correct endpoint from config in post call', async () => {
-        const mockEndpoint: string = 'https://email.microservice/';
-        const apiKey: string = faker.string.uuid();
-        const configService: ConfigService = module.get(ConfigService);
-        configService.getOrThrow = vi.fn().mockReturnValue({
-            ENDPOINT: mockEndpoint,
-            INTERNAL_COMMUNICATION_API_KEY: apiKey,
-        });
         const spshPersonId: string = faker.string.uuid();
         const params: SetEmailAddressForSpshPersonBodyParams = {
             spshUsername: 'mmustermann',
@@ -498,7 +477,7 @@ describe('EmailResolverService', () => {
             { ...params },
             {
                 headers: {
-                    'api-key': apiKey,
+                    'api-key': 'api-key',
                 },
             },
         );
@@ -574,13 +553,6 @@ describe('EmailResolverService', () => {
     describe('deleteEmailsForSpshPerson', () => {
         it('should call httpService.delete with correct URL and log info', async () => {
             const spshPersonId: string = faker.string.uuid();
-            const apiKey: string = faker.string.uuid();
-            const mockEndpoint: string = 'https://email.microservice/';
-            const configService: ConfigService = module.get(ConfigService);
-            configService.getOrThrow = vi.fn().mockReturnValue({
-                ENDPOINT: mockEndpoint,
-                INTERNAL_COMMUNICATION_API_KEY: apiKey,
-            });
 
             mockHttpService.delete.mockReturnValueOnce(of({ status: 200 } as AxiosResponse));
 
@@ -590,10 +562,10 @@ describe('EmailResolverService', () => {
                 `Deleting email for person ${spshPersonId} via email microservice`,
             );
             expect(mockHttpService.delete).toHaveBeenCalledWith(
-                `${mockEndpoint}api/write/${spshPersonId}/delete-emails`,
+                `http://localhost:9091/api/write/${spshPersonId}/delete-emails`,
                 {
                     headers: {
-                        'api-key': apiKey,
+                        'api-key': 'api-key',
                     },
                 },
             );

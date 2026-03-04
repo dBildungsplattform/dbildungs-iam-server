@@ -37,9 +37,7 @@ import { InternalCommunicationApiKeyStrategy } from '../modules/authentication/p
             inject: [ConfigService],
         }),
         PassportModule.register({
-            session: true,
-            defaultStrategy: ['api-key', 'jwt', 'oidc'],
-            keepSessionInfo: true,
+            defaultStrategy: ['api-key'],
             property: 'passportUser',
         }),
         LoggerModule.register(EmailModule.name),
