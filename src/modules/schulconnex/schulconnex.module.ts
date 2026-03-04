@@ -12,6 +12,9 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
 import { SchulconnexRepo } from './persistence/schulconnex.repo.js';
 import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
+import { SchulConnexValidationErrorFilter } from './error/schulconnex-validation-error.filter.js';
+import { SchulConnexSharedErrorFilter } from './error/schulconnex-shared-error-filter.js';
+import { SchulConnexAuthenticationDomainErrorFilter } from './error/schulconnex-authentication-domain-error-filter.js';
 
 @Module({
     imports: [
@@ -24,7 +27,14 @@ import { EmailMicroserviceModule } from '../email-microservice/email-microservic
         EmailMicroserviceModule,
         LoggerModule.register(SchulconnexModule.name),
     ],
-    providers: [PersonenInfoService, SchulconnexRepo, EntityAggregateMapper],
+    providers: [
+        PersonenInfoService,
+        SchulconnexRepo,
+        EntityAggregateMapper,
+        SchulConnexValidationErrorFilter,
+        SchulConnexSharedErrorFilter,
+        SchulConnexAuthenticationDomainErrorFilter,
+    ],
     controllers: [PersonInfoController, PersonenInfoController],
 })
 export class SchulconnexModule {}
