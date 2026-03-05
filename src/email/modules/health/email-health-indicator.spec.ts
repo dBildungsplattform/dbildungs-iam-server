@@ -33,20 +33,20 @@ describe('Email health indicator', () => {
         httpServiceMock = module.get(HttpService);
     });
 
-    it('should report failure', async () => {
+    it('should report failure', () => {
         const error: Error = new Error('AxiosError');
         httpServiceMock.get.mockReturnValueOnce(throwError(() => error));
         const ehi: EmailHealthIndicator = module.get<EmailHealthIndicator>(EmailHealthIndicator);
 
-        const checkResult: HealthIndicatorResult = await ehi.check();
+        const checkResult: HealthIndicatorResult = ehi.check();
         expect(checkResult['Email']).toBeDefined();
     });
 
-    it('should report success', async () => {
+    it('should report success', () => {
         httpServiceMock.get.mockReturnValueOnce(of({} as AxiosResponse));
         const ehi: EmailHealthIndicator = module.get<EmailHealthIndicator>(EmailHealthIndicator);
 
-        const checkResult: HealthIndicatorResult = await ehi.check();
+        const checkResult: HealthIndicatorResult = ehi.check();
         expect(checkResult['Email']).toBeDefined();
     });
 });
