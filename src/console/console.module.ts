@@ -2,7 +2,13 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DbConfig, loadConfigFiles, ServerConfig } from '../shared/config/index.js';
+import {
+    DbConfig,
+    EmailConfigModule,
+    loadConfigFiles,
+    ServerConfig,
+    ServerConfigModule,
+} from '../shared/config/index.js';
 import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
 import { LoggerModule } from '../core/logging/logger.module.js';
@@ -40,6 +46,8 @@ import { KeycloakConsoleModule } from './keycloak/keycloak-console.module.js';
             isGlobal: true,
             load: [loadConfigFiles],
         }),
+        ServerConfigModule,
+        EmailConfigModule,
         MikroOrmModule.forRootAsync({
             useFactory: (config: ConfigService<ServerConfig, true>) => {
                 return defineConfig({
