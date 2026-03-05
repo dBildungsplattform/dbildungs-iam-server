@@ -105,7 +105,7 @@ export class ItsLearningIMSESService {
 
                 'soapenv:Body': body,
             },
-        }) as string;
+        });
     }
 
     private createSecurityObject(syncId?: string): object {
