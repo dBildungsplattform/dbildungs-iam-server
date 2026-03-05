@@ -18,7 +18,7 @@ export class SchulConnexAuthenticationDomainErrorFilter implements ExceptionFilt
         response.json(schulConnexError);
     }
 
-    public mapDomainErrorToSchulConnexError(error: DomainError): SchulConnexError {
+    private mapDomainErrorToSchulConnexError(error: DomainError): SchulConnexError {
         return (
             SCHULCONNEX_ERROR_MAPPINGS.get(error.constructor.name) ??
             new SchulConnexError({

@@ -2,13 +2,13 @@ import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
-import { SharedError } from '../../../shared/error/shared.error.js';
+import { SharedDomainError } from '../../../shared/error/shared-domain.error.js';
 import { NO_MAPPING_FOUND, SCHULCONNEX_ERROR_MAPPINGS } from '../../../shared/error/schul-connex-error.mapping.js';
 import { DomainError } from '../../../shared/error/index.js';
 
-@Catch(SharedError)
-export class SchulConnexSharedErrorFilter implements ExceptionFilter<SharedError> {
-    public catch(exception: SharedError, host: ArgumentsHost): void {
+@Catch(SharedDomainError)
+export class SchulConnexSharedErrorFilter implements ExceptionFilter<SharedDomainError> {
+    public catch(exception: SharedDomainError, host: ArgumentsHost): void {
         const ctx: HttpArgumentsHost = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
@@ -18,7 +18,7 @@ export class SchulConnexSharedErrorFilter implements ExceptionFilter<SharedError
         response.json(schulConnexError);
     }
 
-    public mapDomainErrorToSchulConnexError(error: DomainError): SchulConnexError {
+    private mapDomainErrorToSchulConnexError(error: DomainError): SchulConnexError {
         return SCHULCONNEX_ERROR_MAPPINGS.get(error.constructor.name) ?? NO_MAPPING_FOUND;
     }
 }
