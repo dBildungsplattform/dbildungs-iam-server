@@ -5,15 +5,10 @@ import { firstValueFrom } from 'rxjs';
 import { EmailAddressResponse } from '../core/api/dtos/response/email-address.response.js';
 import util from 'util';
 import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
-import { HostConfig } from '../../../shared/config/host.config.js';
 
 @Injectable()
 export class EmailHealthIndicator extends HealthIndicator {
-    public constructor(
-        private readonly httpService: HttpService,
-        private readonly configService: ConfigService,
-    ) {
+    public constructor(private readonly httpService: HttpService) {
         super();
     }
 
@@ -35,9 +30,8 @@ export class EmailHealthIndicator extends HealthIndicator {
 
     private async findEmailAddresses(): Promise<EmailAddressResponse[]> {
         try {
-            const port: number = this.configService.getOrThrow<HostConfig>('HOST').PORT;
             const response: AxiosResponse<EmailAddressResponse[]> = await firstValueFrom(
-                this.httpService.get(`http://localhost:${port}/read`, {}),
+                this.httpService.get('http://localhost:9090/read', {}),
             );
             return response.data;
         } catch (error: unknown) {
