@@ -5,7 +5,7 @@ import { SharedDomainError } from '../error/shared-domain.error.js';
 import { DbiamSharedError, SharedErrorI18nTypes } from '../error/dbiam-shared.error.js';
 
 @Catch(SharedDomainError)
-export class AuthenticationExceptionFilter implements ExceptionFilter<SharedDomainError> {
+export class SharedExceptionFilter implements ExceptionFilter<SharedDomainError> {
     public catch(exception: SharedDomainError, host: ArgumentsHost): void {
         const ctx: HttpArgumentsHost = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
