@@ -7,6 +7,8 @@ import { EmailCoreModule } from './modules/core/email-core.module.js';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { EmailAppConfig } from '../shared/config/email-app.config.js';
+import { PassportModule } from '@nestjs/passport';
+import { InternalCommunicationApiKeyStrategy } from '../modules/authentication/passport/internalcommunicationapikey.strategy.js';
 
 @Module({
     imports: [
@@ -34,9 +36,14 @@ import { EmailAppConfig } from '../shared/config/email-app.config.js';
             },
             inject: [ConfigService],
         }),
+        PassportModule.register({
+            defaultStrategy: ['api-key'],
+            property: 'passportUser',
+        }),
         LoggerModule.register(EmailModule.name),
         EmailHealthModule,
         EmailCoreModule,
     ],
+    providers: [InternalCommunicationApiKeyStrategy],
 })
 export class EmailModule {}
