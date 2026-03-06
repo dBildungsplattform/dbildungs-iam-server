@@ -12,7 +12,7 @@ describe('KafkaEmailAddressMarkedForDeletionEvent', () => {
         const oxUserId: OXUserID = faker.string.numeric();
         const emailAddressId: EmailAddressID = faker.string.uuid();
         const emailStatus: EmailAddressStatus = EmailAddressStatus.ENABLED;
-        const emailAddress: string = faker.internet.userName();
+        const emailAddress: string = faker.internet.username();
 
         const event: KafkaEmailAddressMarkedForDeletionEvent = new KafkaEmailAddressMarkedForDeletionEvent(
             personId,

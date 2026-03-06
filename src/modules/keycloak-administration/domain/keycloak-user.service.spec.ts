@@ -1399,8 +1399,8 @@ describe('KeycloakUserService', () => {
         let newUsername: string;
 
         beforeEach(() => {
-            username = faker.internet.userName();
-            newUsername = faker.internet.userName();
+            username = faker.internet.username();
+            newUsername = faker.internet.username();
         });
 
         describe('when user does not exist', () => {

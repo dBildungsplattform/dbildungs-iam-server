@@ -101,7 +101,7 @@ describe('EmailAddressDeletionHandler', () => {
 
     describe('handleLdapEmailAddressDeletedEvent', () => {
         const personId: PersonID = faker.string.uuid();
-        const username: PersonUsername = faker.internet.userName();
+        const username: PersonUsername = faker.internet.username();
         const address: string = faker.internet.email();
         const event: LdapEmailAddressDeletedEvent = new LdapEmailAddressDeletedEvent(personId, username, address);
         let emailAddress: EmailAddress<true>;
@@ -198,7 +198,7 @@ describe('EmailAddressDeletionHandler', () => {
     describe('handleOxEmailAddressDeletedEvent', () => {
         const personId: PersonID = faker.string.uuid();
         const oxUserId: OXUserID = faker.string.uuid();
-        const username: PersonUsername = faker.internet.userName();
+        const username: PersonUsername = faker.internet.username();
         const address: string = faker.internet.email();
         const oxContextId: OXContextID = '10';
         const oxContextName: OXContextName = 'testContext';
