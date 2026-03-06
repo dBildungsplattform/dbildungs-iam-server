@@ -67,3 +67,5 @@ data:
   CRON_EMAIL_ADDRESSES_DELETE_LIMIT: '{{ .Values.cron.emailAddressesDeleteLimit }}'
   FEATURE_FLAG_ROLLE_ERWEITERN: '{{ .Values.featureFlags.rolleErweitern }}'
   FEATURE_FLAG_SET_UEM_PASSWORD: '{{ .Values.featureFlags.setUemPassword }}'
+  EMAIL_MICROSERVICE__USE_EMAIL_MICROSERVICE: '{{ .Values.emailMicroservice.useService }}'
+  EMAIL_MICROSERVICE__ENDPOINT: '{{ .Values.emailMicroservice.endpoint | replace "spsh-xxx" .Release.Namespace }}'
