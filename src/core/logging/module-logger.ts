@@ -1,8 +1,6 @@
 import winston, { format, Logger } from 'winston';
-import { ConfigService } from '@nestjs/config';
 import { Inject } from '@nestjs/common';
 import util from 'util';
-import { ServerConfig } from '../../shared/config/index.js';
 import { LoggingConfig } from '../../shared/config/logging.config.js';
 
 const MODULE_NAME: string = 'MODULE_NAME';
@@ -40,10 +38,9 @@ export class ModuleLogger {
 
     private moduleNameInternal: string;
 
-    public constructor(@Inject(MODULE_NAME) moduleName: string, configService: ConfigService<ServerConfig, true>) {
+    public constructor(@Inject(MODULE_NAME) moduleName: string, loggerConfig: LoggingConfig) {
         this.moduleNameInternal = moduleName;
 
-        const loggerConfig: LoggingConfig = configService.getOrThrow<LoggingConfig>('LOGGING');
         const configKey: keyof LoggingConfig = `${moduleName
             .split(/(?=[A-Z])/)
             .join('_')

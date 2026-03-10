@@ -3,8 +3,6 @@ import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
 import { EmailAddress } from './email-address.js';
-import { EmailConfig } from '../../../../shared/config/email.config.js';
-import { ConfigService } from '@nestjs/config';
 import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
 
 @Injectable()
@@ -15,10 +13,10 @@ export class SetEmailSuspendedService {
     public constructor(
         private readonly emailAddressRepo: EmailAddressRepo,
         private readonly logger: ClassLogger,
-        configService: ConfigService<EmailAppConfig>,
+        config: EmailAppConfig,
     ) {
         this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS =
-            configService.getOrThrow<EmailConfig>('EMAIL').NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS ?? 90;
+            config.EMAIL.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS ?? 90;
     }
 
     public async setEmailsSuspended(params: { spshPersonId: string }): Promise<void> {
