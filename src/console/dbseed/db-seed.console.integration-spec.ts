@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
     DatabaseTestModule,
+    EmailConfigTestModule,
     KeycloakConfigTestModule,
     LoggingTestModule,
 } from '../../../test/utils/index.js';
@@ -35,6 +36,7 @@ describe('DbSeedConsoleIntegration', () => {
             imports: [
                 DbSeedModule,
                 ConfigTestModule,
+                EmailConfigTestModule,
                 OrganisationModule,
                 KeycloakAdministrationModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),

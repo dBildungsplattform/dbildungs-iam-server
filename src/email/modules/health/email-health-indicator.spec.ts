@@ -1,14 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { HealthIndicatorResult } from '@nestjs/terminus';
-import { ConfigService } from '@nestjs/config';
 import { EmailHealthIndicator } from './email-health-indicator.js';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { ServerConfig } from '../../../shared/config/server.config.js';
 import { EmailHealthModule } from './email-health.module.js';
 import { HttpModule, HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
 import { of, throwError } from 'rxjs';
+import { EmailConfigTestModule } from '../../../../test/utils/email-config-test.module.js';
 
 describe('Email health indicator', () => {
     let module: TestingModule;
@@ -17,14 +15,8 @@ describe('Email health indicator', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [HttpModule, EmailHealthModule, ConfigTestModule],
-            providers: [
-                EmailHealthIndicator,
-                {
-                    provide: ConfigService<ServerConfig>,
-                    useValue: createMock(ConfigService<ServerConfig>),
-                },
-            ],
+            imports: [HttpModule, EmailHealthModule, EmailConfigTestModule],
+            providers: [EmailHealthIndicator],
         })
             .overrideProvider(HttpService)
             .useValue(createMock(HttpService))

@@ -4,9 +4,9 @@ import { createMock } from '../../../../../test/utils/createMock.js';
 import { MikroORM } from '@mikro-orm/core';
 import { EmailAddressRepo } from './email-address.repo.js';
 import {
-    ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    EmailConfigTestModule,
 } from '../../../../../test/utils/index.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
@@ -21,7 +21,7 @@ describe('EmailDomainRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailCoreModule],
+            imports: [EmailConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailCoreModule],
             providers: [EmailAddressRepo, ClassLogger],
         })
             .overrideProvider(ClassLogger)

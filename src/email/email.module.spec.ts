@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { RedisClientType } from 'redis';
-import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../test/utils/index.js';
+import { DatabaseTestModule, EmailConfigTestModule, LoggingTestModule } from '../../test/utils/index.js';
 import { EmailModule } from './email.module.js';
 
 function createRedisClientMock(overrides?: Partial<RedisClientType>): RedisClientType {
@@ -23,7 +23,7 @@ describe('EmailModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [EmailModule, ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot()],
+            imports: [EmailModule, EmailConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot()],
         }).compile();
     });
 

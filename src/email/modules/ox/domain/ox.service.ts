@@ -1,4 +1,3 @@
-import { ConfigService } from '@nestjs/config';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
 import { OXContextID, OXContextName, OXGroupID, OXGroupName, OXUserID } from '../../../../shared/types/ox-ids.types.js';
@@ -57,9 +56,9 @@ export class OxService {
     public constructor(
         protected readonly logger: ClassLogger,
         protected readonly oxSendService: OxSendService,
-        protected configService: ConfigService<EmailAppConfig>,
+        protected config: EmailAppConfig,
     ) {
-        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
+        const oxConfig: OxConfig = config.OX;
         this.authUser = oxConfig.USERNAME;
         this.authPassword = oxConfig.PASSWORD;
         this.contextID = oxConfig.CONTEXT_ID;

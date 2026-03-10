@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HealthCheckService, HealthIndicatorFunction } from '@nestjs/terminus';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { ConfigService } from '@nestjs/config';
 import { EmailHealthController } from './email-health.controller.js';
 import { EmailHealthIndicator } from './email-health-indicator.js';
+import { EmailConfigTestModule } from '../../../../test/utils/email-config-test.module.js';
 
 describe('EmailHealthController', () => {
     let controller: EmailHealthController;
@@ -11,18 +11,14 @@ describe('EmailHealthController', () => {
     let healthCheckService: DeepMocked<HealthCheckService>;
     let emailHealthIndicator: DeepMocked<EmailHealthIndicator>;
 
-    let configService: DeepMocked<ConfigService>;
-
     beforeAll(async () => {
         healthCheckService = createMock(HealthCheckService);
         emailHealthIndicator = createMock(EmailHealthIndicator);
-        configService = createMock(ConfigService);
 
         const module: TestingModule = await Test.createTestingModule({
-            controllers: [EmailHealthController],
+            controllers: [EmailHealthController, EmailConfigTestModule],
             providers: [
                 { provide: HealthCheckService, useValue: healthCheckService },
-                { provide: ConfigService, useValue: configService },
                 { provide: EmailHealthIndicator, useValue: createMock(EmailHealthIndicator) },
             ],
         }).compile();

@@ -2,7 +2,14 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DbConfig, FrontendConfig, loadConfigFiles, RedisConfig, ServerConfig } from '../shared/config/index.js';
+import {
+    DbConfig,
+    FrontendConfig,
+    JsonConfig,
+    loadConfigFiles,
+    RedisConfig,
+    ServerConfigModule,
+} from '../shared/config/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
@@ -50,9 +57,10 @@ import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis'
             isGlobal: true,
             load: [loadConfigFiles],
         }),
+        ServerConfigModule,
         MikroOrmModule.forRootAsync({
-            useFactory: (config: ConfigService<ServerConfig, true>) => {
-                const dbConfig: DbConfig = config.getOrThrow<DbConfig>('DB');
+            useFactory: (config: JsonConfig) => {
+                const dbConfig: DbConfig = config.DB;
                 return defineConfig({
                     clientUrl: dbConfig.CLIENT_URL,
                     user: dbConfig.USERNAME,
@@ -69,7 +77,7 @@ import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis'
                     connect: false,
                 });
             },
-            inject: [ConfigService],
+            inject: [JsonConfig],
         }),
         PassportModule.register({
             session: true,
@@ -79,9 +87,9 @@ import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis'
         }),
         CacheModule.registerAsync({
             isGlobal: true,
-            inject: [ConfigService],
-            useFactory: (config: ConfigService) => {
-                const redisConfig: RedisConfig = config.getOrThrow<RedisConfig>('REDIS');
+            inject: [JsonConfig],
+            useFactory: (config: JsonConfig) => {
+                const redisConfig: RedisConfig = config.REDIS;
                 const defaultTtlMs: number = 10_000;
 
                 let clientOptions: RedisClientOptions | RedisClusterOptions;
