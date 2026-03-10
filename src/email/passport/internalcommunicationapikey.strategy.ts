@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { HeaderApiKeyConfig } from '../../../../../shared/config/index.js';
+import { HeaderApiKeyConfig } from '../../shared/config/index.js';
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
-import { EmailAppConfig } from '../../../../../shared/config/email-app.config.js';
+import { EmailAppConfig } from '../../shared/config/email-app.config.js';
 
 @Injectable()
 export class InternalCommunicationApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy, 'api-key') {
