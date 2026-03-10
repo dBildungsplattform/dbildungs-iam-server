@@ -1,6 +1,5 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
 import { createHash, Hash } from 'crypto';
 import { XMLBuilder, XMLParser } from 'fast-xml-parser';
@@ -104,9 +103,9 @@ export class OxSendService {
     public constructor(
         private readonly httpService: HttpService,
         private readonly logger: ClassLogger,
-        configService: ConfigService<EmailAppConfig>,
+        config: EmailAppConfig,
     ) {
-        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
+        const oxConfig: OxConfig = config.OX;
 
         this.endpoint = oxConfig.ENDPOINT;
         this.username = oxConfig.USERNAME;
@@ -175,7 +174,7 @@ export class OxSendService {
 
                 'soapenv:Body': body,
             },
-        }) as string;
+        });
     }
 
     private createSecurityObject(): object {

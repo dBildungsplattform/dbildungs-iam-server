@@ -1,5 +1,8 @@
+import { Injectable } from '@nestjs/common';
+
 import { Type } from 'class-transformer';
 import { ValidateNested } from 'class-validator';
+
 import { DbConfig } from './db.config.js';
 import { EmailConfig } from './email.config.js';
 import { HostConfig } from './host.config.js';
@@ -8,6 +11,7 @@ import { LoggingConfig } from './logging.config.js';
 import { OxConfig } from './ox.config.js';
 import { HeaderApiKeyConfig } from './headerapikey.config.js';
 
+@Injectable()
 export class EmailAppConfig {
     @ValidateNested()
     @Type(() => HostConfig)

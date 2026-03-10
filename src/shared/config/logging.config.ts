@@ -1,7 +1,9 @@
+import { Injectable } from '@nestjs/common';
 import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 
 const ALLOWED_LOG_LEVEL: string[] = ['debug', 'info', 'warn', 'notice', 'warning', 'error', 'crit', 'alert', 'emerg'];
 
+@Injectable()
 export class LoggingConfig {
     @IsNotEmpty()
     @IsEnum(ALLOWED_LOG_LEVEL)

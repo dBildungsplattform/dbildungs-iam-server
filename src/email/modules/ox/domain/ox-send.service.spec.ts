@@ -6,8 +6,7 @@ import { AxiosResponse } from 'axios';
 import { of, throwError } from 'rxjs';
 import { OxErrorType, OxSendService } from './ox-send.service';
 import { ClassLogger } from '../../../../core/logging/class-logger';
-import { ConfigTestModule } from '../../../../../test/utils';
-import { ConfigService } from '@nestjs/config';
+import { EmailConfigTestModule } from '../../../../../test/utils';
 import { OxBaseAction } from '../actions/ox-base-action';
 import { DomainError } from '../../../../shared/error';
 import { OxError } from '../../../../shared/error/ox.error';
@@ -16,6 +15,8 @@ import { faker } from '@faker-js/faker';
 import assert from 'assert';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error';
 import { AddMemberToGroupAction } from '../actions/group/add-member-to-group.action.js';
+import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
+import { plainToInstance } from 'class-transformer';
 
 class MockAction extends OxBaseAction<unknown, string> {
     public override action: string = 'http://soap.admin.openexchange.com/mockAction';
@@ -35,12 +36,10 @@ class MockAction extends OxBaseAction<unknown, string> {
 
 describe('OxServiceConstructor', () => {
     it('should set default retries', () => {
-        const configServiceMock: DeepMocked<ConfigService<unknown>> = createMock<ConfigService>(ConfigService);
-        configServiceMock.getOrThrow.mockReturnValue({});
+        const config: EmailAppConfig = plainToInstance(EmailAppConfig, { OX: {} });
 
-        const sut: OxSendService = new OxSendService({} as HttpService, {} as ClassLogger, configServiceMock);
+        const sut: OxSendService = new OxSendService({} as HttpService, {} as ClassLogger, config);
 
-        expect(configServiceMock.getOrThrow).toHaveBeenCalledTimes(1);
         expect((sut as unknown as { max_retries: number }).max_retries).toBe(3);
     });
 });
@@ -54,7 +53,7 @@ describe('OxSendService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule],
+            imports: [EmailConfigTestModule],
             providers: [
                 OxSendService,
                 {
