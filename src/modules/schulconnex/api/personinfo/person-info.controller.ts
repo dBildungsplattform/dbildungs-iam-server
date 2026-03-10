@@ -1,4 +1,4 @@
-import { Controller, Get, UseFilters, Version } from '@nestjs/common';
+import { Controller, Get, Version } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiOAuth2,
@@ -24,11 +24,7 @@ import { UserLock } from '../../../keycloak-administration/domain/user-lock.js';
 import { PersonInfoResponse } from './v0/person-info.response.js';
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 import { EmailRepo } from '../../../email/persistence/email.repo.js';
-import { SchulConnexValidationErrorFilter } from '../../error/schulconnex-validation-error.filter.js';
-import { SchulConnexAuthenticationDomainErrorFilter } from '../../error/schulconnex-authentication-domain-error-filter.js';
-import { SchulConnexSharedErrorFilter } from '../../error/schulconnex-shared-error-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, SchulConnexAuthenticationDomainErrorFilter, SchulConnexSharedErrorFilter)
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
 @ApiTags('person-info')
