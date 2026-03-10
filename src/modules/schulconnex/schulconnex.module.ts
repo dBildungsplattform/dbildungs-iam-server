@@ -15,6 +15,10 @@ import { EmailMicroserviceModule } from '../email-microservice/email-microservic
 import { SchulConnexValidationErrorFilter } from './error/schulconnex-validation-error.filter.js';
 import { SchulConnexSharedErrorFilter } from './error/schulconnex-shared-error-filter.js';
 import { SchulConnexAuthenticationDomainErrorFilter } from './error/schulconnex-authentication-domain-error-filter.js';
+import { APP_FILTER } from '@nestjs/core';
+import { SharedExceptionFilter } from '../../shared/filter/shared-exception-filter.js';
+import { ValidationExceptionFilter } from '../../shared/filter/validation-exception-filter.js';
+import { AuthenticationExceptionFilter } from '../authentication/api/authentication-exception-filter.js';
 
 @Module({
     imports: [
@@ -34,6 +38,9 @@ import { SchulConnexAuthenticationDomainErrorFilter } from './error/schulconnex-
         SchulConnexValidationErrorFilter,
         SchulConnexSharedErrorFilter,
         SchulConnexAuthenticationDomainErrorFilter,
+        { provide: APP_FILTER, useClass: ValidationExceptionFilter },
+        { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
+        { provide: APP_FILTER, useClass: SharedExceptionFilter },
     ],
     controllers: [PersonInfoController, PersonenInfoController],
 })
