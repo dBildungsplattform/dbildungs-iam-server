@@ -1,7 +1,6 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
-import { SharedDomainError } from '../error/shared-domain.error.js';
 import { DbiamSharedError, SharedErrorI18nTypes } from '../error/dbiam-shared.error.js';
 import { EntityAlreadyExistsError } from '../error/entity-already-exists.error.js';
 import { EntityCouldNotBeCreated } from '../error/entity-could-not-be-created.error.js';
@@ -17,9 +16,10 @@ import { MismatchedRevisionError } from '../error/mismatched-revision.error.js';
 import { MissingPermissionsError } from '../error/missing-permissions.error.js';
 import { PersonAlreadyExistsError } from '../error/person-already-exists.error.js';
 import { UserExternalDataWorkflowError } from '../error/user-externaldata-workflow.error.js';
+import { DomainError } from '../error/domain.error.js';
 
-@Catch(SharedDomainError)
-export class SharedExceptionFilter implements ExceptionFilter<SharedDomainError> {
+@Catch(DomainError)
+export class SharedExceptionFilter implements ExceptionFilter<DomainError> {
     private ERROR_MAPPINGS: Map<string, DbiamSharedError> = new Map([
         [
             EntityCouldNotBeCreated.name,
@@ -121,7 +121,7 @@ export class SharedExceptionFilter implements ExceptionFilter<SharedDomainError>
         ],
     ]);
 
-    public catch(exception: SharedDomainError, host: ArgumentsHost): void {
+    public catch(exception: DomainError, host: ArgumentsHost): void {
         const ctx: HttpArgumentsHost = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
@@ -131,7 +131,7 @@ export class SharedExceptionFilter implements ExceptionFilter<SharedDomainError>
         response.json(dbiamSharedError);
     }
 
-    private mapDomainErrorToDbiamError(error: SharedDomainError): DbiamSharedError {
+    private mapDomainErrorToDbiamError(error: DomainError): DbiamSharedError {
         return (
             this.ERROR_MAPPINGS.get(error.constructor.name) ??
             new DbiamSharedError({
