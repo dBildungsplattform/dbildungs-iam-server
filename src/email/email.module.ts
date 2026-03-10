@@ -7,7 +7,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { EmailAppConfig } from '../shared/config/email-app.config.js';
 import { PassportModule } from '@nestjs/passport';
-import { InternalCommunicationApiKeyStrategy } from '../modules/authentication/passport/internalcommunicationapikey.strategy.js';
+import { InternalCommunicationApiKeyStrategy } from './modules/core/api/passport/internalcommunicationapikey.strategy.js';
 
 @Module({
     imports: [
