@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, Put, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Put, UseFilters, UseGuards } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
@@ -9,12 +9,9 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapping.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { MeldungResponse } from './meldung.response.js';
 import { MeldungRepo } from '../persistence/meldung.repo.js';
@@ -23,7 +20,7 @@ import { CreateOrUpdateMeldungBodyParams } from './create-or-update-meldung.body
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { MeldungExceptionFilter } from './meldung.exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new MeldungExceptionFilter())
+@UseFilters(new MeldungExceptionFilter())
 @ApiTags('meldung')
 @ApiOAuth2(['openid'])
 @ApiBearerAuth()
@@ -49,12 +46,8 @@ export class MeldungController {
         const hasRequiredSystemrechte: boolean =
             await permissions.hasSystemrechteAtRootOrganisation(requiredSytsmrechte);
         if (!hasRequiredSystemrechte) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError(
-                        'Schulportal Bearbeiten & Hinweise Bearbeiten Systemrecht Required For This Endpoint',
-                    ),
-                ),
+            throw new MissingPermissionsError(
+                'Schulportal Bearbeiten & Hinweise Bearbeiten Systemrecht Required For This Endpoint',
             );
         }
 
@@ -105,10 +98,8 @@ export class MeldungController {
         const hasRequiredSystemrechte: boolean =
             await permissions.hasSystemrechteAtRootOrganisation(requiredSystemrechte);
         if (!hasRequiredSystemrechte) {
-            throw this.mapError(
-                new MissingPermissionsError(
-                    'Schulportal Bearbeiten & Hinweise Bearbeiten Systemrecht Required For This Endpoint',
-                ),
+            throw new MissingPermissionsError(
+                'Schulportal Bearbeiten & Hinweise Bearbeiten Systemrecht Required For This Endpoint',
             );
         }
 
@@ -133,19 +124,13 @@ export class MeldungController {
     ): Promise<MeldungResponse> {
         const existingMeldung: Option<Meldung<true>> = await this.meldungRepo.findById(body.id);
         if (!existingMeldung) {
-            throw this.mapError(new EntityNotFoundError('Meldung', body.id));
+            throw new EntityNotFoundError('Meldung', body.id);
         }
         const updateResult: Result<void, DomainError> = existingMeldung.update(body.revision, body.inhalt, body.status);
         if (!updateResult.ok) {
             throw updateResult.error;
         }
         return new MeldungResponse(await this.meldungRepo.save(existingMeldung));
-    }
-
-    private mapError(error: DomainError): HttpException {
-        return SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-            SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(error),
-        );
     }
 
     private isUpdateRequest(

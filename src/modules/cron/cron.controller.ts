@@ -17,7 +17,6 @@ import { CronConfig } from '../../shared/config/cron.config.js';
 import { DomainError } from '../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../shared/error/missing-permissions.error.js';
-import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapping.js';
 import { PersonID } from '../../shared/types/aggregate-ids.types.js';
 import { Permissions } from '../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';
@@ -73,11 +72,7 @@ export class CronController {
                 RollenSystemRecht.CRON_DURCHFUEHREN,
             ]);
             if (!hasCronJobPermission) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                        new MissingPermissionsError('Cronrecht Required For This Endpoint'),
-                    ),
-                );
+                throw new MissingPermissionsError('Cronrecht Required For This Endpoint');
             }
 
             const personIdsTouple: [PersonID, string][] = await this.personRepository.getKoPersUserLockList();
@@ -160,11 +155,7 @@ export class CronController {
                 RollenSystemRecht.CRON_DURCHFUEHREN,
             ]);
             if (!hasCronJobPermission) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                        new MissingPermissionsError('Cronrecht Required For This Endpoint'),
-                    ),
-                );
+                throw new MissingPermissionsError('Cronrecht Required For This Endpoint');
             }
             //Get PersonenKontexte for a person at least one kontext exceeds the befristung value
             const personenKontexteGroupedByPersonId: Map<PersonID, Personenkontext<true>[]> =
@@ -279,11 +270,7 @@ export class CronController {
                 RollenSystemRecht.CRON_DURCHFUEHREN,
             ]);
             if (!hasCronJobPermission) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                        new MissingPermissionsError('Cronrecht Required For This Endpoint'),
-                    ),
-                );
+                throw new MissingPermissionsError('Cronrecht Required For This Endpoint');
             }
 
             const { ids: personIds, total }: PersonWithoutOrgDeleteListResult =
@@ -352,11 +339,7 @@ export class CronController {
                 RollenSystemRecht.CRON_DURCHFUEHREN,
             ]);
             if (!hasCronJobPermission) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                        new MissingPermissionsError('Cronrecht Required For This Endpoint'),
-                    ),
-                );
+                throw new MissingPermissionsError('Cronrecht Required For This Endpoint');
             }
             const userLocks: UserLock[] = await this.userLockRepository.getLocksToUnlock();
             if (userLocks.length === 0) {
@@ -429,11 +412,7 @@ export class CronController {
             RollenSystemRecht.CRON_DURCHFUEHREN,
         ]);
         if (!hasCronJobPermission) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Insufficient permissions'),
-                ),
-            );
+            throw new MissingPermissionsError('Insufficient permissions');
         }
         try {
             await this.serviceProviderService.updateServiceProvidersForVidis();
@@ -463,11 +442,7 @@ export class CronController {
                 RollenSystemRecht.CRON_DURCHFUEHREN,
             ]);
             if (!hasCronJobPermission) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                        new MissingPermissionsError('Cronrecht Required For This Endpoint'),
-                    ),
-                );
+                throw new MissingPermissionsError('Cronrecht Required For This Endpoint');
             }
 
             const { processed, total }: { processed: number; total: number } =

@@ -4,7 +4,6 @@ import { UserExternalDataResponse } from './externaldata/user-externaldata.respo
 import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { UserExternaldataWorkflowAggregate } from '../domain/user-extenaldata.workflow.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapping.js';
 import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
@@ -48,22 +47,14 @@ export class KeycloakInternalController {
     public async getExternalData(@Body() params: { sub: string }): Promise<UserExternalDataResponse> {
         const person: Option<Person<true>> = await this.personRepository.findByKeycloakUserId(params.sub);
         if (!person) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person with keycloak sub', params.sub),
-                ),
-            );
+            throw new EntityNotFoundError('Person with keycloak sub', params.sub);
         }
 
         const workflow: UserExternaldataWorkflowAggregate = this.userExternaldataWorkflowFactory.createNew();
         const workflowInitializeError: Option<DomainError> = await workflow.initialize(person.id);
         if (workflowInitializeError || !workflow.person || !workflow.checkedExternalPkData) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new UserExternalDataWorkflowError(
-                        'UserExternaldataWorkflowAggregate has not been successfull initialized',
-                    ),
-                ),
+            throw new UserExternalDataWorkflowError(
+                'UserExternaldataWorkflowAggregate has not been successfull initialized',
             );
         }
 

@@ -23,7 +23,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
@@ -45,7 +44,6 @@ import { DbiamCreatePersonWithPersonenkontexteBodyParams } from './param/dbiam-c
 import { PersonPersonenkontext, PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
 import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapping.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
@@ -54,7 +52,6 @@ import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-per
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DbiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { ConfigService } from '@nestjs/config';
@@ -62,12 +59,7 @@ import { ServerConfig } from '../../../shared/config/index.js';
 import { PortalConfig } from '../../../shared/config/portal.config.js';
 import { mapStringsToRollenArt } from '../../../shared/config/utils.js';
 
-@UseFilters(
-    SchulConnexValidationErrorFilter,
-    new PersonenkontextExceptionFilter(),
-    new PersonenkontexteUpdateExceptionFilter(),
-    new AuthenticationExceptionFilter(),
-)
+@UseFilters(new PersonenkontextExceptionFilter(), new PersonenkontexteUpdateExceptionFilter())
 @ApiTags('personenkontext')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -256,9 +248,7 @@ export class DbiamPersonenkontextWorkflowController {
             }
 
             if (savedPersonWithPersonenkontext instanceof DomainError) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(savedPersonWithPersonenkontext),
-                );
+                throw savedPersonWithPersonenkontext;
             }
         }
 

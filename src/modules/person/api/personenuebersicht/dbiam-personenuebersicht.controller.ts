@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
@@ -8,13 +8,11 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { SchulConnexValidationErrorFilter } from '../../../../shared/error/schulconnex-validation-error.filter.js';
 import { DBiamPersonenuebersichtResponse } from './dbiam-personenuebersicht.response.js';
 import { DBiamFindPersonenuebersichtByPersonIdParams } from './dbiam-find-personenuebersicht-by-personid.params.js';
 import { Person } from '../../domain/person.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
 import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
-import { SchulConnexErrorMapper } from '../../../../shared/error/schul-connex-error.mapping.js';
 import { DBiamPersonenzuordnungResponse } from './dbiam-personenzuordnung.response.js';
 import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -29,10 +27,8 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig, DataConfig } from '../../../../shared/config/index.js';
 import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
-import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
 import { Organisation } from '../../../organisation/domain/organisation.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('dbiam-personenuebersicht')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -103,9 +99,7 @@ export class DBiamPersonenuebersichtController {
                         );
 
                     if (personenUebersichtenResult instanceof EntityNotFoundError) {
-                        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                            SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personenUebersichtenResult),
-                        );
+                        throw personenUebersichtenResult;
                     }
                     items.push(
                         new DBiamPersonenuebersichtResponse(
@@ -146,11 +140,9 @@ export class DBiamPersonenuebersichtController {
             await dbiamPersonenUebersicht.getPersonenkontexte(params.personId, permissions);
 
         if (response instanceof EntityNotFoundError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(response),
-            );
+            throw response;
         }
 
-        return response;
+        return response; //I dont know if that maybe can be deleted when we just throw the response obove
     }
 }
