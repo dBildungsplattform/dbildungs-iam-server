@@ -46,7 +46,7 @@ import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.j
 import { Response } from 'express';
 import { ImportUploadResponse } from './importvorgang-upload.response.js';
 import { ImportDomainError } from '../domain/import-domain.error.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapping.js';
 import { ImportExceptionFilter } from './import-exception-filter.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';

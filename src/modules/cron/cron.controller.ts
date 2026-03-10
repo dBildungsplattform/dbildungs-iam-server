@@ -17,7 +17,7 @@ import { CronConfig } from '../../shared/config/cron.config.js';
 import { DomainError } from '../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../shared/error/missing-permissions.error.js';
-import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapping.js';
 import { PersonID } from '../../shared/types/aggregate-ids.types.js';
 import { Permissions } from '../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';

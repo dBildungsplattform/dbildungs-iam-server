@@ -45,7 +45,7 @@ import { DbiamCreatePersonWithPersonenkontexteBodyParams } from './param/dbiam-c
 import { PersonPersonenkontext, PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
 import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapping.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';

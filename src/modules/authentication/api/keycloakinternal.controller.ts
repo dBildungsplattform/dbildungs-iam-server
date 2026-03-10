@@ -4,7 +4,7 @@ import { UserExternalDataResponse } from './externaldata/user-externaldata.respo
 import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { UserExternaldataWorkflowAggregate } from '../domain/user-extenaldata.workflow.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapping.js';
 import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';

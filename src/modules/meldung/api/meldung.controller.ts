@@ -14,7 +14,7 @@ import { AuthenticationExceptionFilter } from '../../authentication/api/authenti
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapping.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { MeldungResponse } from './meldung.response.js';
 import { MeldungRepo } from '../persistence/meldung.repo.js';

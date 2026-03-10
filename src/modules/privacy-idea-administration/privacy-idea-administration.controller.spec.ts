@@ -3,7 +3,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
 import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
-import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapping.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { Person } from '../person/domain/person.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';

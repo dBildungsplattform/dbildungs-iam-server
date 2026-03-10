@@ -25,7 +25,7 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapping.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';

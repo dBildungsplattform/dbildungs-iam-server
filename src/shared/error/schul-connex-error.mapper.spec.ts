@@ -1,7 +1,7 @@
 import { HttpException } from '@nestjs/common';
 import { DomainError } from './domain.error.js';
 import { EntityNotFoundError } from './entity-not-found.error.js';
-import { SchulConnexErrorMapper } from './schul-connex-error.mapper.js';
+import { SchulConnexErrorMapper } from './schul-connex-error.mapping.js';
 import { SchulConnexError } from './schul-connex.error.js';
 
 describe('DomainToSchulConnexErrorMapper', () => {

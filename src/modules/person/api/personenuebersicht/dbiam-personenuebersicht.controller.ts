@@ -14,7 +14,7 @@ import { DBiamFindPersonenuebersichtByPersonIdParams } from './dbiam-find-person
 import { Person } from '../../domain/person.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
 import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
-import { SchulConnexErrorMapper } from '../../../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexErrorMapper } from '../../../../shared/error/schul-connex-error.mapping.js';
 import { DBiamPersonenzuordnungResponse } from './dbiam-personenzuordnung.response.js';
 import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
