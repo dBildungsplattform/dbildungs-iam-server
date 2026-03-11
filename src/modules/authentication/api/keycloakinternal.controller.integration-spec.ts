@@ -189,7 +189,7 @@ describe('KeycloakInternalController', () => {
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
             personRepoMock.findById.mockResolvedValueOnce(person);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
-            dbiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValueOnce(personenKontextErweiterungen);
+            dbiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce(personenKontextErweiterungen);
 
             const result: UserExternalDataResponse = await keycloakinternalController.getExternalData({
                 sub: keycloakSub,
@@ -228,7 +228,7 @@ describe('KeycloakInternalController', () => {
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
             personRepoMock.findById.mockResolvedValueOnce(person);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce([]);
-            dbiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValueOnce([]);
+            dbiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
 
             const result: UserExternalDataResponse = await keycloakinternalController.getExternalData({
                 sub: keycloakSub,
@@ -316,7 +316,7 @@ describe('KeycloakInternalController', () => {
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
             personRepoMock.findById.mockResolvedValueOnce(person);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
-            dbiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValueOnce(personenKontextErweiterungen);
+            dbiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce(personenKontextErweiterungen);
 
             const result: UserExternalDataResponse = await keycloakinternalController.getExternalData({
                 sub: keycloakSub,
@@ -409,7 +409,7 @@ describe('KeycloakInternalController', () => {
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
             personRepoMock.findById.mockResolvedValueOnce(person);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
-            dbiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValueOnce(personenKontextErweiterungen);
+            dbiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce(personenKontextErweiterungen);
 
             const result: UserExternalDataResponse = await keycloakinternalController.getExternalData({
                 sub: keycloakSub,

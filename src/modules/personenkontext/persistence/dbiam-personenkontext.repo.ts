@@ -27,14 +27,26 @@ import { PersonenkontextErweitertVirtualEntity } from './personenkontext-erweite
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { mapSPEntityToAggregate } from '../../service-provider/repo/service-provider.repo.js';
 
 export type RollenCount = { rollenart: string; count: string };
+
+export type ErweiterterServiceProviderForPK = {
+    personenkontext: Personenkontext<true>;
+    serviceProvider: ServiceProvider<true>;
+};
+
+type ErweiterterServiceProviderForPKEntity = {
+    personenkontext_id: string;
+    service_provider_id: string;
+};
 
 export type ExternalPkData = {
     pkId: string;
     rollenart?: RollenArt;
     kennung?: string;
-    serviceProvider?: ServiceProviderEntity[];
+    serviceProvider?: ServiceProvider<true>[];
 };
 
 export type KontextWithOrgaAndRolle = {
@@ -43,7 +55,7 @@ export type KontextWithOrgaAndRolle = {
     rolle: Rolle<true>;
 };
 
-export type ExternalPkDataLoaded = Loaded<
+type ExternalPkDataLoaded = Loaded<
     PersonenkontextEntity,
     'organisationId' | 'rolleId.serviceProvider.serviceProvider',
     'organisationId.kennung' | 'rolleId.rollenart' | 'rolleId.serviceProvider',
@@ -390,7 +402,7 @@ export class DBiamPersonenkontextRepo {
             },
         );
         return personenkontextEntities.map((pk: ExternalPkDataLoaded) => {
-            const serviceProvider: ServiceProviderEntity[] = pk.rolleId
+            const serviceProviders: ServiceProviderEntity[] = pk.rolleId
                 .unwrap()
                 .serviceProvider.getItems()
                 .map((rsp: RolleServiceProviderEntity) => rsp.serviceProvider);
@@ -399,7 +411,7 @@ export class DBiamPersonenkontextRepo {
                 pkId: pk.id,
                 rollenart: pk.rolleId.unwrap().rollenart,
                 kennung: pk.organisationId.unwrap().kennung,
-                serviceProvider: serviceProvider,
+                serviceProvider: serviceProviders.map((sp: ServiceProviderEntity) => mapSPEntityToAggregate(sp)),
             };
         });
     }
@@ -537,19 +549,62 @@ export class DBiamPersonenkontextRepo {
         return result;
     }
 
-    public async findPKErweiterungen(personId: string): Promise<PersonenkontextErweitertVirtualEntityLoaded[]> {
-        const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = await this.em.find(
-            PersonenkontextErweitertVirtualEntity,
-            {
-                personenkontext: {
-                    personId,
-                },
-            },
-            {
-                populate: ['serviceProvider', 'personenkontext'],
-                exclude: ['serviceProvider.logo', 'serviceProvider.logoMimeType'],
-            },
-        );
-        return personenKontextErweiterungen;
+    public async findErweiterteSPByPersonId(personId: string): Promise<ErweiterterServiceProviderForPK[]> {
+        const query: string = `
+            WITH RECURSIVE
+            expanded_rollenerweiterung AS (
+                SELECT
+                    re.rolle_id,
+                    re.organisation_id,
+                    re.service_provider_id
+                FROM
+                    public.rollenerweiterung re
+                UNION ALL
+                SELECT
+                    exp.rolle_id,
+                    o.id,
+                    exp.service_provider_id
+                FROM
+                    expanded_rollenerweiterung exp
+                    INNER JOIN public.organisation o ON o.administriert_von = exp.organisation_id
+            )
+        SELECT
+            pk.id as personenkontext_id,
+            ere.service_provider_id as service_provider_id
+        FROM
+            public.personenkontext pk
+        INNER JOIN
+            expanded_rollenerweiterung ere ON (pk.organisation_id = ere.organisation_id AND pk.rolle_id = ere.rolle_id)
+        WHERE pk.person_id = ?
+        `;
+
+        const rows: ErweiterterServiceProviderForPKEntity[] = await this.em.execute(query, [personId]);
+
+        const pkIds: string[] = [
+            ...new Set(rows.map((r: ErweiterterServiceProviderForPKEntity) => r.personenkontext_id)),
+        ];
+        const spIds: string[] = [
+            ...new Set(rows.map((r: ErweiterterServiceProviderForPKEntity) => r.service_provider_id)),
+        ];
+
+        const [pks, sps]: [PersonenkontextEntity[], ServiceProviderEntity[]] = await Promise.all([
+            this.em.find(PersonenkontextEntity, { id: { $in: pkIds } }),
+            this.em.find(ServiceProviderEntity, { id: { $in: spIds } }),
+        ]);
+
+        const pkById: Map<string, PersonenkontextEntity> = new Map(pks.map((p: PersonenkontextEntity) => [p.id, p]));
+        const spById: Map<string, ServiceProviderEntity> = new Map(sps.map((s: ServiceProviderEntity) => [s.id, s]));
+
+        const result: ErweiterterServiceProviderForPK[] = rows.map((r: ErweiterterServiceProviderForPKEntity) => {
+            const personenkontext: PersonenkontextEntity = pkById.get(r.personenkontext_id)!;
+            const serviceProvider: ServiceProviderEntity = spById.get(r.service_provider_id)!;
+
+            const pkResp: Personenkontext<boolean> = mapEntityToAggregate(personenkontext, this.personenkontextFactory);
+            const spResp: ServiceProvider<boolean> = mapSPEntityToAggregate(serviceProvider);
+
+            return { personenkontext: pkResp, serviceProvider: spResp };
+        });
+
+        return result;
     }
 }

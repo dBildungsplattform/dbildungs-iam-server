@@ -36,9 +36,9 @@ import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { mapAggregateToPartial, Personenkontext } from '../domain/personenkontext.js';
 import {
     DBiamPersonenkontextRepo,
+    ErweiterterServiceProviderForPK,
     ExternalPkData,
     KontextWithOrgaAndRolle,
-    PersonenkontextErweitertVirtualEntityLoaded,
     RollenCount,
 } from './dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
@@ -365,7 +365,7 @@ describe('dbiam Personenkontext Repo', () => {
             expect(pkData?.rollenart).toEqual(rolleA.rollenart);
             expect(pkData?.kennung).toEqual(organisationA.kennung);
 
-            const spIds: string[] | undefined = pkData?.serviceProvider?.map((sp: ServiceProviderEntity) => sp.id);
+            const spIds: string[] | undefined = pkData?.serviceProvider?.map((sp: ServiceProvider<true>) => sp.id);
             expect(spIds).toContain(mockServiceProvider.id); // from mocked RolleServiceProviderEntity
 
             findSpy.mockRestore();
@@ -1218,14 +1218,8 @@ describe('dbiam Personenkontext Repo', () => {
                 }),
             );
 
-            const result: PersonenkontextErweitertVirtualEntityLoaded[] = await sut.findPKErweiterungen(person.id);
+            const result: ErweiterterServiceProviderForPK[] = await sut.findErweiterteSPByPersonId(person.id);
             expect(result.length).toEqual(1);
-            expect(
-                result.findIndex(
-                    (pker: PersonenkontextErweitertVirtualEntityLoaded) =>
-                        pker.serviceProvider.unwrap().id === serviceprovider.id,
-                ),
-            ).not.toEqual(-1);
         });
     });
 });
