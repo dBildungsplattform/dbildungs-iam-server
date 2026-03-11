@@ -48,6 +48,10 @@ describe('EmailResolverService', () => {
         loggerMock = module.get(ClassLogger);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     afterAll(async () => {
         await module.close();
     });
@@ -354,9 +358,15 @@ describe('EmailResolverService', () => {
             await sut.setEmailForSpshPerson({ spshPersonId: spshPersonId, ...params });
 
             expect(mockHttpService.post).toHaveBeenCalledWith(
-                expect.stringContaining(`/api/write/${spshPersonId}/set-email`),
-                expect.objectContaining({ ...params }),
+                `http://localhost:9091/api/write/${spshPersonId}/set-email`,
+                { ...params },
+                {
+                    headers: {
+                        'api-key': 'api-key',
+                    },
+                },
             );
+
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `Setting email for person ${spshPersonId} via email microservice with spId ${params.spshServiceProviderId}`,
             );
@@ -401,7 +411,13 @@ describe('EmailResolverService', () => {
             await sut.setEmailsSuspendedForSpshPerson({ spshPersonId: spshPersonId });
 
             expect(mockHttpService.post).toHaveBeenCalledWith(
-                expect.stringContaining(`/api/write/${spshPersonId}/set-suspended`),
+                `http://localhost:9091/api/write/${spshPersonId}/set-suspended`,
+                {},
+                {
+                    headers: {
+                        'api-key': 'api-key',
+                    },
+                },
             );
             expect(loggerMock.info).toHaveBeenCalledWith(`Setting emails for person ${spshPersonId} to suspended`);
         });
@@ -443,11 +459,6 @@ describe('EmailResolverService', () => {
     });
 
     it('should use correct endpoint from config in post call', async () => {
-        const mockEndpoint: string = 'https://email.microservice/';
-        const configService: ConfigService = module.get(ConfigService);
-        configService.getOrThrow = vi.fn().mockReturnValue({
-            ENDPOINT: mockEndpoint,
-        });
         const spshPersonId: string = faker.string.uuid();
         const params: SetEmailAddressForSpshPersonBodyParams = {
             spshUsername: 'mmustermann',
@@ -460,9 +471,15 @@ describe('EmailResolverService', () => {
         mockHttpService.post.mockReturnValueOnce(of({ status: 200 } as AxiosResponse));
 
         await sut.setEmailForSpshPerson({ spshPersonId: spshPersonId, ...params });
+
         expect(mockHttpService.post).toHaveBeenCalledWith(
             expect.stringMatching(/\/api\/write\/[a-f0-9-]+\/set-email$/),
-            expect.objectContaining({ ...params }),
+            { ...params },
+            {
+                headers: {
+                    'api-key': 'api-key',
+                },
+            },
         );
     });
 
@@ -536,11 +553,6 @@ describe('EmailResolverService', () => {
     describe('deleteEmailsForSpshPerson', () => {
         it('should call httpService.delete with correct URL and log info', async () => {
             const spshPersonId: string = faker.string.uuid();
-            const mockEndpoint: string = 'https://email.microservice/';
-            const configService: ConfigService = module.get(ConfigService);
-            configService.getOrThrow = vi.fn().mockReturnValue({
-                ENDPOINT: mockEndpoint,
-            });
 
             mockHttpService.delete.mockReturnValueOnce(of({ status: 200 } as AxiosResponse));
 
@@ -550,7 +562,12 @@ describe('EmailResolverService', () => {
                 `Deleting email for person ${spshPersonId} via email microservice`,
             );
             expect(mockHttpService.delete).toHaveBeenCalledWith(
-                `${mockEndpoint}api/write/${spshPersonId}/delete-emails`,
+                `http://localhost:9091/api/write/${spshPersonId}/delete-emails`,
+                {
+                    headers: {
+                        'api-key': 'api-key',
+                    },
+                },
             );
         });
 

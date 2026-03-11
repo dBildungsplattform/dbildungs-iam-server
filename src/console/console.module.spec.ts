@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConsoleModule } from './console.module.js';
 import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
-import { ConfigTestModule, LoggingTestModule } from '../../test/utils/index.js';
+import { ConfigTestModule, EmailConfigTestModule, LoggingTestModule } from '../../test/utils/index.js';
 
 vi.mock('@mikro-orm/nestjs', async () => {
     const actual: Record<string, unknown> = await vi.importActual('@mikro-orm/nestjs');
@@ -47,7 +47,7 @@ describe('ConsoleModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, ConsoleModule, LoggingTestModule],
+            imports: [ConfigTestModule, EmailConfigTestModule, ConsoleModule, LoggingTestModule],
         }).compile();
     });
 

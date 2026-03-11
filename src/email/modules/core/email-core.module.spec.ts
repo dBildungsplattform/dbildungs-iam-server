@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EmailCoreModule } from './email-core.module.js';
 import { SetEmailAddressForSpshPersonService } from './domain/set-email-address-for-spsh-person.service.js';
-import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
+import { DatabaseTestModule, EmailConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { EmailWriteController } from './api/controller/email-write.controller.js';
 import { EmailReadController } from './api/controller/email-read.controller.js';
 
@@ -10,7 +10,7 @@ describe('EmailCoreModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [EmailCoreModule, ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot()],
+            imports: [EmailCoreModule, EmailConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot()],
         }).compile();
     });
 

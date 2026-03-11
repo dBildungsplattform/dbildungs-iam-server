@@ -1,5 +1,4 @@
 import { Injectable, Provider } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { EmailAppConfig } from '../../../shared/config/email-app.config.js';
 import { LdapConfig } from '../../../shared/config/ldap.config.js';
 
@@ -18,8 +17,8 @@ export class LdapInstanceConfig implements LdapConfig {
     public static fromConfigService(): Provider {
         return {
             provide: LdapInstanceConfig,
-            useFactory: (configService: ConfigService<EmailAppConfig>): LdapInstanceConfig => {
-                const ldapConfig: LdapConfig = configService.getOrThrow<LdapConfig>('LDAP');
+            useFactory: (config: EmailAppConfig): LdapInstanceConfig => {
+                const ldapConfig: LdapConfig = config.LDAP;
 
                 return new LdapInstanceConfig(
                     ldapConfig.URL,
@@ -31,7 +30,7 @@ export class LdapInstanceConfig implements LdapConfig {
                     ldapConfig.RETRY_WRAPPER_DEFAULT_RETRIES,
                 );
             },
-            inject: [ConfigService],
+            inject: [EmailAppConfig],
         };
     }
 }

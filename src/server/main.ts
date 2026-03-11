@@ -1,10 +1,9 @@
 /* eslint-disable no-console */
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { NestLogger } from '../core/logging/nest-logger.js';
-import { FrontendConfig, HostConfig, KeycloakConfig, ServerConfig } from '../shared/config/index.js';
+import { FrontendConfig, JsonConfig, KeycloakConfig } from '../shared/config/index.js';
 import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { ServerModule } from './server.module.js';
 import { GlobalPagingHeadersInterceptor } from '../shared/paging/index.js';
@@ -12,10 +11,10 @@ import { VersioningType } from '@nestjs/common';
 
 async function bootstrap(): Promise<void> {
     const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(ServerModule);
-    const configService: ConfigService<ServerConfig, true> = app.get(ConfigService<ServerConfig, true>);
-    const backendHostname: string | undefined = configService.getOrThrow<HostConfig>('HOST').HOSTNAME;
-    const port: number = configService.getOrThrow<HostConfig>('HOST').PORT;
-    const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
+    const config: JsonConfig = app.get(JsonConfig);
+    const backendHostname: string | undefined = config.HOST.HOSTNAME;
+    const port: number = config.HOST.PORT;
+    const keycloakConfig: KeycloakConfig = config.KEYCLOAK;
 
     app.enableVersioning({
         type: VersioningType.URI,
@@ -72,7 +71,7 @@ async function bootstrap(): Promise<void> {
         },
     });
 
-    const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
+    const frontendConfig: FrontendConfig = config.FRONTEND;
     if (frontendConfig.TRUST_PROXY !== undefined) {
         app.set('trust proxy', frontendConfig.TRUST_PROXY);
     }

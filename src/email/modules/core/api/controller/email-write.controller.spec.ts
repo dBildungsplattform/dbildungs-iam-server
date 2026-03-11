@@ -14,6 +14,7 @@ import { SetEmailSuspendedService } from '../../domain/set-email-suspended.servi
 import { SetEmailAddressForSpshPersonPathParams } from '../dtos/params/set-email-address-for-spsh-person.pathparams.js';
 import { DeleteEmailAddressesForSpshPersonPathParams } from '../dtos/params/delete-email-addresses-for-spsh-person.pathparams.js';
 import { SetEmailAddressesSuspendedPathParams } from '../dtos/params/set-email-addresses-suspended.pathparams.js';
+import { EmailConfigTestModule } from '../../../../../../test/utils/email-config-test.module.js';
 
 describe('Email Write Controller', () => {
     let emailWriteController: EmailWriteController;
@@ -23,7 +24,7 @@ describe('Email Write Controller', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [LoggingTestModule],
+            imports: [LoggingTestModule, EmailConfigTestModule],
             providers: [
                 {
                     provide: APP_PIPE,
