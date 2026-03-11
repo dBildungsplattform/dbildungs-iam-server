@@ -13,6 +13,7 @@ import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/c
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { HeaderApiKeyConfig } from '../../../shared/config/headerapikey.config.js';
 
 export interface PersonIdWithEmailResponse {
     personId: string;
@@ -33,7 +34,11 @@ export class EmailResolverService {
     public async findEmailBySpshPerson(personId: string): Promise<Option<PersonEmailResponse>> {
         try {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
-                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`),
+                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`, {
+                    headers: {
+                        'api-key': this.getApiKey(),
+                    },
+                }),
             );
             if (response.data[0] !== undefined) {
                 const status: EmailAddressStatus = this.mapStatus(response.data[0]?.status);
@@ -51,7 +56,11 @@ export class EmailResolverService {
     ): Promise<Result<EmailAddressResponse | undefined, DomainError>> {
         try {
             const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
-                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`),
+                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/spshperson/${personId}`, {
+                    headers: {
+                        'api-key': this.getApiKey(),
+                    },
+                }),
             );
             return Ok(response.data[0]);
         } catch (error) {
@@ -63,7 +72,11 @@ export class EmailResolverService {
     public async findByPrimaryAddress(emailAddress: string): Promise<Option<PersonIdWithEmailResponse>> {
         try {
             const response: AxiosResponse<Option<EmailAddressResponse>> = await lastValueFrom(
-                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/email/${emailAddress}`),
+                this.httpService.get(this.getEndpoint() + `${EmailResolverService.readPath}/email/${emailAddress}`, {
+                    headers: {
+                        'api-key': this.getApiKey(),
+                    },
+                }),
             );
             if (
                 response.status === 200 &&
@@ -108,6 +121,11 @@ export class EmailResolverService {
                         lastName: params.lastName,
                         spshServiceProviderId: params.spshServiceProviderId,
                     } satisfies SetEmailAddressForSpshPersonBodyParams,
+                    {
+                        headers: {
+                            'api-key': this.getApiKey(),
+                        },
+                    },
                 ),
             );
         } catch (error) {
@@ -121,6 +139,11 @@ export class EmailResolverService {
             await lastValueFrom(
                 this.httpService.delete(
                     this.getEndpoint() + `${EmailResolverService.writePath}/${params.spshPersonId}/delete-emails`,
+                    {
+                        headers: {
+                            'api-key': this.getApiKey(),
+                        },
+                    },
                 ),
             );
         } catch (error) {
@@ -134,6 +157,12 @@ export class EmailResolverService {
             await lastValueFrom(
                 this.httpService.post(
                     this.getEndpoint() + `${EmailResolverService.writePath}/${params.spshPersonId}/set-suspended`,
+                    {},
+                    {
+                        headers: {
+                            'api-key': this.getApiKey(),
+                        },
+                    },
                 ),
             );
         } catch (error) {
@@ -153,6 +182,12 @@ export class EmailResolverService {
         const emailMicroserviceConfig: EmailMicroserviceConfig =
             this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
         return emailMicroserviceConfig.ENDPOINT;
+    }
+
+    private getApiKey(): string {
+        const headerApiKeyConfig: HeaderApiKeyConfig =
+            this.configService.getOrThrow<HeaderApiKeyConfig>('HEADER_API_KEY');
+        return headerApiKeyConfig.INTERNAL_COMMUNICATION_API_KEY;
     }
 
     private mapStatus(ease: EmailAddressStatusEnum): EmailAddressStatus {
