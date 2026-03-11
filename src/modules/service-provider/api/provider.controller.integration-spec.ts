@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
-import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
@@ -34,6 +34,9 @@ import {
 } from '../../../../test/utils/auth.mock.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { SchulConnexAuthenticationDomainErrorFilter } from '../../schulconnex/error/schulconnex-authentication-domain-error-filter.js';
+import { SchulConnexSharedErrorFilter } from '../../schulconnex/error/schulconnex-shared-error-filter.js';
+import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -68,6 +71,9 @@ describe('ServiceProvider API', () => {
                     provide: APP_INTERCEPTOR,
                     useValue: createAuthInterceptorMock(personPermissions),
                 },
+                { provide: APP_FILTER, useClass: SchulConnexValidationErrorFilter },
+                { provide: APP_FILTER, useClass: SchulConnexAuthenticationDomainErrorFilter },
+                { provide: APP_FILTER, useClass: SchulConnexSharedErrorFilter },
             ],
         }).compile();
 

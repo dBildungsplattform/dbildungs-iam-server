@@ -1,10 +1,10 @@
-import { DetailedValidationError } from '../validation/detailed-validation.error.js';
+import { DetailedValidationError } from '../../../shared/validation/detailed-validation.error.js';
 import { SchulConnexValidationErrorFilter } from './schulconnex-validation-error.filter.js';
 import { ArgumentsHost } from '@nestjs/common';
 import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { ValidationError } from 'class-validator';
-import { SchulConnexError } from './schul-connex.error.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 
 describe('SchulconnexValidationErrorFilter', () => {
     let filter: SchulConnexValidationErrorFilter;

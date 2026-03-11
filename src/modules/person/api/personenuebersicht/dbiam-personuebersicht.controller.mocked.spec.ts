@@ -1,4 +1,3 @@
-import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -30,6 +29,10 @@ import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.e
 import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
 import { PersonLandesbediensteterSearchService } from '../../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
 import { PersonID } from '../../../../shared/types/aggregate-ids.types.js';
+import { APP_FILTER } from '@nestjs/core';
+import { SharedExceptionFilter } from '../../../../shared/filter/shared-exception-filter.js';
+import { ValidationExceptionFilter } from '../../../../shared/filter/validation-exception-filter.js';
+import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -87,7 +90,14 @@ describe('Personenuebersicht API Mocked', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
                 LoggingTestModule,
             ],
-            providers: [ServiceProviderRepo, RolleFactory, OrganisationRepository],
+            providers: [
+                ServiceProviderRepo,
+                RolleFactory,
+                OrganisationRepository,
+                { provide: APP_FILTER, useClass: ValidationExceptionFilter },
+                { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
+                { provide: APP_FILTER, useClass: SharedExceptionFilter },
+            ],
         })
             .overrideProvider(DBiamPersonenkontextRepo)
             .useValue(createMock(DBiamPersonenkontextRepo))
@@ -147,9 +157,9 @@ describe('Personenuebersicht API Mocked', () => {
                     orgaIds: [orga.id],
                 });
 
-                await expect(sut.findPersonenuebersichtenByPerson(params, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    sut.findPersonenuebersichtenByPerson(params, personPermissionsMock),
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
             });
         });
 
@@ -276,8 +286,8 @@ describe('Personenuebersicht API Mocked', () => {
             organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
             personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [orga.id] });
 
-            await expect(sut.findPersonenuebersichten(bodyParams, personPermissionsMock)).rejects.toThrow(
-                HttpException,
+            await expect(sut.findPersonenuebersichten(bodyParams, personPermissionsMock)).rejects.toBeInstanceOf(
+                EntityNotFoundError,
             );
         });
     });
