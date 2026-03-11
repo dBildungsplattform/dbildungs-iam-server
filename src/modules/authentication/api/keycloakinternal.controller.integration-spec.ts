@@ -3,7 +3,6 @@ import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { Loaded, LoadedReference, MikroORM, Reference } from '@mikro-orm/core';
-import { HttpException } from '@nestjs/common';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
@@ -35,6 +34,11 @@ import { ServiceProviderSystem } from '../../service-provider/domain/service-pro
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
 import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { APP_FILTER } from '@nestjs/core';
+import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
+import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
+import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 function createLoadedReference<T extends object>(entity: T): LoadedReference<T> {
     const reference: Reference<T> = createMock<Reference<T>>(Reference);
@@ -72,6 +76,9 @@ describe('KeycloakInternalController', () => {
                 UserExternaldataWorkflowFactory,
                 ExternalDataCacheInterceptor,
                 { provide: CACHE_MANAGER, useValue: { get: vi.fn(), set: vi.fn() } },
+                { provide: APP_FILTER, useClass: ValidationExceptionFilter },
+                { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
+                { provide: APP_FILTER, useClass: SharedExceptionFilter },
             ],
         })
             .overrideProvider(PersonRepository)
@@ -449,8 +456,8 @@ describe('KeycloakInternalController', () => {
             personRepoMock.findById.mockResolvedValueOnce(undefined);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
 
-            await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toThrow(
-                HttpException,
+            await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toBeInstanceOf(
+                DomainError,
             );
         });
 
@@ -458,8 +465,8 @@ describe('KeycloakInternalController', () => {
             const keycloakSub: string = faker.string.uuid();
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
 
-            await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toThrow(
-                HttpException,
+            await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toBeInstanceOf(
+                DomainError,
             );
         });
     });

@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { HttpException, NotImplementedException } from '@nestjs/common';
+import { NotImplementedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { createPersonPermissionsMock, DoFactory } from '../../../../test/utils/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
@@ -31,6 +31,10 @@ import { OrganisationService } from '../../organisation/domain/organisation.serv
 import { PersonApiMapper } from '../../person/mapper/person-api.mapper.js';
 import { DomainErrorMock } from '../../../../test/utils/error.mock.js';
 import { MockedObject } from 'vitest';
+import { APP_FILTER } from '@nestjs/core';
+import { SchulConnexAuthenticationDomainErrorFilter } from '../../schulconnex/error/schulconnex-authentication-domain-error-filter.js';
+import { SchulConnexSharedErrorFilter } from '../../schulconnex/error/schulconnex-shared-error-filter.js';
+import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -69,6 +73,9 @@ describe('PersonenkontextController', () => {
                     provide: OrganisationService,
                     useValue: createMock(OrganisationService),
                 },
+                { provide: APP_FILTER, useClass: SchulConnexValidationErrorFilter },
+                { provide: APP_FILTER, useClass: SchulConnexAuthenticationDomainErrorFilter },
+                { provide: APP_FILTER, useClass: SchulConnexSharedErrorFilter },
                 PersonApiMapper,
             ],
         }).compile();
@@ -130,7 +137,7 @@ describe('PersonenkontextController', () => {
         });
 
         describe('when NOT finding personenkontext with id', () => {
-            it('should throw http error', async () => {
+            it('should throw domain error', async () => {
                 // Mock Auth check
                 personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
                     ok: true,
@@ -148,7 +155,7 @@ describe('PersonenkontextController', () => {
 
                 const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
-                await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toThrow(HttpException);
+                await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toBeInstanceOf(DomainError);
             });
 
             it('should throw error', async () => {
@@ -183,12 +190,12 @@ describe('PersonenkontextController', () => {
 
                 const responsePromise: Promise<unknown> = sut.findPersonenkontextById(params, permissionsMock);
 
-                await expect(responsePromise).rejects.toThrow(HttpException);
+                await expect(responsePromise).rejects.toBeInstanceOf(MissingPermissionsError);
             });
         });
 
         describe('if person is not found', () => {
-            it('should throw http error', async () => {
+            it('should throw domain error', async () => {
                 // Mock Auth check
                 personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
                     ok: true,
@@ -215,7 +222,7 @@ describe('PersonenkontextController', () => {
                 personenkontextService.findPersonenkontextById.mockResolvedValue(personenkontextResultMock);
                 personService.findPersonById.mockResolvedValue(personResultMock);
 
-                await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toThrow(HttpException);
+                await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toBeInstanceOf(DomainError);
             });
         });
     });
@@ -349,7 +356,7 @@ describe('PersonenkontextController', () => {
         });
 
         describe('when deleting a personenkontext returns a SchulConnexError', () => {
-            it('should throw HttpException', async () => {
+            it('should throw domain error', async () => {
                 // Mock Auth check
                 personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
                     ok: true,
@@ -361,9 +368,9 @@ describe('PersonenkontextController', () => {
                 });
                 const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
-                await expect(sut.deletePersonenkontextById(idParams, bodyParams, permissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    sut.deletePersonenkontextById(idParams, bodyParams, permissionsMock),
+                ).rejects.toBeInstanceOf(MissingPermissionsError);
                 expect(personenkontextService.deletePersonenkontextById).toHaveBeenCalledTimes(1);
             });
         });
@@ -377,9 +384,9 @@ describe('PersonenkontextController', () => {
                 });
                 const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
-                await expect(sut.deletePersonenkontextById(idParams, bodyParams, permissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    sut.deletePersonenkontextById(idParams, bodyParams, permissionsMock),
+                ).rejects.toBeInstanceOf(MissingPermissionsError);
             });
         });
     });

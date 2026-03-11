@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -17,7 +17,6 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { Response } from 'express';
 import { ImportTextFileCreationError } from '../domain/import-text-file-creation.error.js';
 import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.js';
-import { HttpException } from '@nestjs/common';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
@@ -28,6 +27,9 @@ import { ImportPasswordEncryptor } from '../domain/import-password-encryptor.js'
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ConfigService } from '@nestjs/config';
+import { SchulConnexAuthenticationDomainErrorFilter } from '../../schulconnex/error/schulconnex-authentication-domain-error-filter.js';
+import { SchulConnexSharedErrorFilter } from '../../schulconnex/error/schulconnex-shared-error-filter.js';
+import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
 
 describe('Import API with mocked ImportWorkflow', () => {
     let sut: ImportController;
@@ -75,6 +77,9 @@ describe('Import API with mocked ImportWorkflow', () => {
                     provide: ImportDataRepository,
                     useValue: createMock<ImportDataRepository>(ImportDataRepository),
                 },
+                { provide: APP_FILTER, useClass: SchulConnexValidationErrorFilter },
+                { provide: APP_FILTER, useClass: SchulConnexAuthenticationDomainErrorFilter },
+                { provide: APP_FILTER, useClass: SchulConnexSharedErrorFilter },
                 ImportController,
             ],
         }).compile();
@@ -128,7 +133,9 @@ describe('Import API with mocked ImportWorkflow', () => {
                 });
                 importWorkflowFactoryMock.createNew.mockReturnValueOnce(ImportWorkflowMock);
 
-                await expect(sut.deleteImportTransaction(params, personpermissionsMock)).rejects.toThrow(HttpException);
+                await expect(sut.deleteImportTransaction(params, personpermissionsMock)).rejects.toBeInstanceOf(
+                    MissingPermissionsError,
+                );
             });
         });
     });

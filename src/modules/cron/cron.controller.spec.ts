@@ -1,5 +1,4 @@
 import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
-import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../test/utils/config-test.module.js';
 import { DoFactory } from '../../../test/utils/do-factory.js';
@@ -31,6 +30,10 @@ import { OrganisationRepository } from '../organisation/persistence/organisation
 import { DbiamPersonenkontextFactory } from '../personenkontext/domain/dbiam-personenkontext.factory.js';
 import { ConfigService } from '@nestjs/config';
 import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
+import { APP_FILTER } from '@nestjs/core';
+import { SchulConnexAuthenticationDomainErrorFilter } from '../schulconnex/error/schulconnex-authentication-domain-error-filter.js';
+import { SchulConnexSharedErrorFilter } from '../schulconnex/error/schulconnex-shared-error-filter.js';
+import { SchulConnexValidationErrorFilter } from '../schulconnex/error/schulconnex-validation-error.filter.js';
 
 class UnknownError extends DomainError {
     public constructor(message: string) {
@@ -102,6 +105,9 @@ describe('CronController', () => {
                     provide: ServiceProviderService,
                     useValue: createMock(ServiceProviderService),
                 },
+                { provide: APP_FILTER, useClass: SchulConnexValidationErrorFilter },
+                { provide: APP_FILTER, useClass: SchulConnexAuthenticationDomainErrorFilter },
+                { provide: APP_FILTER, useClass: SchulConnexSharedErrorFilter },
             ],
             controllers: [CronController],
         }).compile();
@@ -691,9 +697,9 @@ describe('CronController', () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
                 serviceProviderServiceMock.updateServiceProvidersForVidis.mockResolvedValue();
 
-                await expect(cronController.updateServiceProvidersForVidisAngebote(permissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    cronController.updateServiceProvidersForVidisAngebote(permissionsMock),
+                ).rejects.toBeInstanceOf(MissingPermissionsError);
                 expect(serviceProviderServiceMock.updateServiceProvidersForVidis).toHaveBeenCalledTimes(0);
             });
         });
@@ -726,7 +732,9 @@ describe('CronController', () => {
             it(`should NOT delete non-enabled EmailAddresses which exceed deadline and throw an error`, async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
 
-                await expect(cronController.emailAddressesDelete(permissionsMock)).rejects.toThrow(HttpException);
+                await expect(cronController.emailAddressesDelete(permissionsMock)).rejects.toBeInstanceOf(
+                    MissingPermissionsError,
+                );
                 expect(emailAddressDeletionServiceMock.deleteEmailAddresses).toHaveBeenCalledTimes(0);
             });
         });
