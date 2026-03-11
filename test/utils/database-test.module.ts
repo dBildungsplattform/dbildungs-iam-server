@@ -7,7 +7,6 @@ import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers
 import { randomUUID } from 'crypto';
 import { PullPolicy } from 'testcontainers';
 import { DbConfig } from '../../src/shared/config/index.js';
-import { ConfigService } from '@nestjs/config';
 
 type DatabaseTestModuleOptions = {
     isDatabaseRequired?: boolean;
@@ -59,8 +58,8 @@ export class DatabaseTestModule implements OnModuleDestroy {
                             },
                         });
                     },
-                    inject: [ConfigService],
                     driver: PostgreSqlDriver,
+                    inject: [DbConfig],
                 }),
             ],
         };
