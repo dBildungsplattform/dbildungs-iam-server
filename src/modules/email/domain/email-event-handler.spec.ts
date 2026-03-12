@@ -197,8 +197,8 @@ describe('EmailEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             fakePersonId = faker.string.uuid();
-            fakeUsername = faker.internet.userName();
-            fakeOldUsername = faker.internet.userName();
+            fakeUsername = faker.internet.username();
+            fakeOldUsername = faker.internet.username();
             fakeRolleId = faker.string.uuid();
             fakeOrgaId = faker.string.uuid();
             fakeEmailAddress = faker.internet.email();
@@ -453,7 +453,7 @@ describe('EmailEventHandler', () => {
 
         beforeEach(() => {
             fakePersonId = faker.string.uuid();
-            fakeKeycloakUsername = faker.internet.userName();
+            fakeKeycloakUsername = faker.internet.username();
             fakeOXUserId = faker.string.numeric();
             fakeContextId = faker.string.numeric();
             fakeOXUserName = fakeKeycloakUsername;
@@ -640,7 +640,7 @@ describe('EmailEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             fakePersonId = faker.string.uuid();
-            fakeUsername = faker.internet.userName();
+            fakeUsername = faker.internet.username();
             fakeRolleId = faker.string.uuid();
             fakeEmailAddress = faker.internet.email();
             event = new LdapSyncFailedEvent(fakePersonId, fakeUsername);
@@ -829,7 +829,7 @@ describe('EmailEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             fakePersonId = faker.string.uuid();
-            fakeUsername = faker.internet.userName();
+            fakeUsername = faker.internet.username();
             fakeRolleId = faker.string.uuid();
             fakePKId = faker.string.uuid();
             fakeEmailAddressString = faker.internet.email();
@@ -866,7 +866,7 @@ describe('EmailEventHandler', () => {
                             id: faker.string.uuid(),
                             vorname: faker.person.firstName(),
                             familienname: faker.person.lastName(),
-                            username: faker.internet.userName(),
+                            username: faker.internet.username(),
                         },
                         newKontexte: [],
                         removedKontexte: [],
@@ -1417,7 +1417,7 @@ describe('EmailEventHandler', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(
                     DoFactory.createPerson<true>(true, {
                         id: faker.string.uuid(),
-                        username: faker.internet.userName(),
+                        username: faker.internet.username(),
                     }),
                 );
 
@@ -1462,8 +1462,8 @@ describe('EmailEventHandler', () => {
 
         beforeEach(() => {
             fakePersonId = faker.string.uuid();
-            fakeUsername = faker.internet.userName();
-            fakeOldUsername = faker.internet.userName();
+            fakeUsername = faker.internet.username();
+            fakeOldUsername = faker.internet.username();
             fakeRolleId = faker.string.uuid();
             fakeEmailAddress = faker.internet.email();
             fakeNewEmailAddress = faker.internet.email();
@@ -1521,7 +1521,7 @@ describe('EmailEventHandler', () => {
                     personRepositoryMock.findById.mockResolvedValueOnce(
                         DoFactory.createPerson<true>(true, {
                             id: faker.string.uuid(),
-                            username: faker.internet.userName(),
+                            username: faker.internet.username(),
                         }),
                     );
 
@@ -1816,7 +1816,7 @@ describe('EmailEventHandler', () => {
 
         beforeEach(() => {
             fakePersonId = faker.string.uuid();
-            fakeKeycloakUsername = faker.internet.userName();
+            fakeKeycloakUsername = faker.internet.username();
             fakeOXUserId = faker.string.numeric();
             fakeOXUserName = fakeKeycloakUsername;
             fakeOXContextId = faker.string.numeric();

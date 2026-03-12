@@ -111,7 +111,7 @@ describe('CronDeleteEmailsAddressesService', () => {
         domain: EmailDomain<true>,
     ): Promise<EmailAddress<true>> {
         const mail: EmailAddress<false> = EmailAddress.createNew({
-            address: `${faker.internet.userName()}@${domain.domain}`,
+            address: `${faker.internet.username()}@${domain.domain}`,
             priority: priority,
             spshPersonId: spshPersonId,
             oxUserCounter: oxUserCounter,

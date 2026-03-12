@@ -2,7 +2,7 @@ import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js'
 import { Test, TestingModule } from '@nestjs/testing';
 import { OxService } from './ox.service';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../../../test/utils/index.js';
+import { DatabaseTestModule, EmailConfigTestModule, LoggingTestModule } from '../../../../../test/utils/index.js';
 import { OxSendService } from './ox-send.service';
 import { OxGroupNotFoundError } from '../error/ox-group-not-found.error';
 import { OxGroupNameAmbiguousError } from '../error/ox-group-name-ambiguous.error';
@@ -31,7 +31,7 @@ describe('OxService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot()],
+            imports: [LoggingTestModule, EmailConfigTestModule, DatabaseTestModule.forRoot()],
             providers: [
                 OxService,
                 {
@@ -305,7 +305,7 @@ describe('OxService', () => {
         it('createChangeUserAction returns ChangeUserAction', () => {
             const action: ChangeUserAction = sut.createChangeUserAction(
                 faker.string.uuid(),
-                faker.internet.userName(),
+                faker.internet.username(),
                 [faker.internet.email()],
                 faker.person.firstName(),
                 faker.person.lastName(),
@@ -335,14 +335,14 @@ describe('OxService', () => {
         });
 
         it('createExistsUserAction returns ExistsUserAction', () => {
-            const action: ExistsUserAction = sut.createExistsUserAction(faker.internet.userName());
+            const action: ExistsUserAction = sut.createExistsUserAction(faker.internet.username());
             expect(action).toBeInstanceOf(ExistsUserAction);
         });
 
         it('createCreateUserAction returns CreateUserAction', () => {
             const action: CreateUserAction = sut.createCreateUserAction({
                 displayName: faker.person.fullName(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
                 firstname: faker.person.firstName(),
                 lastname: faker.person.lastName(),
                 primaryEmail: faker.internet.email(),

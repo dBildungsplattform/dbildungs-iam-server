@@ -1,10 +1,8 @@
 /* eslint-disable no-console */
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { NestLogger } from '../core/logging/nest-logger.js';
-import { HostConfig } from '../shared/config/index.js';
 import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { GlobalPagingHeadersInterceptor } from '../shared/paging/index.js';
 import { VersioningType } from '@nestjs/common';
@@ -13,8 +11,8 @@ import { EmailAppConfig } from '../shared/config/email-app.config.js';
 
 async function bootstrap(): Promise<void> {
     const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(EmailModule);
-    const configService: ConfigService<EmailAppConfig, true> = app.get(ConfigService<EmailAppConfig, true>);
-    const port: number = configService.getOrThrow<HostConfig>('HOST').PORT;
+    const config: EmailAppConfig = app.get(EmailAppConfig);
+    const port: number = config.HOST.PORT;
 
     app.enableVersioning({
         type: VersioningType.URI,

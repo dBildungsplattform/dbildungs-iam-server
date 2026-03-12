@@ -3,13 +3,15 @@ import { Migrator, TSMigrationGenerator } from '@mikro-orm/migrations';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { DynamicModule, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { randomUUID } from 'crypto';
 import { PullPolicy } from 'testcontainers';
-import { DbConfig, ServerConfig } from '../../src/shared/config/index.js';
+import { DbConfig } from '../../src/shared/config/index.js';
 
-type DatabaseTestModuleOptions = { isDatabaseRequired: boolean; databaseName?: string };
+type DatabaseTestModuleOptions = {
+    isDatabaseRequired?: boolean;
+    databaseName?: string;
+};
 
 export class DatabaseTestModule implements OnModuleDestroy {
     private static postgres: Option<StartedPostgreSqlContainer>;
@@ -19,10 +21,8 @@ export class DatabaseTestModule implements OnModuleDestroy {
             module: DatabaseTestModule,
             imports: [
                 MikroOrmModule.forRootAsync({
-                    useFactory: async (configService: ConfigService<ServerConfig, true>) => {
-                        const dbName: string =
-                            options?.databaseName ||
-                            `${configService.getOrThrow<DbConfig>('DB').DB_NAME}-${randomUUID()}`;
+                    useFactory: async (config: DbConfig) => {
+                        const dbName: string = options?.databaseName || `${config.DB_NAME}-${randomUUID()}`;
 
                         if (options?.isDatabaseRequired) {
                             this.postgres = await new PostgreSqlContainer('docker.io/postgres:15.3-alpine')
@@ -33,13 +33,12 @@ export class DatabaseTestModule implements OnModuleDestroy {
                         }
 
                         return defineConfig({
-                            clientUrl:
-                                this.postgres?.getConnectionUri() ||
-                                configService.getOrThrow<DbConfig>('DB').CLIENT_URL,
+                            clientUrl: this.postgres?.getConnectionUri() || config.CLIENT_URL,
                             dbName,
                             dynamicImportProvider: (id: string) => import(id),
                             entities: ['./dist/**/*.entity.js'],
                             entitiesTs: ['./src/**/*.entity.ts'],
+                            driver: PostgreSqlDriver,
                             allowGlobalContext: true,
                             connect: options?.isDatabaseRequired ?? false,
                             extensions: [Migrator],
@@ -60,7 +59,7 @@ export class DatabaseTestModule implements OnModuleDestroy {
                         });
                     },
                     driver: PostgreSqlDriver,
-                    inject: [ConfigService],
+                    inject: [DbConfig],
                 }),
             ],
         };

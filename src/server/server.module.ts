@@ -1,8 +1,15 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { defineConfig } from '@mikro-orm/postgresql';
+import { defineConfig, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DbConfig, FrontendConfig, loadConfigFiles, RedisConfig, ServerConfig } from '../shared/config/index.js';
+import {
+    DbConfig,
+    FrontendConfig,
+    JsonConfig,
+    loadConfigFiles,
+    RedisConfig,
+    ServerConfigModule,
+} from '../shared/config/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
@@ -18,7 +25,7 @@ import { PersonenKontextApiModule } from '../modules/personenkontext/personenkon
 import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { SessionAccessTokenMiddleware } from '../modules/authentication/services/session-access-token.middleware.js';
 import { createClient, createCluster, RedisClientType, RedisClusterType } from 'redis';
-import RedisStore from 'connect-redis';
+import { RedisStore } from 'connect-redis';
 import session from 'express-session';
 import passport from 'passport';
 import { ClassLogger } from '../core/logging/class-logger.js';
@@ -50,9 +57,10 @@ import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis'
             isGlobal: true,
             load: [loadConfigFiles],
         }),
+        ServerConfigModule,
         MikroOrmModule.forRootAsync({
-            useFactory: (config: ConfigService<ServerConfig, true>) => {
-                const dbConfig: DbConfig = config.getOrThrow<DbConfig>('DB');
+            useFactory: (config: JsonConfig) => {
+                const dbConfig: DbConfig = config.DB;
                 return defineConfig({
                     clientUrl: dbConfig.CLIENT_URL,
                     user: dbConfig.USERNAME,
@@ -66,10 +74,11 @@ import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis'
                             ssl: dbConfig.USE_SSL,
                         },
                     },
+                    driver: PostgreSqlDriver,
                     connect: false,
                 });
             },
-            inject: [ConfigService],
+            inject: [JsonConfig],
         }),
         PassportModule.register({
             session: true,
@@ -79,9 +88,9 @@ import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis'
         }),
         CacheModule.registerAsync({
             isGlobal: true,
-            inject: [ConfigService],
-            useFactory: (config: ConfigService) => {
-                const redisConfig: RedisConfig = config.getOrThrow<RedisConfig>('REDIS');
+            inject: [JsonConfig],
+            useFactory: (config: JsonConfig) => {
+                const redisConfig: RedisConfig = config.REDIS;
                 const defaultTtlMs: number = 10_000;
 
                 let clientOptions: RedisClientOptions | RedisClusterOptions;
@@ -210,7 +219,7 @@ export class ServerModule implements NestModule {
                 socket: {
                     host: redisConfig.HOST,
                     port: redisConfig.PORT,
-                    tls: redisConfig.USE_TLS,
+                    tls: redisConfig.USE_TLS || undefined,
                     key: redisConfig.PRIVATE_KEY,
                     cert: redisConfig.CERTIFICATE_AUTHORITIES,
                 },

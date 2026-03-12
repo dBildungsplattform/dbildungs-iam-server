@@ -178,7 +178,7 @@ export class OxService {
 
                 'soapenv:Body': body,
             },
-        }) as string;
+        });
     }
 
     private createSecurityObject(): object {

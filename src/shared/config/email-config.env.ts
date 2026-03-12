@@ -1,5 +1,6 @@
 import { DbConfig } from './db.config.js';
 import { EmailConfig } from './email.config.js';
+import { HeaderApiKeyConfig } from './headerapikey.config.js';
 import { HostConfig } from './host.config.js';
 import { LdapConfig } from './ldap.config.js';
 import { LoggingConfig } from './logging.config.js';
@@ -13,6 +14,7 @@ export type EmailAppConfig = {
     LDAP: Partial<LdapConfig>;
     OX: Partial<OxConfig>;
     EMAIL: Partial<EmailConfig>;
+    HEADER_API_KEY: Partial<HeaderApiKeyConfig>;
 };
 
 export function getEmailConfig(): EmailAppConfig {
@@ -51,6 +53,9 @@ export function getEmailConfig(): EmailAppConfig {
             NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: envToOptionalInteger(
                 'NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS',
             ),
+        },
+        HEADER_API_KEY: {
+            INTERNAL_COMMUNICATION_API_KEY: process.env['INTERNAL_COMMUNICATION_API_KEY'],
         },
     };
 }

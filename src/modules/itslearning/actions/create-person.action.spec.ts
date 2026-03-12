@@ -10,7 +10,7 @@ describe('CreatePersonAction', () => {
                 id: faker.string.uuid(),
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
                 institutionRoleType: faker.helpers.enumValue(IMSESInstitutionRoleType),
                 email: faker.internet.email(),
             });
@@ -25,7 +25,7 @@ describe('CreatePersonAction', () => {
                 id: faker.string.uuid(),
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
                 institutionRoleType: faker.helpers.enumValue(IMSESInstitutionRoleType),
                 email: faker.internet.email(),
             });
