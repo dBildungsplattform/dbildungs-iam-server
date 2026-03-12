@@ -6,6 +6,7 @@ export enum ValidationErrorI18nTypes {
     REQUIRED = 'REQUIRED',
     INVALID_LENGTH = 'INVALID_LENGTH',
     INVALID_DATE = 'INVALID_DATE',
+    INVALID_ENUM = 'INVALID_ENUM',
 }
 
 export type DbiamValidationErrorProps = DbiamErrorProps & {

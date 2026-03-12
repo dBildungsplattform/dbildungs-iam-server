@@ -54,14 +54,17 @@ export class ValidationExceptionFilter implements ExceptionFilter<DetailedValida
     private mapConstraintToI18nKey(error: ValidationError): ValidationErrorI18nTypes {
         const constraints: string[] = Object.keys(error?.constraints ?? {});
 
-        if (constraints.includes('isNotEmpty')) {
-            return ValidationErrorI18nTypes.REQUIRED;
+        if (constraints.includes('isMaxLength') || constraints.includes('isMinLength')) {
+            return ValidationErrorI18nTypes.INVALID_LENGTH;
         }
         if (constraints.includes('isDate')) {
             return ValidationErrorI18nTypes.INVALID_DATE;
         }
-        if (constraints.includes('isMaxLength') || constraints.includes('isMinLength')) {
-            return ValidationErrorI18nTypes.INVALID_LENGTH;
+        if (constraints.includes('isEnum')) {
+            return ValidationErrorI18nTypes.INVALID_ENUM;
+        }
+        if (constraints.includes('isNotEmpty')) {
+            return ValidationErrorI18nTypes.REQUIRED;
         }
 
         return ValidationErrorI18nTypes.VALIDATION_ERROR;
