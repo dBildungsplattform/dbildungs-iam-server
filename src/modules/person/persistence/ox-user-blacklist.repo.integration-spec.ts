@@ -43,7 +43,7 @@ describe('OxUserBlacklistRepo', () => {
         const oxUserBlacklistEntity: OxUserBlacklistEntity = new OxUserBlacklistEntity();
         oxUserBlacklistEntity.email = email ?? faker.internet.email();
         oxUserBlacklistEntity.name = name ?? faker.person.lastName();
-        oxUserBlacklistEntity.username = username ?? faker.internet.userName();
+        oxUserBlacklistEntity.username = username ?? faker.internet.username();
         await em.persistAndFlush(oxUserBlacklistEntity);
     }
 
@@ -55,7 +55,7 @@ describe('OxUserBlacklistRepo', () => {
         const oxUserBlacklistEntry: OxUserBlacklistEntry<false> = OxUserBlacklistEntry.createNew(
             email ?? faker.internet.email(),
             name ?? faker.person.lastName(),
-            username ?? faker.internet.userName(),
+            username ?? faker.internet.username(),
         );
         const mappedOxUserBlacklistEntity: OxUserBlacklistEntity = em.create(
             OxUserBlacklistEntity,
@@ -106,7 +106,7 @@ describe('OxUserBlacklistRepo', () => {
     describe('findByOxUsername', () => {
         describe('when entity can be found by username', () => {
             it('should return OxUserBlacklistEntry', async () => {
-                const fakeUsername: OXUserName = faker.internet.userName();
+                const fakeUsername: OXUserName = faker.internet.username();
                 await createEntity(undefined, undefined, fakeUsername);
 
                 const findResult: Option<OxUserBlacklistEntry<true>> = await sut.findByOxUsername(fakeUsername);
@@ -121,7 +121,7 @@ describe('OxUserBlacklistRepo', () => {
         describe('when entity CANNOT be found by username', () => {
             it('should return null', async () => {
                 const findResult: Option<OxUserBlacklistEntry<true>> = await sut.findByOxUsername(
-                    faker.internet.userName(),
+                    faker.internet.username(),
                 );
 
                 expect(findResult).toBeNull();
@@ -138,7 +138,7 @@ describe('OxUserBlacklistRepo', () => {
                 const existingEntity: OxUserBlacklistEntity = await createOxUserBlacklistEntry();
                 const updatedEmail: OXEmail = faker.internet.email();
                 const updatedName: string = faker.person.lastName();
-                const updatedUsername: OXUserName = faker.internet.userName();
+                const updatedUsername: OXUserName = faker.internet.username();
 
                 const updatedEntry: OxUserBlacklistEntry<true> = OxUserBlacklistEntry.construct(
                     existingEntity.id,
@@ -175,7 +175,7 @@ describe('OxUserBlacklistRepo', () => {
             it('should call the update method and return EntityNotFoundError', async () => {
                 const updatedEmail: OXEmail = faker.internet.email();
                 const updatedName: string = faker.person.lastName();
-                const updatedUsername: OXUserName = faker.internet.userName();
+                const updatedUsername: OXUserName = faker.internet.username();
 
                 const updatedEntry: OxUserBlacklistEntry<true> = OxUserBlacklistEntry.construct(
                     faker.string.uuid(),
@@ -199,7 +199,7 @@ describe('OxUserBlacklistRepo', () => {
             it('should call the create method and return the created OxUserBlacklistEntry', async () => {
                 const newEmail: OXEmail = faker.internet.email();
                 const newName: string = faker.person.lastName();
-                const newUsername: OXUserName = faker.internet.userName();
+                const newUsername: OXUserName = faker.internet.username();
                 const newEntry: OxUserBlacklistEntry<false> = OxUserBlacklistEntry.createNew(
                     newEmail,
                     newName,

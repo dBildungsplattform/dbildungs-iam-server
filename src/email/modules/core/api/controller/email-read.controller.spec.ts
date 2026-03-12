@@ -8,8 +8,8 @@ import { EmailReadController } from './email-read.controller.js';
 import { APP_PIPE } from '@nestjs/core';
 import { GlobalValidationPipe } from '../../../../../shared/validation/global-validation.pipe.js';
 import {
-    ConfigTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    EmailConfigTestModule,
     LoggingTestModule,
 } from '../../../../../../test/utils/index.js';
 import { FindEmailAddressBySpshPersonIdPathParams } from '../dtos/params/find-email-address-by-spsh-person-id.pathparams.js';
@@ -26,7 +26,7 @@ describe('EmailReadController', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [LoggingTestModule, EmailOxModule, ConfigTestModule],
+            imports: [LoggingTestModule, EmailOxModule, EmailConfigTestModule],
             providers: [
                 {
                     provide: APP_PIPE,

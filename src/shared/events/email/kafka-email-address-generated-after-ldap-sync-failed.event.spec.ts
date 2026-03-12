@@ -9,7 +9,7 @@ describe('KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent', () => {
         const username: PersonUsername = 'test-username';
         const emailAddressId: EmailAddressID = faker.string.uuid();
         const enabled: boolean = true;
-        const emailAddress: string = faker.internet.userName();
+        const emailAddress: string = faker.internet.username();
         const orgaKennung: string = faker.string.numeric();
 
         const event: KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent =

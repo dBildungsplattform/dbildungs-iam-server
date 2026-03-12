@@ -53,9 +53,9 @@ export type MassResult<ResultType> = {
     value: ResultType;
 };
 
-export abstract class IMSESMassAction<ResponseBodyType, ResultType>
-    implements ItslearningAction<MassResult<ResultType>>
-{
+export abstract class IMSESMassAction<ResponseBodyType, ResultType> implements ItslearningAction<
+    MassResult<ResultType>
+> {
     protected readonly xmlBuilder: XMLBuilder = new XMLBuilder({ ignoreAttributes: false });
 
     protected readonly xmlParser: XMLParser = new XMLParser({

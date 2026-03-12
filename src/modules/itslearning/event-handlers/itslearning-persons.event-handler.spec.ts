@@ -149,7 +149,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
         function createPersonAndResponse(params: Partial<Person<true>> = {}): [Person<true>, PersonResponse] {
             if (!('username' in params)) {
-                params.username = faker.internet.userName();
+                params.username = faker.internet.username();
             }
 
             const person: Person<true> = DoFactory.createPerson(true, params);
@@ -171,7 +171,7 @@ describe('ItsLearning Persons Event Handler', () => {
             itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined); // Create person
             const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(
                 person,
-                faker.internet.userName(),
+                faker.internet.username(),
                 oldFirstname,
                 oldLastname,
             );
@@ -199,7 +199,7 @@ describe('ItsLearning Persons Event Handler', () => {
             itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(new ItsLearningError('Test Error')); // Create person
             const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(
                 person,
-                faker.internet.userName(),
+                faker.internet.username(),
                 oldFirstname,
                 oldLastname,
             );
@@ -216,7 +216,7 @@ describe('ItsLearning Persons Event Handler', () => {
                 const [person]: [Person<true>, PersonResponse] = createPersonAndResponse({ username: undefined });
                 const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(
                     person,
-                    faker.internet.userName(),
+                    faker.internet.username(),
                     oldFirstname,
                     oldLastname,
                 );
@@ -235,7 +235,7 @@ describe('ItsLearning Persons Event Handler', () => {
                 itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(undefined); // Read person
                 const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(
                     person,
-                    faker.internet.userName(),
+                    faker.internet.username(),
                     oldFirstname,
                     oldLastname,
                 );
@@ -253,7 +253,7 @@ describe('ItsLearning Persons Event Handler', () => {
             const [person]: [Person<true>, PersonResponse] = createPersonAndResponse();
             const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(
                 person,
-                faker.internet.userName(),
+                faker.internet.username(),
                 oldFirstname,
                 oldLastname,
             );
@@ -269,7 +269,7 @@ describe('ItsLearning Persons Event Handler', () => {
             id: faker.string.uuid(),
             vorname: faker.person.firstName(),
             familienname: faker.person.lastName(),
-            username: faker.internet.userName(),
+            username: faker.internet.username(),
         };
 
         it('should send person to itsLearning', async () => {
@@ -325,9 +325,9 @@ describe('ItsLearning Persons Event Handler', () => {
         const email: string = faker.internet.email();
         const generatedEvent: OxUserChangedEvent = new OxUserChangedEvent(
             personId,
-            faker.internet.userName(),
+            faker.internet.username(),
             faker.string.uuid(),
-            faker.internet.userName(),
+            faker.internet.username(),
             faker.string.uuid(),
             faker.string.uuid(),
             email,
