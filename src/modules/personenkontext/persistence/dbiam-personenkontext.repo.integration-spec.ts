@@ -1,6 +1,6 @@
 import { Mock, vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { EntityManager, EntityName, MikroORM } from '@mikro-orm/core';
+import { Collection, EntityManager, EntityName, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import {
@@ -50,6 +50,7 @@ import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-pro
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { RollenerweiterungFactory } from '../../rolle/domain/rollenerweiterung.factory.js';
+import { ServiceProviderMerkmalEntity } from '../../service-provider/repo/service-provider-merkmal.entity.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -326,11 +327,16 @@ describe('dbiam Personenkontext Repo', () => {
                 }),
             );
 
+            const mockMerkmale: DeepMocked<Collection<ServiceProviderMerkmalEntity>> =
+                createMock<Collection<ServiceProviderMerkmalEntity>>(Collection);
+            mockMerkmale.getItems.mockReturnValue([]);
+
             // Mock the ORM response for rolle.serviceProvider.getItems()
             const mockServiceProvider: DeepMocked<ServiceProviderEntity> =
                 createMock<ServiceProviderEntity>(ServiceProviderEntity);
             mockServiceProvider.name = 'Mocked Service Provider';
             mockServiceProvider.vidisAngebotId = faker.string.uuid();
+            mockServiceProvider.merkmale = mockMerkmale;
             const mockRolleServiceProviderEntity: RolleServiceProviderEntity =
                 createMock<RolleServiceProviderEntity>(RolleServiceProviderEntity);
             mockRolleServiceProviderEntity.serviceProvider = mockServiceProvider;
