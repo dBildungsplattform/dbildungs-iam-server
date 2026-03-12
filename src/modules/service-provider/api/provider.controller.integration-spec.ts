@@ -22,7 +22,6 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { ServiceProvider } from '../domain/service-provider.js';
-import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
@@ -34,11 +33,13 @@ import {
 } from '../../../../test/utils/auth.mock.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { EntityManager } from '@mikro-orm/postgresql';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
     let orm: MikroORM;
-    let serviceProviderRepo: ServiceProviderRepo;
+    let em: EntityManager;
     let rolleRepo: RolleRepo;
     let rollenerweiterungRepo: RollenerweiterungRepo;
     let organisationRepo: OrganisationRepository;
@@ -72,7 +73,7 @@ describe('ServiceProvider API', () => {
         }).compile();
 
         orm = module.get(MikroORM);
-        serviceProviderRepo = module.get(ServiceProviderRepo);
+        em = module.get(EntityManager);
         rolleRepo = module.get(RolleRepo);
         rollenerweiterungRepo = module.get(RollenerweiterungRepo);
         organisationRepo = module.get(OrganisationRepository);
@@ -95,9 +96,9 @@ describe('ServiceProvider API', () => {
     describe('/GET all service provider', () => {
         it('should return all service provider', async () => {
             await Promise.all([
-                serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
-                serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
-                serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
+                createAndPersistServiceProvider(em),
+                createAndPersistServiceProvider(em),
+                createAndPersistServiceProvider(em),
             ]);
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -113,9 +114,7 @@ describe('ServiceProvider API', () => {
     describe('/GET logo', () => {
         describe('when the service provider exists and has a logo', () => {
             it('should return the image file', async () => {
-                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                    DoFactory.createServiceProvider(false),
-                );
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .get(`/provider/${serviceProvider.id}/logo`)
@@ -128,9 +127,10 @@ describe('ServiceProvider API', () => {
 
         describe('when the service provider exists but does not have a logo', () => {
             it('should return 404', async () => {
-                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                    DoFactory.createServiceProvider(false, { logo: undefined, logoMimeType: undefined }),
-                );
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    logo: undefined,
+                    logoMimeType: undefined,
+                });
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .get(`/provider/${serviceProvider.id}/logo`)
@@ -157,12 +157,13 @@ describe('ServiceProvider API', () => {
         it('should return manageable service providers with linked objects', async () => {
             // Arrange: create organisation, rolle, and service providers
             const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
-            const serviceProvider1: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: organisation.id }),
-            );
-            const serviceProvider2: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: organisation.id }),
-            );
+            const serviceProvider1: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: organisation.id,
+            });
+            const serviceProvider2: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: organisation.id,
+            });
+
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: organisation.id,
@@ -224,12 +225,10 @@ describe('ServiceProvider API', () => {
 
         beforeEach(async () => {
             organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
-            serviceProvider = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, {
-                    providedOnSchulstrukturknoten: organisation.id,
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
+            serviceProvider = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: organisation.id,
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
             const rolleError: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: organisation.id,
@@ -339,9 +338,9 @@ describe('ServiceProvider API', () => {
 
         beforeEach(async () => {
             organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
-            serviceProvider = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: organisation.id }),
-            );
+            serviceProvider = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: organisation.id,
+            });
             rolle = (await rolleRepo.save(
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: organisation.id,

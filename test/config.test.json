@@ -106,7 +106,8 @@
         "FEATURE_FLAG_ROLLE_BEARBEITEN": false,
         "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": false,
         "FEATURE_FLAG_ROLLE_ERWEITERN": true,
-        "FEATURE_FLAG_SET_UEM_PASSWORD": true
+        "FEATURE_FLAG_SET_UEM_PASSWORD": true,
+        "FEATURE_FLAG_ANGEBOT_ERSTELLEN": true
     },
     "KAFKA": {
         "BROKER": "localhost:9094",

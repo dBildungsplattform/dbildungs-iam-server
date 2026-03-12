@@ -360,16 +360,6 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Body() body: CreateServiceProviderBodyParams,
     ): Promise<ServiceProviderResponse> {
-        if (
-            !(await permissions.hasSystemrechtAtOrganisation(body.organisationId, RollenSystemRecht.ANGEBOTE_VERWALTEN))
-        ) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Not authorized to manage Service Providers at this organisation!'),
-                ),
-            );
-        }
-
         // Convert base64 to Buffer (if provided)
         const logoBuffer: Buffer | undefined = body.logoBase64 ? Buffer.from(body.logoBase64, 'base64') : undefined;
 
@@ -389,8 +379,12 @@ export class ProviderController {
             body.merkmale,
         );
 
-        const result: ServiceProvider<true> = await this.serviceProviderRepo.save(serviceProvider);
-
-        return new ServiceProviderResponse(result);
+        const result: Result<ServiceProvider<true>> = await this.serviceProviderRepo.save(permissions, serviceProvider);
+        if (result.ok) {
+            return new ServiceProviderResponse(result.value);
+        } else {
+            // TODO Fehlertypen unterscheiden?
+            throw result.error;
+        }
     }
 }

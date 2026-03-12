@@ -31,6 +31,7 @@ import {
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -331,15 +332,31 @@ export class ServiceProviderService {
                     );
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' was created.`);
                 }
-                const persistedServiceProvider: ServiceProvider<true> =
-                    await this.serviceProviderRepo.save(serviceProvider);
+
+                // The following bypass is really bad, but since this code is not excuted in prod, it is better than keeping ServiceProviderRepo.save() without permission checks
+                const permissionOverride: PermissionsOverride = new PermissionsOverride(
+                    null as unknown as PersonPermissions,
+                );
+                permissionOverride.grantSystemrechteAtOrga(schulstrukturknoten, [RollenSystemRecht.ANGEBOTE_VERWALTEN]);
+
+                const persistedServiceProviderResult: Result<ServiceProvider<true>> =
+                    await this.serviceProviderRepo.save(permissionOverride, serviceProvider);
+                if (!persistedServiceProviderResult.ok) {
+                    this.logger.error(
+                        `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be saved. Error: ${persistedServiceProviderResult.error.message}`,
+                    );
+                    throw new Error(
+                        `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be saved. Error: ${persistedServiceProviderResult.error.message}`,
+                    );
+                }
+
                 await Promise.allSettled(
                     angebot.schoolActivations.map(async (schoolActivation: string) => {
                         const orga: Organisation<true> | undefined = (
                             await this.organisationRepo.findByNameOrKennung(schoolActivation)
                         ).at(0); // Assumption: kennung is unique for an Organisation and is not contained in name or kennung of any other Organisation
                         if (orga) {
-                            await this.organisationServiceProviderRepo.save(orga, persistedServiceProvider);
+                            await this.organisationServiceProviderRepo.save(orga, persistedServiceProviderResult.value);
                             this.logger.info(`Mapping of '${serviceProvider.name}' to '${orga.name}' was saved.`);
                         }
                     }),

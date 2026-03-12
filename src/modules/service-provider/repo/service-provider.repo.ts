@@ -1,7 +1,7 @@
-import { EntityData, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { Loaded } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-
+import { inspect } from 'util';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
 import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
@@ -9,67 +9,17 @@ import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/type
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
-import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
-import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
-
-/**
- * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
- */
-export function mapAggregateToData(
-    serviceProvider: ServiceProvider<boolean>,
-): RequiredEntityData<ServiceProviderEntity> {
-    const merkmale: EntityData<ServiceProviderMerkmalEntity>[] = serviceProvider.merkmale.map(
-        (merkmal: ServiceProviderMerkmal) => ({
-            serviceProvider: serviceProvider.id,
-            merkmal,
-        }),
-    );
-
-    return {
-        // Don't assign createdAt and updatedAt, they are auto-generated!
-        id: serviceProvider.id,
-        name: serviceProvider.name,
-        target: serviceProvider.target,
-        url: serviceProvider.url,
-        kategorie: serviceProvider.kategorie,
-        providedOnSchulstrukturknoten: serviceProvider.providedOnSchulstrukturknoten,
-        logo: serviceProvider.logo,
-        logoMimeType: serviceProvider.logoMimeType,
-        keycloakGroup: serviceProvider.keycloakGroup,
-        keycloakRole: serviceProvider.keycloakRole,
-        externalSystem: serviceProvider.externalSystem,
-        requires2fa: serviceProvider.requires2fa,
-        vidisAngebotId: serviceProvider.vidisAngebotId,
-        merkmale,
-    };
-}
-
-function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<boolean> {
-    const merkmale: ServiceProviderMerkmal[] = entity.merkmale.map(
-        (merkmalEntity: ServiceProviderMerkmalEntity) => merkmalEntity.merkmal,
-    );
-
-    return ServiceProvider.construct(
-        entity.id,
-        entity.createdAt,
-        entity.updatedAt,
-        entity.name,
-        entity.target,
-        entity.url,
-        entity.kategorie,
-        entity.providedOnSchulstrukturknoten,
-        entity.logo,
-        entity.logoMimeType,
-        entity.keycloakGroup,
-        entity.keycloakRole,
-        entity.externalSystem,
-        entity.requires2fa,
-        entity.vidisAngebotId,
-        merkmale,
-    );
-}
+import { Err, Ok } from '../../../shared/util/result.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
+import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js';
+import { DuplicateNameSpecification } from '../specification/duplicate-name.specification.js';
+import { mapAggregateToData, mapEntityToAggregate } from './service-provider-entity-mapper.js';
 
 type ServiceProviderFindOptions = {
     withLogo?: boolean;
@@ -82,6 +32,7 @@ export class ServiceProviderRepo {
     public constructor(
         private readonly em: EntityManager,
         private readonly eventService: EventRoutingLegacyKafkaService,
+        private readonly serviceProviderInternalRepo: ServiceProviderInternalRepo,
     ) {}
 
     public async findById(id: string, options?: ServiceProviderFindOptions): Promise<Option<ServiceProvider<true>>> {
@@ -271,45 +222,93 @@ export class ServiceProviderRepo {
         ).map(mapEntityToAggregate);
     }
 
-    public async save(serviceProvider: ServiceProvider<boolean>): Promise<ServiceProvider<true>> {
-        if (serviceProvider.id) {
-            return this.update(serviceProvider);
-        } else {
-            return this.create(serviceProvider);
-        }
-    }
+    public async save(
+        permissions: IPersonPermissions,
+        serviceProvider: ServiceProvider<boolean>,
+    ): Promise<Result<ServiceProvider<true>>> {
+        await this.checkPermissionsForServiceProvider(permissions, serviceProvider);
 
-    public async create(serviceProvider: ServiceProvider<false>): Promise<ServiceProvider<true>> {
-        const serviceProviderEntity: ServiceProviderEntity = this.em.create(
-            ServiceProviderEntity,
-            mapAggregateToData(serviceProvider),
-        );
-
-        await this.em.persistAndFlush(serviceProviderEntity);
-
-        if (serviceProviderEntity.keycloakGroup && serviceProviderEntity.keycloakRole) {
-            this.eventService.publish(
-                new GroupAndRoleCreatedEvent(serviceProviderEntity.keycloakGroup, serviceProviderEntity.keycloakRole),
-                new KafkaGroupAndRoleCreatedEvent(
-                    serviceProviderEntity.keycloakGroup,
-                    serviceProviderEntity.keycloakRole,
+        if (!(await new DuplicateNameSpecification(this.serviceProviderInternalRepo).isSatisfiedBy(serviceProvider))) {
+            return Err(
+                new DuplicateNameError(
+                    `Duplicate name error: ${serviceProvider.name}`,
+                    serviceProvider.id || undefined,
                 ),
             );
         }
 
-        return mapEntityToAggregate(serviceProviderEntity);
+        if (serviceProvider.id) {
+            return await this.update(serviceProvider);
+        } else {
+            return await this.createInternal(serviceProvider);
+        }
     }
 
-    private async update(serviceProvider: ServiceProvider<true>): Promise<ServiceProvider<true>> {
-        const serviceProviderEntity: Loaded<ServiceProviderEntity> = await this.em.findOneOrFail(
+    // TODO check permissions. Currently required by db-seed. Refactor once we have permissions for seeding.
+    public async create(serviceProvider: ServiceProvider<false>): Promise<ServiceProvider<true>> {
+        // const permissionResult: Result<void> = await this.checkPermissionsForServiceProvider(
+        //     permissions,
+        //     serviceProvider,
+        // );
+        // if (!permissionResult.ok) {
+        //     throw permissionResult.error;
+        // }
+        const serviceProviderResult: Result<ServiceProvider<true>> = await this.createInternal(serviceProvider);
+        if (!serviceProviderResult.ok) {
+            throw serviceProviderResult.error;
+        }
+        return serviceProviderResult.value;
+    }
+
+    private async createInternal(serviceProvider: ServiceProvider<false>): Promise<Result<ServiceProvider<true>>> {
+        try {
+            const serviceProviderEntity: ServiceProviderEntity = this.em.create(
+                ServiceProviderEntity,
+                mapAggregateToData(serviceProvider),
+            );
+
+            await this.em.persistAndFlush(serviceProviderEntity);
+
+            if (serviceProviderEntity.keycloakGroup && serviceProviderEntity.keycloakRole) {
+                this.eventService.publish(
+                    new GroupAndRoleCreatedEvent(
+                        serviceProviderEntity.keycloakGroup,
+                        serviceProviderEntity.keycloakRole,
+                    ),
+                    new KafkaGroupAndRoleCreatedEvent(
+                        serviceProviderEntity.keycloakGroup,
+                        serviceProviderEntity.keycloakRole,
+                    ),
+                );
+            }
+            return Ok(mapEntityToAggregate(serviceProviderEntity));
+        } catch (error) {
+            if (error instanceof Error) {
+                return Err(error);
+            }
+            return Err(new Error(`Failed creating ServiceProvider ${inspect(error)}`));
+        }
+    }
+
+    private async update(serviceProvider: ServiceProvider<true>): Promise<Result<ServiceProvider<true>>> {
+        const serviceProviderEntity: Loaded<ServiceProviderEntity> | null = await this.em.findOne(
             ServiceProviderEntity,
             serviceProvider.id,
         );
+        if (!serviceProviderEntity) {
+            return Err(new EntityNotFoundError('ServiceProvider', serviceProvider.id));
+        }
         serviceProviderEntity.assign(mapAggregateToData(serviceProvider));
 
-        await this.em.persistAndFlush(serviceProviderEntity);
-
-        return mapEntityToAggregate(serviceProviderEntity);
+        try {
+            await this.em.persistAndFlush(serviceProviderEntity);
+        } catch (error) {
+            if (error instanceof Error) {
+                return Err(error);
+            }
+            return Err(new Error(`Failed updating ServiceProvider ${inspect(error)}`));
+        }
+        return Ok(mapEntityToAggregate(serviceProviderEntity));
     }
 
     public async fetchRolleServiceProvidersWithoutPerson(
@@ -344,5 +343,40 @@ export class ServiceProviderRepo {
     public async deleteByName(name: string): Promise<boolean> {
         const deletedPersons: number = await this.em.nativeDelete(ServiceProviderEntity, { name: name });
         return deletedPersons > 0;
+    }
+
+    private async checkPermissionsForServiceProvider(
+        permissions: IPersonPermissions,
+        serviceProvider: ServiceProvider<boolean>,
+    ): Promise<Result<void>> {
+        if (
+            !(await permissions.hasSystemrechtAtOrganisation(
+                serviceProvider.providedOnSchulstrukturknoten,
+                RollenSystemRecht.ANGEBOTE_VERWALTEN,
+            ))
+        ) {
+            this.setDefaults(serviceProvider);
+            if (
+                !(await permissions.hasSystemrechtAtOrganisation(
+                    serviceProvider.providedOnSchulstrukturknoten,
+                    RollenSystemRecht.ANGEBOTE_VERWALTEN,
+                ))
+            ) {
+                return Err(
+                    new MissingPermissionsError('Not authorized to manage Service Providers at this organisation!'),
+                );
+            }
+        }
+        return Ok(undefined);
+    }
+
+    private setDefaults<T extends boolean>(serviceProvider: ServiceProvider<T>): ServiceProvider<T> {
+        serviceProvider.merkmale = [
+            ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+            ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
+        ];
+        serviceProvider.requires2fa = false;
+        serviceProvider.kategorie = ServiceProviderKategorie.SCHULISCH;
+        return serviceProvider;
     }
 }

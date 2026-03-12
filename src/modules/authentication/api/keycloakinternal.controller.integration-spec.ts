@@ -22,7 +22,6 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { RolleModule } from '../../rolle/rolle.module.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
@@ -35,6 +34,8 @@ import { ServiceProviderSystem } from '../../service-provider/domain/service-pro
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
 import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { EntityManager } from '@mikro-orm/postgresql';
 
 function createLoadedReference<T extends object>(entity: T): LoadedReference<T> {
     const reference: Reference<T> = createMock<Reference<T>>(Reference);
@@ -51,10 +52,11 @@ function createLoadedReference<T extends object>(entity: T): LoadedReference<T> 
 describe('KeycloakInternalController', () => {
     let module: TestingModule;
     let keycloakinternalController: KeycloakInternalController;
-    let serviceProviderRepo: ServiceProviderRepo;
     let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let personRepoMock: DeepMocked<PersonRepository>;
     let emailResolverServiceMock: DeepMocked<EmailResolverService>;
+    let em: EntityManager;
+
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
@@ -85,9 +87,9 @@ describe('KeycloakInternalController', () => {
             .compile();
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
+        em = module.get(EntityManager);
 
         keycloakinternalController = module.get(KeycloakInternalController);
-        serviceProviderRepo = module.get(ServiceProviderRepo);
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personRepoMock = module.get(PersonRepository);
         emailResolverServiceMock = module.get(EmailResolverService);
@@ -161,7 +163,7 @@ describe('KeycloakInternalController', () => {
                     serviceProvider: [],
                 },
             ];
-            const sp: ServiceProvider<true> = await serviceProviderRepo.save(DoFactory.createServiceProvider(false));
+            const sp: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
             const pk: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                 personId: person.id,
@@ -281,7 +283,7 @@ describe('KeycloakInternalController', () => {
                     serviceProvider: [],
                 },
             ];
-            const sp: ServiceProvider<true> = await serviceProviderRepo.save(DoFactory.createServiceProvider(false));
+            const sp: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
             const pk: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                 personId: person.id,
@@ -380,7 +382,7 @@ describe('KeycloakInternalController', () => {
                     serviceProvider: [],
                 },
             ];
-            const sp: ServiceProvider<true> = await serviceProviderRepo.save(DoFactory.createServiceProvider(false));
+            const sp: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
             const pk: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                 personId: person.id,
