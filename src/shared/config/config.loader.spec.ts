@@ -418,6 +418,9 @@ describe('configloader', () => {
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 90,
                 },
+                HEADER_API_KEY: {
+                    INTERNAL_COMMUNICATION_API_KEY: 'test123',
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -482,6 +485,9 @@ describe('configloader', () => {
                 },
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 90,
+                },
+                HEADER_API_KEY: {
+                    INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
             };
 

@@ -2,7 +2,14 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DbConfig, FrontendConfig, loadConfigFiles, RedisConfig, ServerConfig } from '../shared/config/index.js';
+import {
+    DbConfig,
+    FrontendConfig,
+    JsonConfig,
+    loadConfigFiles,
+    RedisConfig,
+    ServerConfigModule,
+} from '../shared/config/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
@@ -41,6 +48,8 @@ import { MeldungModule } from '../modules/meldung/meldung.module.js';
 import { MapperModule } from '../modules/person/mapper/mapper.module.js';
 import { LandesbediensteterModule } from '../modules/landesbediensteter/landesbediensteter.module.js';
 import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js';
+import { CacheModule } from '@nestjs/cache-manager';
+import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis';
 
 @Module({
     imports: [
@@ -48,9 +57,10 @@ import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js'
             isGlobal: true,
             load: [loadConfigFiles],
         }),
+        ServerConfigModule,
         MikroOrmModule.forRootAsync({
-            useFactory: (config: ConfigService<ServerConfig, true>) => {
-                const dbConfig: DbConfig = config.getOrThrow<DbConfig>('DB');
+            useFactory: (config: JsonConfig) => {
+                const dbConfig: DbConfig = config.DB;
                 return defineConfig({
                     clientUrl: dbConfig.CLIENT_URL,
                     user: dbConfig.USERNAME,
@@ -67,13 +77,71 @@ import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js'
                     connect: false,
                 });
             },
-            inject: [ConfigService],
+            inject: [JsonConfig],
         }),
         PassportModule.register({
             session: true,
             defaultStrategy: ['api-key', 'jwt', 'oidc'],
             keepSessionInfo: true,
             property: 'passportUser',
+        }),
+        CacheModule.registerAsync({
+            isGlobal: true,
+            inject: [JsonConfig],
+            useFactory: (config: JsonConfig) => {
+                const redisConfig: RedisConfig = config.REDIS;
+                const defaultTtlMs: number = 10_000;
+
+                let clientOptions: RedisClientOptions | RedisClusterOptions;
+
+                /* istanbul ignore next */
+                if (redisConfig.CLUSTERED) {
+                    clientOptions = {
+                        defaults: {
+                            username: redisConfig.USERNAME,
+                            password: redisConfig.PASSWORD,
+                        },
+                        rootNodes: [
+                            {
+                                socket: {
+                                    host: redisConfig.HOST,
+                                    port: redisConfig.PORT,
+                                    tls: redisConfig.USE_TLS,
+                                    key: redisConfig.PRIVATE_KEY,
+                                    cert: redisConfig.CERTIFICATE_AUTHORITIES,
+                                },
+                            },
+                        ],
+                    } satisfies RedisClusterOptions;
+                } else {
+                    clientOptions = {
+                        username: redisConfig.USERNAME,
+                        password: redisConfig.PASSWORD,
+                        socket: {
+                            host: redisConfig.HOST,
+                            port: redisConfig.PORT,
+                        },
+                    } satisfies RedisClientOptions;
+
+                    if (redisConfig.USE_TLS) {
+                        clientOptions.socket = {
+                            host: redisConfig.HOST,
+                            port: redisConfig.PORT,
+                            tls: redisConfig.USE_TLS,
+                            key: redisConfig.PRIVATE_KEY,
+                            cert: redisConfig.CERTIFICATE_AUTHORITIES,
+                        };
+                    }
+                }
+
+                const store: KeyvRedis<unknown> = new KeyvRedis(clientOptions);
+
+                return {
+                    stores: [store],
+                    ttl: defaultTtlMs,
+                    namespace: 'application-cache',
+                };
+            },
         }),
         LoggerModule.register(ServerModule.name),
         EventModule,
