@@ -1,4 +1,3 @@
-
 import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
 import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../src/modules/service-provider/repo/service-provider.entity.js';

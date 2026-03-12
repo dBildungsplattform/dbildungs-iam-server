@@ -57,7 +57,8 @@ import { MissingPermissionsError } from '../../../shared/error/index.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProviderSystem } from '../domain/service-provider.enum.js';
-@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
+import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
+@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), ServiceProviderErrorFilter)
 @ApiTags('provider')
 @ApiOAuth2(['openid'])
 @ApiBearerAuth()
