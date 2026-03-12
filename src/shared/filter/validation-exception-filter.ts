@@ -64,7 +64,7 @@ export class ValidationExceptionFilter implements ExceptionFilter<DetailedValida
             return ValidationErrorI18nTypes.INVALID_ENUM;
         }
         if (constraints.includes('isNotEmpty')) {
-            return ValidationErrorI18nTypes.REQUIRED;
+            return ValidationErrorI18nTypes.REQUIRED_VALUE;
         }
 
         return ValidationErrorI18nTypes.VALIDATION_ERROR;

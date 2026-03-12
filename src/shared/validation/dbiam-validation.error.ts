@@ -3,7 +3,7 @@ import { DbiamError, DbiamErrorProps } from '../error/dbiam.error.js';
 
 export enum ValidationErrorI18nTypes {
     VALIDATION_ERROR = 'VALIDATION_ERROR',
-    REQUIRED = 'REQUIRED',
+    REQUIRED_VALUE = 'REQUIRED_VALUE',
     INVALID_LENGTH = 'INVALID_LENGTH',
     INVALID_DATE = 'INVALID_DATE',
     INVALID_ENUM = 'INVALID_ENUM',

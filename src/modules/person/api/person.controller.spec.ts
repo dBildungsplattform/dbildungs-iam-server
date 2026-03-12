@@ -15,6 +15,7 @@ import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import {
+    DomainError,
     EntityCouldNotBeDeleted,
     EntityNotFoundError,
     MismatchedRevisionError,
@@ -1021,7 +1022,7 @@ describe('PersonController', () => {
 
                 await expect(
                     personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
-                ).rejects.toBeInstanceOf(SharedDomainError);
+                ).rejects.toBeInstanceOf(DomainError);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
@@ -1114,7 +1115,7 @@ describe('PersonController', () => {
             );
 
             it('should throw a domain error', async () => {
-                await expect(personController.resetUEMPassword(permissions)).rejects.toBeInstanceOf(SharedDomainError);
+                await expect(personController.resetUEMPassword(permissions)).rejects.toBeInstanceOf(DomainError);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
