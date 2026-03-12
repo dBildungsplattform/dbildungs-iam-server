@@ -2,24 +2,26 @@ import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { DbiamSharedError, SharedErrorI18nTypes } from '../error/dbiam-shared.error.js';
-import { EntityAlreadyExistsError } from '../error/entity-already-exists.error.js';
-import { EntityCouldNotBeCreated } from '../error/entity-could-not-be-created.error.js';
-import { EntityCouldNotBeDeleted } from '../error/entity-could-not-be-deleted.error.js';
-import { EntityCouldNotBeUpdated } from '../error/entity-could-not-be-updated.error.js';
-import { EntityNotFoundError } from '../error/entity-not-found.error.js';
+import {
+    SharedDomainError,
+    EntityAlreadyExistsError,
+    EntityCouldNotBeCreated,
+    EntityCouldNotBeDeleted,
+    EntityCouldNotBeUpdated,
+    EntityNotFoundError,
+    InvalidAttributeLengthError,
+    InvalidCharacterSetError,
+    InvalidNameError,
+    KeycloakClientError,
+    MismatchedRevisionError,
+    MissingPermissionsError,
+    PersonAlreadyExistsError,
+} from '../error/index.js';
 import { ExceedsLimitError } from '../error/exceeds-limit.error.js';
-import { InvalidAttributeLengthError } from '../error/invalid-attribute-length.error.js';
-import { InvalidCharacterSetError } from '../error/invalid-character-set.error.js';
-import { InvalidNameError } from '../error/invalid-name.error.js';
-import { KeycloakClientError } from '../error/keycloak-client.error.js';
-import { MismatchedRevisionError } from '../error/mismatched-revision.error.js';
-import { MissingPermissionsError } from '../error/missing-permissions.error.js';
-import { PersonAlreadyExistsError } from '../error/person-already-exists.error.js';
 import { UserExternalDataWorkflowError } from '../error/user-externaldata-workflow.error.js';
-import { DomainError } from '../error/domain.error.js';
 
-@Catch(DomainError)
-export class SharedExceptionFilter implements ExceptionFilter<DomainError> {
+@Catch(SharedDomainError)
+export class SharedExceptionFilter implements ExceptionFilter<SharedDomainError> {
     private ERROR_MAPPINGS: Map<string, DbiamSharedError> = new Map([
         [
             EntityCouldNotBeCreated.name,
@@ -121,7 +123,7 @@ export class SharedExceptionFilter implements ExceptionFilter<DomainError> {
         ],
     ]);
 
-    public catch(exception: DomainError, host: ArgumentsHost): void {
+    public catch(exception: SharedDomainError, host: ArgumentsHost): void {
         const ctx: HttpArgumentsHost = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
@@ -131,7 +133,7 @@ export class SharedExceptionFilter implements ExceptionFilter<DomainError> {
         response.json(dbiamSharedError);
     }
 
-    private mapDomainErrorToDbiamError(error: DomainError): DbiamSharedError {
+    private mapDomainErrorToDbiamError(error: SharedDomainError): DbiamSharedError {
         return (
             this.ERROR_MAPPINGS.get(error.constructor.name) ??
             new DbiamSharedError({
