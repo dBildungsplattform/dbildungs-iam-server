@@ -38,7 +38,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
 import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
 import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
+import { SharedDomainError } from '../../../shared/error/index.js';
 
 function createLoadedReference<T extends object>(entity: T): LoadedReference<T> {
     const reference: Reference<T> = createMock<Reference<T>>(Reference);
@@ -457,7 +457,7 @@ describe('KeycloakInternalController', () => {
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
 
             await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toBeInstanceOf(
-                DomainError,
+                SharedDomainError,
             );
         });
 
@@ -466,7 +466,7 @@ describe('KeycloakInternalController', () => {
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
 
             await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toBeInstanceOf(
-                DomainError,
+                SharedDomainError,
             );
         });
     });

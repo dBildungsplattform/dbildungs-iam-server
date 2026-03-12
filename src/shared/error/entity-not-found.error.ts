@@ -1,6 +1,6 @@
-import { DomainError } from './domain.error.js';
+import { SharedDomainError } from './index.js';
 
-export class EntityNotFoundError extends DomainError {
+export class EntityNotFoundError extends SharedDomainError {
     public constructor(
         entityName: string = 'entity',
         id: string = 'ID',

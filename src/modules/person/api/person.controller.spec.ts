@@ -15,10 +15,10 @@ import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import {
-    DomainError,
     EntityCouldNotBeDeleted,
     EntityNotFoundError,
     MismatchedRevisionError,
+    SharedDomainError,
 } from '../../../shared/error/index.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
@@ -654,7 +654,7 @@ describe('PersonController', () => {
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
 
                 await expect(personController.updatePerson(params, body, personPermissionsMock)).rejects.toBeInstanceOf(
-                    DomainError,
+                    SharedDomainError,
                 );
                 //expect(personRepositoryMock.findById).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
@@ -1021,7 +1021,7 @@ describe('PersonController', () => {
 
                 await expect(
                     personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
-                ).rejects.toBeInstanceOf(DomainError);
+                ).rejects.toBeInstanceOf(SharedDomainError);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
@@ -1114,7 +1114,7 @@ describe('PersonController', () => {
             );
 
             it('should throw a domain error', async () => {
-                await expect(personController.resetUEMPassword(permissions)).rejects.toBeInstanceOf(DomainError);
+                await expect(personController.resetUEMPassword(permissions)).rejects.toBeInstanceOf(SharedDomainError);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });

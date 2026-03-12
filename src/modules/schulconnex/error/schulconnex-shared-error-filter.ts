@@ -3,7 +3,7 @@ import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import {
-    DomainError,
+    SharedDomainError,
     EntityAlreadyExistsError,
     EntityCouldNotBeCreated,
     EntityCouldNotBeDeleted,
@@ -20,8 +20,8 @@ import {
 import { ExceedsLimitError } from '../../../shared/error/exceeds-limit.error.js';
 import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
 
-@Catch(DomainError)
-export class SchulConnexSharedErrorFilter implements ExceptionFilter<DomainError> {
+@Catch(SharedDomainError)
+export class SchulConnexSharedErrorFilter implements ExceptionFilter<SharedDomainError> {
     private ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
         [
             EntityCouldNotBeCreated.name,
@@ -153,7 +153,7 @@ export class SchulConnexSharedErrorFilter implements ExceptionFilter<DomainError
         ],
     ]);
 
-    public catch(exception: DomainError, host: ArgumentsHost): void {
+    public catch(exception: SharedDomainError, host: ArgumentsHost): void {
         const ctx: HttpArgumentsHost = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
@@ -163,7 +163,7 @@ export class SchulConnexSharedErrorFilter implements ExceptionFilter<DomainError
         response.json(schulConnexError);
     }
 
-    private mapDomainErrorToSchulConnexError(error: DomainError): SchulConnexError {
+    private mapDomainErrorToSchulConnexError(error: SharedDomainError): SchulConnexError {
         return (
             this.ERROR_MAPPINGS.get(error.constructor.name) ??
             new SchulConnexError({
