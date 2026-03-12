@@ -25,7 +25,7 @@ export class RedisHealthIndicator extends HealthIndicator {
             socket: {
                 host: this.redisConfig.HOST,
                 port: this.redisConfig.PORT,
-                tls: this.redisConfig.USE_TLS,
+                tls: this.redisConfig.USE_TLS || undefined,
                 key: this.redisConfig.PRIVATE_KEY,
                 cert: this.redisConfig.CERTIFICATE_AUTHORITIES,
                 connectTimeout: 1000,

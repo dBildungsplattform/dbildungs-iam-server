@@ -4,7 +4,7 @@ import { LoggerModule } from '../core/logging/logger.module.js';
 import { EmailHealthModule } from './modules/health/email-health.module.js';
 import { EmailCoreModule } from './modules/core/email-core.module.js';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { defineConfig } from '@mikro-orm/postgresql';
+import { defineConfig, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { EmailAppConfig } from '../shared/config/email-app.config.js';
 import { PassportModule } from '@nestjs/passport';
 import { InternalCommunicationApiKeyStrategy } from './passport/internalcommunicationapikey.strategy.js';
@@ -27,6 +27,7 @@ import { InternalCommunicationApiKeyStrategy } from './passport/internalcommunic
                             ssl: dbConfig.USE_SSL,
                         },
                     },
+                    driver: PostgreSqlDriver,
                     connect: false,
                 });
             },

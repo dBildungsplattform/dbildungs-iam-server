@@ -70,7 +70,7 @@ describe('Email Write Controller', () => {
                 lastName: faker.person.lastName(),
                 spshServiceProviderId: faker.string.uuid(),
                 kennungen: [],
-                spshUsername: faker.internet.userName(),
+                spshUsername: faker.internet.username(),
             });
             setEmailAddressForSpshPersonServiceMock.setEmailAddressForSpshPerson.mockResolvedValue();
             const requestParams: SetEmailAddressForSpshPersonPathParams = new SetEmailAddressForSpshPersonPathParams();
@@ -92,7 +92,7 @@ describe('Email Write Controller', () => {
                 lastName: faker.person.lastName(),
                 spshServiceProviderId: faker.string.uuid(),
                 kennungen: [],
-                spshUsername: faker.internet.userName(),
+                spshUsername: faker.internet.username(),
             });
             const requestParams: SetEmailAddressForSpshPersonPathParams = new SetEmailAddressForSpshPersonPathParams();
             Object.assign(requestParams, { spshPersonId });

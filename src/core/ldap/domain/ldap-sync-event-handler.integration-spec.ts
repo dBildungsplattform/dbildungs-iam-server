@@ -258,7 +258,7 @@ describe('LdapSyncEventHandler', () => {
 
     function createDataFetchedByRepositoriesAndLDAP(): void {
         personId = faker.string.uuid();
-        username = faker.internet.userName();
+        username = faker.internet.username();
         event = new PersonExternalSystemsSyncEvent(personId);
         vorname = faker.person.firstName();
         familienname = faker.person.lastName();
@@ -272,7 +272,7 @@ describe('LdapSyncEventHandler', () => {
         enabledEmailAddress = DoFactory.createEmailAddress<true>(true, email);
         givenName = faker.person.firstName();
         surName = faker.person.lastName();
-        cn = faker.internet.userName();
+        cn = faker.internet.username();
         mailPrimaryAddress = faker.internet.email();
         mailAlternativeAddress = faker.internet.email();
         personAttributes = {
@@ -344,7 +344,7 @@ describe('LdapSyncEventHandler', () => {
         let personInfo: PersonIdentifier;
         beforeEach(() => {
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             event = new PersonExternalSystemsSyncEvent(personId);
             person = DoFactory.createPerson<true>(true, { username: username });
             email = faker.internet.email();

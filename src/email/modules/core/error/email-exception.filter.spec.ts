@@ -1,27 +1,22 @@
 import { ArgumentsHost } from '@nestjs/common';
-import { createMock, DeepMocked } from '@golevelup/ts-vitest';
 import { Response } from 'express';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { EmailExceptionFilter } from './email-exception-filter.js';
 import { EmailDomainNotFoundError } from './email-domain-not-found.error.js';
 import { EmailAddressNotFoundError } from './email-address-not-found.error.js';
 import { EmailAddressGenerationAttemptsExceededError } from './email-address-generation-attempts-exceeds.error.js';
 import { DomainError } from '../../../../shared/error/index.js';
+import { createArgumentsHostMock, createResponseMock } from '../../../../../test/utils/http.mocks.js';
+import { MockedObject } from 'vitest';
 
 describe('EmailExceptionFilter', () => {
     let filter: EmailExceptionFilter;
-    let responseMock: DeepMocked<Response>;
-    let argumentsHost: DeepMocked<ArgumentsHost>;
+    let responseMock: MockedObject<Response>;
+    let argumentsHost: MockedObject<ArgumentsHost>;
 
     beforeEach(() => {
         filter = new EmailExceptionFilter();
-        responseMock = createMock(Response);
-        argumentsHost = createMock<ArgumentsHost>({
-            switchToHttp: () =>
-                createMock<HttpArgumentsHost>({
-                    getResponse: () => responseMock,
-                }),
-        });
+        responseMock = createResponseMock();
+        argumentsHost = createArgumentsHostMock({ response: responseMock });
     });
 
     describe('catch', () => {

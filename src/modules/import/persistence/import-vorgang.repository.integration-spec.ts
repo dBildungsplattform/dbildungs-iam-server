@@ -106,7 +106,7 @@ describe('ImportVorgangRepository', () => {
         const personResult: Person<false> | DomainError = await personFactory.createNew({
             vorname: faker.person.firstName(),
             familienname: faker.person.lastName(),
-            username: faker.internet.userName(),
+            username: faker.internet.username(),
             password: generatePassword(),
         });
         if (personResult instanceof DomainError) {
@@ -160,7 +160,7 @@ describe('ImportVorgangRepository', () => {
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
-                faker.internet.userName(),
+                faker.internet.username(),
                 faker.lorem.word(),
                 faker.lorem.word(),
                 100,

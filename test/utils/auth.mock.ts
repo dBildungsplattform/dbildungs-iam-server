@@ -40,7 +40,7 @@ export function createPersonPermissionsMock(personFields?: Partial<PersonFields>
         keycloakUserId: personFields?.keycloakUserId ?? faker.string.uuid(),
         vorname: personFields?.vorname ?? faker.person.firstName(),
         familienname: personFields?.familienname ?? faker.person.lastName(),
-        username: personFields?.username ?? faker.internet.userName(),
+        username: personFields?.username ?? faker.internet.username(),
         updatedAt: personFields?.updatedAt ?? faker.date.past(),
     };
 
