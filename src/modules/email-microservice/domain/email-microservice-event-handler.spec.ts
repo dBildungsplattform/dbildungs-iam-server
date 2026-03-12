@@ -93,7 +93,7 @@ describe('EmailMicroserviceEventHandler', () => {
             const mockServiceProviderId: string = faker.string.uuid();
             const spshPersonId: string = faker.string.uuid();
             const params: SetEmailAddressForSpshPersonBodyParams = {
-                spshUsername: faker.internet.userName(),
+                spshUsername: faker.internet.username(),
                 kennungen: ['0706054'],
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
@@ -202,7 +202,7 @@ describe('EmailMicroserviceEventHandler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.internet.username(),
                 },
                 [{} as PersonenkontextEventKontextData, {} as PersonenkontextEventKontextData],
                 [{} as PersonenkontextEventKontextData],
@@ -456,7 +456,7 @@ describe('EmailMicroserviceEventHandler', () => {
             const mockServiceProviderId: string = faker.string.uuid();
             const spshPersonId: string = faker.string.uuid();
             const params: SetEmailAddressForSpshPersonBodyParams = {
-                spshUsername: faker.internet.userName(),
+                spshUsername: faker.internet.username(),
                 kennungen: ['K2'],
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
@@ -576,10 +576,10 @@ describe('EmailMicroserviceEventHandler', () => {
                 faker.string.uuid(),
                 faker.person.firstName(),
                 faker.person.lastName(),
-                faker.internet.userName(),
+                faker.internet.username(),
                 faker.person.firstName(),
                 faker.person.lastName(),
-                faker.internet.userName(),
+                faker.internet.username(),
             );
             const mockRolle: Rolle<true> = DoFactory.createRolle(true, {
                 serviceProviderData: [
@@ -617,10 +617,10 @@ describe('EmailMicroserviceEventHandler', () => {
                 faker.string.uuid(),
                 faker.person.firstName(),
                 faker.person.lastName(),
-                faker.internet.userName(),
+                faker.internet.username(),
                 faker.person.firstName(),
                 faker.person.lastName(),
-                faker.internet.userName(),
+                faker.internet.username(),
             );
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(false);
 
@@ -639,7 +639,7 @@ describe('EmailMicroserviceEventHandler', () => {
                 undefined, // username
                 faker.person.firstName(),
                 faker.person.lastName(),
-                faker.internet.userName(),
+                faker.internet.username(),
             );
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
 
@@ -658,10 +658,10 @@ describe('EmailMicroserviceEventHandler', () => {
                 faker.string.uuid(),
                 faker.person.firstName(),
                 faker.person.lastName(),
-                faker.internet.userName(),
+                faker.internet.username(),
                 faker.person.firstName(),
                 faker.person.lastName(),
-                faker.internet.userName(),
+                faker.internet.username(),
             );
             const mockRolle: Rolle<true> = DoFactory.createRolle(true, {
                 serviceProviderData: [
@@ -694,7 +694,7 @@ describe('EmailMicroserviceEventHandler', () => {
     describe('handlePersonDeletedEvent', () => {
         it('should log and call emailResolverService.deleteEmailsForSpshPerson when microservice is enabled', async () => {
             const personId: string = faker.string.uuid();
-            const username: string = faker.internet.userName();
+            const username: string = faker.internet.username();
             const event: PersonDeletedEvent = new PersonDeletedEvent(personId, username);
 
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
@@ -711,7 +711,7 @@ describe('EmailMicroserviceEventHandler', () => {
 
         it('should log and return early when microservice is disabled', async () => {
             const personId: string = faker.string.uuid();
-            const username: string = faker.internet.userName();
+            const username: string = faker.internet.username();
             const event: PersonDeletedEvent = new PersonDeletedEvent(personId, username);
 
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(false);
@@ -747,7 +747,7 @@ describe('EmailMicroserviceEventHandler', () => {
 
         it('should log and call setEmailForSpshPerson when microservice is enabled and provider exists', async () => {
             const personId: string = faker.string.uuid();
-            const username: string = faker.internet.userName();
+            const username: string = faker.internet.username();
             const firstName: string = faker.person.firstName();
             const lastName: string = faker.person.lastName();
             const serviceProviderId: string = faker.string.uuid();

@@ -46,8 +46,8 @@ describe('KeycloakGroupRoleService', () => {
             find: () => Promise.resolve([]),
         });
         kcRolesMock = createMock(Roles, {
-            create: () => Promise.resolve({ roleName: faker.internet.userName() }),
-            findOneByName: () => Promise.resolve({ id: faker.string.uuid(), name: faker.internet.userName() }),
+            create: () => Promise.resolve({ roleName: faker.internet.username() }),
+            findOneByName: () => Promise.resolve({ id: faker.string.uuid(), name: faker.internet.username() }),
         });
         adminClient = createMock<KeycloakAdminClient>(KeycloakAdminClient);
         (adminClient.groups as unknown as Groups) = kcGroupsMock;
@@ -69,7 +69,7 @@ describe('KeycloakGroupRoleService', () => {
     });
 
     describe('createGroup', () => {
-        const groupName: string = faker.internet.userName();
+        const groupName: string = faker.internet.username();
         const groupId: string = faker.string.numeric();
 
         describe('when KeycloakAdminClient cannot be obtained', () => {
@@ -131,7 +131,7 @@ describe('KeycloakGroupRoleService', () => {
     });
 
     describe('createRole', () => {
-        const roleName: string = faker.internet.userName();
+        const roleName: string = faker.internet.username();
 
         describe('when KeycloakAdminClient cannot be obtained', () => {
             it('should return an error result', async () => {
@@ -193,7 +193,7 @@ describe('KeycloakGroupRoleService', () => {
 
     describe('addRoleToGroup', () => {
         const groupId: string = faker.string.uuid();
-        const roleName: string = faker.internet.userName();
+        const roleName: string = faker.internet.username();
 
         describe('when KeycloakAdminClient cannot be obtained', () => {
             it('should return an error result', async () => {

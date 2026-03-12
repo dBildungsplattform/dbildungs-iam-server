@@ -38,6 +38,7 @@ export class DatabaseTestModule implements OnModuleDestroy {
                             dynamicImportProvider: (id: string) => import(id),
                             entities: ['./dist/**/*.entity.js'],
                             entitiesTs: ['./src/**/*.entity.ts'],
+                            driver: PostgreSqlDriver,
                             allowGlobalContext: true,
                             connect: options?.isDatabaseRequired ?? false,
                             extensions: [Migrator],
