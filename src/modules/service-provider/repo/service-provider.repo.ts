@@ -20,8 +20,6 @@ import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js
 import { DuplicateNameSpecification } from '../specification/duplicate-name.specification.js';
 import { mapAggregateToData, mapEntityToAggregate } from './service-provider-entity-mapper.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
-import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 
 type ServiceProviderFindOptions = {
     withLogo?: boolean;
@@ -236,19 +234,19 @@ export class ServiceProviderRepo {
             return permissionResult;
         }
 
-        if (!(await new DuplicateNameSpecification(this.serviceProviderInternalRepo).isSatisfiedBy(serviceProvider))) {
+        if (await new DuplicateNameSpecification(this.serviceProviderInternalRepo).isSatisfiedBy(serviceProvider)) {
             return Err(
                 new DuplicateNameError(
                     `Duplicate name error: ${serviceProvider.name}`,
-                    serviceProvider.id || undefined,
+                    serviceProvider.id ?? undefined,
                 ),
             );
         }
 
         if (serviceProvider.id) {
-            return await this.update(serviceProvider);
+            return this.update(serviceProvider);
         } else {
-            return await this.createInternal(serviceProvider);
+            return this.createInternal(serviceProvider);
         }
     }
 
@@ -271,30 +269,24 @@ export class ServiceProviderRepo {
     private async createInternal(
         serviceProvider: ServiceProvider<false>,
     ): Promise<Result<ServiceProvider<true>, DomainError>> {
-        try {
-            const serviceProviderEntity: ServiceProviderEntity = this.em.create(
-                ServiceProviderEntity,
-                mapAggregateToData(serviceProvider),
+        const serviceProviderEntity: ServiceProviderEntity = this.em.create(
+            ServiceProviderEntity,
+            mapAggregateToData(serviceProvider),
+        );
+
+        await this.em.persistAndFlush(serviceProviderEntity);
+
+        if (serviceProviderEntity.keycloakGroup && serviceProviderEntity.keycloakRole) {
+            this.eventService.publish(
+                new GroupAndRoleCreatedEvent(serviceProviderEntity.keycloakGroup, serviceProviderEntity.keycloakRole),
+                new KafkaGroupAndRoleCreatedEvent(
+                    serviceProviderEntity.keycloakGroup,
+                    serviceProviderEntity.keycloakRole,
+                ),
             );
-
-            await this.em.persistAndFlush(serviceProviderEntity);
-
-            if (serviceProviderEntity.keycloakGroup && serviceProviderEntity.keycloakRole) {
-                this.eventService.publish(
-                    new GroupAndRoleCreatedEvent(
-                        serviceProviderEntity.keycloakGroup,
-                        serviceProviderEntity.keycloakRole,
-                    ),
-                    new KafkaGroupAndRoleCreatedEvent(
-                        serviceProviderEntity.keycloakGroup,
-                        serviceProviderEntity.keycloakRole,
-                    ),
-                );
-            }
-            return Ok(mapEntityToAggregate(serviceProviderEntity));
-        } catch (error) {
-            return Err(new EntityCouldNotBeCreated('ServiceProvider', [error]));
         }
+
+        return Ok(mapEntityToAggregate(serviceProviderEntity));
     }
 
     private async update(serviceProvider: ServiceProvider<true>): Promise<Result<ServiceProvider<true>, DomainError>> {
@@ -302,16 +294,15 @@ export class ServiceProviderRepo {
             ServiceProviderEntity,
             serviceProvider.id,
         );
+
         if (!serviceProviderEntity) {
             return Err(new EntityNotFoundError('ServiceProvider', serviceProvider.id));
         }
+
         serviceProviderEntity.assign(mapAggregateToData(serviceProvider));
 
-        try {
-            await this.em.persistAndFlush(serviceProviderEntity);
-        } catch (error) {
-            return Err(new EntityCouldNotBeUpdated('ServiceProvider', serviceProvider.id, [error]));
-        }
+        await this.em.persistAndFlush(serviceProviderEntity);
+
         return Ok(mapEntityToAggregate(serviceProviderEntity));
     }
 
@@ -363,7 +354,7 @@ export class ServiceProviderRepo {
             if (
                 !(await permissions.hasSystemrechtAtOrganisation(
                     serviceProvider.providedOnSchulstrukturknoten,
-                    RollenSystemRecht.ANGEBOTE_VERWALTEN,
+                    RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
                 ))
             ) {
                 return Err(

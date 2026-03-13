@@ -11,6 +11,7 @@ export class DuplicateNameSpecification extends CompositeSpecification<ServicePr
         return this.serviceProviderInternalRepo.existsDuplicateNameForOrganisation(
             serviceProvider.name,
             serviceProvider.providedOnSchulstrukturknoten,
+            serviceProvider.id,
         );
     }
 }

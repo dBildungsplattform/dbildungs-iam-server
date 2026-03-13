@@ -13,7 +13,6 @@ import {
     LoggingTestModule,
 } from '../../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../../shared/validation/global-validation.pipe.js';
-import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
 import { PersonApiModule } from '../../person-api.module.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
 import { UsernameGeneratorService } from '../../domain/username-generator.service.js';
@@ -44,6 +43,7 @@ import {
 import { OrganisationEntity } from '../../../organisation/persistence/organisation.entity.js';
 import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
 import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
+import { ServiceProviderModule } from '../../../service-provider/service-provider.module.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -78,6 +78,7 @@ describe('Personenuebersicht API', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
+                ServiceProviderModule,
             ],
             providers: [
                 {
@@ -100,7 +101,6 @@ describe('Personenuebersicht API', () => {
                     provide: UserLockRepository,
                     useValue: createMock(UserLockRepository),
                 },
-                ServiceProviderRepo,
                 PersonRepository,
                 RolleFactory,
                 RolleRepo,

@@ -78,6 +78,7 @@ import {
 import { PersonScope } from './person.scope.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -106,6 +107,10 @@ describe('PersonRepository Integration', () => {
                 {
                     provide: EmailRepo,
                     useValue: createMock(EmailRepo),
+                },
+                {
+                    provide: ServiceProviderRepo,
+                    useValue: createMock(ServiceProviderRepo),
                 },
                 {
                     provide: EventRoutingLegacyKafkaService,

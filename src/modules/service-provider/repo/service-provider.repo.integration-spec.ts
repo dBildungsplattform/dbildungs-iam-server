@@ -3,9 +3,12 @@ import { Collection, EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
+    createPersonPermissionsMock,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    expectErrResult,
+    expectOkResult,
     LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
@@ -27,6 +30,11 @@ import { ServiceProviderRepo } from './service-provider.repo.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
@@ -41,6 +49,7 @@ describe('ServiceProviderRepo', () => {
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), LoggingTestModule],
             providers: [
                 ServiceProviderRepo,
+                ServiceProviderInternalRepo,
                 RolleRepo,
                 RolleFactory,
                 OrganisationRepository,
@@ -78,47 +87,139 @@ describe('ServiceProviderRepo', () => {
     });
 
     describe('save', () => {
-        it('should save new service-provider', async () => {
-            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
-            serviceProvider.merkmale = [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR];
+        describe('creating', () => {
+            it('should save new service-provider', async () => {
+                const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+                    merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+                });
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            const savedServiceProvider: ServiceProvider<true> = await sut.save(serviceProvider);
+                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
+                    permissionsMock,
+                    serviceProvider,
+                );
 
-            expect(savedServiceProvider.id).toBeDefined();
+                expectOkResult(saveResult);
+                expect(saveResult.value.id).toBeDefined();
+            });
+
+            it('should return error if name is already used', async () => {
+                const name: string = 'Test name';
+                const providedOnSchulstrukturknoten: string = faker.string.uuid();
+
+                await createAndPersistServiceProvider(em, { name, providedOnSchulstrukturknoten });
+                const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+                    name,
+                    providedOnSchulstrukturknoten,
+                });
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
+                    permissionsMock,
+                    serviceProvider,
+                );
+
+                expectErrResult(saveResult);
+                expect(saveResult.error).toBeInstanceOf(DuplicateNameError);
+            });
         });
 
-        it('should update an existing service-provider', async () => {
-            const existingServiceProvider: ServiceProvider<true> = await sut.save(
-                DoFactory.createServiceProvider(false),
-            );
-            const update: ServiceProvider<false> = DoFactory.createServiceProvider(false);
-            update.id = existingServiceProvider.id;
+        describe('updating', () => {
+            it('should not return duplicate name error when trying to update existing', async () => {
+                const existingSp: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
-            const savedServiceProvider: ServiceProvider<true> = await sut.save(existingServiceProvider);
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            expect(savedServiceProvider).toEqual(existingServiceProvider);
+                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
+                    permissionsMock,
+                    existingSp,
+                );
+
+                expectOkResult(saveResult);
+            });
+
+            it('should return error if name is already used', async () => {
+                const nameA: string = 'Test name';
+                const nameB: string = 'Test name';
+                const providedOnSchulstrukturknoten: string = faker.string.uuid();
+
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    name: nameA,
+                    providedOnSchulstrukturknoten,
+                });
+                await createAndPersistServiceProvider(em, { name: nameB, providedOnSchulstrukturknoten });
+
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+                // Change name
+                serviceProvider.name = nameB;
+
+                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
+                    permissionsMock,
+                    serviceProvider,
+                );
+
+                expectErrResult(saveResult);
+                expect(saveResult.error).toBeInstanceOf(DuplicateNameError);
+            });
+
+            it('should return error serviceprovider could not be found', async () => {
+                const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
+                    permissionsMock,
+                    serviceProvider,
+                );
+
+                expectErrResult(saveResult);
+                expect(saveResult.error).toBeInstanceOf(EntityNotFoundError);
+            });
         });
-        it('should publish an event when a new service-provider is saved', async () => {
-            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
 
-            serviceProvider.keycloakGroup = 'someGroup';
-            serviceProvider.keycloakRole = 'someRole';
+        describe('checkPermissionsForServiceProvider', () => {
+            it('should return true if user is admin', async () => {
+                const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            const mockEventService: EventRoutingLegacyKafkaService =
-                module.get<EventRoutingLegacyKafkaService>(EventRoutingLegacyKafkaService);
+                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
+                    permissionsMock,
+                    serviceProvider,
+                );
 
-            await sut.save(serviceProvider);
+                expectOkResult(saveResult);
+                expect(saveResult.value.id).toBeDefined();
+            });
 
-            expect(mockEventService.publish).toHaveBeenCalledTimes(1);
+            it('should return true if user is admin', async () => {
+                const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
+                    permissionsMock,
+                    serviceProvider,
+                );
+
+                expectOkResult(saveResult);
+                expect(saveResult.value.id).toBeDefined();
+            });
         });
     });
 
     describe('find', () => {
         it('should return all service-provider without logo', async () => {
             const serviceProviders: ServiceProvider<true>[] = await Promise.all([
-                sut.save(DoFactory.createServiceProvider(false)),
-                sut.save(DoFactory.createServiceProvider(false)),
-                sut.save(DoFactory.createServiceProvider(false)),
+                createAndPersistServiceProvider(em),
+                createAndPersistServiceProvider(em),
+                createAndPersistServiceProvider(em),
             ]);
             em.clear();
 
@@ -132,9 +233,9 @@ describe('ServiceProviderRepo', () => {
 
         it('should return all service-provider with logo', async () => {
             const serviceProviders: ServiceProvider<true>[] = await Promise.all([
-                sut.save(DoFactory.createServiceProvider(false)),
-                sut.save(DoFactory.createServiceProvider(false)),
-                sut.save(DoFactory.createServiceProvider(false)),
+                createAndPersistServiceProvider(em),
+                createAndPersistServiceProvider(em),
+                createAndPersistServiceProvider(em),
             ]);
             em.clear();
 
@@ -149,7 +250,7 @@ describe('ServiceProviderRepo', () => {
 
     describe('findById', () => {
         it('should return the service-provider without logo', async () => {
-            const serviceProvider: ServiceProvider<true> = await sut.save(DoFactory.createServiceProvider(false));
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
             em.clear();
 
             const serviceProviderResult: Option<ServiceProvider<true>> = await sut.findById(serviceProvider.id, {
@@ -162,7 +263,7 @@ describe('ServiceProviderRepo', () => {
         });
 
         it('should return the service-provider with logo', async () => {
-            const serviceProvider: ServiceProvider<true> = await sut.save(DoFactory.createServiceProvider(false));
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
             const serviceProviderResult: Option<ServiceProvider<true>> = await sut.findById(serviceProvider.id, {
                 withLogo: true,
@@ -184,7 +285,7 @@ describe('ServiceProviderRepo', () => {
 
     describe('findByIds', () => {
         it('should return the service-provider map', async () => {
-            const serviceProvider: ServiceProvider<true> = await sut.save(DoFactory.createServiceProvider(false));
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
             const serviceProviderMap: Map<string, ServiceProvider<true>> = await sut.findByIds([serviceProvider.id]);
 
             expect(serviceProviderMap).toBeDefined();
@@ -199,14 +300,10 @@ describe('ServiceProviderRepo', () => {
                     const targetOrgaId: string = orgaIds === 'all' ? faker.string.uuid() : orgaIds[0]!;
 
                     const serviceProviders: ServiceProvider<true>[] = await Promise.all([
-                        sut.save(
-                            DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: targetOrgaId }),
-                        ),
-                        sut.save(
-                            DoFactory.createServiceProvider(false, {
-                                providedOnSchulstrukturknoten: faker.string.uuid(),
-                            }),
-                        ),
+                        createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: targetOrgaId }),
+                        createAndPersistServiceProvider(em, {
+                            providedOnSchulstrukturknoten: faker.string.uuid(),
+                        }),
                     ]);
 
                     const [serviceProviderResult, count]: Counted<ServiceProvider<true>> =
@@ -226,7 +323,7 @@ describe('ServiceProviderRepo', () => {
 
         it('should respect the limit and offset', async () => {
             const total: number = 10;
-            await Promise.all(Array.from({ length: total }, () => sut.save(DoFactory.createServiceProvider(false))));
+            await Promise.all(Array.from({ length: total }, () => createAndPersistServiceProvider(em)));
 
             const limit: number = 5;
             const [serviceProviderWithoutOffsetResult, countWithoutOffset]: Counted<ServiceProvider<true>> =
@@ -255,8 +352,7 @@ describe('ServiceProviderRepo', () => {
                         ServiceProviderKategorie.EMAIL,
                         ServiceProviderKategorie.UNTERRICHT,
                     ],
-                    (kategorie: ServiceProviderKategorie) =>
-                        sut.save(DoFactory.createServiceProvider(false, { kategorie })),
+                    (kategorie: ServiceProviderKategorie) => createAndPersistServiceProvider(em, { kategorie }),
                 ),
             );
 
@@ -286,12 +382,10 @@ describe('ServiceProviderRepo', () => {
             organisationA = await organisationRepo.save(DoFactory.createOrganisation(false));
             organisationB = await organisationRepo.save(DoFactory.createOrganisation(false));
 
-            serviceProvider = await sut.save(
-                DoFactory.createServiceProvider(false, {
-                    providedOnSchulstrukturknoten: organisationA.id,
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
+            serviceProvider = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: organisationA.id,
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
         });
 
         afterEach(() => {
@@ -346,22 +440,18 @@ describe('ServiceProviderRepo', () => {
         it('returns only service-providers for the given organisation ids that have the rollenerweiterung merkmal', async () => {
             const orgId: string = faker.string.uuid();
 
-            const spWithMerkmal: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
-                providedOnSchulstrukturknoten: orgId,
-                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-            });
-            const spWithoutMerkmal: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
-                providedOnSchulstrukturknoten: orgId,
-            });
-            const spOtherOrgaWithMerkmal: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
-                providedOnSchulstrukturknoten: faker.string.uuid(),
-                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-            });
-
             const [persistedWithMerkmal]: ServiceProvider<true>[] = await Promise.all([
-                sut.save(spWithMerkmal),
-                sut.save(spWithoutMerkmal),
-                sut.save(spOtherOrgaWithMerkmal),
+                createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: orgId,
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+                createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: orgId,
+                }),
+                createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: faker.string.uuid(),
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
             ]);
 
             em.clear();
@@ -384,12 +474,10 @@ describe('ServiceProviderRepo', () => {
 
             await Promise.all(
                 Array.from({ length: total }, () =>
-                    sut.save(
-                        DoFactory.createServiceProvider(false, {
-                            providedOnSchulstrukturknoten: orgId,
-                            merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                        }),
-                    ),
+                    createAndPersistServiceProvider(em, {
+                        providedOnSchulstrukturknoten: orgId,
+                        merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                    }),
                 ),
             );
 
@@ -428,13 +516,11 @@ describe('ServiceProviderRepo', () => {
                     ServiceProviderKategorie.EMAIL,
                     ServiceProviderKategorie.UNTERRICHT,
                 ].map((kategorie: ServiceProviderKategorie) =>
-                    sut.save(
-                        DoFactory.createServiceProvider(false, {
-                            kategorie,
-                            providedOnSchulstrukturknoten: orgId,
-                            merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                        }),
-                    ),
+                    createAndPersistServiceProvider(em, {
+                        kategorie,
+                        providedOnSchulstrukturknoten: orgId,
+                        merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                    }),
                 ),
             );
 
@@ -470,12 +556,8 @@ describe('ServiceProviderRepo', () => {
                 const permittedOrgaIds: string[] = permittedOrgas.all ? [faker.string.uuid()] : permittedOrgas.orgaIds;
 
                 const serviceProviders: ServiceProvider<true>[] = await Promise.all([
-                    sut.save(
-                        DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: permittedOrgaIds[0] }),
-                    ),
-                    sut.save(
-                        DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: faker.string.uuid() }),
-                    ),
+                    createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: permittedOrgaIds[0] }),
+                    createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: faker.string.uuid() }),
                 ]);
 
                 const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
@@ -502,9 +584,7 @@ describe('ServiceProviderRepo', () => {
 
     describe('findByName', () => {
         it('should find a ServiceProvider by its name if a ServiceProvider with the given name exists', async () => {
-            const expectedServiceProvider: ServiceProvider<true> = await sut.save(
-                DoFactory.createServiceProvider(false),
-            );
+            const expectedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
             const actualServiceProvider: Option<ServiceProvider<true>> = await sut.findByName(
                 expectedServiceProvider.name,
@@ -514,7 +594,7 @@ describe('ServiceProviderRepo', () => {
         });
 
         it('should throw an error if there are no existing ServiceProviders for the given name', async () => {
-            await sut.save(DoFactory.createServiceProvider(false));
+            await createAndPersistServiceProvider(em);
 
             const result: Option<ServiceProvider<true>> = await sut.findByName('this-service-provider-does-not-exist');
 
@@ -524,24 +604,20 @@ describe('ServiceProviderRepo', () => {
 
     describe('findByVidisAngebotId', () => {
         it('should find a ServiceProvider by its VIDIS Angebot ID', async () => {
-            const expectedServiceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
-            expectedServiceProvider.vidisAngebotId = '1234567';
-            const expectedPersistedServiceProvider: ServiceProvider<true> = await sut.save(expectedServiceProvider);
-            const anotherServiceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
-            anotherServiceProvider.vidisAngebotId = '7777777';
-            await sut.save(anotherServiceProvider);
+            const expectedVidisAngebotId: string = '1234567';
+            const expectedPersistedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                vidisAngebotId: expectedVidisAngebotId,
+            });
+            await createAndPersistServiceProvider(em, { vidisAngebotId: '7777777' });
 
-            const actualServiceProvider: Option<ServiceProvider<true>> = await sut.findByVidisAngebotId(
-                expectedServiceProvider.vidisAngebotId,
-            );
+            const actualServiceProvider: Option<ServiceProvider<true>> =
+                await sut.findByVidisAngebotId(expectedVidisAngebotId);
 
             expect(actualServiceProvider).toEqual(expectedPersistedServiceProvider);
         });
 
         it('should return null if there are no existing ServiceProviders for the given VIDIS Angebot ID', async () => {
-            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
-            serviceProvider.vidisAngebotId = '1234567';
-            await sut.save(serviceProvider);
+            await createAndPersistServiceProvider(em, { vidisAngebotId: '1234567' });
 
             const result: Option<ServiceProvider<true>> = await sut.findByVidisAngebotId('7777777');
 
@@ -551,16 +627,14 @@ describe('ServiceProviderRepo', () => {
 
     describe('findByKeycloakGroup', () => {
         it('should find a ServiceProvider by its Keycloak groupname', async () => {
-            const expectedServiceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
-            expectedServiceProvider.keycloakGroup = 'keycloak-group-1';
-            const expectedPersistedServiceProvider: ServiceProvider<true> = await sut.save(expectedServiceProvider);
-            const anotherServiceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
-            anotherServiceProvider.keycloakGroup = 'keycloak-group-2';
-            await sut.save(anotherServiceProvider);
+            const expectedPersistedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                keycloakGroup: 'keycloak-group-1',
+            });
+            await createAndPersistServiceProvider(em, { keycloakGroup: 'keycloak-group-2' });
 
             let result: ServiceProvider<true>[] = [];
-            if (expectedServiceProvider.keycloakGroup) {
-                result = await sut.findByKeycloakGroup(expectedServiceProvider.keycloakGroup);
+            if (expectedPersistedServiceProvider.keycloakGroup) {
+                result = await sut.findByKeycloakGroup(expectedPersistedServiceProvider.keycloakGroup);
             }
 
             expect(result).toEqual([expectedPersistedServiceProvider]);
@@ -570,10 +644,9 @@ describe('ServiceProviderRepo', () => {
     describe('findBySchulstrukturknoten', () => {
         it('should return the service provider', async () => {
             const providedOnSchulstrukturknoten: string = faker.string.uuid();
-            const sp: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+            const persistedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
                 providedOnSchulstrukturknoten,
             });
-            const persistedServiceProvider: ServiceProvider<true> = await sut.save(sp);
             const result: Array<ServiceProvider<true>> =
                 await sut.findBySchulstrukturknoten(providedOnSchulstrukturknoten);
 
@@ -631,8 +704,7 @@ describe('ServiceProviderRepo', () => {
 
     describe('deleteById', () => {
         it('should delete an existing ServiceProvider by its id', async () => {
-            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
-            const persistedPersistedServiceProvider: ServiceProvider<true> = await sut.save(serviceProvider);
+            const persistedPersistedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
             const result: boolean = await sut.deleteById(persistedPersistedServiceProvider.id);
 
@@ -642,8 +714,7 @@ describe('ServiceProviderRepo', () => {
 
     describe('deleteByName', () => {
         it('should delete an existing ServiceProvider by its name', async () => {
-            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
-            const persistedPersistedServiceProvider: ServiceProvider<true> = await sut.save(serviceProvider);
+            const persistedPersistedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
             const result: boolean = await sut.deleteByName(persistedPersistedServiceProvider.name);
 
