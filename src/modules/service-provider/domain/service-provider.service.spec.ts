@@ -31,6 +31,7 @@ import {
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { Ok } from '../../../shared/util/result.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -778,7 +779,7 @@ describe('ServiceProviderService', () => {
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(
                 mockExistingVidisServiceProviderContainedInVidisAngebote,
             );
-            serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
+            serviceProviderRepo.save.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
             if (mockExistingSchulen[0]) {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
@@ -803,7 +804,7 @@ describe('ServiceProviderService', () => {
             vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
-            serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
+            serviceProviderRepo.save.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
             if (mockExistingSchulen[0]) {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
@@ -827,7 +828,7 @@ describe('ServiceProviderService', () => {
             vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
-            serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
+            serviceProviderRepo.save.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
             if (mockExistingSchulen[0]) {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
