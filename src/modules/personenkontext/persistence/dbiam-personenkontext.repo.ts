@@ -394,7 +394,11 @@ export class DBiamPersonenkontextRepo {
             PersonenkontextEntity,
             { personId },
             {
-                populate: ['rolleId.serviceProvider.serviceProvider', 'organisationId'],
+                populate: [
+                    'rolleId.serviceProvider.serviceProvider',
+                    'rolleId.serviceProvider.serviceProvider.merkmale',
+                    'organisationId',
+                ],
                 exclude: [
                     'rolleId.serviceProvider.serviceProvider.logo',
                     'rolleId.serviceProvider.serviceProvider.logoMimeType',
@@ -589,7 +593,15 @@ export class DBiamPersonenkontextRepo {
 
         const [pks, sps]: [PersonenkontextEntity[], ServiceProviderEntity[]] = await Promise.all([
             this.em.find(PersonenkontextEntity, { id: { $in: pkIds } }),
-            this.em.find(ServiceProviderEntity, { id: { $in: spIds } }),
+            this.em.find(
+                ServiceProviderEntity,
+                { id: { $in: spIds } },
+
+                {
+                    populate: ['merkmale'],
+                    exclude: ['logo', 'logoMimeType'],
+                },
+            ),
         ]);
 
         const pkById: Map<string, PersonenkontextEntity> = new Map(pks.map((p: PersonenkontextEntity) => [p.id, p]));

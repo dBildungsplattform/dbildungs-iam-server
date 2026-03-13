@@ -9,53 +9,16 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import {
     DBiamPersonenkontextRepo,
     ErweiterterServiceProviderForPK,
-    PersonenkontextErweitertVirtualEntityLoaded,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
 import { RequiredExternalPkData } from '../api/keycloakinternal.controller.js';
-import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { EmailAddressNotFoundError } from '../../email/error/email-address-not-found.error.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
-import { LoadedReference, Reference } from '@mikro-orm/core';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
 import { EmailAddress } from '../../../email/modules/core/domain/email-address.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-
-function createLoadedServiceProviderReferences(id?: string, name?: string): LoadedReference<ServiceProviderEntity> {
-    const serviceProviderReference: Reference<ServiceProviderEntity> =
-        createMock<Reference<ServiceProviderEntity>>(Reference);
-    serviceProviderReference.unwrap = vi.fn().mockReturnValue(
-        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
-            id: id ?? faker.string.uuid(),
-            name: name ?? faker.company.name(),
-        }),
-    );
-    const loadedServiceProvider: LoadedReference<ServiceProviderEntity> = {
-        ...serviceProviderReference,
-        isInitialized: () => true,
-        get: () => serviceProviderReference.unwrap(),
-    } as LoadedReference<ServiceProviderEntity>;
-
-    return loadedServiceProvider;
-}
-
-function createLoadedPersonenkontextReference(id?: string): LoadedReference<PersonenkontextEntity> {
-    const personenKontextReference: Reference<PersonenkontextEntity> =
-        createMock<Reference<PersonenkontextEntity>>(Reference);
-    personenKontextReference.unwrap = vi
-        .fn()
-        .mockReturnValue(createMock<PersonenkontextEntity>(PersonenkontextEntity, { id: id ?? faker.string.uuid() }));
-    const loadedPersonenKontext: LoadedReference<PersonenkontextEntity> = {
-        ...personenKontextReference,
-        isInitialized: () => true,
-        get: () => personenKontextReference.unwrap(),
-    } as LoadedReference<PersonenkontextEntity>;
-
-    return loadedPersonenKontext;
-}
 
 describe('UserExternaldataWorkflow', () => {
     let sut: UserExternaldataWorkflowAggregate;
@@ -361,7 +324,7 @@ describe('UserExternaldataWorkflow', () => {
                 {
                     pkId: 'pk1',
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp1',
                             name: 'Provider 1',
                             vidisAngebotId: 'vidis-123',
@@ -373,7 +336,7 @@ describe('UserExternaldataWorkflow', () => {
                 {
                     pkId: 'pk1',
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp2',
                             name: 'Provider 2',
                         }),
@@ -395,7 +358,7 @@ describe('UserExternaldataWorkflow', () => {
                 {
                     pkId: 'pk1',
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp1',
                             name: 'Provider 1',
                             vidisAngebotId: undefined,
@@ -407,7 +370,7 @@ describe('UserExternaldataWorkflow', () => {
                 {
                     pkId: 'pk2',
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp2',
                             name: 'Provider 2',
                             vidisAngebotId: undefined,
@@ -435,12 +398,12 @@ describe('UserExternaldataWorkflow', () => {
                 {
                     pkId: 'pk1',
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp1',
                             name: 'Provider 1',
                             vidisAngebotId: undefined,
                         }),
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp2',
                             name: 'Provider 2',
                             vidisAngebotId: 'vidis-456',
@@ -463,7 +426,7 @@ describe('UserExternaldataWorkflow', () => {
                 {
                     pkId: 'pk1',
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp1',
                             name: 'Provider 1',
                             vidisAngebotId: '',
