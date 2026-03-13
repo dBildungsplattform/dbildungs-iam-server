@@ -19,5 +19,5 @@ export class FeatureFlagConfig {
 
     @IsBoolean()
     @IsNotEmpty()
-    public readonly FEATURE_FLAG_ANGEBOT_ERSTELLEN!: boolean;
+    public readonly FEATURE_FLAG_ANGEBOT_ERSTELLEN!: boolean; // Rename: SCHULISCHE ANGEBOTE?
 }

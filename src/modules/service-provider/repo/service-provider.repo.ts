@@ -1,7 +1,6 @@
 import { Loaded } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { inspect } from 'util';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
 import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
@@ -20,6 +19,9 @@ import { DuplicateNameError } from '../specification/error/duplicate-name.error.
 import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js';
 import { DuplicateNameSpecification } from '../specification/duplicate-name.specification.js';
 import { mapAggregateToData, mapEntityToAggregate } from './service-provider-entity-mapper.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
+import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 
 type ServiceProviderFindOptions = {
     withLogo?: boolean;
@@ -225,8 +227,14 @@ export class ServiceProviderRepo {
     public async save(
         permissions: IPersonPermissions,
         serviceProvider: ServiceProvider<boolean>,
-    ): Promise<Result<ServiceProvider<true>>> {
-        await this.checkPermissionsForServiceProvider(permissions, serviceProvider);
+    ): Promise<Result<ServiceProvider<true>, DomainError>> {
+        const permissionResult: Result<void, DomainError> = await this.checkPermissionsForServiceProvider(
+            permissions,
+            serviceProvider,
+        );
+        if (!permissionResult.ok) {
+            return permissionResult;
+        }
 
         if (!(await new DuplicateNameSpecification(this.serviceProviderInternalRepo).isSatisfiedBy(serviceProvider))) {
             return Err(
@@ -260,7 +268,9 @@ export class ServiceProviderRepo {
         return serviceProviderResult.value;
     }
 
-    private async createInternal(serviceProvider: ServiceProvider<false>): Promise<Result<ServiceProvider<true>>> {
+    private async createInternal(
+        serviceProvider: ServiceProvider<false>,
+    ): Promise<Result<ServiceProvider<true>, DomainError>> {
         try {
             const serviceProviderEntity: ServiceProviderEntity = this.em.create(
                 ServiceProviderEntity,
@@ -283,14 +293,11 @@ export class ServiceProviderRepo {
             }
             return Ok(mapEntityToAggregate(serviceProviderEntity));
         } catch (error) {
-            if (error instanceof Error) {
-                return Err(error);
-            }
-            return Err(new Error(`Failed creating ServiceProvider ${inspect(error)}`));
+            return Err(new EntityCouldNotBeCreated('ServiceProvider', [error]));
         }
     }
 
-    private async update(serviceProvider: ServiceProvider<true>): Promise<Result<ServiceProvider<true>>> {
+    private async update(serviceProvider: ServiceProvider<true>): Promise<Result<ServiceProvider<true>, DomainError>> {
         const serviceProviderEntity: Loaded<ServiceProviderEntity> | null = await this.em.findOne(
             ServiceProviderEntity,
             serviceProvider.id,
@@ -303,10 +310,7 @@ export class ServiceProviderRepo {
         try {
             await this.em.persistAndFlush(serviceProviderEntity);
         } catch (error) {
-            if (error instanceof Error) {
-                return Err(error);
-            }
-            return Err(new Error(`Failed updating ServiceProvider ${inspect(error)}`));
+            return Err(new EntityCouldNotBeUpdated('ServiceProvider', serviceProvider.id, [error]));
         }
         return Ok(mapEntityToAggregate(serviceProviderEntity));
     }
@@ -348,7 +352,7 @@ export class ServiceProviderRepo {
     private async checkPermissionsForServiceProvider(
         permissions: IPersonPermissions,
         serviceProvider: ServiceProvider<boolean>,
-    ): Promise<Result<void>> {
+    ): Promise<Result<void, DomainError>> {
         if (
             !(await permissions.hasSystemrechtAtOrganisation(
                 serviceProvider.providedOnSchulstrukturknoten,
