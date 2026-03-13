@@ -117,7 +117,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 lastName: faker.person.lastName(),
                 kennungen: [],
                 spshServiceProviderId,
-                spshUsername: faker.internet.userName(),
+                spshUsername: faker.internet.username(),
             },
         ];
     }

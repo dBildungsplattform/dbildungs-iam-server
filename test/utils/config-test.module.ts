@@ -10,8 +10,8 @@ import { LoggingConfig } from '../../src/shared/config/logging.config';
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            ignoreEnvFile: true,
-            ignoreEnvVars: true,
+            validatePredefined: false,
+            skipProcessEnv: true,
             load: [
                 (): Record<string, unknown> => {
                     return JSON.parse(readFileSync('./test/config.test.json', { encoding: 'utf-8' })) as Record<

@@ -85,7 +85,7 @@ export default defineConfig(
   // Main TS files
   {
     files: ['**/*.ts'],
-    ignores: ['test-migrations/**/*.ts', 'migrations/**/*.ts'],
+    ignores: ['test-migrations/**/*.ts', 'migrations/**/*.ts', 'dist/**'],
     extends: [tseslint.configs.recommendedTypeChecked],
     plugins: { tseslint, import: importPlugin, prettier },
     languageOptions: {
@@ -94,7 +94,7 @@ export default defineConfig(
     project: ['./tsconfig.json'],
     tsconfigRootDir,
     sourceType: 'module',
-    ecmaVersion: 2020,
+    ecmaVersion: 2022,
       },
     },
     rules: customRules,
@@ -111,7 +111,7 @@ export default defineConfig(
     project: ['./tsconfig.json'],
     tsconfigRootDir,
     sourceType: 'module',
-    ecmaVersion: 2020,
+    ecmaVersion: 2022,
       },
     },
     rules: {

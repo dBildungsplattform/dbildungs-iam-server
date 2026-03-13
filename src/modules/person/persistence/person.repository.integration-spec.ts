@@ -1559,7 +1559,7 @@ describe('PersonRepository Integration', () => {
 
     describe('findByUsername', () => {
         it('should return persons with matching username (username)', async () => {
-            const username: string = faker.internet.userName();
+            const username: string = faker.internet.username();
             const person1: Person<true> = DoFactory.createPerson(true);
             person1.username = username;
             const personEntity: PersonEntity = new PersonEntity();
@@ -2207,7 +2207,7 @@ describe('PersonRepository Integration', () => {
             it('should delete the person as admin of organisation and publish events when username and oxUserId are defined', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 const personEntity: PersonEntity = new PersonEntity();
-                person1.username = faker.internet.userName();
+                person1.username = faker.internet.username();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
 

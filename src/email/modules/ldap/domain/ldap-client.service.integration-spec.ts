@@ -65,7 +65,7 @@ describe('LDAP Client Service', () => {
             firstName: firstName ?? faker.person.firstName(),
             lastName: lastName ?? faker.person.lastName(),
             uid: uid ?? faker.string.uuid(),
-            username: username ?? faker.internet.userName(),
+            username: username ?? faker.internet.username(),
         };
     }
 

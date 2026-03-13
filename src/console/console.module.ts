@@ -1,5 +1,5 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { defineConfig } from '@mikro-orm/postgresql';
+import { defineConfig, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import {
@@ -77,6 +77,7 @@ import { KeycloakConsoleModule } from './keycloak/keycloak-console.module.js';
                             ssl: config.getOrThrow<DbConfig>('DB').USE_SSL,
                         },
                     },
+                    driver: PostgreSqlDriver,
                     allowGlobalContext: true,
                     connect: false,
                 });

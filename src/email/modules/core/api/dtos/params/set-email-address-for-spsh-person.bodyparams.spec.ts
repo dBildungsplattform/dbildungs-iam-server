@@ -5,7 +5,7 @@ import { SetEmailAddressForSpshPersonBodyParams } from './set-email-address-for-
 
 describe('SetEmailAddressForSpshPersonBodyParams', () => {
     const referenceParams: SetEmailAddressForSpshPersonBodyParams = {
-        spshUsername: faker.internet.userName(),
+        spshUsername: faker.internet.username(),
         kennungen: [faker.string.alphanumeric(5), faker.string.alphanumeric(7)],
         firstName: faker.string.uuid(),
         lastName: faker.string.uuid(),

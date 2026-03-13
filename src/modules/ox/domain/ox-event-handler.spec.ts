@@ -183,7 +183,7 @@ describe('OxEventHandler', () => {
     ): GetDataForUserResponse {
         return {
             id: id ?? faker.string.numeric(),
-            username: username ?? faker.internet.userName(),
+            username: username ?? faker.internet.username(),
             firstname: faker.person.firstName(),
             lastname: faker.person.lastName(),
             mailenabled: true,
@@ -221,7 +221,7 @@ describe('OxEventHandler', () => {
                 id: personId,
                 vorname: faker.person.firstName(),
                 familienname: faker.person.lastName(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
             },
             [],
             [
@@ -275,7 +275,7 @@ describe('OxEventHandler', () => {
             emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
 
             const personId: PersonID = faker.string.uuid();
-            const event: PersonDeletedEvent = new PersonDeletedEvent(personId, faker.internet.userName());
+            const event: PersonDeletedEvent = new PersonDeletedEvent(personId, faker.internet.username());
 
             await sut.handlePersonDeletedEvent(event);
             expect(loggerMock.info).toHaveBeenCalledWith(
@@ -296,7 +296,7 @@ describe('OxEventHandler', () => {
             fakeDstNr = faker.string.numeric();
             event = new EmailAddressGeneratedEvent(
                 personId,
-                faker.internet.userName(),
+                faker.internet.username(),
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
@@ -353,7 +353,7 @@ describe('OxEventHandler', () => {
             fakeDstNr = faker.string.numeric();
             event = new EmailAddressGeneratedEvent(
                 personId,
-                faker.internet.userName(),
+                faker.internet.username(),
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
@@ -549,7 +549,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -663,7 +663,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -954,7 +954,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -1048,14 +1048,14 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
             };
             email = faker.internet.email();
             oxUserId = faker.string.numeric();
-            oxUserName = faker.internet.userName();
+            oxUserName = faker.internet.username();
             contextId = '10';
             contextName = 'testContext';
             event = new EmailAddressChangedEvent(
@@ -1246,7 +1246,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -1255,7 +1255,7 @@ describe('OxEventHandler', () => {
             email = faker.internet.email();
             domain = faker.internet.domainName();
             oxUserId = faker.string.numeric();
-            oxUserName = faker.internet.userName();
+            oxUserName = faker.internet.username();
             contextId = '10';
             contextName = 'testContext';
             event = new DisabledEmailAddressGeneratedEvent(personId, username, email, emailId, domain);
@@ -1332,7 +1332,7 @@ describe('OxEventHandler', () => {
             person = DoFactory.createPerson(true, {
                 id: personId,
                 email: faker.internet.email(),
-                username: faker.internet.userName(),
+                username: faker.internet.username(),
                 oxUserId: faker.string.uuid(),
             });
         });
@@ -1405,7 +1405,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -1569,7 +1569,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             oxUserId = faker.string.numeric();
             emailAddressId = faker.string.uuid();
             status = EmailAddressStatus.DISABLED;
@@ -1711,7 +1711,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -1818,7 +1818,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -1935,7 +1935,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             personIdentifier = {
                 personId: personId,
                 username: username,
@@ -2020,7 +2020,7 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             vi.resetAllMocks();
             personId = faker.string.uuid();
-            username = faker.internet.userName();
+            username = faker.internet.username();
             oxUserId = faker.string.numeric();
             event = new PersonDeletedAfterDeadlineExceededEvent(personId, username, oxUserId);
         });
