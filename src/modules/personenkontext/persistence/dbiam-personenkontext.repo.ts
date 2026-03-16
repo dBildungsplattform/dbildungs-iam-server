@@ -607,6 +607,8 @@ export class DBiamPersonenkontextRepo {
         const pkById: Map<string, PersonenkontextEntity> = new Map(pks.map((p: PersonenkontextEntity) => [p.id, p]));
         const spById: Map<string, ServiceProviderEntity> = new Map(sps.map((s: ServiceProviderEntity) => [s.id, s]));
 
+        //The case that pk or sp doesnt exist in pkByUd or spById is not be possible since the query returns only existing pk and sp ids.
+        //A type assertion on .get is used to avoid returning errors and handling them, even though such errors can never actually occur.
         const result: ErweiterterServiceProviderForPK[] = rows.map((r: ErweiterterServiceProviderForPKEntity) => {
             const personenkontext: PersonenkontextEntity = pkById.get(r.personenkontext_id)!;
             const serviceProvider: ServiceProviderEntity = spById.get(r.service_provider_id)!;
