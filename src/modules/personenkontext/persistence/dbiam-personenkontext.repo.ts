@@ -553,7 +553,7 @@ export class DBiamPersonenkontextRepo {
         return result;
     }
 
-    public async findErweiterteSPByPersonId(personId: string): Promise<ErweiterterServiceProviderForPK[]> {
+    public async findErweiterteSPByPersonId(personId: PersonID): Promise<ErweiterterServiceProviderForPK[]> {
         const query: string = `
             WITH RECURSIVE
             expanded_rollenerweiterung AS (
