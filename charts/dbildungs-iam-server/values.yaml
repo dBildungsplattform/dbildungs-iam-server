@@ -363,7 +363,7 @@ featureFlags:
 
 emailMicroservice:
   useService: false
-  endpoint: http://dbildungs-iam-server-email-backend.spsh-xxx.svc.cluster.local:80
+  endpoint: http://dbildungs-iam-server-email-backend.spsh-xxx.svc.cluster.local:80/
 
 cron:
   personWithoutOrgLimit: 30
