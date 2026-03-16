@@ -274,7 +274,7 @@ describe('UserExternaldataWorkflow', () => {
             );
         });
 
-        //Impossible since when no kontext exists person can not have any erweiterung.
+        // This scenario should be impossible: without a context, a person cannot have any extensions.
         it('should handle empty externalPkData', () => {
             const erweitererSP: ErweiterterServiceProviderForPK = {
                 personenkontext: DoFactory.createPersonenkontext(true, { id: 'pk1' }),

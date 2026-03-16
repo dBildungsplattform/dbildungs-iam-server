@@ -330,6 +330,10 @@ describe('dbiam Personenkontext Repo', () => {
             const mockMerkmale: DeepMocked<Collection<ServiceProviderMerkmalEntity>> =
                 createMock<Collection<ServiceProviderMerkmalEntity>>(Collection);
             mockMerkmale.getItems.mockReturnValue([]);
+            mockMerkmale.map.mockImplementation(
+                (callback: (item: ServiceProviderMerkmalEntity, index: number) => unknown) =>
+                    mockMerkmale.getItems().map(callback),
+            );
 
             // Mock the ORM response for rolle.serviceProvider.getItems()
             const mockServiceProvider: DeepMocked<ServiceProviderEntity> =
@@ -1194,7 +1198,7 @@ describe('dbiam Personenkontext Repo', () => {
         });
     });
 
-    describe('findPkErweiterungen', () => {
+    describe('findErweiterteSPByPersonId', () => {
         it('should find pkErweiterungen for this person', async () => {
             const person: Person<true> = await createPerson();
             const rolleA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
@@ -1205,7 +1209,7 @@ describe('dbiam Personenkontext Repo', () => {
                 throw Error();
             }
 
-            await personenkontextRepoInternal.save(
+            const pk: Personenkontext<true> = await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
                     personId: person.id,
                     rolleId: rolleA.id,
@@ -1226,6 +1230,8 @@ describe('dbiam Personenkontext Repo', () => {
 
             const result: ErweiterterServiceProviderForPK[] = await sut.findErweiterteSPByPersonId(person.id);
             expect(result.length).toEqual(1);
+            expect(result[0]?.personenkontext.id).toEqual(pk.id);
+            expect(result[0]?.serviceProvider.id).toEqual(serviceprovider.id);
         });
     });
 });
