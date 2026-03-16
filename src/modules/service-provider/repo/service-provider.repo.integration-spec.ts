@@ -86,131 +86,153 @@ describe('ServiceProviderRepo', () => {
         expect(em).toBeDefined();
     });
 
-    describe('save', () => {
-        describe('creating', () => {
-            it('should save new service-provider', async () => {
-                const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
-                    merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
-                });
-                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+    describe('create', () => {
+        it('should save new service-provider', async () => {
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
-                    permissionsMock,
-                    serviceProvider,
-                );
+            const createResult: Result<ServiceProvider<true>, DomainError> = await sut.create(
+                permissionsMock,
+                serviceProvider,
+            );
 
-                expectOkResult(saveResult);
-                expect(saveResult.value.id).toBeDefined();
-            });
-
-            it('should return error if name is already used', async () => {
-                const name: string = 'Test name';
-                const providedOnSchulstrukturknoten: string = faker.string.uuid();
-
-                await createAndPersistServiceProvider(em, { name, providedOnSchulstrukturknoten });
-                const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
-                    name,
-                    providedOnSchulstrukturknoten,
-                });
-                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
-                    permissionsMock,
-                    serviceProvider,
-                );
-
-                expectErrResult(saveResult);
-                expect(saveResult.error).toBeInstanceOf(DuplicateNameError);
-            });
+            expectOkResult(createResult);
+            expect(createResult.value.id).toBeDefined();
         });
 
-        describe('updating', () => {
-            it('should not return duplicate name error when trying to update existing', async () => {
-                const existingSp: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+        it('should return error if name is already used', async () => {
+            const name: string = 'Test name';
+            const providedOnSchulstrukturknoten: string = faker.string.uuid();
 
-                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
-                    permissionsMock,
-                    existingSp,
-                );
-
-                expectOkResult(saveResult);
+            await createAndPersistServiceProvider(em, { name, providedOnSchulstrukturknoten });
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+                name,
+                providedOnSchulstrukturknoten,
             });
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            it('should return error if name is already used', async () => {
-                const nameA: string = 'Test name';
-                const nameB: string = 'Test name';
-                const providedOnSchulstrukturknoten: string = faker.string.uuid();
+            const createResult: Result<ServiceProvider<true>, DomainError> = await sut.create(
+                permissionsMock,
+                serviceProvider,
+            );
 
-                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
-                    name: nameA,
-                    providedOnSchulstrukturknoten,
-                });
-                await createAndPersistServiceProvider(em, { name: nameB, providedOnSchulstrukturknoten });
-
-                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-                // Change name
-                serviceProvider.name = nameB;
-
-                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
-                    permissionsMock,
-                    serviceProvider,
-                );
-
-                expectErrResult(saveResult);
-                expect(saveResult.error).toBeInstanceOf(DuplicateNameError);
-            });
-
-            it('should return error serviceprovider could not be found', async () => {
-                const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-
-                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
-                    permissionsMock,
-                    serviceProvider,
-                );
-
-                expectErrResult(saveResult);
-                expect(saveResult.error).toBeInstanceOf(EntityNotFoundError);
-            });
+            expectErrResult(createResult);
+            expect(createResult.error).toBeInstanceOf(DuplicateNameError);
         });
 
-        describe('checkPermissionsForServiceProvider', () => {
-            it('should return true if user is admin', async () => {
-                const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
-                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+        it('should set some default values if person only has limited permissions', async () => {
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+                merkmale: [],
+                requires2fa: true,
+                kategorie: ServiceProviderKategorie.VERWALTUNG,
+            });
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false); // ANGEBOTE_VERWALTEN
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true); // ANGEBOTE_EINGESCHRAENKT_VERWALTEN
 
-                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
-                    permissionsMock,
-                    serviceProvider,
-                );
+            const createResult: Result<ServiceProvider<true>, DomainError> = await sut.create(
+                permissionsMock,
+                serviceProvider,
+            );
 
-                expectOkResult(saveResult);
-                expect(saveResult.value.id).toBeDefined();
+            expectOkResult(createResult);
+            expect(createResult.value.id).toBeDefined();
+
+            expect(createResult.value.merkmale).toEqual([
+                ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+                ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
+            ]);
+            expect(createResult.value.requires2fa).toBe(false);
+            expect(createResult.value.kategorie).toBe(ServiceProviderKategorie.SCHULISCH);
+        });
+    });
+
+    describe('update', () => {
+        it('should not return duplicate name error when trying to update existing', async () => {
+            const existingSp: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const updateResult: Result<ServiceProvider<true>, DomainError> = await sut.update(
+                permissionsMock,
+                existingSp,
+            );
+
+            expectOkResult(updateResult);
+        });
+
+        it('should return error if name is already used', async () => {
+            const nameA: string = 'Test name 1';
+            const nameB: string = 'Test name 2';
+            const providedOnSchulstrukturknoten: string = faker.string.uuid();
+
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                name: nameA,
+                providedOnSchulstrukturknoten,
+            });
+            await createAndPersistServiceProvider(em, { name: nameB, providedOnSchulstrukturknoten });
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            // Change name
+            serviceProvider.name = nameB;
+
+            const updateResult: Result<ServiceProvider<true>, DomainError> = await sut.update(
+                permissionsMock,
+                serviceProvider,
+            );
+
+            expectErrResult(updateResult);
+            expect(updateResult.error).toBeInstanceOf(DuplicateNameError);
+        });
+
+        it('should return error serviceprovider could not be found', async () => {
+            const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const updateResult: Result<ServiceProvider<true>, DomainError> = await sut.update(
+                permissionsMock,
+                serviceProvider,
+            );
+
+            expectErrResult(updateResult);
+            expect(updateResult.error).toBeInstanceOf(EntityNotFoundError);
+        });
+
+        it('should ignore changes to specific properties if person has limited permissions', async () => {
+            const merkmale: ServiceProviderMerkmal[] = [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR];
+            const requires2fa: boolean = true;
+            const kategorie: ServiceProviderKategorie = ServiceProviderKategorie.VERWALTUNG;
+
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale,
+                requires2fa,
+                kategorie,
             });
 
-            it('should return true if user is admin', async () => {
-                const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
-                const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false); // ANGEBOTE_VERWALTEN
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true); // ANGEBOTE_EINGESCHRAENKT_VERWALTEN
 
-                const saveResult: Result<ServiceProvider<true>, DomainError> = await sut.save(
-                    permissionsMock,
-                    serviceProvider,
-                );
+            serviceProvider.merkmale = [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG];
+            serviceProvider.requires2fa = false;
+            serviceProvider.kategorie = ServiceProviderKategorie.EMAIL;
 
-                expectOkResult(saveResult);
-                expect(saveResult.value.id).toBeDefined();
-            });
+            const updateResult: Result<ServiceProvider<true>, DomainError> = await sut.update(
+                permissionsMock,
+                serviceProvider,
+            );
+
+            expectOkResult(updateResult);
+            expect(updateResult.value.merkmale).toEqual(merkmale);
+            expect(updateResult.value.requires2fa).toEqual(requires2fa);
+            expect(updateResult.value.kategorie).toEqual(kategorie);
         });
     });
 
