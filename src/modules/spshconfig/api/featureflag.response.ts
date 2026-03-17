@@ -15,13 +15,13 @@ export class FeatureFlagResponse {
     public setUemPasswordEnabled: boolean;
 
     @ApiProperty()
-    public angebotErstellenEnabled: boolean;
+    public schulischeAngeboteErstellen: boolean;
 
     public constructor(featureFlagConfig: FeatureFlagConfig) {
         this.rolleBearbeitenEnabled = featureFlagConfig.FEATURE_FLAG_ROLLE_BEARBEITEN;
         this.befristungBearbeitenEnabled = featureFlagConfig.FEATURE_FLAG_BEFRISTUNG_BEARBEITEN;
         this.rolleErweiternEnabled = featureFlagConfig.FEATURE_FLAG_ROLLE_ERWEITERN;
         this.setUemPasswordEnabled = featureFlagConfig.FEATURE_FLAG_SET_UEM_PASSWORD;
-        this.angebotErstellenEnabled = featureFlagConfig.FEATURE_FLAG_ANGEBOT_ERSTELLEN;
+        this.schulischeAngeboteErstellen = featureFlagConfig.FEATURE_FLAG_SCHULISCHE_ANGEBOTE_ERSTELLEN;
     }
 }

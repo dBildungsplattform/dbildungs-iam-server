@@ -66,4 +66,4 @@ data:
   CRON_EMAIL_ADDRESSES_DELETE_LIMIT: '{{ .Values.cron.emailAddressesDeleteLimit }}'
   FEATURE_FLAG_ROLLE_ERWEITERN: '{{ .Values.featureFlags.rolleErweitern }}'
   FEATURE_FLAG_SET_UEM_PASSWORD: '{{ .Values.featureFlags.setUemPassword }}'
-  FEATURE_FLAG_ANGEBOT_ERSTELLEN: '{{ .Values.featureFlags.angebotErstellen }}'
+  FEATURE_FLAG_SCHULISCHE_ANGEBOTE_ERSTELLEN: '{{ .Values.featureFlags.schulischeAngeboteErstellen }}'
