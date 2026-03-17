@@ -17,7 +17,7 @@ describe('NameUniqueAtOrgaSpecification', () => {
             await expect(sut.isSatisfiedBy(sp)).resolves.toBe(true);
         });
 
-        it('should return false, if the name is alread in use', async () => {
+        it('should return false, if the name is already in use', async () => {
             spRepoMock.existsDuplicateNameForOrganisation.mockResolvedValueOnce(true);
 
             await expect(sut.isSatisfiedBy(sp)).resolves.toBe(false);

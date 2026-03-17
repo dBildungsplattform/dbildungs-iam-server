@@ -53,7 +53,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
-import { MissingPermissionsError } from '../../../shared/error/index.js';
+import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProviderSystem } from '../domain/service-provider.enum.js';
@@ -380,13 +380,12 @@ export class ProviderController {
             body.merkmale,
         );
 
-        const result: Result<ServiceProvider<true>> = await this.serviceProviderRepo.create(
+        const result: Result<ServiceProvider<true>, DomainError> = await this.serviceProviderRepo.create(
             permissions,
             serviceProvider,
         );
 
         if (!result.ok) {
-            // TODO Fehlertypen unterscheiden?
             throw result.error;
         }
 

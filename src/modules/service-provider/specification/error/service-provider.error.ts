@@ -5,7 +5,7 @@ export class ServiceProviderError extends DomainError {
         public override readonly message: string,
         code: string,
         public readonly entityId?: string,
-        details?: unknown[] | Record<string, undefined>,
+        details?: unknown[] | Record<string, unknown>,
     ) {
         super(message, code, details);
     }
