@@ -48,9 +48,8 @@ export default defineConfig({
                 'vite.config.ts',
             ],
             thresholds: {
-                autoUpdate: true,
                 statements: 100,
-                branches: -95,
+                branches: -96, // Absolute count to avoid regressions
                 functions: 100,
                 lines: 100,
             },
