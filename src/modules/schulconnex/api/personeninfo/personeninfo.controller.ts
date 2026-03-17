@@ -1,4 +1,4 @@
-import { Controller, Headers, Get } from '@nestjs/common';
+import { Controller, Headers, Get, UseFilters } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiOAuth2,
@@ -16,7 +16,15 @@ import { PersonenInfoService } from '../../domain/personeninfo/personeninfo.serv
 import { ExceedsLimitError } from '../../../../shared/error/exceeds-limit.error.js';
 import { ConfigService } from '@nestjs/config';
 import { SchulconnexConfig } from '../../../../shared/config/schulconnex.config.js';
+import { SchulConnexAuthenticationDomainErrorFilter } from '../../error/schulconnex-authentication-domain-error-filter.js';
+import { SchulConnexSharedErrorFilter } from '../../error/schulconnex-shared-error-filter.js';
+import { SchulConnexValidationErrorFilter } from '../../error/schulconnex-validation-error.filter.js';
 
+@UseFilters(
+    new SchulConnexSharedErrorFilter(),
+    new SchulConnexAuthenticationDomainErrorFilter(),
+    new SchulConnexValidationErrorFilter(),
+)
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
 @ApiTags('personen-info')

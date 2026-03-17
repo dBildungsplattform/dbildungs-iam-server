@@ -112,9 +112,6 @@ export class OrganisationController {
             permissions,
         );
         if (!result.ok) {
-            if (result.error instanceof OrganisationSpecificationError) {
-                throw result.error;
-            }
             throw result.error;
         }
 
@@ -174,9 +171,6 @@ export class OrganisationController {
         if (result.ok) {
             return new OrganisationResponse(result.value);
         } else {
-            if (result.error instanceof OrganisationSpecificationError) {
-                throw result.error;
-            }
             throw result.error;
         }
     }
@@ -435,9 +429,6 @@ export class OrganisationController {
         );
 
         if (result instanceof DomainError) {
-            if (result instanceof OrganisationSpecificationError) {
-                throw result;
-            }
             throw result;
         }
 

@@ -17,7 +17,7 @@ import { PersonenkontextdatensatzResponse } from './response/personenkontextdate
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
-import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
@@ -29,12 +29,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { PersonApiMapper } from '../../person/mapper/person-api.mapper.js';
-import { DomainErrorMock } from '../../../../test/utils/error.mock.js';
 import { MockedObject } from 'vitest';
-import { APP_FILTER } from '@nestjs/core';
-import { SchulConnexAuthenticationDomainErrorFilter } from '../../schulconnex/error/schulconnex-authentication-domain-error-filter.js';
-import { SchulConnexSharedErrorFilter } from '../../schulconnex/error/schulconnex-shared-error-filter.js';
-import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -73,9 +68,6 @@ describe('PersonenkontextController', () => {
                     provide: OrganisationService,
                     useValue: createMock(OrganisationService),
                 },
-                { provide: APP_FILTER, useClass: SchulConnexValidationErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexAuthenticationDomainErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexSharedErrorFilter },
                 PersonApiMapper,
             ],
         }).compile();
@@ -150,12 +142,14 @@ describe('PersonenkontextController', () => {
 
                 personService.findPersonById.mockResolvedValue({
                     ok: false,
-                    error: new DomainErrorMock(),
+                    error: new EntityNotFoundError(),
                 });
 
                 const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
-                await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toBeInstanceOf(DomainError);
+                await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toBeInstanceOf(
+                    EntityNotFoundError,
+                );
             });
 
             it('should throw error', async () => {
@@ -216,13 +210,15 @@ describe('PersonenkontextController', () => {
 
                 const personResultMock: Result<Person<true>, DomainError> = {
                     ok: false,
-                    error: new DomainErrorMock(),
+                    error: new EntityNotFoundError(),
                 };
 
                 personenkontextService.findPersonenkontextById.mockResolvedValue(personenkontextResultMock);
                 personService.findPersonById.mockResolvedValue(personResultMock);
 
-                await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toBeInstanceOf(DomainError);
+                await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toBeInstanceOf(
+                    EntityNotFoundError,
+                );
             });
         });
     });

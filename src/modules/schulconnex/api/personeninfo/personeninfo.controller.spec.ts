@@ -6,10 +6,7 @@ import { PersonPermissions } from '../../../authentication/domain/person-permiss
 import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
 import { ConfigService } from '@nestjs/config';
 import { createPersonPermissionsMock } from '../../../../../test/utils/auth.mock.js';
-import { APP_FILTER } from '@nestjs/core';
-import { SchulConnexAuthenticationDomainErrorFilter } from '../../error/schulconnex-authentication-domain-error-filter.js';
-import { SchulConnexSharedErrorFilter } from '../../error/schulconnex-shared-error-filter.js';
-import { SchulConnexValidationErrorFilter } from '../../error/schulconnex-validation-error.filter.js';
+import { ExceedsLimitError } from '../../../../shared/error/exceeds-limit.error.js';
 
 describe('PersonenInfoController', () => {
     let controller: PersonenInfoController;
@@ -31,9 +28,6 @@ describe('PersonenInfoController', () => {
                     useValue: createMock(ClassLogger),
                 },
                 { provide: ConfigService, useValue: configService },
-                { provide: APP_FILTER, useClass: SchulConnexValidationErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexAuthenticationDomainErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexSharedErrorFilter },
             ],
         }).compile();
 
@@ -61,10 +55,9 @@ describe('PersonenInfoController', () => {
     it('should handle limit that exceeds maximum limit', async () => {
         const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
         try {
-            await controller.infoV1(permissions, '0', '1000000');
-            throw new Error('Expected exception was not thrown');
+            await expect(controller.infoV1(permissions, '0', '1000000')).rejects.toBeInstanceOf(ExceedsLimitError);
         } catch (e) {
-            expect(e).toBeInstanceOf(Error);
+            expect(e).toBeInstanceOf(ExceedsLimitError);
         }
     });
 });

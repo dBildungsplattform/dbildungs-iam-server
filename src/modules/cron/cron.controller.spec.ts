@@ -30,10 +30,6 @@ import { OrganisationRepository } from '../organisation/persistence/organisation
 import { DbiamPersonenkontextFactory } from '../personenkontext/domain/dbiam-personenkontext.factory.js';
 import { ConfigService } from '@nestjs/config';
 import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
-import { APP_FILTER } from '@nestjs/core';
-import { SchulConnexAuthenticationDomainErrorFilter } from '../schulconnex/error/schulconnex-authentication-domain-error-filter.js';
-import { SchulConnexSharedErrorFilter } from '../schulconnex/error/schulconnex-shared-error-filter.js';
-import { SchulConnexValidationErrorFilter } from '../schulconnex/error/schulconnex-validation-error.filter.js';
 
 class UnknownError extends DomainError {
     public constructor(message: string) {
@@ -105,9 +101,6 @@ describe('CronController', () => {
                     provide: ServiceProviderService,
                     useValue: createMock(ServiceProviderService),
                 },
-                { provide: APP_FILTER, useClass: SchulConnexValidationErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexAuthenticationDomainErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexSharedErrorFilter },
             ],
             controllers: [CronController],
         }).compile();

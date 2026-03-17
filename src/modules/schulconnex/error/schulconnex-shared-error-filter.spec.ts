@@ -18,7 +18,6 @@ describe('SharedErrorFilter', () => {
     const statusCode: number = 500;
     let responseMock: Partial<Response>;
     let argumentsHost: Partial<ArgumentsHost>;
-    let domainError: SharedDomainError;
 
     const generalSharedError: SchulConnexError = new SchulConnexError({
         code: statusCode,
@@ -104,11 +103,10 @@ describe('SharedErrorFilter', () => {
         });
 
         describe('when filter catches an entityCouldNotBeCreatedError error', () => {
-            beforeEach(() => {
-                domainError = new EntityCouldNotBeCreated('Entität konnte nicht erstellt werden');
-            });
-
             it('should throw a shared schulconnex exception', () => {
+                const domainError: EntityCouldNotBeCreated = new EntityCouldNotBeCreated(
+                    'Entität konnte nicht erstellt werden',
+                );
                 filter.catch(domainError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
@@ -118,11 +116,11 @@ describe('SharedErrorFilter', () => {
         });
 
         describe('when filter catches an entityCouldNotBeUpdatedError error', () => {
-            beforeEach(() => {
-                domainError = new EntityCouldNotBeUpdated('Entität konnte nicht erstellt werden', '00');
-            });
-
             it('should throw a shared schulconnex exception', () => {
+                const domainError: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated(
+                    'Entität konnte nicht erstellt werden',
+                    '00',
+                );
                 filter.catch(domainError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
@@ -132,11 +130,11 @@ describe('SharedErrorFilter', () => {
         });
 
         describe('when filter catches an entityCouldNotBeDeletedError error', () => {
-            beforeEach(() => {
-                domainError = new EntityCouldNotBeDeleted('Entität konnte nicht gelöscht werden', '00');
-            });
-
             it('should throw a shared schulconnex exception', () => {
+                const domainError: EntityCouldNotBeDeleted = new EntityCouldNotBeDeleted(
+                    'Entität konnte nicht gelöscht werden',
+                    '00',
+                );
                 filter.catch(domainError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
@@ -146,11 +144,10 @@ describe('SharedErrorFilter', () => {
         });
 
         describe('when filter catches an entityNotFoundError error', () => {
-            beforeEach(() => {
-                domainError = new EntityNotFoundError('Entität konnte nicht gefunden werden');
-            });
-
             it('should throw a shared schulconnex exception', () => {
+                const domainError: EntityNotFoundError = new EntityNotFoundError(
+                    'Entität konnte nicht gefunden werden',
+                );
                 filter.catch(domainError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
@@ -160,11 +157,10 @@ describe('SharedErrorFilter', () => {
         });
 
         describe('when filter catches an keycloakClientError error', () => {
-            beforeEach(() => {
-                domainError = new KeycloakClientError('Keycloak Client Fehler ist aufgetreten');
-            });
-
             it('should throw a shared schulconnex exception', () => {
+                const domainError: KeycloakClientError = new KeycloakClientError(
+                    'Keycloak Client Fehler ist aufgetreten',
+                );
                 filter.catch(domainError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
@@ -174,11 +170,10 @@ describe('SharedErrorFilter', () => {
         });
 
         describe('when filter catches an mismatchedRevisionError error', () => {
-            beforeEach(() => {
-                domainError = new MismatchedRevisionError('Entität konnte nicht erstellt werden');
-            });
-
             it('should throw a shared schulconnex exception', () => {
+                const domainError: MismatchedRevisionError = new MismatchedRevisionError(
+                    'Entität konnte nicht erstellt werden',
+                );
                 filter.catch(domainError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();

@@ -336,9 +336,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             // Mock the service to throw DuplicatePersonalnummerError
-            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
-                new DuplicatePersonalnummerError('Duplicate Kopers'),
-            );
+            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce({
+                ok: false,
+                error: new DuplicatePersonalnummerError('Duplicate Kopers'),
+            });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')
@@ -375,9 +376,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             // Mock the service to throw DuplicatePersonalnummerError
-            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
-                new PersonenkontexteUpdateError('Error'),
-            );
+            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce({
+                ok: false,
+                error: new PersonenkontexteUpdateError('Error'),
+            });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')
@@ -412,9 +414,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             // Mock the service to throw DuplicatePersonalnummerError
-            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
-                new PersonenkontexteUpdateError('Error'),
-            );
+            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce({
+                ok: false,
+                error: new PersonenkontexteUpdateError('Error'),
+            });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')

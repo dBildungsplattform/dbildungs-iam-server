@@ -38,7 +38,8 @@ import { APP_FILTER } from '@nestjs/core';
 import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
 import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
 import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
-import { SharedDomainError } from '../../../shared/error/index.js';
+import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
 
 function createLoadedReference<T extends object>(entity: T): LoadedReference<T> {
     const reference: Reference<T> = createMock<Reference<T>>(Reference);
@@ -457,7 +458,7 @@ describe('KeycloakInternalController', () => {
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
 
             await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toBeInstanceOf(
-                SharedDomainError,
+                UserExternalDataWorkflowError,
             );
         });
 
@@ -466,7 +467,7 @@ describe('KeycloakInternalController', () => {
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
 
             await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toBeInstanceOf(
-                SharedDomainError,
+                EntityNotFoundError,
             );
         });
     });

@@ -29,10 +29,6 @@ import { PersonInfoPersonResponseV1 } from './v1/person-info-person.response.v1.
 import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
 import { ConfigTestModule, DatabaseTestModule } from '../../../../../test/utils/index.js';
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
-import { SchulConnexValidationErrorFilter } from '../../error/schulconnex-validation-error.filter.js';
-import { SchulConnexAuthenticationDomainErrorFilter } from '../../error/schulconnex-authentication-domain-error-filter.js';
-import { SchulConnexSharedErrorFilter } from '../../error/schulconnex-shared-error-filter.js';
-import { APP_FILTER } from '@nestjs/core';
 import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
 
 describe('PersonInfoController', () => {
@@ -79,9 +75,6 @@ describe('PersonInfoController', () => {
                     provide: EmailResolverService,
                     useValue: createMock(EmailResolverService),
                 },
-                { provide: APP_FILTER, useClass: SchulConnexValidationErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexAuthenticationDomainErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexSharedErrorFilter },
             ],
         })
             .overrideProvider(UserLockRepository)

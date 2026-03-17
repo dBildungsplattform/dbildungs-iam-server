@@ -14,13 +14,7 @@ import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service
 import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
-import {
-    DomainError,
-    EntityCouldNotBeDeleted,
-    EntityNotFoundError,
-    MismatchedRevisionError,
-    SharedDomainError,
-} from '../../../shared/error/index.js';
+import { EntityCouldNotBeDeleted, EntityNotFoundError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
@@ -61,10 +55,6 @@ import { PersonController } from './person.controller.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
-import { APP_FILTER } from '@nestjs/core';
-import { SchulConnexAuthenticationDomainErrorFilter } from '../../schulconnex/error/schulconnex-authentication-domain-error-filter.js';
-import { SchulConnexSharedErrorFilter } from '../../schulconnex/error/schulconnex-shared-error-filter.js';
-import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -166,9 +156,6 @@ describe('PersonController', () => {
                     provide: EmailResolverService,
                     useValue: createMock(EmailResolverService),
                 },
-                { provide: APP_FILTER, useClass: SchulConnexValidationErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexAuthenticationDomainErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexSharedErrorFilter },
             ],
         })
             .overrideProvider(EventRoutingLegacyKafkaService)
@@ -655,7 +642,7 @@ describe('PersonController', () => {
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
 
                 await expect(personController.updatePerson(params, body, personPermissionsMock)).rejects.toBeInstanceOf(
-                    SharedDomainError,
+                    MismatchedRevisionError,
                 );
                 //expect(personRepositoryMock.findById).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
@@ -1022,7 +1009,7 @@ describe('PersonController', () => {
 
                 await expect(
                     personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
-                ).rejects.toBeInstanceOf(DomainError);
+                ).rejects.toBeInstanceOf(PersonDomainError);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
@@ -1115,7 +1102,7 @@ describe('PersonController', () => {
             );
 
             it('should throw a domain error', async () => {
-                await expect(personController.resetUEMPassword(permissions)).rejects.toBeInstanceOf(DomainError);
+                await expect(personController.resetUEMPassword(permissions)).rejects.toBeInstanceOf(PersonDomainError);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });

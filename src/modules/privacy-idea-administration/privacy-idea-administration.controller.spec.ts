@@ -20,10 +20,6 @@ import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
 import { TokenVerifyBodyParams } from './token-verify.params.js';
 import { TokenInitBodyParams } from './token-init.body.params.js';
-import { APP_FILTER } from '@nestjs/core';
-import { SharedExceptionFilter } from '../../shared/filter/shared-exception-filter.js';
-import { ValidationExceptionFilter } from '../../shared/filter/validation-exception-filter.js';
-import { AuthenticationExceptionFilter } from '../authentication/api/authentication-exception-filter.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -59,9 +55,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                     provide: PersonRepository,
                     useValue: createMock(PersonRepository),
                 },
-                { provide: APP_FILTER, useClass: ValidationExceptionFilter },
-                { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
-                { provide: APP_FILTER, useClass: SharedExceptionFilter },
             ],
         }).compile();
 

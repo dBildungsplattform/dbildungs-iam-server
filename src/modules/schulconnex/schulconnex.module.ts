@@ -12,13 +12,6 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
 import { SchulconnexRepo } from './persistence/schulconnex.repo.js';
 import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
-import { SchulConnexValidationErrorFilter } from './error/schulconnex-validation-error.filter.js';
-import { SchulConnexSharedErrorFilter } from './error/schulconnex-shared-error-filter.js';
-import { SchulConnexAuthenticationDomainErrorFilter } from './error/schulconnex-authentication-domain-error-filter.js';
-import { APP_FILTER } from '@nestjs/core';
-import { SharedExceptionFilter } from '../../shared/filter/shared-exception-filter.js';
-import { ValidationExceptionFilter } from '../../shared/filter/validation-exception-filter.js';
-import { AuthenticationExceptionFilter } from '../authentication/api/authentication-exception-filter.js';
 
 @Module({
     imports: [
@@ -31,17 +24,7 @@ import { AuthenticationExceptionFilter } from '../authentication/api/authenticat
         EmailMicroserviceModule,
         LoggerModule.register(SchulconnexModule.name),
     ],
-    providers: [
-        PersonenInfoService,
-        SchulconnexRepo,
-        EntityAggregateMapper,
-        SchulConnexValidationErrorFilter,
-        SchulConnexSharedErrorFilter,
-        SchulConnexAuthenticationDomainErrorFilter,
-        { provide: APP_FILTER, useClass: ValidationExceptionFilter },
-        { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
-        { provide: APP_FILTER, useClass: SharedExceptionFilter },
-    ],
+    providers: [PersonenInfoService, SchulconnexRepo, EntityAggregateMapper],
     controllers: [PersonInfoController, PersonenInfoController],
 })
 export class SchulconnexModule {}

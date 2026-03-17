@@ -1,6 +1,6 @@
 import { Mock, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { APP_FILTER, APP_PIPE } from '@nestjs/core';
+import { APP_PIPE } from '@nestjs/core';
 import { createPersonPermissionsMock, LoggingTestModule } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { RollenerweiterungController } from './rollenerweiterung.controller.js';
@@ -15,9 +15,6 @@ import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterung
 import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
 import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
-import { SchulConnexAuthenticationDomainErrorFilter } from '../../schulconnex/error/schulconnex-authentication-domain-error-filter.js';
-import { SchulConnexSharedErrorFilter } from '../../schulconnex/error/schulconnex-shared-error-filter.js';
-import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
 
 describe('RollenerweiterungController', () => {
     let controller: RollenerweiterungController;
@@ -31,9 +28,6 @@ describe('RollenerweiterungController', () => {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
                 },
-                { provide: APP_FILTER, useClass: SchulConnexValidationErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexAuthenticationDomainErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexSharedErrorFilter },
                 {
                     provide: ClassLogger,
                     useValue: createMock<ClassLogger>(ClassLogger),

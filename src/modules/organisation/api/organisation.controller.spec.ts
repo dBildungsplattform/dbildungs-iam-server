@@ -35,10 +35,6 @@ import { OrganisationDeleteService } from '../organisation-delete/organisation-d
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { OrganisationHasChildrenError } from '../organisation-delete/errors/organisation-has-children.error.js';
 import { CommonCreateUpdateOrganisationBodyParams } from './common-create-update.body.params.js';
-import { APP_FILTER } from '@nestjs/core';
-import { SchulConnexAuthenticationDomainErrorFilter } from '../../schulconnex/error/schulconnex-authentication-domain-error-filter.js';
-import { SchulConnexSharedErrorFilter } from '../../schulconnex/error/schulconnex-shared-error-filter.js';
-import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = new OrganisationByIdParams();
@@ -85,9 +81,6 @@ describe('OrganisationController', () => {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock(DBiamPersonenkontextRepo),
                 },
-                { provide: APP_FILTER, useClass: SchulConnexValidationErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexAuthenticationDomainErrorFilter },
-                { provide: APP_FILTER, useClass: SchulConnexSharedErrorFilter },
             ],
         }).compile();
         organisationController = module.get(OrganisationController);

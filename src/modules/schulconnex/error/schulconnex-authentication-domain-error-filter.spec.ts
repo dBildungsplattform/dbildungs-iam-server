@@ -12,7 +12,6 @@ describe('AuthenticationDomainErrorFilter', () => {
     const statusCode: number = 403;
     let responseMock: Partial<Response>;
     let argumentsHost: Partial<ArgumentsHost>;
-    let authenticationError: AuthenticationDomainError;
 
     const generalAuthenticationError: SchulConnexError = new SchulConnexError({
         code: statusCode,
@@ -73,11 +72,8 @@ describe('AuthenticationDomainErrorFilter', () => {
         });
 
         describe('when filter catches a keycloakUserNotFoundError error', () => {
-            beforeEach(() => {
-                authenticationError = new KeycloakUserNotFoundError();
-            });
-
             it('should throw an authentication schulconnex exception', () => {
+                const authenticationError: KeycloakUserNotFoundError = new KeycloakUserNotFoundError();
                 filter.catch(authenticationError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
@@ -87,11 +83,8 @@ describe('AuthenticationDomainErrorFilter', () => {
         });
 
         describe('when filter catches a requiredStepUpLevelNotMetError error ', () => {
-            beforeEach(() => {
-                authenticationError = new RequiredStepUpLevelNotMetError();
-            });
-
             it('should throw an authentication schulconnex exception', () => {
+                const authenticationError: RequiredStepUpLevelNotMetError = new RequiredStepUpLevelNotMetError();
                 filter.catch(authenticationError, argumentsHost as ArgumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();

@@ -136,13 +136,13 @@ export class DBiamPersonenuebersichtController {
             this.rolleRepository,
             this.config,
         );
-        const response: DBiamPersonenuebersichtResponse | EntityNotFoundError =
+        const responseOrError: Result<DBiamPersonenuebersichtResponse, EntityNotFoundError> =
             await dbiamPersonenUebersicht.getPersonenkontexte(params.personId, permissions);
 
-        if (response instanceof EntityNotFoundError) {
-            throw response;
+        if (!responseOrError.ok) {
+            throw responseOrError.error;
         }
 
-        return response; //I dont know if that maybe can be deleted when we just throw the response obove
+        return responseOrError.value;
     }
 }

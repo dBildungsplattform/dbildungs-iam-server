@@ -302,14 +302,20 @@ export class ImportWorkflow {
         };
     }
 
-    public async downloadFile(importvorgangId: string, permissions: PersonPermissions): Promise<Result<Buffer>> {
+    public async downloadFile(
+        importvorgangId: string,
+        permissions: PersonPermissions,
+    ): Promise<Result<Buffer, DomainError>> {
         const importVorgangResult: Result<ImportVorgang<true>> = await this.checkPermissionsAndImportvorgangValidity(
             importvorgangId,
             permissions,
         );
 
         if (!importVorgangResult.ok) {
-            return importVorgangResult;
+            return {
+                ok: false,
+                error: importVorgangResult.error as DomainError,
+            };
         }
 
         const importVorgang: ImportVorgang<true> = importVorgangResult.value;
@@ -340,7 +346,7 @@ export class ImportWorkflow {
         }
 
         //Create text file.
-        const result: Result<Buffer> = await this.createTextFile(successfulDataItems);
+        const result: Result<Buffer, DomainError> = await this.createTextFile(successfulDataItems);
 
         if (result.ok) {
             importVorgang.complete();
@@ -400,14 +406,17 @@ export class ImportWorkflow {
         importvorgangId: string,
         offset?: number,
         limit?: number,
-    ): Promise<Result<ImportResult>> {
+    ): Promise<Result<ImportResult, DomainError>> {
         const importVorgangResult: Result<ImportVorgang<true>> = await this.checkPermissionsAndImportvorgangValidity(
             importvorgangId,
             permissions,
         );
 
         if (!importVorgangResult.ok) {
-            return importVorgangResult;
+            return {
+                ok: false,
+                error: importVorgangResult.error as DomainError,
+            };
         }
 
         if (limit && limit > 100) {
@@ -537,7 +546,7 @@ export class ImportWorkflow {
         );
     }
 
-    private async createTextFile(importedDataItems: ImportDataItem<true>[]): Promise<Result<Buffer>> {
+    private async createTextFile(importedDataItems: ImportDataItem<true>[]): Promise<Result<Buffer, DomainError>> {
         const [orga, rolle]: [Option<Organisation<true>>, Option<Rolle<true>>] = await Promise.all([
             this.organisationRepository.findById(this.selectedOrganisationId),
             this.rolleRepo.findById(this.selectedRolleId),

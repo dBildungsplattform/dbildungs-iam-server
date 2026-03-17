@@ -306,10 +306,6 @@ export class PersonController {
             body.stammorganisation,
         );
         if (updateResult instanceof DomainError) {
-            if (updateResult instanceof PersonDomainError) {
-                throw updateResult;
-            }
-
             throw updateResult;
         }
         await this.personRepository.update(personResult.value);
