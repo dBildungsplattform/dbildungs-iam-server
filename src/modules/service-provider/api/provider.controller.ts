@@ -380,12 +380,16 @@ export class ProviderController {
             body.merkmale,
         );
 
-        const result: Result<ServiceProvider<true>> = await this.serviceProviderRepo.save(permissions, serviceProvider);
-        if (result.ok) {
-            return new ServiceProviderResponse(result.value);
-        } else {
+        const result: Result<ServiceProvider<true>> = await this.serviceProviderRepo.create(
+            permissions,
+            serviceProvider,
+        );
+
+        if (!result.ok) {
             // TODO Fehlertypen unterscheiden?
             throw result.error;
         }
+
+        return new ServiceProviderResponse(result.value);
     }
 }

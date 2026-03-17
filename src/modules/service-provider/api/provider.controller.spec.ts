@@ -628,7 +628,7 @@ describe('Provider Controller Test', () => {
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             serviceProviderFactoryMock.createNew.mockReturnValueOnce(createdDomainSp);
-            serviceProviderRepoMock.save.mockResolvedValueOnce(Ok(persistedSp));
+            serviceProviderRepoMock.create.mockResolvedValueOnce(Ok(persistedSp));
 
             const result: ServiceProviderResponse = await providerController.createServiceProvider(
                 personPermissionsMock,
@@ -651,7 +651,7 @@ describe('Provider Controller Test', () => {
                 body.vidisAngebotId,
                 body.merkmale,
             );
-            expect(serviceProviderRepoMock.save).toHaveBeenCalledWith(personPermissionsMock, createdDomainSp);
+            expect(serviceProviderRepoMock.create).toHaveBeenCalledWith(personPermissionsMock, createdDomainSp);
             expect(result).toBeInstanceOf(ServiceProviderResponse);
         });
 
@@ -674,7 +674,7 @@ describe('Provider Controller Test', () => {
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             serviceProviderFactoryMock.createNew.mockReturnValueOnce(createdDomainSp);
-            serviceProviderRepoMock.save.mockResolvedValueOnce(Ok(persistedSp));
+            serviceProviderRepoMock.create.mockResolvedValueOnce(Ok(persistedSp));
 
             const result: ServiceProviderResponse = await providerController.createServiceProvider(
                 personPermissionsMock,
@@ -697,7 +697,7 @@ describe('Provider Controller Test', () => {
                 body.vidisAngebotId,
                 body.merkmale,
             );
-            expect(serviceProviderRepoMock.save).toHaveBeenCalledWith(personPermissionsMock, createdDomainSp);
+            expect(serviceProviderRepoMock.create).toHaveBeenCalledWith(personPermissionsMock, createdDomainSp);
             expect(result).toBeInstanceOf(ServiceProviderResponse);
         });
 
@@ -714,7 +714,7 @@ describe('Provider Controller Test', () => {
                 organisationId: faker.string.uuid(),
             });
 
-            serviceProviderRepoMock.save.mockResolvedValueOnce(Err(new MissingPermissionsError('Error')));
+            serviceProviderRepoMock.create.mockResolvedValueOnce(Err(new MissingPermissionsError('Error')));
 
             await expect(() =>
                 providerController.createServiceProvider(personPermissionsMock, body),

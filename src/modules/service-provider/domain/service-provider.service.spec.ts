@@ -779,7 +779,7 @@ describe('ServiceProviderService', () => {
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(
                 mockExistingVidisServiceProviderContainedInVidisAngebote,
             );
-            serviceProviderRepo.save.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
+            serviceProviderRepo.update.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
             if (mockExistingSchulen[0]) {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
@@ -791,7 +791,7 @@ describe('ServiceProviderService', () => {
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
             expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
-            expect(serviceProviderRepo.save).toHaveBeenCalledTimes(mockVidisAngebote.length);
+            expect(serviceProviderRepo.update).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,
             );
@@ -804,7 +804,7 @@ describe('ServiceProviderService', () => {
             vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
-            serviceProviderRepo.save.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
+            serviceProviderRepo.create.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
             if (mockExistingSchulen[0]) {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
@@ -815,7 +815,7 @@ describe('ServiceProviderService', () => {
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
             expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
-            expect(serviceProviderRepo.save).toHaveBeenCalledTimes(mockVidisAngebote.length);
+            expect(serviceProviderRepo.create).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,
             );
@@ -828,7 +828,7 @@ describe('ServiceProviderService', () => {
             vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
-            serviceProviderRepo.save.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
+            serviceProviderRepo.create.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
             if (mockExistingSchulen[0]) {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
@@ -841,7 +841,7 @@ describe('ServiceProviderService', () => {
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
             expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
-            expect(serviceProviderRepo.save).toHaveBeenCalledTimes(mockVidisAngebote.length);
+            expect(serviceProviderRepo.create).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,
             );

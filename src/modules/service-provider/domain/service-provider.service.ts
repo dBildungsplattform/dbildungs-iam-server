@@ -293,9 +293,15 @@ export class ServiceProviderService {
 
                 const angebotLogoMediaType: string = this.determineMediaTypeFor(angebot.angebotLogo);
 
-                let serviceProvider: ServiceProvider<false>;
+                // The following bypass is really bad, but since this code is not excuted in prod, it is better than keeping ServiceProviderRepo.save() without permission checks
+                const permissionOverride: PermissionsOverride = new PermissionsOverride(
+                    null as unknown as PersonPermissions,
+                );
+                permissionOverride.grantSystemrechteAtOrga(schulstrukturknoten, [RollenSystemRecht.ANGEBOTE_VERWALTEN]);
+
+                let persistedServiceProviderResult: Result<ServiceProvider<true>>;
                 if (existingServiceProvider) {
-                    serviceProvider = ServiceProvider.construct(
+                    const serviceProvider: ServiceProvider<true> = ServiceProvider.construct(
                         existingServiceProvider.id,
                         existingServiceProvider.createdAt,
                         existingServiceProvider.updatedAt,
@@ -314,8 +320,22 @@ export class ServiceProviderService {
                         existingServiceProvider.merkmale,
                     );
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' already exists.`);
+
+                    persistedServiceProviderResult = await this.serviceProviderRepo.update(
+                        permissionOverride,
+                        serviceProvider,
+                    );
+
+                    if (!persistedServiceProviderResult.ok) {
+                        this.logger.error(
+                            `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be updated. Error: ${persistedServiceProviderResult.error.message}`,
+                        );
+                        throw new Error(
+                            `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be updated. Error: ${persistedServiceProviderResult.error.message}`,
+                        );
+                    }
                 } else {
-                    serviceProvider = ServiceProvider.createNew(
+                    const serviceProvider: ServiceProvider<false> = ServiceProvider.createNew(
                         angebot.angebotTitle,
                         ServiceProviderTarget.URL,
                         angebot.angebotLink,
@@ -331,23 +351,20 @@ export class ServiceProviderService {
                         [],
                     );
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' was created.`);
-                }
 
-                // The following bypass is really bad, but since this code is not excuted in prod, it is better than keeping ServiceProviderRepo.save() without permission checks
-                const permissionOverride: PermissionsOverride = new PermissionsOverride(
-                    null as unknown as PersonPermissions,
-                );
-                permissionOverride.grantSystemrechteAtOrga(schulstrukturknoten, [RollenSystemRecht.ANGEBOTE_VERWALTEN]);
+                    persistedServiceProviderResult = await this.serviceProviderRepo.create(
+                        permissionOverride,
+                        serviceProvider,
+                    );
 
-                const persistedServiceProviderResult: Result<ServiceProvider<true>> =
-                    await this.serviceProviderRepo.save(permissionOverride, serviceProvider);
-                if (!persistedServiceProviderResult.ok) {
-                    this.logger.error(
-                        `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be saved. Error: ${persistedServiceProviderResult.error.message}`,
-                    );
-                    throw new Error(
-                        `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be saved. Error: ${persistedServiceProviderResult.error.message}`,
-                    );
+                    if (!persistedServiceProviderResult.ok) {
+                        this.logger.error(
+                            `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be created. Error: ${persistedServiceProviderResult.error.message}`,
+                        );
+                        throw new Error(
+                            `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be created. Error: ${persistedServiceProviderResult.error.message}`,
+                        );
+                    }
                 }
 
                 await Promise.allSettled(
@@ -357,7 +374,9 @@ export class ServiceProviderService {
                         ).at(0); // Assumption: kennung is unique for an Organisation and is not contained in name or kennung of any other Organisation
                         if (orga) {
                             await this.organisationServiceProviderRepo.save(orga, persistedServiceProviderResult.value);
-                            this.logger.info(`Mapping of '${serviceProvider.name}' to '${orga.name}' was saved.`);
+                            this.logger.info(
+                                `Mapping of '${persistedServiceProviderResult.value.name}' to '${orga.name}' was saved.`,
+                            );
                         }
                     }),
                 );
