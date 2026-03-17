@@ -2,9 +2,9 @@ import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { Response } from 'express';
 
-import { DuplicateNameError } from '../specification/error/duplicate-name.error';
-import { ServiceProviderError } from '../specification/error/service-provider.error';
-import { DbiamServiceProviderError, ServiceProviderErrorI18nTypes } from './dbiam-service-provider.error';
+import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
+import { ServiceProviderError } from '../specification/error/service-provider.error.js';
+import { DbiamServiceProviderError, ServiceProviderErrorI18nTypes } from './dbiam-service-provider.error.js';
 
 @Catch(ServiceProviderError)
 export class ServiceProviderErrorFilter implements ExceptionFilter<ServiceProviderError> {
