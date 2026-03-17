@@ -31,7 +31,9 @@ import {
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { Ok } from '../../../shared/util/result.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -211,6 +213,7 @@ describe('ServiceProviderService', () => {
     let organisationRepo: DeepMocked<OrganisationRepository>;
     let vidisService: DeepMocked<VidisService>;
     let organisationServiceProviderRepo: DeepMocked<OrganisationServiceProviderRepo>;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -234,6 +237,7 @@ describe('ServiceProviderService', () => {
         organisationServiceProviderRepo = module.get<DeepMocked<OrganisationServiceProviderRepo>>(
             OrganisationServiceProviderRepo,
         );
+        loggerMock = module.get(ClassLogger);
     });
 
     describe('getServiceProvidersByRolleIds', () => {
@@ -800,6 +804,26 @@ describe('ServiceProviderService', () => {
             );
         });
 
+        it('should log error when updating ServiceProvider fails', async () => {
+            vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
+            organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
+            serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(
+                mockExistingVidisServiceProviderContainedInVidisAngebote,
+            );
+            serviceProviderRepo.update.mockResolvedValue(Err(new DuplicateNameError('Name already in use')));
+            if (mockExistingSchulen[0]) {
+                organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            }
+            serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
+            organisationServiceProviderRepo.save.mockResolvedValue();
+
+            await service.updateServiceProvidersForVidis();
+
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `ServiceProvider for VIDIS Angebot 'webtown test offer' could not be updated. Error: Name already in use`,
+            );
+        });
+
         it('should update ServiceProvider for VIDIS Angebote if ServiceProvider in VIDIS Angebot response does not exist in SPSH yet.', async () => {
             vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
@@ -821,6 +845,23 @@ describe('ServiceProviderService', () => {
             );
             expect(organisationServiceProviderRepo.save).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,
+            );
+        });
+
+        it('should log error when creating ServiceProvider fails', async () => {
+            vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
+            organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
+            serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
+            serviceProviderRepo.create.mockResolvedValue(Err(new DuplicateNameError('Name already in use')));
+            if (mockExistingSchulen[0]) {
+                organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            }
+            organisationServiceProviderRepo.save.mockResolvedValue();
+            serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
+            await service.updateServiceProvidersForVidis();
+
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `ServiceProvider for VIDIS Angebot 'webtown test offer' could not be created. Error: Name already in use`,
             );
         });
 

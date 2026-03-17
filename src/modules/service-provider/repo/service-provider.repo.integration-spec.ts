@@ -35,6 +35,7 @@ import { createAndPersistServiceProvider } from '../../../../test/utils/service-
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
@@ -88,7 +89,10 @@ describe('ServiceProviderRepo', () => {
 
     describe('create', () => {
         it('should save new service-provider', async () => {
-            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+                keycloakGroup: faker.string.alphanumeric(),
+                keycloakRole: faker.string.alphanumeric(),
+            });
             const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
@@ -146,6 +150,21 @@ describe('ServiceProviderRepo', () => {
             ]);
             expect(createResult.value.requires2fa).toBe(false);
             expect(createResult.value.kategorie).toBe(ServiceProviderKategorie.SCHULISCH);
+        });
+
+        it('return error if person is missing permissions', async () => {
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+            const createResult: Result<ServiceProvider<true>, DomainError> = await sut.create(
+                permissionsMock,
+                serviceProvider,
+            );
+
+            expectErrResult(createResult);
+            expect(createResult.error).toBeInstanceOf(MissingPermissionsError);
         });
     });
 
@@ -233,6 +252,34 @@ describe('ServiceProviderRepo', () => {
             expect(updateResult.value.merkmale).toEqual(merkmale);
             expect(updateResult.value.requires2fa).toEqual(requires2fa);
             expect(updateResult.value.kategorie).toEqual(kategorie);
+        });
+
+        it('return error if person is missing permissions', async () => {
+            const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+            const createResult: Result<ServiceProvider<true>, DomainError> = await sut.update(
+                permissionsMock,
+                serviceProvider,
+            );
+
+            expectErrResult(createResult);
+            expect(createResult.error).toBeInstanceOf(MissingPermissionsError);
+        });
+    });
+
+    describe('createUnsafe', () => {
+        it('should save new service-provider', async () => {
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+                keycloakGroup: faker.string.alphanumeric(),
+                keycloakRole: faker.string.alphanumeric(),
+            });
+
+            const createdSp: ServiceProvider<true> = await sut.createUnsafe(serviceProvider);
+
+            expect(createdSp.id).toBeDefined();
         });
     });
 

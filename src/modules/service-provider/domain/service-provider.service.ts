@@ -32,6 +32,7 @@ import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/p
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -299,7 +300,7 @@ export class ServiceProviderService {
                 );
                 permissionOverride.grantSystemrechteAtOrga(schulstrukturknoten, [RollenSystemRecht.ANGEBOTE_VERWALTEN]);
 
-                let persistedServiceProviderResult: Result<ServiceProvider<true>>;
+                let persistedServiceProviderResult: Result<ServiceProvider<true>, DomainError>;
                 if (existingServiceProvider) {
                     const serviceProvider: ServiceProvider<true> = ServiceProvider.construct(
                         existingServiceProvider.id,
