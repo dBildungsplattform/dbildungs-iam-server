@@ -8,51 +8,17 @@ import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import {
     DBiamPersonenkontextRepo,
-    PersonenkontextErweitertVirtualEntityLoaded,
+    ErweiterterServiceProviderForPK,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
 import { RequiredExternalPkData } from '../api/keycloakinternal.controller.js';
-import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { EmailAddressNotFoundError } from '../../email/error/email-address-not-found.error.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
-import { LoadedReference, Reference } from '@mikro-orm/core';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
 import { EmailAddress } from '../../../email/modules/core/domain/email-address.js';
-
-function createLoadedServiceProviderReferences(id?: string, name?: string): LoadedReference<ServiceProviderEntity> {
-    const serviceProviderReference: Reference<ServiceProviderEntity> =
-        createMock<Reference<ServiceProviderEntity>>(Reference);
-    serviceProviderReference.unwrap = vi.fn().mockReturnValue(
-        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
-            id: id ?? faker.string.uuid(),
-            name: name ?? faker.company.name(),
-        }),
-    );
-    const loadedServiceProvider: LoadedReference<ServiceProviderEntity> = {
-        ...serviceProviderReference,
-        isInitialized: () => true,
-        get: () => serviceProviderReference.unwrap(),
-    } as LoadedReference<ServiceProviderEntity>;
-
-    return loadedServiceProvider;
-}
-
-function createLoadedPersonenkontextReference(id?: string): LoadedReference<PersonenkontextEntity> {
-    const personenKontextReference: Reference<PersonenkontextEntity> =
-        createMock<Reference<PersonenkontextEntity>>(Reference);
-    personenKontextReference.unwrap = vi
-        .fn()
-        .mockReturnValue(createMock<PersonenkontextEntity>(PersonenkontextEntity, { id: id ?? faker.string.uuid() }));
-    const loadedPersonenKontext: LoadedReference<PersonenkontextEntity> = {
-        ...personenKontextReference,
-        isInitialized: () => true,
-        get: () => personenKontextReference.unwrap(),
-    } as LoadedReference<PersonenkontextEntity>;
-
-    return loadedPersonenKontext;
-}
+import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 
 describe('UserExternaldataWorkflow', () => {
     let sut: UserExternaldataWorkflowAggregate;
@@ -101,7 +67,7 @@ describe('UserExternaldataWorkflow', () => {
 
             personRepositoryMock.findById.mockResolvedValue(person);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
-            dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue([]);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
 
             await sut.initialize(person.id);
@@ -127,7 +93,7 @@ describe('UserExternaldataWorkflow', () => {
 
             personRepositoryMock.findById.mockResolvedValue(person);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
-            dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue([]);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
             const emailAddress: EmailAddress<true> = EmailAddress.construct({
                 id: faker.string.uuid(),
@@ -172,7 +138,7 @@ describe('UserExternaldataWorkflow', () => {
 
             personRepositoryMock.findById.mockResolvedValue(person);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
-            dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue([]);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
             const emailAddress: EmailAddress<true> = EmailAddress.construct({
                 id: faker.string.uuid(),
@@ -202,7 +168,7 @@ describe('UserExternaldataWorkflow', () => {
         it('should return entity Not found error when person not found', async () => {
             personRepositoryMock.findById.mockResolvedValue(undefined);
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
-            dBiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValue([]);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
 
             const response: Option<DomainError> = await sut.initialize(faker.string.uuid());
             expect(response).toBeInstanceOf(DomainError);
@@ -239,20 +205,20 @@ describe('UserExternaldataWorkflow', () => {
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
-                    serviceProvider: [{ id: 'sp1', name: 'Provider 1' } as ServiceProviderEntity],
+                    serviceProvider: [DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' })],
                     rollenart: RollenArt.LEHR,
                     kennung: 'kennung1',
                 },
             ];
 
-            const personenkontextErweitertVirtualEntityLoaded: PersonenkontextErweitertVirtualEntityLoaded = {
-                personenkontext: createLoadedPersonenkontextReference('pk1'),
-                serviceProvider: createLoadedServiceProviderReferences('sp2', 'Provider 2'),
+            const erweitererSP: ErweiterterServiceProviderForPK = {
+                personenkontext: DoFactory.createPersonenkontext(true, { id: 'pk1' }),
+                serviceProvider: DoFactory.createServiceProvider(true, { id: 'sp2', name: 'Provider 2' }),
             };
 
             const result: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
                 externalPkData,
-                [personenkontextErweitertVirtualEntityLoaded],
+                [erweitererSP],
             );
 
             expect(result[0]!.serviceProvider).toEqual(
@@ -269,25 +235,18 @@ describe('UserExternaldataWorkflow', () => {
                     pkId: 'pk1',
                     rollenart: RollenArt.LEHR,
                     kennung: faker.string.alpha(),
-                    serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
-                            id: 'sp1',
-                            name: 'Provider 1',
-                        }),
-                    ],
+                    serviceProvider: [DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' })],
                 },
             ];
 
-            const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = [
-                {
-                    personenkontext: createLoadedPersonenkontextReference('pk1'),
-                    serviceProvider: createLoadedServiceProviderReferences('sp1', 'Provider 1'),
-                },
-            ];
+            const erweitererSP: ErweiterterServiceProviderForPK = {
+                personenkontext: DoFactory.createPersonenkontext(true, { id: 'pk1' }),
+                serviceProvider: DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' }),
+            };
 
             const result: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
                 externalPkData,
-                personenKontextErweiterungen,
+                [erweitererSP],
             );
 
             expect(result[0]!.serviceProvider).toHaveLength(1);
@@ -297,9 +256,7 @@ describe('UserExternaldataWorkflow', () => {
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
-                    serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, { id: 'sp1', name: 'Provider 1' }),
-                    ],
+                    serviceProvider: [DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' })],
                     rollenart: RollenArt.LEHR,
                     kennung: faker.string.alpha(),
                 },
@@ -317,16 +274,15 @@ describe('UserExternaldataWorkflow', () => {
             );
         });
 
+        // This scenario should be impossible: without a context, a person cannot have any extensions.
         it('should handle empty externalPkData', () => {
-            const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = [
-                {
-                    personenkontext: createLoadedPersonenkontextReference('pk1'),
-                    serviceProvider: createLoadedServiceProviderReferences('sp1', 'Provider 1'),
-                },
-            ];
+            const erweitererSP: ErweiterterServiceProviderForPK = {
+                personenkontext: DoFactory.createPersonenkontext(true, { id: 'pk1' }),
+                serviceProvider: DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' }),
+            };
             const result: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
                 [],
-                personenKontextErweiterungen,
+                [erweitererSP],
             );
 
             expect(result).toEqual([]);
@@ -336,32 +292,29 @@ describe('UserExternaldataWorkflow', () => {
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
-                    serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, { id: 'sp1', name: 'Provider 1' }),
-                    ],
+                    serviceProvider: [DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' })],
                     rollenart: RollenArt.LEHR,
                     kennung: faker.string.alpha(),
                 },
             ];
 
-            const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = [
-                {
-                    personenkontext: createLoadedPersonenkontextReference('pk1'),
-                    serviceProvider: createLoadedServiceProviderReferences('sp2', 'Provider 2'),
-                },
-                {
-                    personenkontext: createLoadedPersonenkontextReference('pk1'),
-                    serviceProvider: createLoadedServiceProviderReferences('sp3', 'Provider 3'),
-                },
-            ];
+            const erweitererSP1: ErweiterterServiceProviderForPK = {
+                personenkontext: DoFactory.createPersonenkontext(true, { id: 'pk1' }),
+                serviceProvider: DoFactory.createServiceProvider(true, { id: 'sp2', name: 'Provider 2' }),
+            };
+
+            const erweitererSP2: ErweiterterServiceProviderForPK = {
+                personenkontext: DoFactory.createPersonenkontext(true, { id: 'pk1' }),
+                serviceProvider: DoFactory.createServiceProvider(true, { id: 'sp3', name: 'Provider 3' }),
+            };
 
             const result: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
                 externalPkData,
-                personenKontextErweiterungen,
+                [erweitererSP1, erweitererSP2],
             );
 
             expect(result[0]!.serviceProvider).toHaveLength(3);
-            expect(result[0]!.serviceProvider.map((sp: ServiceProviderEntity) => sp.id)).toEqual(['sp1', 'sp2', 'sp3']);
+            expect(result[0]!.serviceProvider.map((sp: ServiceProvider<true>) => sp.id)).toEqual(['sp1', 'sp2', 'sp3']);
         });
     });
 
@@ -371,7 +324,7 @@ describe('UserExternaldataWorkflow', () => {
                 {
                     pkId: 'pk1',
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp1',
                             name: 'Provider 1',
                             vidisAngebotId: 'vidis-123',
@@ -383,7 +336,7 @@ describe('UserExternaldataWorkflow', () => {
                 {
                     pkId: 'pk1',
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp2',
                             name: 'Provider 2',
                         }),
@@ -405,7 +358,7 @@ describe('UserExternaldataWorkflow', () => {
                 {
                     pkId: 'pk1',
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp1',
                             name: 'Provider 1',
                             vidisAngebotId: undefined,
@@ -417,7 +370,7 @@ describe('UserExternaldataWorkflow', () => {
                 {
                     pkId: 'pk2',
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp2',
                             name: 'Provider 2',
                             vidisAngebotId: undefined,
@@ -445,12 +398,12 @@ describe('UserExternaldataWorkflow', () => {
                 {
                     pkId: 'pk1',
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp1',
                             name: 'Provider 1',
                             vidisAngebotId: undefined,
                         }),
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp2',
                             name: 'Provider 2',
                             vidisAngebotId: 'vidis-456',
@@ -473,7 +426,7 @@ describe('UserExternaldataWorkflow', () => {
                 {
                     pkId: 'pk1',
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp1',
                             name: 'Provider 1',
                             vidisAngebotId: '',

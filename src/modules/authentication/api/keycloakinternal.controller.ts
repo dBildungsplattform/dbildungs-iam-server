@@ -13,8 +13,8 @@ import { Public } from './public.decorator.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { NewOxParams, OldOxParams } from './externaldata/user-externaldata-ox.response.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
-import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -67,7 +67,7 @@ export class KeycloakInternalController {
             return UserExternalDataResponse.createNew(
                 workflow.person,
                 workflow.checkedExternalPkData,
-                workflow.personenKontextErweiterungen!,
+                workflow.erweiterteSP!,
                 oxParams,
             );
         } else {
@@ -75,12 +75,12 @@ export class KeycloakInternalController {
             const mergedExternalPkData: RequiredExternalPkData[] =
                 UserExternaldataWorkflowAggregate.mergeServiceProviders(
                     workflow.checkedExternalPkData,
-                    workflow.personenKontextErweiterungen!,
+                    workflow.erweiterteSP!,
                 );
 
             const hasEmail: boolean = mergedExternalPkData.some((pkData: RequiredExternalPkData) =>
                 pkData.serviceProvider.some(
-                    (sp: ServiceProviderEntity) => sp.externalSystem === ServiceProviderSystem.EMAIL,
+                    (sp: ServiceProvider<true>) => sp.externalSystem === ServiceProviderSystem.EMAIL,
                 ),
             );
 
@@ -95,7 +95,7 @@ export class KeycloakInternalController {
             return UserExternalDataResponse.createNew(
                 workflow.person,
                 workflow.checkedExternalPkData,
-                workflow.personenKontextErweiterungen!,
+                workflow.erweiterteSP!,
                 oxParams,
             );
         }
