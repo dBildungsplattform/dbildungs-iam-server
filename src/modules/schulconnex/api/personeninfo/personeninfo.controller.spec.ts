@@ -54,10 +54,6 @@ describe('PersonenInfoController', () => {
 
     it('should handle limit that exceeds maximum limit', async () => {
         const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-        try {
-            await expect(controller.infoV1(permissions, '0', '1000000')).rejects.toBeInstanceOf(ExceedsLimitError);
-        } catch (e) {
-            expect(e).toBeInstanceOf(ExceedsLimitError);
-        }
+        await expect(controller.infoV1(permissions, '0', '1000000')).rejects.toBeInstanceOf(ExceedsLimitError);
     });
 });

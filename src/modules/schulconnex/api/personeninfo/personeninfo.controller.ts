@@ -60,7 +60,7 @@ export class PersonenInfoController {
     })
     @ApiUnauthorizedResponse({ description: 'person is not logged in.' })
     @ApiOkResponse({ description: 'Liste von Personeninformationen', type: PersonInfoResponseV1 })
-    public infoV1(
+    public async infoV1(
         @Permissions() permissions: PersonPermissions,
         @Headers('x-offset') offset: string,
         @Headers('x-limit') limit: string,
@@ -72,6 +72,6 @@ export class PersonenInfoController {
             throw new ExceedsLimitError(`Limit darf maximal ${this.maxPersonenInfoLimit} sein.`);
         }
 
-        return this.personInfoService.findPersonsForPersonenInfo(permissions, parsedOffset, parsedLimit);
+        return await this.personInfoService.findPersonsForPersonenInfo(permissions, parsedOffset, parsedLimit);
     }
 }
