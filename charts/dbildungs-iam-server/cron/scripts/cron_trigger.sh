@@ -12,12 +12,40 @@ if [ -z "$HTTP_METHOD" ]; then
   exit 1
 fi
 
+AUTHMODE="${AUTH_MODE:-jwt}"
+
 endpoint_url="${BACKEND_ENDPOINT_URL}"
 
-echo "Triggering $endpoint_url with $HTTP_METHOD at $(date)"
+echo "Triggering $endpoint_url with $HTTP_METHOD using AUTH_MODE=$AUTH_MODE at $(date)"
 
-# Call get_access_token.sh and capture the access token
-access_token=$(./get_access_token.sh)
+auth_header=""
+
+case "$AUTH_MOD" in
+
+    jwt)
+        # Call get_access_token.sh and capture the access token
+        echo "Using JWT authentication..."
+        access_token=$(./get_access_token.sh)
+        if [ -z "$access_token" ]; then
+            echo "Error: could not obtain JWT access token"
+            exit 1
+        fi
+        auth_header="Authorization: Bearer $access_token"
+        ;;
+
+    apikey)
+        echo "Using INTERNAL_COMMUNICATION_API_KEY authentication..."
+        if [ -z "$INTERNAL_COMMUNICATION_API_KEY" ]; then
+            echo "Error: INTERNAL_COMMUNICATION_API_KEY is not set."
+            exit 1
+        fi
+        auth_header="INTERNAL_COMMUNICATION_API_KEY: ${INTERNAL_COMMUNICATION_API_KEY}"
+        ;;
+    *)
+        echo "Error: AUTH_MODE must be one of: jwt, apikey"
+        exit 1
+        ;;
+esac
 
 # Create temporary files for headers and body
 header_file=$(mktemp)
@@ -32,8 +60,8 @@ trap cleanup EXIT
 # Make the request with JWT authorization
 wget --quiet \
      --method="$HTTP_METHOD" \
-     --header="Authorization: Bearer $access_token" \
      --header="Content-Type: application/json" \
+     ${auth_header:+"--header=$auth_header"} \
      --output-document="$body_file" \
      --server-response \
      "$endpoint_url" \
