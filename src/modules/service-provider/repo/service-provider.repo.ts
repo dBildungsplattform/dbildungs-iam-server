@@ -46,7 +46,7 @@ export function mapAggregateToData(
     };
 }
 
-function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<boolean> {
+export function mapSPEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<boolean> {
     const merkmale: ServiceProviderMerkmal[] = entity.merkmale.map(
         (merkmalEntity: ServiceProviderMerkmalEntity) => merkmalEntity.merkmal,
     );
@@ -93,7 +93,7 @@ export class ServiceProviderRepo {
             { exclude, populate: ['merkmale'] },
         )) as Option<ServiceProviderEntity>;
 
-        return serviceProvider && mapEntityToAggregate(serviceProvider);
+        return serviceProvider && mapSPEntityToAggregate(serviceProvider);
     }
 
     public async findByName(name: string): Promise<Option<ServiceProvider<true>>> {
@@ -105,7 +105,7 @@ export class ServiceProviderRepo {
             { populate: ['merkmale'] },
         );
         if (serviceProvider) {
-            return mapEntityToAggregate(serviceProvider);
+            return mapSPEntityToAggregate(serviceProvider);
         }
 
         return null;
@@ -120,7 +120,7 @@ export class ServiceProviderRepo {
             { populate: ['merkmale'] },
         );
         if (serviceProvider) {
-            return mapEntityToAggregate(serviceProvider);
+            return mapSPEntityToAggregate(serviceProvider);
         }
 
         return null;
@@ -134,7 +134,7 @@ export class ServiceProviderRepo {
             },
             { populate: ['merkmale'] },
         );
-        return serviceProviders.map(mapEntityToAggregate);
+        return serviceProviders.map(mapSPEntityToAggregate);
     }
 
     public async find(options?: ServiceProviderFindOptions): Promise<ServiceProvider<true>[]> {
@@ -145,7 +145,7 @@ export class ServiceProviderRepo {
             populate: ['merkmale'],
         })) as ServiceProviderEntity[];
 
-        return serviceProviders.map(mapEntityToAggregate);
+        return serviceProviders.map(mapSPEntityToAggregate);
     }
 
     public async findByIds(ids: string[]): Promise<Map<string, ServiceProvider<true>>> {
@@ -159,7 +159,7 @@ export class ServiceProviderRepo {
 
         const serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
         serviceProviderEntities.forEach((serviceProviderEntity: ServiceProviderEntity) => {
-            const serviceProvider: ServiceProvider<true> = mapEntityToAggregate(serviceProviderEntity);
+            const serviceProvider: ServiceProvider<true> = mapSPEntityToAggregate(serviceProviderEntity);
             serviceProviderMap.set(serviceProviderEntity.id, serviceProvider);
         });
 
@@ -182,7 +182,7 @@ export class ServiceProviderRepo {
             },
         );
 
-        const serviceProviders: ServiceProvider<true>[] = entities.map(mapEntityToAggregate);
+        const serviceProviders: ServiceProvider<true>[] = entities.map(mapSPEntityToAggregate);
         return [serviceProviders, count];
     }
 
@@ -205,7 +205,7 @@ export class ServiceProviderRepo {
             return null;
         }
 
-        return mapEntityToAggregate(entity);
+        return mapSPEntityToAggregate(entity);
     }
 
     public async findByOrgasWithMerkmal(
@@ -230,7 +230,7 @@ export class ServiceProviderRepo {
             },
         );
 
-        return [entities.map(mapEntityToAggregate), count];
+        return [entities.map(mapSPEntityToAggregate), count];
     }
 
     public async findAuthorizedById(
@@ -254,7 +254,7 @@ export class ServiceProviderRepo {
                 populate: ['merkmale'],
             },
         );
-        return entity ? mapEntityToAggregate(entity) : entity;
+        return entity ? mapSPEntityToAggregate(entity) : entity;
     }
 
     public async findBySchulstrukturknoten(organisationsId: string): Promise<Array<ServiceProvider<true>>> {
@@ -268,7 +268,7 @@ export class ServiceProviderRepo {
                     exclude,
                 },
             )
-        ).map(mapEntityToAggregate);
+        ).map(mapSPEntityToAggregate);
     }
 
     public async save(serviceProvider: ServiceProvider<boolean>): Promise<ServiceProvider<true>> {
@@ -297,7 +297,7 @@ export class ServiceProviderRepo {
             );
         }
 
-        return mapEntityToAggregate(serviceProviderEntity);
+        return mapSPEntityToAggregate(serviceProviderEntity);
     }
 
     private async update(serviceProvider: ServiceProvider<true>): Promise<ServiceProvider<true>> {
@@ -309,7 +309,7 @@ export class ServiceProviderRepo {
 
         await this.em.persistAndFlush(serviceProviderEntity);
 
-        return mapEntityToAggregate(serviceProviderEntity);
+        return mapSPEntityToAggregate(serviceProviderEntity);
     }
 
     public async fetchRolleServiceProvidersWithoutPerson(
@@ -329,7 +329,7 @@ export class ServiceProviderRepo {
 
         const serviceProviders: ServiceProvider<true>[] = rolleServiceProviderEntities.map(
             (rolleServiceProviderEntity: RolleServiceProviderEntity) => {
-                return mapEntityToAggregate(rolleServiceProviderEntity.serviceProvider);
+                return mapSPEntityToAggregate(rolleServiceProviderEntity.serviceProvider);
             },
         );
 
