@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Check if BACKEND_ENDPOINT_URL is set
-if [ -z "$BACKEND_ENDPOINT_URL" ]; then
-  echo "Error: BACKEND_ENDPOINT_URL is not set."
+# Check if EMAIL_MICROSERVICE_ENDPOINT_URL is set
+if [ -z "$EMAIL_MICROSERVICE_ENDPOINT_URL" ]; then
+  echo "Error: EMAIL_MICROSERVICE_ENDPOINT_URL is not set."
   exit 1
 fi
 
@@ -12,12 +12,16 @@ if [ -z "$HTTP_METHOD" ]; then
   exit 1
 fi
 
-endpoint_url="${BACKEND_ENDPOINT_URL}"
+endpoint_url="${EMAIL_MICROSERVICE_ENDPOINT_URL}"
 
 echo "Triggering $endpoint_url with $HTTP_METHOD at $(date)"
 
-# Call get_access_token.sh and capture the access token
-access_token=$(./get_access_token.sh)
+echo "Using INTERNAL_COMMUNICATION_API_KEY authentication..."
+if [ -z "$INTERNAL_COMMUNICATION_API_KEY" ]; then
+    echo "Error: INTERNAL_COMMUNICATION_API_KEY is not set."
+    exit 1
+fi
+auth_header="INTERNAL_COMMUNICATION_API_KEY: ${INTERNAL_COMMUNICATION_API_KEY}"
 
 # Create temporary files for headers and body
 header_file=$(mktemp)
@@ -32,7 +36,7 @@ trap cleanup EXIT
 # Make the request with JWT authorization
 wget --quiet \
      --method="$HTTP_METHOD" \
-     --header="Authorization: Bearer $access_token" \
+     --header=$auth_header \
      --header="Content-Type: application/json" \
      --output-document="$body_file" \
      --server-response \

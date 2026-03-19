@@ -38,12 +38,18 @@ spec:
               - configMapRef:
                   name:  {{ template "common.names.name" $ }}-cronjob-envs-configmap
             env:
-                - name: BACKEND_ENDPOINT_URL
-                  value: "https://{{ $.Values.backendHostname }}{{ $job_options.endpoint }}"
+                - name: EMAIL_MICROSERVICE_ENDPOINT_URL
+                  value: "https://{{ $.Values.emailHostname }}{{ $job_options.endpoint }}"
                 - name: HTTP_METHOD
                   value: "{{ $job_options.httpMethod }}"
                 - name: LOG_FILE_PATH
                   value: "/tmp/log/cron.log"
+                - name: INTERNAL_COMMUNICATION_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                      key: internal-communication-api-key
+
             resources:
               limits:
                 memory: "128Mi"
