@@ -28,7 +28,7 @@ import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { mapSPEntityToAggregate } from '../../service-provider/repo/service-provider.repo.js';
+import { mapEntityToAggregate as mapSPEntityToAggregate } from '../../service-provider/repo/service-provider-entity-mapper.js';
 
 export type RollenCount = { rollenart: string; count: string };
 
