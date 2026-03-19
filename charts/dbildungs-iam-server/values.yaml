@@ -188,7 +188,7 @@ backend:
       http: 80
   serviceMonitor:
     enabled: true
-    path: '/metrics'
+    path: "/metrics"
     interval: 1m
     endpoints:
       - port: "web"
@@ -344,9 +344,9 @@ cronjobs:
       script: "cron_trigger.sh"
     cron-trigger-5:
       schedule: "0 0 30 9 *" #Should never run automatically status: 15.10.2025. --> Setting to 30.09 so we have 1 Year to manually enable it fo the first time and define running interval
-      endpoint: '/api/cron/email-addresses-delete'
-      httpMethod: 'DELETE'
-      script: 'cron_trigger.sh'
+      endpoint: "/api/cron/email-addresses-delete"
+      httpMethod: "DELETE"
+      script: "cron_trigger.sh"
 #    cron-trigger-6:
 #      schedule: 30 0 * * *
 #      endpoint: '/api/cron/vidis-angebote'
@@ -360,6 +360,7 @@ import:
 featureFlags:
   befristungBearbeiten: true
   rolleErweitern: true
+  setUemPassword: true
 
 emailMicroservice:
   useService: false
