@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { Loaded, LoadedReference, MikroORM, Reference } from '@mikro-orm/core';
+import { MikroORM } from '@mikro-orm/core';
 import { HttpException } from '@nestjs/common';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
@@ -13,15 +13,13 @@ import { PersonModule } from '../../person/person.module.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import {
     DBiamPersonenkontextRepo,
+    ErweiterterServiceProviderForPK,
     ExternalPkData,
-    PersonenkontextErweitertVirtualEntityLoaded,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { RolleModule } from '../../rolle/rolle.module.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
@@ -36,18 +34,6 @@ import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-dat
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
 import { EntityManager } from '@mikro-orm/postgresql';
-
-function createLoadedReference<T extends object>(entity: T): LoadedReference<T> {
-    const reference: Reference<T> = createMock<Reference<T>>(Reference);
-    reference.unwrap = vi.fn().mockReturnValue(entity);
-    const loadedReference: LoadedReference<T> = {
-        ...reference,
-        isInitialized: () => true,
-        get: () => reference.unwrap(),
-    } as LoadedReference<T>;
-
-    return loadedReference;
-}
 
 describe('KeycloakInternalController', () => {
     let module: TestingModule;
@@ -130,7 +116,7 @@ describe('KeycloakInternalController', () => {
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             vidisAngebotId: faker.string.uuid(),
                         }),
                     ],
@@ -140,7 +126,7 @@ describe('KeycloakInternalController', () => {
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             vidisAngebotId: faker.string.uuid(),
                         }),
                     ],
@@ -150,7 +136,7 @@ describe('KeycloakInternalController', () => {
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             externalSystem: ServiceProviderSystem.EMAIL,
                             vidisAngebotId: undefined,
                         }),
@@ -171,27 +157,17 @@ describe('KeycloakInternalController', () => {
                 organisationId: faker.string.uuid(),
             });
 
-            let serviceProviderEntity: ServiceProviderEntity = new ServiceProviderEntity();
-            serviceProviderEntity = Object.assign(serviceProviderEntity, sp);
-
-            let personenkontextEntity: PersonenkontextEntity = new PersonenkontextEntity();
-            personenkontextEntity = Object.assign(personenkontextEntity, pk);
-
-            const spRef: LoadedReference<Loaded<ServiceProviderEntity>> = createLoadedReference(serviceProviderEntity);
-
-            const pkRef: LoadedReference<Loaded<PersonenkontextEntity>> = createLoadedReference(personenkontextEntity);
-
-            const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = [
+            const personenKontextErweiterungen: ErweiterterServiceProviderForPK[] = [
                 {
-                    personenkontext: pkRef,
-                    serviceProvider: spRef,
+                    personenkontext: pk,
+                    serviceProvider: sp,
                 },
             ];
 
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
             personRepoMock.findById.mockResolvedValueOnce(person);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
-            dbiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValueOnce(personenKontextErweiterungen);
+            dbiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce(personenKontextErweiterungen);
 
             const result: UserExternalDataResponse = await keycloakinternalController.getExternalData({
                 sub: keycloakSub,
@@ -230,7 +206,7 @@ describe('KeycloakInternalController', () => {
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
             personRepoMock.findById.mockResolvedValueOnce(person);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce([]);
-            dbiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValueOnce([]);
+            dbiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
 
             const result: UserExternalDataResponse = await keycloakinternalController.getExternalData({
                 sub: keycloakSub,
@@ -261,7 +237,7 @@ describe('KeycloakInternalController', () => {
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             vidisAngebotId: faker.string.uuid(),
                         }),
                     ],
@@ -271,7 +247,7 @@ describe('KeycloakInternalController', () => {
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             vidisAngebotId: faker.string.uuid(),
                         }),
                     ],
@@ -291,20 +267,10 @@ describe('KeycloakInternalController', () => {
                 organisationId: faker.string.uuid(),
             });
 
-            let serviceProviderEntity: ServiceProviderEntity = new ServiceProviderEntity();
-            serviceProviderEntity = Object.assign(serviceProviderEntity, sp);
-
-            let personenkontextEntity: PersonenkontextEntity = new PersonenkontextEntity();
-            personenkontextEntity = Object.assign(personenkontextEntity, pk);
-
-            const spRef: LoadedReference<Loaded<ServiceProviderEntity>> = createLoadedReference(serviceProviderEntity);
-
-            const pkRef: LoadedReference<Loaded<PersonenkontextEntity>> = createLoadedReference(personenkontextEntity);
-
-            const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = [
+            const personenKontextErweiterungen: ErweiterterServiceProviderForPK[] = [
                 {
-                    personenkontext: pkRef,
-                    serviceProvider: spRef,
+                    personenkontext: pk,
+                    serviceProvider: sp,
                 },
             ];
 
@@ -318,7 +284,7 @@ describe('KeycloakInternalController', () => {
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
             personRepoMock.findById.mockResolvedValueOnce(person);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
-            dbiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValueOnce(personenKontextErweiterungen);
+            dbiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce(personenKontextErweiterungen);
 
             const result: UserExternalDataResponse = await keycloakinternalController.getExternalData({
                 sub: keycloakSub,
@@ -360,7 +326,7 @@ describe('KeycloakInternalController', () => {
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             vidisAngebotId: faker.string.uuid(),
                         }),
                     ],
@@ -370,7 +336,7 @@ describe('KeycloakInternalController', () => {
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
-                        createMock<ServiceProviderEntity>(ServiceProviderEntity, {
+                        createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             vidisAngebotId: faker.string.uuid(),
                         }),
                     ],
@@ -390,20 +356,10 @@ describe('KeycloakInternalController', () => {
                 organisationId: faker.string.uuid(),
             });
 
-            let serviceProviderEntity: ServiceProviderEntity = new ServiceProviderEntity();
-            serviceProviderEntity = Object.assign(serviceProviderEntity, sp);
-
-            let personenkontextEntity: PersonenkontextEntity = new PersonenkontextEntity();
-            personenkontextEntity = Object.assign(personenkontextEntity, pk);
-
-            const spRef: LoadedReference<Loaded<ServiceProviderEntity>> = createLoadedReference(serviceProviderEntity);
-
-            const pkRef: LoadedReference<Loaded<PersonenkontextEntity>> = createLoadedReference(personenkontextEntity);
-
-            const personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[] = [
+            const personenKontextErweiterungen: ErweiterterServiceProviderForPK[] = [
                 {
-                    personenkontext: pkRef,
-                    serviceProvider: spRef,
+                    personenkontext: pk,
+                    serviceProvider: sp,
                 },
             ];
 
@@ -411,7 +367,7 @@ describe('KeycloakInternalController', () => {
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
             personRepoMock.findById.mockResolvedValueOnce(person);
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
-            dbiamPersonenkontextRepoMock.findPKErweiterungen.mockResolvedValueOnce(personenKontextErweiterungen);
+            dbiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce(personenKontextErweiterungen);
 
             const result: UserExternalDataResponse = await keycloakinternalController.getExternalData({
                 sub: keycloakSub,

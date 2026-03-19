@@ -1,6 +1,6 @@
 import { Mock, vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { EntityManager, EntityName, MikroORM } from '@mikro-orm/core';
+import { Collection, EntityManager, EntityName, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import {
@@ -35,9 +35,9 @@ import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { mapAggregateToPartial, Personenkontext } from '../domain/personenkontext.js';
 import {
     DBiamPersonenkontextRepo,
+    ErweiterterServiceProviderForPK,
     ExternalPkData,
     KontextWithOrgaAndRolle,
-    PersonenkontextErweitertVirtualEntityLoaded,
     RollenCount,
 } from './dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
@@ -51,6 +51,7 @@ import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { RollenerweiterungFactory } from '../../rolle/domain/rollenerweiterung.factory.js';
 import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
+import { ServiceProviderMerkmalEntity } from '../../service-provider/repo/service-provider-merkmal.entity.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -325,11 +326,20 @@ describe('dbiam Personenkontext Repo', () => {
                 }),
             );
 
+            const mockMerkmale: DeepMocked<Collection<ServiceProviderMerkmalEntity>> =
+                createMock<Collection<ServiceProviderMerkmalEntity>>(Collection);
+            mockMerkmale.getItems.mockReturnValue([]);
+            mockMerkmale.map.mockImplementation(
+                (callback: (item: ServiceProviderMerkmalEntity, index: number) => unknown) =>
+                    mockMerkmale.getItems().map(callback),
+            );
+
             // Mock the ORM response for rolle.serviceProvider.getItems()
             const mockServiceProvider: DeepMocked<ServiceProviderEntity> =
                 createMock<ServiceProviderEntity>(ServiceProviderEntity);
             mockServiceProvider.name = 'Mocked Service Provider';
             mockServiceProvider.vidisAngebotId = faker.string.uuid();
+            mockServiceProvider.merkmale = mockMerkmale;
             const mockRolleServiceProviderEntity: RolleServiceProviderEntity =
                 createMock<RolleServiceProviderEntity>(RolleServiceProviderEntity);
             mockRolleServiceProviderEntity.serviceProvider = mockServiceProvider;
@@ -364,7 +374,7 @@ describe('dbiam Personenkontext Repo', () => {
             expect(pkData?.rollenart).toEqual(rolleA.rollenart);
             expect(pkData?.kennung).toEqual(organisationA.kennung);
 
-            const spIds: string[] | undefined = pkData?.serviceProvider?.map((sp: ServiceProviderEntity) => sp.id);
+            const spIds: string[] | undefined = pkData?.serviceProvider?.map((sp: ServiceProvider<true>) => sp.id);
             expect(spIds).toContain(mockServiceProvider.id); // from mocked RolleServiceProviderEntity
 
             findSpy.mockRestore();
@@ -1173,7 +1183,7 @@ describe('dbiam Personenkontext Repo', () => {
         });
     });
 
-    describe('findPkErweiterungen', () => {
+    describe('findErweiterteSPByPersonId', () => {
         it('should find pkErweiterungen for this person', async () => {
             const person: Person<true> = await createPerson();
             const rolleA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
@@ -1184,7 +1194,7 @@ describe('dbiam Personenkontext Repo', () => {
                 throw Error();
             }
 
-            await personenkontextRepoInternal.save(
+            const pk: Personenkontext<true> = await personenkontextRepoInternal.save(
                 createPersonenkontext(false, {
                     personId: person.id,
                     rolleId: rolleA.id,
@@ -1201,14 +1211,10 @@ describe('dbiam Personenkontext Repo', () => {
                 }),
             );
 
-            const result: PersonenkontextErweitertVirtualEntityLoaded[] = await sut.findPKErweiterungen(person.id);
+            const result: ErweiterterServiceProviderForPK[] = await sut.findErweiterteSPByPersonId(person.id);
             expect(result.length).toEqual(1);
-            expect(
-                result.findIndex(
-                    (pker: PersonenkontextErweitertVirtualEntityLoaded) =>
-                        pker.serviceProvider.unwrap().id === serviceprovider.id,
-                ),
-            ).not.toEqual(-1);
+            expect(result[0]?.personenkontext.id).toEqual(pk.id);
+            expect(result[0]?.serviceProvider.id).toEqual(serviceprovider.id);
         });
     });
 });
