@@ -20,6 +20,7 @@ import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js
 import { NameUniqueAtOrgaSpecification } from '../specification/name-unique-at-orga.specification.js';
 import { mapAggregateToData, mapEntityToAggregate } from './service-provider-entity-mapper.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { assignSameKey, objectKeys } from '../../../shared/util/object-utils.js';
 
 type ServiceProviderFindOptions = {
     withLogo?: boolean;
@@ -283,7 +284,13 @@ export class ServiceProviderRepo {
 
         // Assign defaults if person only has partial system rights
         if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
-            Object.assign(serviceProvider, SP_EINGESCHRAENKT_DEFAULTS);
+            for (const key of objectKeys(SP_EINGESCHRAENKT_DEFAULTS)) {
+                assignSameKey<Partial<ServiceProvider<false>>, keyof Partial<ServiceProvider<false>>>(
+                    serviceProvider,
+                    SP_EINGESCHRAENKT_DEFAULTS,
+                    key,
+                );
+            }
         }
 
         const serviceProviderEntity: ServiceProviderEntity = this.em.create(
@@ -336,10 +343,9 @@ export class ServiceProviderRepo {
         // Use some existing values if person only has partial system rights
         if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
             const existingProvider: ServiceProvider<true> = mapEntityToAggregate(serviceProviderEntity);
-            for (const key of Object.keys(SP_EINGESCHRAENKT_DEFAULTS)) {
-                // @ts-expect-error 'key' is guaranteed to be a valid property name
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                serviceProvider[key] = existingProvider[key];
+
+            for (const key of objectKeys(SP_EINGESCHRAENKT_DEFAULTS)) {
+                assignSameKey(serviceProvider, existingProvider, key);
             }
         }
 

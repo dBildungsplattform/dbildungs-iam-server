@@ -17,3 +17,18 @@ export function mapDefinedObjectProperties<O extends object, R>(obj: O, cb: Mapp
 
     return result;
 }
+
+/**
+ * Returns Object.keys() but with the type set to (keyof O)[].
+ * Has the same pitfalls as Object.keys(), so types may not work on complicated object
+ */
+export function objectKeys<O extends object>(obj: O): (keyof O)[] {
+    return Object.keys(obj) as (keyof O)[];
+}
+
+/**
+ * target[key] = source[key], but typesafe
+ */
+export function assignSameKey<O, K extends keyof O>(target: O, source: O, key: K): void {
+    target[key] = source[key];
+}
