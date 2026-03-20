@@ -54,9 +54,14 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
+  {{- if .Values.backend.ingress.tls }}
   tls:
   - hosts:
-      - {{ .Values.backendHostname  }}
+    - {{ .Values.backendHostname  }}
+  {{- if .Values.backend.ingress.tlsSecretName }}
+    secretName: {{ .Values.backend.ingress.tlsSecretName }}
+  {{- end }}
+  {{- end }}
   ingressClassName: {{ .Values.backend.ingress.ingressClassName }}
   rules:
     - host: {{ .Values.backendHostname }}
