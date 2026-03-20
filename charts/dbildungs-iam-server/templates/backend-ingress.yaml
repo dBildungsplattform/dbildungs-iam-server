@@ -18,7 +18,7 @@ spec:
   - hosts:
       - {{ .Values.backendHostname  }}
   {{- if .Values.backend.ingress.tlsSecretName }}
-      secretName: {{ .Values.backend.ingress.tlsSecretName }}
+    secretName: {{ .Values.backend.ingress.tlsSecretName }}
   {{- end }}
   {{- end }}
   ingressClassName: {{ .Values.backend.ingress.ingressClassName }}
