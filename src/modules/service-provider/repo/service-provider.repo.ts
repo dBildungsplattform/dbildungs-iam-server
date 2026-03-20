@@ -1,9 +1,6 @@
 import { Loaded } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
-import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
@@ -51,7 +48,6 @@ const SP_EINGESCHRAENKT_DEFAULTS: Partial<ServiceProvider<true>> = {
 export class ServiceProviderRepo {
     public constructor(
         private readonly em: EntityManager,
-        private readonly eventService: EventRoutingLegacyKafkaService,
         private readonly serviceProviderInternalRepo: ServiceProviderInternalRepo,
     ) {}
 
@@ -251,16 +247,6 @@ export class ServiceProviderRepo {
 
         await this.em.persistAndFlush(serviceProviderEntity);
 
-        if (serviceProviderEntity.keycloakGroup && serviceProviderEntity.keycloakRole) {
-            this.eventService.publish(
-                new GroupAndRoleCreatedEvent(serviceProviderEntity.keycloakGroup, serviceProviderEntity.keycloakRole),
-                new KafkaGroupAndRoleCreatedEvent(
-                    serviceProviderEntity.keycloakGroup,
-                    serviceProviderEntity.keycloakRole,
-                ),
-            );
-        }
-
         return mapEntityToAggregate(serviceProviderEntity);
     }
 
@@ -299,16 +285,6 @@ export class ServiceProviderRepo {
         );
 
         await this.em.persistAndFlush(serviceProviderEntity);
-
-        if (serviceProviderEntity.keycloakGroup && serviceProviderEntity.keycloakRole) {
-            this.eventService.publish(
-                new GroupAndRoleCreatedEvent(serviceProviderEntity.keycloakGroup, serviceProviderEntity.keycloakRole),
-                new KafkaGroupAndRoleCreatedEvent(
-                    serviceProviderEntity.keycloakGroup,
-                    serviceProviderEntity.keycloakRole,
-                ),
-            );
-        }
 
         return Ok(mapEntityToAggregate(serviceProviderEntity));
     }

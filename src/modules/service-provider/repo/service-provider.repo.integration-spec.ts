@@ -7,11 +7,11 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    EventSystemTestModule,
     expectErrResult,
     expectOkResult,
     LoggingTestModule,
 } from '../../../../test/utils/index.js';
-import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
@@ -47,17 +47,18 @@ describe('ServiceProviderRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), LoggingTestModule],
+            imports: [
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                LoggingTestModule,
+                EventSystemTestModule,
+            ],
             providers: [
                 ServiceProviderRepo,
                 ServiceProviderInternalRepo,
                 RolleRepo,
                 RolleFactory,
                 OrganisationRepository,
-                {
-                    provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock(EventRoutingLegacyKafkaService),
-                },
                 {
                     provide: RolleFactory,
                     useValue: createMock(RolleFactory),
