@@ -4,7 +4,6 @@ import {
     Delete,
     Get,
     HttpCode,
-    HttpException,
     HttpStatus,
     NotImplementedException,
     Param,
@@ -38,15 +37,11 @@ import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/
 import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
-import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
 import { ApiOkResponsePaginated, Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PermittedOrgas, PersonFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -85,7 +80,7 @@ import { PersonLandesbediensteterSearchService } from '../person-landesbedienste
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
+@UseFilters(new PersonExceptionFilter())
 @ApiTags('personen')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -167,9 +162,7 @@ export class PersonController {
             this.logger.error(
                 `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht den Benutzer ${person?.username} (BenutzerId: ${person?.id}) zu löschen. Fehler: ${response.error.message}`,
             );
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(response.error),
-            );
+            throw response.error;
         }
         this.logger.info(
             `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat Benutzer ${person?.username} (BenutzerId: ${person?.id}) gelöscht.`,
@@ -193,11 +186,7 @@ export class PersonController {
             permissions,
         );
         if (!personResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', params.personId),
-                ),
-            );
+            throw new EntityNotFoundError('Person', params.personId);
         }
 
         let personEmailResponse: Option<PersonEmailResponse>;
@@ -258,11 +247,7 @@ export class PersonController {
             permissions,
         );
         if (!personResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', pathParams.personId),
-                ),
-            );
+            throw new EntityNotFoundError('Person', pathParams.personId);
         }
 
         const updatedQueryParams: PersonenkontextQueryParams = { ...queryParams, personId: personResult.value.id };
@@ -311,11 +296,7 @@ export class PersonController {
             permissions,
         );
         if (!personResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', params.personId),
-                ),
-            );
+            throw new EntityNotFoundError('Person', params.personId);
         }
         const updateResult: void | DomainError = personResult.value.update(
             body.revision,
@@ -325,13 +306,7 @@ export class PersonController {
             body.stammorganisation,
         );
         if (updateResult instanceof DomainError) {
-            if (updateResult instanceof PersonDomainError) {
-                throw updateResult;
-            }
-
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updateResult),
-            );
+            throw updateResult;
         }
         await this.personRepository.update(personResult.value);
 
@@ -356,11 +331,7 @@ export class PersonController {
         );
 
         if (!personResult.ok) {
-            const error: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', params.personId),
-                ),
-            );
+            const error: EntityNotFoundError = new EntityNotFoundError('Person', params.personId);
             this.logger.error(
                 `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht das Password des Benutzers mit BenutzerId ${params.personId} zurückzusetzen. Fehler: ${error.message}`,
             );
@@ -370,13 +341,10 @@ export class PersonController {
         const saveResult: Person<true> | DomainError = await this.personRepository.update(personResult.value);
 
         if (saveResult instanceof DomainError) {
-            const error: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult),
-            );
             this.logger.error(
-                `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht das Password des Benutzers ${personResult.value.username} mit BenutzerId ${personResult.value.id} zurückzusetzen. Fehler: ${error.message}`,
+                `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht das Password des Benutzers ${personResult.value.username} mit BenutzerId ${personResult.value.id} zurückzusetzen. Fehler: ${saveResult.message}`,
             );
-            throw error;
+            throw saveResult;
         }
         this.logger.info(
             `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat das Passwort von Benutzer ${saveResult.username} (BenutzerId: ${saveResult.id}) zurueckgesetzt.`,
@@ -552,13 +520,8 @@ export class PersonController {
             this.logger.info(
                 `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht die persoenlichen Daten des Benutzers mit BenutzerId: ${params.personId} zu verändern. Fehler: ${result.message}`,
             );
-            if (result instanceof PersonDomainError || result instanceof DuplicatePersonalnummerError) {
-                throw result;
-            }
 
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
-            );
+            throw result;
         }
         this.logger.info(
             `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat die persoenlichen Daten von Benutzer ${result.username} (BenutzerId: ${result.id}) geändert.`,
@@ -583,18 +546,10 @@ export class PersonController {
             permissions,
         );
         if (!personResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', params.personId),
-                ),
-            );
+            throw new EntityNotFoundError('Person', params.personId);
         }
         if (!personResult.value.username) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new PersonDomainError('Person-Username NOT defined', params.personId),
-                ),
-            );
+            throw new PersonDomainError('Person-Username NOT defined', params.personId);
         }
         const changeUserPasswordResult: Result<PersonID> = await this.ldapClientService.changeUserPasswordByPersonId(
             personResult.value.id,
@@ -621,16 +576,10 @@ export class PersonController {
     public async resetUEMPassword(@Permissions() permissions: PersonPermissions): Promise<Result<string>> {
         const { id, username }: PersonFields = permissions.personFields;
         if (!id) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person', id)),
-            );
+            throw new EntityNotFoundError('Person', id);
         }
         if (!username) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new PersonDomainError('Person-Username NOT defined', id),
-                ),
-            );
+            throw new PersonDomainError('Person-Username NOT defined', id);
         }
         const changeUserPasswordResult: Result<PersonID> = await this.ldapClientService.changeUserPasswordByPersonId(
             id,

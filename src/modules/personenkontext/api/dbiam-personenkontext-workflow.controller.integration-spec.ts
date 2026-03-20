@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
-import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
@@ -47,6 +47,9 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 import { DbiamPersonenkontextFactory } from '../domain/dbiam-personenkontext.factory.js';
 import { ConfigService } from '@nestjs/config';
 import { PersonenkontextWorkflowSharedKernel } from '../domain/personenkontext-workflow-shared-kernel.js';
+import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
+import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
 describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let app: INestApplication;
@@ -75,6 +78,9 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
                 },
+                { provide: APP_FILTER, useClass: ValidationExceptionFilter },
+                { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
+                { provide: APP_FILTER, useClass: SharedExceptionFilter },
                 {
                     provide: PersonPermissionsRepo,
                     useValue: createMock(PersonPermissionsRepo),
@@ -310,9 +316,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             expect(response.status).toBe(404);
             expect(response.body).toEqual({
                 code: 404,
-                subcode: '01',
-                titel: 'Angefragte Entität existiert nicht',
-                beschreibung: 'Die angeforderte Entität existiert nicht',
+                i18nKey: 'MISSING_PERMISSIONS',
             });
         });
         it('should return error with status-code 400 if DuplicatePersonalnummerError is thrown', async () => {
@@ -332,9 +336,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             // Mock the service to throw DuplicatePersonalnummerError
-            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
-                new DuplicatePersonalnummerError('Duplicate Kopers'),
-            );
+            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce({
+                ok: false,
+                error: new DuplicatePersonalnummerError('Duplicate Kopers'),
+            });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')
@@ -371,9 +376,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             // Mock the service to throw DuplicatePersonalnummerError
-            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
-                new PersonenkontexteUpdateError('Error'),
-            );
+            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce({
+                ok: false,
+                error: new PersonenkontexteUpdateError('Error'),
+            });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')
@@ -408,9 +414,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             // Mock the service to throw DuplicatePersonalnummerError
-            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
-                new PersonenkontexteUpdateError('Error'),
-            );
+            vi.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce({
+                ok: false,
+                error: new PersonenkontexteUpdateError('Error'),
+            });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')

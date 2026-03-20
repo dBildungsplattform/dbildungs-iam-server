@@ -5,8 +5,8 @@ import { Response } from 'express';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 import { GlobalExceptionFilter } from './global-exception.filter.js';
 import { DriverException } from '@mikro-orm/core';
-import { SchulConnexError } from './schul-connex.error.js';
 import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
+import { DbiamError } from './dbiam.error.js';
 
 describe('GlobalExceptionFilter', () => {
     let sut: GlobalExceptionFilter;
@@ -72,13 +72,11 @@ describe('GlobalExceptionFilter', () => {
         });
 
         describe('when filter catches DriverException', () => {
-            it('should map it to SchulConnexError with code 500', () => {
+            it('should map it to DbiamError with code 500', () => {
                 const driverException: DriverException = new DriverException({ stack: '' } as Error);
-                const expectedOutput: SchulConnexError = new SchulConnexError({
-                    titel: 'Interner Serverfehler',
-                    beschreibung: 'Es ist ein interner Fehler aufgetreten. Die Datenbank hat einen Fehler erzeugt.',
-                    code: HttpStatus.INTERNAL_SERVER_ERROR,
-                    subcode: '00',
+                const expectedOutput: DbiamError = new DbiamError({
+                    code: 500,
+                    i18nKey: 'DB_ERROR',
                 });
 
                 sut.catch(driverException, argumentsHost as ArgumentsHost);
@@ -94,13 +92,11 @@ describe('GlobalExceptionFilter', () => {
         });
 
         describe('when filter catches Unknown Error', () => {
-            it('should map it to SchulConnexError with code 500', () => {
+            it('should map it to DbiamError with code 500', () => {
                 const unknownError: Error = new Error('error');
-                const expectedOutput: SchulConnexError = new SchulConnexError({
-                    titel: 'Interner Serverfehler',
-                    beschreibung: 'Es ist ein interner Fehler aufgetreten. Der Fehler ist unbekannt.',
-                    code: HttpStatus.INTERNAL_SERVER_ERROR,
-                    subcode: '00',
+                const expectedOutput: DbiamError = new DbiamError({
+                    code: 500,
+                    i18nKey: 'INTERNAL_SERVER_ERROR',
                 });
 
                 sut.catch(unknownError, argumentsHost as ArgumentsHost);
@@ -115,13 +111,11 @@ describe('GlobalExceptionFilter', () => {
         });
 
         describe('when filter catches unknown type which is not an Error', () => {
-            it('should map it to SchulConnexError with code 500', () => {
+            it('should map it to DbiamError with code 500', () => {
                 const unknownError: string = 'not an error';
-                const expectedOutput: SchulConnexError = new SchulConnexError({
-                    titel: 'Interner Serverfehler',
-                    beschreibung: 'Es ist ein interner Fehler aufgetreten. Der Fehler ist unbekannt.',
-                    code: HttpStatus.INTERNAL_SERVER_ERROR,
-                    subcode: '00',
+                const expectedOutput: DbiamError = new DbiamError({
+                    code: 500,
+                    i18nKey: 'INTERNAL_SERVER_ERROR',
                 });
 
                 sut.catch(unknownError, argumentsHost as ArgumentsHost);

@@ -1,9 +1,9 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { DetailedValidationError } from '../validation/detailed-validation.error.js';
+import { DetailedValidationError } from '../../../shared/validation/detailed-validation.error.js';
 import { ValidationError } from 'class-validator';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
-import { SchulConnexError } from './schul-connex.error.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 
 @Catch(DetailedValidationError)
 export class SchulConnexValidationErrorFilter implements ExceptionFilter<DetailedValidationError> {

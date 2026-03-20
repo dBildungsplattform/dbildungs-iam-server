@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import * as fs from 'fs';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
-import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
@@ -50,6 +50,9 @@ import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 import { PassportUser } from '../../authentication/types/user.js';
 import { Person } from '../../person/domain/person.js';
+import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
+import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
 describe('Import API', () => {
     let app: INestApplication;
@@ -97,6 +100,9 @@ describe('Import API', () => {
                         },
                     },
                 },
+                { provide: APP_FILTER, useClass: ValidationExceptionFilter },
+                { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
+                { provide: APP_FILTER, useClass: SharedExceptionFilter },
                 {
                     provide: KeycloakUserService,
                     useValue: keycloakUserServiceMock,
@@ -300,9 +306,7 @@ describe('Import API', () => {
             expect(response.status).toBe(404);
             expect(response.body).toEqual({
                 code: 404,
-                subcode: '01',
-                titel: 'Angefragte Entität existiert nicht',
-                beschreibung: 'Die angeforderte Entität existiert nicht',
+                i18nKey: 'ENTITY_NOT_FOUND',
             });
         });
 
@@ -551,9 +555,7 @@ describe('Import API', () => {
             expect(response.status).toBe(404);
             expect(response.body).toEqual({
                 code: 404,
-                subcode: '01',
-                titel: 'Angefragte Entität existiert nicht',
-                beschreibung: 'Die angeforderte Entität existiert nicht',
+                i18nKey: 'ENTITY_NOT_FOUND',
             });
         });
     });

@@ -3,7 +3,6 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
 import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
-import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { Person } from '../person/domain/person.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
@@ -306,10 +305,8 @@ describe('PrivacyIdeaAdministrationController', () => {
             const entityCouldNotBeUpdatedError: EntityCouldNotBeUpdated = createMock(EntityCouldNotBeUpdated);
             serviceMock.resetToken.mockRejectedValue(entityCouldNotBeUpdatedError);
 
-            await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(
-                SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(entityCouldNotBeUpdatedError),
-                ),
+            await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toBeInstanceOf(
+                EntityCouldNotBeUpdated,
             );
 
             expect(serviceMock.resetToken).toHaveBeenCalledWith(person.username);
@@ -397,7 +394,6 @@ describe('PrivacyIdeaAdministrationController', () => {
         it('should return mapped internal server error for unexpected error', async () => {
             const mockParams: AssignHardwareTokenBodyParams = new AssignHardwareTokenBodyParams();
             const unexpectedError: Error = new Error('Unexpected error');
-            const entityCouldNotBeCreatedError: EntityCouldNotBeCreated = createMock(EntityCouldNotBeCreated);
             const person: Person<true> = getPerson();
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
@@ -406,10 +402,8 @@ describe('PrivacyIdeaAdministrationController', () => {
 
             serviceMock.assignHardwareToken.mockRejectedValue(unexpectedError);
 
-            await expect(sut.assignHardwareToken(mockParams, personPermissionsMock)).rejects.toThrow(
-                SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(entityCouldNotBeCreatedError),
-                ),
+            await expect(sut.assignHardwareToken(mockParams, personPermissionsMock)).rejects.toBeInstanceOf(
+                EntityCouldNotBeCreated,
             );
         });
     });

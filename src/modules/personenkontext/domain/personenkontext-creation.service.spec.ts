@@ -115,7 +115,7 @@ describe('PersonenkontextCreationService', () => {
             rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
             organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
+            const result: Result<PersonPersonenkontext, DomainError> = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
@@ -126,14 +126,17 @@ describe('PersonenkontextCreationService', () => {
                     },
                 ],
             );
-            expect(result).toBeInstanceOf(DomainError);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(DomainError);
+            }
         });
 
         it('should return EntityNotFoundError if Organisation is not found', async () => {
             personFactoryMock.createNew.mockResolvedValueOnce(DoFactory.createPerson(false));
             personenkontextWorkflowSharedKernel.checkReferences.mockResolvedValueOnce(new EntityNotFoundError());
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
+            const result: Result<PersonPersonenkontext, DomainError> = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
@@ -144,14 +147,17 @@ describe('PersonenkontextCreationService', () => {
                     },
                 ],
             );
-            expect(result).toBeInstanceOf(EntityNotFoundError);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(EntityNotFoundError);
+            }
         });
 
         it('should return EntityNotFoundError if Rolle is not found', async () => {
             personFactoryMock.createNew.mockResolvedValueOnce(DoFactory.createPerson(false));
             personenkontextWorkflowSharedKernel.checkReferences.mockResolvedValueOnce(new EntityNotFoundError());
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
+            const result: Result<PersonPersonenkontext, DomainError> = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
@@ -162,14 +168,17 @@ describe('PersonenkontextCreationService', () => {
                     },
                 ],
             );
-            expect(result).toBeInstanceOf(EntityNotFoundError);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(EntityNotFoundError);
+            }
         });
 
         it('should return EntityNotFoundError if Rolle can NOT be assigned to organisation', async () => {
             personFactoryMock.createNew.mockResolvedValueOnce(DoFactory.createPerson(false));
             personenkontextWorkflowSharedKernel.checkReferences.mockResolvedValueOnce(new EntityNotFoundError());
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
+            const result: Result<PersonPersonenkontext, DomainError> = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
@@ -180,7 +189,10 @@ describe('PersonenkontextCreationService', () => {
                     },
                 ],
             );
-            expect(result).toBeInstanceOf(EntityNotFoundError);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(EntityNotFoundError);
+            }
         });
 
         it('should return RolleNurAnPassendeOrganisationError if Rolle does NOT match organisation', async () => {
@@ -189,7 +201,7 @@ describe('PersonenkontextCreationService', () => {
                 new RolleNurAnPassendeOrganisationError(),
             );
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
+            const result: Result<PersonPersonenkontext, DomainError> = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
@@ -200,7 +212,10 @@ describe('PersonenkontextCreationService', () => {
                     },
                 ],
             );
-            expect(result).toBeInstanceOf(RolleNurAnPassendeOrganisationError);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(RolleNurAnPassendeOrganisationError);
+            }
         });
 
         it('should return MissingPermissionsError if user does NOT have permissions', async () => {
@@ -219,7 +234,7 @@ describe('PersonenkontextCreationService', () => {
             personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
             personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
+            const result: Result<PersonPersonenkontext, DomainError> = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
@@ -230,7 +245,10 @@ describe('PersonenkontextCreationService', () => {
                     },
                 ],
             );
-            expect(result).toBeInstanceOf(MissingPermissionsError);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(MissingPermissionsError);
+            }
         });
 
         it('should return DomainError if Person cannot be saved in the DB', async () => {
@@ -248,7 +266,7 @@ describe('PersonenkontextCreationService', () => {
                 new KeycloakClientError('Username or email already exists'),
             );
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
+            const result: Result<PersonPersonenkontext, DomainError> = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
@@ -259,7 +277,10 @@ describe('PersonenkontextCreationService', () => {
                     },
                 ],
             );
-            expect(result).toBeInstanceOf(DomainError);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(DomainError);
+            }
         });
 
         it('should return errors from update', async () => {
@@ -281,7 +302,7 @@ describe('PersonenkontextCreationService', () => {
                 personenkontextUpdateMock,
             );
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
+            const result: Result<PersonPersonenkontext, DomainError> = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
@@ -292,7 +313,10 @@ describe('PersonenkontextCreationService', () => {
                     },
                 ],
             );
-            expect(result).toBeInstanceOf(DomainError);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(DomainError);
+            }
         });
 
         it('should return errors if more or less than 1 personenkontext was updated', async () => {
@@ -314,7 +338,7 @@ describe('PersonenkontextCreationService', () => {
                 personenkontextUpdateMock,
             );
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
+            const result: Result<PersonPersonenkontext, DomainError> = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
@@ -325,7 +349,10 @@ describe('PersonenkontextCreationService', () => {
                     },
                 ],
             );
-            expect(result).toBeInstanceOf(DomainError);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(DomainError);
+            }
         });
     });
 });

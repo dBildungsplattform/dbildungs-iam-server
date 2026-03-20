@@ -35,14 +35,17 @@ export class PersonenkontextCreationService {
         createPersonenkontexte: DbiamCreatePersonenkontextBodyParams[],
         personalnummer?: string,
         befristung?: Date,
-    ): Promise<PersonPersonenkontext | DomainError> {
-        const person: Person<false> | DomainError = await this.personFactory.createNew({
+    ): Promise<Result<PersonPersonenkontext, DomainError>> {
+        const personOrError: Person<false> | DomainError = await this.personFactory.createNew({
             vorname: vorname,
             familienname: familienname,
             personalnummer: personalnummer,
         });
-        if (person instanceof DomainError) {
-            return person;
+        if (personOrError instanceof DomainError) {
+            return {
+                ok: false,
+                error: personOrError,
+            };
         }
 
         const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
@@ -55,42 +58,57 @@ export class PersonenkontextCreationService {
                 OperationContext.PERSON_ANLEGEN,
             );
             if (canCommit instanceof DomainError) {
-                return canCommit;
+                return {
+                    ok: false,
+                    error: canCommit,
+                };
             }
         }
 
         //Save Person
-        const savedPerson: DomainError | Person<true> = await this.personRepository.create(person);
+        const savedPersonOrError: DomainError | Person<true> = await this.personRepository.create(personOrError);
 
-        if (savedPerson instanceof DomainError) {
-            return savedPerson;
+        if (savedPersonOrError instanceof DomainError) {
+            return {
+                ok: false,
+                error: savedPersonOrError,
+            };
         }
 
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
-            savedPerson.id,
+            savedPersonOrError.id,
             new Date(),
             0,
             createPersonenkontexte.map((createPersonenkontext: DbiamCreatePersonenkontextBodyParams) => ({
-                personId: savedPerson.id,
+                personId: savedPersonOrError.id,
                 organisationId: createPersonenkontext.organisationId,
                 rolleId: createPersonenkontext.rolleId,
                 befristung,
             })),
-            new PermissionsOverride(permissions).grantPersonModifyPermission(savedPerson.id),
+            new PermissionsOverride(permissions).grantPersonModifyPermission(savedPersonOrError.id),
         );
 
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
         if (updateResult instanceof DomainError) {
-            return updateResult;
+            return {
+                ok: false,
+                error: updateResult,
+            };
         }
 
         if (updateResult.length !== createPersonenkontexte.length) {
-            return new PersonenkontexteUpdateError('The number of updated personenkontexte is invalid');
+            return {
+                ok: false,
+                error: new PersonenkontexteUpdateError('The number of updated personenkontexte is invalid'),
+            };
         }
 
         return {
-            person: savedPerson,
-            personenkontexte: updateResult,
+            ok: true,
+            value: {
+                person: savedPersonOrError,
+                personenkontexte: updateResult,
+            },
         };
     }
 }
