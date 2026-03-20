@@ -9,7 +9,7 @@ import { UserExeternalDataResponseOpsh } from './user-externaldata-opsh.response
 import { NewOxParams, OldOxParams, UserExternalDataResponseOx } from './user-externaldata-ox.response.js';
 import { UserExeternalDataResponseVidis } from './user-externaldata-vidis.response.js';
 import { UserExternaldataWorkflowAggregate } from '../../domain/user-extenaldata.workflow.js';
-import { PersonenkontextErweitertVirtualEntityLoaded } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ErweiterterServiceProviderForPK } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 export class UserExternalDataResponse {
     @ApiPropertyOptional({ type: UserExternalDataResponseOx })
@@ -44,7 +44,7 @@ export class UserExternalDataResponse {
     public static createNew(
         person: Person<true>,
         externalPkData: RequiredExternalPkData[],
-        personenKontextErweiterungen: PersonenkontextErweitertVirtualEntityLoaded[],
+        erweiterteSP: ErweiterterServiceProviderForPK[],
         contextParams: OldOxParams | NewOxParams | undefined,
     ): UserExternalDataResponse {
         const ox: Option<UserExternalDataResponseOx> =
@@ -52,7 +52,7 @@ export class UserExternalDataResponse {
         const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(person.id);
         const mergedExternalPkData: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
             externalPkData,
-            personenKontextErweiterungen,
+            erweiterteSP,
         );
         const externalPkDataWithVidisAngebotId: RequiredExternalPkData[] =
             UserExternaldataWorkflowAggregate.getExternalPkDataWithSpWithVidisAngebotId(mergedExternalPkData);
