@@ -283,10 +283,7 @@ export class ServiceProviderRepo {
 
         // Assign defaults if person only has partial system rights
         if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
-            for (const [key, value] of Object.entries(SP_EINGESCHRAENKT_DEFAULTS)) {
-                // @ts-expect-error 'key' is guaranteed to be a valid property name
-                serviceProvider[key] = value;
-            }
+            Object.assign(serviceProvider, SP_EINGESCHRAENKT_DEFAULTS);
         }
 
         const serviceProviderEntity: ServiceProviderEntity = this.em.create(
@@ -321,12 +318,6 @@ export class ServiceProviderRepo {
             return permissionsResult;
         }
 
-        if (
-            !(await new NameUniqueAtOrgaSpecification(this.serviceProviderInternalRepo).isSatisfiedBy(serviceProvider))
-        ) {
-            return Err(new DuplicateNameError(`Duplicate name error: ${serviceProvider.name}`, serviceProvider.id));
-        }
-
         const serviceProviderEntity: Loaded<ServiceProviderEntity> | null = await this.em.findOne(
             ServiceProviderEntity,
             serviceProvider.id,
@@ -334,6 +325,12 @@ export class ServiceProviderRepo {
 
         if (!serviceProviderEntity) {
             return Err(new EntityNotFoundError('ServiceProvider', serviceProvider.id));
+        }
+
+        if (
+            !(await new NameUniqueAtOrgaSpecification(this.serviceProviderInternalRepo).isSatisfiedBy(serviceProvider))
+        ) {
+            return Err(new DuplicateNameError(`Duplicate name error: ${serviceProvider.name}`, serviceProvider.id));
         }
 
         // Use some existing values if person only has partial system rights
@@ -397,6 +394,7 @@ export class ServiceProviderRepo {
                 RollenSystemRecht.ANGEBOTE_VERWALTEN,
             )
         ) {
+            // ANGEBOTE_VERWALTEN takes precedence over ANGEBOTE_EINGESCHRAENKT_VERWALTEN, so if the user has both we return early
             return Ok(ServiceProviderPropertyPermissions.ALL);
         }
 
