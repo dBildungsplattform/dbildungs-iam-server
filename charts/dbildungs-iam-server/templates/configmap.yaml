@@ -19,6 +19,7 @@ data:
   BACKEND_HOSTNAME: "{{ .Values.backendHostname }}"
   ERROR_PAGE_REDIRECT: "https://{{ .Values.backendHostname }}/login-error"
   LDAP_URL: '{{ .Values.ldap.url | replace "spsh-xxx" .Release.Namespace }}'
+  LDAP_BASE_DN: "{{ .Values.ldap.base_dn }}"
   LDAP_OEFFENTLICHE_SCHULEN_DOMAIN: "{{ .Values.ldap.oeffentlicheSchulenDomain }}"
   LDAP_ERSATZSCHULEN_DOMAIN: "{{ .Values.ldap.ersatzschulenDomain }}"
   RETRY_WRAPPER_DEFAULT_RETRIES: "{{ .Values.ldap.retryWrapperDefaultRetries }}"
@@ -66,3 +67,5 @@ data:
   CRON_EMAIL_ADDRESSES_DELETE_LIMIT: '{{ .Values.cron.emailAddressesDeleteLimit }}'
   FEATURE_FLAG_ROLLE_ERWEITERN: '{{ .Values.featureFlags.rolleErweitern }}'
   FEATURE_FLAG_SET_UEM_PASSWORD: '{{ .Values.featureFlags.setUemPassword }}'
+  EMAIL_MICROSERVICE__USE_EMAIL_MICROSERVICE: '{{ .Values.emailMicroservice.useService }}'
+  EMAIL_MICROSERVICE__ENDPOINT: '{{ .Values.emailMicroservice.endpoint | replace "spsh-xxx" .Release.Namespace }}'
