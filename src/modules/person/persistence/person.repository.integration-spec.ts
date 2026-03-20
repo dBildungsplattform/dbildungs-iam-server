@@ -3197,9 +3197,9 @@ describe('PersonRepository Integration', () => {
         });
         describe('getPersonWithoutOrgDeleteList', () => {
             it('should return a list of personIds for persons without a personenkontext', async () => {
-                // person without personenkontext & org_unassignment_date older than 90 days
+                // person without personenkontext & org_unassignment_date older than 84 days
                 const daysAgo: Date = new Date();
-                daysAgo.setDate(daysAgo.getDate() - 90);
+                daysAgo.setDate(daysAgo.getDate() - 84);
 
                 const personEntity1: PersonEntity = new PersonEntity();
                 const person1: Person<true> = DoFactory.createPerson(true, { orgUnassignmentDate: daysAgo });
