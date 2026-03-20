@@ -8,12 +8,9 @@ import {
     ApiNoContentResponse,
 } from '@nestjs/swagger';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { ApplyRollenerweiterungPathParams } from './apply-rollenerweiterung-changes.path.params.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { ApplyRollenerweiterungBodyParams } from './apply-rollenerweiterung.body.params.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { RollenerweiterungExceptionFilter } from './rollenerweiterung-exception-filter.js';
@@ -23,12 +20,7 @@ import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterung
 import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
 import { uniq } from 'lodash-es';
 
-@UseFilters(
-    new SchulConnexValidationErrorFilter(),
-    new AuthenticationExceptionFilter(),
-    new RollenerweiterungExceptionFilter(),
-    new ApplyRollenerweiterungMultiExceptionFilter(),
-)
+@UseFilters(new RollenerweiterungExceptionFilter(), new ApplyRollenerweiterungMultiExceptionFilter())
 @ApiTags('rolle')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -94,10 +86,6 @@ export class RollenerweiterungController {
                         .join(', ')}.`,
                 );
                 throw result.error;
-            } else if (err instanceof MissingPermissionsError || err instanceof EntityNotFoundError) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(err),
-                );
             } else {
                 throw result.error;
             }

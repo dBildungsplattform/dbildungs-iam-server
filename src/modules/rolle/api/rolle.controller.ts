@@ -31,10 +31,7 @@ import {
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { Public } from '../../authentication/api/public.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
@@ -71,7 +68,7 @@ import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 
-@UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
+@UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -199,11 +196,7 @@ export class RolleController {
             permissions,
         );
         if (!rolleResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
-                ),
-            );
+            throw new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId);
         }
 
         return this.returnRolleWithServiceProvidersResponse(rolleResult.value);
@@ -229,9 +222,7 @@ export class RolleController {
             this.logger.error(
                 `Admin: ${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${orgResult.error.message}`,
             );
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(orgResult.error),
-            );
+            throw orgResult.error;
         }
         const rolle: DomainError | Rolle<false> = this.rolleFactory.createNew(
             params.name,
@@ -297,9 +288,7 @@ export class RolleController {
     ): Promise<RolleServiceProviderResponse> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (!rolle) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError()),
-            );
+            throw new EntityNotFoundError();
         }
         return new RolleServiceProviderResponse(rolle.serviceProviderIds);
     }
@@ -321,20 +310,14 @@ export class RolleController {
     ): Promise<ServiceProviderResponse[]> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (!rolle) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
-                ),
-            );
+            throw new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId);
         }
 
         const result: Result<ServiceProvider<true>[], DomainError> = await rolle.updateServiceProviders(
             spBodyParams.serviceProviderIds,
         );
         if (!result.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
-            );
+            throw result.error;
         }
         rolle.setVersionForUpdate(spBodyParams.version);
         await this.rolleRepo.save(rolle);
@@ -362,18 +345,12 @@ export class RolleController {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
 
         if (!rolle) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
-                ),
-            );
+            throw new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId);
         }
 
         const result: void | DomainError = rolle.detatchServiceProvider(spBodyParams.serviceProviderIds);
         if (result instanceof DomainError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
-            );
+            throw result;
         }
         rolle.setVersionForUpdate(spBodyParams.version);
         await this.rolleRepo.save(rolle);
@@ -425,9 +402,7 @@ export class RolleController {
             this.logger.error(
                 `Admin: ${permissions.personFields.id}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
             );
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
-            );
+            throw result;
         }
 
         this.logger.info(`Admin: ${permissions.personFields.id}) hat eine Rolle bearbeitet: ${rolleName}.`);
@@ -453,9 +428,7 @@ export class RolleController {
             this.logger.error(
                 `Admin: ${permissions.personFields.id}) hat versucht eine Rolle mit der ID ${findRolleByIdParams.rolleId} zu entfernen. Fehler: ${error.message}`,
             );
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(error),
-            );
+            throw error;
         }
         const rolleName: string = rolle.name;
 
@@ -473,9 +446,7 @@ export class RolleController {
             this.logger.error(
                 `Admin: ${permissions.personFields.id}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
             );
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
-            );
+            throw result;
         }
 
         this.logger.info(`Admin: ${permissions.personFields.id}) hat eine Rolle entfernt: ${rolleName}.`);

@@ -1,4 +1,4 @@
-import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, UnauthorizedException } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { AuthenticationDomainError } from '../domain/authentication-domain.error.js';
@@ -6,7 +6,7 @@ import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.err
 import { AuthenticationErrorI18nTypes, DbiamAuthenticationError } from './dbiam-authentication.error.js';
 import { RequiredStepUpLevelNotMetError } from '../domain/required-step-up-level-not-met.error.js';
 
-@Catch(AuthenticationDomainError)
+@Catch(AuthenticationDomainError, UnauthorizedException)
 export class AuthenticationExceptionFilter implements ExceptionFilter<AuthenticationDomainError> {
     private ERROR_MAPPINGS: Map<string, DbiamAuthenticationError> = new Map([
         [
@@ -23,9 +23,16 @@ export class AuthenticationExceptionFilter implements ExceptionFilter<Authentica
                 i18nKey: AuthenticationErrorI18nTypes.REQUIRED_STEP_UP_LEVEL_NOT_MET,
             }),
         ],
+        [
+            UnauthorizedException.name,
+            new DbiamAuthenticationError({
+                code: 401,
+                i18nKey: AuthenticationErrorI18nTypes.UNAUTHORIZED,
+            }),
+        ],
     ]);
 
-    public catch(exception: AuthenticationDomainError, host: ArgumentsHost): void {
+    public catch(exception: AuthenticationDomainError | UnauthorizedException, host: ArgumentsHost): void {
         const ctx: HttpArgumentsHost = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
         const status: number = 403; //all errors regarding organisation specifications are InternalServerErrors at the moment
@@ -36,7 +43,9 @@ export class AuthenticationExceptionFilter implements ExceptionFilter<Authentica
         response.json(dbiamAuthenticationError);
     }
 
-    private mapDomainErrorToDbiamError(error: AuthenticationDomainError): DbiamAuthenticationError {
+    private mapDomainErrorToDbiamError(
+        error: AuthenticationDomainError | UnauthorizedException,
+    ): DbiamAuthenticationError {
         return (
             this.ERROR_MAPPINGS.get(error.constructor.name) ??
             new DbiamAuthenticationError({

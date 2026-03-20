@@ -1,0 +1,34 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { DbiamError, DbiamErrorProps } from './dbiam.error.js';
+
+export enum SharedErrorI18nTypes {
+    ENTITY_COULD_NOT_BE_CREATED = 'ENTITY_COULD_NOT_BE_CREATED',
+    ENTITY_COULD_NOT_BE_UPDATED = 'ENTITY_COULD_NOT_BE_UPDATED',
+    ENTITY_COULD_NOT_BE_DELETED = 'ENTITY_COULD_NOT_BE_DELETED',
+    ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',
+    KEYCLOAK_CLIENT_ERROR = 'KEYCLOAK_CLIENT_ERROR',
+    MISMATCHED_REVISION = 'MISMATCHED_REVISION',
+    PERSON_ALREADY_EXISTS = 'PERSON_ALREADY_EXISTS',
+    ENTITY_ALREADY_EXISTS = 'ENTITY_ALREADY_EXISTS',
+    INVALID_ATTRIBUTE_LENGTH = 'INVALID_ATTRIBUTE_LENGTH',
+    INVALID_CHARACTER_SET = 'INVALID_CHARACTER_SET',
+    INVALID_NAME = 'INVALID_NAME',
+    MISSING_PERMISSIONS = 'MISSING_PERMISSIONS',
+    EXCEEDS_LIMIT = 'EXCEEDS_LIMIT',
+    USER_EXTERNAL_DATA_WORKFLOW_ERROR = 'USER_EXTERNAL_DATA_WORKFLOW_ERROR',
+    INTERNAL = 'INTERNAL',
+}
+
+export type DbiamSharedErrorProps = DbiamErrorProps & {
+    i18nKey: SharedErrorI18nTypes;
+};
+
+export class DbiamSharedError extends DbiamError {
+    @ApiProperty({ enum: SharedErrorI18nTypes })
+    public override readonly i18nKey: string;
+
+    public constructor(props: DbiamSharedErrorProps) {
+        super(props);
+        this.i18nKey = props.i18nKey;
+    }
+}
