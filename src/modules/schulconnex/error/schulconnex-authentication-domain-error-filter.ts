@@ -1,4 +1,4 @@
-import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, UnauthorizedException } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
@@ -7,7 +7,7 @@ import { DomainError } from '../../../shared/error/index.js';
 import { KeycloakUserNotFoundError } from '../../authentication/domain/keycloak-user-not-found.error.js';
 import { RequiredStepUpLevelNotMetError } from '../../authentication/domain/required-step-up-level-not-met.error.js';
 
-@Catch(AuthenticationDomainError)
+@Catch(AuthenticationDomainError, UnauthorizedException)
 export class SchulConnexAuthenticationDomainErrorFilter implements ExceptionFilter<AuthenticationDomainError> {
     private ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
         [
@@ -15,8 +15,9 @@ export class SchulConnexAuthenticationDomainErrorFilter implements ExceptionFilt
             new SchulConnexError({
                 code: 403,
                 subcode: '00',
-                titel: 'Keycloak user not found',
-                beschreibung: 'Keycloak user not found',
+                titel: 'Fehlende Rechte',
+                beschreibung:
+                    'Die Autorisierung war erfolgreich, aber die erforderlichen Rechte für die Nutzung dieses Endpunktes sind nicht vorhanden.',
             }),
         ],
         [
@@ -24,13 +25,23 @@ export class SchulConnexAuthenticationDomainErrorFilter implements ExceptionFilt
             new SchulConnexError({
                 code: 403,
                 subcode: '00',
-                titel: 'Requered step-up level not met',
-                beschreibung: 'Keycloak user not found',
+                titel: 'Fehlende Rechte',
+                beschreibung:
+                    'Die Autorisierung war erfolgreich, aber die erforderlichen Rechte für die Nutzung dieses Endpunktes sind nicht vorhanden.',
+            }),
+        ],
+        [
+            UnauthorizedException.name,
+            new SchulConnexError({
+                code: 401,
+                subcode: '00',
+                titel: 'Zugang verweigert',
+                beschreibung: 'Die Anfrage konnte aufgrund fehlender Autorisierung nicht verarbeitet werden.',
             }),
         ],
     ]);
 
-    public catch(exception: AuthenticationDomainError, host: ArgumentsHost): void {
+    public catch(exception: AuthenticationDomainError | UnauthorizedException, host: ArgumentsHost): void {
         const ctx: HttpArgumentsHost = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
@@ -40,7 +51,7 @@ export class SchulConnexAuthenticationDomainErrorFilter implements ExceptionFilt
         response.json(schulConnexError);
     }
 
-    private mapDomainErrorToSchulConnexError(error: DomainError): SchulConnexError {
+    private mapDomainErrorToSchulConnexError(error: DomainError | UnauthorizedException): SchulConnexError {
         return (
             this.ERROR_MAPPINGS.get(error.constructor.name) ??
             new SchulConnexError({

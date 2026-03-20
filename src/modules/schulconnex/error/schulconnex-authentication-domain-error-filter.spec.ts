@@ -1,4 +1,4 @@
-import { ArgumentsHost } from '@nestjs/common';
+import { ArgumentsHost, UnauthorizedException } from '@nestjs/common';
 import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
@@ -23,15 +23,24 @@ describe('AuthenticationDomainErrorFilter', () => {
     const keycloakUserNotFoundError: SchulConnexError = new SchulConnexError({
         code: 403,
         subcode: '00',
-        titel: 'Keycloak user not found',
-        beschreibung: 'Keycloak user not found',
+        titel: 'Fehlende Rechte',
+        beschreibung:
+            'Die Autorisierung war erfolgreich, aber die erforderlichen Rechte für die Nutzung dieses Endpunktes sind nicht vorhanden.',
     });
 
     const requiredStepUpLevelNotMetError: SchulConnexError = new SchulConnexError({
         code: 403,
         subcode: '00',
-        titel: 'Requered step-up level not met',
-        beschreibung: 'Keycloak user not found',
+        titel: 'Fehlende Rechte',
+        beschreibung:
+            'Die Autorisierung war erfolgreich, aber die erforderlichen Rechte für die Nutzung dieses Endpunktes sind nicht vorhanden.',
+    });
+
+    const unauthorizedError: SchulConnexError = new SchulConnexError({
+        code: 401,
+        subcode: '00',
+        titel: 'Zugang verweigert',
+        beschreibung: 'Die Anfrage konnte aufgrund fehlender Autorisierung nicht verarbeitet werden.',
     });
 
     beforeEach(() => {
@@ -90,6 +99,17 @@ describe('AuthenticationDomainErrorFilter', () => {
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(requiredStepUpLevelNotMetError);
+            });
+        });
+
+        describe('when filter catches an unauthorized error ', () => {
+            it('should throw an authentication schulconnex exception', () => {
+                const authenticationError: UnauthorizedException = new UnauthorizedException();
+                filter.catch(authenticationError, argumentsHost as ArgumentsHost);
+
+                expect(responseMock.json).toHaveBeenCalled();
+                expect(responseMock.status).toHaveBeenCalledWith(401);
+                expect(responseMock.json).toHaveBeenCalledWith(unauthorizedError);
             });
         });
     });
