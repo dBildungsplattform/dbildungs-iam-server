@@ -39,7 +39,7 @@ spec:
                   name:  {{ template "common.names.name" $ }}-cronjob-envs-configmap
             env:
                 - name: EMAIL_MICROSERVICE_ENDPOINT_URL
-                  value: "https://{{ $.Values.emailHostname }}{{ $job_options.endpoint }}"
+                  value: "https://{{ $.Values.EmailMicroservice.endpoint }}{{ $job_options.endpoint }}"
                 - name: HTTP_METHOD
                   value: "{{ $job_options.httpMethod }}"
                 - name: LOG_FILE_PATH
@@ -47,7 +47,7 @@ spec:
                 - name: INTERNAL_COMMUNICATION_API_KEY
                   valueFrom:
                     secretKeyRef:
-                      name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                      name: {{ default .Values.emailMicroserviceAuth.existingSecret .Values.auth.secretName }}
                       key: internal-communication-api-key
 
             resources:
