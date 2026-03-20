@@ -30,13 +30,12 @@ import { LandesbediensteterWorkflowStepBodyParams } from './param/landesbedienst
 import { LandesbediensteterWorkflowStepResponse } from './response/landesbediensteter-workflow-step.response.js';
 import { LandesbediensteterExceptionFilter } from './landesbediensteter-exception-filter.js';
 import { PersonenkontexteUpdateExceptionFilter } from '../../personenkontext/api/personenkontexte-update-exception-filter.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
 @ApiTags('landesbediensteter')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
 @Controller({ path: 'landesbediensteter' })
-@UseFilters(PersonenkontexteUpdateExceptionFilter, LandesbediensteterExceptionFilter, AuthenticationExceptionFilter)
+@UseFilters(PersonenkontexteUpdateExceptionFilter, LandesbediensteterExceptionFilter)
 export class LandesbediensteterController {
     public constructor(public readonly landesbediensteteWorkflowFactory: LandesbediensteterWorkflowFactory) {}
 
