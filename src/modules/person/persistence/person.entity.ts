@@ -40,8 +40,7 @@ export class PersonEntity extends TimestampedEntity {
     })
     @Index({
         name: 'person_username_unique',
-        expression:
-            'create unique index "person_username_unique" on "person" ("username") nulls distinct;',
+        expression: 'create unique index "person_username_unique" on "person" ("username") nulls distinct;',
     })
     @Unique()
     @Property({ nullable: true })
