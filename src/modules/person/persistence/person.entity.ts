@@ -1,4 +1,14 @@
-import { Collection, DateTimeType, Entity, Index, ManyToOne, OneToMany, Property, QueryOrder } from '@mikro-orm/core';
+import {
+    Collection,
+    DateTimeType,
+    Entity,
+    Index,
+    ManyToOne,
+    OneToMany,
+    Property,
+    QueryOrder,
+    Unique,
+} from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
@@ -20,13 +30,20 @@ export class PersonEntity extends TimestampedEntity {
         expression:
             'create unique index "person_keycloak_user_id_unique" on "person" ("keycloak_user_id") nulls not distinct;',
     })
+    @Unique()
     @Property()
     public keycloakUserId!: string;
 
     @Index({
-        name: 'person_referrer_trgm_unique_index',
-        expression: 'create unique index "person_referrer_trgm_index_unique" on "person" using gin ("username" gin_trgm_ops);',
+        name: 'person_referrer_trgm_index',
+        expression: 'create index "person_referrer_trgm_index" on "person" using gin ("username" gin_trgm_ops);',
     })
+    @Index({
+        name: 'person_username_unique',
+        expression:
+            'create unique index "person_username_unique" on "person" ("username") nulls distinct;',
+    })
+    @Unique()
     @Property({ nullable: true })
     public username?: string;
 

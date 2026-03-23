@@ -2927,6 +2927,26 @@
       "schema": "public",
       "indexes": [
         {
+          "columnNames": [
+            "keycloak_user_id"
+          ],
+          "composite": false,
+          "keyName": "person_keycloak_user_id_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "username"
+          ],
+          "composite": false,
+          "keyName": "person_username_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
           "keyName": "person_keycloak_user_id_unique",
           "columnNames": [
             "keycloak_user_id"
@@ -2938,7 +2958,7 @@
           "expression": "create unique index \"person_keycloak_user_id_unique\" on \"person\" (\"keycloak_user_id\") nulls not distinct;"
         },
         {
-          "keyName": "person_referrer_trgm_unique_index",
+          "keyName": "person_username_unique",
           "columnNames": [
             "username"
           ],
@@ -2946,7 +2966,18 @@
           "constraint": false,
           "primary": false,
           "unique": false,
-          "expression": "create unique index \"person_referrer_trgm_index_unique\" on \"person\" using gin (\"username\" gin_trgm_ops);"
+          "expression": "create unique index \"person_username_unique\" on \"person\" (\"username\") nulls distinct;"
+        },
+        {
+          "keyName": "person_referrer_trgm_index",
+          "columnNames": [
+            "username"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "create index \"person_referrer_trgm_index\" on \"person\" using gin (\"username\" gin_trgm_ops);"
         },
         {
           "keyName": "person_familienname_trgm_index",
