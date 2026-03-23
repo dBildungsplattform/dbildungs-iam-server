@@ -529,7 +529,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"  
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -1154,7 +1154,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"      
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -1473,7 +1473,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"      
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -2058,7 +2058,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"     
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -2938,7 +2938,7 @@
           "expression": "create unique index \"person_keycloak_user_id_unique\" on \"person\" (\"keycloak_user_id\") nulls not distinct;"
         },
         {
-          "keyName": "person_referrer_trgm_index",
+          "keyName": "person_referrer_trgm_unique_index",
           "columnNames": [
             "username"
           ],
@@ -2946,7 +2946,7 @@
           "constraint": false,
           "primary": false,
           "unique": false,
-          "expression": "create index \"person_referrer_trgm_index\" on \"person\" using gin (\"username\" gin_trgm_ops);"
+          "expression": "create unique index \"person_referrer_trgm_index_unique\" on \"person\" using gin (\"username\" gin_trgm_ops);"
         },
         {
           "keyName": "person_familienname_trgm_index",
@@ -3215,7 +3215,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"    
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -5677,7 +5677,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"           
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -5977,7 +5977,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"            
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -6085,7 +6085,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"           
+            "HINWEISE"
           ],
           "mappedType": "enum"
         },
@@ -6371,7 +6371,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"           
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -6652,7 +6652,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"   
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -7027,7 +7027,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"    
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -7308,7 +7308,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"        
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -7920,7 +7920,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"          
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {

@@ -24,8 +24,8 @@ export class PersonEntity extends TimestampedEntity {
     public keycloakUserId!: string;
 
     @Index({
-        name: 'person_referrer_trgm_index',
-        expression: 'create index "person_referrer_trgm_index" on "person" using gin ("username" gin_trgm_ops);',
+        name: 'person_referrer_trgm_unique_index',
+        expression: 'create unique index "person_referrer_trgm_index_unique" on "person" using gin ("username" gin_trgm_ops);',
     })
     @Property({ nullable: true })
     public username?: string;
