@@ -355,7 +355,6 @@ cronjobsEmail:
     repository: docker.io/schulcloud/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
-  emailHostname: '{{ .Values.emailMicroservice.endpoint | replace "spsh-xxx" .Release.Namespace }}'
   scriptDir: scripts
   jobs:
     cron-trigger-email:
