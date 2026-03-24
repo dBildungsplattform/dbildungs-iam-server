@@ -39,7 +39,7 @@ spec:
                   name:  {{ template "common.names.name" $ }}-cronjob-envs-configmap
             env:
                 - name: EMAIL_MICROSERVICE_ENDPOINT_URL
-                  value: '{{ $.Values.emailMicroservice.endpoint | replace "spsh-xxx" .Release.Namespace }}{{ $job_options.endpoint }}'
+                  value: '{{ $.Values.emailMicroservice.endpoint | replace "spsh-xxx" $.Release.Namespace }}{{ $job_options.endpoint }}'
                 - name: HTTP_METHOD
                   value: "{{ $job_options.httpMethod }}"
                 - name: LOG_FILE_PATH
