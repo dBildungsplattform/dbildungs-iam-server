@@ -369,7 +369,7 @@ export class OrganisationController {
     @ApiParam({
         name: 'organisationId',
         description: 'The ID of the parent organisation to which another organisation will be added as a subordinate.',
-        type: OrganisationByIdParams,
+        type: String,
     })
     @ApiBody({
         description: 'The ID of the child organisation that will be assigned to the parent organisation.',
@@ -381,12 +381,12 @@ export class OrganisationController {
     @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
     public async addZugehoerigeOrganisation(
-        @Param() params: OrganisationByIdParams,
+        @Param('organisationId') organisationId: string,
         @Body() body: OrganisationByIdBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
         const res: Result<void, DomainError> = await this.organisationService.setZugehoerigZu(
-            params.organisationId,
+            organisationId,
             body.organisationId,
             permissions,
         );
