@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Post, Query, StreamableFile, UnauthorizedException } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Param,
+    Post,
+    Query,
+    StreamableFile,
+    UnauthorizedException,
+    UseFilters,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
