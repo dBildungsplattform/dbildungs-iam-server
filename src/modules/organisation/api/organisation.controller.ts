@@ -381,12 +381,12 @@ export class OrganisationController {
     @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
     public async addZugehoerigeOrganisation(
-        @Param('organisationId') organisationId: string,
+        @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByIdBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
         const res: Result<void, DomainError> = await this.organisationService.setZugehoerigZu(
-            organisationId,
+            params.organisationId,
             body.organisationId,
             permissions,
         );
