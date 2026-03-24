@@ -4,7 +4,6 @@ import {
     Delete,
     Get,
     HttpCode,
-    HttpException,
     HttpStatus,
     Param,
     ParseFilePipeBuilder,
@@ -32,8 +31,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DbiamPersonenkontextImportBodyParams } from './dbiam-personenkontext-import.body.params.js';
 import { ImportWorkflowFactory } from '../domain/import-workflow.factory.js';
@@ -45,8 +42,6 @@ import { DbiamImportError } from './dbiam-import.error.js';
 import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.js';
 import { Response } from 'express';
 import { ImportUploadResponse } from './importvorgang-upload.response.js';
-import { ImportDomainError } from '../domain/import-domain.error.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { ImportExceptionFilter } from './import-exception-filter.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
@@ -65,7 +60,7 @@ import { ImportResultResponse } from './import-result.response.js';
 import { ImportResultQueryParams } from './import-result-query.params.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new ImportExceptionFilter())
+@UseFilters(new ImportExceptionFilter())
 @ApiTags('import')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -111,13 +106,7 @@ export class ImportController {
             permissions,
         );
         if (result instanceof DomainError) {
-            if (result instanceof ImportDomainError) {
-                throw result;
-            }
-
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
-            );
+            throw result;
         }
 
         return new ImportUploadResponse(
@@ -154,20 +143,10 @@ export class ImportController {
         const result: Result<void> = await importWorkflow.executeImport(body.importvorgangId, permissions);
 
         if (!result.ok) {
-            if (result.error instanceof ImportDomainError) {
-                this.logger.error(
-                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht mit dem Importvorgang: ${body.importvorgangId} einen CSV Import durchzuführen. Fehler: ${result.error.message}`,
-                );
-                throw result.error;
-            }
-
-            const schulConnexError: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
-            );
             this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht mit dem Importvorgang: ${body.importvorgangId} einen CSV Import durchzuführen. Fehler: ${schulConnexError.message}`,
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht mit dem Importvorgang: ${body.importvorgangId} einen CSV Import durchzuführen. Fehler: ${result.error.message}`,
             );
-            throw schulConnexError;
+            throw result.error;
         }
 
         this.logger.info(
@@ -193,11 +172,7 @@ export class ImportController {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
         const result: Result<void> = await importWorkflow.cancelOrCompleteImport(params.importvorgangId, permissions);
         if (!result.ok) {
-            if (result.error instanceof DomainError) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
-                );
-            }
+            throw result.error;
         }
     }
 
@@ -270,16 +245,13 @@ export class ImportController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<StreamableFile> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
-        const result: Result<Buffer> = await importWorkflow.downloadFile(params.importvorgangId, permissions);
+        const result: Result<Buffer, DomainError> = await importWorkflow.downloadFile(
+            params.importvorgangId,
+            permissions,
+        );
 
         if (!result.ok) {
-            if (result.error instanceof ImportDomainError) {
-                throw result.error;
-            }
-
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
-            );
+            throw result.error;
         } else {
             const fileName: string = importWorkflow.getFileName(params.importvorgangId);
             const contentDisposition: string = `attachment; filename="${fileName}"`;
@@ -310,11 +282,7 @@ export class ImportController {
             params.importvorgangId,
         );
         if (!importVorgang) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('ImportVorgang', params.importvorgangId),
-                ),
-            );
+            throw new EntityNotFoundError('ImportVorgang', params.importvorgangId);
         }
 
         // Count processed items and add them to the response
@@ -342,7 +310,7 @@ export class ImportController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<ImportResultResponse> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
-        const result: Result<ImportResult> = await importWorkflow.getImportedUsers(
+        const result: Result<ImportResult, DomainError> = await importWorkflow.getImportedUsers(
             permissions,
             queryParams.importvorgangId,
             queryParams.offset,
@@ -350,13 +318,7 @@ export class ImportController {
         );
 
         if (!result.ok) {
-            if (result.error instanceof ImportDomainError) {
-                throw result.error;
-            }
-
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
-            );
+            throw result.error;
         }
 
         return new ImportResultResponse(result.value);

@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
-import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request } from 'express';
 import { Observable } from 'rxjs';
@@ -54,6 +54,9 @@ import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.respons
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
+import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -94,6 +97,9 @@ describe('Rolle API', () => {
                         },
                     },
                 },
+                { provide: APP_FILTER, useClass: ValidationExceptionFilter },
+                { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
+                { provide: APP_FILTER, useClass: SharedExceptionFilter },
                 {
                     provide: PersonPermissionsRepo,
                     useValue: createMock(PersonPermissionsRepo),
@@ -1094,9 +1100,7 @@ describe('Rolle API', () => {
             expect(response.status).toBe(404);
             expect(response.body).toEqual({
                 code: 404,
-                subcode: '01',
-                titel: 'Angefragte Entität existiert nicht',
-                beschreibung: 'Die angeforderte Entität existiert nicht',
+                i18nKey: 'MISSING_PERMISSIONS',
             });
         });
 
@@ -1145,9 +1149,7 @@ describe('Rolle API', () => {
             expect(response.status).toBe(404);
             expect(response.body).toEqual({
                 code: 404,
-                subcode: '01',
-                titel: 'Angefragte Entität existiert nicht',
-                beschreibung: 'Die angeforderte Entität existiert nicht',
+                i18nKey: 'ENTITY_NOT_FOUND',
             });
         });
 
@@ -1402,9 +1404,7 @@ describe('Rolle API', () => {
                 expect(response.status).toBe(404);
                 expect(response.body).toEqual({
                     code: 404,
-                    subcode: '01',
-                    titel: 'Angefragte Entität existiert nicht',
-                    beschreibung: 'Die angeforderte Entität existiert nicht',
+                    i18nKey: 'MISSING_PERMISSIONS',
                 });
             });
 
@@ -1448,9 +1448,7 @@ describe('Rolle API', () => {
                 expect(response.status).toBe(404);
                 expect(response.body).toEqual({
                     code: 404,
-                    subcode: '01',
-                    titel: 'Angefragte Entität existiert nicht',
-                    beschreibung: 'Die angeforderte Entität existiert nicht',
+                    i18nKey: 'ENTITY_NOT_FOUND',
                 });
             });
         });

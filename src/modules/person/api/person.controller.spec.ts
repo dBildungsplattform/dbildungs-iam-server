@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { HttpException, NotImplementedException, UnauthorizedException } from '@nestjs/common';
+import { NotImplementedException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
@@ -238,15 +238,15 @@ describe('PersonController', () => {
                 expect(personDeleteServiceMock.deletePerson).toHaveBeenCalledTimes(1);
             });
         });
-        describe('when deleting a person returns a SchulConnexError', () => {
+        describe('when deleting a person returns a domain error', () => {
             it('should throw HttpException', async () => {
                 personDeleteServiceMock.deletePerson.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityCouldNotBeDeleted('entity', faker.string.uuid()),
                 });
-                await expect(personController.deletePersonById(deleteParams, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    personController.deletePersonById(deleteParams, personPermissionsMock),
+                ).rejects.toBeInstanceOf(EntityCouldNotBeDeleted);
             });
         });
     });
@@ -266,7 +266,7 @@ describe('PersonController', () => {
             await expect(personController.findPersonById(params, personPermissionsMock)).resolves.not.toThrow();
         });
 
-        it('should throw an HttpNotFoundException when permissions are insufficient', async () => {
+        it('should throw a domain error when permissions are insufficient', async () => {
             personRepositoryMock.findById.mockResolvedValue(undefined);
             personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: false,
@@ -274,7 +274,9 @@ describe('PersonController', () => {
             });
             emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValue(undefined);
 
-            await expect(personController.findPersonById(params, personPermissionsMock)).rejects.toThrow(HttpException);
+            await expect(personController.findPersonById(params, personPermissionsMock)).rejects.toBeInstanceOf(
+                EntityNotFoundError,
+            );
             expect(personRepositoryMock.findById).toHaveBeenCalledTimes(0);
         });
 
@@ -460,7 +462,7 @@ describe('PersonController', () => {
         });
 
         describe('when permissions are insufficient to fetch personenkontexte', () => {
-            it('should throw HttpNotFoundException', async () => {
+            it('should throw a domain error', async () => {
                 const pathParams: PersonByIdParams = new PersonByIdParams();
                 Object.assign(pathParams, {
                     personId: faker.string.uuid(),
@@ -488,7 +490,7 @@ describe('PersonController', () => {
                 personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue(personenkontextDtos);
                 await expect(
                     personController.findPersonenkontexte(pathParams, queryParams, personPermissionsMock),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
             });
         });
     });
@@ -514,7 +516,7 @@ describe('PersonController', () => {
             });
         });
 
-        describe('when resetting password for a person returns a SchulConnexError', () => {
+        describe('when resetting password for a person returns a domain error', () => {
             const params: PersonByIdParams = new PersonByIdParams();
             Object.assign(params, {
                 personId: faker.string.uuid(),
@@ -527,9 +529,9 @@ describe('PersonController', () => {
                 personRepositoryMock.update.mockResolvedValue(new KeycloakClientError(''));
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
 
-                await expect(personController.resetPasswordByPersonId(params, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    personController.resetPasswordByPersonId(params, personPermissionsMock),
+                ).rejects.toBeInstanceOf(KeycloakClientError);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(1);
             });
         });
@@ -550,9 +552,9 @@ describe('PersonController', () => {
                     error: new EntityNotFoundError(),
                 });
 
-                await expect(personController.resetPasswordByPersonId(params, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    personController.resetPasswordByPersonId(params, personPermissionsMock),
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
@@ -565,7 +567,7 @@ describe('PersonController', () => {
             const person: Person<true> = getPerson();
             personPermissionsMock = createPersonPermissionsMock();
 
-            it('should throw HttpNotFoundException', async () => {
+            it('should throw a domain error', async () => {
                 personRepositoryMock.findById.mockResolvedValue(undefined);
                 personRepositoryMock.update.mockResolvedValue(person);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
@@ -573,9 +575,9 @@ describe('PersonController', () => {
                     error: new EntityNotFoundError(),
                 });
 
-                await expect(personController.resetPasswordByPersonId(params, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    personController.resetPasswordByPersonId(params, personPermissionsMock),
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
@@ -615,7 +617,7 @@ describe('PersonController', () => {
         describe('when person does not exist', () => {
             const person: Person<true> = getPerson();
 
-            it('should throw HttpException', async () => {
+            it('should throw a domain error', async () => {
                 personRepositoryMock.findBy.mockResolvedValue([[], 0]);
                 personRepositoryMock.update.mockResolvedValue(person);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
@@ -623,8 +625,8 @@ describe('PersonController', () => {
                     error: new EntityNotFoundError(),
                 });
 
-                await expect(personController.updatePerson(params, body, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
+                await expect(personController.updatePerson(params, body, personPermissionsMock)).rejects.toBeInstanceOf(
+                    EntityNotFoundError,
                 );
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
@@ -634,13 +636,13 @@ describe('PersonController', () => {
             const person: Person<true> = getPerson();
             person.revision = '10';
 
-            it('should throw HttpException', async () => {
+            it('should throw a domain error', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.update.mockResolvedValue(person);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
 
-                await expect(personController.updatePerson(params, body, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
+                await expect(personController.updatePerson(params, body, personPermissionsMock)).rejects.toBeInstanceOf(
+                    MismatchedRevisionError,
                 );
                 //expect(personRepositoryMock.findById).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
@@ -651,7 +653,7 @@ describe('PersonController', () => {
             const person: Person<true> = getPerson();
             person.revision = '10';
 
-            it('should throw HttpNotFoundException', async () => {
+            it('should throw a domain error', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.update.mockResolvedValue(person);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
@@ -659,8 +661,8 @@ describe('PersonController', () => {
                     error: new EntityNotFoundError(),
                 });
 
-                await expect(personController.updatePerson(params, body, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
+                await expect(personController.updatePerson(params, body, personPermissionsMock)).rejects.toBeInstanceOf(
+                    EntityNotFoundError,
                 );
                 expect(personRepositoryMock.findById).toHaveBeenCalledTimes(0);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
@@ -920,7 +922,7 @@ describe('PersonController', () => {
             ).rejects.toThrow(PersonalnummerRequiredError);
         });
 
-        it('should throw HttpException when revision is incorrect', async () => {
+        it('should throw a domain error when revision is incorrect', async () => {
             const bodyWithInvalidRevision: PersonMetadataBodyParams = {
                 familienname: faker.person.lastName(),
                 vorname: faker.person.firstName(),
@@ -935,7 +937,7 @@ describe('PersonController', () => {
 
             await expect(
                 personController.updateMetadata(params, bodyWithInvalidRevision, personPermissionsMock),
-            ).rejects.toThrow(HttpException);
+            ).rejects.toBeInstanceOf(MismatchedRevisionError);
         });
 
         it('should throw PersonDomainError when Person has no personenkontexte where a rolle requires a KoPers.', async () => {
@@ -956,7 +958,7 @@ describe('PersonController', () => {
             });
             personPermissionsMock = createPersonPermissionsMock();
 
-            it('should throw HttpException', async () => {
+            it('should throw a domain error', async () => {
                 personRepositoryMock.findBy.mockResolvedValue([[], 0]);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: false,
@@ -965,7 +967,7 @@ describe('PersonController', () => {
 
                 await expect(
                     personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
@@ -977,7 +979,7 @@ describe('PersonController', () => {
             });
             personPermissionsMock = createPersonPermissionsMock();
 
-            it('should throw HttpNotFoundException', async () => {
+            it('should throw a domain error', async () => {
                 personRepositoryMock.findById.mockResolvedValue(undefined);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: false,
@@ -986,7 +988,7 @@ describe('PersonController', () => {
 
                 await expect(
                     personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
@@ -998,7 +1000,7 @@ describe('PersonController', () => {
             });
             personPermissionsMock = createPersonPermissionsMock();
 
-            it('should throw HttpException', async () => {
+            it('should throw a domain error', async () => {
                 personRepositoryMock.findBy.mockResolvedValue([[], 0]);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
@@ -1007,7 +1009,7 @@ describe('PersonController', () => {
 
                 await expect(
                     personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toBeInstanceOf(PersonDomainError);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
@@ -1075,13 +1077,15 @@ describe('PersonController', () => {
 
     describe('resetUEMPassword', () => {
         describe('when person does not exist', () => {
-            it('should throw HttpException', async () => {
+            it('should throw a domain error', async () => {
                 personPermissionsMock = createPersonPermissionsMock({ id: '' });
                 ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
                     ok: false,
-                    error: new HttpException('Person not found', 404),
+                    error: new EntityNotFoundError('Person not found', String(404)),
                 });
-                await expect(personController.resetUEMPassword(personPermissionsMock)).rejects.toThrow(HttpException);
+                await expect(personController.resetUEMPassword(personPermissionsMock)).rejects.toBeInstanceOf(
+                    EntityNotFoundError,
+                );
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
@@ -1097,8 +1101,8 @@ describe('PersonController', () => {
                 person,
             );
 
-            it('should throw HttpException', async () => {
-                await expect(personController.resetUEMPassword(permissions)).rejects.toThrow(HttpException);
+            it('should throw a domain error', async () => {
+                await expect(personController.resetUEMPassword(permissions)).rejects.toBeInstanceOf(PersonDomainError);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });

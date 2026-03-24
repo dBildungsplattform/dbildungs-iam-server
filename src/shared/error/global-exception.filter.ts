@@ -1,23 +1,19 @@
 import { DriverException } from '@mikro-orm/core';
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { AbstractHttpAdapter, HttpAdapterHost } from '@nestjs/core';
 import util from 'util';
 import { ClassLogger } from '../../core/logging/class-logger.js';
-import { SchulConnexError } from './schul-connex.error.js';
+import { DbiamError } from './dbiam.error.js';
 
-const DB_ERROR: SchulConnexError = new SchulConnexError({
-    titel: 'Interner Serverfehler',
-    beschreibung: 'Es ist ein interner Fehler aufgetreten. Die Datenbank hat einen Fehler erzeugt.',
-    code: HttpStatus.INTERNAL_SERVER_ERROR,
-    subcode: '00',
+const DB_ERROR: DbiamError = new DbiamError({
+    code: 500,
+    i18nKey: 'DB_ERROR',
 });
 
-const UNKNOWN_ERROR: SchulConnexError = new SchulConnexError({
-    titel: 'Interner Serverfehler',
-    beschreibung: 'Es ist ein interner Fehler aufgetreten. Der Fehler ist unbekannt.',
-    code: HttpStatus.INTERNAL_SERVER_ERROR,
-    subcode: '00',
+const UNKNOWN_ERROR: DbiamError = new DbiamError({
+    code: 500,
+    i18nKey: 'INTERNAL_SERVER_ERROR',
 });
 
 @Catch()

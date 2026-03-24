@@ -1,14 +1,4 @@
-import {
-    Body,
-    Controller,
-    Get,
-    Param,
-    Post,
-    Query,
-    StreamableFile,
-    UnauthorizedException,
-    UseFilters,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, StreamableFile, UnauthorizedException } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -23,11 +13,8 @@ import {
 } from '@nestjs/swagger';
 
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { ApiOkResponsePaginated, RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
@@ -58,6 +45,9 @@ import { CreateServiceProviderBodyParams } from './create-service-provider-body.
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProviderSystem } from '../domain/service-provider.enum.js';
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
+import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), ServiceProviderErrorFilter)
 @ApiTags('provider')
 @ApiOAuth2(['openid'])
@@ -130,19 +120,11 @@ export class ProviderController {
         );
 
         if (!serviceProvider) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('ServiceProvider', params.angebotId),
-                ),
-            );
+            throw new EntityNotFoundError('ServiceProvider', params.angebotId);
         }
 
         if (!serviceProvider.logo || !serviceProvider.logoMimeType) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('ServiceProviderLogo', params.angebotId),
-                ),
-            );
+            throw new EntityNotFoundError('ServiceProviderLogo', params.angebotId);
         }
 
         const logoFile: StreamableFile = this.streamableFileFactory.fromBuffer(serviceProvider.logo, {
@@ -183,11 +165,7 @@ export class ProviderController {
             !permittedOrgas.all &&
             !permittedOrgas.orgaIds.includes(queryParams.organisationId)
         ) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Insufficient permissions for the requested organisationId'),
-                ),
-            );
+            throw new MissingPermissionsError('Insufficient permissions for the requested organisationId');
         }
 
         let filteredOrgaIds: string[] | undefined = permittedOrgas.all ? undefined : permittedOrgas.orgaIds;
@@ -287,11 +265,7 @@ export class ProviderController {
         );
 
         if (!result.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Rollen Erweitern Systemrecht required for this endpoint'),
-                ),
-            );
+            throw new MissingPermissionsError('Rollen Erweitern Systemrecht required for this endpoint');
         }
 
         const [serviceProvidersWithRollenAndErweiterungen, total]: [
@@ -332,11 +306,7 @@ export class ProviderController {
             await this.serviceProviderService.findManageableById(permissions, params.angebotId);
 
         if (!serviceProviderWithOrganisationRollenAndErweiterungen) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('ServiceProvider', params.angebotId),
-                ),
-            );
+            throw new EntityNotFoundError('ServiceProvider', params.angebotId);
         }
 
         return new ManageableServiceProviderResponse(

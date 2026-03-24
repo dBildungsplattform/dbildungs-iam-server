@@ -1,4 +1,3 @@
-import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -149,9 +148,9 @@ describe('Personenuebersicht API Mocked', () => {
                     orgaIds: [orga.id],
                 });
 
-                await expect(sut.findPersonenuebersichtenByPerson(params, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    sut.findPersonenuebersichtenByPerson(params, personPermissionsMock),
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
             });
         });
 
@@ -278,8 +277,8 @@ describe('Personenuebersicht API Mocked', () => {
             organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
             personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [orga.id] });
 
-            await expect(sut.findPersonenuebersichten(bodyParams, personPermissionsMock)).rejects.toThrow(
-                HttpException,
+            await expect(sut.findPersonenuebersichten(bodyParams, personPermissionsMock)).rejects.toBeInstanceOf(
+                EntityNotFoundError,
             );
         });
     });

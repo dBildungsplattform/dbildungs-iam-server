@@ -1,6 +1,6 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
-import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
@@ -44,6 +44,9 @@ import { OrganisationEntity } from '../../../organisation/persistence/organisati
 import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
 import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
 import { ServiceProviderModule } from '../../../service-provider/service-provider.module.js';
+import { SharedExceptionFilter } from '../../../../shared/filter/shared-exception-filter.js';
+import { ValidationExceptionFilter } from '../../../../shared/filter/validation-exception-filter.js';
+import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -85,6 +88,9 @@ describe('Personenuebersicht API', () => {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
                 },
+                { provide: APP_FILTER, useClass: ValidationExceptionFilter },
+                { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
+                { provide: APP_FILTER, useClass: SharedExceptionFilter },
                 {
                     provide: UsernameGeneratorService,
                     useValue: createMock(UsernameGeneratorService),

@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { HttpException, INestApplication, UnauthorizedException } from '@nestjs/common';
+import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Client } from 'openid-client';
@@ -268,7 +268,7 @@ describe('Provider Controller Test', () => {
 
             await expect(
                 providerController.findRollenerweiterungenByServiceProviderId(permissions, pathparams, queryparams),
-            ).rejects.toThrow(HttpException);
+            ).rejects.toBeInstanceOf(MissingPermissionsError);
         });
 
         it('should return paged response with items and correct total', async () => {
@@ -571,7 +571,7 @@ describe('Provider Controller Test', () => {
 
             await expect(
                 providerController.getManageableServiceProvidersForOrganisationId(permissions, params),
-            ).rejects.toThrow(HttpException);
+            ).rejects.toBeInstanceOf(MissingPermissionsError);
         });
 
         it('should handle undefined rollenerweiterungenWithName', async () => {

@@ -15,7 +15,6 @@ import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterung
 import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
 import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
-import { HttpException } from '@nestjs/common';
 
 describe('RollenerweiterungController', () => {
     let controller: RollenerweiterungController;
@@ -153,9 +152,9 @@ describe('RollenerweiterungController', () => {
                 error: new EntityNotFoundError(),
             });
 
-            await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow(
-                HttpException,
-            ); //Mapped to SchulConnexHttpException
+            await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toBeInstanceOf(
+                EntityNotFoundError,
+            );
         });
 
         it('should throw if ApplyRollenerweiterungService returns MissingPermissionsError error', async () => {
@@ -173,9 +172,9 @@ describe('RollenerweiterungController', () => {
                 error: new MissingPermissionsError(''),
             });
 
-            await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow(
-                HttpException,
-            ); //Mapped to SchulConnexHttpException
+            await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toBeInstanceOf(
+                MissingPermissionsError,
+            );
         });
 
         it('should throw if ApplyRollenerweiterungService returns MissingMerkmalVerfuegbarFuerRollenerweiterungError error', async () => {

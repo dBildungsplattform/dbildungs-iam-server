@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { HttpException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DoFactory, ConfigTestModule, createPersonPermissionsMock } from '../../../../test/utils/index.js';
@@ -182,7 +182,7 @@ describe('OrganisationController', () => {
         });
 
         describe('when usecase returns a OrganisationSpecificationError', () => {
-            it('should throw a HttpException', async () => {
+            it('should throw a domain error', async () => {
                 const oeffentlich: Organisation<true> = Organisation.construct(
                     faker.string.uuid(),
                     faker.date.past(),
@@ -228,8 +228,8 @@ describe('OrganisationController', () => {
             });
         });
 
-        describe('when usecase returns a SchulConnexError', () => {
-            it('should throw a HttpException', async () => {
+        describe('when usecase returns a domain error', () => {
+            it('should throw a domain error', async () => {
                 const oeffentlich: Organisation<true> = Organisation.construct(
                     faker.string.uuid(),
                     faker.date.past(),
@@ -266,16 +266,16 @@ describe('OrganisationController', () => {
                 organisationRepositoryMock.findRootDirectChildren.mockResolvedValue(mockedRepoResponse);
                 organisationServiceMock.createOrganisation.mockResolvedValue({
                     ok: false,
-                    error: {} as EntityNotFoundError,
+                    error: new EntityNotFoundError(),
                 });
                 await expect(
                     organisationController.createOrganisation(permissionsMock, {} as CreateOrganisationBodyParams),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
                 expect(organisationServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
             });
         });
 
-        it('should throw HttpException if user lacks KLASSEN_VERWALTEN permission for KLASSE type', async () => {
+        it('should throw a domain error if user lacks KLASSEN_VERWALTEN permission for KLASSE type', async () => {
             const params: CreateOrganisationBodyParams = {
                 kennung: faker.lorem.word(),
                 name: faker.lorem.word(),
@@ -289,12 +289,12 @@ describe('OrganisationController', () => {
 
             permissionsMock.hasOrgVerwaltenRechtAtOrga.mockResolvedValueOnce(false);
 
-            await expect(organisationController.createOrganisation(permissionsMock, params)).rejects.toThrow(
-                HttpException,
+            await expect(organisationController.createOrganisation(permissionsMock, params)).rejects.toBeInstanceOf(
+                MissingPermissionsError,
             );
         });
 
-        it('should throw HttpException if user lacks SCHULEN_VERWALTEN permission for SCHULE type', async () => {
+        it('should throw a domain error if user lacks SCHULEN_VERWALTEN permission for SCHULE type', async () => {
             const params: CreateOrganisationBodyParams = {
                 kennung: faker.lorem.word(),
                 name: faker.lorem.word(),
@@ -307,8 +307,8 @@ describe('OrganisationController', () => {
             };
             permissionsMock.hasOrgVerwaltenRechtAtOrga.mockResolvedValueOnce(false);
 
-            await expect(organisationController.createOrganisation(permissionsMock, params)).rejects.toThrow(
-                HttpException,
+            await expect(organisationController.createOrganisation(permissionsMock, params)).rejects.toBeInstanceOf(
+                MissingPermissionsError,
             );
         });
     });
@@ -345,7 +345,7 @@ describe('OrganisationController', () => {
             });
         });
         describe('when usecase returns a OrganisationSpecificationError', () => {
-            it('should throw a HttpException', async () => {
+            it('should throw a domain error', async () => {
                 organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
                 organisationServiceMock.updateOrganisation.mockResolvedValue({
                     ok: false,
@@ -361,12 +361,12 @@ describe('OrganisationController', () => {
                 expect(organisationServiceMock.updateOrganisation).toHaveBeenCalledTimes(1);
             });
         });
-        describe('when usecase returns a SchulConnexError', () => {
-            it('should throw a HttpException', async () => {
+        describe('when usecase returns a domain error', () => {
+            it('should throw a domain error', async () => {
                 organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
                 organisationServiceMock.updateOrganisation.mockResolvedValue({
                     ok: false,
-                    error: {} as EntityNotFoundError,
+                    error: new EntityNotFoundError(),
                 });
                 await expect(
                     organisationController.updateOrganisation(
@@ -374,7 +374,7 @@ describe('OrganisationController', () => {
                         new UpdateOrganisationBodyParams(),
                         permissionsMock,
                     ),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
                 expect(organisationServiceMock.updateOrganisation).toHaveBeenCalledTimes(1);
             });
         });
@@ -392,7 +392,7 @@ describe('OrganisationController', () => {
                 expect(organisationRepositoryMock.findById).toHaveBeenCalledTimes(1);
             });
         });
-        it('should throw HttpException if user lacks KLASSEN_VERWALTEN permission for KLASSE type', async () => {
+        it('should throw a domain error if user lacks KLASSEN_VERWALTEN permission for KLASSE type', async () => {
             const params: OrganisationByIdParams = {
                 organisationId: faker.string.uuid(),
             };
@@ -412,12 +412,12 @@ describe('OrganisationController', () => {
 
             permissionsMock.hasOrgVerwaltenRechtAtOrga.mockResolvedValueOnce(false);
 
-            await expect(organisationController.updateOrganisation(params, body, permissionsMock)).rejects.toThrow(
-                HttpException,
-            );
+            await expect(
+                organisationController.updateOrganisation(params, body, permissionsMock),
+            ).rejects.toBeInstanceOf(MissingPermissionsError);
         });
 
-        it('should throw HttpException if user lacks SCHULEN_VERWALTEN permission for SCHULE type', async () => {
+        it('should throw a domain error if user lacks SCHULEN_VERWALTEN permission for SCHULE type', async () => {
             const params: OrganisationByIdParams = {
                 organisationId: faker.string.uuid(),
             };
@@ -436,9 +436,9 @@ describe('OrganisationController', () => {
 
             permissionsMock.hasOrgVerwaltenRechtAtOrga.mockResolvedValueOnce(false);
 
-            await expect(organisationController.updateOrganisation(params, body, permissionsMock)).rejects.toThrow(
-                HttpException,
-            );
+            await expect(
+                organisationController.updateOrganisation(params, body, permissionsMock),
+            ).rejects.toBeInstanceOf(MissingPermissionsError);
         });
     });
 
@@ -457,13 +457,15 @@ describe('OrganisationController', () => {
             });
         });
 
-        describe('when usecase returns a SchulConnexError', () => {
+        describe('when usecase returns a domain error', () => {
             it('should throw HttpException', async () => {
                 organisationServiceMock.findOrganisationById.mockResolvedValue({
                     ok: false,
                     error: new EntityNotFoundError(),
                 });
-                await expect(organisationController.findOrganisationById(params)).rejects.toThrow(HttpException);
+                await expect(organisationController.findOrganisationById(params)).rejects.toBeInstanceOf(
+                    EntityNotFoundError,
+                );
                 expect(organisationServiceMock.findOrganisationById).toHaveBeenCalledTimes(1);
             });
         });
@@ -597,7 +599,7 @@ describe('OrganisationController', () => {
 
                 organisationRepositoryMock.findRootDirectChildren.mockResolvedValue(mockedRepoResponse);
 
-                await expect(organisationController.getRootChildren()).rejects.toThrow(HttpException);
+                await expect(organisationController.getRootChildren()).rejects.toBeInstanceOf(EntityNotFoundError);
             });
         });
     });
@@ -647,7 +649,7 @@ describe('OrganisationController', () => {
                 ok: false,
                 error: new EntityNotFoundError(),
             });
-            await expect(organisationController.getRootOrganisation()).rejects.toThrow(HttpException);
+            await expect(organisationController.getRootOrganisation()).rejects.toBeInstanceOf(EntityNotFoundError);
             expect(organisationServiceMock.findOrganisationById).toHaveBeenCalledTimes(1);
         });
     });
@@ -689,7 +691,7 @@ describe('OrganisationController', () => {
             });
         });
 
-        describe('when usecase returns a SchulConnexError', () => {
+        describe('when usecase returns a domain error', () => {
             it('should throw a HttpException if parent organisation is not found', async () => {
                 organisationServiceMock.findOrganisationById.mockResolvedValue({
                     ok: false,
@@ -698,7 +700,7 @@ describe('OrganisationController', () => {
 
                 await expect(
                     organisationController.getAdministrierteOrganisationen(routeParams, queryParams),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
             });
         });
     });
@@ -735,14 +737,14 @@ describe('OrganisationController', () => {
             });
         });
 
-        describe('when usecase returns a SchulConnexError', () => {
+        describe('when usecase returns a domain error', () => {
             it('should throw a HttpException if parent organisation is not found', async () => {
                 organisationServiceMock.findOrganisationById.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityNotFoundError(),
                 });
-                await expect(organisationController.getZugehoerigeOrganisationen(params)).rejects.toThrow(
-                    HttpException,
+                await expect(organisationController.getZugehoerigeOrganisationen(params)).rejects.toBeInstanceOf(
+                    EntityNotFoundError,
                 );
             });
         });
@@ -778,8 +780,8 @@ describe('OrganisationController', () => {
             });
         });
 
-        describe('when usecase returns a SchulConnexError', () => {
-            it('should throw a HttpException', async () => {
+        describe('when usecase returns a domain error', () => {
+            it('should throw a domain error', async () => {
                 const [params, body]: [OrganisationByIdParams, OrganisationByIdBodyParams] = getFakeParamsAndBody();
 
                 organisationServiceMock.setZugehoerigZu.mockResolvedValue({
@@ -788,7 +790,7 @@ describe('OrganisationController', () => {
                 });
                 await expect(
                     organisationController.addZugehoerigeOrganisation(params, body, permissionsMock),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
 
                 expect(organisationServiceMock.setZugehoerigZu).toHaveBeenCalledTimes(1);
             });
@@ -831,7 +833,7 @@ describe('OrganisationController', () => {
         });
 
         describe('when user is missing permissions', () => {
-            it('should throw a HttpException', async () => {
+            it('should throw a domain error', async () => {
                 const params: OrganisationByIdParams = {
                     organisationId: faker.string.uuid(),
                 };
@@ -844,7 +846,7 @@ describe('OrganisationController', () => {
 
                 await expect(
                     organisationController.updateOrganisationName(params, body, permissionsMock),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toBeInstanceOf(MissingPermissionsError);
             });
         });
 
@@ -869,8 +871,8 @@ describe('OrganisationController', () => {
             });
         });
 
-        describe('when usecase returns a SchulConnexError', () => {
-            it('should throw a HttpException', async () => {
+        describe('when usecase returns a domain error', () => {
+            it('should throw a domain error', async () => {
                 const params: OrganisationByIdParams = {
                     organisationId: faker.string.uuid(),
                 };
@@ -885,7 +887,7 @@ describe('OrganisationController', () => {
 
                 await expect(
                     organisationController.updateOrganisationName(params, body, permissionsMock),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
             });
         });
     });
@@ -946,8 +948,8 @@ describe('OrganisationController', () => {
             });
         });
 
-        describe('when usecase returns a SchulConnexError', () => {
-            it('should throw a HttpException', async () => {
+        describe('when usecase returns a domain error', () => {
+            it('should throw a domain error', async () => {
                 const params: OrganisationByIdParams = {
                     organisationId: faker.string.uuid(),
                 };
@@ -962,7 +964,7 @@ describe('OrganisationController', () => {
 
                 await expect(
                     organisationController.updateOrganisationName(params, body, permissionsMock),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
             });
         });
     });
@@ -1010,13 +1012,13 @@ describe('OrganisationController', () => {
             });
         });
 
-        describe('when enabling ITSLearning for organisation returns a SchulConnexError or any Non-Specificatin-Error', () => {
-            it('should throw a HttpException', async () => {
+        describe('when enabling ITSLearning for organisation returns a domain error or any Non-Specificatin-Error', () => {
+            it('should throw a domain error', async () => {
                 organisationRepositoryMock.setEnabledForitslearning.mockResolvedValueOnce(new EntityNotFoundError());
 
-                await expect(organisationController.enableForitslearning(params, permissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    organisationController.enableForitslearning(params, permissionsMock),
+                ).rejects.toBeInstanceOf(EntityNotFoundError);
             });
         });
     });
@@ -1030,7 +1032,7 @@ describe('OrganisationController', () => {
                 });
                 await expect(
                     organisationController.deleteOrganisation({ organisationId: faker.string.uuid() }, permissionsMock),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toBeInstanceOf(MissingPermissionsError);
             });
         });
 

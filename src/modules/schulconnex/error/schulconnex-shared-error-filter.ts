@@ -1,23 +1,28 @@
-import { HttpException } from '@nestjs/common';
-import { DomainError } from './domain.error.js';
-import { EntityCouldNotBeCreated } from './entity-could-not-be-created.error.js';
-import { EntityCouldNotBeUpdated } from './entity-could-not-be-updated.error.js';
-import { EntityNotFoundError } from './entity-not-found.error.js';
-import { KeycloakClientError } from './keycloak-client.error.js';
-import { MismatchedRevisionError } from './mismatched-revision.error.js';
-import { PersonAlreadyExistsError } from './person-already-exists.error.js';
-import { SchulConnexError } from './schul-connex.error.js';
-import { EntityCouldNotBeDeleted } from './entity-could-not-be-deleted.error.js';
-import { EntityAlreadyExistsError } from './entity-already-exists.error.js';
-import { InvalidCharacterSetError } from './invalid-character-set.error.js';
-import { InvalidAttributeLengthError } from './invalid-attribute-length.error.js';
-import { InvalidNameError } from './invalid-name.error.js';
-import { MissingPermissionsError } from './missing-permissions.error.js';
-import { UserExternalDataWorkflowError } from './user-externaldata-workflow.error.js';
-import { ExceedsLimitError } from './exceeds-limit.error.js';
+import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
+import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
+import { Response } from 'express';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import {
+    SharedDomainError,
+    EntityAlreadyExistsError,
+    EntityCouldNotBeCreated,
+    EntityCouldNotBeDeleted,
+    EntityCouldNotBeUpdated,
+    EntityNotFoundError,
+    InvalidAttributeLengthError,
+    InvalidCharacterSetError,
+    InvalidNameError,
+    KeycloakClientError,
+    MismatchedRevisionError,
+    MissingPermissionsError,
+    PersonAlreadyExistsError,
+} from '../../../shared/error/index.js';
+import { ExceedsLimitError } from '../../../shared/error/exceeds-limit.error.js';
+import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
 
-export class SchulConnexErrorMapper {
-    private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
+@Catch(SharedDomainError)
+export class SchulConnexSharedErrorFilter implements ExceptionFilter<SharedDomainError> {
+    private ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
         [
             EntityCouldNotBeCreated.name,
             new SchulConnexError({
@@ -148,18 +153,26 @@ export class SchulConnexErrorMapper {
         ],
     ]);
 
-    private static NO_MAPPING_FOUND: SchulConnexError = new SchulConnexError({
-        code: 500,
-        subcode: '00',
-        titel: 'Interner Serverfehler',
-        beschreibung: 'Es ist ein interner Fehler aufgetreten. Der aufgetretene Fehler konnte nicht verarbeitet werden',
-    });
+    public catch(exception: SharedDomainError, host: ArgumentsHost): void {
+        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const response: Response = ctx.getResponse<Response>();
 
-    public static mapSchulConnexErrorToHttpException(error: SchulConnexError): HttpException {
-        return new HttpException(error, error.code);
+        const schulConnexError: SchulConnexError = this.mapDomainErrorToSchulConnexError(exception);
+
+        response.status(schulConnexError.code);
+        response.json(schulConnexError);
     }
 
-    public static mapDomainErrorToSchulConnexError(error: DomainError): SchulConnexError {
-        return this.SCHULCONNEX_ERROR_MAPPINGS.get(error.constructor.name) ?? this.NO_MAPPING_FOUND;
+    private mapDomainErrorToSchulConnexError(error: SharedDomainError): SchulConnexError {
+        return (
+            this.ERROR_MAPPINGS.get(error.constructor.name) ??
+            new SchulConnexError({
+                code: 500,
+                subcode: '00',
+                titel: 'Interner Serverfehler',
+                beschreibung:
+                    'Es ist ein interner Fehler aufgetreten. Der aufgetretene Fehler konnte nicht verarbeitet werden',
+            })
+        );
     }
 }
