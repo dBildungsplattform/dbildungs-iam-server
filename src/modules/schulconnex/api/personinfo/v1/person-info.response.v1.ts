@@ -1,4 +1,4 @@
-import { ApiProperty, ApiSchema } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { KontextWithOrgaAndRolle } from '../../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Person } from '../../../../person/domain/person.js';
 import { PersonInfoPersonResponseV1 } from './person-info-person.response.v1.js';
@@ -7,7 +7,6 @@ import { OrganisationsTyp } from '../../../../organisation/domain/organisation.e
 import { PersonEmailResponse } from '../../../../person/api/person-email-response.js';
 import { UserLock } from '../../../../keycloak-administration/domain/user-lock.js';
 
-@ApiSchema({ name: 'PersonInfoResponse' })
 export class PersonInfoResponseV1 {
     @ApiProperty()
     public readonly pid: string;
