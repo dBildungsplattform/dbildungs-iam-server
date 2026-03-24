@@ -21,7 +21,7 @@ if [ -z "$INTERNAL_COMMUNICATION_API_KEY" ]; then
     echo "Error: INTERNAL_COMMUNICATION_API_KEY is not set."
     exit 1
 fi
-auth_header="INTERNAL_COMMUNICATION_API_KEY: ${INTERNAL_COMMUNICATION_API_KEY}"
+auth_header="api-key: ${INTERNAL_COMMUNICATION_API_KEY}"
 
 # Create temporary files for headers and body
 header_file=$(mktemp)

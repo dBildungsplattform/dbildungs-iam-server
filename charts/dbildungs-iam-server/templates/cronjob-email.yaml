@@ -1,5 +1,5 @@
-{{- if .Values.cronjobs.enabled }}
-{{- range $job_name, $job_options := .Values.cronjobs.jobs }}
+{{- if .Values.cronjobsEmail.enabled }}
+{{- range $job_name, $job_options := .Values.cronjobsEmail.jobs }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -21,8 +21,8 @@ spec:
           automountServiceAccountToken: false
           containers:
           - name: {{ $job_name }}
-            image: "{{ $.Values.cronjobs.image.repository }}:{{ $.Values.cronjobs.image.tag }}"
-            imagePullPolicy: {{ $.Values.cronjobs.image.pullPolicy | default "Always"}}
+            image: "{{ $.Values.cronjobsEmail.image.repository }}:{{ $.Values.cronjobsEmail.image.tag }}"
+            imagePullPolicy: {{ $.Values.cronjobsEmail.image.pullPolicy | default "Always"}}
             securityContext:
               privileged: false
               runAsUser: 1000
@@ -39,7 +39,7 @@ spec:
                   name:  {{ template "common.names.name" $ }}-cronjob-envs-configmap
             env:
                 - name: EMAIL_MICROSERVICE_ENDPOINT_URL
-                  value: "https://{{ $.Values.emailMicroservice.endpoint }}{{ $job_options.endpoint }}"
+                  value: "{{ $.Values.cronjobEmail.emailHostname }}{{ $job_options.endpoint }}"
                 - name: HTTP_METHOD
                   value: "{{ $job_options.httpMethod }}"
                 - name: LOG_FILE_PATH
@@ -64,14 +64,14 @@ spec:
                   mkdir /tmp/log/ &&
                   touch /tmp/log/cron.log &&
                   chmod 644 /tmp/log/cron.log &&
-                  cd {{ $.Values.cronjobs.scriptDir }} &&
+                  cd {{ $.Values.cronjobsEmail.scriptDir }} &&
                   bash {{ $job_options.script }}
             volumeMounts:
               - name: script-volume
                 mountPath: /scripts
                 readOnly: false
             ports:
-            - containerPort: {{ $.Values.cronjobs.port }}
+            - containerPort: {{ $.Values.cronjobsEmail.port }}
               name: cron-pod
           volumes:
           - name: script-volume

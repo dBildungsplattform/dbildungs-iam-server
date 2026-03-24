@@ -342,16 +342,27 @@ cronjobs:
       endpoint: "/api/cron/unlock"
       httpMethod: "PUT"
       script: "cron_trigger.sh"
-    cron-trigger-email:
-      schedule: "0 4 * * *"
-      endpoint: "/api/cron/delete"
-      httpMethod: 'DELETE'
-      script: "cron_trigger_email.sh"
 #    cron-trigger-6:
 #      schedule: 30 0 * * *
 #      endpoint: '/api/cron/vidis-angebote'
 #      httpMethod: 'PUT'
 #      script: 'cron_trigger.sh'
+
+cronjobsEmail:
+  enabled: true
+  image:
+    tag: "1.2.1"
+    repository: docker.io/schulcloud/cron-tools
+    pullPolicy: IfNotPresent
+  port: 5656
+  emailHostname: '{{ .Values.emailMicroservice.endpoint | replace "spsh-xxx" .Release.Namespace }}'
+  scriptDir: scripts
+  jobs:
+    cron-trigger-email:
+      schedule: "0 4 * * *"
+      endpoint: "/api/cron/delete"
+      httpMethod: 'DELETE'
+      script: "cron_trigger_email.sh"
 
 import:
   csvFileMaxSizeInMB: 10
