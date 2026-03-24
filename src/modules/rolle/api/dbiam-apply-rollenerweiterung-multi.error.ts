@@ -18,7 +18,14 @@ export class DbiamApplyRollenerweiterungMultiError {
     @ApiProperty({ description: 'Corresponds to HTTP Status code like 200, 404, 500' })
     public readonly code!: number;
 
-    @ApiProperty()
+    @ApiProperty({
+        isArray: true,
+        required: true,
+        type: () => ({
+            rolleId: { type: 'string' },
+            i18nKey: { type: 'string', enum: DbiamApplyRollenerweiterungMultiErrorI18NTypes },
+        })
+    })
     public readonly rolleIdsWithI18nKeys: {
         rolleId: string;
         i18nKey: DbiamApplyRollenerweiterungMultiErrorI18NTypes;

@@ -369,7 +369,7 @@ export class OrganisationController {
     @ApiParam({
         name: 'organisationId',
         description: 'The ID of the parent organisation to which another organisation will be added as a subordinate.',
-        type: OrganisationByIdParams,
+        type: String,
     })
     @ApiBody({
         description: 'The ID of the child organisation that will be assigned to the parent organisation.',
