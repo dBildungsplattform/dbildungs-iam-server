@@ -344,7 +344,7 @@ cronjobs:
       script: "cron_trigger.sh"
     cron-trigger-email:
       schedule: "0 4 * * *"
-      endpoint: "/api/cron/email-addresses-delete"
+      endpoint: "/api/cron/delete"
       httpMethod: 'DELETE'
       script: "cron_trigger_email.sh"
 #    cron-trigger-6:
