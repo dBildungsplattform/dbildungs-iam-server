@@ -247,9 +247,9 @@ describe('PersonRepository Integration', () => {
 
     describe('findByPersonIds', () => {
         it('should return found person', async () => {
-            const personA: Person<true> = await savePerson(false);
-            const personB: Person<true> = await savePerson(false);
-            const personC: Person<true> = await savePerson(false);
+            const personA: Person<true> = await savePerson(false, { username: 'testuser1' });
+            const personB: Person<true> = await savePerson(false, { username: 'testuser2' });
+            const personC: Person<true> = await savePerson(false, { username: 'testuser3' });
 
             const foundPersons: Person<true>[] = await sut.findByPersonIds([personA.id, personB.id]);
 
@@ -395,8 +395,8 @@ describe('PersonRepository Integration', () => {
 
         describe('findBy', () => {
             it('should return found persons for scope', async () => {
-                await savePerson();
-                await savePerson();
+                await savePerson(false, { username: 'testuser1' });
+                await savePerson(false, { username: 'testuser2' });
 
                 const scope: PersonScope = new PersonScope()
                     .findBy({
@@ -2558,9 +2558,9 @@ describe('PersonRepository Integration', () => {
 
     describe('createPersonScope', () => {
         it('should create a scope with the correct filters and sorting', async () => {
-            await savePerson(false, { vorname: 'Alice', familienname: 'Smith' });
-            await savePerson(false, { vorname: 'Bob', familienname: 'Johnson' });
-            await savePerson(false, { vorname: 'Charlie', familienname: 'Brown' });
+            await savePerson(false, { vorname: 'Alice', familienname: 'Smith', username: 'asmith1' });
+            await savePerson(false, { vorname: 'Bob', familienname: 'Johnson', username: 'bjohnson1' });
+            await savePerson(false, { vorname: 'Charlie', familienname: 'Brown', username: 'cbrown1' });
 
             const permittedOrgas: PermittedOrgas = { all: true };
 
@@ -2585,9 +2585,13 @@ describe('PersonRepository Integration', () => {
         });
 
         it('should return the suchFilter', async () => {
-            await savePerson(false, { vorname: 'Alice', familienname: 'Smith' });
-            const person2: Person<true> = await savePerson(false, { vorname: 'Bob', familienname: 'Johnson' });
-            await savePerson(false, { vorname: 'Charlie', familienname: 'Brown' });
+            await savePerson(false, { vorname: 'Alice', familienname: 'Smith', username: 'asmith1' });
+            const person2: Person<true> = await savePerson(false, {
+                vorname: 'Bob',
+                familienname: 'Johnson',
+                username: 'bjohnson1',
+            });
+            await savePerson(false, { vorname: 'Charlie', familienname: 'Brown', username: 'cbrown1' });
 
             const permittedOrgas: PermittedOrgas = { all: true };
 
@@ -2640,9 +2644,9 @@ describe('PersonRepository Integration', () => {
         });
 
         it('should use default sortField and sortOrder when not provided', async () => {
-            await savePerson(false, { vorname: 'Alice', familienname: 'Smith' });
-            await savePerson(false, { vorname: 'Bob', familienname: 'Johnson' });
-            await savePerson(false, { vorname: 'Charlie', familienname: 'Brown' });
+            await savePerson(false, { vorname: 'Alice', familienname: 'Smith', username: 'asmith1' });
+            await savePerson(false, { vorname: 'Bob', familienname: 'Johnson', username: 'bjohnson1' });
+            await savePerson(false, { vorname: 'Charlie', familienname: 'Brown', username: 'cbrown1' });
 
             const permittedOrgas: PermittedOrgas = { all: true };
 
@@ -2666,10 +2670,18 @@ describe('PersonRepository Integration', () => {
         });
 
         it('should apply sort criteria correctly for VORNAME', async () => {
-            await savePerson(false, { vorname: 'Anna', familienname: 'Smith' });
-            await savePerson(false, { vorname: 'Anna', familienname: 'Johnson' });
-            const person1: Person<true> = await savePerson(false, { vorname: 'Anna', familienname: 'Brown' });
-            const person2: Person<true> = await savePerson(false, { vorname: 'Anna', familienname: 'Brown' });
+            await savePerson(false, { vorname: 'Anna', familienname: 'Smith', username: 'asmith1' });
+            await savePerson(false, { vorname: 'Anna', familienname: 'Johnson', username: 'ajohnson1' });
+            const person1: Person<true> = await savePerson(false, {
+                vorname: 'Anna',
+                familienname: 'Brown',
+                username: 'abrown1',
+            });
+            const person2: Person<true> = await savePerson(false, {
+                vorname: 'Anna',
+                familienname: 'Brown',
+                username: 'abrown2',
+            });
 
             const permittedOrgas: PermittedOrgas = { all: true };
 
@@ -2694,10 +2706,18 @@ describe('PersonRepository Integration', () => {
         });
 
         it('should apply sort criteria correctly for FAMILIENNAME', async () => {
-            await savePerson(false, { vorname: 'Charlie', familienname: 'Smith' });
-            await savePerson(false, { vorname: 'Bob', familienname: 'Smith' });
-            const person1: Person<true> = await savePerson(false, { vorname: 'Anna', familienname: 'Smith' });
-            const person2: Person<true> = await savePerson(false, { vorname: 'Anna', familienname: 'Smith' });
+            await savePerson(false, { vorname: 'Charlie', familienname: 'Smith', username: 'csmith1' });
+            await savePerson(false, { vorname: 'Bob', familienname: 'Smith', username: 'bsmith1' });
+            const person1: Person<true> = await savePerson(false, {
+                vorname: 'Anna',
+                familienname: 'Smith',
+                username: 'asmith1',
+            });
+            const person2: Person<true> = await savePerson(false, {
+                vorname: 'Anna',
+                familienname: 'Smith',
+                username: 'asmith2',
+            });
 
             const permittedOrgas: PermittedOrgas = { all: true };
 
@@ -2757,8 +2777,8 @@ describe('PersonRepository Integration', () => {
 
     describe('findByIds', () => {
         it('should return a list of persons', async () => {
-            const person1: Person<true> = await savePerson();
-            const person2: Person<true> = await savePerson();
+            const person1: Person<true> = await savePerson(false, { username: 'testuser1' });
+            const person2: Person<true> = await savePerson(false, { username: 'testuser2' });
             personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
             const persons: Person<true>[] = await sut.findByIds([person1.id, person2.id], personPermissionsMock);
@@ -2768,8 +2788,8 @@ describe('PersonRepository Integration', () => {
             expect(persons.some((p: Person<true>) => p.id === person2.id)).toBe(true);
         });
         it('should return an empty list of persons', async () => {
-            const person1: Person<true> = await savePerson();
-            const person2: Person<true> = await savePerson();
+            const person1: Person<true> = await savePerson(false, { username: 'testuser1' });
+            const person2: Person<true> = await savePerson(false, { username: 'testuser2' });
             personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
 
             const persons: Person<true>[] = await sut.findByIds([person1.id, person2.id], personPermissionsMock);
@@ -2777,8 +2797,8 @@ describe('PersonRepository Integration', () => {
             expect(persons).toHaveLength(0);
         });
         it('should return a list of persons with one person', async () => {
-            const person1: Person<true> = await savePerson();
-            const person2: Person<true> = await savePerson();
+            const person1: Person<true> = await savePerson(false, { username: 'testuser1' });
+            const person2: Person<true> = await savePerson(false, { username: 'testuser2' });
 
             const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
                 faker.string.alpha(5),
@@ -2945,8 +2965,8 @@ describe('PersonRepository Integration', () => {
         });
 
         it('should return DuplicatePersonalnummerError when the new personalnummer is already assigned', async () => {
-            const person: Person<true> = await savePerson(true);
-            const person2: Person<true> = await savePerson(true);
+            const person: Person<true> = await savePerson(true, { username: 'testuser1' });
+            const person2: Person<true> = await savePerson(true, { username: 'testuser2' });
             if (!person2.personalnummer) {
                 return;
             }
@@ -3107,10 +3127,10 @@ describe('PersonRepository Integration', () => {
             const daysAgo: Date = new Date();
             daysAgo.setDate(daysAgo.getDate() - 57);
 
-            const person1: Person<true> = await savePerson(false);
-            const person2: Person<true> = await savePerson(false);
-            const person3: Person<true> = await savePerson(false);
-            const person4: Person<true> = await savePerson(false); // Person for two PersonenKontexte
+            const person1: Person<true> = await savePerson(false, { username: 'testuser1' });
+            const person2: Person<true> = await savePerson(false, { username: 'testuser2' });
+            const person3: Person<true> = await savePerson(false, { username: 'testuser3' });
+            const person4: Person<true> = await savePerson(false, { username: 'testuser4' }); // Person for two PersonenKontexte
 
             const rolle1: Rolle<false> = DoFactory.createRolle(false, {
                 name: 'rolle1',
