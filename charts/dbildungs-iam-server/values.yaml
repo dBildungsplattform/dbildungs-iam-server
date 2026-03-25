@@ -360,7 +360,7 @@ import:
 featureFlags:
   befristungBearbeiten: true
   rolleErweitern: true
-  schulischeAngeboteErstellen: false
+  schulischeAngeboteErstellen: true
   setUemPassword: true
 
 emailMicroservice:
