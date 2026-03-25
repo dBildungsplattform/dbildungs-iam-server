@@ -1,5 +1,4 @@
 import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
-import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../test/utils/config-test.module.js';
 import { DoFactory } from '../../../test/utils/do-factory.js';
@@ -691,9 +690,9 @@ describe('CronController', () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
                 serviceProviderServiceMock.updateServiceProvidersForVidis.mockResolvedValue();
 
-                await expect(cronController.updateServiceProvidersForVidisAngebote(permissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    cronController.updateServiceProvidersForVidisAngebote(permissionsMock),
+                ).rejects.toBeInstanceOf(MissingPermissionsError);
                 expect(serviceProviderServiceMock.updateServiceProvidersForVidis).toHaveBeenCalledTimes(0);
             });
         });
@@ -726,7 +725,9 @@ describe('CronController', () => {
             it(`should NOT delete non-enabled EmailAddresses which exceed deadline and throw an error`, async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
 
-                await expect(cronController.emailAddressesDelete(permissionsMock)).rejects.toThrow(HttpException);
+                await expect(cronController.emailAddressesDelete(permissionsMock)).rejects.toBeInstanceOf(
+                    MissingPermissionsError,
+                );
                 expect(emailAddressDeletionServiceMock.deleteEmailAddresses).toHaveBeenCalledTimes(0);
             });
         });

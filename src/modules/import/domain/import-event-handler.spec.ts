@@ -199,7 +199,10 @@ describe('ImportEventHandler', () => {
             importVorgangRepositoryMock.save.mockResolvedValueOnce(importvorgang);
 
             const error: DomainError = new RolleNurAnPassendeOrganisationError();
-            personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(error);
+            personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce({
+                ok: false,
+                error: error,
+            });
             organisationRepoMock.findById.mockResolvedValueOnce(schule);
 
             await sut.handleExecuteImport(event, () => undefined);
@@ -240,7 +243,10 @@ describe('ImportEventHandler', () => {
                     DoFactory.createPersonenkontext(true, { organisationId: klasse.id }),
                 ],
             };
-            personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(pks);
+            personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce({
+                ok: true,
+                value: pks,
+            });
             organisationRepoMock.findById.mockResolvedValueOnce(schule);
             importVorgangRepositoryMock.save.mockResolvedValueOnce(importvorgang);
 
@@ -290,7 +296,10 @@ describe('ImportEventHandler', () => {
                 ],
             };
             importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[importDataItem], 1]);
-            personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(pks);
+            personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce({
+                ok: true,
+                value: pks,
+            });
             importVorgangRepositoryMock.save.mockResolvedValueOnce(importvorgang);
 
             await sut.handleExecuteImport(event, () => undefined);
@@ -338,7 +347,10 @@ describe('ImportEventHandler', () => {
                 ],
             };
             importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[importDataItem], 1]);
-            personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(pks);
+            personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce({
+                ok: true,
+                value: pks,
+            });
             importVorgangRepositoryMock.save.mockResolvedValueOnce(importvorgang);
 
             const keepAlive: () => void = vi.fn();

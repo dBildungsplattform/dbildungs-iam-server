@@ -12,13 +12,18 @@ import { MeldungModule } from '../meldung.module.js';
 import { Meldung } from '../domain/meldung.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { MeldungResponse } from './meldung.response.js';
-import { HttpException } from '@nestjs/common';
 import { MeldungStatus } from '../persistence/meldung.entity.js';
 import { CreateOrUpdateMeldungBodyParams } from './create-or-update-meldung.body.params.js';
 import { faker } from '@faker-js/faker';
 import { MeldungInhaltError } from '../domain/meldung-inhalt.error.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { APP_FILTER } from '@nestjs/core';
+import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
+import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
 describe('Meldung Controller', () => {
     let module: TestingModule;
@@ -32,7 +37,13 @@ describe('Meldung Controller', () => {
                 MeldungModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],
-            providers: [MeldungController, MeldungRepo],
+            providers: [
+                MeldungController,
+                MeldungRepo,
+                { provide: APP_FILTER, useClass: ValidationExceptionFilter },
+                { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
+                { provide: APP_FILTER, useClass: SharedExceptionFilter },
+            ],
         })
             .overrideProvider(MeldungRepo)
             .useValue(createMock(MeldungRepo))
@@ -74,7 +85,9 @@ describe('Meldung Controller', () => {
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
             const meldung: Meldung<true> = DoFactory.createMeldung(true);
             meldungRepo.findAll.mockResolvedValueOnce([meldung]);
-            await expect(meldungController.getAllMeldungen(personpermissions)).rejects.toThrow(HttpException);
+            await expect(meldungController.getAllMeldungen(personpermissions)).rejects.toBeInstanceOf(
+                MissingPermissionsError,
+            );
         });
     });
 
@@ -153,8 +166,8 @@ describe('Meldung Controller', () => {
                     revision: 1,
                 });
 
-                await expect(meldungController.createOrUpdateMeldung(body, personpermissions)).rejects.toThrow(
-                    HttpException,
+                await expect(meldungController.createOrUpdateMeldung(body, personpermissions)).rejects.toBeInstanceOf(
+                    MissingPermissionsError,
                 );
             });
         });
@@ -259,8 +272,8 @@ describe('Meldung Controller', () => {
 
                 meldungRepo.findById.mockResolvedValueOnce(undefined);
 
-                await expect(meldungController.createOrUpdateMeldung(body, personpermissions)).rejects.toThrow(
-                    HttpException,
+                await expect(meldungController.createOrUpdateMeldung(body, personpermissions)).rejects.toBeInstanceOf(
+                    EntityNotFoundError,
                 );
             });
         });

@@ -1,4 +1,5 @@
 export * from './domain.error.js';
+export * from './shared-domain.error.js';
 export * from './entity-could-not-be-created.error.js';
 export * from './entity-could-not-be-updated.error.js';
 export * from './entity-not-found.error.js';

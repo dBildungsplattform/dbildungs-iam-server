@@ -17,7 +17,6 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { Response } from 'express';
 import { ImportTextFileCreationError } from '../domain/import-text-file-creation.error.js';
 import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.js';
-import { HttpException } from '@nestjs/common';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
@@ -128,7 +127,9 @@ describe('Import API with mocked ImportWorkflow', () => {
                 });
                 importWorkflowFactoryMock.createNew.mockReturnValueOnce(ImportWorkflowMock);
 
-                await expect(sut.deleteImportTransaction(params, personpermissionsMock)).rejects.toThrow(HttpException);
+                await expect(sut.deleteImportTransaction(params, personpermissionsMock)).rejects.toBeInstanceOf(
+                    MissingPermissionsError,
+                );
             });
         });
     });

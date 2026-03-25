@@ -8,7 +8,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -17,7 +16,7 @@ import { FindPersonenkontextRollenQueryParams } from './param/find-personenkonte
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { FindRollenResponse } from './response/find-rollen.response.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new PersonenkontextExceptionFilter())
+@UseFilters(new PersonenkontextExceptionFilter())
 @ApiTags('person-administration')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])

@@ -30,8 +30,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
@@ -54,7 +52,6 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { OrganisationService } from '../domain/organisation.service.js';
 import { DataConfig } from '../../../shared/config/data.config.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
 import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
@@ -63,11 +60,7 @@ import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { OrganisationDeleteService } from '../organisation-delete/organisation-delete.service.js';
 
-@UseFilters(
-    new SchulConnexValidationErrorFilter(),
-    new OrganisationExceptionFilter(),
-    new AuthenticationExceptionFilter(),
-)
+@UseFilters(new OrganisationExceptionFilter())
 @ApiTags('organisationen')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -97,11 +90,7 @@ export class OrganisationController {
         );
 
         if (!hasOrgVerwaltenRechtAtOrg) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Not authorized to manage this organisation'),
-                ),
-            );
+            throw new MissingPermissionsError('Not authorized to manage this organisation');
         }
         const organisation: Organisation<false> | DomainError = Organisation.createNew(
             params.administriertVon,
@@ -123,12 +112,7 @@ export class OrganisationController {
             permissions,
         );
         if (!result.ok) {
-            if (result.error instanceof OrganisationSpecificationError) {
-                throw result.error;
-            }
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
-            );
+            throw result.error;
         }
 
         return new OrganisationResponse(result.value);
@@ -164,11 +148,7 @@ export class OrganisationController {
         );
 
         if (!hasOrgVerwaltenRechtAtOrg) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Not authorized to manage this organisation'),
-                ),
-            );
+            throw new MissingPermissionsError('Not authorized to manage this organisation');
         }
 
         existingOrganisation.id = params.organisationId;
@@ -191,12 +171,7 @@ export class OrganisationController {
         if (result.ok) {
             return new OrganisationResponse(result.value);
         } else {
-            if (result.error instanceof OrganisationSpecificationError) {
-                throw result.error;
-            }
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
-            );
+            throw result.error;
         }
     }
 
@@ -216,9 +191,7 @@ export class OrganisationController {
             return new OrganisationResponse(result.value);
         }
 
-        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-            SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
-        );
+        throw result.error;
     }
 
     @Get('root/children')
@@ -234,11 +207,7 @@ export class OrganisationController {
             await this.organisationRepository.findRootDirectChildren();
 
         if (!oeffentlich || !ersatz) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Organisation', `${!oeffentlich && 'Oeffentlich'} ${!ersatz && 'Ersatz'}`),
-                ),
-            );
+            throw new EntityNotFoundError('Organisation', `${!oeffentlich && 'Oeffentlich'} ${!ersatz && 'Ersatz'}`);
         }
 
         return new OrganisationRootChildrenResponse(oeffentlich, ersatz);
@@ -278,9 +247,7 @@ export class OrganisationController {
         if (result.ok) {
             return new OrganisationResponse(result.value);
         } else {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
-            );
+            throw result.error;
         }
     }
 
@@ -336,9 +303,7 @@ export class OrganisationController {
             routeParams.organisationId,
         );
         if (!parentOrg.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(parentOrg.error),
-            );
+            throw parentOrg.error;
         }
 
         const result: Paged<Organisation<true>> = await this.organisationService.findAllAdministriertVon(
@@ -377,9 +342,7 @@ export class OrganisationController {
             params.organisationId,
         );
         if (!parentOrg.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(parentOrg.error),
-            );
+            throw parentOrg.error;
         }
 
         const result: Paged<Organisation<true>> = await this.organisationService.findAllZugehoerigZu(
@@ -429,13 +392,7 @@ export class OrganisationController {
         );
 
         if (!res.ok) {
-            // Avoid passing OrganisationSpecificationError to SchulConnexErrorMapper
-            if (res.error instanceof OrganisationSpecificationError) {
-                throw res.error;
-            }
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(res.error),
-            );
+            throw res.error;
         }
     }
 
@@ -461,11 +418,7 @@ export class OrganisationController {
                 RollenSystemRecht.KLASSEN_VERWALTEN,
             ))
         ) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Not authorized to manage this organisation'),
-                ),
-            );
+            throw new MissingPermissionsError('Not authorized to manage this organisation');
         }
 
         const result: DomainError | Organisation<true> = await this.organisationRepository.updateOrganisationName(
@@ -476,12 +429,7 @@ export class OrganisationController {
         );
 
         if (result instanceof DomainError) {
-            if (result instanceof OrganisationSpecificationError) {
-                throw result;
-            }
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
-            );
+            throw result;
         }
 
         return new OrganisationResponse(result);
@@ -512,9 +460,7 @@ export class OrganisationController {
                 throw result;
             }
 
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
-            );
+            throw result;
         }
 
         return new OrganisationResponse(result);
@@ -540,9 +486,7 @@ export class OrganisationController {
             params.organisationId,
         );
         if (!organisation.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(organisation.error),
-            );
+            throw organisation.error;
         }
 
         const result: DomainError | void = await this.organisationDeleteService.deleteOrganisation(
