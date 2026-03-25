@@ -53,7 +53,7 @@ import { ManageableServiceProvidersForOrganisationParams } from './manageable-se
 import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
-import { ServiceProviderSystem } from '../domain/service-provider.enum.js';
+import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
 import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
@@ -346,7 +346,7 @@ export class ProviderController {
 
         const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
             body.name,
-            body.target,
+            ServiceProviderTarget.URL,
             body.url,
             body.kategorie,
             body.organisationId,
@@ -356,7 +356,7 @@ export class ProviderController {
             undefined, // keycloakRole
             ServiceProviderSystem.NONE,
             body.requires2fa,
-            body.vidisAngebotId,
+            undefined, // vidisAngebotId
             body.merkmale,
         );
 
