@@ -7,6 +7,9 @@ import { Personenkontext } from '../../modules/personenkontext/domain/personenko
 import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
 
 export type IPersonPermissions = {
+
+    id: string;
+
     hasSystemrechteAtOrganisation(organisationId: OrganisationID, systemrechte: RollenSystemRecht[]): Promise<boolean>;
 
     hasSystemrechtAtOrganisation(organisationId: OrganisationID, systemrechte: RollenSystemRecht): Promise<boolean>;

@@ -32,6 +32,8 @@ export function intersectPermittedAndRequestedOrgas(
 }
 
 export class PersonPermissions implements IPersonPermissions {
+    public readonly id: string;
+
     private cachedPersonenkontextsFields?: PersonKontextFields[];
 
     private readonly cachedPersonFields: PersonFields;
@@ -44,6 +46,7 @@ export class PersonPermissions implements IPersonPermissions {
         private readonly rolleRepo: RolleRepo,
         person: Person<true>,
     ) {
+        this.id = person.id;
         this.cachedPersonFields = {
             id: person.id,
             keycloakUserId: person.keycloakUserId,
@@ -130,11 +133,7 @@ export class PersonPermissions implements IPersonPermissions {
         organisationId: OrganisationID,
         systemrecht: RollenSystemRecht,
     ): Promise<boolean> {
-        return this.personenkontextRepo.hasSystemrechtAtOrganisation(
-            this.cachedPersonFields.id,
-            organisationId,
-            systemrecht,
-        );
+        return this.personenkontextRepo.hasSystemrechtAtOrganisation(this.id, organisationId, systemrecht);
     }
 
     public async canModifyPerson(personId: PersonID): Promise<boolean> {
@@ -150,9 +149,7 @@ export class PersonPermissions implements IPersonPermissions {
 
     private async getPersonenkontextsFields(): Promise<PersonKontextFields[]> {
         if (!this.cachedPersonenkontextsFields) {
-            const personenkontexte: Personenkontext<true>[] = await this.personenkontextRepo.findByPerson(
-                this.personFields.id,
-            );
+            const personenkontexte: Personenkontext<true>[] = await this.personenkontextRepo.findByPerson(this.id);
             this.cachedPersonenkontextsFields = personenkontexte.map((personenkontext: Personenkontext<true>) => ({
                 rolleId: personenkontext.rolleId,
                 organisationId: personenkontext.organisationId,
@@ -205,7 +202,7 @@ export class PersonPermissions implements IPersonPermissions {
         systemrecht: RollenSystemRecht,
     ): Promise<boolean> {
         return this.personenkontextRepo.hasPersonASystemrechtAtAnyKontextOfPersonB(
-            this.cachedPersonFields.id,
+            this.id,
             targetPersonId,
             systemrecht,
         );
