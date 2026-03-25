@@ -638,7 +638,7 @@ describe('Provider Controller Test', () => {
             expect(result).toBeDefined();
             expect(serviceProviderFactoryMock.createNew).toHaveBeenCalledWith(
                 body.name,
-                body.target,
+                ServiceProviderTarget.URL,
                 body.url,
                 body.kategorie,
                 body.organisationId,
@@ -648,7 +648,7 @@ describe('Provider Controller Test', () => {
                 undefined,
                 ServiceProviderSystem.NONE,
                 body.requires2fa,
-                body.vidisAngebotId,
+                undefined,
                 body.merkmale,
             );
             expect(serviceProviderRepoMock.create).toHaveBeenCalledWith(personPermissionsMock, createdDomainSp);
@@ -684,7 +684,7 @@ describe('Provider Controller Test', () => {
             expect(result).toBeDefined();
             expect(serviceProviderFactoryMock.createNew).toHaveBeenCalledWith(
                 body.name,
-                body.target,
+                ServiceProviderTarget.URL,
                 body.url,
                 body.kategorie,
                 body.organisationId,
@@ -694,7 +694,7 @@ describe('Provider Controller Test', () => {
                 undefined,
                 ServiceProviderSystem.NONE,
                 body.requires2fa,
-                body.vidisAngebotId,
+                undefined,
                 body.merkmale,
             );
             expect(serviceProviderRepoMock.create).toHaveBeenCalledWith(personPermissionsMock, createdDomainSp);
