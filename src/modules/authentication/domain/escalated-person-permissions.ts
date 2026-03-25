@@ -21,6 +21,8 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
 
     private escalatedPermissions: Array<EscalatedPermissionAtOrga>;
 
+    private readonly cachedPersonFields: PersonFields;
+
     private constructor(
         id: string,
         escalatedPermissions: Array<EscalatedPermissionAtOrga>,
@@ -29,6 +31,14 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
     ) {
         this.id = id;
         this.escalatedPermissions = escalatedPermissions;
+        this.cachedPersonFields = {
+            id: id,
+            keycloakUserId: undefined,
+            vorname: `EscalatedPersonPermissions-${id}`,
+            familienname: `EscalatedPersonPermissions-${id}`,
+            username: `EscalatedPersonPermissions-${id}`,
+            updatedAt: new Date(),
+        };
     }
 
     public static createNew(
@@ -185,7 +195,7 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
     }
 
     public get personFields(): PersonFields {
-        throw new Error('Not implemented');
+        return this.cachedPersonFields;
     }
 
     //Make Working

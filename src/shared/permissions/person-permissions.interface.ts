@@ -2,13 +2,18 @@
 // type definitions can not be covered by v8, since the code does not exist at runtime
 import { OrganisationID, PersonID, RolleID } from '../types/index.js';
 import { RollenSystemRecht } from '../../modules/rolle/domain/systemrecht.js';
-import { PermittedOrgas, PersonenkontextRolleWithOrganisation } from '../../modules/authentication/domain/person-permissions.js';
+import {
+    PermittedOrgas,
+    PersonenkontextRolleWithOrganisation,
+    PersonFields,
+} from '../../modules/authentication/domain/person-permissions.js';
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
 
 export type IPersonPermissions = {
-
     id: string;
+
+    readonly personFields: PersonFields;
 
     hasSystemrechteAtOrganisation(organisationId: OrganisationID, systemrechte: RollenSystemRecht[]): Promise<boolean>;
 
@@ -26,9 +31,9 @@ export type IPersonPermissions = {
 
     getRoleIds(): Promise<RolleID[]>;
 
-    getPersonenkontextIds(): Promise<Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[]>
+    getPersonenkontextIds(): Promise<Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[]>;
 
-    getPersonenkontexteWithRolesAndOrgs(): Promise<PersonenkontextRolleWithOrganisation[]>
+    getPersonenkontexteWithRolesAndOrgs(): Promise<PersonenkontextRolleWithOrganisation[]>;
 
-    hasOrgVerwaltenRechtAtOrga(typ: OrganisationsTyp, administriertVon?: string): Promise<boolean>
+    hasOrgVerwaltenRechtAtOrga(typ: OrganisationsTyp, administriertVon?: string): Promise<boolean>;
 };
