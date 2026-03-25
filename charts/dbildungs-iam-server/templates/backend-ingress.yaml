@@ -13,9 +13,14 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
+  {{- if .Values.backend.ingress.tls }}
   tls:
   - hosts:
       - {{ .Values.backendHostname  }}
+  {{- if .Values.backend.ingress.tlsSecretName }}
+    secretName: {{ .Values.backend.ingress.tlsSecretName }}
+  {{- end }}
+  {{- end }}
   ingressClassName: {{ .Values.backend.ingress.ingressClassName }}
   rules:
     - host: {{ .Values.backendHostname }}
@@ -44,14 +49,19 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /health
     nginx.ingress.kubernetes.io/auth-type: basic
     nginx.ingress.kubernetes.io/auth-secret: {{ .Values.auth.secretName }}
-    nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - user'    
+    nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - user'
     {{- with .Values.backend.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
+  {{- if .Values.backend.ingress.tls }}
   tls:
   - hosts:
       - {{ .Values.backendHostname  }}
+  {{- if .Values.backend.ingress.tlsSecretName }}
+    secretName: {{ .Values.backend.ingress.tlsSecretName }}
+  {{- end }}
+  {{- end }}
   ingressClassName: {{ .Values.backend.ingress.ingressClassName }}
   rules:
     - host: {{ .Values.backendHostname }}
