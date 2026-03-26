@@ -16,7 +16,6 @@ import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { KeycloakUserService, User } from '../../keycloak-administration/index.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
@@ -29,6 +28,8 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { SchulconnexModule } from '../schulconnex.module.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 
 describe('Schulconnex Repo', () => {
     let module: TestingModule;
@@ -40,7 +41,6 @@ describe('Schulconnex Repo', () => {
     let personFactory: PersonFactory;
     let personRepo: PersonRepository;
     let organisationRepository: OrganisationRepository;
-    let serviceProviderRepo: ServiceProviderRepo;
     let rolleRepo: RolleRepo;
     let rollenErweiterungRepo: RollenerweiterungRepo;
     let personenkontextFactory: PersonenkontextFactory;
@@ -88,6 +88,7 @@ describe('Schulconnex Repo', () => {
                 OrganisationModule,
                 LoggingTestModule,
                 SchulconnexModule,
+                ServiceProviderModule,
             ],
             providers: [
                 SchulconnexRepo,
@@ -99,7 +100,6 @@ describe('Schulconnex Repo', () => {
                 OxUserBlacklistRepo,
                 RolleFactory,
                 RolleRepo,
-                ServiceProviderRepo,
                 PersonenkontextFactory,
                 EntityAggregateMapper,
                 KeycloakUserService,
@@ -121,7 +121,6 @@ describe('Schulconnex Repo', () => {
         personRepo = module.get(PersonRepository);
         organisationRepository = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
-        serviceProviderRepo = module.get(ServiceProviderRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
         rollenErweiterungRepo = module.get(RollenerweiterungRepo);
 
@@ -177,9 +176,7 @@ describe('Schulconnex Repo', () => {
             const personA: Person<true> = await createPerson();
             const personB: Person<true> = await createPerson();
             const personC: Person<true> = await createPerson();
-            const serviceProviderA: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
-            );
+            const serviceProviderA: ServiceProvider<true> = await createAndPersistServiceProvider(em);
             const rolleA: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProviderA.id] }),
             );
@@ -259,9 +256,7 @@ describe('Schulconnex Repo', () => {
             const personA: Person<true> = await createPerson();
             const personB: Person<true> = await createPerson();
             const personC: Person<true> = await createPerson();
-            const serviceProviderA: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
-            );
+            const serviceProviderA: ServiceProvider<true> = await createAndPersistServiceProvider(em);
             const rolleA: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProviderA.id] }),
             );
@@ -355,9 +350,7 @@ describe('Schulconnex Repo', () => {
             const personA: Person<true> = await createPerson();
             const personB: Person<true> = await createPerson();
             const personC: Person<true> = await createPerson();
-            const serviceProvierA: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
-            );
+            const serviceProvierA: ServiceProvider<true> = await createAndPersistServiceProvider(em);
             const rolleA: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvierA.id] }),
             );
@@ -412,9 +405,7 @@ describe('Schulconnex Repo', () => {
             const personA: Person<true> = await createPerson();
             const personB: Person<true> = await createPerson();
             const personC: Person<true> = await createPerson();
-            const serviceProvierA: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
-            );
+            const serviceProvierA: ServiceProvider<true> = await createAndPersistServiceProvider(em);
             const rolleA: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvierA.id] }),
             );

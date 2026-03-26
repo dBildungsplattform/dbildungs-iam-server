@@ -16,4 +16,8 @@ export class FeatureFlagConfig {
     @IsBoolean()
     @IsNotEmpty()
     public readonly FEATURE_FLAG_SET_UEM_PASSWORD!: boolean;
+
+    @IsBoolean()
+    @IsNotEmpty()
+    public readonly FEATURE_FLAG_SCHULISCHE_ANGEBOTE_ERSTELLEN!: boolean;
 }

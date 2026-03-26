@@ -17,7 +17,6 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
@@ -27,24 +26,24 @@ import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 import { RolleFindByParameters, RolleRepo } from './rolle.repo.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
     let sut: RolleRepo;
     let orm: MikroORM;
     let em: EntityManager;
-    let serviceProviderRepo: ServiceProviderRepo;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
-            providers: [
-                RolleRepo,
-                RolleFactory,
-                ServiceProviderRepo,
-                OrganisationRepository,
-                EventRoutingLegacyKafkaService,
+            imports: [
+                ConfigTestModule,
+                LoggingTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                ServiceProviderModule,
             ],
+            providers: [RolleRepo, RolleFactory, OrganisationRepository, EventRoutingLegacyKafkaService],
         })
             .overrideProvider(EventRoutingLegacyKafkaService)
             .useValue(createMock(EventRoutingLegacyKafkaService))
@@ -53,7 +52,6 @@ describe('RolleRepo', () => {
         sut = module.get(RolleRepo);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        serviceProviderRepo = module.get(ServiceProviderRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -101,11 +99,9 @@ describe('RolleRepo', () => {
         });
 
         it('should save with service provider', async () => {
-            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, {
-                    merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
-                }),
-            );
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+            });
             const rolle: Rolle<false> = DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] });
 
             const savedRolle: Rolle<true> | DomainError = await sut.save(rolle);
@@ -133,9 +129,7 @@ describe('RolleRepo', () => {
 
     describe('findByRollenArten', () => {
         it('should return all rollen', async () => {
-            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
-            );
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
             const rollen: (Rolle<true> | DomainError)[] = await Promise.all([
                 sut.save(DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] })),
                 sut.save(DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] })),
@@ -182,9 +176,7 @@ describe('RolleRepo', () => {
         );
 
         it('should filter rollen by rollenarten', async () => {
-            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
-            );
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
             await Promise.all([
                 sut.save(
@@ -881,11 +873,9 @@ describe('RolleRepo', () => {
 
         it('should return error when a service provider has changed and it is not nachtraeglich zuweisbar', async () => {
             const organisationId: OrganisationID = faker.string.uuid();
-            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, {
-                    merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
-                }),
-            );
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+            });
             const rolle: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: organisationId,
@@ -900,11 +890,9 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
 
-            const newServiceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, {
-                    merkmale: [],
-                }),
-            );
+            const newServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [],
+            });
 
             const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
                 rolle.id,
@@ -925,9 +913,7 @@ describe('RolleRepo', () => {
         describe('should succeed', () => {
             it('if rolle HAS Merkmale, Systemrechte & Service Providers', async () => {
                 const organisationId: OrganisationID = faker.string.uuid();
-                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                    DoFactory.createServiceProvider(false),
-                );
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
                 const rolle: Rolle<true> | DomainError = await sut.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisationId,

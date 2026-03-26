@@ -1,11 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-    ServiceProviderKategorie,
-    ServiceProviderMerkmal,
-    ServiceProviderTarget,
-} from '../domain/service-provider.enum.js';
-import { IsBoolean, IsEnum, IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { IsBoolean, IsEnum, IsIn, IsOptional, IsUUID, MaxLength } from 'class-validator';
 import { ALLOWED_LOGO_MIME_TYPES } from './allowed-mime-types.js';
+import { IsDIN91379AEXT } from '../../../shared/util/din-91379-validation.js';
 
 export class CreateServiceProviderBodyParams {
     @IsUUID()
@@ -17,12 +14,9 @@ export class CreateServiceProviderBodyParams {
     public organisationId!: string;
 
     @ApiProperty()
-    @IsString()
+    @IsDIN91379AEXT()
+    @MaxLength(50)
     public name!: string;
-
-    @ApiProperty({ enum: ServiceProviderTarget })
-    @IsEnum(ServiceProviderTarget)
-    public target!: ServiceProviderTarget;
 
     @ApiProperty({ required: false })
     @IsOptional()
@@ -51,10 +45,6 @@ export class CreateServiceProviderBodyParams {
     @ApiProperty({ required: true })
     @IsBoolean()
     public requires2fa!: boolean;
-
-    @ApiProperty({ required: false })
-    @IsOptional()
-    public vidisAngebotId?: string;
 
     @ApiProperty({ enum: ServiceProviderMerkmal, isArray: true })
     @IsEnum(ServiceProviderMerkmal, { each: true })
