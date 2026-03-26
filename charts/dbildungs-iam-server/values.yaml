@@ -339,7 +339,7 @@ cronjobs:
       script: "cron_trigger.sh"
     cron-trigger-4:
       schedule: 10 0 * * *
-      endpoint: "/api/cron/unlock"
+      endpoint: "api/cron/unlock"
       httpMethod: "PUT"
       script: "cron_trigger.sh"
 #    cron-trigger-6:
