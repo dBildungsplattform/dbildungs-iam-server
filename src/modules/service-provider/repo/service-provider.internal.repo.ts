@@ -1,4 +1,4 @@
-import { EntityManager } from '@mikro-orm/postgresql';
+import { EntityManager, sql } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ServiceProviderEntity } from './service-provider.entity.js';
 import { OrganisationID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
@@ -14,7 +14,7 @@ export class ServiceProviderInternalRepo {
     ): Promise<boolean> {
         const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(ServiceProviderEntity, {
             providedOnSchulstrukturknoten: organisationId,
-            name,
+            [sql.upper('name')]: name.toUpperCase(),
             id: {
                 $ne: ignoreSpId,
             },
