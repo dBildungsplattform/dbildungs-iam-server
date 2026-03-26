@@ -229,7 +229,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -509,7 +510,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -529,7 +531,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"  
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -783,7 +785,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1134,7 +1137,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1154,7 +1158,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"      
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -1453,7 +1457,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1473,7 +1478,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"      
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -1737,7 +1742,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -2038,7 +2044,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -2058,7 +2065,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"     
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -2454,7 +2461,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -2747,7 +2755,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3195,7 +3204,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3215,7 +3225,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"    
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -3542,7 +3552,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3825,7 +3836,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4147,7 +4159,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4616,7 +4629,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5005,7 +5019,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5373,7 +5388,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5657,7 +5673,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5677,7 +5694,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"           
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -5736,7 +5753,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ],
           "mappedType": "enum"
         }
@@ -5957,7 +5975,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5977,7 +5996,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"            
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -6085,7 +6104,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"           
+            "HINWEISE"
           ],
           "mappedType": "enum"
         },
@@ -6351,7 +6370,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -6371,7 +6391,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"           
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -6632,7 +6652,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -6652,7 +6673,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"   
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -7007,7 +7028,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -7027,7 +7049,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"    
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -7288,7 +7310,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -7308,7 +7331,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"        
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -7572,7 +7595,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -7900,7 +7924,8 @@
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
-            "ANGEBOTE_VERWALTEN"
+            "ANGEBOTE_VERWALTEN",
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
           ]
         },
         "service_provider_target_enum": {
@@ -7920,7 +7945,7 @@
             "UNTERRICHT",
             "VERWALTUNG",
             "SCHULISCH",
-            "HINWEISE"          
+            "HINWEISE"
           ]
         },
         "service_provider_system_enum": {
@@ -8119,7 +8144,8 @@
         "SCHULPORTAL_VERWALTEN",
         "HINWEISE_BEARBEITEN",
         "ROLLEN_ERWEITERN",
-        "ANGEBOTE_VERWALTEN"
+        "ANGEBOTE_VERWALTEN",
+        "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
       ]
     },
     "service_provider_target_enum": {

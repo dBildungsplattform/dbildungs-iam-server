@@ -7,7 +7,6 @@ import {
     DoFactory,
     LoggingTestModule,
 } from '../../../../../test/utils/index.js';
-import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
 import { PersonApiModule } from '../../person-api.module.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
 import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
@@ -29,6 +28,7 @@ import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.e
 import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
 import { PersonLandesbediensteterSearchService } from '../../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
 import { PersonID } from '../../../../shared/types/aggregate-ids.types.js';
+import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -98,6 +98,8 @@ describe('Personenuebersicht API Mocked', () => {
             .useValue(createMock(PersonRepository))
             .overrideProvider(PersonLandesbediensteterSearchService)
             .useValue(createMock(PersonLandesbediensteterSearchService))
+            .overrideProvider(ServiceProviderRepo)
+            .useValue(createMock(ServiceProviderRepo))
             .compile();
 
         sut = module.get(DBiamPersonenuebersichtController);

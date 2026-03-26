@@ -49,7 +49,7 @@ export default defineConfig({
             ],
             thresholds: {
                 statements: 100,
-                branches: 97.6,
+                branches: -96, // Absolute count to avoid regressions
                 functions: 100,
                 lines: 100,
             },

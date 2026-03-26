@@ -12,7 +12,6 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
@@ -30,6 +29,8 @@ import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeo
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 import { expectErrResult } from '../../../../test/utils/index.js';
+import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
 
 function makeN<T>(fn: () => T, n: number): Array<T> {
     return Array.from({ length: n }, fn);
@@ -43,17 +44,20 @@ describe('RollenerweiterungRepo', () => {
     let factory: RollenerweiterungFactory;
     let organisationRepo: OrganisationRepository;
     let rolleRepo: RolleRepo;
-    let serviceProviderRepo: ServiceProviderRepo;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
+            imports: [
+                ConfigTestModule,
+                LoggingTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                ServiceProviderModule,
+            ],
             providers: [
                 RolleRepo,
                 RolleFactory,
                 RollenerweiterungRepo,
                 RollenerweiterungFactory,
-                ServiceProviderRepo,
                 OrganisationRepository,
                 EventRoutingLegacyKafkaService,
             ],
@@ -68,7 +72,6 @@ describe('RollenerweiterungRepo', () => {
         factory = module.get(RollenerweiterungFactory);
         organisationRepo = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
-        serviceProviderRepo = module.get(ServiceProviderRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -119,11 +122,9 @@ describe('RollenerweiterungRepo', () => {
             });
             serviceProviders = await Promise.all(
                 [0, 1, 2].map(() =>
-                    serviceProviderRepo.save(
-                        DoFactory.createServiceProvider(false, {
-                            merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                        }),
-                    ),
+                    createAndPersistServiceProvider(em, {
+                        merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                    }),
                 ),
             );
             factory = module.get(RollenerweiterungFactory);
@@ -156,11 +157,9 @@ describe('RollenerweiterungRepo', () => {
         });
 
         it('should return empty arrays for serviceProviderIds with no rollenerweiterungen', async () => {
-            const unusedServiceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, {
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
+            const unusedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
             const ids: string[] = [unusedServiceProvider.id];
             const result: Map<ServiceProviderID, Rollenerweiterung<true>[]> = await sut.findByServiceProviderIds(ids);
 
@@ -214,16 +213,12 @@ describe('RollenerweiterungRepo', () => {
                 throw new Error('Failed to create Rolle');
             }
             rolle = rolleOrError;
-            serviceProvider = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, {
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
-            otherServiceProvider = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, {
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
+            serviceProvider = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+            otherServiceProvider = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
             await sut.create(factory.createNew(organisation.id, rolle.id, serviceProvider.id));
             await sut.create(factory.createNew(organisation.id, rolle.id, otherServiceProvider.id));
             await sut.create(factory.createNew(otherOrganisation.id, rolle.id, serviceProvider.id));
@@ -284,11 +279,9 @@ describe('RollenerweiterungRepo', () => {
                 throw new Error('Failed to create Rolle');
             }
             rolle = rolleOrError;
-            serviceProvider = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, {
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
+            serviceProvider = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
             const re: Rollenerweiterung<false> = factory.createNew(organisation.id, rolle.id, serviceProvider.id);
             await sut.create(re);
         });
@@ -336,11 +329,9 @@ describe('RollenerweiterungRepo', () => {
                 throw new Error('Failed to create Rolle');
             }
             rolle = rolleOrError;
-            serviceProvider = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, {
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
+            serviceProvider = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
         });
 
         it.each([
@@ -376,11 +367,9 @@ describe('RollenerweiterungRepo', () => {
                 throw new Error('Failed to create Rolle');
             }
             rolle = rolleOrError;
-            serviceProvider = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, {
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
+            serviceProvider = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
         });
 
         it('should create rollenerweiterung', async () => {
@@ -396,13 +385,16 @@ describe('RollenerweiterungRepo', () => {
 
     describe('createAuthorized', () => {
         type TestCase = 'root' | 'schuladmin';
-        let organisation: Organisation<true>;
-        let rolle: Rolle<true>;
-        let serviceProvider: ServiceProvider<true>;
-        let permissionMock: DeepMocked<PersonPermissions>;
 
-        beforeEach(async () => {
-            organisation = await organisationRepo.save(
+        type Setup = Awaited<ReturnType<typeof setup>>;
+
+        async function setup(verfuegbarFürRollenerweiterung: boolean = true): Promise<{
+            organisation: Organisation<true>;
+            rolle: Rolle<true>;
+            serviceProvider: ServiceProvider<true>;
+            permissionMock: DeepMocked<PersonPermissions>;
+        }> {
+            const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, {
                     administriertVon: faker.string.uuid(),
                 }),
@@ -415,18 +407,21 @@ describe('RollenerweiterungRepo', () => {
             if (rolleOrError instanceof DomainError) {
                 throw new Error('Failed to create Rolle');
             }
-            rolle = rolleOrError;
-            serviceProvider = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, {
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
-            permissionMock = createPersonPermissionsMock();
-        });
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: verfuegbarFürRollenerweiterung
+                    ? [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG]
+                    : [],
+            });
+            const permissionMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+
+            return { organisation, rolle: rolleOrError, serviceProvider, permissionMock };
+        }
 
         it.each([['root' as TestCase], ['schuladmin' as TestCase]])(
             'should create a new rollenerweiterung as %s',
             async (adminType: TestCase) => {
+                const { organisation, rolle, serviceProvider, permissionMock }: Setup = await setup();
+
                 if (adminType === 'root') {
                     permissionMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
                 }
@@ -457,6 +452,8 @@ describe('RollenerweiterungRepo', () => {
         );
 
         it('should return an error if permissions are missing', async () => {
+            const { organisation, rolle, serviceProvider, permissionMock }: Setup = await setup();
+
             permissionMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
             const rollenerweiterung: Rollenerweiterung<false> = factory.createNew(
                 organisation.id,
@@ -476,6 +473,8 @@ describe('RollenerweiterungRepo', () => {
         });
 
         it('should return an error if references are invalid', async () => {
+            const { rolle, serviceProvider, permissionMock }: Setup = await setup();
+
             permissionMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
             const rollenerweiterung: Rollenerweiterung<false> = factory.createNew(
                 faker.string.uuid(),
@@ -495,6 +494,8 @@ describe('RollenerweiterungRepo', () => {
         });
 
         it('should return an error if rolle already has access to service provider', async () => {
+            const { organisation, rolle, serviceProvider, permissionMock }: Setup = await setup();
+
             permissionMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
             const updatedRolle: Option<Rolle<true>> = await rolleRepo.findById(rolle.id);
             if (!updatedRolle) {
@@ -520,15 +521,8 @@ describe('RollenerweiterungRepo', () => {
         });
 
         it('should return an error if service provider is not available for rollenerweiterung', async () => {
+            const { organisation, rolle, serviceProvider, permissionMock }: Setup = await setup(false);
             permissionMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
-            const updatedServiceProvider: Option<ServiceProvider<true>> = await serviceProviderRepo.findById(
-                serviceProvider.id,
-            );
-            if (!updatedServiceProvider) {
-                throw new Error('Service provider not found');
-            }
-            updatedServiceProvider.merkmale = [];
-            await serviceProviderRepo.save(updatedServiceProvider);
 
             const rollenerweiterung: Rollenerweiterung<false> = factory.createNew(
                 organisation.id,
@@ -585,11 +579,9 @@ describe('RollenerweiterungRepo', () => {
             serviceProviders = await Promise.all(
                 makeN(
                     () =>
-                        serviceProviderRepo.save(
-                            DoFactory.createServiceProvider(false, {
-                                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                            }),
-                        ),
+                        createAndPersistServiceProvider(em, {
+                            merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                        }),
                     3,
                 ),
             );
@@ -693,11 +685,9 @@ describe('RollenerweiterungRepo', () => {
             serviceProviders = await Promise.all(
                 makeN(
                     () =>
-                        serviceProviderRepo.save(
-                            DoFactory.createServiceProvider(false, {
-                                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                            }),
-                        ),
+                        createAndPersistServiceProvider(em, {
+                            merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                        }),
                     3,
                 ),
             );
@@ -773,11 +763,9 @@ describe('RollenerweiterungRepo', () => {
                 throw new Error('Failed to create Rolle');
             }
             rolle = rolleOrError;
-            serviceProvider = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false, {
-                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                }),
-            );
+            serviceProvider = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
         });
 
         it('should return empty array and count 0 if no rollenerweiterung exists for serviceProviderId', async () => {

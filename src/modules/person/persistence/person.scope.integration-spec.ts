@@ -17,7 +17,6 @@ import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persiste
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -26,6 +25,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
 import { PersonExternalIdType } from '../domain/person.enums.js';
+import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
@@ -57,15 +57,10 @@ describe('PersonScope', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonenKontextModule,
+                ServiceProviderModule,
                 LoggingTestModule,
             ],
-            providers: [
-                DBiamPersonenkontextRepoInternal,
-                RolleRepo,
-                RolleFactory,
-                ServiceProviderRepo,
-                OrganisationRepository,
-            ],
+            providers: [DBiamPersonenkontextRepoInternal, RolleRepo, RolleFactory, OrganisationRepository],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
