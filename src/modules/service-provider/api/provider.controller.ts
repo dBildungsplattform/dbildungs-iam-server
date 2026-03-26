@@ -3,6 +3,7 @@ import {
     Controller,
     Get,
     Param,
+    Patch,
     Post,
     Query,
     StreamableFile,
@@ -57,6 +58,7 @@ import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
 import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -364,6 +366,32 @@ export class ProviderController {
             permissions,
             serviceProvider,
         );
+
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        return new ServiceProviderResponse(result.value);
+    }
+
+    @Patch()
+    @ApiOperation({ description: 'Update a service-provider (Angebot).' })
+    @ApiOkResponse({
+        description: 'The service-provider was successfully updated.',
+        type: ServiceProviderResponse,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions.' })
+    @ApiBadRequestResponse({ description: 'Invalid request body.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+    public async updateServiceProvider(
+        @Permissions() permissions: PersonPermissions,
+        @Body() body: UpdateServiceProviderBodyParams,
+    ): Promise<ServiceProviderResponse> {
+        const result: Result<
+            ServiceProvider<true>,
+            DomainError
+        > = await this.serviceProviderService.updateServiceProvider(permissions, body);
 
         if (!result.ok) {
             throw result.error;
