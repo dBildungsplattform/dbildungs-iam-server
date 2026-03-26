@@ -11,7 +11,6 @@ import {
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
@@ -22,6 +21,7 @@ import { Meldung } from '../domain/meldung.js';
 import { CreateOrUpdateMeldungBodyParams } from './create-or-update-meldung.body.params.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { MeldungExceptionFilter } from './meldung.exception-filter.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new MeldungExceptionFilter())
 @ApiTags('meldung')
@@ -41,7 +41,7 @@ export class MeldungController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available meldungen.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get meldungen.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all meldungen.' })
-    public async getAllMeldungen(@Permissions() permissions: PersonPermissions): Promise<MeldungResponse[]> {
+    public async getAllMeldungen(@Permissions() permissions: IPersonPermissions): Promise<MeldungResponse[]> {
         const requiredSytsmrechte: RollenSystemRecht[] = [
             RollenSystemRecht.SCHULPORTAL_VERWALTEN,
             RollenSystemRecht.HINWEISE_BEARBEITEN,
@@ -96,7 +96,7 @@ export class MeldungController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the meldung.' })
     public async createOrUpdateMeldung(
         @Body() body: CreateOrUpdateMeldungBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<MeldungResponse> {
         const requiredSystemrechte: RollenSystemRecht[] = [
             RollenSystemRecht.SCHULPORTAL_VERWALTEN,

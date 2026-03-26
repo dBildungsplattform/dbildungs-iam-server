@@ -23,7 +23,7 @@ describe('StepUpGuard', () => {
             email: 'test@test.com',
         };
 
-        const personPermissionsMock: PersonPermissions = createPersonPermissionsMock();
+        const personPermissionsMock: IPersonPermissions = createPersonPermissionsMock();
 
         const request: Partial<Request> = {
             passportUser: {

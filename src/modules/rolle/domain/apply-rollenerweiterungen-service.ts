@@ -1,5 +1,4 @@
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
@@ -17,6 +16,7 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from './missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 type TunknownResultForRolle = {
     rolleId: string;
@@ -49,7 +49,7 @@ export class ApplyRollenerweiterungService {
         orgaId: string,
         angebotId: string,
         body: ApplyRollenerweiterungBodyParams,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<
         Result<
             null,
@@ -163,7 +163,7 @@ export class ApplyRollenerweiterungService {
         existingErweiterungen: Array<Rollenerweiterung<true>> = [],
         addErweiterungenForRolleIds: string[],
         rollen: Map<string, Rolle<true>>,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<{
         rolleId: string;
         result: Result<Rollenerweiterung<true>, DomainError>;

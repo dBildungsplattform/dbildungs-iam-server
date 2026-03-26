@@ -49,7 +49,7 @@ import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { PermittedOrgas, PersonFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonFields } from '../../authentication/domain/person-permissions.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
@@ -84,6 +84,7 @@ import { PersonLandesbediensteterSearchResponse } from './person-landesbedienste
 import { PersonLandesbediensteterSearchService } from '../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -122,7 +123,7 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting landesbedienstete.' })
     public async findLandesbediensteter(
         @Query() queryParams: PersonLandesbediensteterSearchQueryParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PersonLandesbediensteterSearchResponse[]> {
         // Find all organisations where user has permission
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
@@ -155,7 +156,7 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
     public async deletePersonById(
         @Param() params: PersonByIdParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<void> {
         const response: Result<void, DomainError> = await this.personDeleteService.deletePerson(
             params.personId,
@@ -185,7 +186,7 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
     public async findPersonById(
         @Param() params: PersonByIdParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PersonendatensatzResponse> {
         //check that logged-in user is allowed to update person
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
@@ -250,7 +251,7 @@ export class PersonController {
     public async findPersonenkontexte(
         @Param() pathParams: PersonByIdParams,
         @Query() queryParams: PersonenkontextQueryParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PagedResponse<PersonenkontextResponse>> {
         // check that logged-in user is allowed to update person
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
@@ -303,7 +304,7 @@ export class PersonController {
     public async updatePerson(
         @Param() params: PersonByIdParams,
         @Body() body: UpdatePersonBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PersonendatensatzResponse> {
         //check that logged-in user is allowed to update person
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
@@ -347,7 +348,7 @@ export class PersonController {
     @UseInterceptors(ResultInterceptor)
     public async resetPasswordByPersonId(
         @Param() params: PersonByIdParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<Result<string>> {
         //check that logged-in user is allowed to update person
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
@@ -395,7 +396,7 @@ export class PersonController {
     public async lockPerson(
         @Param('personId') personId: string,
         @Body() lockUserBodyParams: LockUserBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PersonLockResponse> {
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             personId,
@@ -484,7 +485,7 @@ export class PersonController {
     @ApiBadGatewayResponse({ description: 'A downstream server returned an error.' })
     public async syncPerson(
         @Param('personId') personId: string,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<void> {
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             personId,
@@ -521,7 +522,7 @@ export class PersonController {
     public async updateMetadata(
         @Param() params: PersonByIdParams,
         @Body() body: PersonMetadataBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PersonendatensatzResponse | DomainError> {
         if (
             body.personalnummer &&
@@ -575,7 +576,7 @@ export class PersonController {
     @UseInterceptors(ResultInterceptor)
     public async resetUEMPasswordByPersonId(
         @Param() params: PersonByIdParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<Result<string>> {
         //check that logged-in user is allowed to update person
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
@@ -618,7 +619,7 @@ export class PersonController {
     @ApiNotFoundResponse({ description: 'The person does not exist or insufficient permissions to update person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     @UseInterceptors(ResultInterceptor)
-    public async resetUEMPassword(@Permissions() permissions: PersonPermissions): Promise<Result<string>> {
+    public async resetUEMPassword(@Permissions() permissions: IPersonPermissions): Promise<Result<string>> {
         const { id, username }: PersonFields = permissions.personFields;
         if (!id) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(

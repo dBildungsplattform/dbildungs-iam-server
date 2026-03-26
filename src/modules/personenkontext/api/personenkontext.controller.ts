@@ -40,7 +40,7 @@ import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonIdResponse } from '../../person/api/person-id.response.js';
@@ -50,6 +50,7 @@ import { PersonService } from '../../person/domain/person.service.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonResponseAutomapper } from '../../person/api/person.response-automapper.js';
 import { PersonApiMapper } from '../../person/mapper/person-api.mapper.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personenkontexte')
@@ -76,7 +77,7 @@ export class PersonenkontextController {
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
     public async findPersonenkontextById(
         @Param() params: FindPersonenkontextByIdParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PersonendatensatzResponseAutomapper> {
         const result: Result<Personenkontext<true>, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
             params.personenkontextId,
@@ -118,7 +119,7 @@ export class PersonenkontextController {
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
     public async findPersonenkontexte(
         @Query() queryParams: PersonenkontextQueryParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PagedResponse<PersonenkontextdatensatzResponse>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.PERSONEN_LESEN],
@@ -181,7 +182,7 @@ export class PersonenkontextController {
     public async deletePersonenkontextById(
         @Param() params: FindPersonenkontextByIdParams,
         @Body() body: DeleteRevisionBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<void> {
         // Check permissions
         const result: Result<unknown, DomainError> = await this.personenkontextRepo.findByIDAuthorized(

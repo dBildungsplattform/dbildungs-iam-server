@@ -10,7 +10,6 @@ import {
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { ApplyRollenerweiterungPathParams } from './apply-rollenerweiterung-changes.path.params.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
@@ -22,6 +21,7 @@ import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweit
 import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterungen-service.js';
 import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
 import { uniq } from 'lodash-es';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -51,7 +51,7 @@ export class RollenerweiterungController {
     public async applyRollenerweiterungChanges(
         @Param() params: ApplyRollenerweiterungPathParams,
         @Body() body: ApplyRollenerweiterungBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<void> {
         this.logger.info(
             `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} with ${body.addErweiterungenForRolleIds.length} x ADD (${[...body.addErweiterungenForRolleIds].map((id: string) => id).join(', ')}) and ${body.removeErweiterungenForRolleIds.length} x REMOVE (${[...body.removeErweiterungenForRolleIds].map((id: string) => id).join(', ')}).`,

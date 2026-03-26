@@ -31,6 +31,12 @@ export function intersectPermittedAndRequestedOrgas(
     return permittedOrgas.all ? requestedOrgaIds : intersection(permittedOrgas.orgaIds, requestedOrgaIds);
 }
 
+const PERSON_PERMISSIONS_BRAND: string = 'PERSON_PERMISSIONS_BRAND';
+
+export function isPersonPermissions(obj: unknown): obj is PersonPermissions {
+    return typeof obj === 'object' && obj !== null && 'brand' in obj && obj.brand === PERSON_PERMISSIONS_BRAND;
+}
+
 export class PersonPermissions implements IPersonPermissions {
     public readonly id: string;
 
@@ -39,6 +45,8 @@ export class PersonPermissions implements IPersonPermissions {
     private readonly cachedPersonFields: PersonFields;
 
     private cachedRollenFields?: PersonenkontextRolleWithOrganisation[];
+
+    private readonly brand: string = PERSON_PERMISSIONS_BRAND;
 
     public constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,

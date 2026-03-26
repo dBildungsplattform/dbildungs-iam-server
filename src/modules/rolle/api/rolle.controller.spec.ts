@@ -120,7 +120,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
 
     describe('/POST rolle mocked Rolle-repo', () => {
         describe('createRolle', () => {
-            const permissionsMock: PersonPermissions = createPersonPermissionsMock();
+            const permissionsMock: IPersonPermissions = createPersonPermissionsMock();
             it('should throw an HTTP exception when rolleFactory.createNew returns DomainError', async () => {
                 const createRolleParams: CreateRolleBodyParams = {
                     name: ' SuS',
@@ -146,7 +146,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
     describe('POST rolle/erweiterung', () => {
         describe('createRollenerweiterung', () => {
             let createRollenerweiterungParams: CreateRollenerweiterungBodyParams;
-            let permissions: PersonPermissions;
+            let permissions: IPersonPermissions;
             beforeEach(() => {
                 createRollenerweiterungParams = new CreateRollenerweiterungBodyParams();
                 Object.assign(createRollenerweiterungParams, {

@@ -471,7 +471,7 @@ describe('CronController', () => {
                     throw new Error('Some internal error');
                 });
 
-                const personPermissionsMock: PersonPermissions = createPersonPermissionsMock();
+                const personPermissionsMock: IPersonPermissions = createPersonPermissionsMock();
                 await expect(cronController.personWithoutOrgDelete(personPermissionsMock)).rejects.toThrow(
                     'Failed to remove users due to an internal server error.',
                 );

@@ -28,9 +28,10 @@ import {
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -95,7 +96,7 @@ export class ServiceProviderService {
     }
 
     public async findManageableById(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         id: ServiceProviderID,
     ): Promise<Option<ManageableServiceProviderWithReferencedObjects>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
@@ -129,7 +130,7 @@ export class ServiceProviderService {
     }
 
     public async findAuthorized(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         limit?: number,
         offset?: number,
     ): Promise<Counted<ManageableServiceProviderWithReferencedObjects>> {
@@ -153,7 +154,7 @@ export class ServiceProviderService {
 
     public async getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
         organisationId: OrganisationID,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         limit?: number,
         offset?: number,
     ): Promise<Result<Counted<ManageableServiceProviderWithReferencedObjects>, MissingPermissionsError>> {

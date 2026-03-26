@@ -30,6 +30,7 @@ import { PersonInfoPersonResponseV1 } from './v1/person-info-person.response.v1.
 import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
 import { ConfigTestModule, DatabaseTestModule } from '../../../../../test/utils/index.js';
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
+import { IPersonPermissions } from '../../../../shared/permissions/person-permissions.interface.js';
 
 describe('PersonInfoController', () => {
     let module: TestingModule;
@@ -128,7 +129,7 @@ describe('PersonInfoController', () => {
             it('should return person info with loeschung old Repo', async () => {
                 emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
 
-                const permissions: PersonPermissions = {
+                const permissions: IPersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
                     },
@@ -176,7 +177,7 @@ describe('PersonInfoController', () => {
             it('should return person info with loeschung new Microservice', async () => {
                 emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
 
-                const permissions: PersonPermissions = {
+                const permissions: IPersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
                     },
@@ -231,7 +232,7 @@ describe('PersonInfoController', () => {
             it('should return person info with no loeschungZeitpunkt', async () => {
                 emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
 
-                const permissions: PersonPermissions = {
+                const permissions: IPersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
                     },
@@ -285,7 +286,7 @@ describe('PersonInfoController', () => {
             it('should return person info with empty dnr array and no kontexte', async () => {
                 emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
 
-                const permissions: PersonPermissions = {
+                const permissions: IPersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
                     },
@@ -327,7 +328,7 @@ describe('PersonInfoController', () => {
 
         describe('when person does not exist', () => {
             it('should return null', async () => {
-                const permissions: PersonPermissions = {
+                const permissions: IPersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
                     },
@@ -353,7 +354,7 @@ describe('PersonInfoController', () => {
                 emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
 
                 const orgaLand: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND });
-                const permissions: PersonPermissions = {
+                const permissions: IPersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
                     },
@@ -403,7 +404,7 @@ describe('PersonInfoController', () => {
                 emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
 
                 const orgaLand: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND });
-                const permissions: PersonPermissions = {
+                const permissions: IPersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
                     },
@@ -450,7 +451,7 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.rolle).toEqual(SchulconnexRolle.SYSADMIN);
             });
             it('should return person info for Lehrer with Email with Schul-kontext and no gruppen', async () => {
-                const permissions: PersonPermissions = {
+                const permissions: IPersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
                     },
@@ -501,7 +502,7 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.erreichbarkeiten.at(0)?.kennung).toEqual(email.address);
             });
             it('should return person info without Email with Schul-kontext and no gruppen', async () => {
-                const permissions: PersonPermissions = {
+                const permissions: IPersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
                     },
@@ -563,7 +564,7 @@ describe('PersonInfoController', () => {
                     typ: OrganisationsTyp.KLASSE,
                     name: undefined,
                 });
-                const permissions: PersonPermissions = {
+                const permissions: IPersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
                     },
@@ -641,7 +642,7 @@ describe('PersonInfoController', () => {
 
         describe('when person does not exist', () => {
             it('should return null', async () => {
-                const permissions: PersonPermissions = {
+                const permissions: IPersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
                     },

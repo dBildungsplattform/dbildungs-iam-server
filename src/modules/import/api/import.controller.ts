@@ -37,7 +37,6 @@ import { AuthenticationExceptionFilter } from '../../authentication/api/authenti
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DbiamPersonenkontextImportBodyParams } from './dbiam-personenkontext-import.body.params.js';
 import { ImportWorkflowFactory } from '../domain/import-workflow.factory.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ImportResult, ImportUploadResultFields, ImportWorkflow } from '../domain/import-workflow.js';
@@ -64,6 +63,7 @@ import { ImportVorgangStatusResponse } from './importvorgang-status.response.js'
 import { ImportResultResponse } from './import-result.response.js';
 import { ImportResultQueryParams } from './import-result-query.params.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new ImportExceptionFilter())
 @ApiTags('import')
@@ -101,7 +101,7 @@ export class ImportController {
                 }),
         )
         file: Express.Multer.File,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<ImportUploadResponse> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
         const result: DomainError | ImportUploadResultFields = await importWorkflow.validateImport(
@@ -148,7 +148,7 @@ export class ImportController {
     })
     public async executeImport(
         @Body() body: ImportvorgangByIdBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<void> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
         const result: Result<void> = await importWorkflow.executeImport(body.importvorgangId, permissions);
@@ -188,7 +188,7 @@ export class ImportController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to delete the import transaction.' })
     public async deleteImportTransaction(
         @Param() params: ImportvorgangByIdParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<void> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
         const result: Result<void> = await importWorkflow.cancelOrCompleteImport(params.importvorgangId, permissions);
@@ -214,7 +214,7 @@ export class ImportController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting import transactions.' })
     public async findImportTransactions(
         @Query() queryParams: ImportvorgangQueryParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PagedResponse<ImportVorgangResponse>> {
         const [result, total]: [ImportVorgang<true>[], number] = await this.importVorgangRepository.findAuthorized(
             permissions,
@@ -267,7 +267,7 @@ export class ImportController {
     public async downloadFile(
         @Param() params: ImportvorgangByIdBodyParams,
         @Res({ passthrough: true }) res: Response,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<StreamableFile> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
         const result: Result<Buffer> = await importWorkflow.downloadFile(params.importvorgangId, permissions);
@@ -339,7 +339,7 @@ export class ImportController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting list of imported users.' })
     public async getImportedUsers(
         @Query() queryParams: ImportResultQueryParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<ImportResultResponse> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
         const result: Result<ImportResult> = await importWorkflow.getImportedUsers(

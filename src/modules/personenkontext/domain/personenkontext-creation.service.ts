@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/index.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Personenkontext } from './personenkontext.js';
 import { PersonenkontextWorkflowFactory } from './personenkontext-workflow.factory.js';
 import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow.js';
@@ -10,9 +9,16 @@ import { PersonFactory } from '../../person/domain/person.factory.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
-import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
 import { DbiamCreatePersonenkontextBodyParams } from '../api/param/dbiam-create-personenkontext.body.params.js';
 import { OperationContext } from './personenkontext.enums.js';
+import {
+    EscalatedPermissionAtOrga,
+    isEscalatedPersonPermissions,
+} from '../../authentication/domain/escalated-person-permissions.js';
+import { EscalatedPersonPermissionsFactory } from '../../authentication/domain/escalated-person-permissions.factory.js';
+import { isPersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export type PersonPersonenkontext = {
     person: Person<true>;
@@ -26,10 +32,11 @@ export class PersonenkontextCreationService {
         private readonly personFactory: PersonFactory,
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
+        private readonly escalatedPersonPermissionsFactory: EscalatedPersonPermissionsFactory,
     ) {}
 
     public async createPersonWithPersonenkontexte(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         vorname: string,
         familienname: string,
         createPersonenkontexte: DbiamCreatePersonenkontextBodyParams[],
@@ -66,6 +73,24 @@ export class PersonenkontextCreationService {
             return savedPerson;
         }
 
+        let permissionsToUse: IPersonPermissions;
+        if (isEscalatedPersonPermissions(permissions)) {
+            permissionsToUse = permissions;
+        } else if (isPersonPermissions(permissions)) {
+            permissionsToUse = await this.escalatedPersonPermissionsFactory.fromPersonPermissions(
+                permissions,
+                createPersonenkontexte.map(
+                    (createPersonenkontext: DbiamCreatePersonenkontextBodyParams) =>
+                        ({
+                            orgaId: createPersonenkontext.organisationId,
+                            systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
+                        }) satisfies EscalatedPermissionAtOrga,
+                ),
+            );
+        } else {
+            throw new Error('TBD');
+        }
+
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             savedPerson.id,
             new Date(),
@@ -76,7 +101,7 @@ export class PersonenkontextCreationService {
                 rolleId: createPersonenkontext.rolleId,
                 befristung,
             })),
-            new PermissionsOverride(permissions).grantPersonModifyPermission(savedPerson.id),
+            permissionsToUse,
         );
 
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();

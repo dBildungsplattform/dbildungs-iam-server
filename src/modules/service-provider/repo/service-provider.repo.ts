@@ -6,13 +6,14 @@ import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/
 import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
 import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -234,7 +235,7 @@ export class ServiceProviderRepo {
     }
 
     public async findAuthorizedById(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         id: string,
     ): Promise<Option<ServiceProvider<true>>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(

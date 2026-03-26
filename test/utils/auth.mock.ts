@@ -7,15 +7,64 @@ import {
     UserinfoResponse as OidcUserinfoResponse,
 } from 'openid-client';
 import { UserinfoResponse } from '../../src/modules/authentication/api/userinfo.response.js';
-import { PersonFields, PersonPermissions } from '../../src/modules/authentication/domain/person-permissions.js';
+import {
+    PermittedOrgas,
+    PersonenkontextRolleWithOrganisation,
+    PersonFields,
+    PersonPermissions,
+} from '../../src/modules/authentication/domain/person-permissions.js';
 import { IPersonPermissions } from '../../src/shared/permissions/person-permissions.interface.js';
 import { createMock, DeepMocked } from './createMock.js';
 import { PassportUser } from '../../src/modules/authentication/types/user.js';
 import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { Request } from 'express';
+import { OrganisationsTyp } from '../../src/modules/organisation/domain/organisation.enums.js';
+import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
+import { RollenSystemRecht } from '../../src/modules/rolle/domain/systemrecht.js';
+import { RolleID } from '../../src/shared/types/aggregate-ids.types.js';
 
 export class PersonPermissionsMock implements IPersonPermissions {
+    public id: string;
+    public personFields: PersonFields;
+
+    public constructor() {
+        this.id = '';
+        this.personFields = {
+            id: faker.string.uuid(),
+            keycloakUserId: faker.string.uuid(),
+            vorname: faker.person.firstName(),
+            familienname: faker.person.lastName(),
+            username: faker.internet.username(),
+            updatedAt: faker.date.past(),
+        };
+    }
+
+    public hasSystemrechteAtRootOrganisation(
+        _systemrechte: RollenSystemRecht[],
+        _matchAll?: boolean,
+    ): Promise<boolean> {
+        throw new Error('Method not implemented.');
+    }
+    public getOrgIdsWithSystemrecht(
+        _systemrechte: RollenSystemRecht[],
+        _withChildren: boolean,
+        _matchAll?: boolean,
+    ): Promise<PermittedOrgas> {
+        throw new Error('Method not implemented.');
+    }
+    public getRoleIds(): Promise<RolleID[]> {
+        throw new Error('Method not implemented.');
+    }
+    public getPersonenkontextIds(): Promise<Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[]> {
+        throw new Error('Method not implemented.');
+    }
+    public getPersonenkontexteWithRolesAndOrgs(): Promise<PersonenkontextRolleWithOrganisation[]> {
+        throw new Error('Method not implemented.');
+    }
+    public hasOrgVerwaltenRechtAtOrga(_typ: OrganisationsTyp, _administriertVon?: string): Promise<boolean> {
+        throw new Error('Method not implemented.');
+    }
     public hasSystemrechteAtOrganisation(): Promise<boolean> {
         return Promise.resolve(true);
     }
@@ -54,7 +103,7 @@ export function createUserinfoResponseMock(): DeepMocked<OidcUserinfoResponse> {
     return createMock(UserinfoResponse) as unknown as DeepMocked<OidcUserinfoResponse>;
 }
 
-export function createPassportUserMock(personPermissions?: PersonPermissions): PassportUser {
+export function createPassportUserMock(personPermissions?: IPersonPermissions): PassportUser {
     return {
         userinfo: createUserinfoResponseMock(),
         personPermissions: () => Promise.resolve(personPermissions ?? createPersonPermissionsMock()),
@@ -77,7 +126,7 @@ export function createOidcClientMock(clientFields?: Partial<BaseClient>): DeepMo
     return Object.assign(client, clientFields);
 }
 
-export function createAuthInterceptorMock(personPermissions?: PersonPermissions): NestInterceptor {
+export function createAuthInterceptorMock(personPermissions?: IPersonPermissions): NestInterceptor {
     return {
         intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
             const req: Request = context.switchToHttp().getRequest();

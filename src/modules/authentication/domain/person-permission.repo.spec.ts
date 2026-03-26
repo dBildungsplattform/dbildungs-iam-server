@@ -78,7 +78,7 @@ describe('PersonPermissionRepo', () => {
                     faker.string.uuid(),
                 );
                 personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(person);
-                const personPermissions: PersonPermissions = await sut.loadPersonPermissions(faker.string.uuid());
+                const personPermissions: IPersonPermissions = await sut.loadPersonPermissions(faker.string.uuid());
                 expect(personPermissions).toBeDefined();
             });
         });

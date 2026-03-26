@@ -12,7 +12,6 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { ImportExecutedEvent } from '../../../shared/events/import-executed.event.js';
 import { KafkaImportExecutedEvent } from '../../../shared/events/kafka-import-executed.event.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -40,6 +39,7 @@ import { ImportTextFileCreationError } from './import-text-file-creation.error.j
 import { ImportVorgang } from './import-vorgang.js';
 import { ImportStatus } from './import.enums.js';
 import { ImportDataItemStatus } from './importDataItem.enum.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -125,7 +125,7 @@ export class ImportWorkflow {
         file: Express.Multer.File,
         organisationId: string,
         rolleId: string,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<DomainError | ImportUploadResultFields> {
         this.initialize(organisationId, rolleId);
         const referenceCheck: DomainError | RolleAndOrganisationByName = await this.checkReferences(
@@ -257,7 +257,7 @@ export class ImportWorkflow {
         };
     }
 
-    public async executeImport(importvorgangId: string, permissions: PersonPermissions): Promise<Result<void>> {
+    public async executeImport(importvorgangId: string, permissions: IPersonPermissions): Promise<Result<void>> {
         const importVorgangResult: Result<ImportVorgang<true>> = await this.checkPermissionsAndImportvorgangValidity(
             importvorgangId,
             permissions,
@@ -302,7 +302,7 @@ export class ImportWorkflow {
         };
     }
 
-    public async downloadFile(importvorgangId: string, permissions: PersonPermissions): Promise<Result<Buffer>> {
+    public async downloadFile(importvorgangId: string, permissions: IPersonPermissions): Promise<Result<Buffer>> {
         const importVorgangResult: Result<ImportVorgang<true>> = await this.checkPermissionsAndImportvorgangValidity(
             importvorgangId,
             permissions,
@@ -362,7 +362,7 @@ export class ImportWorkflow {
 
     public async cancelOrCompleteImport(
         importvorgangId: string,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Result<void>> {
         const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
         if (permissionCheckError) {
@@ -396,7 +396,7 @@ export class ImportWorkflow {
     }
 
     public async getImportedUsers(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         importvorgangId: string,
         offset?: number,
         limit?: number,
@@ -483,7 +483,7 @@ export class ImportWorkflow {
         };
     }
 
-    private async checkPermissions(permissions: PersonPermissions): Promise<Option<DomainError>> {
+    private async checkPermissions(permissions: IPersonPermissions): Promise<Option<DomainError>> {
         const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtRootOrganisation([
             RollenSystemRecht.IMPORT_DURCHFUEHREN,
         ]);
@@ -587,7 +587,7 @@ export class ImportWorkflow {
 
     private async checkPermissionsAndImportvorgangValidity(
         importvorgangId: string,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Result<ImportVorgang<true>>> {
         const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
         if (permissionCheckError) {

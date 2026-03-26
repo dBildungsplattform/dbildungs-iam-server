@@ -20,7 +20,6 @@ import { MissingPermissionsError } from '../../shared/error/missing-permissions.
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { PersonID } from '../../shared/types/aggregate-ids.types.js';
 import { Permissions } from '../authentication/api/permissions.decorator.js';
-import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { EmailAddressDeletionService } from '../email/email-address-deletion/email-address-deletion.service.js';
 import { KeycloakUserService } from '../keycloak-administration/domain/keycloak-user.service.js';
 import { UserLock } from '../keycloak-administration/domain/user-lock.js';
@@ -36,6 +35,7 @@ import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenSystemRecht } from '../rolle/domain/systemrecht.js';
 import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
+import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -67,7 +67,7 @@ export class CronController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to lock user.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to lock user.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to lock user.' })
-    public async koPersUserLock(@Permissions() permissions: PersonPermissions): Promise<boolean> {
+    public async koPersUserLock(@Permissions() permissions: IPersonPermissions): Promise<boolean> {
         try {
             const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
                 RollenSystemRecht.CRON_DURCHFUEHREN,
@@ -153,7 +153,7 @@ export class CronController {
         description: 'Internal server error while trying to remove personenkontexte from users.',
     })
     public async removePersonenKontexteWithExpiredBefristungFromUsers(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<boolean> {
         try {
             const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
@@ -273,7 +273,7 @@ export class CronController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to delete users.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to delete users.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to remove users.' })
-    public async personWithoutOrgDelete(@Permissions() permissions: PersonPermissions): Promise<boolean> {
+    public async personWithoutOrgDelete(@Permissions() permissions: IPersonPermissions): Promise<boolean> {
         try {
             const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
                 RollenSystemRecht.CRON_DURCHFUEHREN,
@@ -346,7 +346,7 @@ export class CronController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to unlock users.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to unlock users.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to unlock users.' })
-    public async unlockUsersWithExpiredLocks(@Permissions() permissions: PersonPermissions): Promise<boolean> {
+    public async unlockUsersWithExpiredLocks(@Permissions() permissions: IPersonPermissions): Promise<boolean> {
         try {
             const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
                 RollenSystemRecht.CRON_DURCHFUEHREN,
@@ -424,7 +424,7 @@ export class CronController {
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while trying to update VIDIS Angebote.',
     })
-    public async updateServiceProvidersForVidisAngebote(@Permissions() permissions: PersonPermissions): Promise<void> {
+    public async updateServiceProvidersForVidisAngebote(@Permissions() permissions: IPersonPermissions): Promise<void> {
         const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
             RollenSystemRecht.CRON_DURCHFUEHREN,
         ]);
@@ -457,7 +457,7 @@ export class CronController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to delete EmailAddresses.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to delete EmailAddresses.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to delete EmailAddresses.' })
-    public async emailAddressesDelete(@Permissions() permissions: PersonPermissions): Promise<void> {
+    public async emailAddressesDelete(@Permissions() permissions: IPersonPermissions): Promise<void> {
         try {
             const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
                 RollenSystemRecht.CRON_DURCHFUEHREN,

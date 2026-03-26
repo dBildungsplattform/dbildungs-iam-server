@@ -1,20 +1,33 @@
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
+import { OrganisationID, PersonID } from '../../../shared/types/index.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
-import { PermittedOrgas, PersonenkontextRolleWithOrganisation, PersonFields } from './person-permissions.js';
+import {
+    PermittedOrgas,
+    PersonenkontextRolleWithOrganisation,
+    PersonFields,
+    PersonPermissions,
+} from './person-permissions.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import {
     DBiamPersonenkontextRepo,
     KontextWithOrgaAndRolle,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export type EscalatedPermissionAtOrga = {
     orgaId: OrganisationID | 'ROOT';
     systemrechte: Array<RollenSystemRechtEnum> | 'ALL';
 };
+
+const ESCALATED_PERSON_PERMISSIONS_BRAND: string = 'ESCALATED_PERSON_PERMISSIONS_BRAND';
+
+export function isEscalatedPersonPermissions(obj: unknown): obj is EscalatedPersonPermissions {
+    return (
+        typeof obj === 'object' && obj !== null && 'brand' in obj && obj.brand === ESCALATED_PERSON_PERMISSIONS_BRAND
+    );
+}
 
 export class EscalatedPersonPermissions implements IPersonPermissions {
     public readonly id: string;
@@ -23,11 +36,14 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
 
     private readonly cachedPersonFields: PersonFields;
 
+    private readonly brand: string = ESCALATED_PERSON_PERMISSIONS_BRAND;
+
     private constructor(
         id: string,
         escalatedPermissions: Array<EscalatedPermissionAtOrga>,
         private readonly organisationRepo: OrganisationRepository,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly logger: ClassLogger,
     ) {
         this.id = id;
         this.escalatedPermissions = escalatedPermissions;
@@ -39,6 +55,51 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
             username: `EscalatedPersonPermissions-${id}`,
             updatedAt: new Date(),
         };
+
+        this.logger.info(
+            `Created new ${this.brand} for ${id} with escalated permissions: ${JSON.stringify(escalatedPermissions)}`,
+        );
+    }
+
+    public static async fromPersonPermissions(
+        personPermissions: PersonPermissions,
+        additionalEscalatedPermissions: Array<EscalatedPermissionAtOrga>,
+        organisationRepo: OrganisationRepository,
+        personenkontextRepo: DBiamPersonenkontextRepo,
+        logger: ClassLogger,
+    ): Promise<EscalatedPersonPermissions> {
+        const allEscalatedPermissions: EscalatedPermissionAtOrga[] = additionalEscalatedPermissions;
+
+        const allKontexte: PersonenkontextRolleWithOrganisation[] =
+            await personPermissions.getPersonenkontexteWithRolesAndOrgs();
+
+        allKontexte.forEach((kontext: PersonenkontextRolleWithOrganisation) => {
+            const escalatedPermissionAtOrga: EscalatedPermissionAtOrga = {
+                orgaId: kontext.organisation.id,
+                systemrechte: kontext.rolle.systemrechte.map((recht: RollenSystemRecht) => recht.name),
+            };
+            if (
+                allEscalatedPermissions.some(
+                    (perm: EscalatedPermissionAtOrga) =>
+                        perm.orgaId === escalatedPermissionAtOrga.orgaId &&
+                        perm.systemrechte === escalatedPermissionAtOrga.systemrechte,
+                )
+            ) {
+                logger.debug(
+                    `Skipping adding escalated permissions for orga ${escalatedPermissionAtOrga.orgaId} as it already exists in additionalEscalatedPermissions`,
+                );
+            } else {
+                allEscalatedPermissions.push(escalatedPermissionAtOrga);
+            }
+        });
+
+        return new EscalatedPersonPermissions(
+            personPermissions.id,
+            allEscalatedPermissions,
+            organisationRepo,
+            personenkontextRepo,
+            logger,
+        );
     }
 
     public static createNew(
@@ -46,17 +107,15 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
         escalatedPermissions: Array<EscalatedPermissionAtOrga>,
         organisationRepo: OrganisationRepository,
         personenkontextRepo: DBiamPersonenkontextRepo,
+        logger: ClassLogger,
     ): EscalatedPersonPermissions {
         return new EscalatedPersonPermissions(
             esacalator.name,
             escalatedPermissions,
             organisationRepo,
             personenkontextRepo,
+            logger,
         );
-    }
-
-    public async getRoleIds(): Promise<RolleID[]> {
-        return Promise.reject(new Error('Not implemented'));
     }
 
     //Make Working
@@ -94,6 +153,47 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
             all: false,
             orgaIds: Array.from(organisationIDs),
         };
+    }
+
+    public extendEscalation(additional: Array<EscalatedPermissionAtOrga>): void {
+        for (const newPerm of additional) {
+            const existing: EscalatedPermissionAtOrga | undefined = this.escalatedPermissions.find(
+                (p: EscalatedPermissionAtOrga) => p.orgaId === newPerm.orgaId,
+            );
+
+            if (!existing) {
+                this.logger.info(
+                    `Extending escalation for ${this.id}: adding new orga ${newPerm.orgaId} with rights ${JSON.stringify(newPerm.systemrechte)}`,
+                );
+                this.escalatedPermissions.push(newPerm);
+                continue;
+            }
+
+            if (existing.systemrechte === 'ALL') {
+                this.logger.debug(`Skipping escalation for orga ${newPerm.orgaId}: already has ALL rights`);
+                continue;
+            }
+
+            if (newPerm.systemrechte === 'ALL') {
+                this.logger.info(`Extending escalation for ${this.id}: orga ${newPerm.orgaId} escalated to ALL rights`);
+                existing.systemrechte = 'ALL';
+                continue;
+            }
+
+            const before: RollenSystemRechtEnum[] = [...existing.systemrechte];
+            const added: RollenSystemRechtEnum[] = newPerm.systemrechte.filter(
+                (r: RollenSystemRechtEnum) => !existing.systemrechte.includes(r),
+            );
+
+            if (added.length > 0) {
+                existing.systemrechte.push(...added);
+                this.logger.info(
+                    `Extending escalation for ${this.id}: orga ${newPerm.orgaId} added rights ${JSON.stringify(added)} (before: ${JSON.stringify(before)}, after: ${JSON.stringify(existing.systemrechte)})`,
+                );
+            } else {
+                this.logger.debug(`Skipping escalation for orga ${newPerm.orgaId}: no new rights`);
+            }
+        }
     }
 
     public async hasSystemrechteAtOrganisation(
@@ -184,14 +284,6 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
             }
         }
         return false;
-    }
-
-    public async getPersonenkontextIds(): Promise<Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[]> {
-        return Promise.reject(new Error('Not implemented'));
-    }
-
-    public async getPersonenkontexteWithRolesAndOrgs(): Promise<PersonenkontextRolleWithOrganisation[]> {
-        return Promise.reject(new Error('Not implemented'));
     }
 
     public get personFields(): PersonFields {

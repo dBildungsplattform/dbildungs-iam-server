@@ -785,7 +785,7 @@ describe('OrganisationRepository', () => {
     });
 
     describe('Update Organisationsname - Klasse', () => {
-        const permissionsMock: PersonPermissions = createPersonPermissionsMock();
+        const permissionsMock: IPersonPermissions = createPersonPermissionsMock();
         describe('when organisation does not exist', () => {
             it('should return EntityNotFoundError', async () => {
                 const id: string = faker.string.uuid();
@@ -1011,7 +1011,7 @@ describe('OrganisationRepository', () => {
     });
 
     describe('updateOrganisationName - Schulträger', () => {
-        const permissionsMock: PersonPermissions = createPersonPermissionsMock();
+        const permissionsMock: IPersonPermissions = createPersonPermissionsMock();
 
         describe('when organisation is a Schulträger', () => {
             let savedOeffentlich: OrganisationEntity;

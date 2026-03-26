@@ -24,13 +24,13 @@ import { Rolle } from '../../../rolle/domain/rolle.js';
 import { ApiOkResponsePaginated, PagingHeadersObject } from '../../../../shared/paging/index.js';
 import { PersonenuebersichtBodyParams } from './personenuebersicht-body.params.js';
 import { Permissions } from '../../../authentication/api/permissions.decorator.js';
-import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig, DataConfig } from '../../../../shared/config/index.js';
 import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
 import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
 import { Organisation } from '../../../organisation/domain/organisation.js';
+import { IPersonPermissions } from '../../../../shared/permissions/person-permissions.interface.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('dbiam-personenuebersicht')
@@ -60,7 +60,7 @@ export class DBiamPersonenuebersichtController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting personenuebersichten.' })
     public async findPersonenuebersichten(
         @Body() bodyParams: PersonenuebersichtBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<{ items: DBiamPersonenuebersichtResponse[] }> {
         const persons: Person<true>[] = await this.personRepository.findByIds(bodyParams.personIds, permissions);
 
@@ -133,7 +133,7 @@ export class DBiamPersonenuebersichtController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting personenuebersicht.' })
     public async findPersonenuebersichtenByPerson(
         @Param() params: DBiamFindPersonenuebersichtByPersonIdParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<DBiamPersonenuebersichtResponse> {
         const dbiamPersonenUebersicht: DbiamPersonenuebersicht = DbiamPersonenuebersicht.createNew(
             this.personRepository,

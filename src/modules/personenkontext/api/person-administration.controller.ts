@@ -10,12 +10,12 @@ import {
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { PersonAdministrationService } from '../domain/person-administration.service.js';
 import { FindPersonenkontextRollenQueryParams } from './param/find-personenkontext-rollen.query.params.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { FindRollenResponse } from './response/find-rollen.response.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new PersonenkontextExceptionFilter())
 @ApiTags('person-administration')
@@ -37,7 +37,7 @@ export class PersonAdministrationController {
     })
     public async findRollen(
         @Query() params: FindPersonenkontextRollenQueryParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<FindRollenResponse> {
         const rollen: Rolle<true>[] = await this.personAdministrationService.findAuthorizedRollen(
             permissions,

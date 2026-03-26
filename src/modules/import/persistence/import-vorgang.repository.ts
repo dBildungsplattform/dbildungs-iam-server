@@ -3,9 +3,9 @@ import { Injectable } from '@nestjs/common';
 import { ImportVorgangEntity } from './import-vorgang.entity.js';
 import { ImportVorgang } from '../domain/import-vorgang.js';
 import { ImportStatus } from '../domain/import.enums.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export function mapAggregateToData(importVorgang: ImportVorgang<boolean>): RequiredEntityData<ImportVorgangEntity> {
     return {
@@ -70,7 +70,7 @@ export class ImportVorgangRepository {
     }
 
     public async findAuthorized(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         queryOptions: ImportQueryOptions,
     ): Promise<[ImportVorgang<true>[], total: number]> {
         const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtRootOrganisation([

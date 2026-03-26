@@ -29,7 +29,6 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-personenkontextworkflow-body.params.js';
 import { PersonenkontextWorkflowResponse } from './response/dbiam-personenkontext-workflow-response.js';
 import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
@@ -61,6 +60,8 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/index.js';
 import { PortalConfig } from '../../../shared/config/portal.config.js';
 import { mapStringsToRollenArt } from '../../../shared/config/utils.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 @UseFilters(
     SchulConnexValidationErrorFilter,
@@ -95,7 +96,7 @@ export class DbiamPersonenkontextWorkflowController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting data for personenkontext.' })
     public async processStep(
         @Query() params: FindDbiamPersonenkontextWorkflowBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PersonenkontextWorkflowResponse> {
         // Creates a new instance of the workflow aggregate
         const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
@@ -174,7 +175,7 @@ export class DbiamPersonenkontextWorkflowController {
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
         @Query() queryParams: DbiamUpdatePersonenkontexteQueryParams,
         @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PersonenkontexteUpdateResponse> {
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError =
             await this.personenkontextWorkflowFactory

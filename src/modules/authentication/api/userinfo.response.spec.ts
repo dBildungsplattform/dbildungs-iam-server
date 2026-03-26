@@ -12,9 +12,10 @@ import { StepUpLevel } from '../passport/oidc.strategy.js';
 import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js';
 import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 import { UserinfoExtension, UserinfoResponse } from './userinfo.response.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 describe('UserinfoResponse', () => {
-    const permissions: PersonPermissions = new PersonPermissions(
+    const permissions: IPersonPermissions = new PersonPermissions(
         createMock(DBiamPersonenkontextRepo),
         createMock(OrganisationRepository),
         createMock(RolleRepo),

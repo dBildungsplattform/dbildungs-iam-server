@@ -57,6 +57,7 @@ import { MissingPermissionsError } from '../../../shared/error/index.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProviderSystem } from '../domain/service-provider.enum.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
 @ApiOAuth2(['openid'])
@@ -164,7 +165,7 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollenerweiterungen.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rollenerweiterungen.' })
     public async findRollenerweiterungenByServiceProviderId(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Param() pathParams: RollenerweiterungByServiceProvidersIdPathParams,
         @Query() queryParams: RollenerweiterungByServiceProvidersIdQueryParams,
     ): Promise<RawPagedResponse<RollenerweiterungWithExtendedDataResponse>> {
@@ -240,7 +241,7 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
     public async getManageableServiceProviders(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Query() params: ManageableServiceProvidersParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
         const [enrichedServiceProviders, total]: Counted<ManageableServiceProviderWithReferencedObjects> =
@@ -272,7 +273,7 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
     public async getManageableServiceProvidersForOrganisationId(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Query() params: ManageableServiceProvidersForOrganisationParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
         const result: Result<
@@ -324,7 +325,7 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-provider.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting service-provider.' })
     public async getManageableServiceProviderById(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Param() params: AngebotByIdParams,
     ): Promise<ManageableServiceProviderResponse> {
         const serviceProviderWithOrganisationRollenAndErweiterungen: Option<ManageableServiceProviderWithReferencedObjects> =
@@ -357,7 +358,7 @@ export class ProviderController {
     @ApiBadRequestResponse({ description: 'Invalid request body.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     public async createServiceProvider(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Body() body: CreateServiceProviderBodyParams,
     ): Promise<ServiceProviderResponse> {
         if (

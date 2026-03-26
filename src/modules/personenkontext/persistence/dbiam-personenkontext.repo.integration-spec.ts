@@ -50,6 +50,7 @@ import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-pro
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { RollenerweiterungFactory } from '../../rolle/domain/rollenerweiterung.factory.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -195,7 +196,7 @@ describe('dbiam Personenkontext Repo', () => {
         return result;
     }
 
-    function createPermissions(person: Person<true>): PersonPermissions {
+    function createPermissions(person: Person<true>): IPersonPermissions {
         return new PersonPermissions(sut, organisationRepository, rolleRepo, person);
     }
 
@@ -904,7 +905,7 @@ describe('dbiam Personenkontext Repo', () => {
             const personenkontext: Personenkontext<true> = await personenkontextRepoInternal.save(
                 createPersonenkontext(false, { personId: person.id, organisationId: rootOrga, rolleId: rolle.id }),
             );
-            const permissions: PersonPermissions = createPermissions(person);
+            const permissions: IPersonPermissions = createPermissions(person);
 
             const result: Result<Personenkontext<true>, DomainError> = await sut.findByIDAuthorized(
                 personenkontext.id,
@@ -926,7 +927,7 @@ describe('dbiam Personenkontext Repo', () => {
             await personenkontextRepoInternal.save(
                 createPersonenkontext(false, { personId: person.id, organisationId: rootOrga, rolleId: sysadmin.id }),
             );
-            const permissions: PersonPermissions = createPermissions(person);
+            const permissions: IPersonPermissions = createPermissions(person);
 
             const id: PersonenkontextID = faker.string.uuid();
 
@@ -946,7 +947,7 @@ describe('dbiam Personenkontext Repo', () => {
             const personenkontext: Personenkontext<true> = await personenkontextRepoInternal.save(
                 createPersonenkontext(false, { personId: person.id, organisationId: schule, rolleId: lehrer.id }),
             );
-            const permissions: PersonPermissions = createPermissions(person);
+            const permissions: IPersonPermissions = createPermissions(person);
 
             const result: Result<Personenkontext<true>, DomainError> = await sut.findByIDAuthorized(
                 personenkontext.id,

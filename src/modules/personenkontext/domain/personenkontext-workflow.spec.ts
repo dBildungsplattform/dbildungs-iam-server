@@ -57,7 +57,7 @@ describe('PersonenkontextWorkflow', () => {
                     useValue: createMock(DBiamPersonenkontextRepo),
                 },
                 {
-                    provide: PersonPermissions,
+                    provide: IPersonPermissions,
                     useValue: createPersonPermissionsMock(),
                 },
                 {
