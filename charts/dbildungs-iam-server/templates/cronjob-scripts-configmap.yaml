@@ -11,3 +11,5 @@ data:
     {{ .Files.Get "cron/scripts/get_access_token.sh" | nindent 4 }}
   cron_trigger.sh: |-
     {{ .Files.Get "cron/scripts/cron_trigger.sh" | nindent 4 }}
+  cron_trigge_email.sh: |-
+    {{ .Files.Get "cron/scripts/cron_trigger_email.sh" | nindent 4 }}
