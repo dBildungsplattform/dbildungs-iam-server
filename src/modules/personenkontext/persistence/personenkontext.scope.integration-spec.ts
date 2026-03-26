@@ -16,7 +16,6 @@ import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { EventModule } from '../../../core/eventbus/event.module.js';
 import { mapAggregateToData } from '../../person/persistence/person.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
@@ -24,6 +23,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { createAndPersistPersonenkontext } from '../../../../test/utils/personenkontext-test-helper.js';
+import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 
 describe('PersonenkontextScope', () => {
     let module: TestingModule;
@@ -45,8 +45,9 @@ describe('PersonenkontextScope', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 EventModule,
                 LoggingTestModule,
+                ServiceProviderModule,
             ],
-            providers: [RolleFactory, RolleRepo, ServiceProviderRepo, OrganisationRepository],
+            providers: [RolleFactory, RolleRepo, OrganisationRepository],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);

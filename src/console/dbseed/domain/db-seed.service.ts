@@ -258,7 +258,7 @@ export class DbSeedService {
             }
 
             const persistedServiceProvider: ServiceProvider<true> =
-                await this.serviceProviderRepo.create(serviceProvider);
+                await this.serviceProviderRepo.createUnsafe(serviceProvider);
             if (persistedServiceProvider && file.id != null) {
                 const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
                     ReferencedEntityType.SERVICE_PROVIDER,

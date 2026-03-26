@@ -168,8 +168,6 @@ backend:
     command:
       ["node", "dist/src/console/main.js", "keycloak", "update-clients", "dev"]
   ingress:
-    # Only enable if 2nd host name is defined
-    enabled2nd: false
     enabled: true
     healthenabled: true
     ingressClassName: nginx
@@ -182,6 +180,8 @@ backend:
       - /docs-json
       - /docs-yaml
     annotations: []
+    tls: false
+    tlsSecretName: ""
   service:
     type: ClusterIP
     ports:
@@ -375,6 +375,7 @@ import:
 featureFlags:
   befristungBearbeiten: true
   rolleErweitern: true
+  schulischeAngeboteErstellen: true
   setUemPassword: true
 
 emailMicroservice:

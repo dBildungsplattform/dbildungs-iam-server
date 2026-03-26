@@ -60,6 +60,7 @@ export class ServiceProviderEntity extends TimestampedEntity {
         entity: () => ServiceProviderMerkmalEntity,
         mappedBy: 'serviceProvider',
         orphanRemoval: true,
+        eager: true,
     })
     public merkmale: Collection<ServiceProviderMerkmalEntity> = new Collection<ServiceProviderMerkmalEntity>(this);
 }
