@@ -29,7 +29,6 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationApiModule } from '../organisation-api.module.js';
@@ -39,6 +38,7 @@ import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.j
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { OrganisationSpecificationErrorI18nTypes } from './dbiam-organisation.error.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
 
 describe('Organisation API', () => {
     let app: INestApplication;
@@ -47,7 +47,6 @@ describe('Organisation API', () => {
     let rolleRepo: RolleRepo;
     let personRepo: PersonRepository;
     let dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
-    let serviceProviderRepo: ServiceProviderRepo;
     let organisationRepo: OrganisationRepository;
     let rollenerweiterungRepo: RollenerweiterungRepo;
 
@@ -114,7 +113,6 @@ describe('Organisation API', () => {
         rolleRepo = module.get(RolleRepo);
         personRepo = module.get(PersonRepository);
         dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
-        serviceProviderRepo = module.get(ServiceProviderRepo);
         organisationRepo = module.get(OrganisationRepository);
         rollenerweiterungRepo = module.get(RollenerweiterungRepo);
 
@@ -221,9 +219,7 @@ describe('Organisation API', () => {
                             DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                         );
 
-                        await serviceProviderRepo.save(
-                            DoFactory.createServiceProvider(false, { providedOnSchulstrukturknoten: savedOrga.id }),
-                        );
+                        await createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: savedOrga.id });
                         return savedOrga.id;
                     },
                     i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_HAT_ANGEBOTE,
@@ -238,11 +234,9 @@ describe('Organisation API', () => {
                         if (rolle instanceof DomainError) {
                             throw rolle;
                         }
-                        const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                            DoFactory.createServiceProvider(false, {
-                                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-                            }),
-                        );
+                        const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                            merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                        });
                         await rollenerweiterungRepo.create(
                             DoFactory.createRollenerweiterung(false, {
                                 organisationId: savedOrga.id,
