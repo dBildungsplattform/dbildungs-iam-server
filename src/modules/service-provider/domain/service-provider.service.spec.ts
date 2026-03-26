@@ -31,6 +31,9 @@ import {
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -210,6 +213,7 @@ describe('ServiceProviderService', () => {
     let organisationRepo: DeepMocked<OrganisationRepository>;
     let vidisService: DeepMocked<VidisService>;
     let organisationServiceProviderRepo: DeepMocked<OrganisationServiceProviderRepo>;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -233,6 +237,7 @@ describe('ServiceProviderService', () => {
         organisationServiceProviderRepo = module.get<DeepMocked<OrganisationServiceProviderRepo>>(
             OrganisationServiceProviderRepo,
         );
+        loggerMock = module.get(ClassLogger);
     });
 
     describe('getServiceProvidersByRolleIds', () => {
@@ -778,7 +783,7 @@ describe('ServiceProviderService', () => {
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(
                 mockExistingVidisServiceProviderContainedInVidisAngebote,
             );
-            serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
+            serviceProviderRepo.update.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
             if (mockExistingSchulen[0]) {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
@@ -790,12 +795,32 @@ describe('ServiceProviderService', () => {
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
             expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
-            expect(serviceProviderRepo.save).toHaveBeenCalledTimes(mockVidisAngebote.length);
+            expect(serviceProviderRepo.update).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,
             );
             expect(organisationServiceProviderRepo.save).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,
+            );
+        });
+
+        it('should log error when updating ServiceProvider fails', async () => {
+            vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
+            organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
+            serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(
+                mockExistingVidisServiceProviderContainedInVidisAngebote,
+            );
+            serviceProviderRepo.update.mockResolvedValue(Err(new DuplicateNameError('Name already in use')));
+            if (mockExistingSchulen[0]) {
+                organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            }
+            serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
+            organisationServiceProviderRepo.save.mockResolvedValue();
+
+            await service.updateServiceProvidersForVidis();
+
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `ServiceProvider for VIDIS Angebot 'webtown test offer' could not be updated. Error: Name already in use`,
             );
         });
 
@@ -803,7 +828,7 @@ describe('ServiceProviderService', () => {
             vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
-            serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
+            serviceProviderRepo.create.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
             if (mockExistingSchulen[0]) {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
@@ -814,7 +839,7 @@ describe('ServiceProviderService', () => {
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
             expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
-            expect(serviceProviderRepo.save).toHaveBeenCalledTimes(mockVidisAngebote.length);
+            expect(serviceProviderRepo.create).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,
             );
@@ -823,11 +848,28 @@ describe('ServiceProviderService', () => {
             );
         });
 
+        it('should log error when creating ServiceProvider fails', async () => {
+            vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
+            organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
+            serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
+            serviceProviderRepo.create.mockResolvedValue(Err(new DuplicateNameError('Name already in use')));
+            if (mockExistingSchulen[0]) {
+                organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
+            }
+            organisationServiceProviderRepo.save.mockResolvedValue();
+            serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
+            await service.updateServiceProvidersForVidis();
+
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `ServiceProvider for VIDIS Angebot 'webtown test offer' could not be created. Error: Name already in use`,
+            );
+        });
+
         it('should delete ServiceProvider for VIDIS Angebote in SPSH if ServiceProvider is not in VIDIS Angebot response.', async () => {
             vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
-            serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
+            serviceProviderRepo.create.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
             if (mockExistingSchulen[0]) {
                 organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             }
@@ -840,7 +882,7 @@ describe('ServiceProviderService', () => {
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
             expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
-            expect(serviceProviderRepo.save).toHaveBeenCalledTimes(mockVidisAngebote.length);
+            expect(serviceProviderRepo.create).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,
             );

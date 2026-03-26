@@ -40,6 +40,7 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
 import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
 import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweiterung-by-service-provider-id.pathparams.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
@@ -627,7 +628,7 @@ describe('Provider Controller Test', () => {
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             serviceProviderFactoryMock.createNew.mockReturnValueOnce(createdDomainSp);
-            serviceProviderRepoMock.save.mockResolvedValueOnce(persistedSp);
+            serviceProviderRepoMock.create.mockResolvedValueOnce(Ok(persistedSp));
 
             const result: ServiceProviderResponse = await providerController.createServiceProvider(
                 personPermissionsMock,
@@ -637,7 +638,7 @@ describe('Provider Controller Test', () => {
             expect(result).toBeDefined();
             expect(serviceProviderFactoryMock.createNew).toHaveBeenCalledWith(
                 body.name,
-                body.target,
+                ServiceProviderTarget.URL,
                 body.url,
                 body.kategorie,
                 body.organisationId,
@@ -647,10 +648,10 @@ describe('Provider Controller Test', () => {
                 undefined,
                 ServiceProviderSystem.NONE,
                 body.requires2fa,
-                body.vidisAngebotId,
+                undefined,
                 body.merkmale,
             );
-            expect(serviceProviderRepoMock.save).toHaveBeenCalledWith(createdDomainSp);
+            expect(serviceProviderRepoMock.create).toHaveBeenCalledWith(personPermissionsMock, createdDomainSp);
             expect(result).toBeInstanceOf(ServiceProviderResponse);
         });
 
@@ -673,7 +674,7 @@ describe('Provider Controller Test', () => {
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             serviceProviderFactoryMock.createNew.mockReturnValueOnce(createdDomainSp);
-            serviceProviderRepoMock.save.mockResolvedValueOnce(persistedSp);
+            serviceProviderRepoMock.create.mockResolvedValueOnce(Ok(persistedSp));
 
             const result: ServiceProviderResponse = await providerController.createServiceProvider(
                 personPermissionsMock,
@@ -683,7 +684,7 @@ describe('Provider Controller Test', () => {
             expect(result).toBeDefined();
             expect(serviceProviderFactoryMock.createNew).toHaveBeenCalledWith(
                 body.name,
-                body.target,
+                ServiceProviderTarget.URL,
                 body.url,
                 body.kategorie,
                 body.organisationId,
@@ -693,14 +694,14 @@ describe('Provider Controller Test', () => {
                 undefined,
                 ServiceProviderSystem.NONE,
                 body.requires2fa,
-                body.vidisAngebotId,
+                undefined,
                 body.merkmale,
             );
-            expect(serviceProviderRepoMock.save).toHaveBeenCalledWith(createdDomainSp);
+            expect(serviceProviderRepoMock.create).toHaveBeenCalledWith(personPermissionsMock, createdDomainSp);
             expect(result).toBeInstanceOf(ServiceProviderResponse);
         });
 
-        it('should throw forbidden error when user lacks permission', async () => {
+        it('should throw error when repo returns error', async () => {
             const body: CreateServiceProviderBodyParams = new CreateServiceProviderBodyParams();
             Object.assign(body, {
                 name: faker.company.name(),
@@ -713,10 +714,11 @@ describe('Provider Controller Test', () => {
                 organisationId: faker.string.uuid(),
             });
 
-            personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            serviceProviderRepoMock.create.mockResolvedValueOnce(Err(new MissingPermissionsError('Error')));
 
-            await expect(providerController.createServiceProvider(personPermissionsMock, body)).rejects.toBeDefined();
-            expect(serviceProviderRepoMock.save).not.toHaveBeenCalled();
+            await expect(() =>
+                providerController.createServiceProvider(personPermissionsMock, body),
+            ).rejects.toBeInstanceOf(MissingPermissionsError);
         });
     });
 });

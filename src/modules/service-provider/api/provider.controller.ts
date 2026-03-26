@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Post, Query, StreamableFile, UnauthorizedException } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Param,
+    Post,
+    Query,
+    StreamableFile,
+    UnauthorizedException,
+    UseFilters,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -40,11 +50,15 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
-import { MissingPermissionsError } from '../../../shared/error/index.js';
+import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
-import { ServiceProviderSystem } from '../domain/service-provider.enum.js';
+import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
+import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
+import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
+@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), ServiceProviderErrorFilter)
 @ApiTags('provider')
 @ApiOAuth2(['openid'])
 @ApiBearerAuth()
@@ -327,18 +341,12 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
         @Body() body: CreateServiceProviderBodyParams,
     ): Promise<ServiceProviderResponse> {
-        if (
-            !(await permissions.hasSystemrechtAtOrganisation(body.organisationId, RollenSystemRecht.ANGEBOTE_VERWALTEN))
-        ) {
-            throw new MissingPermissionsError('Not authorized to manage Service Providers at this organisation!');
-        }
-
         // Convert base64 to Buffer (if provided)
         const logoBuffer: Buffer | undefined = body.logoBase64 ? Buffer.from(body.logoBase64, 'base64') : undefined;
 
         const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
             body.name,
-            body.target,
+            ServiceProviderTarget.URL,
             body.url,
             body.kategorie,
             body.organisationId,
@@ -348,12 +356,19 @@ export class ProviderController {
             undefined, // keycloakRole
             ServiceProviderSystem.NONE,
             body.requires2fa,
-            body.vidisAngebotId,
+            undefined, // vidisAngebotId
             body.merkmale,
         );
 
-        const result: ServiceProvider<true> = await this.serviceProviderRepo.save(serviceProvider);
+        const result: Result<ServiceProvider<true>, DomainError> = await this.serviceProviderRepo.create(
+            permissions,
+            serviceProvider,
+        );
 
-        return new ServiceProviderResponse(result);
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        return new ServiceProviderResponse(result.value);
     }
 }
