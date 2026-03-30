@@ -23,15 +23,9 @@ export class UpdateServiceProviderBodyParams {
 
     @ApiProperty({
         required: false,
-        description: 'The id of the logo',
-    })
-    @IsOptional()
-    public logoId?: string;
-
-    @ApiProperty({
-        required: false,
         enum: ServiceProviderKategorie,
     })
     @IsEnum(ServiceProviderKategorie)
+    @IsOptional()
     public kategorie?: ServiceProviderKategorie;
 }
