@@ -367,6 +367,7 @@ cronjobsEmail:
       endpoint: "api/cron/delete"
       httpMethod: 'DELETE'
       script: "cron_trigger_email.sh"
+      suspended: true
 
 import:
   csvFileMaxSizeInMB: 10

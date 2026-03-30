@@ -7,6 +7,7 @@ metadata:
   namespace: {{ template "common.names.namespace" $ }}
 spec:
   schedule: {{ $job_options.schedule | quote }}
+  suspend: {{ $job_options.suspended | default false }}
   startingDeadlineSeconds: 300
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
