@@ -45,7 +45,7 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
 import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationID, RolleID } from '../../../shared/types/index.js';
+import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
 import { uniq } from 'lodash-es';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -56,11 +56,9 @@ import { CreateServiceProviderBodyParams } from './create-service-provider-body.
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
-import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), ServiceProviderErrorFilter)
+@UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
 @ApiOAuth2(['openid'])
 @ApiBearerAuth()
@@ -374,7 +372,7 @@ export class ProviderController {
         return new ServiceProviderResponse(result.value);
     }
 
-    @Patch()
+    @Patch(':angebotId')
     @ApiOperation({ description: 'Update a service-provider (Angebot).' })
     @ApiOkResponse({
         description: 'The service-provider was successfully updated.',
@@ -386,12 +384,13 @@ export class ProviderController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     public async updateServiceProvider(
         @Permissions() permissions: PersonPermissions,
+        @Param('angebotId') angebotId: ServiceProviderID,
         @Body() body: UpdateServiceProviderBodyParams,
     ): Promise<ServiceProviderResponse> {
         const result: Result<
             ServiceProvider<true>,
             DomainError
-        > = await this.serviceProviderService.updateServiceProvider(permissions, body);
+        > = await this.serviceProviderService.updateServiceProvider(permissions, angebotId, body);
 
         if (!result.ok) {
             throw result.error;

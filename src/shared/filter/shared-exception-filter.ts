@@ -19,6 +19,7 @@ import {
 } from '../error/index.js';
 import { ExceedsLimitError } from '../error/exceeds-limit.error.js';
 import { UserExternalDataWorkflowError } from '../error/user-externaldata-workflow.error.js';
+import { MissingAttributeError } from '../error/missing-attribute.error.js';
 
 @Catch(SharedDomainError)
 export class SharedExceptionFilter implements ExceptionFilter<SharedDomainError> {
@@ -98,6 +99,13 @@ export class SharedExceptionFilter implements ExceptionFilter<SharedDomainError>
             new DbiamSharedError({
                 code: 400,
                 i18nKey: SharedErrorI18nTypes.INVALID_NAME,
+            }),
+        ],
+        [
+            MissingAttributeError.name,
+            new DbiamSharedError({
+                code: 400,
+                i18nKey: SharedErrorI18nTypes.MISSING_ATTRIBUTE,
             }),
         ],
         [
