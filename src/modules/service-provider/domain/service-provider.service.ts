@@ -435,6 +435,7 @@ export class ServiceProviderService {
 
         const updatedServiceProvider: Promise<Result<ServiceProvider<true>, DomainError>> =
             this.serviceProviderRepo.update(permissions, existingServiceProvider);
+        this.logger.info(`ServiceProvider mit Id ${angebotId} erfolgreich aktualisiert.`);
         return updatedServiceProvider;
     }
 

@@ -912,6 +912,7 @@ describe('ServiceProviderService', () => {
         });
 
         it('should update service provider', async () => {
+            const newAngebotId: string = faker.string.uuid();
             const updateData: UpdateServiceProviderBodyParams = {
                 name: 'New Name',
                 url: 'https://new-url.com',
@@ -920,11 +921,11 @@ describe('ServiceProviderService', () => {
 
             const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
                 permissions,
-                'some-id',
+                newAngebotId,
                 updateData,
             );
 
-            expect(serviceProviderRepo.findById).toHaveBeenCalledWith('some-id');
+            expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId);
             expect(serviceProviderRepo.update).toHaveBeenCalledWith(
                 permissions,
                 expect.objectContaining({
@@ -937,13 +938,16 @@ describe('ServiceProviderService', () => {
                 throw result.error;
             }
             expect(result.value).toEqual(existingServiceProvider);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `ServiceProvider mit Id ${newAngebotId} erfolgreich aktualisiert.`,
+            );
         });
 
         it('should return error if no update data is provided', async () => {
             const updateData: UpdateServiceProviderBodyParams = {};
             const result: Result<ServiceProvider<true>, MissingAttributeError> = await service.updateServiceProvider(
                 permissions,
-                'some-id',
+                faker.string.uuid(),
                 updateData,
             );
             expect(serviceProviderRepo.findById).not.toHaveBeenCalled();
