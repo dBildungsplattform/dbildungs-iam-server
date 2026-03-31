@@ -41,6 +41,8 @@ import { ManageableServiceProvidersForOrganisationParams } from './manageable-se
 import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
 import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweiterung-by-service-provider-id.pathparams.js';
 import { Err, Ok } from '../../../shared/util/result.js';
+import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
+import { EntityNotFoundError, MissingAttributeError } from '../../../shared/error/index.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
@@ -719,6 +721,50 @@ describe('Provider Controller Test', () => {
             await expect(() =>
                 providerController.createServiceProvider(personPermissionsMock, body),
             ).rejects.toBeInstanceOf(MissingPermissionsError);
+        });
+    });
+
+    describe('updateServiceProvider', () => {
+        const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+        const angebotId: string = faker.string.uuid();
+
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+
+        it('should update service provider when user has permission', async () => {
+            const body: UpdateServiceProviderBodyParams = new UpdateServiceProviderBodyParams();
+            Object.assign(body, {
+                name: faker.company.name(),
+                url: faker.internet.url(),
+            });
+
+            const updatedEntity: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+
+            serviceProviderServiceMock.updateServiceProvider.mockResolvedValueOnce(Ok(updatedEntity));
+
+            const result: ServiceProviderResponse = await providerController.updateServiceProvider(
+                permissions,
+                angebotId,
+                body,
+            );
+
+            expect(serviceProviderServiceMock.updateServiceProvider).toHaveBeenCalledWith(permissions, angebotId, body);
+
+            expect(result).toBeDefined();
+            expect(result).toBeInstanceOf(ServiceProviderResponse);
+            expect(result.id).toBe(updatedEntity.id);
+        });
+
+        it('should throw the error when service returns Err', async () => {
+            const body: UpdateServiceProviderBodyParams = { name: 'Invalid' };
+            const error: MissingAttributeError = new MissingAttributeError('Missing attribute');
+
+            serviceProviderServiceMock.updateServiceProvider.mockResolvedValueOnce(Err(error));
+
+            await expect(providerController.updateServiceProvider(permissions, angebotId, body)).rejects.toThrow(
+                MissingAttributeError,
+            );
         });
     });
 });

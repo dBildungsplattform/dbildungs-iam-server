@@ -34,6 +34,9 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
+import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -890,6 +893,77 @@ describe('ServiceProviderService', () => {
                 mockAllSchoolActivationsInVidisAngebote.length,
             );
             expect(serviceProviderRepo.deleteById).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('updateServiceProvider', () => {
+        let permissions: DeepMocked<PersonPermissions>;
+        let existingServiceProvider: ServiceProvider<true>;
+
+        beforeEach(() => {
+            permissions = createMock(PersonPermissions);
+            existingServiceProvider = DoFactory.createServiceProvider(true);
+            serviceProviderRepo.findById.mockResolvedValue(existingServiceProvider);
+            serviceProviderRepo.update.mockResolvedValue(Ok(existingServiceProvider));
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('should update service provider with new name and url', async () => {
+            const updateData: UpdateServiceProviderBodyParams = {
+                name: 'New Name',
+                url: 'https://new-url.com',
+            };
+
+            const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
+                permissions,
+                'some-id',
+                updateData,
+            );
+
+            expect(serviceProviderRepo.findById).toHaveBeenCalledWith('some-id');
+            expect(serviceProviderRepo.update).toHaveBeenCalledWith(
+                permissions,
+                expect.objectContaining({
+                    name: updateData.name,
+                    url: updateData.url,
+                }),
+            );
+            if (!result.ok) {
+                throw result.error;
+            }
+            expect(result.value).toEqual(existingServiceProvider);
+        });
+
+        it('should return error if no update data is provided', async () => {
+            const updateData: UpdateServiceProviderBodyParams = {};
+            const result: Result<ServiceProvider<true>, MissingAttributeError> = await service.updateServiceProvider(
+                permissions,
+                'some-id',
+                updateData,
+            );
+            expect(serviceProviderRepo.findById).not.toHaveBeenCalled();
+            expect(serviceProviderRepo.update).not.toHaveBeenCalled();
+            expect(result.ok).toBe(false);
+            if (result.ok) {
+                throw new Error('Expected result to be an error');
+            }
+            expect(result.error).toBeInstanceOf(MissingAttributeError);
+            expect(result.error.message).toBe('At least one of the following parameters must be provided: name, url');
+        });
+
+        it('should return error if service provider does not exist', async () => {
+            serviceProviderRepo.findById.mockResolvedValue(null);
+
+            const updateData: UpdateServiceProviderBodyParams = { name: 'New Name' };
+
+            await expect(
+                service.updateServiceProvider(permissions, 'nonexistent-id', updateData),
+            ).rejects.toBeInstanceOf(EntityNotFoundError);
+
+            expect(serviceProviderRepo.update).not.toHaveBeenCalled();
         });
     });
 });
