@@ -40,11 +40,11 @@ export class RollenerweiterungController {
     })
     @ApiNotFoundResponse({
         description: 'One or more of the specified objects were not found.',
-        type: () => DbiamApplyRollenerweiterungMultiError
+        type: () => DbiamApplyRollenerweiterungMultiError,
     })
     @ApiInternalServerErrorResponse({
         description: 'Internal server error',
-        type: () => DbiamApplyRollenerweiterungMultiError
+        type: () => DbiamApplyRollenerweiterungMultiError,
     })
     @HttpCode(204)
     public async applyRollenerweiterungChanges(

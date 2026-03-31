@@ -24,7 +24,7 @@ export class DbiamApplyRollenerweiterungMultiError {
         type: () => ({
             rolleId: { type: 'string' },
             i18nKey: { type: 'string', enum: DbiamApplyRollenerweiterungMultiErrorI18NTypes },
-        })
+        }),
     })
     public readonly rolleIdsWithI18nKeys: {
         rolleId: string;
