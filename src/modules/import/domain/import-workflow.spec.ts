@@ -98,7 +98,7 @@ describe('ImportWorkflow', () => {
                     useValue: createMock(ImportPasswordEncryptor),
                 },
                 {
-                    provide: IPersonPermissions,
+                    provide: PersonPermissions,
                     useValue: createPersonPermissionsMock(),
                 },
             ],

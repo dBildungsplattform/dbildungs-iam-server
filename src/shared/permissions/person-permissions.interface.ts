@@ -22,7 +22,7 @@ export type IPersonPermissions = {
 
     getOrgIdsWithSystemrecht(
         systemrechte: RollenSystemRecht[],
-        withChildren: boolean,
+        withChildren?: boolean,
         matchAll?: boolean,
     ): Promise<PermittedOrgas>;
 

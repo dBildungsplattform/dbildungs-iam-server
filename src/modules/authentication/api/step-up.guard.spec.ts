@@ -4,7 +4,6 @@ import { RequiredStepUpLevelNotMetError } from '../domain/required-step-up-level
 import { StepUpLevel } from '../passport/oidc.strategy.js';
 import { Request } from 'express';
 import { UserinfoResponse } from 'openid-client';
-import { PersonPermissions } from '../domain/person-permissions.js';
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 
 describe('StepUpGuard', () => {

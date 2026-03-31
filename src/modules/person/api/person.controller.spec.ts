@@ -1094,7 +1094,7 @@ describe('PersonController', () => {
             const person: Person<true> = getPerson();
             person.username = undefined;
             person.username = undefined;
-            const permissions: IPersonPermissions = new PersonPermissions(
+            const permissions: PersonPermissions = new PersonPermissions(
                 createMock(DBiamPersonenkontextRepo),
                 createMock(OrganisationRepository),
                 createMock(RolleRepo),
@@ -1109,7 +1109,7 @@ describe('PersonController', () => {
 
         describe('when resetting UEM-password for self', () => {
             const person: Person<true> = getPerson();
-            const permissions: IPersonPermissions = new PersonPermissions(
+            const permissions: PersonPermissions = new PersonPermissions(
                 createMock(DBiamPersonenkontextRepo),
                 createMock(OrganisationRepository),
                 createMock(RolleRepo),
@@ -1133,7 +1133,7 @@ describe('PersonController', () => {
 
         describe('when setting password in LDAP fails', () => {
             const person: Person<true> = getPerson();
-            const permissions: IPersonPermissions = new PersonPermissions(
+            const permissions: PersonPermissions = new PersonPermissions(
                 createMock(DBiamPersonenkontextRepo),
                 createMock(OrganisationRepository),
                 createMock(RolleRepo),

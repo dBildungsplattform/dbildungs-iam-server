@@ -24,6 +24,7 @@ import {
     PersonFields,
     PersonPermissions,
 } from './person-permissions.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 describe('PersonPermissions', () => {
     let module: TestingModule;
@@ -97,7 +98,7 @@ describe('PersonPermissions', () => {
                 const person: Person<true> = DoFactory.createPerson(true);
                 const personenkontexte: Personenkontext<true>[] = [createPersonenkontext()];
                 dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
-                const personPermissions: IPersonPermissions = new PersonPermissions(
+                const personPermissions: PersonPermissions = new PersonPermissions(
                     dbiamPersonenkontextRepoMock,
                     organisationRepoMock,
                     rolleRepoMock,
@@ -289,7 +290,7 @@ describe('PersonPermissions', () => {
                 new Map([[expectedOrganisation.id, expectedOrganisation]]),
             );
 
-            const personPermissions: IPersonPermissions = new PersonPermissions(
+            const personPermissions: PersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -630,7 +631,7 @@ describe('PersonPermissions', () => {
 
     describe('getPersonenkontextIds', () => {
         it('should return fields', async () => {
-            const personPermissions: IPersonPermissions = new PersonPermissions(
+            const personPermissions: PersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,

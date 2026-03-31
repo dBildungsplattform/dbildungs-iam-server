@@ -32,9 +32,11 @@ import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/per
 import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/personenkontext-workflow.factory.js';
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RollenSystemRecht } from '../rolle/domain/systemrecht.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../rolle/domain/systemrecht.js';
 import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
 import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
+import { EscalatedPersonPermissionsFactory } from '../authentication/domain/escalated-person-permissions.factory.js';
+import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -53,6 +55,7 @@ export class CronController {
         private readonly emailAddressDeletionService: EmailAddressDeletionService,
         private readonly logger: ClassLogger,
         private readonly serviceProviderService: ServiceProviderService,
+        private readonly escalatedPersonPermissionsFactory: EscalatedPersonPermissionsFactory,
         configService: ConfigService,
     ) {
         this.config = configService.getOrThrow<CronConfig>('CRON');
@@ -407,7 +410,7 @@ export class CronController {
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while trying to update VIDIS Angebote.',
     })
-    public async updateServiceProvidersForVidisAngebote(@Permissions() permissions: IPersonPermissions): Promise<void> {
+    public async updateServiceProvidersForVidisAngebote(@Permissions() permissions: PersonPermissions): Promise<void> {
         const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
             RollenSystemRecht.CRON_DURCHFUEHREN,
         ]);
@@ -415,7 +418,11 @@ export class CronController {
             throw new MissingPermissionsError('Insufficient permissions');
         }
         try {
-            await this.serviceProviderService.updateServiceProvidersForVidis();
+            const escalatedPermissions: IPersonPermissions =
+                await this.escalatedPersonPermissionsFactory.fromPersonPermissions(permissions, [
+                    { orgaId: 'ROOT', systemrechte: [RollenSystemRechtEnum.ANGEBOTE_VERWALTEN] },
+                ]);
+            await this.serviceProviderService.updateServiceProvidersForVidis(escalatedPermissions);
         } catch (error) {
             let errorMessage: string = 'unbekannt';
             if (error instanceof DomainError) {

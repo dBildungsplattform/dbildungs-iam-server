@@ -30,6 +30,7 @@ import { OrganisationRepository } from '../organisation/persistence/organisation
 import { DbiamPersonenkontextFactory } from '../personenkontext/domain/dbiam-personenkontext.factory.js';
 import { ConfigService } from '@nestjs/config';
 import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
+import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
 
 class UnknownError extends DomainError {
     public constructor(message: string) {

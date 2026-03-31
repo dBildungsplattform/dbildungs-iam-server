@@ -31,6 +31,7 @@ import { TraegerUnterRootChildError } from '../specification/error/traeger-unter
 import { OrganisationEntity } from './organisation.entity.js';
 import { mapOrgaAggregateToData, mapOrgaEntityToAggregate, OrganisationRepository } from './organisation.repository.js';
 import { OrganisationScope } from './organisation.scope.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;

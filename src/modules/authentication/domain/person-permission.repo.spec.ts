@@ -14,7 +14,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { KeycloakUserNotFoundError } from './keycloak-user-not-found.error.js';
 import { PersonPermissionsRepo } from './person-permission.repo.js';
-import { PersonPermissions } from './person-permissions.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 describe('PersonPermissionRepo', () => {
     let module: TestingModule;
