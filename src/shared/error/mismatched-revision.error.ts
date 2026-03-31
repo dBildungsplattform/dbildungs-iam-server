@@ -1,6 +1,6 @@
-import { DomainError } from './domain.error.js';
+import { SharedDomainError } from './index.js';
 
-export class MismatchedRevisionError extends DomainError {
+export class MismatchedRevisionError extends SharedDomainError {
     public constructor(message: string, details?: unknown[] | Record<string, unknown>) {
         super(message, 'MISMATCHED_REVISION', details);
     }

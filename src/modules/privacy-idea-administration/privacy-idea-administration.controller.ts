@@ -26,9 +26,7 @@ import {
 import { ClassLogger } from '../../core/logging/class-logger.js';
 import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
 import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
-import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { PersonUsername } from '../../shared/types/aggregate-ids.types.js';
-import { AuthenticationExceptionFilter } from '../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../authentication/api/permissions.decorator.js';
 import { StepUpGuard } from '../authentication/api/steup-up.guard.js';
 import { Person } from '../person/domain/person.js';
@@ -46,7 +44,7 @@ import { TokenStateResponse } from './token-state.response.js';
 import { TokenVerifyBodyParams } from './token-verify.params.js';
 import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
 
-@UseFilters(new PrivacyIdeaAdministrationExceptionFilter(), new AuthenticationExceptionFilter())
+@UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
 @ApiTags('2FA')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -139,15 +137,14 @@ export class PrivacyIdeaAdministrationController {
                 );
                 throw error;
             }
-            const schulConnexError: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityCouldNotBeUpdated(username, 'Token could not be unassigned.'),
-                ),
+            const entityCouldNotBeUpdatedError: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated(
+                username,
+                'Token could not be unassigned.',
             );
             this.logger.error(
-                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht den 2FA Token von Benutzer mit BenutzerId: ${personId} zurückzusetzen. Fehler: ${schulConnexError.message}`,
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht den 2FA Token von Benutzer mit BenutzerId: ${personId} zurückzusetzen. Fehler: ${entityCouldNotBeUpdatedError.message}`,
             );
-            throw schulConnexError;
+            throw entityCouldNotBeUpdatedError;
         }
     }
 
@@ -192,15 +189,13 @@ export class PrivacyIdeaAdministrationController {
                 );
                 throw error;
             }
-            const schulConnexError: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityCouldNotBeCreated('Hardware-Token could not be assigned.'),
-                ),
+            const entityCouldNotBeCreatedError: EntityCouldNotBeCreated = new EntityCouldNotBeCreated(
+                'Hardware-Token could not be assigned.',
             );
             this.logger.error(
-                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht Benutzer ${username} (BenutzerId: ${params.userId}) einen Hardware-Token zuzuweisen. Fehler: ${schulConnexError.message}`,
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht Benutzer ${username} (BenutzerId: ${params.userId}) einen Hardware-Token zuzuweisen. Fehler: ${entityCouldNotBeCreatedError.message}`,
             );
-            throw schulConnexError;
+            throw entityCouldNotBeCreatedError;
         }
     }
 

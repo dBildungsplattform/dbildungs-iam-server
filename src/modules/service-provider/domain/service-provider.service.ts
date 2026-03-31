@@ -32,6 +32,7 @@ import { PermittedOrgas } from '../../authentication/domain/person-permissions.j
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -271,7 +272,7 @@ export class ServiceProviderService {
         }));
     }
 
-    public async updateServiceProvidersForVidis(): Promise<void> {
+    public async updateServiceProvidersForVidis(permissions: IPersonPermissions): Promise<void> {
         this.logger.info('Aktualisierung der ServiceProvider für VIDIS-Angebote wurde gestartet.');
 
         const vidisKeycloakGroup: string = this.vidisConfig.KEYCLOAK_GROUP;
@@ -293,9 +294,9 @@ export class ServiceProviderService {
 
                 const angebotLogoMediaType: string = this.determineMediaTypeFor(angebot.angebotLogo);
 
-                let serviceProvider: ServiceProvider<false>;
+                let persistedServiceProviderResult: Result<ServiceProvider<true>, DomainError>;
                 if (existingServiceProvider) {
-                    serviceProvider = ServiceProvider.construct(
+                    const serviceProvider: ServiceProvider<true> = ServiceProvider.construct(
                         existingServiceProvider.id,
                         existingServiceProvider.createdAt,
                         existingServiceProvider.updatedAt,
@@ -314,8 +315,22 @@ export class ServiceProviderService {
                         existingServiceProvider.merkmale,
                     );
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' already exists.`);
+
+                    persistedServiceProviderResult = await this.serviceProviderRepo.update(
+                        permissions,
+                        serviceProvider,
+                    );
+
+                    if (!persistedServiceProviderResult.ok) {
+                        this.logger.error(
+                            `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be updated. Error: ${persistedServiceProviderResult.error.message}`,
+                        );
+                        throw new Error(
+                            `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be updated. Error: ${persistedServiceProviderResult.error.message}`,
+                        );
+                    }
                 } else {
-                    serviceProvider = ServiceProvider.createNew(
+                    const serviceProvider: ServiceProvider<false> = ServiceProvider.createNew(
                         angebot.angebotTitle,
                         ServiceProviderTarget.URL,
                         angebot.angebotLink,
@@ -331,17 +346,32 @@ export class ServiceProviderService {
                         [],
                     );
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' was created.`);
+
+                    persistedServiceProviderResult = await this.serviceProviderRepo.create(
+                        permissions,
+                        serviceProvider,
+                    );
+
+                    if (!persistedServiceProviderResult.ok) {
+                        this.logger.error(
+                            `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be created. Error: ${persistedServiceProviderResult.error.message}`,
+                        );
+                        throw new Error(
+                            `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be created. Error: ${persistedServiceProviderResult.error.message}`,
+                        );
+                    }
                 }
-                const persistedServiceProvider: ServiceProvider<true> =
-                    await this.serviceProviderRepo.save(serviceProvider);
+
                 await Promise.allSettled(
                     angebot.schoolActivations.map(async (schoolActivation: string) => {
                         const orga: Organisation<true> | undefined = (
                             await this.organisationRepo.findByNameOrKennung(schoolActivation)
                         ).at(0); // Assumption: kennung is unique for an Organisation and is not contained in name or kennung of any other Organisation
                         if (orga) {
-                            await this.organisationServiceProviderRepo.save(orga, persistedServiceProvider);
-                            this.logger.info(`Mapping of '${serviceProvider.name}' to '${orga.name}' was saved.`);
+                            await this.organisationServiceProviderRepo.save(orga, persistedServiceProviderResult.value);
+                            this.logger.info(
+                                `Mapping of '${persistedServiceProviderResult.value.name}' to '${orga.name}' was saved.`,
+                            );
                         }
                     }),
                 );

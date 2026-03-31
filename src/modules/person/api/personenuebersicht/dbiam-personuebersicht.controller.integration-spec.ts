@@ -1,6 +1,6 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
-import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
@@ -13,7 +13,6 @@ import {
     LoggingTestModule,
 } from '../../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../../shared/validation/global-validation.pipe.js';
-import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
 import { PersonApiModule } from '../../person-api.module.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
 import { UsernameGeneratorService } from '../../domain/username-generator.service.js';
@@ -44,6 +43,10 @@ import {
 import { OrganisationEntity } from '../../../organisation/persistence/organisation.entity.js';
 import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
 import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
+import { ServiceProviderModule } from '../../../service-provider/service-provider.module.js';
+import { SharedExceptionFilter } from '../../../../shared/filter/shared-exception-filter.js';
+import { ValidationExceptionFilter } from '../../../../shared/filter/validation-exception-filter.js';
+import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -78,12 +81,16 @@ describe('Personenuebersicht API', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
+                ServiceProviderModule,
             ],
             providers: [
                 {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
                 },
+                { provide: APP_FILTER, useClass: ValidationExceptionFilter },
+                { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
+                { provide: APP_FILTER, useClass: SharedExceptionFilter },
                 {
                     provide: UsernameGeneratorService,
                     useValue: createMock(UsernameGeneratorService),
@@ -100,7 +107,6 @@ describe('Personenuebersicht API', () => {
                     provide: UserLockRepository,
                     useValue: createMock(UserLockRepository),
                 },
-                ServiceProviderRepo,
                 PersonRepository,
                 RolleFactory,
                 RolleRepo,

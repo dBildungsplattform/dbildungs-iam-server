@@ -1,6 +1,5 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
-import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../../test/utils/do-factory.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
@@ -31,6 +30,7 @@ import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
 import { ConfigTestModule, DatabaseTestModule } from '../../../../../test/utils/index.js';
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 import { IPersonPermissions } from '../../../../shared/permissions/person-permissions.interface.js';
+import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
 
 describe('PersonInfoController', () => {
     let module: TestingModule;
@@ -336,7 +336,7 @@ describe('PersonInfoController', () => {
 
                 personRepoMock.findById.mockResolvedValue(null);
 
-                await expect(() => sut.info(permissions)).rejects.toThrow(HttpException);
+                await expect(() => sut.info(permissions)).rejects.toBeInstanceOf(EntityNotFoundError);
             });
         });
     });
@@ -650,7 +650,7 @@ describe('PersonInfoController', () => {
 
                 personRepoMock.findById.mockResolvedValue(null);
 
-                await expect(() => sut.infoV1(permissions)).rejects.toThrow(HttpException);
+                await expect(() => sut.infoV1(permissions)).rejects.toBeInstanceOf(EntityNotFoundError);
             });
         });
     });

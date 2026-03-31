@@ -23,11 +23,8 @@ import {
 } from '@nestjs/swagger';
 
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { ApiOkResponsePaginated, RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
@@ -53,12 +50,16 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
-import { MissingPermissionsError } from '../../../shared/error/index.js';
+import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
-import { ServiceProviderSystem } from '../domain/service-provider.enum.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
+import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
+import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
+import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+
+@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), ServiceProviderErrorFilter)
 @ApiTags('provider')
 @ApiOAuth2(['openid'])
 @ApiBearerAuth()
@@ -130,19 +131,11 @@ export class ProviderController {
         );
 
         if (!serviceProvider) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('ServiceProvider', params.angebotId),
-                ),
-            );
+            throw new EntityNotFoundError('ServiceProvider', params.angebotId);
         }
 
         if (!serviceProvider.logo || !serviceProvider.logoMimeType) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('ServiceProviderLogo', params.angebotId),
-                ),
-            );
+            throw new EntityNotFoundError('ServiceProviderLogo', params.angebotId);
         }
 
         const logoFile: StreamableFile = this.streamableFileFactory.fromBuffer(serviceProvider.logo, {
@@ -183,11 +176,7 @@ export class ProviderController {
             !permittedOrgas.all &&
             !permittedOrgas.orgaIds.includes(queryParams.organisationId)
         ) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Insufficient permissions for the requested organisationId'),
-                ),
-            );
+            throw new MissingPermissionsError('Insufficient permissions for the requested organisationId');
         }
 
         let filteredOrgaIds: string[] | undefined = permittedOrgas.all ? undefined : permittedOrgas.orgaIds;
@@ -287,11 +276,7 @@ export class ProviderController {
         );
 
         if (!result.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Rollen Erweitern Systemrecht required for this endpoint'),
-                ),
-            );
+            throw new MissingPermissionsError('Rollen Erweitern Systemrecht required for this endpoint');
         }
 
         const [serviceProvidersWithRollenAndErweiterungen, total]: [
@@ -332,11 +317,7 @@ export class ProviderController {
             await this.serviceProviderService.findManageableById(permissions, params.angebotId);
 
         if (!serviceProviderWithOrganisationRollenAndErweiterungen) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('ServiceProvider', params.angebotId),
-                ),
-            );
+            throw new EntityNotFoundError('ServiceProvider', params.angebotId);
         }
 
         return new ManageableServiceProviderResponse(
@@ -361,22 +342,12 @@ export class ProviderController {
         @Permissions() permissions: IPersonPermissions,
         @Body() body: CreateServiceProviderBodyParams,
     ): Promise<ServiceProviderResponse> {
-        if (
-            !(await permissions.hasSystemrechtAtOrganisation(body.organisationId, RollenSystemRecht.ANGEBOTE_VERWALTEN))
-        ) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Not authorized to manage Service Providers at this organisation!'),
-                ),
-            );
-        }
-
         // Convert base64 to Buffer (if provided)
         const logoBuffer: Buffer | undefined = body.logoBase64 ? Buffer.from(body.logoBase64, 'base64') : undefined;
 
         const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
             body.name,
-            body.target,
+            ServiceProviderTarget.URL,
             body.url,
             body.kategorie,
             body.organisationId,
@@ -386,12 +357,19 @@ export class ProviderController {
             undefined, // keycloakRole
             ServiceProviderSystem.NONE,
             body.requires2fa,
-            body.vidisAngebotId,
+            undefined, // vidisAngebotId
             body.merkmale,
         );
 
-        const result: ServiceProvider<true> = await this.serviceProviderRepo.save(serviceProvider);
+        const result: Result<ServiceProvider<true>, DomainError> = await this.serviceProviderRepo.create(
+            permissions,
+            serviceProvider,
+        );
 
-        return new ServiceProviderResponse(result);
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        return new ServiceProviderResponse(result.value);
     }
 }

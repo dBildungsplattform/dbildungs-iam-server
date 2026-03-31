@@ -10,17 +10,21 @@ import {
 } from '@nestjs/swagger';
 import { Permissions } from '../../../authentication/api/permissions.decorator.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { SchulConnexValidationErrorFilter } from '../../../../shared/error/schulconnex-validation-error.filter.js';
-import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
 import { PersonInfoResponseV1 } from '../personinfo/v1/person-info.response.v1.js';
 import { PersonenInfoService } from '../../domain/personeninfo/personeninfo.service.js';
 import { ExceedsLimitError } from '../../../../shared/error/exceeds-limit.error.js';
-import { SchulConnexErrorMapper } from '../../../../shared/error/schul-connex-error.mapper.js';
 import { ConfigService } from '@nestjs/config';
 import { SchulconnexConfig } from '../../../../shared/config/schulconnex.config.js';
 import { IPersonPermissions } from '../../../../shared/permissions/person-permissions.interface.js';
+import { SchulConnexAuthenticationDomainErrorFilter } from '../../error/schulconnex-authentication-domain-error-filter.js';
+import { SchulConnexSharedErrorFilter } from '../../error/schulconnex-shared-error-filter.js';
+import { SchulConnexValidationErrorFilter } from '../../error/schulconnex-validation-error.filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
+@UseFilters(
+    new SchulConnexSharedErrorFilter(),
+    new SchulConnexAuthenticationDomainErrorFilter(),
+    new SchulConnexValidationErrorFilter(),
+)
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
 @ApiTags('personen-info')
@@ -56,7 +60,7 @@ export class PersonenInfoController {
     })
     @ApiUnauthorizedResponse({ description: 'person is not logged in.' })
     @ApiOkResponse({ description: 'Liste von Personeninformationen', type: PersonInfoResponseV1 })
-    public infoV1(
+    public async infoV1(
         @Permissions() permissions: IPersonPermissions,
         @Headers('x-offset') offset: string,
         @Headers('x-limit') limit: string,
@@ -65,13 +69,9 @@ export class PersonenInfoController {
         const parsedLimit: number = Number.isNaN(parseInt(limit, 10)) ? this.maxPersonenInfoLimit : parseInt(limit, 10);
 
         if (parsedLimit > this.maxPersonenInfoLimit) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new ExceedsLimitError(`Limit darf maximal ${this.maxPersonenInfoLimit} sein.`),
-                ),
-            );
+            throw new ExceedsLimitError(`Limit darf maximal ${this.maxPersonenInfoLimit} sein.`);
         }
 
-        return this.personInfoService.findPersonsForPersonenInfo(permissions, parsedOffset, parsedLimit);
+        return await this.personInfoService.findPersonsForPersonenInfo(permissions, parsedOffset, parsedLimit);
     }
 }

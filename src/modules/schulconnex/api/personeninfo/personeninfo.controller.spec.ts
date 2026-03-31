@@ -4,9 +4,9 @@ import { PersonenInfoService } from '../../domain/personeninfo/personeninfo.serv
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
-import { HttpException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createPersonPermissionsMock } from '../../../../../test/utils/auth.mock.js';
+import { ExceedsLimitError } from '../../../../shared/error/exceeds-limit.error.js';
 
 describe('PersonenInfoController', () => {
     let controller: PersonenInfoController;
@@ -54,11 +54,6 @@ describe('PersonenInfoController', () => {
 
     it('should handle limit that exceeds maximum limit', async () => {
         const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-        try {
-            await controller.infoV1(permissions, '0', '1000000');
-            throw new Error('Expected exception was not thrown');
-        } catch (e) {
-            expect(e).toBeInstanceOf(HttpException);
-        }
+        await expect(controller.infoV1(permissions, '0', '1000000')).rejects.toBeInstanceOf(ExceedsLimitError);
     });
 });

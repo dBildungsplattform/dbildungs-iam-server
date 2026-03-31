@@ -9,7 +9,6 @@ import {
     Param,
     Put,
     Query,
-    UseFilters,
 } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
@@ -25,8 +24,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { PagingHeadersObject } from '../../../shared/paging/paging.enums.js';
@@ -44,7 +41,6 @@ import { PermittedOrgas } from '../../authentication/domain/person-permissions.j
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonIdResponse } from '../../person/api/person-id.response.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';
 import { PersonService } from '../../person/domain/person.service.js';
 import { Person } from '../../person/domain/person.js';
@@ -52,7 +48,6 @@ import { PersonResponseAutomapper } from '../../person/api/person.response-autom
 import { PersonApiMapper } from '../../person/mapper/person-api.mapper.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personenkontexte')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -84,9 +79,7 @@ export class PersonenkontextController {
             permissions,
         );
         if (!result.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
-            );
+            throw result.error;
         }
 
         const personenkontext: Personenkontext<true> = result.value;
@@ -96,9 +89,7 @@ export class PersonenkontextController {
         );
 
         if (!personResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResult.error),
-            );
+            throw personResult.error;
         }
 
         return new PersonendatensatzResponseAutomapper(new PersonResponseAutomapper(personResult.value), [
@@ -190,9 +181,7 @@ export class PersonenkontextController {
             permissions,
         );
         if (!result.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
-            );
+            throw result.error;
         }
 
         const deleteResult: Result<void, DomainError> = await this.personenkontextService.deletePersonenkontextById(
@@ -201,9 +190,7 @@ export class PersonenkontextController {
         );
 
         if (!deleteResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(deleteResult.error),
-            );
+            throw deleteResult.error;
         }
     }
 }

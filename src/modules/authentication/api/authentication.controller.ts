@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Req, Res, Session, UseFilters, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Inject, Req, Res, Session, UseGuards, Query } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
     ApiBearerAuth,
@@ -27,7 +27,6 @@ import { Public } from './public.decorator.js';
 import { RolleID } from '../../../shared/types/index.js';
 import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 import { RollenSystemRechtServiceProviderIDResponse } from './rolle-systemrechte-serviceproviderid.response.js';
-import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { getLowestStepUpLevel } from '../passport/oidc.strategy.js';
@@ -44,7 +43,6 @@ type WithoutOptional<T> = {
 
 export type RequiredExternalPkData = WithoutOptional<ExternalPkData>;
 
-@UseFilters(new AuthenticationExceptionFilter())
 @ApiTags('auth')
 @Controller({ path: 'auth' })
 export class AuthenticationController {

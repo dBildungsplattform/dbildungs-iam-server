@@ -8,12 +8,9 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { EntityNotFoundError } from '../../../../shared/error/index.js';
-import { SchulConnexErrorMapper } from '../../../../shared/error/schul-connex-error.mapper.js';
 import { Permissions } from '../../../authentication/api/permissions.decorator.js';
 import { Person } from '../../../person/domain/person.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { SchulConnexValidationErrorFilter } from '../../../../shared/error/schulconnex-validation-error.filter.js';
-import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
 import {
     DBiamPersonenkontextRepo,
     KontextWithOrgaAndRolle,
@@ -27,8 +24,15 @@ import { PersonInfoResponse } from './v0/person-info.response.js';
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 import { EmailRepo } from '../../../email/persistence/email.repo.js';
 import { IPersonPermissions } from '../../../../shared/permissions/person-permissions.interface.js';
+import { SchulConnexSharedErrorFilter } from '../../error/schulconnex-shared-error-filter.js';
+import { SchulConnexAuthenticationDomainErrorFilter } from '../../error/schulconnex-authentication-domain-error-filter.js';
+import { SchulConnexValidationErrorFilter } from '../../error/schulconnex-validation-error.filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
+@UseFilters(
+    new SchulConnexSharedErrorFilter(),
+    new SchulConnexAuthenticationDomainErrorFilter(),
+    new SchulConnexValidationErrorFilter(),
+)
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
 @ApiTags('person-info')
@@ -54,9 +58,7 @@ export class PersonInfoController {
         const person: Option<Person<true>> = await this.personRepo.findById(personId);
 
         if (!person) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError(Person.name, personId)),
-            );
+            throw new EntityNotFoundError(Person.name, personId);
         }
 
         let personEmailResponse: Option<PersonEmailResponse>;
@@ -77,7 +79,7 @@ export class PersonInfoController {
 
     @Version('1')
     @Get()
-    @ApiOperation({ summary: 'Info about logged in person.' })
+    @ApiOperation({ summary: 'Info about logged in person.', operationId: 'personInfoControllerInfoV1' })
     @ApiUnauthorizedResponse({ description: 'person is not logged in.' })
     @ApiOkResponse({ description: 'Returns info about the person.', type: PersonInfoResponseV1 })
     public async infoV1(@Permissions() permissions: IPersonPermissions): Promise<PersonInfoResponseV1> {
@@ -85,9 +87,7 @@ export class PersonInfoController {
         const person: Option<Person<true>> = await this.personRepo.findById(personId);
 
         if (!person) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError(Person.name, personId)),
-            );
+            throw new EntityNotFoundError(Person.name, personId);
         }
 
         let personEmailResponse: Option<PersonEmailResponse>;

@@ -49,10 +49,13 @@ export class DbiamPersonenuebersicht {
     public async getPersonenkontexte(
         personId: PersonID,
         permissions: IPersonPermissions,
-    ): Promise<DBiamPersonenuebersichtResponse | EntityNotFoundError> {
+    ): Promise<Result<DBiamPersonenuebersichtResponse, EntityNotFoundError>> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
         if (!person) {
-            return new EntityNotFoundError('Person', personId);
+            return {
+                ok: false,
+                error: new EntityNotFoundError('Person', personId),
+            };
         }
         // Find all organisations where user has permission
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
@@ -80,10 +83,16 @@ export class DbiamPersonenuebersicht {
                 permittedOrgas.all ? undefined : permittedOrgas.orgaIds,
             );
         if (result instanceof EntityNotFoundError) {
-            return result;
+            return {
+                ok: false,
+                error: result,
+            };
         }
 
-        return new DBiamPersonenuebersichtResponse(person, result[0], result[1]);
+        return {
+            ok: true,
+            value: new DBiamPersonenuebersichtResponse(person, result[0], result[1]),
+        };
     }
 
     public async createZuordnungenForKontexte(

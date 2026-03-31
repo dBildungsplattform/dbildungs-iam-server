@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
-import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request } from 'express';
 import { Observable } from 'rxjs';
@@ -38,7 +38,6 @@ import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
 import { Rolle } from '../domain/rolle.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
@@ -54,6 +53,10 @@ import { RolleResponse } from './rolle.response.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
+import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -61,7 +64,6 @@ describe('Rolle API', () => {
     let em: EntityManager;
     let rolleRepo: RolleRepo;
     let personRepo: PersonRepository;
-    let serviceProviderRepo: ServiceProviderRepo;
     let organisationRepo: OrganisationRepository;
     let dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
@@ -95,6 +97,9 @@ describe('Rolle API', () => {
                         },
                     },
                 },
+                { provide: APP_FILTER, useClass: ValidationExceptionFilter },
+                { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
+                { provide: APP_FILTER, useClass: SharedExceptionFilter },
                 {
                     provide: PersonPermissionsRepo,
                     useValue: createMock(PersonPermissionsRepo),
@@ -124,7 +129,6 @@ describe('Rolle API', () => {
         em = module.get(EntityManager);
         rolleRepo = module.get(RolleRepo);
         personRepo = module.get(PersonRepository);
-        serviceProviderRepo = module.get(ServiceProviderRepo);
         organisationRepo = module.get(OrganisationRepository);
         personFactory = module.get(PersonFactory);
 
@@ -477,9 +481,9 @@ describe('Rolle API', () => {
         it('should return rollen with serviceproviders', async () => {
             const [sp1, sp2, sp3]: [ServiceProvider<true>, ServiceProvider<true>, ServiceProvider<true>] =
                 await Promise.all([
-                    serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
-                    serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
-                    serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
+                    createAndPersistServiceProvider(em),
+                    createAndPersistServiceProvider(em),
+                    createAndPersistServiceProvider(em),
                 ]);
 
             const orgaIds: string[] = (
@@ -698,9 +702,7 @@ describe('Rolle API', () => {
         });
 
         it('should return rolle with serviceproviders', async () => {
-            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
-            );
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
             );
@@ -796,9 +798,7 @@ describe('Rolle API', () => {
     describe('/GET rolleId/serviceProviders', () => {
         describe('when rolle exists', () => {
             it('should return 200 and a list of serviceProviders', async () => {
-                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                    DoFactory.createServiceProvider(false),
-                );
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
@@ -829,9 +829,7 @@ describe('Rolle API', () => {
     describe('/PUT rolleId/serviceProviders', () => {
         describe('when rolle and serviceProvider exist', () => {
             it('should return 201 and add serviceProvider', async () => {
-                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                    DoFactory.createServiceProvider(false),
-                );
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
                 if (rolle instanceof DomainError) {
                     throw Error();
@@ -851,9 +849,7 @@ describe('Rolle API', () => {
 
         describe('when rolle and serviceProvider exist, but serviceProvider is already attached', () => {
             it('should return 201', async () => {
-                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                    DoFactory.createServiceProvider(false),
-                );
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
@@ -911,9 +907,7 @@ describe('Rolle API', () => {
     describe('/DELETE rolleId/serviceProviders', () => {
         describe('when rolle and serviceProvider exist', () => {
             it('should return 200 and delete serviceProvider', async () => {
-                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                    DoFactory.createServiceProvider(false),
-                );
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
@@ -1009,9 +1003,7 @@ describe('Rolle API', () => {
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [organisation.id] });
 
-            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
-            );
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
@@ -1108,9 +1100,7 @@ describe('Rolle API', () => {
             expect(response.status).toBe(404);
             expect(response.body).toEqual({
                 code: 404,
-                subcode: '01',
-                titel: 'Angefragte Entität existiert nicht',
-                beschreibung: 'Die angeforderte Entität existiert nicht',
+                i18nKey: 'MISSING_PERMISSIONS',
             });
         });
 
@@ -1159,9 +1149,7 @@ describe('Rolle API', () => {
             expect(response.status).toBe(404);
             expect(response.body).toEqual({
                 code: 404,
-                subcode: '01',
-                titel: 'Angefragte Entität existiert nicht',
-                beschreibung: 'Die angeforderte Entität existiert nicht',
+                i18nKey: 'ENTITY_NOT_FOUND',
             });
         });
 
@@ -1264,9 +1252,7 @@ describe('Rolle API', () => {
                 throw Error();
             }
 
-            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
-            );
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
             const params: UpdateRolleBodyParams = {
                 name: ' newName ',
@@ -1418,9 +1404,7 @@ describe('Rolle API', () => {
                 expect(response.status).toBe(404);
                 expect(response.body).toEqual({
                     code: 404,
-                    subcode: '01',
-                    titel: 'Angefragte Entität existiert nicht',
-                    beschreibung: 'Die angeforderte Entität existiert nicht',
+                    i18nKey: 'MISSING_PERMISSIONS',
                 });
             });
 
@@ -1464,9 +1448,7 @@ describe('Rolle API', () => {
                 expect(response.status).toBe(404);
                 expect(response.body).toEqual({
                     code: 404,
-                    subcode: '01',
-                    titel: 'Angefragte Entität existiert nicht',
-                    beschreibung: 'Die angeforderte Entität existiert nicht',
+                    i18nKey: 'ENTITY_NOT_FOUND',
                 });
             });
         });
@@ -1485,9 +1467,7 @@ describe('Rolle API', () => {
                 const organisation: OrganisationEntity = new OrganisationEntity();
                 await em.persistAndFlush(organisation);
                 await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
-                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                    DoFactory.createServiceProvider(false),
-                );
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {

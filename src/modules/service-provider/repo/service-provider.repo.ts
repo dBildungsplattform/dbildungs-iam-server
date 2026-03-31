@@ -1,19 +1,23 @@
 import { EntityData, Loaded, RequiredEntityData } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-
-import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
-import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
-import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
-import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
+import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { NameUniqueAtOrgaSpecification } from '../specification/name-unique-at-orga.specification.js';
+import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { assignSameKey, objectKeys } from '../../../shared/util/object-utils.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -78,11 +82,30 @@ type ServiceProviderFindOptions = {
 
 type SPWithMerkmale = Loaded<ServiceProviderEntity, 'merkmale'>;
 
+enum ServiceProviderPropertyPermissions {
+    ALL,
+    EINGESCHRAENKT,
+}
+
+/**
+ * Used when person doesn't have full rights to create/update serviceprovider.
+ * - Use these values as default, when creating service providers
+ * - Use the keys to copy values of existing service provider, when updating
+ */
+const SP_EINGESCHRAENKT_DEFAULTS: Partial<ServiceProvider<true>> = {
+    merkmale: [
+        ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+        ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
+    ],
+    requires2fa: false,
+    kategorie: ServiceProviderKategorie.SCHULISCH,
+};
+
 @Injectable()
 export class ServiceProviderRepo {
     public constructor(
         private readonly em: EntityManager,
-        private readonly eventService: EventRoutingLegacyKafkaService,
+        private readonly serviceProviderInternalRepo: ServiceProviderInternalRepo,
     ) {}
 
     public async findById(id: string, options?: ServiceProviderFindOptions): Promise<Option<ServiceProvider<true>>> {
@@ -272,15 +295,8 @@ export class ServiceProviderRepo {
         ).map(mapEntityToAggregate);
     }
 
-    public async save(serviceProvider: ServiceProvider<boolean>): Promise<ServiceProvider<true>> {
-        if (serviceProvider.id) {
-            return this.update(serviceProvider);
-        } else {
-            return this.create(serviceProvider);
-        }
-    }
-
-    public async create(serviceProvider: ServiceProvider<false>): Promise<ServiceProvider<true>> {
+    // TODO check permissions. Currently required by db-seed. Refactor once we have permissions for seeding.
+    public async createUnsafe(serviceProvider: ServiceProvider<false>): Promise<ServiceProvider<true>> {
         const serviceProviderEntity: ServiceProviderEntity = this.em.create(
             ServiceProviderEntity,
             mapAggregateToData(serviceProvider),
@@ -288,29 +304,89 @@ export class ServiceProviderRepo {
 
         await this.em.persistAndFlush(serviceProviderEntity);
 
-        if (serviceProviderEntity.keycloakGroup && serviceProviderEntity.keycloakRole) {
-            this.eventService.publish(
-                new GroupAndRoleCreatedEvent(serviceProviderEntity.keycloakGroup, serviceProviderEntity.keycloakRole),
-                new KafkaGroupAndRoleCreatedEvent(
-                    serviceProviderEntity.keycloakGroup,
-                    serviceProviderEntity.keycloakRole,
-                ),
-            );
-        }
-
         return mapEntityToAggregate(serviceProviderEntity);
     }
 
-    private async update(serviceProvider: ServiceProvider<true>): Promise<ServiceProvider<true>> {
-        const serviceProviderEntity: Loaded<ServiceProviderEntity> = await this.em.findOneOrFail(
+    public async create(
+        permissions: IPersonPermissions,
+        serviceProvider: ServiceProvider<false>,
+    ): Promise<Result<ServiceProvider<true>, DomainError>> {
+        const permissionsResult: Result<ServiceProviderPropertyPermissions, DomainError> =
+            await this.getPermissionsForServiceProvider(permissions, serviceProvider);
+
+        // Not allowed to modify this serviceprovider
+        if (!permissionsResult.ok) {
+            return permissionsResult;
+        }
+
+        if (
+            !(await new NameUniqueAtOrgaSpecification(this.serviceProviderInternalRepo).isSatisfiedBy(serviceProvider))
+        ) {
+            return Err(new DuplicateNameError(`Duplicate name error: ${serviceProvider.name}`));
+        }
+
+        // Assign defaults if person only has partial system rights
+        if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
+            for (const key of objectKeys(SP_EINGESCHRAENKT_DEFAULTS)) {
+                assignSameKey<Partial<ServiceProvider<false>>, keyof Partial<ServiceProvider<false>>>(
+                    serviceProvider,
+                    SP_EINGESCHRAENKT_DEFAULTS,
+                    key,
+                );
+            }
+        }
+
+        const serviceProviderEntity: ServiceProviderEntity = this.em.create(
+            ServiceProviderEntity,
+            mapAggregateToData(serviceProvider),
+        );
+
+        await this.em.persistAndFlush(serviceProviderEntity);
+
+        return Ok(mapEntityToAggregate(serviceProviderEntity));
+    }
+
+    public async update(
+        permissions: IPersonPermissions,
+        serviceProvider: ServiceProvider<true>,
+    ): Promise<Result<ServiceProvider<true>, DomainError>> {
+        const permissionsResult: Result<ServiceProviderPropertyPermissions, DomainError> =
+            await this.getPermissionsForServiceProvider(permissions, serviceProvider);
+
+        // Not allowed to modify this serviceprovider
+        if (!permissionsResult.ok) {
+            return permissionsResult;
+        }
+
+        const serviceProviderEntity: Loaded<ServiceProviderEntity> | null = await this.em.findOne(
             ServiceProviderEntity,
             serviceProvider.id,
         );
+
+        if (!serviceProviderEntity) {
+            return Err(new EntityNotFoundError('ServiceProvider', serviceProvider.id));
+        }
+
+        if (
+            !(await new NameUniqueAtOrgaSpecification(this.serviceProviderInternalRepo).isSatisfiedBy(serviceProvider))
+        ) {
+            return Err(new DuplicateNameError(`Duplicate name error: ${serviceProvider.name}`, serviceProvider.id));
+        }
+
+        // Use some existing values if person only has partial system rights
+        if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
+            const existingProvider: ServiceProvider<true> = mapEntityToAggregate(serviceProviderEntity);
+
+            for (const key of objectKeys(SP_EINGESCHRAENKT_DEFAULTS)) {
+                assignSameKey(serviceProvider, existingProvider, key);
+            }
+        }
+
         serviceProviderEntity.assign(mapAggregateToData(serviceProvider));
 
         await this.em.persistAndFlush(serviceProviderEntity);
 
-        return mapEntityToAggregate(serviceProviderEntity);
+        return Ok(mapEntityToAggregate(serviceProviderEntity));
     }
 
     public async fetchRolleServiceProvidersWithoutPerson(
@@ -345,5 +421,31 @@ export class ServiceProviderRepo {
     public async deleteByName(name: string): Promise<boolean> {
         const deletedPersons: number = await this.em.nativeDelete(ServiceProviderEntity, { name: name });
         return deletedPersons > 0;
+    }
+
+    private async getPermissionsForServiceProvider(
+        permissions: IPersonPermissions,
+        serviceProvider: ServiceProvider<boolean>,
+    ): Promise<Result<ServiceProviderPropertyPermissions, DomainError>> {
+        if (
+            await permissions.hasSystemrechtAtOrganisation(
+                serviceProvider.providedOnSchulstrukturknoten,
+                RollenSystemRecht.ANGEBOTE_VERWALTEN,
+            )
+        ) {
+            // ANGEBOTE_VERWALTEN takes precedence over ANGEBOTE_EINGESCHRAENKT_VERWALTEN, so if the user has both we return early
+            return Ok(ServiceProviderPropertyPermissions.ALL);
+        }
+
+        if (
+            await permissions.hasSystemrechtAtOrganisation(
+                serviceProvider.providedOnSchulstrukturknoten,
+                RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
+            )
+        ) {
+            return Ok(ServiceProviderPropertyPermissions.EINGESCHRAENKT);
+        }
+
+        return Err(new MissingPermissionsError('Not authorized to manage Service Providers at this organisation!'));
     }
 }

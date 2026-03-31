@@ -148,7 +148,7 @@ export class ImportEventHandler {
                 },
             ];
 
-            const savedPersonWithPersonenkontext: DomainError | PersonPersonenkontext =
+            const savedPersonWithPersonenkontext: Result<PersonPersonenkontext, DomainError> =
                 await this.personenkontextCreationService.createPersonWithPersonenkontexte(
                     permissions,
                     importDataItem.vorname,
@@ -156,32 +156,34 @@ export class ImportEventHandler {
                     createPersonenkontexte,
                 );
 
-            if (savedPersonWithPersonenkontext instanceof DomainError) {
+            if (!savedPersonWithPersonenkontext.ok) {
                 this.logger.error(
-                    `Failed to create user for ${importDataItem.vorname} ${importDataItem.nachname}. Error: ${savedPersonWithPersonenkontext.message}`,
+                    `Failed to create user for ${importDataItem.vorname} ${importDataItem.nachname}. Error: ${savedPersonWithPersonenkontext.error.message}`,
                 );
                 importDataItem.status = ImportDataItemStatus.FAILED;
                 await this.importDataRepository.save(importDataItem);
                 return;
             }
 
-            if (!savedPersonWithPersonenkontext.person.newPassword) {
-                this.logger.error(`Person with ID ${savedPersonWithPersonenkontext.person.id} has no start password!`);
+            if (!savedPersonWithPersonenkontext.value.person.newPassword) {
+                this.logger.error(
+                    `Person with ID ${savedPersonWithPersonenkontext.value.person.id} has no start password!`,
+                );
                 importDataItem.status = ImportDataItemStatus.FAILED;
 
                 await this.importDataRepository.save(importDataItem);
                 return;
             }
 
-            importDataItem.username = savedPersonWithPersonenkontext.person.username;
+            importDataItem.username = savedPersonWithPersonenkontext.value.person.username;
             importDataItem.password = await this.importPasswordEncryptor.encryptPassword(
-                savedPersonWithPersonenkontext.person.newPassword,
+                savedPersonWithPersonenkontext.value.person.newPassword,
             );
             importDataItem.status = ImportDataItemStatus.SUCCESS;
             await this.importDataRepository.save(importDataItem);
 
             this.logger.info(
-                `Created user ${savedPersonWithPersonenkontext.person.username} (${savedPersonWithPersonenkontext.person.id}).`,
+                `Created user ${savedPersonWithPersonenkontext.value.person.username} (${savedPersonWithPersonenkontext.value.person.id}).`,
             );
         } catch (error) {
             this.logger.logUnknownAsError(
