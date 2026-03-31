@@ -911,10 +911,11 @@ describe('ServiceProviderService', () => {
             vi.restoreAllMocks();
         });
 
-        it('should update service provider with new name and url', async () => {
+        it('should update service provider', async () => {
             const updateData: UpdateServiceProviderBodyParams = {
                 name: 'New Name',
                 url: 'https://new-url.com',
+                kategorie: ServiceProviderKategorie.EMAIL,
             };
 
             const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
@@ -929,6 +930,7 @@ describe('ServiceProviderService', () => {
                 expect.objectContaining({
                     name: updateData.name,
                     url: updateData.url,
+                    kategorie: updateData.kategorie,
                 }),
             );
             if (!result.ok) {
