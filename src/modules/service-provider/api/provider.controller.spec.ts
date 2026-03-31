@@ -42,7 +42,7 @@ import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweit
 import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweiterung-by-service-provider-id.pathparams.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
-import { EntityNotFoundError, MissingAttributeError } from '../../../shared/error/index.js';
+import { MissingAttributeError } from '../../../shared/error/index.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
