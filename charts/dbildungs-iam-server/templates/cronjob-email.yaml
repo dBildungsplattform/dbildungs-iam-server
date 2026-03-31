@@ -1,0 +1,85 @@
+{{- if .Values.cronjobsEmail.enabled }}
+{{- range $job_name, $job_options := .Values.cronjobsEmail.jobs }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "common.names.name" $ }}-{{ $job_name}}
+  namespace: {{ template "common.names.namespace" $ }}
+spec:
+  schedule: {{ $job_options.schedule | quote }}
+  suspend: {{ $job_options.suspended | default false }}
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            cron: {{ $job_name }}
+        spec:
+          automountServiceAccountToken: false
+          containers:
+          - name: {{ $job_name }}
+            image: "{{ $.Values.cronjobsEmail.image.repository }}:{{ $.Values.cronjobsEmail.image.tag }}"
+            imagePullPolicy: {{ $.Values.cronjobsEmail.image.pullPolicy | default "Always"}}
+            securityContext:
+              privileged: false
+              runAsUser: 1000
+              runAsNonRoot: true
+              capabilities:
+                drop:
+                  - ALL
+              readOnlyRootFilesystem: false
+              allowPrivilegeEscalation: false
+              seccompProfile:
+                type: RuntimeDefault
+            envFrom:
+              - configMapRef:
+                  name:  {{ template "common.names.name" $ }}-cronjob-envs-configmap
+            env:
+                - name: EMAIL_MICROSERVICE_ENDPOINT_URL
+                  value: '{{ $.Values.emailMicroservice.endpoint | replace "spsh-xxx" $.Release.Namespace }}{{ $job_options.endpoint }}'
+                - name: HTTP_METHOD
+                  value: "{{ $job_options.httpMethod }}"
+                - name: LOG_FILE_PATH
+                  value: "/tmp/log/cron.log"
+                - name: INTERNAL_COMMUNICATION_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ default $.Values.emailMicroserviceAuth.existingSecret $.Values.emailMicroserviceAuth.secretName }}
+                      key: internal-communication-api-key
+
+            resources:
+              limits:
+                memory: "128Mi"
+                cpu: "200m"
+              requests:
+                memory: "64Mi"
+                cpu: "50m"
+            command:
+              - "sh"
+              - "-c"
+              - |
+                  mkdir /tmp/log/ &&
+                  touch /tmp/log/cron.log &&
+                  chmod 644 /tmp/log/cron.log &&
+                  cd {{ $.Values.cronjobsEmail.scriptDir }} &&
+                  bash {{ $job_options.script }}
+            volumeMounts:
+              - name: script-volume
+                mountPath: /scripts
+                readOnly: false
+            ports:
+            - containerPort: {{ $.Values.cronjobsEmail.port }}
+              name: cron-pod
+          volumes:
+          - name: script-volume
+            configMap:
+              name: {{ template "common.names.name" $ }}-cronjob-scripts-configmap
+              defaultMode: 0555
+          restartPolicy: Never
+---
+{{- end}}
+{{- end }}

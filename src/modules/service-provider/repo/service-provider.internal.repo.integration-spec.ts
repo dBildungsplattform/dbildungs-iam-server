@@ -85,5 +85,21 @@ describe('ServiceProviderInternalRepo', () => {
 
             await expect(promise).resolves.toBe(false);
         });
+
+        it('should be case insensitive', async () => {
+            const nameA: string = 'Example-Name';
+            const nameB: string = 'eXAMPLE-nAME';
+            const providedOnSchulstrukturknoten: string = faker.string.uuid();
+
+            await createAndPersistServiceProvider(em, { name: nameA, providedOnSchulstrukturknoten });
+
+            const promise: Promise<boolean> = sut.existsDuplicateNameForOrganisation(
+                nameB,
+                providedOnSchulstrukturknoten,
+                undefined,
+            );
+
+            await expect(promise).resolves.toBe(true);
+        });
     });
 });
