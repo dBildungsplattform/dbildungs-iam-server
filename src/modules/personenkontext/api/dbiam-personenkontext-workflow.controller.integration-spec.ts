@@ -50,6 +50,8 @@ import { PersonenkontextWorkflowSharedKernel } from '../domain/personenkontext-w
 import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
 import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { EscalatedPersonPermissionsFactory } from '../../authentication/domain/escalated-person-permissions.factory.js';
+import { EscalatedPersonPermissions } from '../../authentication/domain/escalated-person-permissions.js';
 
 describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let app: INestApplication;
@@ -62,9 +64,12 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let personFactory: PersonFactory;
     let personenkontextService: PersonenkontextCreationService;
     let personenkontextWorkflowFactoryMock: DeepMocked<PersonenkontextWorkflowFactory>;
+    let escalatedPersonPermissionsFactoryMock: DeepMocked<EscalatedPersonPermissionsFactory>;
 
     beforeAll(async () => {
         personPermissionsMock = createPersonPermissionsMock();
+        escalatedPersonPermissionsFactoryMock = createMock(EscalatedPersonPermissionsFactory);
+
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
@@ -97,6 +102,8 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .overrideProvider(EscalatedPersonPermissionsFactory)
+            .useValue(escalatedPersonPermissionsFactoryMock)
             .compile();
 
         const stepUpGuard: StepUpGuard = module.get(StepUpGuard);
@@ -110,10 +117,12 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         personFactory = module.get(PersonFactory);
         personenkontextService = module.get(PersonenkontextCreationService);
         personenkontextWorkflowFactoryMock = module.get(PersonenkontextWorkflowFactory);
-
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
         await app.init();
+        escalatedPersonPermissionsFactoryMock.fromPermissions.mockResolvedValue(
+            personPermissionsMock as unknown as EscalatedPersonPermissions,
+        );
     }, 10000000);
 
     async function createPerson(): Promise<Person<true>> {
@@ -163,6 +172,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             }
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValue(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')
@@ -199,6 +209,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             }
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValue(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')

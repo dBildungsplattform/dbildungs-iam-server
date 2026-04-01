@@ -83,6 +83,7 @@ export function createPersonPermissionsMock(personFields?: Partial<PersonFields>
     personPermissions.hasSystemrechteAtOrganisation = vi.fn().mockResolvedValue(true);
     personPermissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(true);
     personPermissions.canModifyPerson = vi.fn().mockResolvedValue(true);
+    personPermissions.getPersonenkontexteWithRolesAndOrgs = vi.fn().mockResolvedValue([]);
 
     const personFieldsWithDefaults: PersonFields = {
         id: personFields?.id ?? faker.string.uuid(),
@@ -92,6 +93,11 @@ export function createPersonPermissionsMock(personFields?: Partial<PersonFields>
         username: personFields?.username ?? faker.internet.username(),
         updatedAt: personFields?.updatedAt ?? faker.date.past(),
     };
+
+    // define cached fields so that "isPersonPermissions" type guard works correctly in tests
+    Object.defineProperty(personPermissions, 'cachedPersonenkontextsFields', []);
+    Object.defineProperty(personPermissions, 'cachedRollenFields', []);
+    Object.defineProperty(personPermissions, 'cachedPersonFields', personFieldsWithDefaults);
 
     Object.defineProperty(personPermissions, 'personFields', {
         get: vi.fn(() => personFieldsWithDefaults),
@@ -103,7 +109,7 @@ export function createUserinfoResponseMock(): DeepMocked<OidcUserinfoResponse> {
     return createMock(UserinfoResponse) as unknown as DeepMocked<OidcUserinfoResponse>;
 }
 
-export function createPassportUserMock(personPermissions?: IPersonPermissions): PassportUser {
+export function createPassportUserMock(personPermissions?: PersonPermissions): PassportUser {
     return {
         userinfo: createUserinfoResponseMock(),
         personPermissions: () => Promise.resolve(personPermissions ?? createPersonPermissionsMock()),
@@ -126,7 +132,7 @@ export function createOidcClientMock(clientFields?: Partial<BaseClient>): DeepMo
     return Object.assign(client, clientFields);
 }
 
-export function createAuthInterceptorMock(personPermissions?: IPersonPermissions): NestInterceptor {
+export function createAuthInterceptorMock(personPermissions?: PersonPermissions): NestInterceptor {
     return {
         intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
             const req: Request = context.switchToHttp().getRequest();

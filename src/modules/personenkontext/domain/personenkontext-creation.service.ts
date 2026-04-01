@@ -82,23 +82,16 @@ export class PersonenkontextCreationService {
             };
         }
 
-        let permissionsToUse: IPersonPermissions;
-        if (isEscalatedPersonPermissions(permissions)) {
-            permissionsToUse = permissions;
-        } else if (isPersonPermissions(permissions)) {
-            permissionsToUse = await this.escalatedPersonPermissionsFactory.fromPersonPermissions(
-                permissions,
-                createPersonenkontexte.map(
-                    (createPersonenkontext: DbiamCreatePersonenkontextBodyParams) =>
-                        ({
-                            orgaId: createPersonenkontext.organisationId,
-                            systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
-                        }) satisfies EscalatedPermissionAtOrga,
-                ),
-            );
-        } else {
-            throw new Error('TBD');
-        }
+        const permissionsToUse: IPersonPermissions = await this.escalatedPersonPermissionsFactory.fromPermissions(
+            permissions,
+            createPersonenkontexte.map(
+                (createPersonenkontext: DbiamCreatePersonenkontextBodyParams) =>
+                    ({
+                        orgaId: createPersonenkontext.organisationId,
+                        systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
+                    }) satisfies EscalatedPermissionAtOrga,
+            ),
+        );
 
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             savedPersonOrError.id,
