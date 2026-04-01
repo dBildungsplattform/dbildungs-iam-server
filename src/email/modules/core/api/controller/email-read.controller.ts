@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, UseFilters, UseGuards } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiInternalServerErrorResponse,
@@ -21,6 +21,7 @@ import { EmailAddressMissingStatusError } from '../../error/email-address-missin
 import { EmailAddress } from '../../domain/email-address.js';
 import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
 import { AuthGuard } from '@nestjs/passport';
+import { FindEmailAddressBySpshPersonIdsBodyParams } from '../dtos/params/find-email-addresses-by-spsh-person-ids.bodyparams.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
@@ -96,5 +97,30 @@ export class EmailReadController {
         }
 
         return new EmailAddressResponse(emailAddress, latestStatus, this.oxService.contextID);
+    }
+
+    public async findEmailAddressesByPersonIds(
+        @Body() findEmailAddressBySpshPersonIdsBodyParams: FindEmailAddressBySpshPersonIdsBodyParams,
+    ): Promise<Record<string, EmailAddressResponse | null>> {
+        const personIds: string[] = findEmailAddressBySpshPersonIdsBodyParams.spshPersonIds;
+        this.logger.info(`PersonIds: ${personIds.join(', ')}`);
+
+        const primaryMap: Map<string, EmailAddress<true> | null> =
+            await this.emailAddressRepo.findPrimaryBySpshPersonIds(personIds);
+
+        const result: Record<string, EmailAddressResponse | null> = {};
+
+        for (const pid of personIds) {
+            const addr: EmailAddress<true> | null | undefined = primaryMap.get(pid);
+
+            if (!addr || !addr.getStatus()) {
+                result[pid] = null;
+                continue;
+            }
+
+            result[pid] = new EmailAddressResponse(addr, addr.getStatus()!, this.oxService.contextID);
+        }
+
+        return result;
     }
 }
