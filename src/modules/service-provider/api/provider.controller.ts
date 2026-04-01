@@ -57,6 +57,7 @@ import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -72,6 +73,7 @@ export class ProviderController {
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepository,
+        private readonly logger: ClassLogger,
     ) {}
 
     @Get('all')
@@ -396,6 +398,7 @@ export class ProviderController {
             throw result.error;
         }
 
+        this.logger.info(`ServiceProvider mit Id ${angebotId} erfolgreich aktualisiert.`);
         return new ServiceProviderResponse(result.value);
     }
 }

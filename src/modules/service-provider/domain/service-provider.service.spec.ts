@@ -938,9 +938,6 @@ describe('ServiceProviderService', () => {
                 throw result.error;
             }
             expect(result.value).toEqual(existingServiceProvider);
-            expect(loggerMock.info).toHaveBeenCalledWith(
-                `ServiceProvider mit Id ${newAngebotId} erfolgreich aktualisiert.`,
-            );
         });
 
         it('should return error if no update data is provided', async () => {
