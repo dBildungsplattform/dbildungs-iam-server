@@ -760,7 +760,9 @@ describe('Provider Controller Test', () => {
             expect(result).toBeDefined();
             expect(result).toBeInstanceOf(ServiceProviderResponse);
             expect(result.id).toBe(updatedEntity.id);
-            expect(loggerMock.info).toHaveBeenCalledWith(`ServiceProvider wurden erfolgreich aktualisiert.`);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `ServiceProvider mit Id ${angebotId} erfolgreich aktualisiert.`,
+            );
         });
 
         it('should throw the error when service returns Err', async () => {
