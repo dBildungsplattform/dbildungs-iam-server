@@ -913,6 +913,10 @@ describe('ServiceProviderService', () => {
             rolleRepo.findByServiceProviderIds.mockReset();
             rollenerweiterungRepo.findByServiceProviderIds.mockReset();
             serviceProviderRepo.deleteById.mockReset();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [schulstrukturknotenId],
+            });
         });
 
         it('returns EntityNotFoundError if service provider does not exist', async () => {
@@ -928,8 +932,7 @@ describe('ServiceProviderService', () => {
 
         it('returns MissingPermissionsError if user lacks permissions', async () => {
             serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
-            // Both permissions return false
-            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(false);
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
             const result: Result<boolean, MissingPermissionsError> = await service.deleteByIdAuthorized(
                 permissions,
                 serviceProviderId,
@@ -941,8 +944,6 @@ describe('ServiceProviderService', () => {
 
         it('returns AttachedRollenError if attached Rollen exist', async () => {
             serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
-            // Mock permission to return true for one of the relevant rights
-            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
             rolleRepo.findByServiceProviderIds.mockResolvedValue(
                 new Map([[serviceProviderId, [DoFactory.createRolle(true)]]]),
             );
@@ -958,8 +959,6 @@ describe('ServiceProviderService', () => {
 
         it('returns AttachedRollenerweiterungenError if attached Rollenerweiterungen exist', async () => {
             serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
-            // Mock permission to return true for one of the relevant rights
-            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
             rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
             rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
                 new Map([[serviceProviderId, [DoFactory.createRollenerweiterung(true)]]]),
@@ -975,8 +974,6 @@ describe('ServiceProviderService', () => {
 
         it('calls deleteById and returns Ok(true) on success', async () => {
             serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
-            // Mock permission to return true for one of the relevant rights
-            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
             rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
             rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
             serviceProviderRepo.deleteById.mockResolvedValue(true);

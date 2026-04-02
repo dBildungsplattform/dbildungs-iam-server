@@ -426,83 +426,97 @@ describe('ServiceProvider API', () => {
         let organisation: Organisation<true>;
         let serviceProvider: ServiceProvider<true>;
 
-        beforeEach(async () => {
+        type Permitted = 'all' | 'some';
+
+        describe.each([['all'], ['some']] as Permitted[][])('when %s orgas are permitted', (permitted: Permitted) => {
+            beforeEach(async () => {
+                organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
+                serviceProvider = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: organisation.id,
+                });
+                if (permitted === 'all') {
+                    permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+                } else {
+                    permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                        all: false,
+                        orgaIds: [organisation.id],
+                    });
+                }
+            });
+
+            it('should delete service provider', async () => {
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/provider/${serviceProvider.id}`)
+                    .send();
+
+                expect(response.status).toBe(204);
+                expect(
+                    await em.findOne(ServiceProviderEntity, { id: serviceProvider.id }, { refresh: true }),
+                ).toBeNull();
+            });
+
+            it('should return 404 if service provider is not found', async () => {
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/provider/${faker.string.uuid()}`)
+                    .send();
+
+                expect(response.status).toBe(404);
+                expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'ENTITY_NOT_FOUND' }));
+            });
+
+            it('should return 400 if there are rollen with service provider', async () => {
+                await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisation.id,
+                        serviceProviderIds: [serviceProvider.id],
+                    }),
+                );
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/provider/${serviceProvider.id}`)
+                    .send();
+
+                expect(response.status).toBe(400);
+                expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'ATTACHED_ROLLEN' }));
+            });
+
+            it('should return 400 if there are rollenerweiterungen with service provider', async () => {
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisation.id,
+                    }),
+                );
+                if (rolle instanceof DomainError) {
+                    throw rolle;
+                }
+                await rollenerweiterungRepo.create(
+                    DoFactory.createRollenerweiterung(false, {
+                        organisationId: organisation.id,
+                        rolleId: rolle.id,
+                        serviceProviderId: serviceProvider.id,
+                    }),
+                );
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/provider/${serviceProvider.id}`)
+                    .send();
+
+                expect(response.status).toBe(400);
+                expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'ATTACHED_ROLLENERWEITERUNGEN' }));
+            });
+        });
+
+        it('should return 404 if permissions are missing', async () => {
             organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
             serviceProvider = await createAndPersistServiceProvider(em, {
                 providedOnSchulstrukturknoten: organisation.id,
             });
-        });
-
-        it('should delete service provider', async () => {
-            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-            const response: Response = await request(app.getHttpServer() as App)
-                .delete(`/provider/${serviceProvider.id}`)
-                .send();
-
-            expect(response.status).toBe(204);
-            expect(await em.findOne(ServiceProviderEntity, { id: serviceProvider.id }, { refresh: true })).toBeNull();
-        });
-
-        it('should return 404 if service provider is not found', async () => {
-            const response: Response = await request(app.getHttpServer() as App)
-                .delete(`/provider/${faker.string.uuid()}`)
-                .send();
-
-            expect(response.status).toBe(404);
-            expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'ENTITY_NOT_FOUND' }));
-        });
-
-        it('should return 404 if permissions are missing', async () => {
-            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
-            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
             const response: Response = await request(app.getHttpServer() as App)
                 .delete(`/provider/${serviceProvider.id}`)
                 .send();
 
             expect(response.status).toBe(404);
             expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'MISSING_PERMISSIONS' }));
-        });
-
-        it('should return 400 if there are rollen with service provider', async () => {
-            await rolleRepo.save(
-                DoFactory.createRolle(false, {
-                    administeredBySchulstrukturknoten: organisation.id,
-                    serviceProviderIds: [serviceProvider.id],
-                }),
-            );
-            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-            const response: Response = await request(app.getHttpServer() as App)
-                .delete(`/provider/${serviceProvider.id}`)
-                .send();
-
-            expect(response.status).toBe(400);
-            expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'ATTACHED_ROLLEN' }));
-        });
-
-        it('should return 400 if there are rollenerweiterungen with service provider', async () => {
-            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
-                DoFactory.createRolle(false, {
-                    administeredBySchulstrukturknoten: organisation.id,
-                }),
-            );
-            if (rolle instanceof DomainError) {
-                throw rolle;
-            }
-            await rollenerweiterungRepo.create(
-                DoFactory.createRollenerweiterung(false, {
-                    organisationId: organisation.id,
-                    rolleId: rolle.id,
-                    serviceProviderId: serviceProvider.id,
-                }),
-            );
-            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .delete(`/provider/${serviceProvider.id}`)
-                .send();
-
-            expect(response.status).toBe(400);
-            expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'ATTACHED_ROLLENERWEITERUNGEN' }));
         });
     });
 });

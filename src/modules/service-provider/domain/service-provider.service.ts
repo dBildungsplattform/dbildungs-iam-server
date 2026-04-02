@@ -6,17 +6,26 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { FeatureFlagConfig } from '../../../shared/config/featureflag.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { VidisConfig } from '../../../shared/config/vidis.config.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 import { VidisService } from '../../vidis/vidis.service.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
+import { AttachedRollenError } from './errors/attached-rollen.error.js';
+import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
@@ -28,16 +37,6 @@ import {
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { Err, Ok } from '../../../shared/util/result.js';
-import { AttachedRollenError } from './errors/attached-rollen.error.js';
-import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -434,8 +433,9 @@ export class ServiceProviderService {
         return 'image/svg+xml';
     }
 
+
     public async deleteByIdAuthorized(
-        permissions: IPersonPermissions,
+        permissions: PersonPermissions, // TODO: switch to IPersonPermissions after 3289 is merged
         id: ServiceProviderID,
     ): Promise<
         Result<
@@ -452,16 +452,9 @@ export class ServiceProviderService {
             RollenSystemRecht.ANGEBOTE_VERWALTEN,
             RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
         ];
-        const hasPermission: boolean = (
-            await Promise.all(
-                relevantSystemrechte.map((systemrecht: RollenSystemRecht) =>
-                    permissions.hasSystemrechtAtOrganisation(
-                        serviceProvider.providedOnSchulstrukturknoten,
-                        systemrecht,
-                    ),
-                ),
-            )
-        ).some(Boolean);
+
+        const orgasWithSystemrecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(relevantSystemrechte, true, false);
+        const hasPermission: boolean = orgasWithSystemrecht.all || orgasWithSystemrecht.orgaIds.includes(serviceProvider.providedOnSchulstrukturknoten);
         if (!hasPermission) {
             return Err(
                 new MissingPermissionsError('User does not have required permissions to delete this ServiceProvider'),
