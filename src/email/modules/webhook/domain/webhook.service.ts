@@ -3,10 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { AxiosError } from 'axios';
 import { retry, timer } from 'rxjs';
 
-import { ClassLogger } from '../../../../core/logging/class-logger';
-import { EmailAppConfig } from '../../../../shared/config';
+import { ClassLogger } from '../../../../core/logging/class-logger.js';
+import { EmailAppConfig } from '../../../../shared/config/index.js';
 
-import { EmailChangedBodyParams } from '../../../../modules/email-microservice/api/changed.body.params';
+import { EmailChangedBodyParams } from '../../../../modules/email-microservice/api/changed.body.params.js';
 
 @Injectable()
 export class WebhookService {
