@@ -1,3 +1,7 @@
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { AttachedRollenError } from './errors/attached-rollen.error.js';
+import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -34,6 +38,8 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
+import { ServiceProviderError } from '../specification/error/service-provider.error.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -890,6 +896,98 @@ describe('ServiceProviderService', () => {
                 mockAllSchoolActivationsInVidisAngebote.length,
             );
             expect(serviceProviderRepo.deleteById).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('deleteByIdAuthorized', () => {
+        let permissions: ReturnType<typeof createPersonPermissionsMock>;
+        const schulstrukturknotenId: string = faker.string.uuid();
+        const mockServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+            providedOnSchulstrukturknoten: schulstrukturknotenId,
+        });
+        const serviceProviderId: ServiceProviderID = mockServiceProvider.id;
+
+        beforeEach(() => {
+            permissions = createPersonPermissionsMock();
+            serviceProviderRepo.findById.mockReset();
+            rolleRepo.findByServiceProviderIds.mockReset();
+            rollenerweiterungRepo.findByServiceProviderIds.mockReset();
+            serviceProviderRepo.deleteById.mockReset();
+        });
+
+        it('returns EntityNotFoundError if service provider does not exist', async () => {
+            serviceProviderRepo.findById.mockResolvedValue(undefined);
+            const result: Result<boolean, EntityNotFoundError> = await service.deleteByIdAuthorized(
+                permissions,
+                serviceProviderId,
+            );
+            expect(result.ok).toBe(false);
+            assert(!result.ok, 'Expected result to be an error');
+            expect(result.error).toBeInstanceOf(EntityNotFoundError);
+        });
+
+        it('returns MissingPermissionsError if user lacks permissions', async () => {
+            serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
+            // Both permissions return false
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(false);
+            const result: Result<boolean, MissingPermissionsError> = await service.deleteByIdAuthorized(
+                permissions,
+                serviceProviderId,
+            );
+            expect(result.ok).toBe(false);
+            assert(!result.ok, 'Expected result to be an error');
+            expect(result.error).toBeInstanceOf(MissingPermissionsError);
+        });
+
+        it('returns AttachedRollenError if attached Rollen exist', async () => {
+            serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
+            // Mock permission to return true for one of the relevant rights
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(
+                new Map([[serviceProviderId, [DoFactory.createRolle(true)]]]),
+            );
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
+            const result: Result<boolean, AttachedRollenError> = await service.deleteByIdAuthorized(
+                permissions,
+                serviceProviderId,
+            );
+            expect(result.ok).toBe(false);
+            assert(!result.ok, 'Expected result to be an error');
+            expect(result.error).toBeInstanceOf(AttachedRollenError);
+        });
+
+        it('returns AttachedRollenerweiterungenError if attached Rollenerweiterungen exist', async () => {
+            serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
+            // Mock permission to return true for one of the relevant rights
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
+                new Map([[serviceProviderId, [DoFactory.createRollenerweiterung(true)]]]),
+            );
+            const result: Result<boolean, AttachedRollenerweiterungenError> = await service.deleteByIdAuthorized(
+                permissions,
+                serviceProviderId,
+            );
+            expect(result.ok).toBe(false);
+            assert(!result.ok, 'Expected result to be an error');
+            expect(result.error).toBeInstanceOf(AttachedRollenerweiterungenError);
+        });
+
+        it('calls deleteById and returns Ok(true) on success', async () => {
+            serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
+            // Mock permission to return true for one of the relevant rights
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
+            serviceProviderRepo.deleteById.mockResolvedValue(true);
+            const result: Result<boolean, ServiceProviderError> = await service.deleteByIdAuthorized(
+                permissions,
+                serviceProviderId,
+            );
+            expect(result.ok).toBe(true);
+            assert(result.ok, 'Expected result to be successful');
+            expect(serviceProviderRepo.deleteById).toHaveBeenCalledWith(serviceProviderId);
+            expect(result.value).toBe(true);
         });
     });
 });

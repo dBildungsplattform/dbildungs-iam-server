@@ -33,6 +33,11 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { AttachedRollenError } from './errors/attached-rollen.error.js';
+import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -427,5 +432,60 @@ export class ServiceProviderService {
         }
 
         return 'image/svg+xml';
+    }
+
+    public async deleteByIdAuthorized(
+        permissions: IPersonPermissions,
+        id: ServiceProviderID,
+    ): Promise<
+        Result<
+            boolean,
+            EntityNotFoundError | MissingPermissionsError | AttachedRollenError | AttachedRollenerweiterungenError
+        >
+    > {
+        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(id);
+        if (!serviceProvider) {
+            return Err(new EntityNotFoundError('ServiceProvider', id));
+        }
+
+        const relevantSystemrechte: RollenSystemRecht[] = [
+            RollenSystemRecht.ANGEBOTE_VERWALTEN,
+            RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
+        ];
+        const hasPermission: boolean = (
+            await Promise.all(
+                relevantSystemrechte.map((systemrecht: RollenSystemRecht) =>
+                    permissions.hasSystemrechtAtOrganisation(
+                        serviceProvider.providedOnSchulstrukturknoten,
+                        systemrecht,
+                    ),
+                ),
+            )
+        ).some(Boolean);
+        if (!hasPermission) {
+            return Err(
+                new MissingPermissionsError('User does not have required permissions to delete this ServiceProvider'),
+            );
+        }
+
+        const rollen: Map<ServiceProviderID, Rolle<true>[]> = await this.rolleRepo.findByServiceProviderIds([id]);
+        const hasAttachedRollen: boolean = (rollen.get(id)?.length ?? 0) > 0;
+        if (hasAttachedRollen) {
+            return Err(new AttachedRollenError('ServiceProvider has attached Rollen and cannot be deleted', id));
+        }
+
+        const rollenerweiterungen: Map<ServiceProviderID, Rollenerweiterung<true>[]> =
+            await this.rollenerweiterungRepo.findByServiceProviderIds([id]);
+        const hasAttachedRollenerweiterungen: boolean = (rollenerweiterungen.get(id)?.length ?? 0) > 0;
+        if (hasAttachedRollenerweiterungen) {
+            return Err(
+                new AttachedRollenerweiterungenError(
+                    'ServiceProvider has attached Rollenerweiterungen and cannot be deleted',
+                    id,
+                ),
+            );
+        }
+
+        return Ok(await this.serviceProviderRepo.deleteById(id));
     }
 }

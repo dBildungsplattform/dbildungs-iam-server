@@ -1,19 +1,24 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
+    HttpCode,
+    HttpStatus,
     Param,
     Post,
     Query,
     StreamableFile,
     UnauthorizedException,
     UseFilters,
+    UseGuards,
 } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
@@ -22,41 +27,45 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
+import { uniq } from 'lodash-es';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { ApiOkResponsePaginated, RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
+import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
+import { AttachedRollenError } from '../domain/errors/attached-rollen.error.js';
+import { AttachedRollenerweiterungenError } from '../domain/errors/attached-rollenerweiterungen.error.js';
+import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
+import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
 import { ManageableServiceProviderWithReferencedObjects } from '../domain/types.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
+import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
+import { DbiamServiceProviderError } from './dbiam-service-provider.error.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
-import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
-import { ServiceProviderResponse } from './service-provider.response.js';
-import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweiterung-by-service-provider-id.pathparams.js';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
-import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
-import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationID, RolleID } from '../../../shared/types/index.js';
-import { uniq } from 'lodash-es';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
-import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
-import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
-import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
-import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
+import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
+import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweiterung-by-service-provider-id.pathparams.js';
+import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
-import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { ServiceProviderResponse } from './service-provider.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -370,5 +379,30 @@ export class ProviderController {
         }
 
         return new ServiceProviderResponse(result.value);
+    }
+
+    @Delete(':angebotId')
+    @UseGuards(StepUpGuard)
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiOperation({ description: 'Delete a service-provider (Angebot) by id.' })
+    @ApiNoContentResponse({ description: 'The service-provider was successfully deleted.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamServiceProviderError })
+    @ApiUnauthorizedResponse({ description: 'Not authorized.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions.' })
+    @ApiNotFoundResponse({ description: 'The service-provider does not exist.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+    public async deleteServiceProvider(
+        @Permissions() permissions: PersonPermissions,
+        @Param() params: AngebotByIdParams,
+    ): Promise<void> {
+        const result: Result<
+            boolean,
+            EntityNotFoundError | MissingPermissionsError | AttachedRollenError | AttachedRollenerweiterungenError
+        > = await this.serviceProviderService.deleteByIdAuthorized(permissions, params.angebotId);
+
+        if (!result.ok) {
+            throw result.error;
+        }
+        return;
     }
 }
