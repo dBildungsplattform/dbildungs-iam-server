@@ -9,6 +9,7 @@ import { OxSendService } from '../../ox/domain/ox-send.service.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { OXUserID } from '../../../../shared/types/ox-ids.types.js';
 import { LdapClientService } from '../../ldap/domain/ldap-client.service.js';
+import { WebhookService } from '../../webhook/domain/webhook.service.js';
 
 @Injectable()
 export class CronDeleteEmailsAddressesService {
@@ -19,6 +20,7 @@ export class CronDeleteEmailsAddressesService {
         private readonly oxService: OxService,
         private readonly oxSendService: OxSendService,
         private readonly ldapClientService: LdapClientService,
+        private readonly webhookService: WebhookService,
     ) {}
     public async deleteEmailAddresses(): Promise<void> {
         const markedForCron: Date = new Date();
@@ -146,5 +148,14 @@ export class CronDeleteEmailsAddressesService {
                 `skipping removal of ${prio1ToDelete.address} from DB for person ${spshPersonId}, because not all external representation could be deleted`,
             );
         }
+
+        // Webhook notify
+        this.webhookService.sendEmailsChanged({
+            spshPersonId,
+            newPrimaryEmail: prio0ToKeep.address,
+            newAlternativeEmail: undefined,
+            previousPrimaryEmail: prio0ToKeep.address,
+            previousAlternativeEmail: prio1ToDelete.address,
+        });
     }
 }

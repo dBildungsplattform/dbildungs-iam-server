@@ -12,6 +12,7 @@ import { LdapClientService } from '../../ldap/domain/ldap-client.service.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { Ok, Err } from '../../../../shared/util/result.js';
 import { OxNoSuchUserError } from '../../ox/error/ox-no-such-user.error.js';
+import { WebhookService } from '../../webhook/domain/webhook.service.js';
 
 describe('DeleteEmailsAddressesForSpshPersonService', () => {
     let module: TestingModule;
@@ -20,6 +21,7 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
     let oxServiceMock: DeepMocked<OxService>;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
     let loggerMock: DeepMocked<ClassLogger>;
+    let webhookServiceMock: DeepMocked<WebhookService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -38,6 +40,10 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
                     provide: LdapClientService,
                     useValue: createMock(LdapClientService),
                 },
+                {
+                    provide: WebhookService,
+                    useValue: createMock(WebhookService),
+                },
             ],
         })
             .overrideProvider(ClassLogger)
@@ -49,6 +55,7 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
         oxServiceMock = module.get(OxService);
         ldapClientServiceMock = module.get(LdapClientService);
         loggerMock = module.get(ClassLogger);
+        webhookServiceMock = module.get(WebhookService);
     });
 
     afterAll(async () => {
@@ -117,6 +124,13 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
         expect(loggerMock.info).toHaveBeenCalledWith(
             `Successfully deleted all email addresses for spshPerson ${spshPersonId} from DB.`,
         );
+        expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+            spshPersonId,
+            newPrimaryEmail: undefined,
+            newAlternativeEmail: undefined,
+            previousPrimaryEmail: email.address,
+            previousAlternativeEmail: undefined,
+        });
     });
 
     it('should log and skip OX deletion if oxUserCounter is missing', async () => {
@@ -140,6 +154,13 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
         );
         expect(oxServiceMock.deleteUser).not.toHaveBeenCalled();
         expect(emailAddressRepoMock.delete).toHaveBeenCalledWith(email);
+        expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+            spshPersonId,
+            newPrimaryEmail: undefined,
+            newAlternativeEmail: undefined,
+            previousPrimaryEmail: email.address,
+            previousAlternativeEmail: undefined,
+        });
     });
 
     it('should log and skip LDAP deletion if domain is missing', async () => {
@@ -163,6 +184,13 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
         );
         expect(ldapClientServiceMock.deletePerson).not.toHaveBeenCalled();
         expect(emailAddressRepoMock.delete).toHaveBeenCalledWith(email);
+        expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+            spshPersonId,
+            newPrimaryEmail: undefined,
+            newAlternativeEmail: undefined,
+            previousPrimaryEmail: email.address,
+            previousAlternativeEmail: undefined,
+        });
     });
 
     it('should not delete from DB if OX deletion fails', async () => {
@@ -186,6 +214,13 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
         expect(loggerMock.warning).toHaveBeenCalledWith(
             `Could not delete all external representations for spshPerson ${spshPersonId}. Keeping email addresses in DB with status TO_BE_DELETED for retry.`,
         );
+        expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+            spshPersonId,
+            newPrimaryEmail: undefined,
+            newAlternativeEmail: undefined,
+            previousPrimaryEmail: email.address,
+            previousAlternativeEmail: undefined,
+        });
     });
 
     it('should not delete from DB if LDAP deletion fails', async () => {
@@ -209,6 +244,13 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
         expect(loggerMock.warning).toHaveBeenCalledWith(
             `Could not delete all external representations for spshPerson ${spshPersonId}. Keeping email addresses in DB with status TO_BE_DELETED for retry.`,
         );
+        expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+            spshPersonId,
+            newPrimaryEmail: undefined,
+            newAlternativeEmail: undefined,
+            previousPrimaryEmail: email.address,
+            previousAlternativeEmail: undefined,
+        });
     });
 
     it('should log info if OX user does not exist (OxNoSuchUserError)', async () => {
@@ -233,5 +275,12 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
             expect.stringContaining('does not exist in Ox anymore. Continuing deletion process.'),
         );
         expect(emailAddressRepoMock.delete).toHaveBeenCalledWith(email);
+        expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+            spshPersonId,
+            newPrimaryEmail: undefined,
+            newAlternativeEmail: undefined,
+            previousPrimaryEmail: email.address,
+            previousAlternativeEmail: undefined,
+        });
     });
 });
