@@ -398,7 +398,7 @@ export class ProviderController {
             throw result.error;
         }
 
-        this.logger.info(`ServiceProvider wurden mit Id ${angebotId} erfolgreich aktualisiert.`);
+        this.logger.info(`ServiceProvider mit Id ${angebotId} erfolgreich aktualisiert.`);
         return new ServiceProviderResponse(result.value);
     }
 }
