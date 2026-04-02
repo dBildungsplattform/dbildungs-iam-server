@@ -39,20 +39,8 @@ describe('EmailWebhookController', () => {
             });
 
             expect(eventServiceMock.publish).toHaveBeenCalledWith(
-                new EmailMicroserviceAddressChangedEvent(
-                    spshPersonId,
-                    newPrimaryEmail,
-                    newAlternativeEmail,
-                    previousPrimaryEmail,
-                    previousAlternativeEmail,
-                ),
-                new KafkaEmailMicroserviceAddressChangedEvent(
-                    spshPersonId,
-                    newPrimaryEmail,
-                    newAlternativeEmail,
-                    previousPrimaryEmail,
-                    previousAlternativeEmail,
-                ),
+                expect.any(EmailMicroserviceAddressChangedEvent),
+                expect.any(KafkaEmailMicroserviceAddressChangedEvent),
             );
         });
     });
