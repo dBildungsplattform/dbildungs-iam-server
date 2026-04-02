@@ -4,7 +4,7 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { Err, Ok, UnionToResult } from '../../../shared/util/result.js';
 import { findAllowedRollen } from '../../../shared/util/rollen.helper.js';
-import { isPersonPermissions, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -24,7 +24,6 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import {
     EscalatedPermissionAtOrga,
     EscalatedPersonPermissions,
-    isEscalatedPersonPermissions,
 } from '../../authentication/domain/escalated-person-permissions.js';
 import { EscalatedPersonPermissionsFactory } from '../../authentication/domain/escalated-person-permissions.factory.js';
 
@@ -234,19 +233,8 @@ export class LandesbediensteterWorkflowAggregate {
 
         const existingPKs: DbiamPersonenkontextBodyParams[] = await this.personenkontextRepo.findByPerson(personId);
 
-        let permissionsToUse: EscalatedPersonPermissions;
-        if (isEscalatedPersonPermissions(permissions)) {
-            permissionsToUse = permissions;
-            permissionsToUse.extendEscalation(
-                existingPKs.map(
-                    (createPersonenkontext: DbiamPersonenkontextBodyParams): EscalatedPermissionAtOrga => ({
-                        orgaId: createPersonenkontext.organisationId,
-                        systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN, RollenSystemRechtEnum.PERSONEN_LESEN],
-                    }),
-                ),
-            );
-        } else if (isPersonPermissions(permissions)) {
-            permissionsToUse = await this.escalatedPersonPermissionsFactory.fromPersonPermissions(
+        const escalatedPermissions: EscalatedPersonPermissions =
+            await this.escalatedPersonPermissionsFactory.fromPermissions(
                 permissions,
                 existingPKs.map(
                     (createPersonenkontext: DbiamPersonenkontextBodyParams): EscalatedPermissionAtOrga => ({
@@ -255,16 +243,13 @@ export class LandesbediensteterWorkflowAggregate {
                     }),
                 ),
             );
-        } else {
-            throw new Error('TBD');
-        }
 
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             personId,
             lastModified,
             count,
             existingPKs.concat(newPersonenkontexte),
-            permissionsToUse,
+            escalatedPermissions,
             personalnummer,
         );
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();

@@ -11,12 +11,8 @@ import { PersonenkontexteUpdateError } from './error/personenkontexte-update.err
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamCreatePersonenkontextBodyParams } from '../api/param/dbiam-create-personenkontext.body.params.js';
 import { OperationContext } from './personenkontext.enums.js';
-import {
-    EscalatedPermissionAtOrga,
-    isEscalatedPersonPermissions,
-} from '../../authentication/domain/escalated-person-permissions.js';
+import { EscalatedPermissionAtOrga } from '../../authentication/domain/escalated-person-permissions.js';
 import { EscalatedPersonPermissionsFactory } from '../../authentication/domain/escalated-person-permissions.factory.js';
-import { isPersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 

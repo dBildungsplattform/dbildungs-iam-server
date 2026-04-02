@@ -59,6 +59,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let organisationRepo: OrganisationRepository;
     let rolleRepo: RolleRepo;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
+    let escalatedPersonPermissionsMock: DeepMocked<PersonPermissions>;
     let personRepo: PersonRepository;
     let personenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personFactory: PersonFactory;
@@ -68,6 +69,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
     beforeAll(async () => {
         personPermissionsMock = createPersonPermissionsMock();
+        escalatedPersonPermissionsMock = createPersonPermissionsMock();
         escalatedPersonPermissionsFactoryMock = createMock(EscalatedPersonPermissionsFactory);
 
         const module: TestingModule = await Test.createTestingModule({
@@ -121,7 +123,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         app = module.createNestApplication();
         await app.init();
         escalatedPersonPermissionsFactoryMock.fromPermissions.mockResolvedValue(
-            personPermissionsMock as unknown as EscalatedPersonPermissions,
+            escalatedPersonPermissionsMock as unknown as EscalatedPersonPermissions,
         );
     }, 10000000);
 
@@ -172,7 +174,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             }
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-            personPermissionsMock.canModifyPerson.mockResolvedValue(true);
+            escalatedPersonPermissionsMock.canModifyPerson.mockResolvedValue(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')
@@ -209,7 +211,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             }
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-            personPermissionsMock.canModifyPerson.mockResolvedValue(true);
+            escalatedPersonPermissionsMock.canModifyPerson.mockResolvedValue(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')
@@ -240,7 +242,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
             personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+            escalatedPersonPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/personenkontext-workflow')

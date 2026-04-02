@@ -29,6 +29,8 @@ import { LandesbediensteterWorkflowAggregate } from './landesbediensteter-workfl
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 import { createPersonenkontexteUpdateMock } from '../../../../test/utils/workflow.mocks.js';
 import { MockedObject } from 'vitest';
+import { EscalatedPersonPermissionsFactory } from '../../authentication/domain/escalated-person-permissions.factory.js';
+import { EscalatedPersonPermissions } from '../../authentication/domain/escalated-person-permissions.js';
 
 describe('LandesbediensteterWorkflow', () => {
     let module: TestingModule;
@@ -48,6 +50,9 @@ describe('LandesbediensteterWorkflow', () => {
     const personenkontextWorkflowSharedKernelMock: DeepMocked<PersonenkontextWorkflowSharedKernel> = createMock(
         PersonenkontextWorkflowSharedKernel,
     );
+    const escalatedPersonPermissionsFactoryMock: DeepMocked<EscalatedPersonPermissionsFactory> = createMock(
+        EscalatedPersonPermissionsFactory,
+    );
 
     function mockCheckPermissions(permissionsMock: DeepMocked<PersonPermissions>, success: boolean): void {
         permissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(success);
@@ -64,8 +69,15 @@ describe('LandesbediensteterWorkflow', () => {
                 { provide: DbiamPersonenkontextFactory, useValue: personenkontextFactoryMock },
                 { provide: PersonLandesbediensteterSearchService, useValue: landesbediensteteServiceMock },
                 { provide: PersonenkontextWorkflowSharedKernel, useValue: personenkontextWorkflowSharedKernelMock },
+                {
+                    provide: EscalatedPersonPermissionsFactory,
+                    useValue: escalatedPersonPermissionsFactoryMock,
+                },
             ],
-        }).compile();
+        })
+            .overrideProvider(EscalatedPersonPermissionsFactory)
+            .useValue(escalatedPersonPermissionsFactoryMock)
+            .compile();
 
         factory = module.get(LandesbediensteterWorkflowFactory);
     });
@@ -371,6 +383,11 @@ describe('LandesbediensteterWorkflow', () => {
             ];
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            const escalatedPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            escalatedPersonPermissionsFactoryMock.fromPermissions.mockResolvedValue(
+                escalatedPermissions as unknown as EscalatedPersonPermissions,
+            );
+
             const personalnummer: string = faker.string.numeric(7);
             personRepoMock.findById.mockResolvedValueOnce(DoFactory.createPerson(true));
             landesbediensteteServiceMock.personIsSearchable.mockResolvedValueOnce({ ok: true, value: undefined });
