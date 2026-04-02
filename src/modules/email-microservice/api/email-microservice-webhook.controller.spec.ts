@@ -1,4 +1,4 @@
-import { faker } from '@faker-js/faker/.';
+import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { EmailConfigTestModule, EventSystemTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
