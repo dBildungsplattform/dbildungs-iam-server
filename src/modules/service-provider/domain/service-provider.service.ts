@@ -33,6 +33,9 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
+import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -399,6 +402,40 @@ export class ServiceProviderService {
         );
 
         this.logger.info(`ServiceProvider für VIDIS-Angebote erfolgreich aktualisiert.`);
+    }
+
+    public async updateServiceProvider(
+        permissions: PersonPermissions,
+        angebotId: ServiceProviderID,
+        updateServiceProviderBodyParams: UpdateServiceProviderBodyParams,
+    ): Promise<Result<ServiceProvider<true>, DomainError>> {
+        if (!updateServiceProviderBodyParams.name && !updateServiceProviderBodyParams.url) {
+            return {
+                ok: false,
+                error: new MissingAttributeError(
+                    'At least one of the following parameters must be provided: name, url',
+                ),
+            };
+        }
+        const existingServiceProvider: Option<ServiceProvider<true>> =
+            await this.serviceProviderRepo.findById(angebotId);
+        if (!existingServiceProvider) {
+            throw new EntityNotFoundError();
+        }
+
+        if (updateServiceProviderBodyParams.name) {
+            existingServiceProvider.name = updateServiceProviderBodyParams.name;
+        }
+        if (updateServiceProviderBodyParams.url) {
+            existingServiceProvider.url = updateServiceProviderBodyParams.url;
+        }
+        if (updateServiceProviderBodyParams.kategorie) {
+            existingServiceProvider.kategorie = updateServiceProviderBodyParams.kategorie;
+        }
+
+        const updatedServiceProvider: Promise<Result<ServiceProvider<true>, DomainError>> =
+            this.serviceProviderRepo.update(permissions, existingServiceProvider);
+        return updatedServiceProvider;
     }
 
     /**
