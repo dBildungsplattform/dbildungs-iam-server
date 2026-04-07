@@ -31,6 +31,7 @@ import { DbiamPersonenkontextFactory } from '../personenkontext/domain/dbiam-per
 import { ConfigService } from '@nestjs/config';
 import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
 import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
+import { EscalatedPersonPermissionsFactory } from '../authentication/domain/escalated-person-permissions.factory.js';
 
 class UnknownError extends DomainError {
     public constructor(message: string) {
@@ -52,6 +53,9 @@ describe('CronController', () => {
     let userLockRepositoryMock: DeepMocked<UserLockRepository>;
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
     let emailAddressDeletionServiceMock: DeepMocked<EmailAddressDeletionService>;
+    const escalatedPersonPermissionsFactoryMock: DeepMocked<EscalatedPersonPermissionsFactory> = createMock(
+        EscalatedPersonPermissionsFactory,
+    );
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -102,9 +106,16 @@ describe('CronController', () => {
                     provide: ServiceProviderService,
                     useValue: createMock(ServiceProviderService),
                 },
+                {
+                    provide: EscalatedPersonPermissionsFactory,
+                    useValue: escalatedPersonPermissionsFactoryMock,
+                },
             ],
             controllers: [CronController],
-        }).compile();
+        })
+            .overrideProvider(EscalatedPersonPermissionsFactory)
+            .useValue(escalatedPersonPermissionsFactoryMock)
+            .compile();
 
         cronController = module.get(CronController);
         keycloakUserServiceMock = module.get(KeycloakUserService);
