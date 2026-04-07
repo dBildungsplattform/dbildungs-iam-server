@@ -10,8 +10,9 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
-import { Err, Ok } from '../../../shared/util/result.js';
+import { Err } from '../../../shared/util/result.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -128,8 +129,19 @@ export class ServiceProviderService {
             return undefined;
         }
 
+        // Calculate permitted orgas for delete
+        const permittedDeleteOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN],
+            true,
+            false,
+        );
         const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
-            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider]);
+            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
+                [serviceProvider],
+                undefined,
+                undefined,
+                permittedDeleteOrgas,
+            );
 
         return enrichedServiceProviders[0];
     }
@@ -152,7 +164,12 @@ export class ServiceProviderService {
             );
 
         const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
-            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(serviceProviders, 20);
+            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
+                serviceProviders,
+                20,
+                undefined,
+                permittedOrgas,
+            );
 
         return [enrichedServiceProviders, count];
     }
@@ -187,11 +204,18 @@ export class ServiceProviderService {
 
         const [serviceProviders, total]: [ServiceProvider<true>[], number] = result;
 
+        // Calculate permitted orgas for delete
+        const permittedDeleteOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN],
+            true,
+            false,
+        );
         const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
             await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
                 serviceProviders,
                 20,
                 organisationId,
+                permittedDeleteOrgas,
             );
 
         return { ok: true, value: [enrichedServiceProviders, total] };
@@ -201,6 +225,7 @@ export class ServiceProviderService {
         serviceProviders: ServiceProvider<true>[],
         limitRoles?: number,
         organisationId?: OrganisationID,
+        permittedDeleteOrgas?: PermittedOrgas,
     ): Promise<ManageableServiceProviderWithReferencedObjects[]> {
         const serviceProvidersIds: ServiceProviderID[] = serviceProviders.map((sp: ServiceProvider<true>) => sp.id);
 
@@ -216,13 +241,25 @@ export class ServiceProviderService {
             ),
         ]);
 
+        let permittedDeleteOrgaSet: Set<string> = new Set();
+        if (permittedDeleteOrgas) {
+            if (!permittedDeleteOrgas.all) {
+                permittedDeleteOrgaSet = new Set(permittedDeleteOrgas.orgaIds);
+            }
+        }
+
         const serviceProvidersWithData: ManageableServiceProviderWithReferencedObjects[] = serviceProviders.map(
-            (serviceProvider: ServiceProvider<true>) => ({
-                serviceProvider,
-                organisation: organisationen.get(serviceProvider.providedOnSchulstrukturknoten)!,
-                rollen: rollen.get(serviceProvider.id) ?? [],
-                rollenerweiterungen: rollenerweiterungen.get(serviceProvider.id) ?? [],
-            }),
+            (serviceProvider: ServiceProvider<true>) => {
+                return {
+                    serviceProvider,
+                    organisation: organisationen.get(serviceProvider.providedOnSchulstrukturknoten)!,
+                    rollen: rollen.get(serviceProvider.id) ?? [],
+                    rollenerweiterungen: rollenerweiterungen.get(serviceProvider.id) ?? [],
+                    isDeleteAuthorized:
+                        permittedDeleteOrgas?.all ||
+                        permittedDeleteOrgaSet.has(serviceProvider.providedOnSchulstrukturknoten),
+                };
+            },
         );
 
         // Call the third method internally to enrich rollenerweiterungen with names
@@ -434,7 +471,7 @@ export class ServiceProviderService {
     }
 
     public async deleteByIdAuthorized(
-        permissions: PersonPermissions, // TODO: switch to IPersonPermissions after 3289 is merged
+        permissions: IPersonPermissions,
         id: ServiceProviderID,
     ): Promise<
         Result<
@@ -442,31 +479,7 @@ export class ServiceProviderService {
             EntityNotFoundError | MissingPermissionsError | AttachedRollenError | AttachedRollenerweiterungenError
         >
     > {
-        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(id);
-        if (!serviceProvider) {
-            return Err(new EntityNotFoundError('ServiceProvider', id));
-        }
-
-        const relevantSystemrechte: RollenSystemRecht[] = [
-            RollenSystemRecht.ANGEBOTE_VERWALTEN,
-            RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
-        ];
-
-        const orgasWithSystemrecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            relevantSystemrechte,
-            true,
-            false,
-        );
-        const hasPermission: boolean =
-            orgasWithSystemrecht.all ||
-            orgasWithSystemrecht.orgaIds.includes(serviceProvider.providedOnSchulstrukturknoten);
-        if (!hasPermission) {
-            return Err(
-                new MissingPermissionsError('User does not have required permissions to delete this ServiceProvider'),
-            );
-        }
-
-        const rollen: Map<ServiceProviderID, Rolle<true>[]> = await this.rolleRepo.findByServiceProviderIds([id]);
+        const rollen: Map<ServiceProviderID, Rolle<true>[]> = await this.rolleRepo.findByServiceProviderIds([id], 1);
         const hasAttachedRollen: boolean = (rollen.get(id)?.length ?? 0) > 0;
         if (hasAttachedRollen) {
             return Err(new AttachedRollenError('ServiceProvider has attached Rollen and cannot be deleted', id));
@@ -484,6 +497,6 @@ export class ServiceProviderService {
             );
         }
 
-        return Ok(await this.serviceProviderRepo.deleteById(id));
+        return this.serviceProviderRepo.deleteByIdAuthorized(permissions, id);
     }
 }

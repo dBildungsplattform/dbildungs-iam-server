@@ -21,14 +21,14 @@ export class ServiceProviderErrorFilter implements ExceptionFilter<ServiceProvid
         [
             AttachedRollenError.name,
             new DbiamServiceProviderError({
-                code: 400,
+                code: 409,
                 i18nKey: ServiceProviderErrorI18nTypes.ATTACHED_ROLLEN,
             }),
         ],
         [
             AttachedRollenerweiterungenError.name,
             new DbiamServiceProviderError({
-                code: 400,
+                code: 409,
                 i18nKey: ServiceProviderErrorI18nTypes.ATTACHED_ROLLENERWEITERUNGEN,
             }),
         ],

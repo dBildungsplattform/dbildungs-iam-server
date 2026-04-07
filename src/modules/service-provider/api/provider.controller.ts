@@ -16,6 +16,7 @@ import {
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
+    ApiConflictResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNoContentResponse,
@@ -57,7 +58,6 @@ import { ManageableServiceProviderWithReferencedObjects } from '../domain/types.
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
-import { DbiamServiceProviderError } from './dbiam-service-provider.error.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
@@ -255,6 +255,7 @@ export class ProviderController {
                         spWithData.organisation,
                         spWithData.rollen,
                         spWithData.rollenerweiterungenWithName ?? [],
+                        spWithData.isDeleteAuthorized,
                     ),
             ),
         });
@@ -303,6 +304,7 @@ export class ProviderController {
                         spWithData.organisation,
                         spWithData.rollen,
                         spWithData.rollenerweiterungenWithName ?? [],
+                        spWithData.isDeleteAuthorized,
                     ),
             ),
         });
@@ -386,7 +388,9 @@ export class ProviderController {
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete a service-provider (Angebot) by id.' })
     @ApiNoContentResponse({ description: 'The service-provider was successfully deleted.' })
-    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamServiceProviderError })
+    @ApiConflictResponse({
+        description: 'The service-provider has attached rollenerweiterungen or rollen and cannot be deleted.',
+    })
     @ApiUnauthorizedResponse({ description: 'Not authorized.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions.' })
     @ApiNotFoundResponse({ description: 'The service-provider does not exist.' })
