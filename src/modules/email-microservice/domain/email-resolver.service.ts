@@ -51,6 +51,39 @@ export class EmailResolverService {
         }
     }
 
+    public async findEmailsBySpshPersons(
+        personIds: string[],
+    ): Promise<Record<string, PersonEmailResponse | undefined>> {
+        try {
+            const response: AxiosResponse<Record<string, EmailAddressResponse>> = await lastValueFrom(
+                this.httpService.post(
+                    this.getEndpoint() + `${EmailResolverService.readPath}/spshpersons`,
+                    {
+                        personIds: personIds,
+                    },
+                    {
+                        headers: {
+                            'api-key': this.getApiKey(),
+                        },
+                    },
+                ),
+            );
+            const result: Record<string, PersonEmailResponse | undefined> = {};
+            for (const personId of personIds) {
+                if (response.data[personId] !== undefined) {
+                    const status: EmailAddressStatus = this.mapStatus(response.data[personId].status);
+                    result[personId] = new PersonEmailResponse(status, response.data[personId].address);
+                } else {
+                    result[personId] = undefined;
+                }
+            }
+            return result;
+        } catch (error) {
+            this.logger.logUnknownAsError(`Failed to fetch emails for persons`, error);
+            return {};
+        }
+    }
+
     public async findEmailBySpshPersonAsEmailAddressResponse(
         personId: string,
     ): Promise<Result<EmailAddressResponse | undefined, DomainError>> {

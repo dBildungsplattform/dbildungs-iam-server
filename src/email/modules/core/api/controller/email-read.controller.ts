@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseFilters, UseGuards } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiInternalServerErrorResponse,
@@ -99,6 +99,16 @@ export class EmailReadController {
         return new EmailAddressResponse(emailAddress, latestStatus, this.oxService.contextID);
     }
 
+    @Post('spshpersons')
+    @Public()
+    @ApiOperation({ description: 'Get email-addresses by personIds.' })
+    @ApiOkResponse({
+        description: 'The email-addresses for corresponding persons were successfully returned.',
+        type: [EmailAddressResponse],
+    })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while getting email-addresses by personIds.',
+    })
     public async findEmailAddressesByPersonIds(
         @Body() findEmailAddressBySpshPersonIdsBodyParams: FindEmailAddressBySpshPersonIdsBodyParams,
     ): Promise<Record<string, EmailAddressResponse | null>> {
