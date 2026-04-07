@@ -1,23 +1,25 @@
-import { UseFilters, Controller, Post, Param, Body, HttpCode } from '@nestjs/common';
+import { Body, Controller, HttpCode, Param, Post, UseFilters } from '@nestjs/common';
 import {
-    ApiTags,
     ApiBearerAuth,
-    ApiOAuth2,
-    ApiOperation,
     ApiInternalServerErrorResponse,
     ApiNoContentResponse,
+    ApiNotFoundResponse,
+    ApiOAuth2,
+    ApiOperation,
+    ApiTags,
 } from '@nestjs/swagger';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { ApplyRollenerweiterungPathParams } from './apply-rollenerweiterung-changes.path.params.js';
-import { ApplyRollenerweiterungBodyParams } from './apply-rollenerweiterung.body.params.js';
-import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
-import { RollenerweiterungExceptionFilter } from './rollenerweiterung-exception-filter.js';
-import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
-import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
-import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterungen-service.js';
-import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
 import { uniq } from 'lodash-es';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterungen-service.js';
+import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
+import { ApplyRollenerweiterungPathParams } from './apply-rollenerweiterung-changes.path.params.js';
+import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
+import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
+import { ApplyRollenerweiterungBodyParams } from './apply-rollenerweiterung.body.params.js';
+import { DbiamApplyRollenerweiterungMultiError } from './dbiam-apply-rollenerweiterung-multi.error.js';
+import { RollenerweiterungExceptionFilter } from './rollenerweiterung-exception-filter.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @UseFilters(new RollenerweiterungExceptionFilter(), new ApplyRollenerweiterungMultiExceptionFilter())
@@ -36,8 +38,13 @@ export class RollenerweiterungController {
     @ApiNoContentResponse({
         description: 'Changes applied successfully.',
     })
+    @ApiNotFoundResponse({
+        description: 'One or more of the specified objects were not found.',
+        type: () => DbiamApplyRollenerweiterungMultiError,
+    })
     @ApiInternalServerErrorResponse({
         description: 'Internal server error',
+        type: () => DbiamApplyRollenerweiterungMultiError,
     })
     @HttpCode(204)
     public async applyRollenerweiterungChanges(

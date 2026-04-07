@@ -65,6 +65,7 @@
                 "BULK_VERWALTEN",
                 "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
                 "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
+                "ROLLEN_ERWEITERN",
                 "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
             ],
             "serviceProviderIds": [5, 8, 9, 10, 11]
