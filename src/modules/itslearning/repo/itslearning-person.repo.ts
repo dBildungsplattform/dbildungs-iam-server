@@ -53,7 +53,11 @@ export class ItslearningPersonRepo {
         return createResult;
     }
 
-    public async updateEmail(personId: PersonID, email: string, syncId?: string): Promise<Option<DomainError>> {
+    public async updateEmail(
+        personId: PersonID,
+        email: string | undefined,
+        syncId?: string,
+    ): Promise<Option<DomainError>> {
         const person: Option<PersonResponse> = await this.readPerson(personId, syncId);
 
         // Person is not in itslearning, should not update the e-mail

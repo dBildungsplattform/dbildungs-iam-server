@@ -26,6 +26,8 @@ import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-ren
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
+import { KafkaEmailMicroserviceAddressChangedEvent } from '../../../shared/events/email-microservice/kafka-email-microservice-address-changed.event.js';
+import { EmailMicroserviceAddressChangedEvent } from '../../../shared/events/email-microservice/email-microservice-address-changed.event.js';
 
 @Injectable()
 export class ItsLearningPersonsEventHandler {
@@ -112,6 +114,37 @@ export class ItsLearningPersonsEventHandler {
             const updateError: Option<DomainError> = await this.itslearningPersonRepo.updateEmail(
                 event.personId,
                 event.primaryEmail,
+                `${event.eventID}-EMAIL-UPDATE`,
+            );
+
+            if (updateError) {
+                this.logger.error(
+                    `[EventID: ${event.eventID}] Could not update E-Mail for person with ID ${event.personId}!`,
+                );
+            } else {
+                this.logger.info(`[EventID: ${event.eventID}] Updated E-Mail for person with ID ${event.personId}!`);
+            }
+        });
+    }
+
+    @KafkaEventHandler(KafkaEmailMicroserviceAddressChangedEvent)
+    @EventHandler(EmailMicroserviceAddressChangedEvent)
+    @EnsureRequestContext()
+    public async microserviceEmailChangedEventHandler(event: EmailMicroserviceAddressChangedEvent): Promise<void> {
+        if (!this.ENABLED) {
+            return this.logger.info(
+                `[EventID: ${event.eventID}] Not enabled, ignoring email update from microservice.`,
+            );
+        }
+
+        await this.personUpdateMutex.runExclusive(async () => {
+            this.logger.info(
+                `[EventID: ${event.eventID}] Received EmailMicroserviceAddressChangedEvent, ${event.personId}`,
+            );
+
+            const updateError: Option<DomainError> = await this.itslearningPersonRepo.updateEmail(
+                event.personId,
+                event.newPrimaryAddress,
                 `${event.eventID}-EMAIL-UPDATE`,
             );
 
