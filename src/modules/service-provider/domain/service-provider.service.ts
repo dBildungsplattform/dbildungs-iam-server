@@ -432,6 +432,12 @@ export class ServiceProviderService {
         if (updateServiceProviderBodyParams.kategorie) {
             existingServiceProvider.kategorie = updateServiceProviderBodyParams.kategorie;
         }
+        if (updateServiceProviderBodyParams.nachtraeglichZuweisbar) {
+            existingServiceProvider.merkmale.push(ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR);
+        }
+        if (updateServiceProviderBodyParams.verfuegbarFuerRollenerweiterung) {
+            existingServiceProvider.merkmale.push(ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG);
+        }
 
         const updatedServiceProvider: Promise<Result<ServiceProvider<true>, DomainError>> =
             this.serviceProviderRepo.update(permissions, existingServiceProvider);
