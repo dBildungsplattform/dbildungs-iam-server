@@ -433,7 +433,6 @@ export class ServiceProviderService {
         return 'image/svg+xml';
     }
 
-
     public async deleteByIdAuthorized(
         permissions: PersonPermissions, // TODO: switch to IPersonPermissions after 3289 is merged
         id: ServiceProviderID,
@@ -453,8 +452,14 @@ export class ServiceProviderService {
             RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
         ];
 
-        const orgasWithSystemrecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(relevantSystemrechte, true, false);
-        const hasPermission: boolean = orgasWithSystemrecht.all || orgasWithSystemrecht.orgaIds.includes(serviceProvider.providedOnSchulstrukturknoten);
+        const orgasWithSystemrecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            relevantSystemrechte,
+            true,
+            false,
+        );
+        const hasPermission: boolean =
+            orgasWithSystemrecht.all ||
+            orgasWithSystemrecht.orgaIds.includes(serviceProvider.providedOnSchulstrukturknoten);
         if (!hasPermission) {
             return Err(
                 new MissingPermissionsError('User does not have required permissions to delete this ServiceProvider'),
