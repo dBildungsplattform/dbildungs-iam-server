@@ -41,6 +41,9 @@ import { ManageableServiceProvidersForOrganisationParams } from './manageable-se
 import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
 import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweiterung-by-service-provider-id.pathparams.js';
 import { Err, Ok } from '../../../shared/util/result.js';
+import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
+import { MissingAttributeError } from '../../../shared/error/index.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
@@ -49,6 +52,7 @@ describe('Provider Controller Test', () => {
     let serviceProviderFactoryMock: DeepMocked<ServiceProviderFactory>;
     let providerController: ProviderController;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
+    let loggerMock: DeepMocked<ClassLogger>;
     const oidcClientMock: DeepMocked<Client> = {
         grant: vi.fn(),
         userinfo: vi.fn(),
@@ -78,12 +82,15 @@ describe('Provider Controller Test', () => {
             .useValue(createMock<ServiceProviderRepo>(ServiceProviderRepo))
             .overrideProvider(ServiceProviderFactory)
             .useValue(createMock<ServiceProviderFactory>(ServiceProviderFactory))
+            .overrideProvider(ClassLogger)
+            .useValue(createMock(ClassLogger))
             .compile();
 
         serviceProviderServiceMock = module.get<DeepMocked<ServiceProviderService>>(ServiceProviderService);
         serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         serviceProviderFactoryMock = module.get<DeepMocked<ServiceProviderFactory>>(ServiceProviderFactory);
         providerController = module.get(ProviderController);
+        loggerMock = module.get<DeepMocked<ClassLogger>>(ClassLogger);
         personPermissionsMock = createPersonPermissionsMock();
 
         app = module.createNestApplication();
@@ -114,6 +121,7 @@ describe('Provider Controller Test', () => {
                 rollenerweiterungRepoMock,
                 rolleRepoMock,
                 organisationRepositoryMock,
+                loggerMock,
             );
         });
 
@@ -719,6 +727,53 @@ describe('Provider Controller Test', () => {
             await expect(() =>
                 providerController.createServiceProvider(personPermissionsMock, body),
             ).rejects.toBeInstanceOf(MissingPermissionsError);
+        });
+    });
+
+    describe('updateServiceProvider', () => {
+        const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+        const angebotId: string = faker.string.uuid();
+
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+
+        it('should update service provider when user has permission', async () => {
+            const body: UpdateServiceProviderBodyParams = new UpdateServiceProviderBodyParams();
+            Object.assign(body, {
+                name: faker.company.name(),
+                url: faker.internet.url(),
+            });
+
+            const updatedEntity: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+
+            serviceProviderServiceMock.updateServiceProvider.mockResolvedValueOnce(Ok(updatedEntity));
+
+            const result: ServiceProviderResponse = await providerController.updateServiceProvider(
+                permissions,
+                angebotId,
+                body,
+            );
+
+            expect(serviceProviderServiceMock.updateServiceProvider).toHaveBeenCalledWith(permissions, angebotId, body);
+
+            expect(result).toBeDefined();
+            expect(result).toBeInstanceOf(ServiceProviderResponse);
+            expect(result.id).toBe(updatedEntity.id);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `ServiceProvider mit Id ${angebotId} erfolgreich aktualisiert.`,
+            );
+        });
+
+        it('should throw the error when service returns Err', async () => {
+            const body: UpdateServiceProviderBodyParams = { name: 'Invalid' };
+            const error: MissingAttributeError = new MissingAttributeError('Missing attribute');
+
+            serviceProviderServiceMock.updateServiceProvider.mockResolvedValueOnce(Err(error));
+
+            await expect(providerController.updateServiceProvider(permissions, angebotId, body)).rejects.toThrow(
+                MissingAttributeError,
+            );
         });
     });
 });
