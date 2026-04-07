@@ -917,8 +917,6 @@ describe('ServiceProviderService', () => {
                 name: 'New Name',
                 url: 'https://new-url.com',
                 kategorie: ServiceProviderKategorie.EMAIL,
-                nachtraeglichZuweisbar: true,
-                verfuegbarFuerRollenerweiterung: true,
             };
 
             const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(

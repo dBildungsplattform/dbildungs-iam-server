@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ServiceProviderKategorie } from '../domain/service-provider.enum.js';
-import { IsBoolean, IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 import { IsDIN91379AEXT } from '../../../shared/util/din-91379-validation.js';
 
 export class UpdateServiceProviderBodyParams {
@@ -22,14 +22,4 @@ export class UpdateServiceProviderBodyParams {
     @IsEnum(ServiceProviderKategorie)
     @IsOptional()
     public kategorie?: ServiceProviderKategorie;
-
-    @ApiProperty({ required: false })
-    @IsBoolean()
-    @IsOptional()
-    public nachtraeglichZuweisbar?: boolean;
-
-    @ApiProperty({ required: false })
-    @IsBoolean()
-    @IsOptional()
-    public verfuegbarFuerRollenerweiterung?: boolean;
 }
