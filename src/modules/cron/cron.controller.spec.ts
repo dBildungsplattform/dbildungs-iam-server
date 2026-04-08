@@ -31,7 +31,7 @@ import { DbiamPersonenkontextFactory } from '../personenkontext/domain/dbiam-per
 import { ConfigService } from '@nestjs/config';
 import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
 import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
-import { EscalatedPersonPermissionsFactory } from '../authentication/domain/escalated-person-permissions.factory.js';
+import { EscalatedPersonPermissionsFactory } from '../permission/escalated-person-permissions.factory.js';
 
 class UnknownError extends DomainError {
     public constructor(message: string) {

@@ -31,8 +31,8 @@ import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js
 import { MockedObject } from 'vitest';
 import { createPersonenkontexteUpdateMock } from '../../../../test/utils/workflow.mocks.js';
 import { Ok } from '../../../shared/util/result.js';
-import { EscalatedPersonPermissionsFactory } from '../../authentication/domain/escalated-person-permissions.factory.js';
-import { EscalatedPersonPermissions } from '../../authentication/domain/escalated-person-permissions.js';
+import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
+import { EscalatedPersonPermissions } from '../../permission/escalated-person-permissions.js';
 
 describe('PersonenkontextCreationService', () => {
     let module: TestingModule;

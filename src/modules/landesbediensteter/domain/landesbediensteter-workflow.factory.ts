@@ -8,7 +8,7 @@ import { LandesbediensteterWorkflowAggregate } from './landesbediensteter-workfl
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { PersonLandesbediensteterSearchService } from '../../person/person-landesbedienstete-search/person-landesbediensteter-search.service.js';
 import { PersonenkontextWorkflowSharedKernel } from '../../personenkontext/domain/personenkontext-workflow-shared-kernel.js';
-import { EscalatedPersonPermissionsFactory } from '../../authentication/domain/escalated-person-permissions.factory.js';
+import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
 
 @Injectable()
 export class LandesbediensteterWorkflowFactory {

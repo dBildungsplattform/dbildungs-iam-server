@@ -7,13 +7,12 @@ import { RolleModule } from '../rolle/rolle.module.js';
 import { LandesbediensteterController } from './api/landesbediensteter.controller.js';
 import { LandesbediensteterWorkflowFactory } from './domain/landesbediensteter-workflow.factory.js';
 import { PersonModule } from '../person/person.module.js';
-import { EscalatedPersonPermissionsFactory } from '../authentication/domain/escalated-person-permissions.factory.js';
+import { EscalatedPersonPermissionsFactory } from '../permission/escalated-person-permissions.factory.js';
 import { LoggerModule } from '../../core/logging/logger.module.js';
-import { AuthenticationModule } from '../authentication/authentication.module.js';
 
 @Module({
     imports: [
-        LoggerModule.register(AuthenticationModule.name),
+        LoggerModule.register(LandesbediensteterModule.name),
         PersonLandesbediensteterSearchModule,
         PersonModule,
         OrganisationModule,

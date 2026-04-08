@@ -14,7 +14,6 @@ import { PersonenkontextCreationService } from './domain/personenkontext-creatio
 import { PersonenkontextWorkflowFactory } from './domain/personenkontext-workflow.factory.js';
 import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.js';
 import { PersonenkontextWorkflowSharedKernel } from './domain/personenkontext-workflow-shared-kernel.js';
-import { EscalatedPersonPermissionsFactory } from '../authentication/domain/escalated-person-permissions.factory.js';
 
 @Module({
     imports: [
@@ -35,7 +34,6 @@ import { EscalatedPersonPermissionsFactory } from '../authentication/domain/esca
         PersonenkontextWorkflowFactory,
         EntityAggregateMapper,
         PersonenkontextWorkflowSharedKernel,
-        EscalatedPersonPermissionsFactory,
     ],
     exports: [
         PersonenkontextService,

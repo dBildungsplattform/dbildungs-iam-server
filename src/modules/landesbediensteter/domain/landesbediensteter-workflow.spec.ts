@@ -29,8 +29,8 @@ import { LandesbediensteterWorkflowAggregate } from './landesbediensteter-workfl
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 import { createPersonenkontexteUpdateMock } from '../../../../test/utils/workflow.mocks.js';
 import { MockedObject } from 'vitest';
-import { EscalatedPersonPermissionsFactory } from '../../authentication/domain/escalated-person-permissions.factory.js';
-import { EscalatedPersonPermissions } from '../../authentication/domain/escalated-person-permissions.js';
+import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
+import { EscalatedPersonPermissions } from '../../permission/escalated-person-permissions.js';
 
 describe('LandesbediensteterWorkflow', () => {
     let module: TestingModule;

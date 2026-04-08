@@ -50,6 +50,7 @@ import { LandesbediensteterModule } from '../modules/landesbediensteter/landesbe
 import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js';
 import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis';
+import { PermissionModule } from '../modules/permission/permission.module.js';
 
 @Module({
     imports: [
@@ -146,6 +147,7 @@ import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis'
         }),
         LoggerModule.register(ServerModule.name),
         EventModule,
+        PermissionModule,
         AuthenticationApiModule,
         PersonApiModule,
         OrganisationApiModule,

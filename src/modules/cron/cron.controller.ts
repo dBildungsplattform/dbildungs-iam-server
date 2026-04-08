@@ -35,7 +35,7 @@ import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-p
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../rolle/domain/systemrecht.js';
 import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
 import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
-import { EscalatedPersonPermissionsFactory } from '../authentication/domain/escalated-person-permissions.factory.js';
+import { EscalatedPersonPermissionsFactory } from '../permission/escalated-person-permissions.factory.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 
 @Controller({ path: 'cron' })

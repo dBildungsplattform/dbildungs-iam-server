@@ -1,20 +1,20 @@
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { OrganisationID, PersonID } from '../../../shared/types/index.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
+import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
+import { OrganisationID, PersonID } from '../../shared/types/index.js';
+import { OrganisationsTyp } from '../organisation/domain/organisation.enums.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../rolle/domain/systemrecht.js';
 import {
     PermittedOrgas,
     PersonenkontextRolleWithOrganisation,
     PersonFields,
     PersonPermissions,
-} from './person-permissions.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
+} from '../authentication/domain/person-permissions.js';
+import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../organisation/domain/organisation.js';
 import {
     DBiamPersonenkontextRepo,
     KontextWithOrgaAndRolle,
-} from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
+} from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 export type EscalatedPermissionAtOrga = {
     orgaId: OrganisationID | 'ROOT';

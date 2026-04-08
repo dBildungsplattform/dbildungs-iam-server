@@ -24,8 +24,8 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import {
     EscalatedPermissionAtOrga,
     EscalatedPersonPermissions,
-} from '../../authentication/domain/escalated-person-permissions.js';
-import { EscalatedPersonPermissionsFactory } from '../../authentication/domain/escalated-person-permissions.factory.js';
+} from '../../permission/escalated-person-permissions.js';
+import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
 
 export class LandesbediensteterWorkflowAggregate {
     public selectedOrganisationId?: string;

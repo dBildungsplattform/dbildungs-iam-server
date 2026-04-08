@@ -50,8 +50,8 @@ import { PersonenkontextWorkflowSharedKernel } from '../domain/personenkontext-w
 import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
 import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { EscalatedPersonPermissionsFactory } from '../../authentication/domain/escalated-person-permissions.factory.js';
-import { EscalatedPersonPermissions } from '../../authentication/domain/escalated-person-permissions.js';
+import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
+import { EscalatedPersonPermissions } from '../../permission/escalated-person-permissions.js';
 
 describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let app: INestApplication;
