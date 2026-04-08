@@ -6,6 +6,7 @@ import {
     HttpCode,
     HttpStatus,
     Param,
+    Patch,
     Post,
     Query,
     StreamableFile,
@@ -29,12 +30,12 @@ import {
 } from '@nestjs/swagger';
 
 import { uniq } from 'lodash-es';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { ApiOkResponsePaginated, RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
-import { OrganisationID, RolleID } from '../../../shared/types/index.js';
+import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -47,7 +48,6 @@ import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
-import { SchulConnexValidationErrorFilter } from '../../schulconnex/error/schulconnex-validation-error.filter.js';
 import { AttachedRollenError } from '../domain/errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from '../domain/errors/attached-rollenerweiterungen.error.js';
 import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
@@ -66,8 +66,9 @@ import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweite
 import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
+import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), ServiceProviderErrorFilter)
+@UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
 @ApiOAuth2(['openid'])
 @ApiBearerAuth()
@@ -81,6 +82,7 @@ export class ProviderController {
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepository,
+        private readonly logger: ClassLogger,
     ) {}
 
     @Get('all')
@@ -383,6 +385,34 @@ export class ProviderController {
         return new ServiceProviderResponse(result.value);
     }
 
+    @Patch(':angebotId')
+    @ApiOperation({ description: 'Update a service-provider (Angebot).' })
+    @ApiOkResponse({
+        description: 'The service-provider was successfully updated.',
+        type: ServiceProviderResponse,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions.' })
+    @ApiBadRequestResponse({ description: 'Invalid request body.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+    public async updateServiceProvider(
+        @Permissions() permissions: PersonPermissions,
+        @Param('angebotId') angebotId: ServiceProviderID,
+        @Body() body: UpdateServiceProviderBodyParams,
+    ): Promise<ServiceProviderResponse> {
+        const result: Result<
+            ServiceProvider<true>,
+            DomainError
+        > = await this.serviceProviderService.updateServiceProvider(permissions, angebotId, body);
+
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        this.logger.info(`ServiceProvider mit Id ${angebotId} erfolgreich aktualisiert.`);
+        return new ServiceProviderResponse(result.value);
+    }
+
     @Delete(':angebotId')
     @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.NO_CONTENT)
@@ -407,6 +437,5 @@ export class ProviderController {
         if (!result.ok) {
             throw result.error;
         }
-        return;
     }
 }

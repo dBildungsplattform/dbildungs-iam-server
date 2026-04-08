@@ -8,6 +8,7 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { VidisConfig } from '../../../shared/config/vidis.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
@@ -23,6 +24,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 import { VidisService } from '../../vidis/vidis.service.js';
+import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AttachedRollenError } from './errors/attached-rollen.error.js';
@@ -440,6 +442,40 @@ export class ServiceProviderService {
         );
 
         this.logger.info(`ServiceProvider für VIDIS-Angebote erfolgreich aktualisiert.`);
+    }
+
+    public async updateServiceProvider(
+        permissions: PersonPermissions,
+        angebotId: ServiceProviderID,
+        updateServiceProviderBodyParams: UpdateServiceProviderBodyParams,
+    ): Promise<Result<ServiceProvider<true>, DomainError>> {
+        if (!updateServiceProviderBodyParams.name && !updateServiceProviderBodyParams.url) {
+            return {
+                ok: false,
+                error: new MissingAttributeError(
+                    'At least one of the following parameters must be provided: name, url',
+                ),
+            };
+        }
+        const existingServiceProvider: Option<ServiceProvider<true>> =
+            await this.serviceProviderRepo.findById(angebotId);
+        if (!existingServiceProvider) {
+            throw new EntityNotFoundError();
+        }
+
+        if (updateServiceProviderBodyParams.name) {
+            existingServiceProvider.name = updateServiceProviderBodyParams.name;
+        }
+        if (updateServiceProviderBodyParams.url) {
+            existingServiceProvider.url = updateServiceProviderBodyParams.url;
+        }
+        if (updateServiceProviderBodyParams.kategorie) {
+            existingServiceProvider.kategorie = updateServiceProviderBodyParams.kategorie;
+        }
+
+        const updatedServiceProvider: Promise<Result<ServiceProvider<true>, DomainError>> =
+            this.serviceProviderRepo.update(permissions, existingServiceProvider);
+        return updatedServiceProvider;
     }
 
     /**
