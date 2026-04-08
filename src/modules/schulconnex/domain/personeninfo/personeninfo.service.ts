@@ -15,6 +15,7 @@ import { Person } from '../../../person/domain/person.js';
 import { PersonInfoResponseV1 } from '../../api/personinfo/v1/person-info.response.v1.js';
 import { PersonID } from '../../../../shared/types/index.js';
 import { SchulconnexRepo } from '../../persistence/schulconnex.repo.js';
+import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 
 @Injectable()
 export class PersonenInfoService {
@@ -24,6 +25,7 @@ export class PersonenInfoService {
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly emailRepo: EmailRepo,
         private readonly userLockRepo: UserLockRepository,
+        private readonly emailResolverService: EmailResolverService,
     ) {}
 
     public async findPersonsForPersonenInfo(
@@ -72,14 +74,19 @@ export class PersonenInfoService {
             .sort((a: string, b: string) => a.localeCompare(b))
             .slice(offset, offset + limit);
 
-        const [persons, emailsForPersons, kontexteForPersons, userLocksForPersons]: [
+        let emailsForPersons: Map<PersonID, PersonEmailResponse | undefined>;
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            emailsForPersons = await this.emailResolverService.findEmailsBySpshPersons(personIds);
+        } else {
+            emailsForPersons = await this.emailRepo.getEmailAddressAndStatusForPersonIds(personIds);
+        }
+
+        const [persons, kontexteForPersons, userLocksForPersons]: [
             Person<true>[],
-            Map<PersonID, PersonEmailResponse>,
             Map<PersonID, KontextWithOrgaAndRolle[]>,
             Map<PersonID, UserLock[]>,
         ] = await Promise.all([
             this.personRepo.findByPersonIds(personIds),
-            this.emailRepo.getEmailAddressAndStatusForPersonIds(personIds),
             this.personenkontextRepo.findByPersonIdsAndServiceprovidersWithOrgaAndRolle(
                 personIds,
                 Array.from(permittedServiceProviderIds),

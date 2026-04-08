@@ -14,6 +14,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { HeaderApiKeyConfig } from '../../../shared/config/headerapikey.config.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 export interface PersonIdWithEmailResponse {
     personId: string;
@@ -51,15 +52,13 @@ export class EmailResolverService {
         }
     }
 
-    public async findEmailsBySpshPersons(
-        personIds: string[],
-    ): Promise<Record<string, PersonEmailResponse | undefined>> {
+    public async findEmailsBySpshPersons(personIds: string[]): Promise<Map<PersonID, PersonEmailResponse | undefined>> {
         try {
-            const response: AxiosResponse<Record<string, EmailAddressResponse>> = await lastValueFrom(
+            const response: AxiosResponse<Record<string, EmailAddressResponse | null>> = await lastValueFrom(
                 this.httpService.post(
                     this.getEndpoint() + `${EmailResolverService.readPath}/spshpersons`,
                     {
-                        personIds: personIds,
+                        spshPersonIds: personIds,
                     },
                     {
                         headers: {
@@ -68,19 +67,23 @@ export class EmailResolverService {
                     },
                 ),
             );
-            const result: Record<string, PersonEmailResponse | undefined> = {};
+            const result: Map<PersonID, PersonEmailResponse | undefined> = new Map<
+                PersonID,
+                PersonEmailResponse | undefined
+            >();
             for (const personId of personIds) {
-                if (response.data[personId] !== undefined) {
-                    const status: EmailAddressStatus = this.mapStatus(response.data[personId].status);
-                    result[personId] = new PersonEmailResponse(status, response.data[personId].address);
+                const emailResponse: EmailAddressResponse | null | undefined = response.data[personId];
+                if (emailResponse) {
+                    const status: EmailAddressStatus = this.mapStatus(emailResponse.status);
+                    result.set(personId, new PersonEmailResponse(status, emailResponse.address));
                 } else {
-                    result[personId] = undefined;
+                    result.set(personId, undefined);
                 }
             }
             return result;
         } catch (error) {
             this.logger.logUnknownAsError(`Failed to fetch emails for persons`, error);
-            return {};
+            return new Map<PersonID, PersonEmailResponse | undefined>();
         }
     }
 
