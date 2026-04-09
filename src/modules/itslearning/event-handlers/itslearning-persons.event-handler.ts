@@ -79,7 +79,7 @@ export class ItsLearningPersonsEventHandler {
                 );
             }
 
-            const updatePersonError: Option<DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
+            const updatePersonResult: Result<void, DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
                 {
                     id: event.personId,
                     firstName: event.vorname,
@@ -90,9 +90,10 @@ export class ItsLearningPersonsEventHandler {
                 `${event.eventID}-PERSON-RENAMED-UPDATE`,
             );
 
-            if (updatePersonError) {
-                return this.logger.error(
+            if (!updatePersonResult.ok) {
+                return this.logger.logUnknownAsError(
                     `[EventID: ${event.eventID}] Person with ID ${event.personId} could not be updated in itsLearning!`,
+                    updatePersonResult.error,
                 );
             }
 
@@ -111,15 +112,16 @@ export class ItsLearningPersonsEventHandler {
         await this.personUpdateMutex.runExclusive(async () => {
             this.logger.info(`[EventID: ${event.eventID}] Received OxUserChangedEvent, ${event.personId}`);
 
-            const updateError: Option<DomainError> = await this.itslearningPersonRepo.updateEmail(
+            const updateResult: Result<void, DomainError> = await this.itslearningPersonRepo.updateEmail(
                 event.personId,
                 event.primaryEmail,
                 `${event.eventID}-EMAIL-UPDATE`,
             );
 
-            if (updateError) {
-                this.logger.error(
+            if (!updateResult.ok) {
+                this.logger.logUnknownAsError(
                     `[EventID: ${event.eventID}] Could not update E-Mail for person with ID ${event.personId}!`,
+                    updateResult.error,
                 );
             } else {
                 this.logger.info(`[EventID: ${event.eventID}] Updated E-Mail for person with ID ${event.personId}!`);
@@ -142,15 +144,16 @@ export class ItsLearningPersonsEventHandler {
                 `[EventID: ${event.eventID}] Received EmailMicroserviceAddressChangedEvent, ${event.personId}`,
             );
 
-            const updateError: Option<DomainError> = await this.itslearningPersonRepo.updateEmail(
+            const updateResult: Result<void, DomainError> = await this.itslearningPersonRepo.updateEmail(
                 event.personId,
                 event.newPrimaryAddress,
                 `${event.eventID}-EMAIL-UPDATE`,
             );
 
-            if (updateError) {
-                this.logger.error(
+            if (!updateResult.ok) {
+                this.logger.logUnknownAsError(
                     `[EventID: ${event.eventID}] Could not update E-Mail for person with ID ${event.personId}!`,
+                    updateResult.error,
                 );
             } else {
                 this.logger.info(`[EventID: ${event.eventID}] Updated E-Mail for person with ID ${event.personId}!`);
@@ -236,7 +239,7 @@ export class ItsLearningPersonsEventHandler {
             determineHighestRollenart(currentPersonenkontexte.map((pk: PersonenkontextUpdatedData) => pk.rolle)),
         );
 
-        const createError: Option<DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
+        const createResult: Result<void, DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
             {
                 id: person.id,
                 firstName: person.vorname,
@@ -248,9 +251,9 @@ export class ItsLearningPersonsEventHandler {
             eventID,
         );
 
-        if (createError) {
+        if (!createResult.ok) {
             return this.logger.error(
-                `[EventID: ${eventID}] Person with ID ${person.id} could not be sent to itsLearning! Error: ${createError.message}`,
+                `[EventID: ${eventID}] Person with ID ${person.id} could not be sent to itsLearning! Error: ${createResult.error.message}`,
             );
         }
 

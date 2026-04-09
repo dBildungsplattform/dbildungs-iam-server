@@ -9,6 +9,7 @@ import { ItsLearningIMSESService } from '../itslearning.service.js';
 import { CreatePersonsAction } from '../actions/create-persons.action.js';
 import { MassResult } from '../actions/base-mass-action.js';
 import { DeletePersonsAction } from '../actions/delete-persons.action.js';
+import { Err } from '../../../shared/util/result.js';
 
 @Injectable()
 export class ItslearningPersonRepo {
@@ -27,16 +28,10 @@ export class ItslearningPersonRepo {
         return personResult.value;
     }
 
-    public async createOrUpdatePerson(params: CreatePersonParams, syncId?: string): Promise<Option<DomainError>> {
+    public async createOrUpdatePerson(params: CreatePersonParams, syncId?: string): Promise<Result<void, DomainError>> {
         const createAction: CreatePersonAction = new CreatePersonAction(params);
 
-        const createResult: Result<void, DomainError> = await this.itslearningService.send(createAction, syncId);
-
-        if (!createResult.ok) {
-            return createResult.error;
-        }
-
-        return undefined;
+        return this.itslearningService.send(createAction, syncId);
     }
 
     public async createOrUpdatePersons(
@@ -57,12 +52,12 @@ export class ItslearningPersonRepo {
         personId: PersonID,
         email: string | undefined,
         syncId?: string,
-    ): Promise<Option<DomainError>> {
+    ): Promise<Result<void, DomainError>> {
         const person: Option<PersonResponse> = await this.readPerson(personId, syncId);
 
         // Person is not in itslearning, should not update the e-mail
         if (!person) {
-            return new ItsLearningError(`[updateEmail] person with ID ${personId} not found.`);
+            return Err(new ItsLearningError(`[updateEmail] person with ID ${personId} not found.`));
         }
 
         return this.createOrUpdatePerson(
