@@ -945,29 +945,28 @@ describe('ServiceProviderService', () => {
             expect(result.value).toEqual(existingServiceProvider);
         });
 
+        it.each([[{ name: 'New Name' }], [{ url: 'https://new-url.com' }]])(
+            'should only touch field if value is provided',
+            async (updateData: UpdateServiceProviderBodyParams) => {
+                const newAngebotId: string = faker.string.uuid();
 
-        it.each([
-            [{ name: 'New Name' }],
-            [{ url: 'https://new-url.com' }],
-        ])('should only touch field if value is provided', async (updateData: UpdateServiceProviderBodyParams) => {
-            const newAngebotId: string = faker.string.uuid();
+                const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
+                    permissions,
+                    newAngebotId,
+                    updateData,
+                );
 
-            const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
-                permissions,
-                newAngebotId,
-                updateData,
-            );
-
-            expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId);
-            expect(serviceProviderRepo.update).toHaveBeenCalledWith(
-                permissions,
-                expect.objectContaining(updateData),
-            );
-            if (!result.ok) {
-                throw result.error;
-            }
-            expect(result.value).toEqual(existingServiceProvider);
-        });
+                expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId);
+                expect(serviceProviderRepo.update).toHaveBeenCalledWith(
+                    permissions,
+                    expect.objectContaining(updateData),
+                );
+                if (!result.ok) {
+                    throw result.error;
+                }
+                expect(result.value).toEqual(existingServiceProvider);
+            },
+        );
 
         it('should return error if no update data is provided', async () => {
             const updateData: UpdateServiceProviderBodyParams = {};

@@ -437,6 +437,8 @@ export class ProviderController {
         if (!result.ok) {
             throw result.error;
         }
-        this.logger.info(`Admin ${permissions.personFields.id} hat ServiceProvider mit Id ${params.angebotId} erfolgreich gelöscht.`);
+        this.logger.info(
+            `Admin ${permissions.personFields.id} hat ServiceProvider mit Id ${params.angebotId} erfolgreich gelöscht.`,
+        );
     }
 }
