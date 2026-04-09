@@ -982,14 +982,10 @@ describe('ServiceProviderService', () => {
 
         beforeEach(() => {
             permissions = createPersonPermissionsMock();
-            serviceProviderRepo.findById.mockReset();
-            rolleRepo.findByServiceProviderIds.mockReset();
-            rollenerweiterungRepo.findByServiceProviderIds.mockReset();
-            serviceProviderRepo.deleteById.mockReset();
+            vi.resetAllMocks();
         });
 
         it('returns AttachedRollenError if attached Rollen exist', async () => {
-            serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
             rolleRepo.findByServiceProviderIds.mockResolvedValue(
                 new Map([[serviceProviderId, [DoFactory.createRolle(true)]]]),
             );
@@ -1004,7 +1000,6 @@ describe('ServiceProviderService', () => {
         });
 
         it('returns AttachedRollenerweiterungenError if attached Rollenerweiterungen exist', async () => {
-            serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
             rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
             rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
                 new Map([[serviceProviderId, [DoFactory.createRollenerweiterung(true)]]]),
@@ -1020,7 +1015,6 @@ describe('ServiceProviderService', () => {
 
         it('calls deleteById and returns Ok(true) on success', async () => {
             const expectedResult: Result<boolean, ServiceProviderError> = Ok(true);
-            serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
             rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
             rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
             serviceProviderRepo.deleteByIdAuthorized.mockResolvedValue(expectedResult);
@@ -1036,9 +1030,8 @@ describe('ServiceProviderService', () => {
 
         it('calls deleteById and returns Error on failure', async () => {
             const expectedResult: Result<boolean, ServiceProviderError> = Err(new EntityNotFoundError());
-            serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
-            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([]));
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([]));
             serviceProviderRepo.deleteByIdAuthorized.mockResolvedValue(expectedResult);
             const result: Result<boolean, ServiceProviderError> = await service.deleteByIdAuthorized(
                 permissions,
