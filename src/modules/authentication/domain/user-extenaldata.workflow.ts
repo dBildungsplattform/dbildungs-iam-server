@@ -70,6 +70,9 @@ export class UserExternaldataWorkflowAggregate {
             > = await this.emailResolverService.findEmailBySpshPersonAsEmailAddressResponse(personId);
 
             if (personEmailResponse.ok) {
+                // Overwrite the email in the person aggregate, if microservice is active
+                this.person.email = personEmailResponse.value?.address;
+
                 if (personEmailResponse.value?.status !== EmailAddressStatusEnum.SUSPENDED) {
                     this.oxLoginId = personEmailResponse.value?.oxLoginId;
                 }

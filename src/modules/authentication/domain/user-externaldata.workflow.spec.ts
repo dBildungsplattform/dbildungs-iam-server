@@ -118,6 +118,7 @@ describe('UserExternaldataWorkflow', () => {
             expect(sut.person).toBeDefined();
             expect(sut.checkedExternalPkData).toBeDefined();
             expect(sut.oxLoginId).toBe(`${oxLoginId}@${oxContextId}`);
+            expect(sut.person?.email).toBe(emailAddress.address);
         });
 
         it('should not set contextID when user has suspended email', async () => {
