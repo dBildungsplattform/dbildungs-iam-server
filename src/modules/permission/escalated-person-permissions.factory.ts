@@ -41,19 +41,6 @@ export class EscalatedPersonPermissionsFactory {
         );
     }
 
-    public async fromPersonPermissions(
-        personPermissions: PersonPermissions,
-        escalatedPermissions: Array<EscalatedPermissionAtOrga>,
-    ): Promise<EscalatedPersonPermissions> {
-        return await EscalatedPersonPermissions.fromPersonPermissions(
-            personPermissions,
-            escalatedPermissions,
-            this.organisationRepo,
-            this.personenkontextRepo,
-            this.logger,
-        );
-    }
-
     public async fromPermissions(
         permissions: IPersonPermissions,
         escalatedPermissions: Array<EscalatedPermissionAtOrga>,

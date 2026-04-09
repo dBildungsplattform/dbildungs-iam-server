@@ -419,7 +419,7 @@ export class CronController {
         }
         try {
             const escalatedPermissions: IPersonPermissions =
-                await this.escalatedPersonPermissionsFactory.fromPersonPermissions(permissions, [
+                await this.escalatedPersonPermissionsFactory.fromPermissions(permissions, [
                     { orgaId: 'ROOT', systemrechte: [RollenSystemRechtEnum.ANGEBOTE_VERWALTEN] },
                 ]);
             await this.serviceProviderService.updateServiceProvidersForVidis(escalatedPermissions);
