@@ -121,6 +121,32 @@ describe('UserExternaldataWorkflow', () => {
             expect(sut.person?.email).toBe(emailAddress.address);
         });
 
+        it('should set email to undefined if user has no email', async () => {
+            const keycloakSub: string = faker.string.uuid();
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                keycloakSub,
+                faker.string.uuid(),
+            );
+
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+
+            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValue(Ok(undefined));
+
+            await sut.initialize(person.id);
+
+            expect(sut.person?.email).toBeUndefined();
+        });
+
         it('should not set contextID when user has suspended email', async () => {
             const keycloakSub: string = faker.string.uuid();
             const person: Person<true> = Person.construct(
