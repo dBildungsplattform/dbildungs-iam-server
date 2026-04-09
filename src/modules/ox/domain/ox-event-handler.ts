@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { uniq } from 'lodash-es';
 
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
@@ -390,9 +391,7 @@ export class OxEventHandler {
                 newPrimaryMail = enabledMail.address;
 
                 // Make sure the email is in the aliases
-                if (!newAliasesArray.includes(newPrimaryMail)) {
-                    newAliasesArray.unshift(newPrimaryMail);
-                }
+                newAliasesArray = uniq([newPrimaryMail, ...newAliasesArray]);
             }
         }
 
