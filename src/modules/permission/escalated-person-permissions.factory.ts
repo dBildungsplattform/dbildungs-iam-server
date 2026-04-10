@@ -9,7 +9,7 @@ import {
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
 import { PersonID } from '../../shared/types/index.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
-import { isPersonPermissions, PersonPermissions } from '../authentication/domain/person-permissions.js';
+import { isPersonPermissions } from '../authentication/domain/person-permissions.js';
 import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
 
 @Injectable({ scope: Scope.TRANSIENT })

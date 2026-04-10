@@ -5,12 +5,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
-    ConfigTestModule,
     createPassportUserMock,
     createPersonPermissionsMock,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    LoggingTestModule,
 } from '../../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../../shared/validation/global-validation.pipe.js';
 import { PersonApiModule } from '../../person-api.module.js';
