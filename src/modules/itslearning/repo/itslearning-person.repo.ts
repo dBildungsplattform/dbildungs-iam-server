@@ -67,7 +67,7 @@ export class ItslearningPersonRepo {
                 lastName: person.lastName,
                 institutionRoleType: person.institutionRole,
                 username: person.username,
-                email,
+                email: email ?? '', // Need to send an empty string to clear an e-mail
             },
             syncId,
         );

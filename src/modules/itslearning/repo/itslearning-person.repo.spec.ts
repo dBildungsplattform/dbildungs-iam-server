@@ -138,6 +138,51 @@ describe('Itslearning Person Repo', () => {
             expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(2, expect.any(CreatePersonAction), syncID);
         });
 
+        it('should send empty string if no email is given', async () => {
+            const personId: string = faker.string.uuid();
+            const personResponse: PersonResponse = {
+                firstName: faker.person.firstName(),
+                lastName: faker.person.lastName(),
+                username: faker.internet.username(),
+                institutionRole: faker.helpers.enumValue(IMSESInstitutionRoleType),
+                primaryRoleType: true,
+            };
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: personResponse,
+            }); // ReadPersonAction
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            }); // CreatePersonAction
+            const syncID: string = faker.string.uuid();
+
+            const updateResult: Result<void, DomainError> = await sut.updateEmail(personId, undefined, syncID);
+
+            expectOkResult(updateResult);
+            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(
+                1,
+                expect.objectContaining({ id: personId }),
+                syncID,
+            );
+            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(1, expect.any(ReadPersonAction), syncID);
+            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(
+                2,
+                expect.objectContaining({
+                    params: {
+                        id: personId,
+                        firstName: personResponse.firstName,
+                        lastName: personResponse.lastName,
+                        username: personResponse.username,
+                        institutionRoleType: personResponse.institutionRole,
+                        email: '',
+                    },
+                }),
+                syncID,
+            );
+            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(2, expect.any(CreatePersonAction), syncID);
+        });
+
         it('should not update email, if person was not found', async () => {
             const personId: string = faker.string.uuid();
             const email: string = faker.internet.email();
