@@ -341,6 +341,7 @@ export class ProviderController {
     }
 
     @Post()
+    @UseGuards(StepUpGuard)
     @ApiOperation({ description: 'Create a new service-provider (Angebot).' })
     @ApiOkResponse({
         description: 'The service-provider was successfully created.',
@@ -386,6 +387,7 @@ export class ProviderController {
     }
 
     @Patch(':angebotId')
+    @UseGuards(StepUpGuard)
     @ApiOperation({ description: 'Update a service-provider (Angebot).' })
     @ApiOkResponse({
         description: 'The service-provider was successfully updated.',
