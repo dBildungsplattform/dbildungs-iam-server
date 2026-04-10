@@ -161,6 +161,104 @@ describe('EmailResolverService', () => {
         });
     });
 
+    describe('findEmailsBySpshPersons', () => {
+        it('should return record of personId to PersonEmailResponse when post call returns valid data', async () => {
+            const personId1: string = faker.string.uuid();
+            const personId2: string = faker.string.uuid();
+            const email1: string = 'one@example.com';
+            const email2: string = 'two@example.com';
+
+            const resp1: DeepMocked<EmailAddressResponse> = createMock<EmailAddressResponse>(EmailAddressResponse, {
+                address: email1,
+                status: EmailAddressStatusEnum.ACTIVE,
+            });
+            const resp2: DeepMocked<EmailAddressResponse> = createMock<EmailAddressResponse>(EmailAddressResponse, {
+                address: email2,
+                status: EmailAddressStatusEnum.PENDING,
+            });
+
+            const responseData: Record<string, EmailAddressResponse | null> = {
+                [personId1]: resp1,
+                [personId2]: resp2,
+            };
+
+            const mockAxiosResponse: AxiosResponse<Record<string, EmailAddressResponse | null>> = {
+                data: responseData,
+                status: 200,
+                statusText: 'OK',
+                headers: {},
+                config: {
+                    headers: new AxiosHeaders(),
+                },
+            };
+
+            mockHttpService.post.mockReturnValueOnce(of(mockAxiosResponse));
+
+            const result: Map<string, PersonEmailResponse | undefined> = await sut.findEmailsBySpshPersons([
+                personId1,
+                personId2,
+            ]);
+
+            expect(result.size).toBe(2);
+            expect(result.get(personId1)).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, email1));
+            expect(result.get(personId2)).toEqual(new PersonEmailResponse(EmailAddressStatus.REQUESTED, email2));
+        });
+
+        it('should set undefined for persons with null or missing entries in response', async () => {
+            const personId1: string = faker.string.uuid();
+            const personId2: string = faker.string.uuid();
+            const personId3: string = faker.string.uuid();
+            const email1: string = 'present@example.com';
+
+            const resp1: DeepMocked<EmailAddressResponse> = createMock<EmailAddressResponse>(EmailAddressResponse, {
+                address: email1,
+                status: EmailAddressStatusEnum.ACTIVE,
+            });
+
+            const responseData: Record<string, EmailAddressResponse | null> = {
+                [personId1]: resp1,
+                [personId2]: null,
+            };
+
+            const mockAxiosResponse: AxiosResponse<Record<string, EmailAddressResponse | null>> = {
+                data: responseData,
+                status: 200,
+                statusText: 'OK',
+                headers: {},
+                config: {
+                    headers: new AxiosHeaders(),
+                },
+            };
+
+            mockHttpService.post.mockReturnValueOnce(of(mockAxiosResponse));
+
+            const result: Map<string, PersonEmailResponse | undefined> = await sut.findEmailsBySpshPersons([
+                personId1,
+                personId2,
+                personId3,
+            ]);
+
+            expect(result.size).toBe(3);
+            expect(result.get(personId1)).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, email1));
+            expect(result.get(personId2)).toBeUndefined();
+            expect(result.get(personId3)).toBeUndefined();
+        });
+
+        it('should log error and return empty map when post call fails', async () => {
+            const ids: string[] = [faker.string.uuid(), faker.string.uuid()];
+            const error: Error = new Error('Network failure');
+
+            mockHttpService.post.mockImplementation(() => {
+                throw error;
+            });
+
+            const result: Map<string, PersonEmailResponse | undefined> = await sut.findEmailsBySpshPersons(ids);
+
+            expect(result.size).toBe(0);
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(`Failed to fetch emails for persons`, error);
+        });
+    });
+
     describe('findByPrimaryAddress', () => {
         it('should return spshPersonId when get call returns valid primary email data', async () => {
             const address: string = faker.internet.email();
