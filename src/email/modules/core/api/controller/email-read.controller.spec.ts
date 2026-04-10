@@ -19,6 +19,7 @@ import { EmailAddressNotFoundError } from '../../error/email-address-not-found.e
 import { EmailAddressMissingStatusError } from '../../error/email-address-missing-status.error.js';
 import { EmailAddress } from '../../domain/email-address.js';
 import { FindEmailAddressPathParams } from '../dtos/params/find-email-address.pathparams.js';
+import { FindEmailAddressBySpshPersonIdsBodyParams } from '../dtos/params/find-email-addresses-by-spsh-person-ids.bodyparams.js';
 
 describe('EmailReadController', () => {
     let emailReadController: EmailReadController;
@@ -214,5 +215,105 @@ describe('EmailReadController', () => {
             const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonId(params);
             expect(result).toEqual([]);
         });
+    });
+
+    describe('findEmailAddressesByPersonIds', () => {
+        it('should return a map of personIds to EmailAddressResponse', async () => {
+            const spshPerson1Id: string = faker.string.uuid();
+            const params1: FindEmailAddressBySpshPersonIdPathParams = new FindEmailAddressBySpshPersonIdPathParams();
+            Object.assign(params1, { spshPerson1Id });
+            const address1: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                address: 'test1@example.com',
+                priority: 0,
+                spshPersonId: spshPerson1Id,
+                oxUserCounter: undefined,
+                markedForCron: undefined,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                externalId: spshPerson1Id,
+                sortedStatuses: [
+                    {
+                        id: faker.string.uuid(),
+                        status: EmailAddressStatusEnum.ACTIVE,
+                    },
+                ],
+            });
+
+            const spshPerson2Id: string = faker.string.uuid();
+            const params2: FindEmailAddressBySpshPersonIdPathParams = new FindEmailAddressBySpshPersonIdPathParams();
+            Object.assign(params2, { spshPerson2Id });
+            const address2: EmailAddress<true> = EmailAddress.construct({
+                id: faker.string.uuid(),
+                address: 'test2@example.com',
+                priority: 0,
+                spshPersonId: spshPerson2Id,
+                oxUserCounter: undefined,
+                markedForCron: undefined,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                externalId: spshPerson2Id,
+                sortedStatuses: [
+                    {
+                        id: faker.string.uuid(),
+                        status: EmailAddressStatusEnum.ACTIVE,
+                    },
+                ],
+            });
+
+            emailAddressRepoMock.findPrimaryBySpshPersonIds.mockResolvedValueOnce(
+                new Map<string, EmailAddress<true>>([
+                    [spshPerson1Id, address1],
+                    [spshPerson2Id, address2],
+                ]),
+            );
+
+            const params: FindEmailAddressBySpshPersonIdsBodyParams = {
+                spshPersonIds: [spshPerson1Id, spshPerson2Id],
+            };
+
+            const result: Record<string, EmailAddressResponse | null> =
+                await emailReadController.findEmailAddressesByPersonIds(params);
+
+            expect(Object.keys(result).length).toBe(2);
+
+            expect(result[spshPerson1Id]).toBeInstanceOf(EmailAddressResponse);
+            expect(result[spshPerson1Id]!.address).toBe('test1@example.com');
+            expect(result[spshPerson1Id]!.status).toBe(EmailAddressStatusEnum.ACTIVE);
+
+            expect(result[spshPerson2Id]).toBeInstanceOf(EmailAddressResponse);
+            expect(result[spshPerson2Id]!.address).toBe('test2@example.com');
+            expect(result[spshPerson2Id]!.status).toBe(EmailAddressStatusEnum.ACTIVE);
+        });
+    });
+
+    it('should return null for personIds without a primary address', async () => {
+        const id1: string = faker.string.uuid();
+        const id2: string = faker.string.uuid();
+
+        emailAddressRepoMock.findPrimaryBySpshPersonIds.mockResolvedValueOnce(
+            new Map([
+                [id1, null],
+                [id2, null],
+            ]),
+        );
+
+        const params: FindEmailAddressBySpshPersonIdsBodyParams = { spshPersonIds: [id1, id2] };
+
+        const result: Record<string, EmailAddressResponse | null> =
+            await emailReadController.findEmailAddressesByPersonIds(params);
+
+        expect(Object.keys(result).length).toBe(2);
+        expect(result[id1]).toBeNull();
+        expect(result[id2]).toBeNull();
+    });
+
+    it('should return empty map if no personIds provided', async () => {
+        const params: FindEmailAddressBySpshPersonIdsBodyParams = { spshPersonIds: [] };
+
+        const result: Record<string, EmailAddressResponse | null> =
+            await emailReadController.findEmailAddressesByPersonIds(params);
+
+        expect(Object.keys(result).length).toBe(0);
     });
 });
