@@ -112,7 +112,7 @@ export class EmailReadController {
     public async findEmailAddressesByPersonIds(
         @Body() findEmailAddressBySpshPersonIdsBodyParams: FindEmailAddressBySpshPersonIdsBodyParams,
     ): Promise<Record<string, EmailAddressResponse | null>> {
-        const personIds: string[] = findEmailAddressBySpshPersonIdsBodyParams.spshPersonIds;
+        const personIds: string[] = Array.from(new Set(findEmailAddressBySpshPersonIdsBodyParams.spshPersonIds));
         this.logger.info(`PersonIds: ${personIds.join(', ')}`);
 
         const primaryMap: Map<string, EmailAddress<true> | null> =
@@ -122,13 +122,17 @@ export class EmailReadController {
 
         for (const pid of personIds) {
             const addr: EmailAddress<true> | null | undefined = primaryMap.get(pid);
-
-            if (!addr || !addr.getStatus()) {
+            if (!addr) {
+                result[pid] = null;
+                continue;
+            }
+            const status: EmailAddressStatusEnum | undefined = addr.getStatus();
+            if (!status) {
                 result[pid] = null;
                 continue;
             }
 
-            result[pid] = new EmailAddressResponse(addr, addr.getStatus()!, this.oxService.contextID);
+            result[pid] = new EmailAddressResponse(addr, status, this.oxService.contextID);
         }
 
         return result;

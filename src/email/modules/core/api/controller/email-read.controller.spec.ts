@@ -308,6 +308,37 @@ describe('EmailReadController', () => {
         expect(result[id2]).toBeNull();
     });
 
+    it('should return null when primary email address has no status', async () => {
+        const personId: string = faker.string.uuid();
+
+        const emailWithoutStatus: EmailAddress<true> = EmailAddress.construct({
+            id: faker.string.uuid(),
+            address: 'nostatus@example.com',
+            priority: 0,
+            spshPersonId: personId,
+            oxUserCounter: undefined,
+            markedForCron: undefined,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            externalId: personId,
+            sortedStatuses: [],
+        });
+
+        emailAddressRepoMock.findPrimaryBySpshPersonIds.mockResolvedValueOnce(
+            new Map([[personId, emailWithoutStatus]]),
+        );
+
+        const params: FindEmailAddressBySpshPersonIdsBodyParams = {
+            spshPersonIds: [personId],
+        };
+
+        const result: Record<string, EmailAddressResponse | null> =
+            await emailReadController.findEmailAddressesByPersonIds(params);
+
+        expect(Object.keys(result).length).toBe(1);
+        expect(result[personId]).toBeNull();
+    });
+
     it('should return empty map if no personIds provided', async () => {
         const params: FindEmailAddressBySpshPersonIdsBodyParams = { spshPersonIds: [] };
 
