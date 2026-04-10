@@ -12,6 +12,7 @@
     "scripts": {
         "build": "nest build",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+        "check-format": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
         "email": "nest start email",
         "email:debug": "nest start email --debug --watch",
         "start": "nest start server",
@@ -100,7 +101,6 @@
         "eslint": "^9.35.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-import": "^2.32.0",
-        "eslint-plugin-prettier": "^5.5.5",
         "jiti": "^2.6.1",
         "prettier": "^3.8.1",
         "supertest": "^7.2.2",
