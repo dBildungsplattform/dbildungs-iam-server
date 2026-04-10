@@ -1,15 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
+import { DatabaseTestModule } from '../../../test/utils/index.js';
 import { PersonService } from './domain/person.service.js';
 import { PersonModule } from './person.module.js';
 import { EventModule } from '../../core/eventbus/index.js';
+import { CommonTestModule } from '../../../test/utils/common-test.module.js';
 
 describe('PersonModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), PersonModule, EventModule],
+            imports: [CommonTestModule, DatabaseTestModule.forRoot(), PersonModule, EventModule],
         }).compile();
     });
 

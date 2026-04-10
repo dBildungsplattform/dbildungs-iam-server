@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
-    ConfigTestModule,
+    CommonTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
@@ -74,7 +74,7 @@ describe('EmailRepo', () => {
         });
 
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailModule],
+            imports: [CommonTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailModule],
             providers: [],
         })
             .overrideProvider(ClassLogger)

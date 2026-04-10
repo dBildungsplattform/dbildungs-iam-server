@@ -9,3 +9,4 @@ export * from './ldap-test.module.js';
 export * from './logging-test.module.js';
 export * from './test-types.js';
 export * from './timeouts.js';
+export * from './common-test.module.js';

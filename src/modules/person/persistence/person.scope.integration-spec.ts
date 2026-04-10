@@ -1,13 +1,7 @@
 import { MikroORM } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    DatabaseTestModule,
-    DoFactory,
-    LoggingTestModule,
-} from '../../../../test/utils/index.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
@@ -26,6 +20,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
 import { PersonExternalIdType } from '../domain/person.enums.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
@@ -53,12 +48,10 @@ describe('PersonScope', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
-                LoggingTestModule,
-                ConfigTestModule,
+                CommonTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonenKontextModule,
                 ServiceProviderModule,
-                LoggingTestModule,
             ],
             providers: [DBiamPersonenkontextRepoInternal, RolleRepo, RolleFactory, OrganisationRepository],
         }).compile();
