@@ -7,7 +7,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
@@ -38,6 +37,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -52,7 +52,7 @@ describe('ServiceProvider API', () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ServiceProviderApiModule,
-                ConfigTestModule,
+                CommonTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],
             providers: [
