@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, KeycloakConfigTestModule } from '../../../test/utils/index.js';
+import { DatabaseTestModule, KeycloakConfigTestModule } from '../../../test/utils/index.js';
 import { KeycloakUserService } from './domain/keycloak-user.service.js';
 import { KeycloakAdministrationModule } from './keycloak-administration.module.js';
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 import { KeycloakAdministrationService } from './domain/keycloak-admin-client.service.js';
 import { RolleModule } from '../rolle/rolle.module.js';
 import { PersonModule } from '../person/person.module.js';
+import { CommonTestModule } from '../../../test/utils/common-test.module.js';
 
 describe('KeycloakAdministrationModule', () => {
     let module: TestingModule;
@@ -13,7 +14,7 @@ describe('KeycloakAdministrationModule', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
-                ConfigTestModule,
+                CommonTestModule,
                 KeycloakAdministrationModule,
                 DatabaseTestModule.forRoot(),
                 KeycloakConfigTestModule.forRoot(),

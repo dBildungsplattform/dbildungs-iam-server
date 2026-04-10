@@ -7,7 +7,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
-    ConfigTestModule,
     createPassportUserMock,
     createPersonPermissionsMock,
     DatabaseTestModule,
@@ -53,6 +52,7 @@ import { Person } from '../../person/domain/person.js';
 import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
 import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('Import API', () => {
     let app: INestApplication;
@@ -84,7 +84,7 @@ describe('Import API', () => {
         passportUserMock = createPassportUserMock();
 
         const module: TestingModule = await Test.createTestingModule({
-            imports: [ImportApiModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
+            imports: [ImportApiModule, CommonTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 {
                     provide: APP_PIPE,

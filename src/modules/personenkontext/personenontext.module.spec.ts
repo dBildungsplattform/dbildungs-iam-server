@@ -1,14 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
+import { DatabaseTestModule } from '../../../test/utils/index.js';
 import { PersonenKontextModule } from './personenkontext.module.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
+import { CommonTestModule } from '../../../test/utils/common-test.module.js';
 
 describe('PersonKontextModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), PersonenKontextModule],
+            imports: [CommonTestModule, DatabaseTestModule.forRoot(), PersonenKontextModule],
         }).compile();
     });
 

@@ -6,13 +6,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
-    ConfigTestModule,
     createAuthInterceptorMock,
     createPersonPermissionsMock,
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
-    LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -52,6 +50,7 @@ import { ValidationExceptionFilter } from '../../../shared/filter/validation-exc
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
 import { EscalatedPersonPermissions } from '../../permission/escalated-person-permissions.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let app: INestApplication;
@@ -74,11 +73,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
         const module: TestingModule = await Test.createTestingModule({
             imports: [
-                ConfigTestModule,
+                CommonTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonenKontextApiModule,
                 KeycloakAdministrationModule,
-                LoggingTestModule,
             ],
             providers: [
                 {

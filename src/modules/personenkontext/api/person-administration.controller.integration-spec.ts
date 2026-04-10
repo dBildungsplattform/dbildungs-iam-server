@@ -8,7 +8,6 @@ import { Observable } from 'rxjs';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
-    ConfigTestModule,
     createPassportUserMock,
     createPersonPermissionsMock,
     DatabaseTestModule,
@@ -28,6 +27,7 @@ import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { FindRollenResponse } from './response/find-rollen.response.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { DeepMocked } from '../../../../test/utils/createMock.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('PersonAdministrationController Integration Test', () => {
     let app: INestApplication;
@@ -43,7 +43,7 @@ describe('PersonAdministrationController Integration Test', () => {
         } as DeepMocked<PersonPermissionsRepo>;
         const module: TestingModule = await Test.createTestingModule({
             imports: [
-                ConfigTestModule,
+                CommonTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonenKontextApiModule,
                 KeycloakAdministrationModule,

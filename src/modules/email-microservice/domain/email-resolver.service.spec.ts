@@ -6,7 +6,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosHeaders, AxiosResponse } from 'axios';
 import { of } from 'rxjs';
 import {
-    ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     expectErrResult,
@@ -21,6 +20,7 @@ import { EmailAddressStatus } from '../../email/domain/email-address';
 import { PersonEmailResponse } from '../../person/api/person-email-response';
 import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailResolverService, PersonIdWithEmailResponse } from './email-resolver.service';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('EmailResolverService', () => {
     let module: TestingModule;
@@ -32,7 +32,7 @@ describe('EmailResolverService', () => {
         module = await Test.createTestingModule({
             imports: [
                 EmailMicroserviceModule,
-                ConfigTestModule,
+                CommonTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
             ],
             providers: [],

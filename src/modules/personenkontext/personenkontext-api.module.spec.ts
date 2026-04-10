@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, KeycloakConfigTestModule } from '../../../test/utils/index.js';
+import { DatabaseTestModule, KeycloakConfigTestModule } from '../../../test/utils/index.js';
 import { PersonenKontextApiModule } from './personenkontext-api.module.js';
 import { PersonenkontextController } from './api/personenkontext.controller.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { createMock } from '../../../test/utils/createMock.js';
 import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
+import { CommonTestModule } from '../../../test/utils/common-test.module.js';
 
 describe('PersonenKontextApiModule', () => {
     let module: TestingModule;
@@ -23,7 +24,7 @@ describe('PersonenKontextApiModule', () => {
                 },
             ],
             imports: [
-                ConfigTestModule,
+                CommonTestModule,
                 DatabaseTestModule.forRoot(),
                 PersonenKontextApiModule,
                 KeycloakConfigTestModule.forRoot(),

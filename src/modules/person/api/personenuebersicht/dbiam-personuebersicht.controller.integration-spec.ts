@@ -47,6 +47,7 @@ import { ServiceProviderModule } from '../../../service-provider/service-provide
 import { SharedExceptionFilter } from '../../../../shared/filter/shared-exception-filter.js';
 import { ValidationExceptionFilter } from '../../../../shared/filter/validation-exception-filter.js';
 import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
+import { CommonTestModule } from '../../../../../test/utils/common-test.module.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -76,11 +77,9 @@ describe('Personenuebersicht API', () => {
 
         const module: TestingModule = await Test.createTestingModule({
             imports: [
-                LoggingTestModule,
+                CommonTestModule,
                 PersonApiModule,
-                ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                LoggingTestModule,
                 ServiceProviderModule,
             ],
             providers: [

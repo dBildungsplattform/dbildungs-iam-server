@@ -5,7 +5,6 @@ import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
-    ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
@@ -46,6 +45,7 @@ import {
     PersonenkontextEventKontextData,
     PersonenkontextEventPersonData,
 } from '../../../shared/events/personenkontext-event.types.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 function getEmail(address?: string, status?: EmailAddressStatus): EmailAddress<true> {
     const fakePersonId: PersonID = faker.string.uuid();
@@ -77,7 +77,7 @@ describe('EmailEventHandler', () => {
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
-                ConfigTestModule,
+                CommonTestModule,
                 EmailModule,
                 EventModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
