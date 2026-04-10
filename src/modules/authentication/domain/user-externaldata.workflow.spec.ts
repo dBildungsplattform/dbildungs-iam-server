@@ -147,7 +147,7 @@ describe('UserExternaldataWorkflow', () => {
             expect(sut.person?.email).toBeUndefined();
         });
 
-        it('should not set contextID when user has suspended email', async () => {
+        it('should not set contextID and address when user has suspended email', async () => {
             const keycloakSub: string = faker.string.uuid();
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
@@ -188,6 +188,7 @@ describe('UserExternaldataWorkflow', () => {
 
             await sut.initialize(person.id);
             expect(sut.person).toBeDefined();
+            expect(sut.person?.email).toBeUndefined();
             expect(sut.checkedExternalPkData).toBeDefined();
             expect(sut.oxLoginId).toBeUndefined();
         });
