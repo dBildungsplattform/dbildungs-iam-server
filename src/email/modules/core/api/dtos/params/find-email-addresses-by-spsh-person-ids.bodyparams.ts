@@ -1,12 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMinSize, IsArray, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsUUID } from 'class-validator';
 
 export class FindEmailAddressBySpshPersonIdsBodyParams {
     @IsArray()
-    @ArrayMinSize(2500)
-    @IsString({ each: true })
+    @ArrayMaxSize(2500)
     @IsUUID(undefined, { each: true })
-    @IsNotEmpty()
     @ApiProperty({
         description: 'The spshPersonIds for the emailAddresses.',
         required: true,

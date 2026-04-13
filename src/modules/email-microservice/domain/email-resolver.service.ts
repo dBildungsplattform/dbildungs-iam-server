@@ -52,7 +52,9 @@ export class EmailResolverService {
         }
     }
 
-    public async findEmailsBySpshPersons(personIds: string[]): Promise<Map<PersonID, PersonEmailResponse | undefined>> {
+    public async findEmailsBySpshPersons(
+        personIds: string[],
+    ): Promise<Option<Map<PersonID, PersonEmailResponse | undefined>>> {
         try {
             const response: AxiosResponse<Record<string, EmailAddressResponse | null>> = await lastValueFrom(
                 this.httpService.post(
@@ -70,20 +72,22 @@ export class EmailResolverService {
             const result: Map<PersonID, PersonEmailResponse | undefined> = new Map<
                 PersonID,
                 PersonEmailResponse | undefined
-            >();
-            for (const personId of personIds) {
-                const emailResponse: EmailAddressResponse | null | undefined = response.data[personId];
-                if (emailResponse) {
-                    const status: EmailAddressStatus = this.mapStatus(emailResponse.status);
-                    result.set(personId, new PersonEmailResponse(status, emailResponse.address));
-                } else {
-                    result.set(personId, undefined);
-                }
-            }
+            >(
+                personIds.map((pid: string) => {
+                    const email: EmailAddressResponse | null | undefined = response.data[pid];
+
+                    if (!email) {
+                        return [pid, undefined];
+                    }
+
+                    return [pid, new PersonEmailResponse(this.mapStatus(email.status), email.address)];
+                }),
+            );
+
             return result;
         } catch (error) {
             this.logger.logUnknownAsError(`Failed to fetch emails for persons`, error);
-            return new Map<PersonID, PersonEmailResponse | undefined>();
+            return undefined;
         }
     }
 

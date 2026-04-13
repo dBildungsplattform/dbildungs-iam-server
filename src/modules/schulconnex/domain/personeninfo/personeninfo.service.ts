@@ -74,12 +74,11 @@ export class PersonenInfoService {
             .sort((a: string, b: string) => a.localeCompare(b))
             .slice(offset, offset + limit);
 
-        let emailsForPersons: Map<PersonID, PersonEmailResponse | undefined>;
-        if (this.emailResolverService.shouldUseEmailMicroservice()) {
-            emailsForPersons = await this.emailResolverService.findEmailsBySpshPersons(personIds);
-        } else {
-            emailsForPersons = await this.emailRepo.getEmailAddressAndStatusForPersonIds(personIds);
-        }
+        const emailsForPersons: Map<PersonID, PersonEmailResponse | undefined> =
+            this.emailResolverService.shouldUseEmailMicroservice()
+                ? ((await this.emailResolverService.findEmailsBySpshPersons(personIds)) ??
+                  new Map<PersonID, PersonEmailResponse | undefined>())
+                : await this.emailRepo.getEmailAddressAndStatusForPersonIds(personIds);
 
         const [persons, kontexteForPersons, userLocksForPersons]: [
             Person<true>[],

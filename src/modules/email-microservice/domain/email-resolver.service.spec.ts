@@ -194,11 +194,13 @@ describe('EmailResolverService', () => {
 
             mockHttpService.post.mockReturnValueOnce(of(mockAxiosResponse));
 
-            const result: Map<string, PersonEmailResponse | undefined> = await sut.findEmailsBySpshPersons([
+            const result: Option<Map<string, PersonEmailResponse | undefined>> = await sut.findEmailsBySpshPersons([
                 personId1,
                 personId2,
             ]);
-
+            if (!result) {
+                throw new Error('Expected result to be defined');
+            }
             expect(result.size).toBe(2);
             expect(result.get(personId1)).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, email1));
             expect(result.get(personId2)).toEqual(new PersonEmailResponse(EmailAddressStatus.REQUESTED, email2));
@@ -232,12 +234,15 @@ describe('EmailResolverService', () => {
 
             mockHttpService.post.mockReturnValueOnce(of(mockAxiosResponse));
 
-            const result: Map<string, PersonEmailResponse | undefined> = await sut.findEmailsBySpshPersons([
+            const result: Option<Map<string, PersonEmailResponse | undefined>> = await sut.findEmailsBySpshPersons([
                 personId1,
                 personId2,
                 personId3,
             ]);
 
+            if (!result) {
+                throw new Error('Expected result to be defined');
+            }
             expect(result.size).toBe(3);
             expect(result.get(personId1)).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, email1));
             expect(result.get(personId2)).toBeUndefined();
@@ -252,9 +257,9 @@ describe('EmailResolverService', () => {
                 throw error;
             });
 
-            const result: Map<string, PersonEmailResponse | undefined> = await sut.findEmailsBySpshPersons(ids);
+            const result: Option<Map<string, PersonEmailResponse | undefined>> = await sut.findEmailsBySpshPersons(ids);
 
-            expect(result.size).toBe(0);
+            expect(result).toBeUndefined();
             expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(`Failed to fetch emails for persons`, error);
         });
     });

@@ -220,8 +220,6 @@ describe('EmailReadController', () => {
     describe('findEmailAddressesByPersonIds', () => {
         it('should return a map of personIds to EmailAddressResponse', async () => {
             const spshPerson1Id: string = faker.string.uuid();
-            const params1: FindEmailAddressBySpshPersonIdPathParams = new FindEmailAddressBySpshPersonIdPathParams();
-            Object.assign(params1, { spshPerson1Id });
             const address1: EmailAddress<true> = EmailAddress.construct({
                 id: faker.string.uuid(),
                 address: 'test1@example.com',
@@ -241,8 +239,6 @@ describe('EmailReadController', () => {
             });
 
             const spshPerson2Id: string = faker.string.uuid();
-            const params2: FindEmailAddressBySpshPersonIdPathParams = new FindEmailAddressBySpshPersonIdPathParams();
-            Object.assign(params2, { spshPerson2Id });
             const address2: EmailAddress<true> = EmailAddress.construct({
                 id: faker.string.uuid(),
                 address: 'test2@example.com',

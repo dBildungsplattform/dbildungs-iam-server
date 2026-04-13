@@ -119,11 +119,9 @@ export class EmailAddressRepo {
             { orderBy: { spshPersonId: 'asc', priority: 'asc' } },
         );
 
-        const result: Map<string, EmailAddress<true> | null> = new Map<string, EmailAddress<true> | null>();
-
-        for (const pid of spshPersonIds) {
-            result.set(pid, null);
-        }
+        const result: Map<string, EmailAddress<true> | null> = new Map<string, EmailAddress<true> | null>(
+            spshPersonIds.map((pid: string) => [pid, null]),
+        );
 
         for (const entity of emailAddressEntities) {
             const pid: string = entity.spshPersonId;
