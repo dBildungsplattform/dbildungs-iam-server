@@ -23,6 +23,7 @@ import { PersonEmailResponse } from '../../../person/api/person-email-response.j
 import { SchulconnexRepo } from '../../persistence/schulconnex.repo.js';
 import { createPersonPermissionsMock } from '../../../../../test/utils/auth.mock.js';
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
+import { DomainError } from '../../../../shared/error/index.js';
 
 describe('PersonInfoService', () => {
     let module: TestingModule;
@@ -106,12 +107,16 @@ describe('PersonInfoService', () => {
                 orgaIds: [],
             });
             dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([]);
-            const res: PersonInfoResponseV1[] = await sut.findPersonsForPersonenInfo(
+            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
                 createPersonPermissionsMock(),
                 0,
                 10,
             );
-            expect(res.length).toEqual(0);
+            expect(res.ok).toBe(true);
+            if (!res.ok) {
+                throw new Error('Expected result.ok to be true, got error: ' + JSON.stringify(res.error));
+            }
+            expect(res.value.length).toEqual(0);
             expect(
                 schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
             ).not.toHaveBeenCalled();
@@ -173,12 +178,13 @@ describe('PersonInfoService', () => {
                 DoFactory.createPerson(true, { id: personId1 }),
                 DoFactory.createPerson(true, { id: personId2 }),
             ]);
-            emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue(
-                new Map([
+            emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
+                ok: true,
+                value: new Map([
                     [personId1, createMock(PersonEmailResponse)],
                     [personId2, createMock(PersonEmailResponse)],
                 ]),
-            );
+            });
             dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
                 new Map([
                     [personId1, []],
@@ -192,7 +198,11 @@ describe('PersonInfoService', () => {
                 ]),
             );
 
-            const res: PersonInfoResponseV1[] = await sut.findPersonsForPersonenInfo(permissions, 0, 10);
+            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
+                permissions,
+                0,
+                10,
+            );
             expect(res).toBeDefined();
             expect(
                 schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
@@ -213,9 +223,13 @@ describe('PersonInfoService', () => {
             expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
             );
-            expect(res.length).toEqual(2);
-            expect(res[0]).toBeInstanceOf(PersonInfoResponseV1);
-            expect(res[1]).toBeInstanceOf(PersonInfoResponseV1);
+            expect(res.ok).toBe(true);
+            if (!res.ok) {
+                throw new Error('Expected result.ok to be true, got error: ' + JSON.stringify(res.error));
+            }
+            expect(res.value.length).toEqual(2);
+            expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV1);
+            expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV1);
         });
 
         it('should return persons with all permissions using new microservice', async () => {
@@ -273,12 +287,13 @@ describe('PersonInfoService', () => {
                 DoFactory.createPerson(true, { id: personId1 }),
                 DoFactory.createPerson(true, { id: personId1 }),
             ]);
-            emailResolverServiceMock.findEmailsBySpshPersons.mockResolvedValue(
-                new Map([
+            emailResolverServiceMock.findEmailsBySpshPersons.mockResolvedValue({
+                ok: true,
+                value: new Map([
                     [personId1, createMock(PersonEmailResponse)],
                     [personId2, createMock(PersonEmailResponse)],
                 ]),
-            );
+            });
             dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
                 new Map([
                     [personId1, []],
@@ -292,7 +307,11 @@ describe('PersonInfoService', () => {
                 ]),
             );
 
-            const res: PersonInfoResponseV1[] = await sut.findPersonsForPersonenInfo(permissions, 0, 10);
+            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
+                permissions,
+                0,
+                10,
+            );
             expect(res).toBeDefined();
             expect(
                 schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
@@ -313,9 +332,13 @@ describe('PersonInfoService', () => {
             expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
             );
-            expect(res.length).toEqual(2);
-            expect(res[0]).toBeInstanceOf(PersonInfoResponseV1);
-            expect(res[1]).toBeInstanceOf(PersonInfoResponseV1);
+            expect(res.ok).toBe(true);
+            if (!res.ok) {
+                throw new Error('Expected result.ok to be true, got error: ' + JSON.stringify(res.error));
+            }
+            expect(res.value.length).toEqual(2);
+            expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV1);
+            expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV1);
         });
 
         it('should return persons with all permissions using old repo', async () => {
@@ -373,12 +396,13 @@ describe('PersonInfoService', () => {
                 DoFactory.createPerson(true, { id: personId1 }),
                 DoFactory.createPerson(true, { id: personId1 }),
             ]);
-            emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue(
-                new Map([
+            emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
+                ok: true,
+                value: new Map([
                     [personId1, createMock(PersonEmailResponse)],
                     [personId2, createMock(PersonEmailResponse)],
                 ]),
-            );
+            });
             dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
                 new Map([
                     [personId1, []],
@@ -392,7 +416,11 @@ describe('PersonInfoService', () => {
                 ]),
             );
 
-            const res: PersonInfoResponseV1[] = await sut.findPersonsForPersonenInfo(permissions, 0, 10);
+            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
+                permissions,
+                0,
+                10,
+            );
             expect(res).toBeDefined();
             expect(
                 schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
@@ -413,9 +441,13 @@ describe('PersonInfoService', () => {
             expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
             );
-            expect(res.length).toEqual(2);
-            expect(res[0]).toBeInstanceOf(PersonInfoResponseV1);
-            expect(res[1]).toBeInstanceOf(PersonInfoResponseV1);
+            expect(res.ok).toBe(true);
+            if (!res.ok) {
+                throw new Error('Expected result.ok to be true, got error: ' + JSON.stringify(res.error));
+            }
+            expect(res.value.length).toEqual(2);
+            expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV1);
+            expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV1);
         });
 
         it('should return persons and default to empty kontext and userlock array', async () => {
@@ -472,12 +504,13 @@ describe('PersonInfoService', () => {
                 DoFactory.createPerson(true, { id: personId1 }),
                 DoFactory.createPerson(true, { id: personId1 }),
             ]);
-            emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue(
-                new Map([
+            emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
+                ok: true,
+                value: new Map([
                     [personId1, createMock(PersonEmailResponse)],
                     [personId2, createMock(PersonEmailResponse)],
                 ]),
-            );
+            });
             dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
                 new Map([
                     ['', []],
@@ -491,7 +524,11 @@ describe('PersonInfoService', () => {
                 ]),
             );
 
-            const res: PersonInfoResponseV1[] = await sut.findPersonsForPersonenInfo(permissions, 0, 10);
+            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
+                permissions,
+                0,
+                10,
+            );
             expect(res).toBeDefined();
             expect(
                 schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
@@ -512,9 +549,13 @@ describe('PersonInfoService', () => {
             expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
             );
-            expect(res.length).toEqual(2);
-            expect(res[0]).toBeInstanceOf(PersonInfoResponseV1);
-            expect(res[1]).toBeInstanceOf(PersonInfoResponseV1);
+            expect(res.ok).toBe(true);
+            if (!res.ok) {
+                throw new Error('Expected result.ok to be true, got error: ' + JSON.stringify(res.error));
+            }
+            expect(res.value.length).toEqual(2);
+            expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV1);
+            expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV1);
         });
     });
 });

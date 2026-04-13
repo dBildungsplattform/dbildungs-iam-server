@@ -15,6 +15,7 @@ import { Err, Ok } from '../../../shared/util/result.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { HeaderApiKeyConfig } from '../../../shared/config/headerapikey.config.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { EmailMicroserviceCommunicationError } from '../../../shared/error/index.js';
 
 export interface PersonIdWithEmailResponse {
     personId: string;
@@ -54,7 +55,7 @@ export class EmailResolverService {
 
     public async findEmailsBySpshPersons(
         personIds: string[],
-    ): Promise<Option<Map<PersonID, PersonEmailResponse | undefined>>> {
+    ): Promise<Result<Map<PersonID, PersonEmailResponse | undefined>, DomainError>> {
         try {
             const response: AxiosResponse<Record<string, EmailAddressResponse | null>> = await lastValueFrom(
                 this.httpService.post(
@@ -84,10 +85,10 @@ export class EmailResolverService {
                 }),
             );
 
-            return result;
+            return Ok(result);
         } catch (error) {
             this.logger.logUnknownAsError(`Failed to fetch emails for persons`, error);
-            return undefined;
+            return Err(new EmailMicroserviceCommunicationError('Failed to fetch emails for persons'));
         }
     }
 

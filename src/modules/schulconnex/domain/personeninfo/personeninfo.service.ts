@@ -16,6 +16,7 @@ import { PersonInfoResponseV1 } from '../../api/personinfo/v1/person-info.respon
 import { PersonID } from '../../../../shared/types/index.js';
 import { SchulconnexRepo } from '../../persistence/schulconnex.repo.js';
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
+import { DomainError } from '../../../../shared/error/index.js';
 
 @Injectable()
 export class PersonenInfoService {
@@ -32,7 +33,7 @@ export class PersonenInfoService {
         permissions: PersonPermissions,
         offset: number,
         limit: number,
-    ): Promise<PersonInfoResponseV1[]> {
+    ): Promise<Result<PersonInfoResponseV1[], DomainError>> {
         // 1. Ermittle alle Knoten mit PERSONEN_LESEN-Recht
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_LESEN],
@@ -56,7 +57,7 @@ export class PersonenInfoService {
         }
 
         if (permittedServiceProviderIds.size === 0) {
-            return [];
+            return { ok: true, value: [] };
         }
 
         const [idsWithKontext, idsWithRollenerweiterung]: [PersonID[], PersonID[]] = await Promise.all([
@@ -74,18 +75,19 @@ export class PersonenInfoService {
             .sort((a: string, b: string) => a.localeCompare(b))
             .slice(offset, offset + limit);
 
-        const emailsForPersons: Map<PersonID, PersonEmailResponse | undefined> =
+        const emailsForPersonsPromise: Promise<Result<Map<PersonID, PersonEmailResponse | undefined>, DomainError>> =
             this.emailResolverService.shouldUseEmailMicroservice()
-                ? ((await this.emailResolverService.findEmailsBySpshPersons(personIds)) ??
-                  new Map<PersonID, PersonEmailResponse | undefined>())
-                : await this.emailRepo.getEmailAddressAndStatusForPersonIds(personIds);
+                ? this.emailResolverService.findEmailsBySpshPersons(personIds)
+                : this.emailRepo.getEmailAddressAndStatusForPersonIds(personIds);
 
-        const [persons, kontexteForPersons, userLocksForPersons]: [
+        const [persons, emailsForPersons, kontexteForPersons, userLocksForPersons]: [
             Person<true>[],
+            Result<Map<PersonID, PersonEmailResponse | undefined>, DomainError>,
             Map<PersonID, KontextWithOrgaAndRolle[]>,
             Map<PersonID, UserLock[]>,
         ] = await Promise.all([
             this.personRepo.findByPersonIds(personIds),
+            emailsForPersonsPromise,
             this.personenkontextRepo.findByPersonIdsAndServiceprovidersWithOrgaAndRolle(
                 personIds,
                 Array.from(permittedServiceProviderIds),
@@ -94,15 +96,20 @@ export class PersonenInfoService {
             this.userLockRepo.findByPersonIds(personIds),
         ]);
 
+        if (!emailsForPersons.ok) {
+            return { ok: false, error: emailsForPersons.error };
+        }
+
+        const emailMap: Map<PersonID, PersonEmailResponse | undefined> = emailsForPersons.value;
         const responses: PersonInfoResponseV1[] = persons.map((person: Person<true>) => {
             const personId: PersonID = person.id;
-            const email: PersonEmailResponse | undefined = emailsForPersons.get(personId);
+            const email: PersonEmailResponse | undefined = emailMap.get(personId);
             const kontexteWithOrgaAndRolle: KontextWithOrgaAndRolle[] = kontexteForPersons.get(personId) ?? [];
             const userLocks: UserLock[] = userLocksForPersons.get(personId) ?? [];
 
             return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle, email, userLocks);
         });
 
-        return responses;
+        return { ok: true, value: responses };
     }
 }

@@ -16,11 +16,12 @@ import { ClassLogger } from '../../../core/logging/class-logger';
 import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams';
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity';
-import { EntityNotFoundError } from '../../../shared/error';
+import { DomainError, EntityNotFoundError } from '../../../shared/error';
 import { EmailAddressStatus } from '../../email/domain/email-address';
 import { PersonEmailResponse } from '../../person/api/person-email-response';
 import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailResolverService, PersonIdWithEmailResponse } from './email-resolver.service';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('EmailResolverService', () => {
     let module: TestingModule;
@@ -194,16 +195,16 @@ describe('EmailResolverService', () => {
 
             mockHttpService.post.mockReturnValueOnce(of(mockAxiosResponse));
 
-            const result: Option<Map<string, PersonEmailResponse | undefined>> = await sut.findEmailsBySpshPersons([
-                personId1,
-                personId2,
-            ]);
-            if (!result) {
+            const result: Result<
+                Map<PersonID, PersonEmailResponse | undefined>,
+                DomainError
+            > = await sut.findEmailsBySpshPersons([personId1, personId2]);
+            if (!result.ok) {
                 throw new Error('Expected result to be defined');
             }
-            expect(result.size).toBe(2);
-            expect(result.get(personId1)).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, email1));
-            expect(result.get(personId2)).toEqual(new PersonEmailResponse(EmailAddressStatus.REQUESTED, email2));
+            expect(result.value.size).toBe(2);
+            expect(result.value.get(personId1)).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, email1));
+            expect(result.value.get(personId2)).toEqual(new PersonEmailResponse(EmailAddressStatus.REQUESTED, email2));
         });
 
         it('should set undefined for persons with null or missing entries in response', async () => {
@@ -234,19 +235,18 @@ describe('EmailResolverService', () => {
 
             mockHttpService.post.mockReturnValueOnce(of(mockAxiosResponse));
 
-            const result: Option<Map<string, PersonEmailResponse | undefined>> = await sut.findEmailsBySpshPersons([
-                personId1,
-                personId2,
-                personId3,
-            ]);
+            const result: Result<
+                Map<PersonID, PersonEmailResponse | undefined>,
+                DomainError
+            > = await sut.findEmailsBySpshPersons([personId1, personId2, personId3]);
 
-            if (!result) {
+            if (!result.ok) {
                 throw new Error('Expected result to be defined');
             }
-            expect(result.size).toBe(3);
-            expect(result.get(personId1)).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, email1));
-            expect(result.get(personId2)).toBeUndefined();
-            expect(result.get(personId3)).toBeUndefined();
+            expect(result.value.size).toBe(3);
+            expect(result.value.get(personId1)).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, email1));
+            expect(result.value.get(personId2)).toBeUndefined();
+            expect(result.value.get(personId3)).toBeUndefined();
         });
 
         it('should log error and return empty map when post call fails', async () => {
@@ -257,9 +257,12 @@ describe('EmailResolverService', () => {
                 throw error;
             });
 
-            const result: Option<Map<string, PersonEmailResponse | undefined>> = await sut.findEmailsBySpshPersons(ids);
+            const result: Result<
+                Map<PersonID, PersonEmailResponse | undefined>,
+                DomainError
+            > = await sut.findEmailsBySpshPersons(ids);
 
-            expect(result).toBeUndefined();
+            expect(result.ok).toBeFalsy();
             expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(`Failed to fetch emails for persons`, error);
         });
     });
