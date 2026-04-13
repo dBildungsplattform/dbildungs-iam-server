@@ -585,12 +585,15 @@ describe('Provider Controller Test', () => {
         });
 
         it('should handle rollenerweiterungenWithName', async () => {
-            const params: ManageableServiceProvidersParams = { limit: 10, offset: 0 };
-            const total: number = 1;
             const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const params: ManageableServiceProvidersForOrganisationParams = {
+                limit: 10,
+                offset: 0,
+                organisationId: organisation.id,
+            };
+            const total: number = 1;
 
             const manageableObjects: ManageableServiceProviderWithReferencedObjects[] = [
                 {
@@ -608,10 +611,12 @@ describe('Provider Controller Test', () => {
                 },
             ];
 
-            serviceProviderServiceMock.findAuthorized.mockResolvedValue([manageableObjects, total]);
+            serviceProviderServiceMock.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung.mockResolvedValue(
+                Ok([manageableObjects, total]),
+            );
 
             const result: RawPagedResponse<ManageableServiceProviderListEntryResponse> =
-                await providerController.getManageableServiceProviders(personPermissionsMock, params);
+                await providerController.getManageableServiceProvidersForOrganisationId(personPermissionsMock, params);
 
             expect(result).toBeDefined();
             expect(result.items).toHaveLength(1);
