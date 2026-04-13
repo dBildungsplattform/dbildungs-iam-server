@@ -46,6 +46,7 @@ import { OxEventHandler } from './ox-event-handler.js';
 import { OxEventService } from './ox-event.service.js';
 import { OxSyncEventHandler } from './ox-sync-event-handler.js';
 import { OxService } from './ox.service.js';
+import { ChangeUserParams } from '../actions/user/change-user.action.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
@@ -1678,9 +1679,129 @@ describe('OxEventHandler', () => {
             });
         });
 
+        describe('when personId is set in event', () => {
+            it('should add found email to aliases and set it as primary', async () => {
+                const dbEmail: string = faker.internet.email();
+                const aliases: string[] = [address];
+                const userData: GetDataForUserResponse = getGetDataForUserResponse(
+                    oxUserId,
+                    username,
+                    address,
+                    aliases,
+                );
+                //mock: get-user-data succeeds
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: userData,
+                });
+                //mock: change-user-data succeeds
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(DoFactory.createEmailAddress(true, dbEmail));
+                await sut.handleEmailAddressMarkedForDeletionEvent(event);
+                await vi.runAllTimersAsync();
+
+                expect(oxServiceMock.send).toHaveBeenLastCalledWith(
+                    expect.objectContaining({
+                        params: expect.objectContaining({
+                            userId: oxUserId,
+                            contextId: contextId,
+                            username: undefined,
+                            aliases: [dbEmail],
+                            givenname: undefined,
+                            surname: undefined,
+                            displayname: undefined,
+                            defaultSenderAddress: dbEmail,
+                            primaryEmail: dbEmail,
+                            email1: dbEmail,
+                        }) as ChangeUserParams,
+                    }),
+                );
+            });
+
+            it('should skip setting primary if none exists', async () => {
+                const existingMail: string = faker.internet.email();
+                const aliases: string[] = [existingMail, address];
+                const userData: GetDataForUserResponse = getGetDataForUserResponse(
+                    oxUserId,
+                    username,
+                    address,
+                    aliases,
+                );
+                //mock: get-user-data succeeds
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: userData,
+                });
+                //mock: change-user-data succeeds
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(undefined);
+                await sut.handleEmailAddressMarkedForDeletionEvent(event);
+                await vi.runAllTimersAsync();
+
+                expect(oxServiceMock.send).toHaveBeenLastCalledWith(
+                    expect.objectContaining({
+                        params: expect.objectContaining({
+                            userId: oxUserId,
+                            contextId: contextId,
+                            username: undefined,
+                            aliases: [existingMail],
+                            givenname: undefined,
+                            surname: undefined,
+                            displayname: undefined,
+                            defaultSenderAddress: existingMail,
+                            primaryEmail: existingMail,
+                            email1: existingMail,
+                        }) as ChangeUserParams,
+                    }),
+                );
+            });
+        });
+
+        it('should abort if the removed mail is the last one', async () => {
+            const aliases: string[] = [address];
+            const event: EmailAddressMarkedForDeletionEvent = new EmailAddressMarkedForDeletionEvent(
+                undefined,
+                username,
+                oxUserId,
+                emailAddressId,
+                status,
+                address,
+            );
+            const userData: GetDataForUserResponse = getGetDataForUserResponse(oxUserId, username, address, aliases);
+            //mock: get-user-data succeeds
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: userData,
+            });
+            //mock: change-user-data succeeds
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            });
+            emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(undefined);
+            await sut.handleEmailAddressMarkedForDeletionEvent(event);
+            await vi.runAllTimersAsync();
+
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `Could Not Remove EmailAddress from OxAccount because user would not have any more addresses, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+            );
+        });
+
         describe('when getting current user-data from OX succeeds but changing user-data fails', () => {
             it('should log error about that', async () => {
-                const userData: GetDataForUserResponse = getGetDataForUserResponse(oxUserId, username, address);
+                const aliases: string[] = [faker.internet.email(), address];
+                const userData: GetDataForUserResponse = getGetDataForUserResponse(
+                    oxUserId,
+                    username,
+                    address,
+                    aliases,
+                );
                 //mock: get-user-data succeeds
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: true,
