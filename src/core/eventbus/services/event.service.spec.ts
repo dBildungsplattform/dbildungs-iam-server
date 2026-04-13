@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import { Mock, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 
@@ -9,6 +10,12 @@ import { EventService } from './event.service.js';
 import { DeepMocked } from '../../../../test/utils/createMock.js';
 
 class TestEvent extends BaseEvent {
+    public constructor() {
+        super();
+    }
+}
+
+class UnregisteredTestEvent extends BaseEvent {
     public constructor() {
         super();
     }
@@ -76,6 +83,14 @@ describe('EventService', () => {
 
             sut.unsubscribe(TestEvent, handler);
             sut.publish(new TestEvent());
+            expect(handler).not.toHaveBeenCalled();
+        });
+
+        it('should should do nothing without info', () => {
+            const handler: Mock = vi.fn();
+
+            sut.unsubscribe(UnregisteredTestEvent, handler);
+            sut.publish(new UnregisteredTestEvent());
             expect(handler).not.toHaveBeenCalled();
         });
     });
