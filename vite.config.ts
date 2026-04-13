@@ -52,6 +52,7 @@ export default defineConfig({
                 branches: -96, // Absolute count to avoid regressions
                 functions: 100,
                 lines: 100,
+                autoUpdate: true, // automatically update coverage to stay up to date
             },
             skipFull: true,
         },

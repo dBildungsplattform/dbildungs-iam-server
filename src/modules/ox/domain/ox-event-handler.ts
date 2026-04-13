@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { uniq } from 'lodash-es';
 
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
@@ -378,10 +379,37 @@ export class OxEventHandler {
                 `Removed From alias:${event.address}, personId:${event.personId}, username:${event.username}`,
             );
         }
+
+        // Use the first alias as primary mail (guaranteed to still exist in OX)
+        let newPrimaryMail: string | undefined = newAliasesArray[0];
+
+        if (event.personId) {
+            // Try to find a primary mail if user still exists, instead of using one returned by ox
+            const enabledMail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(event.personId);
+
+            if (enabledMail) {
+                newPrimaryMail = enabledMail.address;
+
+                // Make sure the email is in the aliases
+                newAliasesArray = uniq([newPrimaryMail, ...newAliasesArray]);
+            }
+        }
+
+        if (!newPrimaryMail) {
+            return this.logger.error(
+                `Could Not Remove EmailAddress from OxAccount because user would not have any more addresses, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+            );
+        }
+
         const action: ChangeUserAction = this.oxEventService.createChangeUserAction(
             event.oxUserId,
-            undefined,
-            newAliasesArray,
+            undefined, // oxUserName
+            newAliasesArray, // aliases
+            undefined, // givenname
+            undefined, // surname
+            undefined, // displayname
+            newPrimaryMail, // defaultSenderAddress
+            newPrimaryMail, // primaryEmail
         );
         const result: Result<void, DomainError> = await this.oxService.send(action);
 
