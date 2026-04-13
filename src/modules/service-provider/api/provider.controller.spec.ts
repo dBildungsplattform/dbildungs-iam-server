@@ -44,6 +44,8 @@ import { Err, Ok } from '../../../shared/util/result.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 import { MissingAttributeError } from '../../../shared/error/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
@@ -580,6 +582,58 @@ describe('Provider Controller Test', () => {
             await expect(
                 providerController.getManageableServiceProvidersForOrganisationId(permissions, params),
             ).rejects.toBeInstanceOf(MissingPermissionsError);
+        });
+
+        it('should handle rollenerweiterungenWithName', async () => {
+            const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true);
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const params: ManageableServiceProvidersForOrganisationParams = {
+                limit: 10,
+                offset: 0,
+                organisationId: organisation.id,
+            };
+            const total: number = 1;
+
+            const manageableObjects: ManageableServiceProviderWithReferencedObjects[] = [
+                {
+                    serviceProvider: serviceProvider,
+                    organisation,
+                    rollen: [rolle],
+                    rollenerweiterungen: [DoFactory.createRollenerweiterung(true)],
+                    rollenerweiterungenWithName: [
+                        {
+                            serviceProviderId: serviceProvider.id,
+                            organisation,
+                            rolle,
+                        },
+                    ],
+                },
+            ];
+
+            serviceProviderServiceMock.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung.mockResolvedValue(
+                Ok([manageableObjects, total]),
+            );
+
+            const result: RawPagedResponse<ManageableServiceProviderListEntryResponse> =
+                await providerController.getManageableServiceProvidersForOrganisationId(personPermissionsMock, params);
+
+            expect(result).toBeDefined();
+            expect(result.items).toHaveLength(1);
+            expect(result.items[0]).toBeInstanceOf(ManageableServiceProviderListEntryResponse);
+            expect(result.items[0]?.rollenerweiterungen).toEqual([
+                {
+                    organisation: {
+                        id: organisation.id,
+                        kennung: organisation.kennung,
+                        name: organisation.name,
+                    },
+                    rolle: {
+                        id: rolle.id,
+                        name: rolle.name,
+                    },
+                },
+            ]);
         });
 
         it('should handle undefined rollenerweiterungenWithName', async () => {
