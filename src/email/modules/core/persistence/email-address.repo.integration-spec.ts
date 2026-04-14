@@ -201,6 +201,22 @@ describe('EmailRepo', () => {
             const result: EmailAddress<true>[] = await sut.findPrimaryBySpshPersonIds(unknownIds);
             expect(result).toHaveLength(0);
         });
+
+        it('should return only primary email addresses even if multiple exist for a spshPersonId', async () => {
+            const pid: string = faker.string.uuid();
+
+            const mail1: EmailAddress<true> = await createAndSaveMail(undefined, 0, pid); // primary
+            await setStatus(mail1, EmailAddressStatusEnum.ACTIVE);
+
+            const mail2: EmailAddress<true> = await createAndSaveMail(undefined, 1, pid); // secondary
+            await setStatus(mail2, EmailAddressStatusEnum.SUSPENDED);
+
+            const result: EmailAddress<true>[] = await sut.findPrimaryBySpshPersonIds([pid]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]!.spshPersonId).toBe(pid);
+            expect(result[0]!.priority).toBe(0);
+        });
     });
 
     describe('findAllEmailAddressesWithStatusesDescBySpshPersonId', () => {
