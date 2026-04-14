@@ -30,6 +30,7 @@ import { OxPrimaryMailAlreadyExistsError } from '../../ox/error/ox-primary-mail-
 import { expectOkResult } from '../../../../../test/utils/test-types.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { SetEmailAddressForSpshPersonPathParams } from '../api/dtos/params/set-email-address-for-spsh-person.pathparams.js';
+import { WebhookService } from '../../webhook/domain/webhook.service.js';
 
 describe('SetEmailAddressForSpshPersonService', () => {
     let module: TestingModule;
@@ -44,6 +45,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
     let oxSendServiceMock: DeepMocked<OxSendService>;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
     let oxServiceMock: DeepMocked<OxService>;
+    let webhookServiceMock: DeepMocked<WebhookService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -72,6 +74,10 @@ describe('SetEmailAddressForSpshPersonService', () => {
                     provide: LdapClientService,
                     useValue: createMock(LdapClientService),
                 },
+                {
+                    provide: WebhookService,
+                    useValue: createMock(WebhookService),
+                },
             ],
         }).compile();
 
@@ -86,6 +92,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
         oxSendServiceMock = module.get(OxSendService);
         ldapClientServiceMock = module.get(LdapClientService);
         oxServiceMock = module.get(OxService);
+        webhookServiceMock = module.get(WebhookService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -174,6 +181,13 @@ describe('SetEmailAddressForSpshPersonService', () => {
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `SET EMAIL FOR SPSHPERSONID: ${pathParams.spshPersonId} - Success`,
             );
+            expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+                spshPersonId: pathParams.spshPersonId,
+                newPrimaryEmail: expectedEmailAddress,
+                newAlternativeEmail: undefined,
+                previousPrimaryEmail: undefined,
+                previousAlternativeEmail: undefined,
+            });
         });
 
         it('should reactivate old email', async () => {
@@ -296,6 +310,13 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 email3.address,
                 email1.address,
             );
+            expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+                spshPersonId: pathParams.spshPersonId,
+                newPrimaryEmail: email3.address,
+                newAlternativeEmail: email1.address,
+                previousPrimaryEmail: email1.address,
+                previousAlternativeEmail: email2.address,
+            });
         });
 
         it('should shift failed email from prio 0', async () => {
@@ -356,6 +377,13 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 }),
             );
             expect(emailResult[1]?.getStatus()).toEqual(EmailAddressStatusEnum.FAILED);
+            expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+                spshPersonId: pathParams.spshPersonId,
+                newPrimaryEmail: emailResult[0]?.address,
+                newAlternativeEmail: undefined,
+                previousPrimaryEmail: email.address,
+                previousAlternativeEmail: undefined,
+            });
         });
 
         it('should error if shifting of old failed address fails', async () => {
@@ -397,6 +425,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 `Error while updating e-mail priorities for prio 0 mail`,
                 error,
             );
+            expect(webhookServiceMock.sendEmailsChanged).not.toHaveBeenCalled();
         });
 
         it('should not change priorities if the email has prio 0 and the status is not ALREADY_IN_OX', async () => {
@@ -448,6 +477,13 @@ describe('SetEmailAddressForSpshPersonService', () => {
             expect(emailResult[0]?.getStatus()).toEqual(EmailAddressStatusEnum.ACTIVE);
 
             expect(shiftPrioritiesSpy).not.toHaveBeenCalled();
+            expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+                spshPersonId: pathParams.spshPersonId,
+                newPrimaryEmail: emailResult[0]?.address,
+                newAlternativeEmail: undefined,
+                previousPrimaryEmail: emailResult[0]?.address,
+                previousAlternativeEmail: undefined,
+            });
         });
 
         it('should throw error if domain can not be found', async () => {
@@ -458,6 +494,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             await expect(() =>
                 sut.setEmailAddressForSpshPerson({ ...pathParams, ...bodyParams }),
             ).rejects.toBeInstanceOf(EmailDomainNotFoundError);
+            expect(webhookServiceMock.sendEmailsChanged).not.toHaveBeenCalled();
         });
 
         it('should throw error if user already has a pending e-mail', async () => {
@@ -481,6 +518,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             await expect(() =>
                 sut.setEmailAddressForSpshPerson({ ...pathParams, ...bodyParams }),
             ).rejects.toBeInstanceOf(EmailUpdateInProgressError);
+            expect(webhookServiceMock.sendEmailsChanged).not.toHaveBeenCalled();
         });
 
         it('should throw error if new email can not be determined', async () => {
@@ -502,6 +540,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 `SET EMAIL FOR SPSHPERSONID: ${pathParams.spshPersonId} - Error while creating or updating the email`,
                 generationError,
             );
+            expect(webhookServiceMock.sendEmailsChanged).not.toHaveBeenCalled();
         });
 
         it('should error when updating of priorities fails', async () => {
@@ -526,6 +565,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
             expect(emailResult).toHaveLength(1);
             expect(emailResult[0]?.getStatus()).toEqual(EmailAddressStatusEnum.FAILED);
+            expect(webhookServiceMock.sendEmailsChanged).not.toHaveBeenCalled();
         });
 
         it('should error if save after ox-sync fails', async () => {
@@ -567,6 +607,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
             expect(emailResult).toHaveLength(1);
             expect(emailResult[0]?.getStatus()).toEqual(EmailAddressStatusEnum.FAILED);
+            expect(webhookServiceMock.sendEmailsChanged).not.toHaveBeenCalled();
         });
 
         describe('getOrCreateAvailableEmail', () => {

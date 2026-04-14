@@ -231,6 +231,21 @@ describe('OpenIdConnectStrategy', () => {
                 vi.restoreAllMocks();
             });
 
+            it('should not set stepUpLevel if step-up time is over but passportUser is undefined', () => {
+                const req: Request = {
+                    session: { lastRouteChangeTime: 1000 },
+                } as Request;
+                mockTime(12000);
+                const timeout: number = 10;
+
+                const result: StepUpLevel = updateAndGetStepUpLevel(req, timeout);
+
+                expect(req.passportUser).toBeUndefined();
+                expect(result).toBe(StepUpLevel.SILVER);
+                expect(req.session.lastRouteChangeTime).toBe(12000);
+                vi.restoreAllMocks();
+            });
+
             it('should not reset stepUpLevel if step-up time is not over', () => {
                 const req: Request = {
                     session: { lastRouteChangeTime: 1000 },

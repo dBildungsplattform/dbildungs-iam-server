@@ -69,9 +69,19 @@ export class UserExternaldataWorkflowAggregate {
                 DomainError
             > = await this.emailResolverService.findEmailBySpshPersonAsEmailAddressResponse(personId);
 
+            // Set undefined as default, if microservice is enabled
+            this.person.email = undefined;
+            this.oxLoginId = undefined;
+
             if (personEmailResponse.ok) {
-                if (personEmailResponse.value?.status !== EmailAddressStatusEnum.SUSPENDED) {
-                    this.oxLoginId = personEmailResponse.value?.oxLoginId;
+                if (personEmailResponse.value) {
+                    if (personEmailResponse.value.status === EmailAddressStatusEnum.ACTIVE) {
+                        this.person.email = personEmailResponse.value.address;
+                    }
+
+                    if (personEmailResponse.value.status !== EmailAddressStatusEnum.SUSPENDED) {
+                        this.oxLoginId = personEmailResponse.value.oxLoginId;
+                    }
                 }
             } else {
                 return personEmailResponse.error;
