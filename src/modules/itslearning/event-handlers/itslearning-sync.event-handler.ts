@@ -135,7 +135,7 @@ export class ItsLearningSyncEventHandler {
             );
 
             // Create or update the person in itslearning
-            const creationError: Option<DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
+            const creationResult: Result<void, DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
                 {
                     id: person.id,
                     firstName: person.vorname,
@@ -147,9 +147,10 @@ export class ItsLearningSyncEventHandler {
                 `${event.eventID}-SYNC-PERSON`,
             );
 
-            if (creationError) {
-                return this.logger.error(
+            if (!creationResult.ok) {
+                return this.logger.logUnknownAsError(
                     `[EventID: ${event.eventID}] Could not create/update person with ID ${person.id} in itslearning!`,
+                    creationResult.error,
                 );
             }
 

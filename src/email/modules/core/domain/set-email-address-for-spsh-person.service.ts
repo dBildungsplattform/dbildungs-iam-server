@@ -21,6 +21,7 @@ import { EmailAddressGenerationAttemptsExceededError } from '../error/email-addr
 import { uniq } from 'lodash-es';
 import { OxError } from '../../../../shared/error/ox.error.js';
 import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
+import { WebhookService } from '../../webhook/domain/webhook.service.js';
 
 const MAX_EMAIL_PRIORITY: number = 99999; // E-Mails will be created with this priority before being activated
 
@@ -38,6 +39,7 @@ export class SetEmailAddressForSpshPersonService {
         private readonly oxService: OxService,
         private readonly oxSendService: OxSendService,
         private readonly ldapClientService: LdapClientService,
+        private readonly webhookService: WebhookService,
         config: EmailAppConfig,
     ) {
         this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS =
@@ -195,6 +197,8 @@ export class SetEmailAddressForSpshPersonService {
 
         const externalId: string = newPrimaryEmail.externalId; // Used as ox username and ldap uid.
 
+        let previousPrimaryEmail: string | undefined;
+        let previousAlternativeEmail: string | undefined;
         {
             const allEmailsWithStatuses: EmailAddress<true>[] =
                 await this.emailAddressRepo.findBySpshPersonIdSortedByPriorityAsc(spshPersonId);
@@ -202,6 +206,13 @@ export class SetEmailAddressForSpshPersonService {
             const currentPrioZero: EmailAddress<true> | undefined = allEmailsWithStatuses.find(
                 (em: EmailAddress<true>) => em.priority === 0,
             );
+
+            const currentPrioOne: EmailAddress<true> | undefined = allEmailsWithStatuses.find(
+                (em: EmailAddress<true>) => em.priority === 1,
+            );
+
+            previousPrimaryEmail = currentPrioZero?.address;
+            previousAlternativeEmail = currentPrioOne?.address;
 
             // Shift email back if necessary
             if (currentPrioZero?.id !== newPrimaryEmail.id) {
@@ -333,6 +344,15 @@ export class SetEmailAddressForSpshPersonService {
             alternativeEmail.setStatus(EmailAddressStatusEnum.ACTIVE);
             alternativeEmail = await this.updateEmailIgnoreMissing(alternativeEmail);
         }
+
+        // Send webhook update
+        this.webhookService.sendEmailsChanged({
+            spshPersonId,
+            newPrimaryEmail: newPrimaryEmail.address,
+            newAlternativeEmail: alternativeEmail?.address,
+            previousPrimaryEmail,
+            previousAlternativeEmail,
+        });
 
         return Ok(undefined);
     }

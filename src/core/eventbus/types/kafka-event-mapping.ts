@@ -36,6 +36,7 @@ import { KafkaLdapSyncFailedEvent } from '../../../shared/events/ldap/kafka-ldap
 import { KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/kafka-email-address-generated-after-ldap-sync-failed.event.js';
 import { KafkaOxSyncUserCreatedEvent } from '../../../shared/events/ox/kafka-ox-sync-user-created.event.js';
 import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
+import { KafkaEmailMicroserviceAddressChangedEvent } from '../../../shared/events/email-microservice/kafka-email-microservice-address-changed.event.js';
 
 export type KafkaEventKey =
     | 'user.created.email'
@@ -64,6 +65,7 @@ export type KafkaEventKey =
     | 'user.ox.email_deleted'
     | 'user.ox.user_changed'
     | 'user.ox.sync.user_created'
+    | 'user.email-microservice.changed'
     | 'import.executed'
     | 'group_role.created'
     | 'klasse.created'
@@ -127,6 +129,11 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
     },
     'user.ldap.synced': {
         eventClass: KafkaPersonLdapSyncEvent,
+        topic: 'user-topic',
+        topicDlq: 'user-dlq-topic',
+    },
+    'user.email-microservice.changed': {
+        eventClass: KafkaEmailMicroserviceAddressChangedEvent,
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },

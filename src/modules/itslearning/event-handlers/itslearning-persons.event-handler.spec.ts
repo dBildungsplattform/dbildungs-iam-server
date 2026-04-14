@@ -23,6 +23,8 @@ import { ItslearningMembershipRepo, SetMembershipsResult } from '../repo/itslear
 import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
 import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { ItsLearningPersonsEventHandler } from './itslearning-persons.event-handler.js';
+import { EmailMicroserviceAddressChangedEvent } from '../../../shared/events/email-microservice/email-microservice-address-changed.event.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 
 function makeKontextEventData(props?: Partial<PersonenkontextUpdatedData>): PersonenkontextUpdatedData {
     return {
@@ -168,7 +170,7 @@ describe('ItsLearning Persons Event Handler', () => {
         it('should send person to itsLearning', async () => {
             const [person, personResponse]: [Person<true>, PersonResponse] = createPersonAndResponse();
             itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(personResponse); // Read person
-            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined); // Create person
+            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined)); // Create person
             const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(
                 person,
                 faker.internet.username(),
@@ -195,8 +197,9 @@ describe('ItsLearning Persons Event Handler', () => {
 
         it('should log error if person could not be updated', async () => {
             const [person, personResponse]: [Person<true>, PersonResponse] = createPersonAndResponse();
+            const error: DomainError = new ItsLearningError('Test Error');
             itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(personResponse); // Read person
-            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(new ItsLearningError('Test Error')); // Create person
+            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Err(error)); // Create person
             const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(
                 person,
                 faker.internet.username(),
@@ -206,8 +209,9 @@ describe('ItsLearning Persons Event Handler', () => {
 
             await sut.personRenamedEventHandler(event);
 
-            expect(loggerMock.error).toHaveBeenCalledWith(
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
                 `[EventID: ${event.eventID}] Person with ID ${person.id} could not be updated in itsLearning!`,
+                error,
             );
         });
 
@@ -274,7 +278,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
         it('should send person to itsLearning', async () => {
             const kontextData: PersonenkontextUpdatedData = makeKontextEventData({ rolle: RollenArt.LERN });
-            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined);
+            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
             const eventID: string = faker.string.uuid();
 
             await sut.updatePerson(person, [kontextData], eventID);
@@ -296,7 +300,9 @@ describe('ItsLearning Persons Event Handler', () => {
 
         it('should log error if person could not be created', async () => {
             const kontextData: PersonenkontextUpdatedData = makeKontextEventData({ rolle: RollenArt.LERN });
-            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(new ItsLearningError('Test Error'));
+            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(
+                Err(new ItsLearningError('Test Error')),
+            );
             const eventID: string = faker.string.uuid();
 
             await sut.updatePerson(person, [kontextData], eventID);
@@ -334,7 +340,7 @@ describe('ItsLearning Persons Event Handler', () => {
         );
 
         it('should update email', async () => {
-            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
+            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(Ok(undefined)); // Update email
 
             await sut.oxUserChangedEventHandler(generatedEvent);
 
@@ -349,23 +355,75 @@ describe('ItsLearning Persons Event Handler', () => {
         });
 
         it('should log error, if email could not be updated', async () => {
-            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(new ItsLearningError('Test Error')); // Update email
+            const error: DomainError = new ItsLearningError('Test Error');
+            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(Err(error)); // Update email
 
             await sut.oxUserChangedEventHandler(generatedEvent);
 
-            expect(loggerMock.error).toHaveBeenCalledWith(
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
                 `[EventID: ${generatedEvent.eventID}] Could not update E-Mail for person with ID ${personId}!`,
+                error,
             );
         });
 
         it('should skip event, if not enabled', async () => {
             sut.ENABLED = false;
-            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
+            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(Ok(undefined)); // Update email
 
             await sut.oxUserChangedEventHandler(generatedEvent);
 
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `[EventID: ${generatedEvent.eventID}] Not enabled, ignoring email update.`,
+            );
+        });
+    });
+
+    describe('microserviceEmailChangedEventHandler', () => {
+        const personId: string = faker.string.uuid();
+        const newPrimaryEmail: string = faker.internet.email();
+        const generatedEvent: EmailMicroserviceAddressChangedEvent = new EmailMicroserviceAddressChangedEvent(
+            personId,
+            newPrimaryEmail,
+            faker.internet.email(),
+            faker.internet.email(),
+            faker.internet.email(),
+        );
+
+        it('should update email', async () => {
+            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(Ok(undefined)); // Update email
+
+            await sut.microserviceEmailChangedEventHandler(generatedEvent);
+
+            expect(itslearningPersonRepoMock.updateEmail).toHaveBeenCalledWith(
+                personId,
+                newPrimaryEmail,
+                `${generatedEvent.eventID}-EMAIL-UPDATE`,
+            );
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `[EventID: ${generatedEvent.eventID}] Updated E-Mail for person with ID ${personId}!`,
+            );
+        });
+
+        it('should log error, if email could not be updated', async () => {
+            const error: DomainError = new ItsLearningError('Test Error');
+            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(Err(error)); // Update email
+
+            await sut.microserviceEmailChangedEventHandler(generatedEvent);
+
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                `[EventID: ${generatedEvent.eventID}] Could not update E-Mail for person with ID ${personId}!`,
+                error,
+            );
+        });
+
+        it('should skip event, if not enabled', async () => {
+            sut.ENABLED = false;
+            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(Ok(undefined)); // Update email
+
+            await sut.microserviceEmailChangedEventHandler(generatedEvent);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `[EventID: ${generatedEvent.eventID}] Not enabled, ignoring email update from microservice.`,
             );
         });
     });

@@ -22,6 +22,7 @@ import { ItslearningMembershipRepo, SetMembershipsResult } from '../repo/itslear
 import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
 import { rollenartToIMSESInstitutionRole } from '../repo/role-utils.js';
 import { ItsLearningSyncEventHandler } from './itslearning-sync.event-handler.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 
 describe('ItsLearning Persons Event Handler', () => {
     let module: TestingModule;
@@ -165,7 +166,7 @@ describe('ItsLearning Persons Event Handler', () => {
             });
 
             it('should create or update user', async () => {
-                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined);
+                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
                 itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
                     ok: true,
                     value: { deleted: 0, updated: 0 },
@@ -190,21 +191,21 @@ describe('ItsLearning Persons Event Handler', () => {
             });
 
             it('should log error if creation failed', async () => {
-                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(
-                    new ItsLearningError('Error Test'),
-                );
+                const error: DomainError = new ItsLearningError('Error Test');
+                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Err(error));
 
                 const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
                 await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledTimes(1);
-                expect(loggerMock.error).toHaveBeenCalledWith(
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
                     `[EventID: ${event.eventID}] Could not create/update person with ID ${person.id} in itslearning!`,
+                    error,
                 );
             });
 
             it('should set memberships', async () => {
-                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined);
+                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
                 itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
                     ok: true,
                     value: { deleted: 0, updated: 1 },
@@ -233,7 +234,7 @@ describe('ItsLearning Persons Event Handler', () => {
             });
 
             it('should log error if setting memberships failed', async () => {
-                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined);
+                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
                 itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
                     ok: false,
                     error: new ItsLearningError('Error Test'),

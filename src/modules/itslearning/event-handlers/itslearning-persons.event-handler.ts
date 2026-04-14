@@ -26,6 +26,8 @@ import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-ren
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
+import { KafkaEmailMicroserviceAddressChangedEvent } from '../../../shared/events/email-microservice/kafka-email-microservice-address-changed.event.js';
+import { EmailMicroserviceAddressChangedEvent } from '../../../shared/events/email-microservice/email-microservice-address-changed.event.js';
 
 @Injectable()
 export class ItsLearningPersonsEventHandler {
@@ -77,7 +79,7 @@ export class ItsLearningPersonsEventHandler {
                 );
             }
 
-            const updatePersonError: Option<DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
+            const updatePersonResult: Result<void, DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
                 {
                     id: event.personId,
                     firstName: event.vorname,
@@ -88,9 +90,10 @@ export class ItsLearningPersonsEventHandler {
                 `${event.eventID}-PERSON-RENAMED-UPDATE`,
             );
 
-            if (updatePersonError) {
-                return this.logger.error(
+            if (!updatePersonResult.ok) {
+                return this.logger.logUnknownAsError(
                     `[EventID: ${event.eventID}] Person with ID ${event.personId} could not be updated in itsLearning!`,
+                    updatePersonResult.error,
                 );
             }
 
@@ -109,15 +112,48 @@ export class ItsLearningPersonsEventHandler {
         await this.personUpdateMutex.runExclusive(async () => {
             this.logger.info(`[EventID: ${event.eventID}] Received OxUserChangedEvent, ${event.personId}`);
 
-            const updateError: Option<DomainError> = await this.itslearningPersonRepo.updateEmail(
+            const updateResult: Result<void, DomainError> = await this.itslearningPersonRepo.updateEmail(
                 event.personId,
                 event.primaryEmail,
                 `${event.eventID}-EMAIL-UPDATE`,
             );
 
-            if (updateError) {
-                this.logger.error(
+            if (!updateResult.ok) {
+                this.logger.logUnknownAsError(
                     `[EventID: ${event.eventID}] Could not update E-Mail for person with ID ${event.personId}!`,
+                    updateResult.error,
+                );
+            } else {
+                this.logger.info(`[EventID: ${event.eventID}] Updated E-Mail for person with ID ${event.personId}!`);
+            }
+        });
+    }
+
+    @KafkaEventHandler(KafkaEmailMicroserviceAddressChangedEvent)
+    @EventHandler(EmailMicroserviceAddressChangedEvent)
+    @EnsureRequestContext()
+    public async microserviceEmailChangedEventHandler(event: EmailMicroserviceAddressChangedEvent): Promise<void> {
+        if (!this.ENABLED) {
+            return this.logger.info(
+                `[EventID: ${event.eventID}] Not enabled, ignoring email update from microservice.`,
+            );
+        }
+
+        await this.personUpdateMutex.runExclusive(async () => {
+            this.logger.info(
+                `[EventID: ${event.eventID}] Received EmailMicroserviceAddressChangedEvent, ${event.personId}`,
+            );
+
+            const updateResult: Result<void, DomainError> = await this.itslearningPersonRepo.updateEmail(
+                event.personId,
+                event.newPrimaryAddress,
+                `${event.eventID}-EMAIL-UPDATE`,
+            );
+
+            if (!updateResult.ok) {
+                this.logger.logUnknownAsError(
+                    `[EventID: ${event.eventID}] Could not update E-Mail for person with ID ${event.personId}!`,
+                    updateResult.error,
                 );
             } else {
                 this.logger.info(`[EventID: ${event.eventID}] Updated E-Mail for person with ID ${event.personId}!`);
@@ -203,7 +239,7 @@ export class ItsLearningPersonsEventHandler {
             determineHighestRollenart(currentPersonenkontexte.map((pk: PersonenkontextUpdatedData) => pk.rolle)),
         );
 
-        const createError: Option<DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
+        const createResult: Result<void, DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
             {
                 id: person.id,
                 firstName: person.vorname,
@@ -215,9 +251,9 @@ export class ItsLearningPersonsEventHandler {
             eventID,
         );
 
-        if (createError) {
+        if (!createResult.ok) {
             return this.logger.error(
-                `[EventID: ${eventID}] Person with ID ${person.id} could not be sent to itsLearning! Error: ${createError.message}`,
+                `[EventID: ${eventID}] Person with ID ${person.id} could not be sent to itsLearning! Error: ${createResult.error.message}`,
             );
         }
 

@@ -7,6 +7,7 @@ import { OXUserID } from '../../../../shared/types/ox-ids.types.js';
 import { LdapClientService } from '../../ldap/domain/ldap-client.service.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { OxNoSuchUserError } from '../../ox/error/ox-no-such-user.error.js';
+import { WebhookService } from '../../webhook/domain/webhook.service.js';
 
 @Injectable()
 export class DeleteEmailsAddressesForSpshPersonService {
@@ -15,6 +16,7 @@ export class DeleteEmailsAddressesForSpshPersonService {
         private readonly oxService: OxService,
         private readonly logger: ClassLogger,
         private readonly ldapClientService: LdapClientService,
+        private readonly webhookService: WebhookService,
     ) {}
     public async deleteEmailAddressesForSpshPerson(params: { spshPersonId: string }): Promise<void> {
         this.logger.info(`Received request to delete all email addresses for spshPerson ${params.spshPersonId}.`);
@@ -84,5 +86,21 @@ export class DeleteEmailsAddressesForSpshPersonService {
                 `Could not delete all external representations for spshPerson ${params.spshPersonId}. Keeping email addresses in DB with status TO_BE_DELETED for retry.`,
             );
         }
+
+        // Webhook notify
+        const previousPrimaryEmail: string | undefined = addresses.find(
+            (a: EmailAddress<true>) => a.priority === 0,
+        )?.address;
+        const previousAlternativeEmail: string | undefined = addresses.find(
+            (a: EmailAddress<true>) => a.priority === 1,
+        )?.address;
+
+        this.webhookService.sendEmailsChanged({
+            spshPersonId: params.spshPersonId,
+            previousPrimaryEmail,
+            previousAlternativeEmail,
+            newPrimaryEmail: undefined,
+            newAlternativeEmail: undefined,
+        });
     }
 }

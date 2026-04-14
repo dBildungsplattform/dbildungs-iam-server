@@ -37,6 +37,7 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
 import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { expectOkResult } from '../../../../test/utils/test-types.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -937,6 +938,57 @@ describe('ServiceProviderService', () => {
             if (!result.ok) {
                 throw result.error;
             }
+            expect(result.value).toEqual(existingServiceProvider);
+        });
+
+        it('should update service provider name only', async () => {
+            const newAngebotId: string = faker.string.uuid();
+            const updateData: UpdateServiceProviderBodyParams = {
+                name: 'New Name',
+            };
+
+            const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
+                permissions,
+                newAngebotId,
+                updateData,
+            );
+
+            expectOkResult(result);
+
+            expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId);
+            expect(serviceProviderRepo.update).toHaveBeenCalledWith(
+                permissions,
+                expect.objectContaining({
+                    name: updateData.name,
+                    url: existingServiceProvider.url,
+                    kategorie: existingServiceProvider.kategorie,
+                }),
+            );
+            expect(result.value).toEqual(existingServiceProvider);
+        });
+
+        it('should update service provider url only', async () => {
+            const newAngebotId: string = faker.string.uuid();
+            const updateData: UpdateServiceProviderBodyParams = {
+                url: 'https://new-url.com',
+            };
+
+            const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
+                permissions,
+                newAngebotId,
+                updateData,
+            );
+
+            expectOkResult(result);
+            expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId);
+            expect(serviceProviderRepo.update).toHaveBeenCalledWith(
+                permissions,
+                expect.objectContaining({
+                    name: existingServiceProvider.name,
+                    url: updateData.url,
+                    kategorie: existingServiceProvider.kategorie,
+                }),
+            );
             expect(result.value).toEqual(existingServiceProvider);
         });
 

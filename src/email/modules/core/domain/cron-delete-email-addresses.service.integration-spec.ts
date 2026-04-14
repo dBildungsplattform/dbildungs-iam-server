@@ -22,6 +22,7 @@ import { DeleteEmailsAddressesForSpshPersonService } from './delete-email-adress
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { Err, Ok } from '../../../../shared/util/result.js';
 import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
+import { WebhookService } from '../../webhook/domain/webhook.service.js';
 
 describe('CronDeleteEmailsAddressesService', () => {
     let module: TestingModule;
@@ -34,6 +35,7 @@ describe('CronDeleteEmailsAddressesService', () => {
     let oxSendServiceMock: DeepMocked<OxSendService>;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
     let oxServiceMock: DeepMocked<OxService>;
+    let webhookServiceMock: DeepMocked<WebhookService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -66,6 +68,10 @@ describe('CronDeleteEmailsAddressesService', () => {
                     provide: LdapClientService,
                     useValue: createMock(LdapClientService),
                 },
+                {
+                    provide: WebhookService,
+                    useValue: createMock(WebhookService),
+                },
             ],
         }).compile();
 
@@ -78,6 +84,7 @@ describe('CronDeleteEmailsAddressesService', () => {
         ldapClientServiceMock = module.get(LdapClientService);
         oxServiceMock = module.get(OxService);
         deleteEmailsAddressesForSpshPersonServiceMock = module.get(DeleteEmailsAddressesForSpshPersonService);
+        webhookServiceMock = module.get(WebhookService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -208,6 +215,8 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(loggerMock.info).not.toHaveBeenCalledWith(
                 `Processing Emails with Prio < 2 for spshPerson ${personId2}`,
             );
+            // Should not be called because neither primary nor alternative email changed
+            expect(webhookServiceMock.sendEmailsChanged).not.toHaveBeenCalled();
         });
 
         it('should use DeleteEmailsAddressesForSpshPersonService to remove all entries external representations', async () => {
@@ -227,6 +236,8 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(
                 deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
             ).toHaveBeenLastCalledWith({ spshPersonId: personId1 });
+            // Should not be called because neither primary nor alternative email changed
+            expect(webhookServiceMock.sendEmailsChanged).not.toHaveBeenCalled();
         });
 
         it('should keep the primary mail and remove only the alternative mail', async () => {
@@ -281,6 +292,13 @@ describe('CronDeleteEmailsAddressesService', () => {
                 email0.address,
                 undefined,
             );
+            expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+                spshPersonId: personId1,
+                newPrimaryEmail: email0.address,
+                newAlternativeEmail: undefined,
+                previousPrimaryEmail: email0.address,
+                previousAlternativeEmail: email1.address,
+            });
         });
 
         it('should still remove the alternative mail from db if ox user counter not found', async () => {
@@ -328,6 +346,13 @@ describe('CronDeleteEmailsAddressesService', () => {
                 email0.address,
                 undefined,
             );
+            expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+                spshPersonId: personId1,
+                newPrimaryEmail: email0.address,
+                newAlternativeEmail: undefined,
+                previousPrimaryEmail: email0.address,
+                previousAlternativeEmail: email1.address,
+            });
         });
 
         it('should fallback to oxUserCounter from prio 0 address if oxUserCounter from prio 1 address is missing', async () => {
@@ -374,6 +399,13 @@ describe('CronDeleteEmailsAddressesService', () => {
                 email0.address,
                 undefined,
             );
+            expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+                spshPersonId: personId1,
+                newPrimaryEmail: email0.address,
+                newAlternativeEmail: undefined,
+                previousPrimaryEmail: email0.address,
+                previousAlternativeEmail: email1.address,
+            });
         });
 
         it('should fail removing the alternative mail due to ox error and leave email in status TO_BE_DELETED', async () => {
@@ -439,6 +471,13 @@ describe('CronDeleteEmailsAddressesService', () => {
                 email0.address,
                 undefined,
             );
+            expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+                spshPersonId: personId1,
+                newPrimaryEmail: email0.address,
+                newAlternativeEmail: undefined,
+                previousPrimaryEmail: email0.address,
+                previousAlternativeEmail: email1.address,
+            });
         });
 
         it('should fail removing the alternative mail due ldap domain missing and leave email in status TO_BE_DELETED', async () => {
@@ -499,6 +538,13 @@ describe('CronDeleteEmailsAddressesService', () => {
                 email0.address,
             );
             expect(ldapClientServiceMock.updatePersonEmails).not.toHaveBeenCalled();
+            expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+                spshPersonId: personId1,
+                newPrimaryEmail: email0.address,
+                newAlternativeEmail: undefined,
+                previousPrimaryEmail: email0.address,
+                previousAlternativeEmail: email1.address,
+            });
         });
 
         it('should fail removing the alternative mail due to ldap error and leave email in status TO_BE_DELETED', async () => {
@@ -564,6 +610,13 @@ describe('CronDeleteEmailsAddressesService', () => {
                 email0.address,
                 undefined,
             );
+            expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+                spshPersonId: personId1,
+                newPrimaryEmail: email0.address,
+                newAlternativeEmail: undefined,
+                previousPrimaryEmail: email0.address,
+                previousAlternativeEmail: email1.address,
+            });
         });
 
         it('should fail when the only remaining email to be deleted is not the alternative', async () => {
@@ -608,6 +661,7 @@ describe('CronDeleteEmailsAddressesService', () => {
             ).not.toHaveBeenCalled();
             expect(oxServiceMock.createChangeUserAction).not.toHaveBeenCalled();
             expect(ldapClientServiceMock.updatePersonEmails).not.toHaveBeenCalled();
+            expect(webhookServiceMock.sendEmailsChanged).not.toHaveBeenCalled();
         });
     });
 });
