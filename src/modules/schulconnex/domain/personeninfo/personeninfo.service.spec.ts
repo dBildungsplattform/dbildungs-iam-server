@@ -121,6 +121,57 @@ describe('PersonInfoService', () => {
                 schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
             ).not.toHaveBeenCalled();
         });
+
+        it('should ignore kontext roles without PERSONEN_LESEN systemrecht', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: ['orga1'],
+            });
+
+            const rolleWithoutPermission: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.SYSADMIN,
+                systemrechte: [], // ← this is the key
+                serviceProviderIds: ['serviceProvider1'],
+            });
+
+            const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: new Date(),
+                getRolle: () => Promise.resolve(rolleWithoutPermission),
+                getOrganisation: () =>
+                    Promise.resolve(
+                        DoFactory.createOrganisation(true, {
+                            typ: OrganisationsTyp.SCHULE,
+                        }),
+                    ),
+            });
+
+            dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([
+                {
+                    personenkontext: kontext,
+                    organisation: DoFactory.createOrganisation(true, {
+                        typ: OrganisationsTyp.SCHULE,
+                    }),
+                    rolle: rolleWithoutPermission,
+                } satisfies KontextWithOrgaAndRolle,
+            ]);
+
+            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
+                permissions,
+                0,
+                10,
+            );
+
+            expect(res.ok).toBe(true);
+            if (!res.ok) {
+                throw new Error('Expected result.ok to be true, got error: ' + JSON.stringify(res.error));
+            }
+            expect(res.value).toEqual([]);
+
+            expect(
+                schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
+            ).not.toHaveBeenCalled();
+        });
     });
 
     describe('when caller has organisations with systemrecht PERSONEN_LESEN', () => {
