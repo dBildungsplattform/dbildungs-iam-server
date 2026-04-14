@@ -432,7 +432,7 @@ export class ProviderController {
         @Param() params: AngebotByIdParams,
     ): Promise<void> {
         const result: Result<
-            boolean,
+            void,
             EntityNotFoundError | MissingPermissionsError | AttachedRollenError | AttachedRollenerweiterungenError
         > = await this.serviceProviderService.deleteByIdAuthorized(permissions, params.angebotId);
 
