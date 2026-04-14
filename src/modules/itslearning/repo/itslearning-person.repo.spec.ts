@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
+import { DoFactory, expectErrResult, expectOkResult, LoggingTestModule } from '../../../../test/utils/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ItsLearningError } from '../../../shared/error/its-learning.error.js';
 import { CreatePersonAction, CreatePersonParams } from '../actions/create-person.action.js';
@@ -112,8 +112,9 @@ describe('Itslearning Person Repo', () => {
             }); // CreatePersonAction
             const syncID: string = faker.string.uuid();
 
-            await sut.updateEmail(personId, email, syncID);
+            const updateResult: Result<void, DomainError> = await sut.updateEmail(personId, email, syncID);
 
+            expectOkResult(updateResult);
             expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(
                 1,
                 expect.objectContaining({ id: personId }),
@@ -137,6 +138,51 @@ describe('Itslearning Person Repo', () => {
             expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(2, expect.any(CreatePersonAction), syncID);
         });
 
+        it('should send empty string if no email is given', async () => {
+            const personId: string = faker.string.uuid();
+            const personResponse: PersonResponse = {
+                firstName: faker.person.firstName(),
+                lastName: faker.person.lastName(),
+                username: faker.internet.username(),
+                institutionRole: faker.helpers.enumValue(IMSESInstitutionRoleType),
+                primaryRoleType: true,
+            };
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: personResponse,
+            }); // ReadPersonAction
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            }); // CreatePersonAction
+            const syncID: string = faker.string.uuid();
+
+            const updateResult: Result<void, DomainError> = await sut.updateEmail(personId, undefined, syncID);
+
+            expectOkResult(updateResult);
+            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(
+                1,
+                expect.objectContaining({ id: personId }),
+                syncID,
+            );
+            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(1, expect.any(ReadPersonAction), syncID);
+            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(
+                2,
+                expect.objectContaining({
+                    params: {
+                        id: personId,
+                        firstName: personResponse.firstName,
+                        lastName: personResponse.lastName,
+                        username: personResponse.username,
+                        institutionRoleType: personResponse.institutionRole,
+                        email: '',
+                    },
+                }),
+                syncID,
+            );
+            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(2, expect.any(CreatePersonAction), syncID);
+        });
+
         it('should not update email, if person was not found', async () => {
             const personId: string = faker.string.uuid();
             const email: string = faker.internet.email();
@@ -145,8 +191,9 @@ describe('Itslearning Person Repo', () => {
                 error: new ItsLearningError('Not Found'),
             }); // ReadPersonAction
 
-            await sut.updateEmail(personId, email);
+            const updateResult: Result<void, DomainError> = await sut.updateEmail(personId, email);
 
+            expectErrResult(updateResult);
             expect(itsLearningServiceMock.send).toHaveBeenCalledTimes(1);
             expect(itsLearningServiceMock.send).not.toHaveBeenCalledWith(expect.any(CreatePersonAction));
         });
@@ -189,9 +236,9 @@ describe('Itslearning Person Repo', () => {
                 value: undefined,
             });
 
-            const result: Option<DomainError> = await sut.createOrUpdatePerson(createParams);
+            const result: Result<void, DomainError> = await sut.createOrUpdatePerson(createParams);
 
-            expect(result).toBeUndefined();
+            expectOkResult(result);
         });
 
         it('should return error, if the request failed', async () => {
@@ -208,9 +255,10 @@ describe('Itslearning Person Repo', () => {
                 error: error,
             });
 
-            const result: Option<DomainError> = await sut.createOrUpdatePerson(createParams);
+            const result: Result<void, DomainError> = await sut.createOrUpdatePerson(createParams);
 
-            expect(result).toBe(error);
+            expectErrResult(result);
+            expect(result.error).toBe(error);
         });
     });
 

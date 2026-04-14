@@ -157,6 +157,20 @@ describe('KafkaEventService', () => {
         );
     });
 
+    it('should do nothing if no handlers are registered', async () => {
+        const message: DeepMocked<KafkaMessage> = vi.mockObject<KafkaMessage>({
+            key: Buffer.from('test'),
+            value: Buffer.from(JSON.stringify(new TestEvent())),
+            headers: { eventKey: 'schule.created' },
+        } as unknown as KafkaMessage);
+
+        await sut.handleMessage(message, () => Promise.resolve());
+
+        expect(logger.info).not.toHaveBeenCalledWith(
+            expect.stringContaining('Handling event: KafkaSchuleCreatedEvent'),
+        );
+    });
+
     it('should log error if event type header is missing', async () => {
         const message: DeepMocked<KafkaMessage> = vi.mockObject<KafkaMessage>({
             key: Buffer.from('test'),

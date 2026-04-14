@@ -10,6 +10,7 @@ import { LdapConfig } from './ldap.config.js';
 import { LoggingConfig } from './logging.config.js';
 import { OxConfig } from './ox.config.js';
 import { HeaderApiKeyConfig } from './headerapikey.config.js';
+import { EmailWebhookConfig } from './email-webhook.config.js';
 
 @Injectable()
 export class EmailAppConfig {
@@ -36,6 +37,10 @@ export class EmailAppConfig {
     @ValidateNested()
     @Type(() => EmailConfig)
     public readonly EMAIL!: EmailConfig;
+
+    @ValidateNested()
+    @Type(() => EmailWebhookConfig)
+    public readonly WEBHOOK!: EmailWebhookConfig;
 
     @ValidateNested()
     @Type(() => HeaderApiKeyConfig)
