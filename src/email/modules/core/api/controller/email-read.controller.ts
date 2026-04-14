@@ -117,7 +117,14 @@ export class EmailReadController {
         @Body() findEmailAddressBySpshPersonIdsBodyParams: FindEmailAddressBySpshPersonIdsBodyParams,
     ): Promise<EmailAddressResponse[]> {
         const personIds: string[] = Array.from(new Set(findEmailAddressBySpshPersonIdsBodyParams.spshPersonIds));
-        this.logger.info(`Received ${personIds.length} PersonIds`);
+        const count: number = personIds.length;
+        this.logger.info(
+            count === 0
+                ? 'Received 0 PersonIds'
+                : count === 1
+                  ? `Received 1 PersonId: ${personIds[0]}`
+                  : `Received ${count} PersonIds: ${personIds[0]} ... ${personIds[count - 1]}`,
+        );
 
         const primaryEmails: EmailAddress<true>[] = await this.emailAddressRepo.findPrimaryBySpshPersonIds(personIds);
 

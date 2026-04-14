@@ -177,18 +177,22 @@ describe('EmailRepo', () => {
         const spshPersonIds: string[] = [faker.string.uuid(), faker.string.uuid(), faker.string.uuid()];
 
         beforeEach(async () => {
-            await createAndSaveMail(undefined, 1, spshPersonIds[0]);
-            await createAndSaveMail(undefined, 0, spshPersonIds[0]);
-            await createAndSaveMail(undefined, 1, spshPersonIds[1]);
-            await createAndSaveMail(undefined, 2, spshPersonIds[1]);
-            await createAndSaveMail(undefined, 0, spshPersonIds[2]);
+            const mail1: EmailAddress<true> = await createAndSaveMail(undefined, 1, spshPersonIds[0]);
+            await setStatus(mail1, EmailAddressStatusEnum.SUSPENDED);
+            const mail2: EmailAddress<true> = await createAndSaveMail(undefined, 0, spshPersonIds[0]);
+            await setStatus(mail2, EmailAddressStatusEnum.ACTIVE);
+            const mail3: EmailAddress<true> = await createAndSaveMail(undefined, 1, spshPersonIds[1]);
+            await setStatus(mail3, EmailAddressStatusEnum.SUSPENDED);
+            const mail4: EmailAddress<true> = await createAndSaveMail(undefined, 2, spshPersonIds[1]);
+            await setStatus(mail4, EmailAddressStatusEnum.SUSPENDED);
+            const mail5: EmailAddress<true> = await createAndSaveMail(undefined, 0, spshPersonIds[2]);
+            await setStatus(mail5, EmailAddressStatusEnum.ACTIVE);
         });
 
         it('should return primary email addresses for the given spshPersonIds', async () => {
             const result: EmailAddress<true>[] = await sut.findPrimaryBySpshPersonIds(spshPersonIds);
-            expect(result).toHaveLength(3);
+            expect(result).toHaveLength(2);
             expect(result.find((e: EmailAddress<true>) => e.spshPersonId === spshPersonIds[0])!.priority).toBe(0);
-            expect(result.find((e: EmailAddress<true>) => e.spshPersonId === spshPersonIds[1])!.priority).toBe(1);
             expect(result.find((e: EmailAddress<true>) => e.spshPersonId === spshPersonIds[2])!.priority).toBe(0);
         });
 

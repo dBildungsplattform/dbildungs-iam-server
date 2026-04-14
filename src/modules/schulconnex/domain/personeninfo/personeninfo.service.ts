@@ -101,6 +101,9 @@ export class PersonenInfoService {
         }
 
         const emailMap: Map<PersonID, PersonEmailResponse | undefined> = emailsForPersons.value;
+        emailMap.forEach((emailResponse: PersonEmailResponse | undefined, personId: PersonID) => {
+            console.log(`Email for PersonID ${personId}: ${emailResponse ? emailResponse.address : 'undefined'}`);
+        });
         const responses: PersonInfoResponseV1[] = persons.map((person: Person<true>) => {
             const personId: PersonID = person.id;
             const email: PersonEmailResponse | undefined = emailMap.get(personId);

@@ -115,8 +115,12 @@ export class EmailAddressRepo {
     public async findPrimaryBySpshPersonIds(spshPersonIds: string[]): Promise<EmailAddress<true>[]> {
         const emailAddressEntities: Option<EmailAddrEntity[]> = await this.em.find(
             EmailAddrEntity,
-            { spshPersonId: { $in: spshPersonIds } },
-            { orderBy: { spshPersonId: 'asc', priority: 'asc' } },
+            {
+                spshPersonId: { $in: spshPersonIds },
+                priority: 0,
+                statuses: { status: EmailAddressStatusEnum.ACTIVE },
+            },
+            { orderBy: { spshPersonId: 'asc', priority: 'asc' }, populate: ['statuses'] },
         );
 
         const result: EmailAddress<true>[] = [];
