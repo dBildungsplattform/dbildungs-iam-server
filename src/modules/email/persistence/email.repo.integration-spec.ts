@@ -445,11 +445,16 @@ describe('EmailRepo', () => {
                 const personId1: PersonID | undefined = personIds[0];
                 assert(personId1);
 
-                const responseMap: Map<PersonID, PersonEmailResponse> =
-                    await sut.getEmailAddressAndStatusForPersonIds(personIds);
+                const responseMap: Result<
+                    Map<PersonID, PersonEmailResponse>,
+                    DomainError
+                > = await sut.getEmailAddressAndStatusForPersonIds(personIds);
 
-                expect(responseMap.size).toStrictEqual(1);
-                expect(responseMap.get(personId1)?.address).toStrictEqual(emailAddress1.address);
+                if (!responseMap.ok) {
+                    throw responseMap.error;
+                }
+                expect(responseMap.value.size).toStrictEqual(1);
+                expect(responseMap.value.get(personId1)?.address).toStrictEqual(emailAddress1.address);
             });
         });
 
@@ -464,12 +469,17 @@ describe('EmailRepo', () => {
                 const extendedPersonIds: PersonID[] = personIds;
                 extendedPersonIds.push(personIdWithoutEnabledAddress);
 
-                const responseMap: Map<PersonID, PersonEmailResponse> =
-                    await sut.getEmailAddressAndStatusForPersonIds(extendedPersonIds);
+                const responseMap: Result<
+                    Map<PersonID, PersonEmailResponse>,
+                    DomainError
+                > = await sut.getEmailAddressAndStatusForPersonIds(extendedPersonIds);
 
-                expect(responseMap.size).toStrictEqual(1);
-                expect(responseMap.get(personId1)?.address).toStrictEqual(emailAddress1.address);
-                expect(responseMap.get(personIdWithoutEnabledAddress)).toBeUndefined();
+                if (!responseMap.ok) {
+                    throw responseMap.error;
+                }
+                expect(responseMap.value.size).toStrictEqual(1);
+                expect(responseMap.value.get(personId1)?.address).toStrictEqual(emailAddress1.address);
+                expect(responseMap.value.get(personIdWithoutEnabledAddress)).toBeUndefined();
             });
         });
 
@@ -488,15 +498,21 @@ describe('EmailRepo', () => {
                     moreRecentAddress,
                 );
 
-                const responseMap: Map<PersonID, PersonEmailResponse> =
-                    await sut.getEmailAddressAndStatusForPersonIds(personIds);
+                const responseMap: Result<
+                    Map<PersonID, PersonEmailResponse>,
+                    DomainError
+                > = await sut.getEmailAddressAndStatusForPersonIds(personIds);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Found multiple ENABLED EmailAddresses, treating ${moreRecentAddress} as latest address, personId:${personId1}`,
                 );
-                expect(responseMap.size).toStrictEqual(1);
-                expect(responseMap.get(personId1)?.address).toStrictEqual(moreRecentAddress);
-                expect(responseMap.get(personId1)?.address).not.toStrictEqual(emailAddress1.address);
+
+                if (!responseMap.ok) {
+                    throw responseMap.error;
+                }
+                expect(responseMap.value.size).toStrictEqual(1);
+                expect(responseMap.value.get(personId1)?.address).toStrictEqual(moreRecentAddress);
+                expect(responseMap.value.get(personId1)?.address).not.toStrictEqual(emailAddress1.address);
             });
         });
     });
