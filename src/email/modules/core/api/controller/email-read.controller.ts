@@ -125,6 +125,9 @@ export class EmailReadController {
                   ? `Received 1 PersonId: ${personIds[0]}`
                   : `Received ${count} PersonIds: ${personIds[0]} ... ${personIds[count - 1]}`,
         );
+        if (personIds.length === 0) {
+            return [];
+        }
 
         const primaryEmails: EmailAddress<true>[] = await this.emailAddressRepo.findPrimaryBySpshPersonIds(personIds);
 

@@ -296,7 +296,7 @@ describe('EmailReadController', () => {
         expect(result.length).toBe(0);
     });
 
-    it('should return null when primary email address has no status', async () => {
+    it('should omit primary email address if it has no status', async () => {
         const personId: string = faker.string.uuid();
 
         const emailWithoutStatus: EmailAddress<true> = EmailAddress.construct({
@@ -320,11 +320,7 @@ describe('EmailReadController', () => {
 
         const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonIds(params);
 
-        expect(result.length).toBe(1);
-        const email: EmailAddressResponse | undefined = result.find(
-            (e: EmailAddressResponse) => e.spshPersonId === personId,
-        );
-        expect(email).toBeNull();
+        expect(result.length).toBe(0);
     });
 
     it('should return empty map if no personIds provided', async () => {
