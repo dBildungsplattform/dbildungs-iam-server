@@ -112,22 +112,20 @@ export class EmailAddressRepo {
         return emailAddressEntities.map(mapEntityToAggregate);
     }
 
-    public async findPrimaryBySpshPersonIds(spshPersonIds: string[]): Promise<Map<string, EmailAddress<true> | null>> {
+    public async findPrimaryBySpshPersonIds(spshPersonIds: string[]): Promise<EmailAddress<true>[]> {
         const emailAddressEntities: Option<EmailAddrEntity[]> = await this.em.find(
             EmailAddrEntity,
             { spshPersonId: { $in: spshPersonIds } },
             { orderBy: { spshPersonId: 'asc', priority: 'asc' } },
         );
 
-        const result: Map<string, EmailAddress<true> | null> = new Map<string, EmailAddress<true> | null>(
-            spshPersonIds.map((pid: string) => [pid, null]),
-        );
+        const result: EmailAddress<true>[] = [];
+        const seen: Set<string> = new Set<string>();
 
         for (const entity of emailAddressEntities) {
-            const pid: string = entity.spshPersonId;
-
-            if (result.get(pid) === null) {
-                result.set(pid, mapEntityToAggregate(entity));
+            if (!seen.has(entity.spshPersonId)) {
+                seen.add(entity.spshPersonId);
+                result.push(mapEntityToAggregate(entity));
             }
         }
 

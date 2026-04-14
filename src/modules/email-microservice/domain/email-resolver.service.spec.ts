@@ -16,7 +16,7 @@ import { ClassLogger } from '../../../core/logging/class-logger';
 import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams';
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity';
-import { DomainError, EntityNotFoundError } from '../../../shared/error';
+import { DomainError, EmailMicroserviceCommunicationError, EntityNotFoundError } from '../../../shared/error';
 import { EmailAddressStatus } from '../../email/domain/email-address';
 import { PersonEmailResponse } from '../../person/api/person-email-response';
 import { EmailMicroserviceModule } from '../email-microservice.module';
@@ -172,18 +172,17 @@ describe('EmailResolverService', () => {
             const resp1: DeepMocked<EmailAddressResponse> = createMock<EmailAddressResponse>(EmailAddressResponse, {
                 address: email1,
                 status: EmailAddressStatusEnum.ACTIVE,
+                spshPersonId: personId1,
             });
             const resp2: DeepMocked<EmailAddressResponse> = createMock<EmailAddressResponse>(EmailAddressResponse, {
                 address: email2,
                 status: EmailAddressStatusEnum.PENDING,
+                spshPersonId: personId2,
             });
 
-            const responseData: Record<string, EmailAddressResponse | null> = {
-                [personId1]: resp1,
-                [personId2]: resp2,
-            };
+            const responseData: EmailAddressResponse[] = [resp1, resp2];
 
-            const mockAxiosResponse: AxiosResponse<Record<string, EmailAddressResponse | null>> = {
+            const mockAxiosResponse: AxiosResponse<EmailAddressResponse[]> = {
                 data: responseData,
                 status: 200,
                 statusText: 'OK',
@@ -207,51 +206,11 @@ describe('EmailResolverService', () => {
             expect(result.value.get(personId2)).toEqual(new PersonEmailResponse(EmailAddressStatus.REQUESTED, email2));
         });
 
-        it('should set undefined for persons with null or missing entries in response', async () => {
-            const personId1: string = faker.string.uuid();
-            const personId2: string = faker.string.uuid();
-            const personId3: string = faker.string.uuid();
-            const email1: string = 'present@example.com';
-
-            const resp1: DeepMocked<EmailAddressResponse> = createMock<EmailAddressResponse>(EmailAddressResponse, {
-                address: email1,
-                status: EmailAddressStatusEnum.ACTIVE,
-            });
-
-            const responseData: Record<string, EmailAddressResponse | null> = {
-                [personId1]: resp1,
-                [personId2]: null,
-            };
-
-            const mockAxiosResponse: AxiosResponse<Record<string, EmailAddressResponse | null>> = {
-                data: responseData,
-                status: 200,
-                statusText: 'OK',
-                headers: {},
-                config: {
-                    headers: new AxiosHeaders(),
-                },
-            };
-
-            mockHttpService.post.mockReturnValueOnce(of(mockAxiosResponse));
-
-            const result: Result<
-                Map<PersonID, PersonEmailResponse | undefined>,
-                DomainError
-            > = await sut.findEmailsBySpshPersons([personId1, personId2, personId3]);
-
-            if (!result.ok) {
-                throw new Error('Expected result to be defined');
-            }
-            expect(result.value.size).toBe(3);
-            expect(result.value.get(personId1)).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, email1));
-            expect(result.value.get(personId2)).toBeUndefined();
-            expect(result.value.get(personId3)).toBeUndefined();
-        });
-
         it('should log error and return empty map when post call fails', async () => {
             const ids: string[] = [faker.string.uuid(), faker.string.uuid()];
-            const error: Error = new Error('Network failure');
+            const error: EmailMicroserviceCommunicationError = new EmailMicroserviceCommunicationError(
+                'Communication error',
+            );
 
             mockHttpService.post.mockImplementation(() => {
                 throw error;

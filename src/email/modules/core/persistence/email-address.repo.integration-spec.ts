@@ -185,18 +185,17 @@ describe('EmailRepo', () => {
         });
 
         it('should return primary email addresses for the given spshPersonIds', async () => {
-            const result: Map<string, EmailAddress<true> | null> = await sut.findPrimaryBySpshPersonIds(spshPersonIds);
+            const result: EmailAddress<true>[] = await sut.findPrimaryBySpshPersonIds(spshPersonIds);
             expect(result).toHaveLength(3);
-            expect(result.get(spshPersonIds[0]!)!.priority).toBe(0);
-            expect(result.get(spshPersonIds[1]!)!.priority).toBe(1);
+            expect(result.find((e: EmailAddress<true>) => e.spshPersonId === spshPersonIds[0])!.priority).toBe(0);
+            expect(result.find((e: EmailAddress<true>) => e.spshPersonId === spshPersonIds[1])!.priority).toBe(1);
+            expect(result.find((e: EmailAddress<true>) => e.spshPersonId === spshPersonIds[2])!.priority).toBe(0);
         });
 
         it('should return null for unknown spshPersonIds', async () => {
             const unknownIds: string[] = [faker.string.uuid(), faker.string.uuid()];
-            const result: Map<string, EmailAddress<true> | null> = await sut.findPrimaryBySpshPersonIds(unknownIds);
-            expect(result).toHaveLength(2);
-            expect(result.get(unknownIds[0]!)).toBeNull();
-            expect(result.get(unknownIds[1]!)).toBeNull();
+            const result: EmailAddress<true>[] = await sut.findPrimaryBySpshPersonIds(unknownIds);
+            expect(result).toHaveLength(0);
         });
     });
 

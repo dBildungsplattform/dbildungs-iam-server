@@ -257,29 +257,29 @@ describe('EmailReadController', () => {
                 ],
             });
 
-            emailAddressRepoMock.findPrimaryBySpshPersonIds.mockResolvedValueOnce(
-                new Map<string, EmailAddress<true>>([
-                    [spshPerson1Id, address1],
-                    [spshPerson2Id, address2],
-                ]),
-            );
+            emailAddressRepoMock.findPrimaryBySpshPersonIds.mockResolvedValueOnce([address1, address2]);
 
             const params: FindEmailAddressBySpshPersonIdsBodyParams = {
                 spshPersonIds: [spshPerson1Id, spshPerson2Id],
             };
 
-            const result: Record<string, EmailAddressResponse | null> =
-                await emailReadController.findEmailAddressesByPersonIds(params);
+            const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonIds(params);
 
-            expect(Object.keys(result).length).toBe(2);
+            expect(result.length).toBe(2);
 
-            expect(result[spshPerson1Id]).toBeInstanceOf(EmailAddressResponse);
-            expect(result[spshPerson1Id]!.address).toBe('test1@example.com');
-            expect(result[spshPerson1Id]!.status).toBe(EmailAddressStatusEnum.ACTIVE);
+            const email1: EmailAddressResponse | undefined = result.find(
+                (e: EmailAddressResponse) => e.spshPersonId === spshPerson1Id,
+            );
+            expect(email1).toBeDefined();
+            expect(email1!.address).toBe('test1@example.com');
+            expect(email1!.status).toBe(EmailAddressStatusEnum.ACTIVE);
 
-            expect(result[spshPerson2Id]).toBeInstanceOf(EmailAddressResponse);
-            expect(result[spshPerson2Id]!.address).toBe('test2@example.com');
-            expect(result[spshPerson2Id]!.status).toBe(EmailAddressStatusEnum.ACTIVE);
+            const email2: EmailAddressResponse | undefined = result.find(
+                (e: EmailAddressResponse) => e.spshPersonId === spshPerson2Id,
+            );
+            expect(email2).toBeDefined();
+            expect(email2!.address).toBe('test2@example.com');
+            expect(email2!.status).toBe(EmailAddressStatusEnum.ACTIVE);
         });
     });
 
@@ -287,21 +287,13 @@ describe('EmailReadController', () => {
         const id1: string = faker.string.uuid();
         const id2: string = faker.string.uuid();
 
-        emailAddressRepoMock.findPrimaryBySpshPersonIds.mockResolvedValueOnce(
-            new Map([
-                [id1, null],
-                [id2, null],
-            ]),
-        );
+        emailAddressRepoMock.findPrimaryBySpshPersonIds.mockResolvedValueOnce([]);
 
         const params: FindEmailAddressBySpshPersonIdsBodyParams = { spshPersonIds: [id1, id2] };
 
-        const result: Record<string, EmailAddressResponse | null> =
-            await emailReadController.findEmailAddressesByPersonIds(params);
+        const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonIds(params);
 
-        expect(Object.keys(result).length).toBe(2);
-        expect(result[id1]).toBeNull();
-        expect(result[id2]).toBeNull();
+        expect(result.length).toBe(0);
     });
 
     it('should return null when primary email address has no status', async () => {
@@ -320,27 +312,26 @@ describe('EmailReadController', () => {
             sortedStatuses: [],
         });
 
-        emailAddressRepoMock.findPrimaryBySpshPersonIds.mockResolvedValueOnce(
-            new Map([[personId, emailWithoutStatus]]),
-        );
+        emailAddressRepoMock.findPrimaryBySpshPersonIds.mockResolvedValueOnce([emailWithoutStatus]);
 
         const params: FindEmailAddressBySpshPersonIdsBodyParams = {
             spshPersonIds: [personId],
         };
 
-        const result: Record<string, EmailAddressResponse | null> =
-            await emailReadController.findEmailAddressesByPersonIds(params);
+        const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonIds(params);
 
-        expect(Object.keys(result).length).toBe(1);
-        expect(result[personId]).toBeNull();
+        expect(result.length).toBe(1);
+        const email: EmailAddressResponse | undefined = result.find(
+            (e: EmailAddressResponse) => e.spshPersonId === personId,
+        );
+        expect(email).toBeNull();
     });
 
     it('should return empty map if no personIds provided', async () => {
         const params: FindEmailAddressBySpshPersonIdsBodyParams = { spshPersonIds: [] };
 
-        const result: Record<string, EmailAddressResponse | null> =
-            await emailReadController.findEmailAddressesByPersonIds(params);
+        const result: EmailAddressResponse[] = await emailReadController.findEmailAddressesByPersonIds(params);
 
-        expect(Object.keys(result).length).toBe(0);
+        expect(result.length).toBe(0);
     });
 });

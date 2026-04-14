@@ -57,7 +57,7 @@ export class EmailResolverService {
         personIds: string[],
     ): Promise<Result<Map<PersonID, PersonEmailResponse | undefined>, DomainError>> {
         try {
-            const response: AxiosResponse<Record<string, EmailAddressResponse | null>> = await lastValueFrom(
+            const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
                 this.httpService.post(
                     this.getEndpoint() + `${EmailResolverService.readPath}/spshpersons`,
                     {
@@ -70,19 +70,12 @@ export class EmailResolverService {
                     },
                 ),
             );
-            const result: Map<PersonID, PersonEmailResponse | undefined> = new Map<
-                PersonID,
-                PersonEmailResponse | undefined
-            >(
-                personIds.map((pid: string) => {
-                    const email: EmailAddressResponse | null | undefined = response.data[pid];
 
-                    if (!email) {
-                        return [pid, undefined];
-                    }
-
-                    return [pid, new PersonEmailResponse(this.mapStatus(email.status), email.address)];
-                }),
+            const result: Map<PersonID, PersonEmailResponse> = new Map<PersonID, PersonEmailResponse>(
+                response.data.map((email: EmailAddressResponse) => [
+                    email.spshPersonId as PersonID,
+                    new PersonEmailResponse(this.mapStatus(email.status), email.address),
+                ]),
             );
 
             return Ok(result);

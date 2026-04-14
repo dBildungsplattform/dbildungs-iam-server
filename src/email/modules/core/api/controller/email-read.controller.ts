@@ -115,30 +115,17 @@ export class EmailReadController {
     })
     public async findEmailAddressesByPersonIds(
         @Body() findEmailAddressBySpshPersonIdsBodyParams: FindEmailAddressBySpshPersonIdsBodyParams,
-    ): Promise<Record<string, EmailAddressResponse | null>> {
+    ): Promise<EmailAddressResponse[]> {
         const personIds: string[] = Array.from(new Set(findEmailAddressBySpshPersonIdsBodyParams.spshPersonIds));
         this.logger.info(`Received ${personIds.length} PersonIds`);
 
-        const primaryMap: Map<string, EmailAddress<true> | null> =
-            await this.emailAddressRepo.findPrimaryBySpshPersonIds(personIds);
+        const primaryEmails: EmailAddress<true>[] = await this.emailAddressRepo.findPrimaryBySpshPersonIds(personIds);
 
-        const result: Record<string, EmailAddressResponse | null> = {};
-
-        for (const pid of personIds) {
-            const addr: EmailAddress<true> | null | undefined = primaryMap.get(pid);
-            if (!addr) {
-                result[pid] = null;
-                continue;
-            }
-            const status: EmailAddressStatusEnum | undefined = addr.getStatus();
-            if (!status) {
-                result[pid] = null;
-                continue;
-            }
-
-            result[pid] = new EmailAddressResponse(addr, status, this.oxService.contextID);
-        }
-
-        return result;
+        return primaryEmails
+            .map((addr: EmailAddress<true>) => {
+                const status: EmailAddressStatusEnum | undefined = addr.getStatus();
+                return status ? new EmailAddressResponse(addr, status, this.oxService.contextID) : null;
+            })
+            .filter((e: EmailAddressResponse | null): e is EmailAddressResponse => e !== null);
     }
 }
