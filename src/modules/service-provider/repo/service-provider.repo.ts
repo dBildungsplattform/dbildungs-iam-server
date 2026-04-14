@@ -359,7 +359,7 @@ export class ServiceProviderRepo {
     public async deleteByIdAuthorized(
         permissions: IPersonPermissions,
         serviceProviderId: ServiceProviderID,
-    ): Promise<Result<boolean, EntityNotFoundError | MissingPermissionsError>> {
+    ): Promise<Result<void, EntityNotFoundError | MissingPermissionsError>> {
         const entity: ServiceProviderEntity | null = await this.em.findOne(ServiceProviderEntity, {
             id: serviceProviderId,
         });
@@ -374,7 +374,7 @@ export class ServiceProviderRepo {
         }
 
         await this.em.removeAndFlush(entity);
-        return Ok(true);
+        return Ok(undefined);
     }
 
     public async deleteById(id: string): Promise<boolean> {

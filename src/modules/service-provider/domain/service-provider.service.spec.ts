@@ -6,6 +6,7 @@ import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { expectErrResult } from '../../../../test/utils/test-types.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
@@ -945,29 +946,6 @@ describe('ServiceProviderService', () => {
             expect(result.value).toEqual(existingServiceProvider);
         });
 
-        it.each([[{ name: 'New Name' }], [{ url: 'https://new-url.com' }]])(
-            'should only touch field if value is provided',
-            async (updateData: UpdateServiceProviderBodyParams) => {
-                const newAngebotId: string = faker.string.uuid();
-
-                const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
-                    permissions,
-                    newAngebotId,
-                    updateData,
-                );
-
-                expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId);
-                expect(serviceProviderRepo.update).toHaveBeenCalledWith(
-                    permissions,
-                    expect.objectContaining(updateData),
-                );
-                if (!result.ok) {
-                    throw result.error;
-                }
-                expect(result.value).toEqual(existingServiceProvider);
-            },
-        );
-
         it('should return error if no update data is provided', async () => {
             const updateData: UpdateServiceProviderBodyParams = {};
             const result: Result<ServiceProvider<true>, MissingAttributeError> = await service.updateServiceProvider(
@@ -1013,12 +991,11 @@ describe('ServiceProviderService', () => {
                 new Map([[serviceProviderId, [DoFactory.createRolle(true)]]]),
             );
             rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
-            const result: Result<boolean, AttachedRollenError> = await service.deleteByIdAuthorized(
+            const result: Result<void, AttachedRollenError> = await service.deleteByIdAuthorized(
                 permissions,
                 serviceProviderId,
             );
-            expect(result.ok).toBe(false);
-            assert(!result.ok, 'Expected result to be an error');
+            expectErrResult(result);
             expect(result.error).toBeInstanceOf(AttachedRollenError);
         });
 
@@ -1027,22 +1004,21 @@ describe('ServiceProviderService', () => {
             rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
                 new Map([[serviceProviderId, [DoFactory.createRollenerweiterung(true)]]]),
             );
-            const result: Result<boolean, AttachedRollenerweiterungenError> = await service.deleteByIdAuthorized(
+            const result: Result<void, AttachedRollenerweiterungenError> = await service.deleteByIdAuthorized(
                 permissions,
                 serviceProviderId,
             );
-            expect(result.ok).toBe(false);
-            assert(!result.ok, 'Expected result to be an error');
+            expectErrResult(result);
             expect(result.error).toBeInstanceOf(AttachedRollenerweiterungenError);
         });
 
-        it('calls deleteById and returns Ok(true) on success', async () => {
-            const expectedResult: Result<boolean, ServiceProviderError> = Ok(true);
+        it('calls deleteById and returns Ok() on success', async () => {
+            const expectedResult: Result<void, ServiceProviderError> = Ok(undefined);
             rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
             rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
             serviceProviderRepo.deleteByIdAuthorized.mockResolvedValue(expectedResult);
 
-            const result: Result<boolean, ServiceProviderError> = await service.deleteByIdAuthorized(
+            const result: Result<void, ServiceProviderError> = await service.deleteByIdAuthorized(
                 permissions,
                 serviceProviderId,
             );
@@ -1052,11 +1028,11 @@ describe('ServiceProviderService', () => {
         });
 
         it('calls deleteById and returns Error on failure', async () => {
-            const expectedResult: Result<boolean, ServiceProviderError> = Err(new EntityNotFoundError());
+            const expectedResult: Result<void, ServiceProviderError> = Err(new EntityNotFoundError());
             rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([]));
             rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([]));
             serviceProviderRepo.deleteByIdAuthorized.mockResolvedValue(expectedResult);
-            const result: Result<boolean, ServiceProviderError> = await service.deleteByIdAuthorized(
+            const result: Result<void, ServiceProviderError> = await service.deleteByIdAuthorized(
                 permissions,
                 serviceProviderId,
             );

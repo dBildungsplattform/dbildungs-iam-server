@@ -483,7 +483,7 @@ export class ServiceProviderService {
         id: ServiceProviderID,
     ): Promise<
         Result<
-            boolean,
+            void,
             EntityNotFoundError | MissingPermissionsError | AttachedRollenError | AttachedRollenerweiterungenError
         >
     > {
