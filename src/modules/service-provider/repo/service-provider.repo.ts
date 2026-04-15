@@ -374,7 +374,7 @@ export class ServiceProviderRepo {
         }
 
         await this.em.removeAndFlush(entity);
-        return Ok(undefined);
+        return Ok();
     }
 
     public async deleteById(id: string): Promise<boolean> {
