@@ -1,21 +1,36 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { zip } from 'lodash-es';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { expectErrResult, expectOkResult } from '../../../../test/utils/test-types.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 import { VidisService } from '../../vidis/vidis.service.js';
+import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
+import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
+import { ServiceProviderError } from '../specification/error/service-provider.error.js';
+import { AttachedRollenError } from './errors/attached-rollen.error.js';
+import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
@@ -28,16 +43,6 @@ import {
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { Err, Ok } from '../../../shared/util/result.js';
-import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
-import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { expectOkResult } from '../../../../test/utils/test-types.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -395,7 +400,7 @@ describe('ServiceProviderService', () => {
                 MissingPermissionsError
             > = await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions);
 
-            expect(result.ok).toBe(false);
+            expectErrResult(result);
             expect(organisationRepo.findParentOrgasForIds).not.toHaveBeenCalled();
             expect(serviceProviderRepo.findByOrgasWithMerkmal).not.toHaveBeenCalled();
         });
@@ -427,9 +432,7 @@ describe('ServiceProviderService', () => {
                 undefined,
                 undefined,
             );
-            if (!result.ok) {
-                throw result.error;
-            }
+            expectOkResult(result);
             expect(
                 result.value[0].map((s: ManageableServiceProviderWithReferencedObjects) => s.serviceProvider),
             ).toContain(serviceProvider);
@@ -471,9 +474,7 @@ describe('ServiceProviderService', () => {
                 limit,
                 offset,
             );
-            if (!result.ok) {
-                throw result.error;
-            }
+            expectOkResult(result);
             expect(
                 result.value[0].map((s: ManageableServiceProviderWithReferencedObjects) => s.serviceProvider),
             ).toContain(serviceProvider);
@@ -935,9 +936,7 @@ describe('ServiceProviderService', () => {
                     kategorie: updateData.kategorie,
                 }),
             );
-            if (!result.ok) {
-                throw result.error;
-            }
+            expectOkResult(result);
             expect(result.value).toEqual(existingServiceProvider);
         });
 
@@ -1001,10 +1000,7 @@ describe('ServiceProviderService', () => {
             );
             expect(serviceProviderRepo.findById).not.toHaveBeenCalled();
             expect(serviceProviderRepo.update).not.toHaveBeenCalled();
-            expect(result.ok).toBe(false);
-            if (result.ok) {
-                throw new Error('Expected result to be an error');
-            }
+            expectErrResult(result);
             expect(result.error).toBeInstanceOf(MissingAttributeError);
             expect(result.error.message).toBe('At least one of the following parameters must be provided: name, url');
         });
@@ -1019,6 +1015,71 @@ describe('ServiceProviderService', () => {
             ).rejects.toBeInstanceOf(EntityNotFoundError);
 
             expect(serviceProviderRepo.update).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('deleteByIdAuthorized', () => {
+        let permissions: ReturnType<typeof createPersonPermissionsMock>;
+        const mockServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+        const serviceProviderId: ServiceProviderID = mockServiceProvider.id;
+
+        beforeEach(() => {
+            permissions = createPersonPermissionsMock();
+            vi.resetAllMocks();
+        });
+
+        it('returns AttachedRollenError if attached Rollen exist', async () => {
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(
+                new Map([[serviceProviderId, [DoFactory.createRolle(true)]]]),
+            );
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
+            const result: Result<void, AttachedRollenError> = await service.deleteByIdAuthorized(
+                permissions,
+                serviceProviderId,
+            );
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(AttachedRollenError);
+        });
+
+        it('returns AttachedRollenerweiterungenError if attached Rollenerweiterungen exist', async () => {
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
+                new Map([[serviceProviderId, [DoFactory.createRollenerweiterung(true)]]]),
+            );
+            const result: Result<void, AttachedRollenerweiterungenError> = await service.deleteByIdAuthorized(
+                permissions,
+                serviceProviderId,
+            );
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(AttachedRollenerweiterungenError);
+        });
+
+        it('calls deleteById and returns Ok() on success', async () => {
+            const expectedResult: Result<void, ServiceProviderError> = Ok();
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
+            serviceProviderRepo.deleteByIdAuthorized.mockResolvedValue(expectedResult);
+
+            const result: Result<void, ServiceProviderError> = await service.deleteByIdAuthorized(
+                permissions,
+                serviceProviderId,
+            );
+
+            expect(serviceProviderRepo.deleteByIdAuthorized).toHaveBeenCalledWith(permissions, serviceProviderId);
+            expect(result).toBe(expectedResult);
+        });
+
+        it('calls deleteById and returns Error on failure', async () => {
+            const expectedResult: Result<void, ServiceProviderError> = Err(new EntityNotFoundError());
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([]));
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([]));
+            serviceProviderRepo.deleteByIdAuthorized.mockResolvedValue(expectedResult);
+            const result: Result<void, ServiceProviderError> = await service.deleteByIdAuthorized(
+                permissions,
+                serviceProviderId,
+            );
+            expect(serviceProviderRepo.deleteByIdAuthorized).toHaveBeenCalledWith(permissions, serviceProviderId);
+            expect(result).toBe(expectedResult);
         });
     });
 });
