@@ -394,7 +394,7 @@ describe('LandesbediensteterWorkflow', () => {
 
             const pkupdateMock: MockedObject<PersonenkontexteUpdate> = createPersonenkontexteUpdateMock();
 
-            personenkontextRepoMock.findByPerson.mockResolvedValueOnce([]);
+            personenkontextRepoMock.findByPerson.mockResolvedValueOnce([DoFactory.createPersonenkontext(true)]);
             personenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValueOnce(pkupdateMock);
 
             await sut.commit(personId, lastModified, count, newPersonenkontexte, permissions, personalnummer);
