@@ -400,7 +400,7 @@ describe('ServiceProviderService', () => {
                 MissingPermissionsError
             > = await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions);
 
-            expect(result.ok).toBe(false);
+            expectErrResult(result);
             expect(organisationRepo.findParentOrgasForIds).not.toHaveBeenCalled();
             expect(serviceProviderRepo.findByOrgasWithMerkmal).not.toHaveBeenCalled();
         });
@@ -432,9 +432,7 @@ describe('ServiceProviderService', () => {
                 undefined,
                 undefined,
             );
-            if (!result.ok) {
-                throw result.error;
-            }
+            expectOkResult(result);
             expect(
                 result.value[0].map((s: ManageableServiceProviderWithReferencedObjects) => s.serviceProvider),
             ).toContain(serviceProvider);
@@ -476,9 +474,7 @@ describe('ServiceProviderService', () => {
                 limit,
                 offset,
             );
-            if (!result.ok) {
-                throw result.error;
-            }
+            expectOkResult(result);
             expect(
                 result.value[0].map((s: ManageableServiceProviderWithReferencedObjects) => s.serviceProvider),
             ).toContain(serviceProvider);
@@ -940,9 +936,7 @@ describe('ServiceProviderService', () => {
                     kategorie: updateData.kategorie,
                 }),
             );
-            if (!result.ok) {
-                throw result.error;
-            }
+            expectOkResult(result);
             expect(result.value).toEqual(existingServiceProvider);
         });
 
@@ -1006,10 +1000,7 @@ describe('ServiceProviderService', () => {
             );
             expect(serviceProviderRepo.findById).not.toHaveBeenCalled();
             expect(serviceProviderRepo.update).not.toHaveBeenCalled();
-            expect(result.ok).toBe(false);
-            if (result.ok) {
-                throw new Error('Expected result to be an error');
-            }
+            expectErrResult(result);
             expect(result.error).toBeInstanceOf(MissingAttributeError);
             expect(result.error.message).toBe('At least one of the following parameters must be provided: name, url');
         });
@@ -1064,7 +1055,7 @@ describe('ServiceProviderService', () => {
         });
 
         it('calls deleteById and returns Ok() on success', async () => {
-            const expectedResult: Result<void, ServiceProviderError> = Ok(undefined);
+            const expectedResult: Result<void, ServiceProviderError> = Ok();
             rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
             rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
             serviceProviderRepo.deleteByIdAuthorized.mockResolvedValue(expectedResult);
