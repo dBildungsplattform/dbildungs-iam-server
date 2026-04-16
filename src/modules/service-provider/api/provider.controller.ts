@@ -1,7 +1,10 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
+    HttpCode,
+    HttpStatus,
     Param,
     Patch,
     Post,
@@ -9,12 +12,15 @@ import {
     StreamableFile,
     UnauthorizedException,
     UseFilters,
+    UseGuards,
 } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
+    ApiConflictResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
@@ -23,41 +29,44 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
+import { uniq } from 'lodash-es';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { ApiOkResponsePaginated, RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
+import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { AttachedRollenError } from '../domain/errors/attached-rollen.error.js';
+import { AttachedRollenerweiterungenError } from '../domain/errors/attached-rollenerweiterungen.error.js';
+import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
+import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
 import { ManageableServiceProviderWithReferencedObjects } from '../domain/types.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
+import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
-import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
-import { ServiceProviderResponse } from './service-provider.response.js';
-import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweiterung-by-service-provider-id.pathparams.js';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
-import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
-import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
-import { uniq } from 'lodash-es';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
-import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
-import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
-import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
-import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
+import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
+import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweiterung-by-service-provider-id.pathparams.js';
+import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
+import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -248,6 +257,7 @@ export class ProviderController {
                         spWithData.organisation,
                         spWithData.rollen,
                         spWithData.rollenerweiterungenWithName ?? [],
+                        spWithData.isDeleteAuthorized,
                     ),
             ),
         });
@@ -296,6 +306,7 @@ export class ProviderController {
                         spWithData.organisation,
                         spWithData.rollen,
                         spWithData.rollenerweiterungenWithName ?? [],
+                        spWithData.isDeleteAuthorized,
                     ),
             ),
         });
@@ -330,6 +341,7 @@ export class ProviderController {
     }
 
     @Post()
+    @UseGuards(StepUpGuard)
     @ApiOperation({ description: 'Create a new service-provider (Angebot).' })
     @ApiOkResponse({
         description: 'The service-provider was successfully created.',
@@ -375,6 +387,7 @@ export class ProviderController {
     }
 
     @Patch(':angebotId')
+    @UseGuards(StepUpGuard)
     @ApiOperation({ description: 'Update a service-provider (Angebot).' })
     @ApiOkResponse({
         description: 'The service-provider was successfully updated.',
@@ -400,5 +413,34 @@ export class ProviderController {
 
         this.logger.info(`ServiceProvider mit Id ${angebotId} erfolgreich aktualisiert.`);
         return new ServiceProviderResponse(result.value);
+    }
+
+    @Delete(':angebotId')
+    @UseGuards(StepUpGuard)
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiOperation({ description: 'Delete a service-provider (Angebot) by id.' })
+    @ApiNoContentResponse({ description: 'The service-provider was successfully deleted.' })
+    @ApiConflictResponse({
+        description: 'The service-provider has attached rollenerweiterungen or rollen and cannot be deleted.',
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions.' })
+    @ApiNotFoundResponse({ description: 'The service-provider does not exist.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+    public async deleteServiceProvider(
+        @Permissions() permissions: PersonPermissions,
+        @Param() params: AngebotByIdParams,
+    ): Promise<void> {
+        const result: Result<
+            void,
+            EntityNotFoundError | MissingPermissionsError | AttachedRollenError | AttachedRollenerweiterungenError
+        > = await this.serviceProviderService.deleteByIdAuthorized(permissions, params.angebotId);
+
+        if (!result.ok) {
+            throw result.error;
+        }
+        this.logger.info(
+            `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat ServiceProvider mit Id ${params.angebotId} erfolgreich gelöscht.`,
+        );
     }
 }

@@ -14,6 +14,7 @@ import { PassportUser } from '../../src/modules/authentication/types/user.js';
 import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { Request } from 'express';
+import { StepUpLevel } from '../../src/modules/authentication/passport/oidc.strategy.js';
 
 export class PersonPermissionsMock implements IPersonPermissions {
     public hasSystemrechteAtOrganisation(): Promise<boolean> {
@@ -61,6 +62,7 @@ export function createPassportUserMock(personPermissions?: PersonPermissions): P
         id_token: faker.string.uuid(),
         access_token: faker.string.uuid(),
         refresh_token: faker.string.uuid(),
+        stepUpLevel: StepUpLevel.GOLD,
     };
 }
 

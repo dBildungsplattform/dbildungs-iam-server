@@ -4,6 +4,8 @@ import { DbiamError, DbiamErrorProps } from '../../../shared/error/dbiam.error.j
 export enum ServiceProviderErrorI18nTypes {
     SERVICE_PROVIDER_ERROR = 'SERVICE_PROVIDER_ERROR',
     DUPLICATE_NAME = 'DUPLICATE_NAME',
+    ATTACHED_ROLLEN = 'ATTACHED_ROLLEN',
+    ATTACHED_ROLLENERWEITERUNGEN = 'ATTACHED_ROLLENERWEITERUNGEN',
 }
 
 export type DbiamServiceProviderErrorProps = DbiamErrorProps & {
