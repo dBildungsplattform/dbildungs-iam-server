@@ -24,6 +24,7 @@ import { SchulconnexRepo } from '../../persistence/schulconnex.repo.js';
 import { createPersonPermissionsMock } from '../../../../../test/utils/auth.mock.js';
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 import { DomainError } from '../../../../shared/error/index.js';
+import { expectOkResult } from '../../../../../test/utils/test-types.js';
 
 describe('PersonInfoService', () => {
     let module: TestingModule;
@@ -112,10 +113,7 @@ describe('PersonInfoService', () => {
                 0,
                 10,
             );
-            expect(res.ok).toBe(true);
-            if (!res.ok) {
-                throw new Error('Expected result.ok to be true, got error: ' + JSON.stringify(res.error));
-            }
+            expectOkResult(res);
             expect(res.value.length).toEqual(0);
             expect(
                 schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
@@ -162,10 +160,7 @@ describe('PersonInfoService', () => {
                 10,
             );
 
-            expect(res.ok).toBe(true);
-            if (!res.ok) {
-                throw new Error('Expected result.ok to be true, got error: ' + JSON.stringify(res.error));
-            }
+            expectOkResult(res);
             expect(res.value).toEqual([]);
 
             expect(
@@ -274,10 +269,7 @@ describe('PersonInfoService', () => {
             expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
             );
-            expect(res.ok).toBe(true);
-            if (!res.ok) {
-                throw new Error('Expected result.ok to be true, got error: ' + JSON.stringify(res.error));
-            }
+            expectOkResult(res);
             expect(res.value.length).toEqual(2);
             expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV1);
             expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV1);
@@ -383,10 +375,7 @@ describe('PersonInfoService', () => {
             expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
             );
-            expect(res.ok).toBe(true);
-            if (!res.ok) {
-                throw new Error('Expected result.ok to be true, got error: ' + JSON.stringify(res.error));
-            }
+            expectOkResult(res);
             expect(res.value.length).toEqual(2);
             expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV1);
             expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV1);
@@ -492,10 +481,7 @@ describe('PersonInfoService', () => {
             expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
             );
-            expect(res.ok).toBe(true);
-            if (!res.ok) {
-                throw new Error('Expected result.ok to be true, got error: ' + JSON.stringify(res.error));
-            }
+            expectOkResult(res);
             expect(res.value.length).toEqual(2);
             expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV1);
             expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV1);
@@ -600,10 +586,7 @@ describe('PersonInfoService', () => {
             expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
                 expect.arrayContaining([personId1, personId2]),
             );
-            expect(res.ok).toBe(true);
-            if (!res.ok) {
-                throw new Error('Expected result.ok to be true, got error: ' + JSON.stringify(res.error));
-            }
+            expectOkResult(res);
             expect(res.value.length).toEqual(2);
             expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV1);
             expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV1);

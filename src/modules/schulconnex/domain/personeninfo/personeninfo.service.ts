@@ -17,6 +17,7 @@ import { PersonID } from '../../../../shared/types/index.js';
 import { SchulconnexRepo } from '../../persistence/schulconnex.repo.js';
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 import { DomainError } from '../../../../shared/error/index.js';
+import { Ok } from '../../../../shared/util/result.js';
 
 @Injectable()
 export class PersonenInfoService {
@@ -57,7 +58,7 @@ export class PersonenInfoService {
         }
 
         if (permittedServiceProviderIds.size === 0) {
-            return { ok: true, value: [] };
+            return Ok([]);
         }
 
         const [idsWithKontext, idsWithRollenerweiterung]: [PersonID[], PersonID[]] = await Promise.all([
@@ -97,7 +98,7 @@ export class PersonenInfoService {
         ]);
 
         if (!emailsForPersons.ok) {
-            return { ok: false, error: emailsForPersons.error };
+            return emailsForPersons;
         }
 
         const emailMap: Map<PersonID, PersonEmailResponse | undefined> = emailsForPersons.value;
@@ -110,6 +111,6 @@ export class PersonenInfoService {
             return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle, email, userLocks);
         });
 
-        return { ok: true, value: responses };
+        return Ok(responses);
     }
 }

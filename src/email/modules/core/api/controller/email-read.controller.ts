@@ -6,7 +6,6 @@ import {
     ApiOkResponse,
     ApiOperation,
     ApiTags,
-    getSchemaPath,
 } from '@nestjs/swagger';
 
 import { FindEmailAddressBySpshPersonIdPathParams } from '../dtos/params/find-email-address-by-spsh-person-id.pathparams.js';
@@ -105,10 +104,7 @@ export class EmailReadController {
     @ApiOperation({ description: 'Get email-addresses by personIds.' })
     @ApiOkResponse({
         description: 'The email-addresses for corresponding persons were successfully returned.',
-        schema: {
-            type: 'object',
-            additionalProperties: { $ref: getSchemaPath(EmailAddressResponse), nullable: true },
-        },
+        type: [EmailAddressResponse],
     })
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while getting email-addresses by personIds.',

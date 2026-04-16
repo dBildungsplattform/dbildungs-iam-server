@@ -5,6 +5,7 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    expectOkResult,
 } from '../../../../test/utils/index.js';
 import {
     compareEmailAddressesByUpdatedAt,
@@ -450,9 +451,7 @@ describe('EmailRepo', () => {
                     DomainError
                 > = await sut.getEmailAddressAndStatusForPersonIds(personIds);
 
-                if (!responseMap.ok) {
-                    throw responseMap.error;
-                }
+                expectOkResult(responseMap);
                 expect(responseMap.value.size).toStrictEqual(1);
                 expect(responseMap.value.get(personId1)?.address).toStrictEqual(emailAddress1.address);
             });
@@ -474,9 +473,7 @@ describe('EmailRepo', () => {
                     DomainError
                 > = await sut.getEmailAddressAndStatusForPersonIds(extendedPersonIds);
 
-                if (!responseMap.ok) {
-                    throw responseMap.error;
-                }
+                expectOkResult(responseMap);
                 expect(responseMap.value.size).toStrictEqual(1);
                 expect(responseMap.value.get(personId1)?.address).toStrictEqual(emailAddress1.address);
                 expect(responseMap.value.get(personIdWithoutEnabledAddress)).toBeUndefined();
@@ -507,9 +504,7 @@ describe('EmailRepo', () => {
                     `Found multiple ENABLED EmailAddresses, treating ${moreRecentAddress} as latest address, personId:${personId1}`,
                 );
 
-                if (!responseMap.ok) {
-                    throw responseMap.error;
-                }
+                expectOkResult(responseMap);
                 expect(responseMap.value.size).toStrictEqual(1);
                 expect(responseMap.value.get(personId1)?.address).toStrictEqual(moreRecentAddress);
                 expect(responseMap.value.get(personId1)?.address).not.toStrictEqual(emailAddress1.address);

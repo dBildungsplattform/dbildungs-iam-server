@@ -198,9 +198,7 @@ describe('EmailResolverService', () => {
                 Map<PersonID, PersonEmailResponse | undefined>,
                 DomainError
             > = await sut.findEmailsBySpshPersons([personId1, personId2]);
-            if (!result.ok) {
-                throw new Error('Expected result to be defined');
-            }
+            expectOkResult(result);
             expect(result.value.size).toBe(2);
             expect(result.value.get(personId1)).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, email1));
             expect(result.value.get(personId2)).toEqual(new PersonEmailResponse(EmailAddressStatus.REQUESTED, email2));

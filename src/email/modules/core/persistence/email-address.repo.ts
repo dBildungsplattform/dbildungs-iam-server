@@ -113,22 +113,17 @@ export class EmailAddressRepo {
     }
 
     public async findPrimaryBySpshPersonIds(spshPersonIds: string[]): Promise<EmailAddress<true>[]> {
-        const emailAddressEntities: Option<EmailAddrEntity[]> = await this.em.find(
-            EmailAddrEntity,
-            {
-                spshPersonId: { $in: spshPersonIds },
-                priority: 0,
-                statuses: { status: EmailAddressStatusEnum.ACTIVE },
-            },
-            { orderBy: { spshPersonId: 'asc', priority: 'asc' }, populate: ['statuses'] },
-        );
+        const emailAddressEntities: Option<EmailAddrEntity[]> = await this.em.find(EmailAddrEntity, {
+            spshPersonId: { $in: spshPersonIds },
+            priority: 0,
+        });
 
         const result: EmailAddress<true>[] = [];
-        const seen: Set<string> = new Set<string>();
 
         for (const entity of emailAddressEntities) {
-            if (!seen.has(entity.spshPersonId)) {
-                seen.add(entity.spshPersonId);
+            const newestStatus: EmailAddressStatusEntity | undefined = entity.statuses.getItems()[0];
+
+            if (newestStatus?.status === EmailAddressStatusEnum.ACTIVE) {
                 result.push(mapEntityToAggregate(entity));
             }
         }
