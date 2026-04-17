@@ -131,8 +131,7 @@ export class ServiceProviderService {
             return undefined;
         }
 
-        // Calculate permitted orgas for delete
-        const permittedDeleteOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+        const orgasWithSomeVerwaltenPermission: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN],
             true,
             false,
@@ -142,7 +141,7 @@ export class ServiceProviderService {
                 [serviceProvider],
                 undefined,
                 undefined,
-                permittedDeleteOrgas,
+                orgasWithSomeVerwaltenPermission,
             );
 
         return enrichedServiceProviders[0];
@@ -207,7 +206,7 @@ export class ServiceProviderService {
         const [serviceProviders, total]: [ServiceProvider<true>[], number] = result;
 
         // Calculate permitted orgas for delete
-        const permittedDeleteOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN],
             true,
             false,
@@ -217,7 +216,7 @@ export class ServiceProviderService {
                 serviceProviders,
                 20,
                 organisationId,
-                permittedDeleteOrgas,
+                permittedOrgas,
             );
 
         return { ok: true, value: [enrichedServiceProviders, total] };
@@ -227,7 +226,7 @@ export class ServiceProviderService {
         serviceProviders: ServiceProvider<true>[],
         limitRoles?: number,
         organisationId?: OrganisationID,
-        permittedDeleteOrgas?: PermittedOrgas,
+        permittedOrgas?: PermittedOrgas,
     ): Promise<ManageableServiceProviderWithReferencedObjects[]> {
         const serviceProvidersIds: ServiceProviderID[] = serviceProviders.map((sp: ServiceProvider<true>) => sp.id);
 
@@ -243,10 +242,10 @@ export class ServiceProviderService {
             ),
         ]);
 
-        let permittedDeleteOrgaSet: Set<string> = new Set();
-        if (permittedDeleteOrgas) {
-            if (!permittedDeleteOrgas.all) {
-                permittedDeleteOrgaSet = new Set(permittedDeleteOrgas.orgaIds);
+        let permittedOrgaSet: Set<string> = new Set();
+        if (permittedOrgas) {
+            if (!permittedOrgas.all) {
+                permittedOrgaSet = new Set(permittedOrgas.orgaIds);
             }
         }
 
@@ -257,9 +256,8 @@ export class ServiceProviderService {
                     organisation: organisationen.get(serviceProvider.providedOnSchulstrukturknoten)!,
                     rollen: rollen.get(serviceProvider.id) ?? [],
                     rollenerweiterungen: rollenerweiterungen.get(serviceProvider.id) ?? [],
-                    isDeleteAuthorized:
-                        permittedDeleteOrgas?.all ||
-                        permittedDeleteOrgaSet.has(serviceProvider.providedOnSchulstrukturknoten),
+                    hasSomeVerwaltenPermission:
+                        permittedOrgas?.all || permittedOrgaSet.has(serviceProvider.providedOnSchulstrukturknoten),
                 };
             },
         );

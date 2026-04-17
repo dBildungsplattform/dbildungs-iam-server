@@ -43,11 +43,15 @@ export class ManageableServiceProviderResponse {
     @ApiProperty({ type: RolleRefResponse, isArray: true })
     public rollen: RolleRefResponse[];
 
+    @ApiProperty()
+    public hasSomeVerwaltenPermission: boolean;
+
     public constructor(
         serviceProvider: ServiceProvider<true>,
         organisation: Organisation<true>,
         rollen: Rolle<true>[],
         hasRollenerweiterung: boolean,
+        hasSomeVerwaltenPermission: boolean,
     ) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;
@@ -65,5 +69,6 @@ export class ManageableServiceProviderResponse {
             ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
         );
         this.rollen = rollen.map((r: Rolle<true>) => ({ id: r.id, name: r.name }));
+        this.hasSomeVerwaltenPermission = hasSomeVerwaltenPermission;
     }
 }

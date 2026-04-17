@@ -318,7 +318,7 @@ describe('ServiceProvider API', () => {
                                 name: rolle.name,
                             },
                         ],
-                        isDeleteAuthorized: true,
+                        hasSomeVerwaltenPermission: true,
                     },
                 ],
                 limit: 1,

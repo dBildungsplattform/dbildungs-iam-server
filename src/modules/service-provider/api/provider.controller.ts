@@ -257,7 +257,7 @@ export class ProviderController {
                         spWithData.organisation,
                         spWithData.rollen,
                         spWithData.rollenerweiterungenWithName ?? [],
-                        spWithData.isDeleteAuthorized,
+                        spWithData.hasSomeVerwaltenPermission,
                     ),
             ),
         });
@@ -306,7 +306,7 @@ export class ProviderController {
                         spWithData.organisation,
                         spWithData.rollen,
                         spWithData.rollenerweiterungenWithName ?? [],
-                        spWithData.isDeleteAuthorized,
+                        spWithData.hasSomeVerwaltenPermission,
                     ),
             ),
         });
@@ -337,6 +337,7 @@ export class ProviderController {
             serviceProviderWithOrganisationRollenAndErweiterungen.organisation,
             serviceProviderWithOrganisationRollenAndErweiterungen.rollen,
             serviceProviderWithOrganisationRollenAndErweiterungen.rollenerweiterungen.length > 0,
+            serviceProviderWithOrganisationRollenAndErweiterungen.hasSomeVerwaltenPermission,
         );
     }
 
