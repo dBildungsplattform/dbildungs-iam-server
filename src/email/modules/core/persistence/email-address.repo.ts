@@ -112,6 +112,25 @@ export class EmailAddressRepo {
         return emailAddressEntities.map(mapEntityToAggregate);
     }
 
+    public async findPrimaryBySpshPersonIds(spshPersonIds: string[]): Promise<EmailAddress<true>[]> {
+        const emailAddressEntities: Option<EmailAddrEntity[]> = await this.em.find(EmailAddrEntity, {
+            spshPersonId: { $in: spshPersonIds },
+            priority: 0,
+        });
+
+        const result: EmailAddress<true>[] = [];
+
+        for (const entity of emailAddressEntities) {
+            const newestStatus: EmailAddressStatusEntity | undefined = entity.statuses.getItems()[0];
+
+            if (newestStatus?.status === EmailAddressStatusEnum.ACTIVE) {
+                result.push(mapEntityToAggregate(entity));
+            }
+        }
+
+        return result;
+    }
+
     /**
      * Takes in an email-address (needs to already be persisted!) and a target priority X.
      * At the end, the given email will have priority X.
