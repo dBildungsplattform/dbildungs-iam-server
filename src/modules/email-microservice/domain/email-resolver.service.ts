@@ -14,6 +14,8 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { HeaderApiKeyConfig } from '../../../shared/config/headerapikey.config.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { EmailMicroserviceCommunicationError } from '../../../shared/error/index.js';
 
 export interface PersonIdWithEmailResponse {
     personId: string;
@@ -48,6 +50,38 @@ export class EmailResolverService {
         } catch (error) {
             this.logger.logUnknownAsError(`Failed to fetch email for person ${personId}`, error);
             return undefined;
+        }
+    }
+
+    public async findEmailsBySpshPersons(
+        personIds: string[],
+    ): Promise<Result<Map<PersonID, PersonEmailResponse | undefined>, DomainError>> {
+        try {
+            const response: AxiosResponse<EmailAddressResponse[]> = await lastValueFrom(
+                this.httpService.post(
+                    this.getEndpoint() + `${EmailResolverService.readPath}/spshpersons`,
+                    {
+                        spshPersonIds: personIds,
+                    },
+                    {
+                        headers: {
+                            'api-key': this.getApiKey(),
+                        },
+                    },
+                ),
+            );
+
+            const result: Map<PersonID, PersonEmailResponse> = new Map<PersonID, PersonEmailResponse>(
+                response.data.map((email: EmailAddressResponse) => [
+                    email.spshPersonId as PersonID,
+                    new PersonEmailResponse(this.mapStatus(email.status), email.address),
+                ]),
+            );
+
+            return Ok(result);
+        } catch (error) {
+            this.logger.logUnknownAsError(`Failed to fetch emails for persons`, error);
+            return Err(new EmailMicroserviceCommunicationError('Failed to fetch emails for persons'));
         }
     }
 
