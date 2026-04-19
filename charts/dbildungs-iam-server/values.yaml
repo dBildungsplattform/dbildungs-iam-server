@@ -356,7 +356,7 @@ cronjobs:
 cronjobsEmail:
   enabled: true
   image:
-    tag: "0.0.1"
+    tag: "DBP-2198-latest"
     repository: ghcr.io/dbildungsplattform/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
