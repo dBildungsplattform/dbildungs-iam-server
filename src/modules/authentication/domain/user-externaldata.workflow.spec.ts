@@ -118,9 +118,36 @@ describe('UserExternaldataWorkflow', () => {
             expect(sut.person).toBeDefined();
             expect(sut.checkedExternalPkData).toBeDefined();
             expect(sut.oxLoginId).toBe(`${oxLoginId}@${oxContextId}`);
+            expect(sut.person?.email).toBe(emailAddress.address);
         });
 
-        it('should not set contextID when user has suspended email', async () => {
+        it('should set email to undefined if user has no email', async () => {
+            const keycloakSub: string = faker.string.uuid();
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                keycloakSub,
+                faker.string.uuid(),
+            );
+
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+
+            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValue(Ok(undefined));
+
+            await sut.initialize(person.id);
+
+            expect(sut.person?.email).toBeUndefined();
+        });
+
+        it('should not set contextID and address when user has suspended email', async () => {
             const keycloakSub: string = faker.string.uuid();
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
@@ -161,6 +188,7 @@ describe('UserExternaldataWorkflow', () => {
 
             await sut.initialize(person.id);
             expect(sut.person).toBeDefined();
+            expect(sut.person?.email).toBeUndefined();
             expect(sut.checkedExternalPkData).toBeDefined();
             expect(sut.oxLoginId).toBeUndefined();
         });

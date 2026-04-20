@@ -54,7 +54,6 @@ import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { PersonExternalIdType, PersonLockOccasion, SortFieldPerson } from '../domain/person.enums.js';
@@ -78,6 +77,8 @@ import {
 } from './person.repository.js';
 import { PersonScope } from './person.scope.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -94,7 +95,6 @@ describe('PersonRepository Integration', () => {
     let personenkontextFactory: PersonenkontextFactory;
     let userLockRepository: UserLockRepository;
     let organisationRepository: OrganisationRepository;
-    let serviceProviderRepository: ServiceProviderRepo;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -107,6 +107,10 @@ describe('PersonRepository Integration', () => {
                 {
                     provide: EmailRepo,
                     useValue: createMock(EmailRepo),
+                },
+                {
+                    provide: ServiceProviderRepo,
+                    useValue: createMock(ServiceProviderRepo),
                 },
                 {
                     provide: EventRoutingLegacyKafkaService,
@@ -122,7 +126,6 @@ describe('PersonRepository Integration', () => {
                 },
                 // the following are required to prepare the test for findByIds()
                 OrganisationRepository,
-                ServiceProviderRepo,
                 RolleFactory,
                 RolleRepo,
                 DBiamPersonenkontextRepoInternal,
@@ -146,7 +149,6 @@ describe('PersonRepository Integration', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
         userLockRepository = module.get(UserLockRepository);
         organisationRepository = module.get(OrganisationRepository);
-        serviceProviderRepository = module.get(ServiceProviderRepo);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         loggerMock = module.get(ClassLogger);
         await DatabaseTestModule.setupDatabase(orm);
@@ -266,9 +268,9 @@ describe('PersonRepository Integration', () => {
             const orga: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false, { itslearningEnabled: true }),
             );
-            const serviceProvider: ServiceProvider<true> = await serviceProviderRepository.save(
-                DoFactory.createServiceProvider(false, { externalSystem: ServiceProviderSystem.ITSLEARNING }),
-            );
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                externalSystem: ServiceProviderSystem.ITSLEARNING,
+            });
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
             );
@@ -305,9 +307,9 @@ describe('PersonRepository Integration', () => {
             const orgaB: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false, { itslearningEnabled: true }),
             );
-            const serviceProvider: ServiceProvider<true> = await serviceProviderRepository.save(
-                DoFactory.createServiceProvider(false, { externalSystem: ServiceProviderSystem.ITSLEARNING }),
-            );
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                externalSystem: ServiceProviderSystem.ITSLEARNING,
+            });
             const rolleA: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [] }),
             );
@@ -347,9 +349,9 @@ describe('PersonRepository Integration', () => {
             const orga: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false, { itslearningEnabled: false }),
             );
-            const serviceProvider: ServiceProvider<true> = await serviceProviderRepository.save(
-                DoFactory.createServiceProvider(false, { externalSystem: ServiceProviderSystem.ITSLEARNING }),
-            );
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                externalSystem: ServiceProviderSystem.ITSLEARNING,
+            });
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
             );

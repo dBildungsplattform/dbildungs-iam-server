@@ -8,6 +8,7 @@ import { createOidcClientMock } from '../../../../test/utils/auth.mock.js';
 import { createRequestMock } from '../../../../test/utils/http.mocks.js';
 import { decode } from 'jsonwebtoken';
 import { Mock } from 'vitest';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 
 type importType = typeof import('jsonwebtoken');
 vi.mock<importType>(import('jsonwebtoken'), async (importOriginal: () => Promise<importType>) => {
@@ -49,6 +50,29 @@ describe('JWT Strategy', () => {
         const sessionContent: { access_token: string } = await sut.validate(request, '');
 
         expect(sessionContent.access_token).toEqual('');
+    });
+
+    it('should check if user exists by keycloak id', async () => {
+        const client: DeepMocked<BaseClient> = createOidcClientMock({
+            issuer: {
+                metadata: { jwks_uri: 'https://nowhere.example.com', issuer: 'https://anyhere.example.com' },
+            } as Issuer,
+        });
+        const personRepositoryMock: DeepMocked<PersonRepository> = createMock(PersonRepository);
+        personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(DoFactory.createPerson(true));
+        const sut: JwtStrategy = new JwtStrategy(client, personRepositoryMock);
+
+        (decode as Mock).mockReturnValue({
+            sub: faker.string.uuid().toString(),
+        });
+        const request: Request = createRequestMock({
+            headers: { authorization: 'Bearer 12345' },
+        }) as unknown as Request;
+
+        const sessionContent: { access_token: string } = await sut.validate(request, '');
+
+        expect(sessionContent.access_token).toEqual('12345');
+        expect(personRepositoryMock.findByKeycloakUserId).toHaveBeenCalled();
     });
 
     it('should throw KeycloakUserNotFoundError if the kc user does not exist', async () => {

@@ -353,6 +353,22 @@ cronjobs:
 #      httpMethod: 'PUT'
 #      script: 'cron_trigger.sh'
 
+cronjobsEmail:
+  enabled: true
+  image:
+    tag: "1.2.1"
+    repository: docker.io/schulcloud/cron-tools
+    pullPolicy: IfNotPresent
+  port: 5656
+  scriptDir: scripts
+  jobs:
+    cron-trigger-email:
+      schedule: "0 4 * * *"
+      endpoint: "api/cron/delete"
+      httpMethod: 'DELETE'
+      script: "cron_trigger_email.sh"
+      suspended: true
+
 import:
   csvFileMaxSizeInMB: 10
   csvMaxNumberOfUsers: 2001
@@ -360,6 +376,7 @@ import:
 featureFlags:
   befristungBearbeiten: true
   rolleErweitern: true
+  schulischeAngeboteErstellen: true
   setUemPassword: true
 
 emailMicroservice:

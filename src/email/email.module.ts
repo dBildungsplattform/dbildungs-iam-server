@@ -8,6 +8,7 @@ import { defineConfig, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { EmailAppConfig } from '../shared/config/email-app.config.js';
 import { PassportModule } from '@nestjs/passport';
 import { InternalCommunicationApiKeyStrategy } from './passport/internalcommunicationapikey.strategy.js';
+import { EmailWebhookModule } from './modules/webhook/webhook.module.js';
 
 @Module({
     imports: [
@@ -40,6 +41,7 @@ import { InternalCommunicationApiKeyStrategy } from './passport/internalcommunic
         LoggerModule.register(EmailModule.name),
         EmailHealthModule,
         EmailCoreModule,
+        EmailWebhookModule,
     ],
     providers: [InternalCommunicationApiKeyStrategy],
 })

@@ -9,7 +9,8 @@ import { EmailAddressStatusEnum } from '../persistence/email-address-status.enti
 import { EmailAddressRepo } from '../persistence/email-address.repo';
 import { EmailAddress } from './email-address';
 import { SetEmailSuspendedService } from './set-email-suspended.service';
-import { DeepMocked } from '../../../../../test/utils/createMock';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock';
+import { WebhookService } from '../../webhook/domain/webhook.service';
 
 describe('SetEmailSuspendedService', () => {
     let module: TestingModule;
@@ -17,6 +18,7 @@ describe('SetEmailSuspendedService', () => {
     let orm: MikroORM;
     let emailAddressRepo: EmailAddressRepo;
     let loggerMock: DeepMocked<ClassLogger>;
+    let webhookServiceMock: DeepMocked<WebhookService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -25,13 +27,21 @@ describe('SetEmailSuspendedService', () => {
                 EmailConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],
-            providers: [SetEmailSuspendedService, EmailAddressRepo],
+            providers: [
+                SetEmailSuspendedService,
+                EmailAddressRepo,
+                {
+                    provide: WebhookService,
+                    useValue: createMock(WebhookService),
+                },
+            ],
         }).compile();
 
         sut = module.get(SetEmailSuspendedService);
         orm = module.get(MikroORM);
         emailAddressRepo = module.get(EmailAddressRepo);
         loggerMock = module.get(ClassLogger);
+        webhookServiceMock = module.get(WebhookService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -92,6 +102,7 @@ describe('SetEmailSuspendedService', () => {
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `No email addresses found for spshPerson ${spshPersonId}. Skipping setting suspended.`,
             );
+            expect(webhookServiceMock.sendEmailsChanged).not.toHaveBeenCalled();
         });
 
         it('should set SUSPENDED and markedForCron 90 days for priority 0 and 1, skip > 1', async () => {
@@ -129,6 +140,13 @@ describe('SetEmailSuspendedService', () => {
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `Priority of email address ${inlegibleEmail} is not 0 or 1. Skipping setting suspended`,
             );
+            expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+                spshPersonId,
+                newPrimaryEmail: undefined,
+                newAlternativeEmail: undefined,
+                previousPrimaryEmail: refreshed[0]?.address,
+                previousAlternativeEmail: refreshed[1]?.address,
+            });
         });
 
         it('should not update markedForCron if it already has a value', async () => {

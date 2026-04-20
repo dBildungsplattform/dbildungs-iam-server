@@ -15,7 +15,6 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
@@ -23,6 +22,7 @@ import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -75,6 +75,7 @@ describe('dbiam Personenkontext Repo', () => {
                 RolleModule,
                 OrganisationModule,
                 LoggingTestModule,
+                ServiceProviderModule,
             ],
             providers: [
                 DBiamPersonenkontextRepoInternal,
@@ -85,7 +86,6 @@ describe('dbiam Personenkontext Repo', () => {
                 RolleFactory,
                 RolleRepo,
                 OrganisationRepository,
-                ServiceProviderRepo,
                 PersonenkontextFactory,
                 {
                     provide: KeycloakUserService,

@@ -49,9 +49,10 @@ export default defineConfig({
             ],
             thresholds: {
                 statements: 100,
-                branches: 97.6,
+                branches: -89, // Absolute count to avoid regressions
                 functions: 100,
                 lines: 100,
+                autoUpdate: true, // automatically update coverage to stay up to date
             },
             skipFull: true,
         },

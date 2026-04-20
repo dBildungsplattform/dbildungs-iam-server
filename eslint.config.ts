@@ -1,7 +1,6 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import tseslint from 'typescript-eslint';
 import importPlugin from 'eslint-plugin-import';
-import prettier from 'eslint-plugin-prettier';
 // Custom rule overrides
 import type { Linter } from 'eslint';
 
@@ -26,9 +25,6 @@ const customRules: Partial<Linter.RulesRecord> = {
   // Import plugin
   'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
   'import/no-cycle': ['error'],
-
-  // Prettier
-  'prettier/prettier': ['warn'],
 
   // TypeScript rules
   '@typescript-eslint/no-inferrable-types': ['off'],
@@ -76,7 +72,6 @@ export default defineConfig(
     'eslint.config copy.ts',
     'vite.config.ts',
     '.eslintrc.cjs',
-    '.prettierrc.cjs',
     'dist/*',
     'node_modules/*',
     'coverage/*'
@@ -87,7 +82,7 @@ export default defineConfig(
     files: ['**/*.ts'],
     ignores: ['test-migrations/**/*.ts', 'migrations/**/*.ts', 'dist/**'],
     extends: [tseslint.configs.recommendedTypeChecked],
-    plugins: { tseslint, import: importPlugin, prettier },
+    plugins: { tseslint, import: importPlugin },
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -104,7 +99,7 @@ export default defineConfig(
   {
     files: ['**/*spec.ts'],
     extends: [tseslint.configs.recommendedTypeChecked],
-    plugins: { tseslint, import: importPlugin, prettier },
+    plugins: { tseslint, import: importPlugin },
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {

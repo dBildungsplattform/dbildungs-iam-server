@@ -16,9 +16,11 @@ import {
     MismatchedRevisionError,
     MissingPermissionsError,
     PersonAlreadyExistsError,
+    EmailMicroserviceCommunicationError,
 } from '../error/index.js';
 import { ExceedsLimitError } from '../error/exceeds-limit.error.js';
 import { UserExternalDataWorkflowError } from '../error/user-externaldata-workflow.error.js';
+import { MissingAttributeError } from '../error/missing-attribute.error.js';
 
 @Catch(SharedDomainError)
 export class SharedExceptionFilter implements ExceptionFilter<SharedDomainError> {
@@ -101,6 +103,13 @@ export class SharedExceptionFilter implements ExceptionFilter<SharedDomainError>
             }),
         ],
         [
+            MissingAttributeError.name,
+            new DbiamSharedError({
+                code: 400,
+                i18nKey: SharedErrorI18nTypes.MISSING_ATTRIBUTE,
+            }),
+        ],
+        [
             MissingPermissionsError.name,
             new DbiamSharedError({
                 code: 404,
@@ -119,6 +128,13 @@ export class SharedExceptionFilter implements ExceptionFilter<SharedDomainError>
             new DbiamSharedError({
                 code: 500,
                 i18nKey: SharedErrorI18nTypes.USER_EXTERNAL_DATA_WORKFLOW_ERROR,
+            }),
+        ],
+        [
+            EmailMicroserviceCommunicationError.name,
+            new DbiamSharedError({
+                code: 500,
+                i18nKey: SharedErrorI18nTypes.EMAIL_MICROSERVICE_COMMUNICATION_ERROR,
             }),
         ],
     ]);

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseFilters, UseGuards } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiInternalServerErrorResponse,
@@ -21,6 +21,7 @@ import { EmailAddressMissingStatusError } from '../../error/email-address-missin
 import { EmailAddress } from '../../domain/email-address.js';
 import { EmailAddressStatusEnum } from '../../persistence/email-address-status.entity.js';
 import { AuthGuard } from '@nestjs/passport';
+import { FindEmailAddressBySpshPersonIdsBodyParams } from '../dtos/params/find-email-addresses-by-spsh-person-ids.bodyparams.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
@@ -96,5 +97,41 @@ export class EmailReadController {
         }
 
         return new EmailAddressResponse(emailAddress, latestStatus, this.oxService.contextID);
+    }
+
+    @Post('spshpersons')
+    @Public()
+    @ApiOperation({ description: 'Get email-addresses by personIds.' })
+    @ApiOkResponse({
+        description: 'The email-addresses for corresponding persons were successfully returned.',
+        type: [EmailAddressResponse],
+    })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while getting email-addresses by personIds.',
+    })
+    public async findEmailAddressesByPersonIds(
+        @Body() findEmailAddressBySpshPersonIdsBodyParams: FindEmailAddressBySpshPersonIdsBodyParams,
+    ): Promise<EmailAddressResponse[]> {
+        const personIds: string[] = Array.from(new Set(findEmailAddressBySpshPersonIdsBodyParams.spshPersonIds));
+        const count: number = personIds.length;
+        this.logger.info(
+            count === 0
+                ? 'Received 0 PersonIds'
+                : count === 1
+                  ? `Received 1 PersonId: ${personIds[0]}`
+                  : `Received ${count} PersonIds: ${personIds[0]} ... ${personIds[count - 1]}`,
+        );
+        if (personIds.length === 0) {
+            return [];
+        }
+
+        const primaryEmails: EmailAddress<true>[] = await this.emailAddressRepo.findPrimaryBySpshPersonIds(personIds);
+
+        return primaryEmails
+            .map((addr: EmailAddress<true>) => {
+                const status: EmailAddressStatusEnum | undefined = addr.getStatus();
+                return status ? new EmailAddressResponse(addr, status, this.oxService.contextID) : null;
+            })
+            .filter((e: EmailAddressResponse | null): e is EmailAddressResponse => e !== null);
     }
 }

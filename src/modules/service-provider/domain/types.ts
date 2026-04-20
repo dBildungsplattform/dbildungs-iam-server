@@ -12,6 +12,7 @@ export type ManageableServiceProviderWithReferencedObjects = {
     rollen: Rolle<true>[];
     rollenerweiterungen: Rollenerweiterung<true>[];
     rollenerweiterungenWithName?: RollenerweiterungForManageableServiceProvider[];
+    isDeleteAuthorized: boolean;
 };
 
 export type RollenerweiterungForManageableServiceProvider = {
