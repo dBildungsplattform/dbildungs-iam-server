@@ -359,6 +359,10 @@ export class RolleRepo {
         serviceProviderIds: string[],
         limitPerProvider: number = Infinity,
     ): Promise<Map<ServiceProviderID, Rolle<true>[]>> {
+        if (serviceProviderIds.length === 0) {
+            return new Map();
+        }
+
         // Load *all* Rollen that have one of the specified providers.
         // We can assume there won't be thousands of Rollen in the system and this easier to maintain
 
@@ -379,6 +383,7 @@ export class RolleRepo {
             {
                 orderBy: { name: 'ASC' },
                 populateWhere: 'infer',
+                populate: ['serviceProvider.serviceProvider'],
             },
         );
 
