@@ -19,6 +19,7 @@ import { SchulconnexConfig } from '../../../../shared/config/schulconnex.config.
 import { SchulConnexAuthenticationDomainErrorFilter } from '../../error/schulconnex-authentication-domain-error-filter.js';
 import { SchulConnexSharedErrorFilter } from '../../error/schulconnex-shared-error-filter.js';
 import { SchulConnexValidationErrorFilter } from '../../error/schulconnex-validation-error.filter.js';
+import { DomainError } from '../../../../shared/error/domain.error.js';
 
 @UseFilters(
     new SchulConnexSharedErrorFilter(),
@@ -72,6 +73,11 @@ export class PersonenInfoController {
             throw new ExceedsLimitError(`Limit darf maximal ${this.maxPersonenInfoLimit} sein.`);
         }
 
-        return await this.personInfoService.findPersonsForPersonenInfo(permissions, parsedOffset, parsedLimit);
+        const result: Result<PersonInfoResponseV1[], DomainError> =
+            await this.personInfoService.findPersonsForPersonenInfo(permissions, parsedOffset, parsedLimit);
+        if (!result.ok) {
+            throw result.error;
+        }
+        return result.value;
     }
 }
