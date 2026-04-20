@@ -1,4 +1,4 @@
-import { BigIntType, Collection, Entity, Enum, OneToMany, Opt, Property } from '@mikro-orm/core';
+import { BigIntType, Collection, Entity, Enum, Index, OneToMany, Opt, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { RollenArt } from '../domain/rolle.enums.js';
 import { RolleMerkmalEntity } from './rolle-merkmal.entity.js';
@@ -8,6 +8,7 @@ import { PersonenkontextEntity } from '../../personenkontext/persistence/persone
 
 @Entity({ tableName: 'rolle' })
 export class RolleEntity extends TimestampedEntity {
+    @Index()
     @Property()
     public name!: string;
 
@@ -24,6 +25,7 @@ export class RolleEntity extends TimestampedEntity {
         entity: () => RolleMerkmalEntity,
         mappedBy: 'rolle',
         orphanRemoval: true,
+        eager: true,
     })
     public merkmale: Collection<RolleMerkmalEntity> = new Collection<RolleMerkmalEntity>(this);
 
@@ -31,6 +33,7 @@ export class RolleEntity extends TimestampedEntity {
         entity: () => RolleSystemrechtEntity,
         mappedBy: 'rolle',
         orphanRemoval: true,
+        eager: true,
     })
     public systemrechte: Collection<RolleSystemrechtEntity> = new Collection<RolleSystemrechtEntity>(this);
 
@@ -38,6 +41,7 @@ export class RolleEntity extends TimestampedEntity {
         entity: () => RolleServiceProviderEntity,
         mappedBy: 'rolle',
         orphanRemoval: true,
+        eager: true,
     })
     public serviceProvider: Collection<RolleServiceProviderEntity> = new Collection<RolleServiceProviderEntity>(this);
 

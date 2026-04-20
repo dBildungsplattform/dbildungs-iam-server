@@ -4,6 +4,7 @@ import {
     FilterQuery,
     ForeignKeyConstraintViolationException,
     Loaded,
+    PopulatePath,
     RequiredEntityData,
 } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
@@ -356,38 +357,44 @@ export class RolleRepo {
 
     public async findByServiceProviderIds(
         serviceProviderIds: string[],
-        limitPerProvider?: number,
+        limitPerProvider: number = Infinity,
     ): Promise<Map<ServiceProviderID, Rolle<true>[]>> {
-        const rollenMap: Map<ServiceProviderID, Rolle<true>[]> = new Map<ServiceProviderID, Rolle<true>[]>();
+        // Load *all* Rollen that have one of the specified providers.
+        // We can assume there won't be thousands of Rollen in the system and this easier to maintain
 
-        await Promise.all(
-            serviceProviderIds.map(async (spId: ServiceProviderID) => {
-                const query: object = {
-                    serviceProvider: { serviceProvider: { id: spId } },
-                };
+        // For future reference, the following sql can be used as a starting point if we need to optimize this further
+        // SELECT "sp"."id", "sp"."name", "r"."name" FROM "service_provider" AS "sp" LEFT JOIN LATERAL( SELECT DISTINCT "r_inner".* FROM "rolle" AS "r_inner" JOIN "rolle_service_provider" AS "rsp_inner" ON "rsp_inner"."service_provider_id" = "sp"."id" ORDER BY "r_inner"."name" ASC LIMIT 2) AS "r" ON TRUE WHERE "sp"."id" IN (?) ORDER BY "sp"."name" ASC
 
-                const findOptions: Record<string, unknown> = {
-                    populate: [
-                        'merkmale',
-                        'systemrechte',
-                        'serviceProvider.serviceProvider',
-                        'serviceProvider.serviceProvider.merkmale',
-                    ] as const,
-                    exclude: ['serviceProvider.serviceProvider.logo'] as const,
-                    orderBy: { name: 'ASC' },
-                };
-
-                if (limitPerProvider !== undefined) {
-                    findOptions['limit'] = limitPerProvider;
-                }
-
-                const rollen: Rolle<true>[] = (await this.em.find(RolleEntity, query, findOptions)).map(
-                    (rolleEntity: RolleEntity) => mapRolleEntityToAggregate(rolleEntity, this.rolleFactory),
-                );
-
-                rollenMap.set(spId, rollen);
-            }),
+        const result: Loaded<RolleEntity, 'serviceProvider', PopulatePath.ALL, never>[] = await this.em.find(
+            RolleEntity,
+            {
+                serviceProvider: {
+                    serviceProvider: {
+                        id: {
+                            $in: serviceProviderIds,
+                        },
+                    },
+                },
+            },
+            {
+                orderBy: { name: 'ASC' },
+                populateWhere: 'infer',
+            },
         );
+
+        const rollenMap: Map<ServiceProviderID, Rolle<true>[]> = new Map(
+            serviceProviderIds.map((id: ServiceProviderID) => [id, []]),
+        );
+
+        // Iterate through every Rolle (already sorted by name) and append them to the map for each ServiceProvider (stop adding after each list has reached 'limitPerProvider' count)
+        for (const rolle of result) {
+            for (const sp of rolle.serviceProvider) {
+                const mapArray: Rolle<true>[] | undefined = rollenMap.get(sp.serviceProvider.id);
+                if (mapArray && mapArray.length < limitPerProvider) {
+                    mapArray.push(mapRolleEntityToAggregate(rolle, this.rolleFactory));
+                }
+            }
+        }
 
         return rollenMap;
     }
