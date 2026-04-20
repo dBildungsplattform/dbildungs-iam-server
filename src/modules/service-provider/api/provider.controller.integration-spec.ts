@@ -404,6 +404,7 @@ describe('ServiceProvider API', () => {
                 merkmale: serviceProvider.merkmale,
                 url: serviceProvider.url,
                 hasRollenerweiterung: true,
+                hasSomeVerwaltenPermission: true,
                 availableForRollenerweiterung: false,
                 rollen: [
                     {
