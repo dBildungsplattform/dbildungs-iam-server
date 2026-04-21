@@ -231,13 +231,13 @@ export class LandesbediensteterWorkflowAggregate {
             return Err(new EntityNotFoundError('Person', personId));
         }
 
-        const existingPKs: Personenkontext<true>[] = await this.personenkontextRepo.findByPerson(personId);
+        const existingPKs: DbiamPersonenkontextBodyParams[] = await this.personenkontextRepo.findByPerson(personId);
 
         const escalatedPermissions: EscalatedPersonPermissions =
             await this.escalatedPersonPermissionsFactory.fromPermissions(
                 permissions,
                 existingPKs.map(
-                    (createPersonenkontext: Personenkontext<true>): EscalatedPermissionAtOrga => ({
+                    (createPersonenkontext: DbiamPersonenkontextBodyParams): EscalatedPermissionAtOrga => ({
                         orgaId: createPersonenkontext.organisationId,
                         systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN, RollenSystemRechtEnum.PERSONEN_LESEN],
                     }),

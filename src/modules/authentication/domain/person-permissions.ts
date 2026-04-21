@@ -206,7 +206,6 @@ export class PersonPermissions implements IPersonPermissions {
         return this.cachedRollenFields;
     }
 
-    //Mit Person
     private hasSystemrechtAtAnyKontextOfTargetPerson(
         targetPersonId: PersonID,
         systemrecht: RollenSystemRecht,
@@ -222,7 +221,6 @@ export class PersonPermissions implements IPersonPermissions {
         return this.cachedPersonFields;
     }
 
-    //Ohne Person
     public async hasOrgVerwaltenRechtAtOrga(typ: OrganisationsTyp, administriertVon?: string): Promise<boolean> {
         if (typ === OrganisationsTyp.KLASSE) {
             const [oeffentlich]: [Organisation<true> | undefined, Organisation<true> | undefined] =

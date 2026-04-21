@@ -14,6 +14,7 @@ import { PersonenkontextCreationService } from './domain/personenkontext-creatio
 import { PersonenkontextWorkflowFactory } from './domain/personenkontext-workflow.factory.js';
 import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.js';
 import { PersonenkontextWorkflowSharedKernel } from './domain/personenkontext-workflow-shared-kernel.js';
+import { PermissionModule } from '../permission/permission.module.js';
 
 @Module({
     imports: [
@@ -22,6 +23,7 @@ import { PersonenkontextWorkflowSharedKernel } from './domain/personenkontext-wo
         RolleModule,
         OrganisationModule,
         LoggerModule.register(PersonenKontextModule.name),
+        forwardRef(() => PermissionModule),
     ],
     providers: [
         PersonenkontextService,

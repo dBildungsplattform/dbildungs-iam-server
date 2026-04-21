@@ -118,7 +118,6 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
         );
     }
 
-    //Make Working
     public async getOrgIdsWithSystemrecht(
         systemrechte: RollenSystemRecht[],
         withChildren: boolean = false,
@@ -264,7 +263,6 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
         return this.hasSystemrechteAtOrganisation(organisationId, [systemrecht], true);
     }
 
-    //Make Working
     public async canModifyPerson(personId: PersonID): Promise<boolean> {
         const hasModifyRechtAtRoot: boolean = await this.hasSystemrechteAtRootOrganisation([
             RollenSystemRecht.PERSONEN_VERWALTEN,
@@ -290,7 +288,6 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
         return this.cachedPersonFields;
     }
 
-    //Make Working
     public async hasOrgVerwaltenRechtAtOrga(typ: OrganisationsTyp, administriertVon?: string): Promise<boolean> {
         if (typ === OrganisationsTyp.KLASSE) {
             const [oeffentlich]: [Organisation<true> | undefined, Organisation<true> | undefined] =
