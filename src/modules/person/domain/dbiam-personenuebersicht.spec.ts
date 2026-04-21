@@ -14,6 +14,7 @@ import { DBiamPersonenzuordnungResponse } from '../api/personenuebersicht/dbiam-
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { ConfigTestModule, DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
 import { faker } from '@faker-js/faker';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 describe('DbiamPersonenUebersicht', () => {
     let module: TestingModule;
@@ -86,7 +87,7 @@ describe('DbiamPersonenUebersicht', () => {
         beforeEach(() => {
             fakeRolleId = faker.string.uuid();
             fakeOrganisationId = faker.string.uuid();
-            rolle = DoFactory.createRolle<true>(true, { id: fakeRolleId });
+            rolle = DoFactory.createRolle<true>(true, { id: fakeRolleId, rollenart: RollenArt.LEIT });
             organisation = DoFactory.createOrganisation<true>(true, { id: fakeOrganisationId });
             latestPKUpdatedAt = faker.date.recent();
             personenkontextPast = DoFactory.createPersonenkontext<true>(true, {
@@ -172,6 +173,40 @@ describe('DbiamPersonenUebersicht', () => {
                 expect(responses).toBeDefined();
                 expect(lastModified).toBeDefined();
                 expect(lastModified).toStrictEqual(latestPKUpdatedAt);
+            });
+        });
+
+        describe('loading of orga-admins', () => {
+            it('should add the admins to the response when not LEIT', async () => {
+                rolle.rollenart = RollenArt.LEHR;
+                personenkontexte = [personenkontextRecent];
+                personRepositoryMock.findOrganisationAdminsByOrganisationId.mockResolvedValueOnce(['adminA']);
+
+                const res: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
+                    await sut.createZuordnungenForKontexte(personenkontexte, rolleMap, orgaMap, undefined);
+                if (res instanceof EntityNotFoundError) {
+                    throw res;
+                }
+
+                expect(res[0]).toBeDefined();
+                expect(res[0]).toHaveLength(1);
+                expect(res[0][0]!.admins).toEqual(['adminA']);
+            });
+
+            it('should not add the admins to the response when LEIT', async () => {
+                rolle.rollenart = RollenArt.LEIT;
+                personenkontexte = [personenkontextRecent];
+                personRepositoryMock.findOrganisationAdminsByOrganisationId.mockResolvedValueOnce(['adminA']);
+
+                const res: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
+                    await sut.createZuordnungenForKontexte(personenkontexte, rolleMap, orgaMap, undefined);
+                if (res instanceof EntityNotFoundError) {
+                    throw res;
+                }
+
+                expect(res[0]).toBeDefined();
+                expect(res[0]).toHaveLength(1);
+                expect(res[0][0]!.admins).toBeUndefined();
             });
         });
     });

@@ -1,18 +1,20 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { MikroORM } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/postgresql';
 import { INestApplication } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -21,6 +23,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { ServiceProvider } from '../domain/service-provider.js';
+import { ServiceProviderEntity } from '../repo/service-provider.entity.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
@@ -33,7 +36,6 @@ import {
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
-import { EntityManager } from '@mikro-orm/postgresql';
 import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
@@ -46,9 +48,12 @@ describe('ServiceProvider API', () => {
     let rolleRepo: RolleRepo;
     let rollenerweiterungRepo: RollenerweiterungRepo;
     let organisationRepo: OrganisationRepository;
-    const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+
+    let permissionsMock: DeepMocked<PersonPermissions>;
 
     beforeAll(async () => {
+        permissionsMock = createPersonPermissionsMock();
+
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ServiceProviderApiModule,
@@ -70,13 +75,16 @@ describe('ServiceProvider API', () => {
                 },
                 {
                     provide: APP_INTERCEPTOR,
-                    useValue: createAuthInterceptorMock(personPermissions),
+                    useValue: createAuthInterceptorMock(permissionsMock),
                 },
                 { provide: APP_FILTER, useClass: ValidationExceptionFilter },
                 { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
                 { provide: APP_FILTER, useClass: SharedExceptionFilter },
             ],
         }).compile();
+
+        const stepUpGuard: StepUpGuard = module.get(StepUpGuard);
+        stepUpGuard.canActivate = vi.fn().mockReturnValue(true);
 
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
@@ -96,7 +104,8 @@ describe('ServiceProvider API', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
-        personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+        vi.restoreAllMocks();
+        permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
     });
 
     describe('/GET all service provider', () => {
@@ -309,6 +318,7 @@ describe('ServiceProvider API', () => {
                                 name: rolle.name,
                             },
                         ],
+                        isDeleteAuthorized: true,
                     },
                 ],
                 limit: 1,
@@ -410,6 +420,87 @@ describe('ServiceProvider API', () => {
                 .send();
 
             expect(response.status).toBe(404);
+        });
+    });
+
+    describe('/DELETE service provider by id', () => {
+        let organisation: Organisation<true>;
+        let serviceProvider: ServiceProvider<true>;
+
+        beforeEach(async () => {
+            organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
+            serviceProvider = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: organisation.id,
+            });
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+        });
+
+        it('should delete service provider', async () => {
+            const response: Response = await request(app.getHttpServer() as App)
+                .delete(`/provider/${serviceProvider.id}`)
+                .send();
+
+            expect(response.status).toBe(204);
+            expect(await em.findOne(ServiceProviderEntity, { id: serviceProvider.id }, { refresh: true })).toBeNull();
+        });
+
+        it('should return 404 if service provider is not found', async () => {
+            const response: Response = await request(app.getHttpServer() as App)
+                .delete(`/provider/${faker.string.uuid()}`)
+                .send();
+
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'ENTITY_NOT_FOUND' }));
+        });
+
+        it('should return 400 if there are rollen with service provider', async () => {
+            await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    serviceProviderIds: [serviceProvider.id],
+                }),
+            );
+            const response: Response = await request(app.getHttpServer() as App)
+                .delete(`/provider/${serviceProvider.id}`)
+                .send();
+
+            expect(response.status).toBe(409);
+            expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'ATTACHED_ROLLEN' }));
+        });
+
+        it('should return 400 if there are rollenerweiterungen with service provider', async () => {
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw rolle;
+            }
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                    serviceProviderId: serviceProvider.id,
+                }),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .delete(`/provider/${serviceProvider.id}`)
+                .send();
+
+            expect(response.status).toBe(409);
+            expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'ATTACHED_ROLLENERWEITERUNGEN' }));
+        });
+
+        it('should return 404 if permissions are missing', async () => {
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
+            const response: Response = await request(app.getHttpServer() as App)
+                .delete(`/provider/${serviceProvider.id}`)
+                .send();
+
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'MISSING_PERMISSIONS' }));
         });
     });
 });

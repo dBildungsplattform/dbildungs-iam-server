@@ -6,17 +6,28 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { FeatureFlagConfig } from '../../../shared/config/featureflag.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { VidisConfig } from '../../../shared/config/vidis.config.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
+import { Err } from '../../../shared/util/result.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 import { VidisService } from '../../vidis/vidis.service.js';
+import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
+import { AttachedRollenError } from './errors/attached-rollen.error.js';
+import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
@@ -28,14 +39,6 @@ import {
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
-import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
-import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -127,8 +130,19 @@ export class ServiceProviderService {
             return undefined;
         }
 
+        // Calculate permitted orgas for delete
+        const permittedDeleteOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN],
+            true,
+            false,
+        );
         const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
-            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider]);
+            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
+                [serviceProvider],
+                undefined,
+                undefined,
+                permittedDeleteOrgas,
+            );
 
         return enrichedServiceProviders[0];
     }
@@ -151,7 +165,12 @@ export class ServiceProviderService {
             );
 
         const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
-            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(serviceProviders, 20);
+            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
+                serviceProviders,
+                20,
+                undefined,
+                permittedOrgas,
+            );
 
         return [enrichedServiceProviders, count];
     }
@@ -186,11 +205,18 @@ export class ServiceProviderService {
 
         const [serviceProviders, total]: [ServiceProvider<true>[], number] = result;
 
+        // Calculate permitted orgas for delete
+        const permittedDeleteOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN],
+            true,
+            false,
+        );
         const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
             await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
                 serviceProviders,
                 20,
                 organisationId,
+                permittedDeleteOrgas,
             );
 
         return { ok: true, value: [enrichedServiceProviders, total] };
@@ -200,6 +226,7 @@ export class ServiceProviderService {
         serviceProviders: ServiceProvider<true>[],
         limitRoles?: number,
         organisationId?: OrganisationID,
+        permittedDeleteOrgas?: PermittedOrgas,
     ): Promise<ManageableServiceProviderWithReferencedObjects[]> {
         const serviceProvidersIds: ServiceProviderID[] = serviceProviders.map((sp: ServiceProvider<true>) => sp.id);
 
@@ -215,13 +242,25 @@ export class ServiceProviderService {
             ),
         ]);
 
+        let permittedDeleteOrgaSet: Set<string> = new Set();
+        if (permittedDeleteOrgas) {
+            if (!permittedDeleteOrgas.all) {
+                permittedDeleteOrgaSet = new Set(permittedDeleteOrgas.orgaIds);
+            }
+        }
+
         const serviceProvidersWithData: ManageableServiceProviderWithReferencedObjects[] = serviceProviders.map(
-            (serviceProvider: ServiceProvider<true>) => ({
-                serviceProvider,
-                organisation: organisationen.get(serviceProvider.providedOnSchulstrukturknoten)!,
-                rollen: rollen.get(serviceProvider.id) ?? [],
-                rollenerweiterungen: rollenerweiterungen.get(serviceProvider.id) ?? [],
-            }),
+            (serviceProvider: ServiceProvider<true>) => {
+                return {
+                    serviceProvider,
+                    organisation: organisationen.get(serviceProvider.providedOnSchulstrukturknoten)!,
+                    rollen: rollen.get(serviceProvider.id) ?? [],
+                    rollenerweiterungen: rollenerweiterungen.get(serviceProvider.id) ?? [],
+                    isDeleteAuthorized:
+                        permittedDeleteOrgas?.all ||
+                        permittedDeleteOrgaSet.has(serviceProvider.providedOnSchulstrukturknoten),
+                };
+            },
         );
 
         // Call the third method internally to enrich rollenerweiterungen with names
@@ -430,6 +469,36 @@ export class ServiceProviderService {
         const updatedServiceProvider: Promise<Result<ServiceProvider<true>, DomainError>> =
             this.serviceProviderRepo.update(permissions, existingServiceProvider);
         return updatedServiceProvider;
+    }
+
+    public async deleteByIdAuthorized(
+        permissions: IPersonPermissions,
+        id: ServiceProviderID,
+    ): Promise<
+        Result<
+            void,
+            EntityNotFoundError | MissingPermissionsError | AttachedRollenError | AttachedRollenerweiterungenError
+        >
+    > {
+        const rollen: Map<ServiceProviderID, Rolle<true>[]> = await this.rolleRepo.findByServiceProviderIds([id], 1);
+        const hasAttachedRollen: boolean = (rollen.get(id)?.length ?? 0) > 0;
+        if (hasAttachedRollen) {
+            return Err(new AttachedRollenError('ServiceProvider has attached Rollen and cannot be deleted', id));
+        }
+
+        const rollenerweiterungen: Map<ServiceProviderID, Rollenerweiterung<true>[]> =
+            await this.rollenerweiterungRepo.findByServiceProviderIds([id]);
+        const hasAttachedRollenerweiterungen: boolean = (rollenerweiterungen.get(id)?.length ?? 0) > 0;
+        if (hasAttachedRollenerweiterungen) {
+            return Err(
+                new AttachedRollenerweiterungenError(
+                    'ServiceProvider has attached Rollenerweiterungen and cannot be deleted',
+                    id,
+                ),
+            );
+        }
+
+        return this.serviceProviderRepo.deleteByIdAuthorized(permissions, id);
     }
 
     /**

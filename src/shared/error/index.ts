@@ -15,3 +15,4 @@ export * from './invalid-attribute-length.error.js';
 export * from './its-learning.error.js';
 export * from './missing-permissions.error.js';
 export * from './missing-attribute.error.js';
+export * from './email-microservice-communication.error.js';

@@ -32,6 +32,7 @@ import { ConfigService } from '@nestjs/config';
 import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
 import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
 import { EscalatedPersonPermissionsFactory } from '../permission/escalated-person-permissions.factory.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 class UnknownError extends DomainError {
     public constructor(message: string) {
@@ -56,6 +57,7 @@ describe('CronController', () => {
     const escalatedPersonPermissionsFactoryMock: DeepMocked<EscalatedPersonPermissionsFactory> = createMock(
         EscalatedPersonPermissionsFactory,
     );
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -128,6 +130,7 @@ describe('CronController', () => {
         permissionsMock = createPersonPermissionsMock();
         serviceProviderServiceMock = module.get(ServiceProviderService);
         emailAddressDeletionServiceMock = module.get(EmailAddressDeletionService);
+        loggerMock = module.get(ClassLogger);
     });
 
     beforeEach(() => {
@@ -709,6 +712,20 @@ describe('CronController', () => {
             });
         });
         describe(`when is authorized user but ServiceProvider update throws an Error`, () => {
+            it(`should throw the error`, async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+                serviceProviderServiceMock.updateServiceProvidersForVidis.mockRejectedValueOnce(
+                    new Error('Non-DomainError'),
+                );
+
+                await expect(cronController.updateServiceProvidersForVidisAngebote(permissionsMock)).rejects.toThrow(
+                    'Non-DomainError',
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    'ServiceProvider für VIDIS-Angebote konnten nicht aktualisiert werden. Fehler: unbekannt',
+                );
+            });
+
             it(`should throw the error`, async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
                 serviceProviderServiceMock.updateServiceProvidersForVidis.mockImplementationOnce(() => {

@@ -173,6 +173,61 @@ describe('EmailRepo', () => {
         });
     });
 
+    describe('findPrimaryBySpshPersonIds', () => {
+        const spshPersonIds: string[] = [faker.string.uuid(), faker.string.uuid(), faker.string.uuid()];
+        let mail1: EmailAddress<true>;
+        let mail2: EmailAddress<true>;
+        let mail3: EmailAddress<true>;
+        let mail4: EmailAddress<true>;
+        let mail5: EmailAddress<true>;
+
+        beforeEach(async () => {
+            mail1 = await createAndSaveMail(undefined, 1, spshPersonIds[0]);
+            await setStatus(mail1, EmailAddressStatusEnum.SUSPENDED);
+            mail2 = await createAndSaveMail(undefined, 0, spshPersonIds[0]);
+            await setStatus(mail2, EmailAddressStatusEnum.ACTIVE);
+            mail3 = await createAndSaveMail(undefined, 1, spshPersonIds[1]);
+            await setStatus(mail3, EmailAddressStatusEnum.SUSPENDED);
+            mail4 = await createAndSaveMail(undefined, 2, spshPersonIds[1]);
+            await setStatus(mail4, EmailAddressStatusEnum.SUSPENDED);
+            mail5 = await createAndSaveMail(undefined, 0, spshPersonIds[2]);
+            await setStatus(mail5, EmailAddressStatusEnum.ACTIVE);
+            await setStatus(mail5, EmailAddressStatusEnum.SUSPENDED);
+        });
+
+        it('should return primary email addresses for the given spshPersonIds', async () => {
+            const result: EmailAddress<true>[] = await sut.findPrimaryBySpshPersonIds(spshPersonIds);
+            expect(result).toHaveLength(1);
+            expect(result).toEqual(expect.arrayContaining([expect.objectContaining({ id: mail2.id })]));
+        });
+
+        it('should return null for unknown spshPersonIds', async () => {
+            const unknownIds: string[] = [faker.string.uuid(), faker.string.uuid()];
+            const result: EmailAddress<true>[] = await sut.findPrimaryBySpshPersonIds(unknownIds);
+            expect(result).toHaveLength(0);
+        });
+
+        it('should return only primary email addresses with status aktive even if multiple exist for a spshPersonId', async () => {
+            const pid: string = faker.string.uuid();
+
+            const mail1: EmailAddress<true> = await createAndSaveMail(undefined, 0, pid);
+            await setStatus(mail1, EmailAddressStatusEnum.ACTIVE);
+
+            const mail2: EmailAddress<true> = await createAndSaveMail(undefined, 1, pid);
+            await setStatus(mail2, EmailAddressStatusEnum.SUSPENDED);
+
+            const mail3: EmailAddress<true> = await createAndSaveMail(undefined, 0, pid);
+            await setStatus(mail3, EmailAddressStatusEnum.ACTIVE);
+            await setStatus(mail3, EmailAddressStatusEnum.SUSPENDED);
+
+            const result: EmailAddress<true>[] = await sut.findPrimaryBySpshPersonIds([pid]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]!.spshPersonId).toBe(pid);
+            expect(result[0]!.priority).toBe(0);
+        });
+    });
+
     describe('findAllEmailAddressesWithStatusesDescBySpshPersonId', () => {
         const spshPersonId: string = faker.string.uuid();
 

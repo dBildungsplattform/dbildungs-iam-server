@@ -23,6 +23,7 @@ import { OrganisationsTyp } from '../../src/modules/organisation/domain/organisa
 import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
 import { RollenSystemRecht } from '../../src/modules/rolle/domain/systemrecht.js';
 import { RolleID } from '../../src/shared/types/aggregate-ids.types.js';
+import { StepUpLevel } from '../../src/modules/authentication/passport/oidc.strategy.js';
 
 export class PersonPermissionsMock implements IPersonPermissions {
     public id: string;
@@ -116,6 +117,7 @@ export function createPassportUserMock(personPermissions?: PersonPermissions): P
         id_token: faker.string.uuid(),
         access_token: faker.string.uuid(),
         refresh_token: faker.string.uuid(),
+        stepUpLevel: StepUpLevel.GOLD,
     };
 }
 

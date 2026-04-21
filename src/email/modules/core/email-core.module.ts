@@ -12,9 +12,10 @@ import { DeleteEmailsAddressesForSpshPersonService } from './domain/delete-email
 import { SetEmailSuspendedService } from './domain/set-email-suspended.service.js';
 import { EmailCronController } from './api/controller/email-cron.controller.js';
 import { CronDeleteEmailsAddressesService } from './domain/cron-delete-email-addresses.service.js';
+import { EmailWebhookModule } from '../webhook/webhook.module.js';
 
 @Module({
-    imports: [LoggerModule.register(EmailCoreModule.name), EmailOxModule, EmailLdapModule],
+    imports: [LoggerModule.register(EmailCoreModule.name), EmailOxModule, EmailLdapModule, EmailWebhookModule],
     providers: [
         SetEmailAddressForSpshPersonService,
         DeleteEmailsAddressesForSpshPersonService,

@@ -16,6 +16,9 @@ import { PersonInfoResponseV1 } from '../../api/personinfo/v1/person-info.respon
 import { PersonID } from '../../../../shared/types/index.js';
 import { SchulconnexRepo } from '../../persistence/schulconnex.repo.js';
 import { IPersonPermissions } from '../../../../shared/permissions/person-permissions.interface.js';
+import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
+import { DomainError } from '../../../../shared/error/index.js';
+import { Ok } from '../../../../shared/util/result.js';
 
 @Injectable()
 export class PersonenInfoService {
@@ -25,13 +28,14 @@ export class PersonenInfoService {
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly emailRepo: EmailRepo,
         private readonly userLockRepo: UserLockRepository,
+        private readonly emailResolverService: EmailResolverService,
     ) {}
 
     public async findPersonsForPersonenInfo(
         permissions: IPersonPermissions,
         offset: number,
         limit: number,
-    ): Promise<PersonInfoResponseV1[]> {
+    ): Promise<Result<PersonInfoResponseV1[], DomainError>> {
         // 1. Ermittle alle Knoten mit PERSONEN_LESEN-Recht
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_LESEN],
@@ -55,7 +59,7 @@ export class PersonenInfoService {
         }
 
         if (permittedServiceProviderIds.size === 0) {
-            return [];
+            return Ok([]);
         }
 
         const [idsWithKontext, idsWithRollenerweiterung]: [PersonID[], PersonID[]] = await Promise.all([
@@ -73,14 +77,19 @@ export class PersonenInfoService {
             .sort((a: string, b: string) => a.localeCompare(b))
             .slice(offset, offset + limit);
 
+        const emailsForPersonsPromise: Promise<Result<Map<PersonID, PersonEmailResponse | undefined>, DomainError>> =
+            this.emailResolverService.shouldUseEmailMicroservice()
+                ? this.emailResolverService.findEmailsBySpshPersons(personIds)
+                : this.emailRepo.getEmailAddressAndStatusForPersonIds(personIds);
+
         const [persons, emailsForPersons, kontexteForPersons, userLocksForPersons]: [
             Person<true>[],
-            Map<PersonID, PersonEmailResponse>,
+            Result<Map<PersonID, PersonEmailResponse | undefined>, DomainError>,
             Map<PersonID, KontextWithOrgaAndRolle[]>,
             Map<PersonID, UserLock[]>,
         ] = await Promise.all([
             this.personRepo.findByPersonIds(personIds),
-            this.emailRepo.getEmailAddressAndStatusForPersonIds(personIds),
+            emailsForPersonsPromise,
             this.personenkontextRepo.findByPersonIdsAndServiceprovidersWithOrgaAndRolle(
                 personIds,
                 Array.from(permittedServiceProviderIds),
@@ -89,15 +98,20 @@ export class PersonenInfoService {
             this.userLockRepo.findByPersonIds(personIds),
         ]);
 
+        if (!emailsForPersons.ok) {
+            return emailsForPersons;
+        }
+
+        const emailMap: Map<PersonID, PersonEmailResponse | undefined> = emailsForPersons.value;
         const responses: PersonInfoResponseV1[] = persons.map((person: Person<true>) => {
             const personId: PersonID = person.id;
-            const email: PersonEmailResponse | undefined = emailsForPersons.get(personId);
+            const email: PersonEmailResponse | undefined = emailMap.get(personId);
             const kontexteWithOrgaAndRolle: KontextWithOrgaAndRolle[] = kontexteForPersons.get(personId) ?? [];
             const userLocks: UserLock[] = userLocksForPersons.get(personId) ?? [];
 
             return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle, email, userLocks);
         });
 
-        return responses;
+        return Ok(responses);
     }
 }

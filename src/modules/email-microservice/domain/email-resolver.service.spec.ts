@@ -15,12 +15,13 @@ import { ClassLogger } from '../../../core/logging/class-logger';
 import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams';
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity';
-import { EntityNotFoundError } from '../../../shared/error';
+import { DomainError, EmailMicroserviceCommunicationError, EntityNotFoundError } from '../../../shared/error';
 import { EmailAddressStatus } from '../../email/domain/email-address';
 import { PersonEmailResponse } from '../../person/api/person-email-response';
 import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailResolverService, PersonIdWithEmailResponse } from './email-resolver.service';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('EmailResolverService', () => {
     let module: TestingModule;
@@ -158,6 +159,68 @@ describe('EmailResolverService', () => {
                 `Failed to fetch email for person ${mockPersonId}`,
                 error,
             );
+        });
+    });
+
+    describe('findEmailsBySpshPersons', () => {
+        it('should return record of personId to PersonEmailResponse when post call returns valid data', async () => {
+            const personId1: string = faker.string.uuid();
+            const personId2: string = faker.string.uuid();
+            const email1: string = 'one@example.com';
+            const email2: string = 'two@example.com';
+
+            const resp1: DeepMocked<EmailAddressResponse> = createMock<EmailAddressResponse>(EmailAddressResponse, {
+                address: email1,
+                status: EmailAddressStatusEnum.ACTIVE,
+                spshPersonId: personId1,
+            });
+            const resp2: DeepMocked<EmailAddressResponse> = createMock<EmailAddressResponse>(EmailAddressResponse, {
+                address: email2,
+                status: EmailAddressStatusEnum.PENDING,
+                spshPersonId: personId2,
+            });
+
+            const responseData: EmailAddressResponse[] = [resp1, resp2];
+
+            const mockAxiosResponse: AxiosResponse<EmailAddressResponse[]> = {
+                data: responseData,
+                status: 200,
+                statusText: 'OK',
+                headers: {},
+                config: {
+                    headers: new AxiosHeaders(),
+                },
+            };
+
+            mockHttpService.post.mockReturnValueOnce(of(mockAxiosResponse));
+
+            const result: Result<
+                Map<PersonID, PersonEmailResponse | undefined>,
+                DomainError
+            > = await sut.findEmailsBySpshPersons([personId1, personId2]);
+            expectOkResult(result);
+            expect(result.value.size).toBe(2);
+            expect(result.value.get(personId1)).toEqual(new PersonEmailResponse(EmailAddressStatus.ENABLED, email1));
+            expect(result.value.get(personId2)).toEqual(new PersonEmailResponse(EmailAddressStatus.REQUESTED, email2));
+        });
+
+        it('should log error and return empty map when post call fails', async () => {
+            const ids: string[] = [faker.string.uuid(), faker.string.uuid()];
+            const error: EmailMicroserviceCommunicationError = new EmailMicroserviceCommunicationError(
+                'Communication error',
+            );
+
+            mockHttpService.post.mockImplementation(() => {
+                throw error;
+            });
+
+            const result: Result<
+                Map<PersonID, PersonEmailResponse | undefined>,
+                DomainError
+            > = await sut.findEmailsBySpshPersons(ids);
+
+            expect(result.ok).toBeFalsy();
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(`Failed to fetch emails for persons`, error);
         });
     });
 

@@ -4,6 +4,7 @@ import { EmailAddressStatusEnum } from '../persistence/email-address-status.enti
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
 import { EmailAddress } from './email-address.js';
 import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
+import { WebhookService } from '../../webhook/domain/webhook.service.js';
 
 @Injectable()
 export class SetEmailSuspendedService {
@@ -13,6 +14,7 @@ export class SetEmailSuspendedService {
     public constructor(
         private readonly emailAddressRepo: EmailAddressRepo,
         private readonly logger: ClassLogger,
+        private readonly webhookService: WebhookService,
         config: EmailAppConfig,
     ) {
         this.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS =
@@ -45,5 +47,21 @@ export class SetEmailSuspendedService {
             );
         });
         await Promise.all(eligibleAddresses.map((a: EmailAddress<true>) => this.emailAddressRepo.save(a)));
+
+        // Webhook update
+        const previousPrimaryEmail: string | undefined = eligibleAddresses.find(
+            (a: EmailAddress<true>) => a.priority === 0,
+        )?.address;
+        const previousAlternativeEmail: string | undefined = eligibleAddresses.find(
+            (a: EmailAddress<true>) => a.priority === 1,
+        )?.address;
+
+        this.webhookService.sendEmailsChanged({
+            spshPersonId: params.spshPersonId,
+            newPrimaryEmail: undefined,
+            newAlternativeEmail: undefined,
+            previousPrimaryEmail,
+            previousAlternativeEmail,
+        });
     }
 }

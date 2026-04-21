@@ -261,7 +261,7 @@ export class EmailRepo {
      */
     public async getEmailAddressAndStatusForPersonIds(
         personIds: PersonID[],
-    ): Promise<Map<PersonID, PersonEmailResponse>> {
+    ): Promise<Result<Map<PersonID, PersonEmailResponse>, DomainError>> {
         let lastUsedPersonId: PersonID;
         const addresses: EmailAddress<true>[] = await this.findEnabledByPersonIdsSortedByUpdatedAtDesc(personIds);
         const responseMap: Map<PersonID, PersonEmailResponse> = new Map<PersonID, PersonEmailResponse>();
@@ -277,7 +277,7 @@ export class EmailRepo {
             lastUsedPersonId = ea.personId;
         });
 
-        return responseMap;
+        return { ok: true, value: responseMap };
     }
 
     /**

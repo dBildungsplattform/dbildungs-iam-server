@@ -6,6 +6,7 @@ import { RolleModule } from '../rolle/rolle.module.js';
 import { EmailMicroserviceEventHandler } from './domain/email-microservice-event-handler.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { PersonModule } from '../person/person.module.js';
+import { EmailWebhookController } from './api/email-microservice-webhook.controller.js';
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { PersonModule } from '../person/person.module.js';
         forwardRef(() => PersonModule),
         LoggerModule.register(EmailMicroserviceModule.name),
     ],
+    controllers: [EmailWebhookController],
     providers: [EmailResolverService, EmailMicroserviceEventHandler],
     exports: [EmailResolverService],
 })

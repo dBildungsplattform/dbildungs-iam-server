@@ -135,7 +135,14 @@ describe('Personenuebersicht API', () => {
         orm = module.get<MikroORM>(MikroORM);
         personRepository = module.get<PersonRepository>(PersonRepository);
         usernameGeneratorService = module.get(UsernameGeneratorService);
-        usernameGeneratorService.generateUsername = vi.fn().mockResolvedValue({ ok: true, value: 'mockUsername' });
+        usernameGeneratorService.generateUsername = vi
+            .fn()
+            .mockResolvedValueOnce({ ok: true, value: 'mockUsername1' })
+            .mockResolvedValueOnce({ ok: true, value: 'mockUsername2' })
+            .mockResolvedValueOnce({ ok: true, value: 'mockUsername3' })
+            .mockResolvedValueOnce({ ok: true, value: 'mockUsername4' })
+            .mockResolvedValueOnce({ ok: true, value: 'mockUsername5' })
+            .mockResolvedValueOnce({ ok: true, value: 'mockUsername6' });
         rolleFactory = module.get(RolleFactory);
         rolleRepo = module.get(RolleRepo);
         dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
