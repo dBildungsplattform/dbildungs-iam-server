@@ -1,4 +1,4 @@
-import { Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { FilterQuery, Loaded, NoInfer, PopulatePath, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EntityManager, QueryBuilder } from '@mikro-orm/postgresql';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -200,34 +200,42 @@ export class RollenerweiterungRepo {
         serviceProviderIds: ServiceProviderID[],
         organisationId?: OrganisationID,
     ): Promise<Map<ServiceProviderID, Rollenerweiterung<true>[]>> {
-        const entries: [ServiceProviderID, Rollenerweiterung<true>[]][] = await Promise.all(
-            serviceProviderIds.map(async (serviceProviderId: ServiceProviderID) => {
-                const filter: Record<string, unknown> = {
-                    serviceProviderId,
-                };
+        if (serviceProviderIds.length === 0) {
+            return new Map();
+        }
 
-                if (organisationId) {
-                    filter['organisationId'] = organisationId;
-                }
+        const filter: FilterQuery<NoInfer<RollenerweiterungEntity>> = {
+            serviceProviderId: {
+                $in: serviceProviderIds,
+            },
+        };
 
-                const entities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
-                    RollenerweiterungEntity,
-                    filter,
-                    {
-                        limit: 5,
-                        orderBy: { createdAt: 'DESC' },
-                    },
-                );
+        if (organisationId) {
+            filter.organisationId = organisationId;
+        }
 
-                const aggregates: Rollenerweiterung<true>[] = entities.map((entity: Loaded<RollenerweiterungEntity>) =>
-                    this.mapEntityToAggregate(entity),
-                );
+        const result: Loaded<RollenerweiterungEntity, 'serviceProvider', PopulatePath.ALL, never>[] =
+            await this.em.find(RollenerweiterungEntity, filter, {
+                populateWhere: 'infer',
+                orderBy: { rolleId: { name: 'ASC' } },
+            });
 
-                return [serviceProviderId, aggregates];
-            }),
+        const rollenErweiterungMap: Map<ServiceProviderID, Rollenerweiterung<true>[]> = new Map(
+            serviceProviderIds.map((id: ServiceProviderID) => [id, []]),
         );
 
-        return new Map(entries);
+        // Iterate through every Rollenerweiterung (already sorted by name) and append them to the map for each ServiceProvider (stop adding 5)
+        // For reasoning see findByServiceProviderIds in RolleRepo
+        for (const rollenerweiterung of result) {
+            const mapArray: Rollenerweiterung<true>[] | undefined = rollenErweiterungMap.get(
+                rollenerweiterung.serviceProviderId.id,
+            );
+            if (mapArray && mapArray.length < 5) {
+                mapArray.push(this.mapEntityToAggregate(rollenerweiterung));
+            }
+        }
+
+        return rollenErweiterungMap;
     }
 
     /*
