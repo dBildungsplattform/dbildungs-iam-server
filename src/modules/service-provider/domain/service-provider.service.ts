@@ -37,6 +37,7 @@ import {
 } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import {
+    ManageableServiceProviderDetailsWithReferencedObjects,
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
@@ -106,45 +107,66 @@ export class ServiceProviderService {
     public async findManageableById(
         permissions: PersonPermissions,
         id: ServiceProviderID,
-    ): Promise<Option<ManageableServiceProviderWithReferencedObjects>> {
-        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ROLLEN_ERWEITERN],
-            false,
-            false,
-        );
+    ): Promise<Option<ManageableServiceProviderDetailsWithReferencedObjects>> {
+        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(id);
+        if (!serviceProvider) {
+            return;
+        }
 
-        let serviceProvider: Option<ServiceProvider<true>>;
+        const systemrechte: RollenSystemRecht[] = [];
+        if (
+            await permissions.hasSystemrechtAtOrganisation(
+                serviceProvider.providedOnSchulstrukturknoten,
+                RollenSystemRecht.ANGEBOTE_VERWALTEN,
+            )
+        ) {
+            systemrechte.push(RollenSystemRecht.ANGEBOTE_VERWALTEN);
+        }
+        if (
+            await permissions.hasSystemrechtAtOrganisation(
+                serviceProvider.providedOnSchulstrukturknoten,
+                RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
+            )
+        ) {
+            systemrechte.push(RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN);
+        }
 
-        if (permittedOrgas.all) {
-            serviceProvider = await this.serviceProviderRepo.findById(id);
+        const orgasWithRollenErweiternPermission: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht([
+            RollenSystemRecht.ROLLEN_ERWEITERN,
+        ]);
+        if (
+            orgasWithRollenErweiternPermission.all ||
+            orgasWithRollenErweiternPermission.orgaIds.includes(serviceProvider.providedOnSchulstrukturknoten)
+        ) {
+            systemrechte.push(RollenSystemRecht.ROLLEN_ERWEITERN);
         } else {
             const parents: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds(
-                permittedOrgas.orgaIds,
+                orgasWithRollenErweiternPermission.orgaIds,
             );
-            const parentOrgaIds: OrganisationID[] = parents.map((orga: Organisation<true>) => orga.id);
-            const organisationWithParentsIds: OrganisationID[] = permittedOrgas.orgaIds.concat(parentOrgaIds);
-
-            serviceProvider = await this.serviceProviderRepo.findByIdForOrganisationIds(id, organisationWithParentsIds);
+            if (
+                Array.isArray(parents) &&
+                parents.find(
+                    (parent: Organisation<true>) => parent.id === serviceProvider.providedOnSchulstrukturknoten,
+                )
+            ) {
+                systemrechte.push(RollenSystemRecht.ROLLEN_ERWEITERN);
+            }
         }
 
-        if (!serviceProvider) {
-            return undefined;
+        if (systemrechte.length === 0) {
+            return;
         }
 
-        const orgasWithSomeVerwaltenPermission: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN],
-            true,
-            false,
-        );
-        const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
-            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
-                [serviceProvider],
-                undefined,
-                undefined,
-                orgasWithSomeVerwaltenPermission,
-            );
+        const enrichedServiceProvider: ManageableServiceProviderWithReferencedObjects = (
+            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider])
+        )[0]!;
 
-        return enrichedServiceProviders[0];
+        const result: ManageableServiceProviderDetailsWithReferencedObjects = {
+            ...enrichedServiceProvider,
+            relevantSystemrechte: systemrechte,
+        };
+
+        return result;
     }
 
     public async findAuthorized(

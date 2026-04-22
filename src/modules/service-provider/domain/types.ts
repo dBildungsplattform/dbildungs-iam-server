@@ -4,6 +4,7 @@
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { ServiceProvider } from './service-provider.js';
 
 export type ManageableServiceProviderWithReferencedObjects = {
@@ -13,6 +14,15 @@ export type ManageableServiceProviderWithReferencedObjects = {
     rollenerweiterungen: Rollenerweiterung<true>[];
     rollenerweiterungenWithName?: RollenerweiterungForManageableServiceProvider[];
     hasSomeVerwaltenPermission: boolean;
+};
+
+export type ManageableServiceProviderDetailsWithReferencedObjects = {
+    serviceProvider: ServiceProvider<true>;
+    organisation: Organisation<true>;
+    rollen: Rolle<true>[];
+    rollenerweiterungen: Rollenerweiterung<true>[];
+    rollenerweiterungenWithName?: RollenerweiterungForManageableServiceProvider[];
+    relevantSystemrechte: RollenSystemRecht[];
 };
 
 export type RollenerweiterungForManageableServiceProvider = {

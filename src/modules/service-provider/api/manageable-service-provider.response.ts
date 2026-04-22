@@ -11,6 +11,7 @@ import {
 import { ServiceProvider } from '../domain/service-provider.js';
 import { OrganisationRefResponse } from './organisation-ref.response.js';
 import { RolleRefResponse } from './rolle-ref.response.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 
 export class ManageableServiceProviderResponse {
     @ApiProperty()
@@ -43,15 +44,15 @@ export class ManageableServiceProviderResponse {
     @ApiProperty({ type: RolleRefResponse, isArray: true })
     public rollen: RolleRefResponse[];
 
-    @ApiProperty()
-    public hasSomeVerwaltenPermission: boolean;
+    @ApiProperty({ enum: RollenSystemRechtEnum, isArray: true })
+    public relevantSystemrechte: RollenSystemRechtEnum[];
 
     public constructor(
         serviceProvider: ServiceProvider<true>,
         organisation: Organisation<true>,
         rollen: Rolle<true>[],
         hasRollenerweiterung: boolean,
-        hasSomeVerwaltenPermission: boolean,
+        relevantSystemrechte: RollenSystemRecht[],
     ) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;
@@ -69,6 +70,6 @@ export class ManageableServiceProviderResponse {
             ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
         );
         this.rollen = rollen.map((r: Rolle<true>) => ({ id: r.id, name: r.name }));
-        this.hasSomeVerwaltenPermission = hasSomeVerwaltenPermission;
+        this.relevantSystemrechte = relevantSystemrechte.map((recht: RollenSystemRecht) => recht.name);
     }
 }
