@@ -2936,6 +2936,26 @@
       "schema": "public",
       "indexes": [
         {
+          "columnNames": [
+            "keycloak_user_id"
+          ],
+          "composite": false,
+          "keyName": "person_keycloak_user_id_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "username"
+          ],
+          "composite": false,
+          "keyName": "person_username_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
           "keyName": "person_keycloak_user_id_unique",
           "columnNames": [
             "keycloak_user_id"
@@ -2945,6 +2965,17 @@
           "primary": false,
           "unique": false,
           "expression": "create unique index \"person_keycloak_user_id_unique\" on \"person\" (\"keycloak_user_id\") nulls not distinct;"
+        },
+        {
+          "keyName": "person_username_unique",
+          "columnNames": [
+            "username"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "create unique index \"person_username_unique\" on \"person\" (\"username\") nulls distinct;"
         },
         {
           "keyName": "person_referrer_trgm_index",
@@ -3970,6 +4001,16 @@
       "name": "rolle",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "name"
+          ],
+          "composite": false,
+          "keyName": "rolle_name_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "rolle_pkey",
           "columnNames": [
@@ -6437,6 +6478,26 @@
       "name": "rolle_service_provider",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "rolle_id"
+          ],
+          "composite": false,
+          "keyName": "rolle_service_provider_rolle_id_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "service_provider_id"
+          ],
+          "composite": false,
+          "keyName": "rolle_service_provider_service_provider_id_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "rolle_service_provider_pkey",
           "columnNames": [
