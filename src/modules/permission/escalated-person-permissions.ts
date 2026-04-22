@@ -32,7 +32,7 @@ export function isEscalatedPersonPermissions(obj: unknown): obj is EscalatedPers
 export class EscalatedPersonPermissions implements IPersonPermissions {
     public readonly id: string;
 
-    private escalatedPermissions: Array<EscalatedPermissionAtOrga>;
+    private escalatedPermissions: Record<string, Array<RollenSystemRechtEnum> | 'ALL'> = {};
 
     private readonly cachedPersonFields: PersonFields;
 
@@ -46,7 +46,19 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
         private readonly logger: ClassLogger,
     ) {
         this.id = id;
-        this.escalatedPermissions = escalatedPermissions;
+        escalatedPermissions.forEach((perm: EscalatedPermissionAtOrga) => {
+
+            const id: string = perm.orgaId === 'ROOT' ? this.getRootOrgaId() : perm.orgaId;
+
+            const existing: Array<RollenSystemRechtEnum> | 'ALL' | undefined = this.escalatedPermissions[id];
+            if (existing === 'ALL' || perm.systemrechte === 'ALL') {
+                this.escalatedPermissions[id] = 'ALL';
+            } else if (Array.isArray(existing)) {
+                this.escalatedPermissions[id] = Array.from(new Set([...existing, ...perm.systemrechte]));
+            } else {
+                this.escalatedPermissions[id] = perm.systemrechte;
+            }
+        });
         this.cachedPersonFields = {
             id: id,
             keycloakUserId: undefined,
@@ -74,23 +86,38 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
             await personPermissions.getPersonenkontexteWithRolesAndOrgs();
 
         allKontexte.forEach((kontext: PersonenkontextRolleWithOrganisation) => {
-            const escalatedPermissionAtOrga: EscalatedPermissionAtOrga = {
-                orgaId: kontext.organisation.id,
-                systemrechte: kontext.rolle.systemrechte.map((recht: RollenSystemRecht) => recht.name),
-            };
-            if (
-                allEscalatedPermissions.some(
-                    (perm: EscalatedPermissionAtOrga) =>
-                        perm.orgaId === escalatedPermissionAtOrga.orgaId &&
-                        perm.systemrechte === escalatedPermissionAtOrga.systemrechte,
-                )
-            ) {
-                logger.debug(
-                    `Skipping adding escalated permissions for orga ${escalatedPermissionAtOrga.orgaId} as it already exists in additionalEscalatedPermissions`,
-                );
-            } else {
-                allEscalatedPermissions.push(escalatedPermissionAtOrga);
+
+            const existingPermsForOrga: EscalatedPermissionAtOrga[] = allEscalatedPermissions.filter(
+                (perm: EscalatedPermissionAtOrga) => perm.orgaId === kontext.organisation.id,
+            );
+
+            const hasAllAlready: boolean = existingPermsForOrga.some(
+                (perm: EscalatedPermissionAtOrga) => perm.systemrechte === "ALL",
+            );
+
+            if(hasAllAlready){
+                logger.debug(`Skipping adding permissions from kontext for orga ${kontext.organisation.id}: already has ALL rights by additionalEscalatedPermissions`);
+                return;
             }
+
+            const existingSystemrechte: RollenSystemRechtEnum[] = existingPermsForOrga.flatMap(
+                (perm: EscalatedPermissionAtOrga) => perm.systemrechte as RollenSystemRechtEnum[],
+            );
+
+            const newSystemrechte: RollenSystemRechtEnum[] = kontext.rolle.systemrechte.map((recht: RollenSystemRecht) => recht.name).filter(
+                (recht: RollenSystemRechtEnum) => !existingSystemrechte.includes(recht),
+            );
+
+            if(newSystemrechte.length === 0){
+                logger.debug(`Skipping adding permissions from kontext for orga ${kontext.organisation.id}: no new systemrechte to add`);
+                return;
+            }
+
+            allEscalatedPermissions.push({
+                orgaId: kontext.organisation.id,
+                systemrechte: [...existingSystemrechte, ...newSystemrechte],
+            } satisfies EscalatedPermissionAtOrga)
+
         });
 
         return new EscalatedPersonPermissions(
@@ -127,15 +154,15 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
             return { all: true };
         }
         const organisationIDs: Set<OrganisationID> = new Set();
-        for (const perm of this.escalatedPermissions) {
-            if (perm.systemrechte === 'ALL') {
-                organisationIDs.add(perm.orgaId);
+        for (const [orgaId, systemrechteOnOrga] of Object.entries(this.escalatedPermissions)) {
+            if (systemrechteOnOrga === 'ALL') {
+                organisationIDs.add(orgaId);
             } else {
                 const hasRequiredRechte: boolean = matchAll
-                    ? systemrechte.every((recht: RollenSystemRecht) => perm.systemrechte.includes(recht.name))
-                    : systemrechte.some((recht: RollenSystemRecht) => perm.systemrechte.includes(recht.name));
+                    ? systemrechte.every((recht: RollenSystemRecht) => systemrechteOnOrga.includes(recht.name))
+                    : systemrechte.some((recht: RollenSystemRecht) => systemrechteOnOrga.includes(recht.name));
                 if (hasRequiredRechte) {
-                    organisationIDs.add(perm.orgaId);
+                    organisationIDs.add(orgaId);
                 }
             }
         }
@@ -156,38 +183,37 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
 
     public extendEscalation(additional: Array<EscalatedPermissionAtOrga>): void {
         for (const newPerm of additional) {
-            const existing: EscalatedPermissionAtOrga | undefined = this.escalatedPermissions.find(
-                (p: EscalatedPermissionAtOrga) => p.orgaId === newPerm.orgaId,
-            );
+            const existing: RollenSystemRechtEnum[] | 'ALL' | undefined = this.escalatedPermissions[newPerm.orgaId]
 
             if (!existing) {
                 this.logger.info(
                     `Extending escalation for ${this.id}: adding new orga ${newPerm.orgaId} with rights ${JSON.stringify(newPerm.systemrechte)}`,
                 );
-                this.escalatedPermissions.push(newPerm);
+                this.escalatedPermissions[newPerm.orgaId] = newPerm.systemrechte;
                 continue;
             }
 
-            if (existing.systemrechte === 'ALL') {
+            if (existing === 'ALL') {
                 this.logger.debug(`Skipping escalation for orga ${newPerm.orgaId}: already has ALL rights`);
                 continue;
             }
 
             if (newPerm.systemrechte === 'ALL') {
                 this.logger.info(`Extending escalation for ${this.id}: orga ${newPerm.orgaId} escalated to ALL rights`);
-                existing.systemrechte = 'ALL';
+                this.escalatedPermissions[newPerm.orgaId] = 'ALL';
                 continue;
             }
 
-            const before: RollenSystemRechtEnum[] = [...existing.systemrechte];
+            const before: RollenSystemRechtEnum[] = [...existing];
             const added: RollenSystemRechtEnum[] = newPerm.systemrechte.filter(
-                (r: RollenSystemRechtEnum) => !existing.systemrechte.includes(r),
+                (r: RollenSystemRechtEnum) => !existing.includes(r),
             );
 
             if (added.length > 0) {
-                existing.systemrechte.push(...added);
+                const orgaId: string = newPerm.orgaId === 'ROOT' ? this.getRootOrgaId() : newPerm.orgaId;
+                this.escalatedPermissions[orgaId] = Array.from(new Set([...existing, ...added]));
                 this.logger.info(
-                    `Extending escalation for ${this.id}: orga ${newPerm.orgaId} added rights ${JSON.stringify(added)} (before: ${JSON.stringify(before)}, after: ${JSON.stringify(existing.systemrechte)})`,
+                    `Extending escalation for ${this.id}: orga ${newPerm.orgaId} added rights ${JSON.stringify(added)} (before: ${JSON.stringify(before)}, after: ${JSON.stringify(this.escalatedPermissions[orgaId])})`,
                 );
             } else {
                 this.logger.debug(`Skipping escalation for orga ${newPerm.orgaId}: no new rights`);
@@ -200,24 +226,21 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
         systemrechte: RollenSystemRecht[],
         matchAll: boolean = true,
     ): Promise<boolean> {
-        if (this.isHasAllEscalatedPermissionsOnRoot()) {
-            return true;
-        }
-
         if (this.isOrgaIdRoot(organisationId)) {
-            const escalatedPermissionsOnRoot: EscalatedPermissionAtOrga | undefined = this.escalatedPermissions.find(
-                (perm: EscalatedPermissionAtOrga) => perm.orgaId === 'ROOT' || perm.orgaId === this.getRootOrgaId(),
-            );
-            if (!escalatedPermissionsOnRoot) {
+            const systemrechteOnRoot: RollenSystemRechtEnum[] | undefined | 'ALL' = this.escalatedPermissions[organisationId];
+            if(systemrechteOnRoot === 'ALL'){
+                return true;
+            }
+            if (!systemrechteOnRoot) {
                 return false;
             }
 
             return matchAll
                 ? systemrechte.every((recht: RollenSystemRecht) =>
-                      escalatedPermissionsOnRoot.systemrechte.includes(recht.name),
+                      systemrechteOnRoot.includes(recht.name),
                   )
                 : systemrechte.some((recht: RollenSystemRecht) =>
-                      escalatedPermissionsOnRoot.systemrechte.includes(recht.name),
+                      systemrechteOnRoot.includes(recht.name),
                   );
         } else {
             const parentOrgas: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds([
@@ -230,9 +253,7 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
 
             const combindedRechteForThisAndParents: (RollenSystemRechtEnum | 'ALL')[] = thisAndParentOrgaIds
                 .map((orgaId: OrganisationID) => {
-                    const escalatedPermissionsAtOrga: EscalatedPermissionAtOrga | undefined =
-                        this.escalatedPermissions.find((perm: EscalatedPermissionAtOrga) => perm.orgaId === orgaId);
-                    return escalatedPermissionsAtOrga?.systemrechte ?? [];
+                    return this.escalatedPermissions[orgaId] ?? [];
                 })
                 .flat();
             if (combindedRechteForThisAndParents.includes('ALL')) {
@@ -310,12 +331,5 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
 
     private getRootOrgaId(): string {
         return this.organisationRepo.ROOT_ORGANISATION_ID;
-    }
-
-    private isHasAllEscalatedPermissionsOnRoot(): boolean {
-        const escalatedPermissionsOnRoot: EscalatedPermissionAtOrga | undefined = this.escalatedPermissions.find(
-            (perm: EscalatedPermissionAtOrga) => perm.orgaId === 'ROOT' || perm.orgaId === this.getRootOrgaId(),
-        );
-        return escalatedPermissionsOnRoot?.systemrechte === 'ALL';
     }
 }
