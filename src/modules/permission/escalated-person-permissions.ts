@@ -183,24 +183,25 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
 
     public extendEscalation(additional: Array<EscalatedPermissionAtOrga>): void {
         for (const newPerm of additional) {
-            const existing: RollenSystemRechtEnum[] | 'ALL' | undefined = this.escalatedPermissions[newPerm.orgaId]
+            const orgaId: string = newPerm.orgaId === 'ROOT' ? this.getRootOrgaId() : newPerm.orgaId;
+            const existing: RollenSystemRechtEnum[] | 'ALL' | undefined = this.escalatedPermissions[orgaId]
 
             if (!existing) {
                 this.logger.info(
-                    `Extending escalation for ${this.id}: adding new orga ${newPerm.orgaId} with rights ${JSON.stringify(newPerm.systemrechte)}`,
+                    `Extending escalation for ${this.id}: adding new orga ${orgaId} with rights ${JSON.stringify(newPerm.systemrechte)}`,
                 );
-                this.escalatedPermissions[newPerm.orgaId] = newPerm.systemrechte;
+                this.escalatedPermissions[orgaId] = newPerm.systemrechte;
                 continue;
             }
 
             if (existing === 'ALL') {
-                this.logger.debug(`Skipping escalation for orga ${newPerm.orgaId}: already has ALL rights`);
+                this.logger.debug(`Skipping escalation for orga ${orgaId}: already has ALL rights`);
                 continue;
             }
 
             if (newPerm.systemrechte === 'ALL') {
-                this.logger.info(`Extending escalation for ${this.id}: orga ${newPerm.orgaId} escalated to ALL rights`);
-                this.escalatedPermissions[newPerm.orgaId] = 'ALL';
+                this.logger.info(`Extending escalation for ${this.id}: orga ${orgaId} escalated to ALL rights`);
+                this.escalatedPermissions[orgaId] = 'ALL';
                 continue;
             }
 
@@ -210,13 +211,12 @@ export class EscalatedPersonPermissions implements IPersonPermissions {
             );
 
             if (added.length > 0) {
-                const orgaId: string = newPerm.orgaId === 'ROOT' ? this.getRootOrgaId() : newPerm.orgaId;
                 this.escalatedPermissions[orgaId] = Array.from(new Set([...existing, ...added]));
                 this.logger.info(
-                    `Extending escalation for ${this.id}: orga ${newPerm.orgaId} added rights ${JSON.stringify(added)} (before: ${JSON.stringify(before)}, after: ${JSON.stringify(this.escalatedPermissions[orgaId])})`,
+                    `Extending escalation for ${this.id}: orga ${orgaId} added rights ${JSON.stringify(added)} (before: ${JSON.stringify(before)}, after: ${JSON.stringify(this.escalatedPermissions[orgaId])})`,
                 );
             } else {
-                this.logger.debug(`Skipping escalation for orga ${newPerm.orgaId}: no new rights`);
+                this.logger.debug(`Skipping escalation for orga ${orgaId}: no new rights`);
             }
         }
     }

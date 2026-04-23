@@ -9,8 +9,7 @@ import {
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
 import { PersonID } from '../../shared/types/index.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
-import { isPersonPermissions } from '../authentication/domain/person-permissions.js';
-import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
+import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class EscalatedPersonPermissionsFactory {
@@ -42,13 +41,13 @@ export class EscalatedPersonPermissionsFactory {
     }
 
     public async fromPermissions(
-        permissions: IPersonPermissions,
+        permissions: PersonPermissions | EscalatedPersonPermissions,
         escalatedPermissions: Array<EscalatedPermissionAtOrga>,
     ): Promise<EscalatedPersonPermissions> {
         if (isEscalatedPersonPermissions(permissions)) {
             permissions.extendEscalation(escalatedPermissions);
             return permissions;
-        } else if (isPersonPermissions(permissions)) {
+        } else {
             return await EscalatedPersonPermissions.fromPersonPermissions(
                 permissions,
                 escalatedPermissions,
@@ -56,8 +55,6 @@ export class EscalatedPersonPermissionsFactory {
                 this.personenkontextRepo,
                 this.logger,
             );
-        } else {
-            throw new Error('unknown permissions Object');
         }
     }
 }

@@ -832,6 +832,42 @@ describe('EscalatedPersonPermission', () => {
             ).resolves.toBe(true);
         });
 
+        it('should add a new escalation on ROOT', async () => {
+            organisationRepo.findParentOrgasForIds.mockResolvedValue([
+                rootOrga,
+                oeffentlicheSchuleOrga,
+            ]);
+            const initial: EscalatedPermissionAtOrga[] = [
+                { orgaId: orgaId1, systemrechte: [RollenSystemRechtEnum.PERSONEN_ANLEGEN] },
+            ];
+            const additional: EscalatedPermissionAtOrga[] = [
+                { orgaId: 'ROOT', systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN] },
+            ];
+            const escalatedPersonPermission: EscalatedPersonPermissions = EscalatedPersonPermissions.createNew(
+                { name: 'testInstance' },
+                [...initial],
+                organisationRepo,
+                personenkontextRepo,
+                logger,
+            );
+            escalatedPersonPermission.extendEscalation(additional);
+            await expect(
+                escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId1, [
+                    { name: RollenSystemRechtEnum.PERSONEN_ANLEGEN } as RollenSystemRecht,
+                ])
+            ).resolves.toBe(true);
+            await expect(
+                escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId1, [
+                    { name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht,
+                ])
+            ).resolves.toBe(true);
+            await expect(
+                escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId2, [
+                    { name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht,
+                ])
+            ).resolves.toBe(true);
+        });
+
         it('should skip if existing escalation has systemrechte "ALL"', async () => {
             organisationRepo.findParentOrgasForIds.mockResolvedValue([]);
             const initial: EscalatedPermissionAtOrga[] = [
