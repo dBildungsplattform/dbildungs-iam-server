@@ -21,10 +21,21 @@ describe('EscalatedPersonPermissionsFactory', () => {
     });
 
     describe('createNew', () => {
-        it('should create new EscalatedPersonPermissions ', async () => {
+        it('should create new EscalatedPersonPermissions with PersonId ', async () => {
             const permissions: EscalatedPersonPermissions = sut.createNew(
                 [{ orgaId: '1234', systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN] }],
                 'personId',
+            );
+            orgaRepoMock.findParentOrgasForIds.mockResolvedValueOnce([]);
+
+            await expect(
+                permissions.hasSystemrechtAtOrganisation('1234', RollenSystemRecht.PERSONEN_VERWALTEN),
+            ).resolves.toBe(true);
+        });
+
+        it('should create new EscalatedPersonPermissions without PersonId ', async () => {
+            const permissions: EscalatedPersonPermissions = sut.createNew(
+                [{ orgaId: '1234', systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN] }]
             );
             orgaRepoMock.findParentOrgasForIds.mockResolvedValueOnce([]);
 
@@ -69,5 +80,11 @@ describe('EscalatedPersonPermissionsFactory', () => {
                 escalatedPermissions.hasSystemrechtAtOrganisation('1234', RollenSystemRecht.PERSONEN_VERWALTEN),
             ).resolves.toBe(true);
         });
+            it('should throw if permissions are neither PersonPermissions nor EscalatedPersonPermissions', async () => {
+                // @ts-expect-error purposely passing invalid object
+                await expect(sut.fromPermissions({}, [
+                    { orgaId: '1234', systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN] },
+                ])).rejects.toThrow('Provided permissions are neither PersonPermissions nor EscalatedPersonPermissions');
+            });
     });
 });

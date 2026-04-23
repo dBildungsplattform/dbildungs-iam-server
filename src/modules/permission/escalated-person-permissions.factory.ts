@@ -9,7 +9,8 @@ import {
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
 import { PersonID } from '../../shared/types/index.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
-import { PersonPermissions } from '../authentication/domain/person-permissions.js';
+import { isPersonPermissions } from '../authentication/domain/person-permissions.js';
+import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class EscalatedPersonPermissionsFactory {
@@ -41,13 +42,13 @@ export class EscalatedPersonPermissionsFactory {
     }
 
     public async fromPermissions(
-        permissions: PersonPermissions | EscalatedPersonPermissions,
+        permissions: IPersonPermissions,
         escalatedPermissions: Array<EscalatedPermissionAtOrga>,
     ): Promise<EscalatedPersonPermissions> {
         if (isEscalatedPersonPermissions(permissions)) {
             permissions.extendEscalation(escalatedPermissions);
             return permissions;
-        } else {
+        } else if(isPersonPermissions(permissions)) {
             return await EscalatedPersonPermissions.fromPersonPermissions(
                 permissions,
                 escalatedPermissions,
@@ -55,6 +56,8 @@ export class EscalatedPersonPermissionsFactory {
                 this.personenkontextRepo,
                 this.logger,
             );
+        }else{
+            throw new Error('Provided permissions are neither PersonPermissions nor EscalatedPersonPermissions');
         }
     }
 }
