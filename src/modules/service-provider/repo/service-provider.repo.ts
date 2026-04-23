@@ -19,7 +19,6 @@ import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js
 import { NameUniqueAtOrgaSpecification } from '../specification/name-unique-at-orga.specification.js';
 import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
 
-
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
  */

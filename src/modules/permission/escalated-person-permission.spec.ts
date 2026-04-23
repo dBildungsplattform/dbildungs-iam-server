@@ -9,10 +9,19 @@ import { Personenkontext } from '../personenkontext/domain/personenkontext';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo';
 import { Rolle } from '../rolle/domain/rolle';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../rolle/domain/systemrecht';
-import { EscalatedPermissionAtOrga, EscalatedPersonPermissions, isEscalatedPersonPermissions } from './escalated-person-permissions';
+import {
+    EscalatedPermissionAtOrga,
+    EscalatedPersonPermissions,
+    isEscalatedPersonPermissions,
+} from './escalated-person-permissions';
 import { Mock } from 'vitest';
 import { OrganisationsTyp } from '../organisation/domain/organisation.enums';
-import { PermittedOrgas, PersonenkontextRolleWithOrganisation, PersonFields, PersonPermissions } from '../authentication/domain/person-permissions';
+import {
+    PermittedOrgas,
+    PersonenkontextRolleWithOrganisation,
+    PersonFields,
+    PersonPermissions,
+} from '../authentication/domain/person-permissions';
 
 describe('EscalatedPersonPermission', () => {
     const organisationRepo: DeepMocked<OrganisationRepository> =
@@ -54,10 +63,7 @@ describe('EscalatedPersonPermission', () => {
     describe('hasSystemrechteAtOrganisation', () => {
         describe('when permission is escalated at root', () => {
             it('should return true if permission is escalated for all systemrechte', async () => {
-                organisationRepo.findParentOrgasForIds.mockResolvedValue([
-                    rootOrga,
-                    oeffentlicheSchuleOrga
-                ]);
+                organisationRepo.findParentOrgasForIds.mockResolvedValue([rootOrga, oeffentlicheSchuleOrga]);
                 const escalatedPersonPermission: EscalatedPersonPermissions = EscalatedPersonPermissions.createNew(
                     { name: 'testInstance' },
                     [{ orgaId: 'ROOT', systemrechte: 'ALL' }],
@@ -496,7 +502,7 @@ describe('EscalatedPersonPermission', () => {
         });
     });
 
-     describe('canModifyPerson', () => {
+    describe('canModifyPerson', () => {
         const personId: string = 'xyc';
 
         it('should return true if has modify right at root organisation', async () => {
@@ -523,7 +529,11 @@ describe('EscalatedPersonPermission', () => {
             vi.spyOn(escalatedPersonPermission, 'hasSystemrechteAtRootOrganisation').mockResolvedValue(false);
             const orgaIds: string[] = [faker.string.uuid(), faker.string.uuid()];
             personenkontextRepo.findByPersonWithOrgaAndRolle.mockResolvedValue(
-                orgaIds.map((id: string) => ({ personenkontext: {} as unknown as Personenkontext<true>, rolle: {} as unknown as Rolle<true>, organisation: { id } as unknown as Organisation<true> }))
+                orgaIds.map((id: string) => ({
+                    personenkontext: {} as unknown as Personenkontext<true>,
+                    rolle: {} as unknown as Rolle<true>,
+                    organisation: { id } as unknown as Organisation<true>,
+                })),
             );
             vi.spyOn(escalatedPersonPermission, 'hasSystemrechtAtOrganisation')
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -543,7 +553,11 @@ describe('EscalatedPersonPermission', () => {
             vi.spyOn(escalatedPersonPermission, 'hasSystemrechteAtRootOrganisation').mockResolvedValue(false);
             const orgaIds: string[] = [faker.string.uuid(), faker.string.uuid()];
             personenkontextRepo.findByPersonWithOrgaAndRolle.mockResolvedValue(
-                orgaIds.map((id: string) => ({ personenkontext: {} as unknown as Personenkontext<true>, rolle: {} as unknown as Rolle<true>, organisation: { id } as unknown as Organisation<true> }))
+                orgaIds.map((id: string) => ({
+                    personenkontext: {} as unknown as Personenkontext<true>,
+                    rolle: {} as unknown as Rolle<true>,
+                    organisation: { id } as unknown as Organisation<true>,
+                })),
             );
             vi.spyOn(escalatedPersonPermission, 'hasSystemrechtAtOrganisation').mockResolvedValue(false);
             const result: boolean = await escalatedPersonPermission.canModifyPerson(personId);
@@ -575,11 +589,16 @@ describe('EscalatedPersonPermission', () => {
                 logger,
             );
             const orgaId: string = faker.string.uuid();
-            const oeffentlich: Organisation<true> = { id: faker.string.uuid()} as Organisation<true>;
+            const oeffentlich: Organisation<true> = { id: faker.string.uuid() } as Organisation<true>;
             organisationRepo.findRootDirectChildren.mockResolvedValue([oeffentlich, undefined]);
-            const spy: Mock = vi.spyOn(escalatedPersonPermission, 'hasSystemrechtAtOrganisation').mockResolvedValue(true);
+            const spy: Mock = vi
+                .spyOn(escalatedPersonPermission, 'hasSystemrechtAtOrganisation')
+                .mockResolvedValue(true);
 
-            const result: boolean = await escalatedPersonPermission.hasOrgVerwaltenRechtAtOrga(OrganisationsTyp.KLASSE, orgaId);
+            const result: boolean = await escalatedPersonPermission.hasOrgVerwaltenRechtAtOrga(
+                OrganisationsTyp.KLASSE,
+                orgaId,
+            );
             expect(result).toBe(true);
             expect(spy).toHaveBeenCalledWith(orgaId, RollenSystemRecht.KLASSEN_VERWALTEN);
         });
@@ -592,9 +611,11 @@ describe('EscalatedPersonPermission', () => {
                 personenkontextRepo,
                 logger,
             );
-            const oeffentlich: Organisation<true> = { id: faker.string.uuid()} as Organisation<true>;
+            const oeffentlich: Organisation<true> = { id: faker.string.uuid() } as Organisation<true>;
             organisationRepo.findRootDirectChildren.mockResolvedValue([oeffentlich, undefined]);
-            const spy: Mock  = vi.spyOn(escalatedPersonPermission, 'hasSystemrechtAtOrganisation').mockResolvedValue(true);
+            const spy: Mock = vi
+                .spyOn(escalatedPersonPermission, 'hasSystemrechtAtOrganisation')
+                .mockResolvedValue(true);
 
             const result: boolean = await escalatedPersonPermission.hasOrgVerwaltenRechtAtOrga(OrganisationsTyp.KLASSE);
             expect(result).toBe(true);
@@ -610,11 +631,16 @@ describe('EscalatedPersonPermission', () => {
                 logger,
             );
             organisationRepo.findRootDirectChildren.mockResolvedValue([undefined, undefined]);
-            const spy: Mock  = vi.spyOn(escalatedPersonPermission, 'hasSystemrechtAtOrganisation').mockResolvedValue(true);
+            const spy: Mock = vi
+                .spyOn(escalatedPersonPermission, 'hasSystemrechtAtOrganisation')
+                .mockResolvedValue(true);
 
             const result: boolean = await escalatedPersonPermission.hasOrgVerwaltenRechtAtOrga(OrganisationsTyp.KLASSE);
             expect(result).toBe(true);
-            expect(spy).toHaveBeenCalledWith(organisationRepo.ROOT_ORGANISATION_ID, RollenSystemRecht.KLASSEN_VERWALTEN);
+            expect(spy).toHaveBeenCalledWith(
+                organisationRepo.ROOT_ORGANISATION_ID,
+                RollenSystemRecht.KLASSEN_VERWALTEN,
+            );
         });
 
         it('should check SCHULEN_VERWALTEN for SCHULE', async () => {
@@ -625,7 +651,9 @@ describe('EscalatedPersonPermission', () => {
                 personenkontextRepo,
                 logger,
             );
-            const spy: Mock  = vi.spyOn(escalatedPersonPermission, 'hasSystemrechteAtRootOrganisation').mockResolvedValue(true);
+            const spy: Mock = vi
+                .spyOn(escalatedPersonPermission, 'hasSystemrechteAtRootOrganisation')
+                .mockResolvedValue(true);
 
             const result: boolean = await escalatedPersonPermission.hasOrgVerwaltenRechtAtOrga(OrganisationsTyp.SCHULE);
             expect(result).toBe(true);
@@ -640,9 +668,13 @@ describe('EscalatedPersonPermission', () => {
                 personenkontextRepo,
                 logger,
             );
-            const spy: Mock  = vi.spyOn(escalatedPersonPermission, 'hasSystemrechteAtRootOrganisation').mockResolvedValue(true);
+            const spy: Mock = vi
+                .spyOn(escalatedPersonPermission, 'hasSystemrechteAtRootOrganisation')
+                .mockResolvedValue(true);
 
-            const result: boolean = await escalatedPersonPermission.hasOrgVerwaltenRechtAtOrga(OrganisationsTyp.TRAEGER);
+            const result: boolean = await escalatedPersonPermission.hasOrgVerwaltenRechtAtOrga(
+                OrganisationsTyp.TRAEGER,
+            );
             expect(result).toBe(true);
             expect(spy).toHaveBeenCalledWith([RollenSystemRecht.SCHULTRAEGER_VERWALTEN]);
         });
@@ -715,7 +747,9 @@ describe('EscalatedPersonPermission', () => {
 
             const result: PermittedOrgas = await escalatedPersonPermission.getOrgIdsWithSystemrecht(systemrechte);
             expect(result.all).toBe(false);
-            if(result.all){return;}
+            if (result.all) {
+                return;
+            }
             expect(result.orgaIds).toContain(orgaId1);
         });
 
@@ -732,9 +766,15 @@ describe('EscalatedPersonPermission', () => {
             );
             vi.spyOn(escalatedPersonPermission, 'hasSystemrechteAtRootOrganisation').mockResolvedValue(false);
 
-            const result: PermittedOrgas = await escalatedPersonPermission.getOrgIdsWithSystemrecht(systemrechte, false, true);
+            const result: PermittedOrgas = await escalatedPersonPermission.getOrgIdsWithSystemrecht(
+                systemrechte,
+                false,
+                true,
+            );
             expect(result.all).toBe(false);
-            if(result.all){return;}
+            if (result.all) {
+                return;
+            }
             expect(result.orgaIds).toContain(orgaId1);
             expect(result.orgaIds).not.toContain(orgaId2);
         });
@@ -743,7 +783,13 @@ describe('EscalatedPersonPermission', () => {
             const escalatedPersonPermission: EscalatedPersonPermissions = EscalatedPersonPermissions.createNew(
                 { name: 'testInstance' },
                 [
-                    { orgaId: orgaId1, systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN, RollenSystemRechtEnum.PERSONEN_ANLEGEN] },
+                    {
+                        orgaId: orgaId1,
+                        systemrechte: [
+                            RollenSystemRechtEnum.PERSONEN_VERWALTEN,
+                            RollenSystemRechtEnum.PERSONEN_ANLEGEN,
+                        ],
+                    },
                     { orgaId: orgaId2, systemrechte: [RollenSystemRechtEnum.PERSONEN_ANLEGEN] },
                 ],
                 organisationRepo,
@@ -758,7 +804,9 @@ describe('EscalatedPersonPermission', () => {
                 false,
             );
             expect(result.all).toBe(false);
-            if(result.all){return;}
+            if (result.all) {
+                return;
+            }
             expect(result.orgaIds).toContain(orgaId1);
             expect(result.orgaIds).toContain(orgaId2);
         });
@@ -777,7 +825,9 @@ describe('EscalatedPersonPermission', () => {
 
             const result: PermittedOrgas = await escalatedPersonPermission.getOrgIdsWithSystemrecht(systemrechte, true);
             expect(result.all).toBe(false);
-            if(result.all){return;}
+            if (result.all) {
+                return;
+            }
             expect(result.orgaIds).toContain(orgaId1);
             expect(result.orgaIds).toContain(childOrga.id);
         });
@@ -794,7 +844,9 @@ describe('EscalatedPersonPermission', () => {
 
             const result: PermittedOrgas = await escalatedPersonPermission.getOrgIdsWithSystemrecht(systemrechte);
             expect(result.all).toBe(false);
-            if(result.all){return;}
+            if (result.all) {
+                return;
+            }
             expect(result.orgaIds).toEqual([]);
         });
     });
@@ -823,20 +875,17 @@ describe('EscalatedPersonPermission', () => {
             await expect(
                 escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId1, [
                     { name: RollenSystemRechtEnum.PERSONEN_ANLEGEN } as RollenSystemRecht,
-                ])
+                ]),
             ).resolves.toBe(true);
             await expect(
                 escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId2, [
                     { name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht,
-                ])
+                ]),
             ).resolves.toBe(true);
         });
 
         it('should add a new escalation on ROOT', async () => {
-            organisationRepo.findParentOrgasForIds.mockResolvedValue([
-                rootOrga,
-                oeffentlicheSchuleOrga,
-            ]);
+            organisationRepo.findParentOrgasForIds.mockResolvedValue([rootOrga, oeffentlicheSchuleOrga]);
             const initial: EscalatedPermissionAtOrga[] = [
                 { orgaId: orgaId1, systemrechte: [RollenSystemRechtEnum.PERSONEN_ANLEGEN] },
             ];
@@ -854,25 +903,23 @@ describe('EscalatedPersonPermission', () => {
             await expect(
                 escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId1, [
                     { name: RollenSystemRechtEnum.PERSONEN_ANLEGEN } as RollenSystemRecht,
-                ])
+                ]),
             ).resolves.toBe(true);
             await expect(
                 escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId1, [
                     { name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht,
-                ])
+                ]),
             ).resolves.toBe(true);
             await expect(
                 escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId2, [
                     { name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht,
-                ])
+                ]),
             ).resolves.toBe(true);
         });
 
         it('should skip if existing escalation has systemrechte "ALL"', async () => {
             organisationRepo.findParentOrgasForIds.mockResolvedValue([]);
-            const initial: EscalatedPermissionAtOrga[] = [
-                { orgaId: orgaId1, systemrechte: 'ALL' },
-            ];
+            const initial: EscalatedPermissionAtOrga[] = [{ orgaId: orgaId1, systemrechte: 'ALL' }];
             const additional: EscalatedPermissionAtOrga[] = [
                 { orgaId: orgaId1, systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN] },
             ];
@@ -887,12 +934,12 @@ describe('EscalatedPersonPermission', () => {
             await expect(
                 escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId1, [
                     { name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht,
-                ])
+                ]),
             ).resolves.toBe(true);
             await expect(
                 escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId1, [
                     { name: RollenSystemRechtEnum.PERSONEN_ANLEGEN } as RollenSystemRecht,
-                ])
+                ]),
             ).resolves.toBe(true);
         });
 
@@ -901,9 +948,7 @@ describe('EscalatedPersonPermission', () => {
             const initial: EscalatedPermissionAtOrga[] = [
                 { orgaId: orgaId1, systemrechte: [RollenSystemRechtEnum.PERSONEN_ANLEGEN] },
             ];
-            const additional: EscalatedPermissionAtOrga[] = [
-                { orgaId: orgaId1, systemrechte: 'ALL' },
-            ];
+            const additional: EscalatedPermissionAtOrga[] = [{ orgaId: orgaId1, systemrechte: 'ALL' }];
             const escalatedPersonPermission: EscalatedPersonPermissions = EscalatedPersonPermissions.createNew(
                 { name: 'testInstance' },
                 [...initial],
@@ -915,12 +960,12 @@ describe('EscalatedPersonPermission', () => {
             await expect(
                 escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId1, [
                     { name: RollenSystemRechtEnum.PERSONEN_ANLEGEN } as RollenSystemRecht,
-                ])
+                ]),
             ).resolves.toBe(true);
             await expect(
                 escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId1, [
                     { name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht,
-                ])
+                ]),
             ).resolves.toBe(true);
         });
 
@@ -941,10 +986,14 @@ describe('EscalatedPersonPermission', () => {
             );
             escalatedPersonPermission.extendEscalation(additional);
             await expect(
-                escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId1, [
-                    { name: RollenSystemRechtEnum.PERSONEN_ANLEGEN } as RollenSystemRecht,
-                    { name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht,
-                ], true)
+                escalatedPersonPermission.hasSystemrechteAtOrganisation(
+                    orgaId1,
+                    [
+                        { name: RollenSystemRechtEnum.PERSONEN_ANLEGEN } as RollenSystemRecht,
+                        { name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht,
+                    ],
+                    true,
+                ),
             ).resolves.toBe(true);
         });
 
@@ -965,14 +1014,18 @@ describe('EscalatedPersonPermission', () => {
             );
             escalatedPersonPermission.extendEscalation(additional);
             await expect(
-                escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId1, [
-                    { name: RollenSystemRechtEnum.PERSONEN_ANLEGEN } as RollenSystemRecht,
-                ], true)
+                escalatedPersonPermission.hasSystemrechteAtOrganisation(
+                    orgaId1,
+                    [{ name: RollenSystemRechtEnum.PERSONEN_ANLEGEN } as RollenSystemRecht],
+                    true,
+                ),
             ).resolves.toBe(true);
             await expect(
-                escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId1, [
-                    { name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht,
-                ], true)
+                escalatedPersonPermission.hasSystemrechteAtOrganisation(
+                    orgaId1,
+                    [{ name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht],
+                    true,
+                ),
             ).resolves.toBe(false);
         });
 
@@ -995,25 +1048,29 @@ describe('EscalatedPersonPermission', () => {
             );
             escalatedPersonPermission.extendEscalation(additional);
             await expect(
-                escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId1, [
-                    { name: RollenSystemRechtEnum.PERSONEN_ANLEGEN } as RollenSystemRecht,
-                    { name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht,
-                ], true)
+                escalatedPersonPermission.hasSystemrechteAtOrganisation(
+                    orgaId1,
+                    [
+                        { name: RollenSystemRechtEnum.PERSONEN_ANLEGEN } as RollenSystemRecht,
+                        { name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht,
+                    ],
+                    true,
+                ),
             ).resolves.toBe(true);
             await expect(
                 escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId2, [
                     { name: RollenSystemRechtEnum.PERSONEN_ANLEGEN } as RollenSystemRecht,
-                ])
+                ]),
             ).resolves.toBe(true);
             await expect(
                 escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId3, [
                     { name: RollenSystemRechtEnum.PERSONEN_VERWALTEN } as RollenSystemRecht,
-                ])
+                ]),
             ).resolves.toBe(true);
             await expect(
                 escalatedPersonPermission.hasSystemrechteAtOrganisation(orgaId3, [
                     { name: RollenSystemRechtEnum.PERSONEN_ANLEGEN } as RollenSystemRecht,
-                ])
+                ]),
             ).resolves.toBe(true);
         });
     });
@@ -1027,12 +1084,12 @@ describe('EscalatedPersonPermission', () => {
             const systemrecht2: RollenSystemRechtEnum = RollenSystemRechtEnum.PERSONEN_VERWALTEN;
 
             const kontext1: PersonenkontextRolleWithOrganisation = {
-                organisation: DoFactory.createOrganisationAggregate(true, {id: orgaId1}),
-                rolle: DoFactory.createRolle(true, {systemrechte: [RollenSystemRecht.getByName(systemrecht1)] }),
+                organisation: DoFactory.createOrganisationAggregate(true, { id: orgaId1 }),
+                rolle: DoFactory.createRolle(true, { systemrechte: [RollenSystemRecht.getByName(systemrecht1)] }),
             };
             const kontext2: PersonenkontextRolleWithOrganisation = {
-                organisation: DoFactory.createOrganisationAggregate(true, {id: orgaId2}),
-                rolle: DoFactory.createRolle(true, {systemrechte: [RollenSystemRecht.getByName(systemrecht2)] }),
+                organisation: DoFactory.createOrganisationAggregate(true, { id: orgaId2 }),
+                rolle: DoFactory.createRolle(true, { systemrechte: [RollenSystemRecht.getByName(systemrecht2)] }),
             };
 
             const personPermissions: PersonPermissions = createPersonPermissionsMock();
@@ -1051,21 +1108,19 @@ describe('EscalatedPersonPermission', () => {
             );
 
             await expect(
-                escalated.hasSystemrechteAtOrganisation(orgaId1, [{ name: systemrecht1 } as RollenSystemRecht])
+                escalated.hasSystemrechteAtOrganisation(orgaId1, [{ name: systemrecht1 } as RollenSystemRecht]),
             ).resolves.toBe(true);
             await expect(
-                escalated.hasSystemrechteAtOrganisation(orgaId1, [{ name: systemrecht2 } as RollenSystemRecht])
+                escalated.hasSystemrechteAtOrganisation(orgaId1, [{ name: systemrecht2 } as RollenSystemRecht]),
             ).resolves.toBe(false);
             await expect(
-                escalated.hasSystemrechteAtOrganisation(orgaId2, [{ name: systemrecht1 } as RollenSystemRecht])
+                escalated.hasSystemrechteAtOrganisation(orgaId2, [{ name: systemrecht1 } as RollenSystemRecht]),
             ).resolves.toBe(true);
             await expect(
-                escalated.hasSystemrechteAtOrganisation(orgaId2, [{ name: systemrecht2 } as RollenSystemRecht])
+                escalated.hasSystemrechteAtOrganisation(orgaId2, [{ name: systemrecht2 } as RollenSystemRecht]),
             ).resolves.toBe(true);
 
-            expect(logger.info).toHaveBeenCalledWith(
-                expect.stringContaining(`with escalated permissions:`)
-            );
+            expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`with escalated permissions:`));
         });
 
         it('should not duplicate permissions from kontexts if already present in additionalEscalatedPermissions', async () => {
@@ -1073,8 +1128,8 @@ describe('EscalatedPersonPermission', () => {
             const systemrecht1: RollenSystemRechtEnum = RollenSystemRechtEnum.PERSONEN_ANLEGEN;
 
             const kontext1: PersonenkontextRolleWithOrganisation = {
-                organisation: DoFactory.createOrganisationAggregate(true, {id: orgaId1}),
-                rolle: DoFactory.createRolle(true, {systemrechte: [RollenSystemRecht.getByName(systemrecht1)] }),
+                organisation: DoFactory.createOrganisationAggregate(true, { id: orgaId1 }),
+                rolle: DoFactory.createRolle(true, { systemrechte: [RollenSystemRecht.getByName(systemrecht1)] }),
             };
 
             const personPermissions: PersonPermissions = createPersonPermissionsMock();
@@ -1093,21 +1148,21 @@ describe('EscalatedPersonPermission', () => {
             );
 
             await expect(
-                escalated.getOrgIdsWithSystemrecht([{ name: systemrecht1 } as RollenSystemRecht], false, true)
+                escalated.getOrgIdsWithSystemrecht([{ name: systemrecht1 } as RollenSystemRecht], false, true),
             ).resolves.toEqual({ all: false, orgaIds: [orgaId1] });
 
             expect(logger.debug).toHaveBeenCalledWith(
-                `Skipping adding permissions from kontext for orga ${orgaId1}: no new systemrechte to add`
+                `Skipping adding permissions from kontext for orga ${orgaId1}: no new systemrechte to add`,
             );
         });
 
-         it('should not duplicate permissions from kontexts if ALL is present in additionalEscalatedPermissions', async () => {
+        it('should not duplicate permissions from kontexts if ALL is present in additionalEscalatedPermissions', async () => {
             const orgaId1: OrganisationID = faker.string.uuid();
             const systemrecht1: RollenSystemRechtEnum = RollenSystemRechtEnum.PERSONEN_ANLEGEN;
 
             const kontext1: PersonenkontextRolleWithOrganisation = {
-                organisation: DoFactory.createOrganisationAggregate(true, {id: orgaId1}),
-                rolle: DoFactory.createRolle(true, {systemrechte: [RollenSystemRecht.getByName(systemrecht1)] }),
+                organisation: DoFactory.createOrganisationAggregate(true, { id: orgaId1 }),
+                rolle: DoFactory.createRolle(true, { systemrechte: [RollenSystemRecht.getByName(systemrecht1)] }),
             };
 
             const personPermissions: PersonPermissions = createPersonPermissionsMock();
@@ -1126,11 +1181,11 @@ describe('EscalatedPersonPermission', () => {
             );
 
             await expect(
-                escalated.getOrgIdsWithSystemrecht([{ name: systemrecht1 } as RollenSystemRecht], false, true)
+                escalated.getOrgIdsWithSystemrecht([{ name: systemrecht1 } as RollenSystemRecht], false, true),
             ).resolves.toEqual({ all: false, orgaIds: [orgaId1] });
 
             expect(logger.debug).toHaveBeenCalledWith(
-                `Skipping adding permissions from kontext for orga ${orgaId1}: already has ALL rights by additionalEscalatedPermissions`
+                `Skipping adding permissions from kontext for orga ${orgaId1}: already has ALL rights by additionalEscalatedPermissions`,
             );
         });
     });
