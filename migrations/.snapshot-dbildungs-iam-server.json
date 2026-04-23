@@ -4002,6 +4002,16 @@
       "schema": "public",
       "indexes": [
         {
+          "columnNames": [
+            "name"
+          ],
+          "composite": false,
+          "keyName": "rolle_name_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "rolle_pkey",
           "columnNames": [
             "id"
@@ -6468,6 +6478,26 @@
       "name": "rolle_service_provider",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "rolle_id"
+          ],
+          "composite": false,
+          "keyName": "rolle_service_provider_rolle_id_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "service_provider_id"
+          ],
+          "composite": false,
+          "keyName": "rolle_service_provider_service_provider_id_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "rolle_service_provider_pkey",
           "columnNames": [
