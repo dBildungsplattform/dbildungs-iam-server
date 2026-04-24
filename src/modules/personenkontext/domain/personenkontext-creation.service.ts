@@ -78,15 +78,26 @@ export class PersonenkontextCreationService {
             };
         }
 
+        /* We must grant PERSONEN_VERWALTEN on the ROOT level instead of only on the schools
+        of the newly created Personenkontexte.
+
+        Reason:
+        EscalatedPermission.canModifyPerson is executed *after* the person is persisted,
+        but *before* the Personenkontexte are persisted. At that point, the new person
+        has no contexts in the database yet.
+
+        As a result, the caller would not be allowed to modify the person based on
+        school-level permissions alone, because there are no associated contexts to
+        validate against.
+
+        Granting PERSONEN_VERWALTEN on ROOT ensures the caller can modify the person
+        regardless of which contexts will be created afterward. */
         const permissionsToUse: IPersonPermissions = await this.escalatedPersonPermissionsFactory.fromPermissions(
             permissions,
-            createPersonenkontexte.map(
-                (createPersonenkontext: DbiamCreatePersonenkontextBodyParams) =>
-                    ({
-                        orgaId: createPersonenkontext.organisationId,
-                        systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
-                    }) satisfies EscalatedPermissionAtOrga,
-            ),
+            [{
+                orgaId: 'ROOT',
+                systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
+            } satisfies EscalatedPermissionAtOrga]
         );
 
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
