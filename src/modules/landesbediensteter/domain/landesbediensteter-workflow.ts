@@ -23,7 +23,6 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import {
     EscalatedPermissionAtOrga,
-    EscalatedPersonPermissions,
 } from '../../permission/escalated-person-permissions.js';
 import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
 
@@ -233,16 +232,24 @@ export class LandesbediensteterWorkflowAggregate {
 
         const existingPKs: DbiamPersonenkontextBodyParams[] = await this.personenkontextRepo.findByPerson(personId);
 
-        const escalatedPermissions: EscalatedPersonPermissions =
-            await this.escalatedPersonPermissionsFactory.fromPermissions(
-                permissions,
-                existingPKs.map(
-                    (createPersonenkontext: DbiamPersonenkontextBodyParams): EscalatedPermissionAtOrga => ({
-                        orgaId: createPersonenkontext.organisationId,
-                        systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN, RollenSystemRechtEnum.PERSONEN_LESEN],
-                    }),
-                ),
-            );
+        /* We must grant PERSONEN_VERWALTEN on the ROOT level instead of only on the existing kontexts
+
+        Reason:
+        EscalatedPermission.canModifyPerson is executed and it is possible that the Landesbedienstster has no kontexte in the database.
+
+        As a result, the caller would not be allowed to modify the person based on
+        school-level permissions alone, because there are no associated contexts to
+        validate against.
+
+        Granting PERSONEN_VERWALTEN on ROOT ensures the caller can modify the person
+        regardless of which contexts will be created afterward. */
+        const escalatedPermissions: IPersonPermissions = await this.escalatedPersonPermissionsFactory.fromPermissions(
+            permissions,
+            [{
+                orgaId: 'ROOT',
+                systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
+            } satisfies EscalatedPermissionAtOrga]
+        );
 
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             personId,
