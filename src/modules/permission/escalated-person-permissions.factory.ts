@@ -48,7 +48,7 @@ export class EscalatedPersonPermissionsFactory {
         if (isEscalatedPersonPermissions(permissions)) {
             permissions.extendEscalation(escalatedPermissions);
             return permissions;
-        } else if(isPersonPermissions(permissions)) {
+        } else if (isPersonPermissions(permissions)) {
             return await EscalatedPersonPermissions.fromPersonPermissions(
                 permissions,
                 escalatedPermissions,
@@ -56,7 +56,7 @@ export class EscalatedPersonPermissionsFactory {
                 this.personenkontextRepo,
                 this.logger,
             );
-        }else{
+        } else {
             throw new Error('Provided permissions are neither PersonPermissions nor EscalatedPersonPermissions');
         }
     }
