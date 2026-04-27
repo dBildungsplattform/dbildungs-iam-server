@@ -68,6 +68,8 @@ import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis'
                     dbName: dbConfig.DB_NAME,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
+                    preferReadReplicas: true,
+                    replicas: [{ name: 'replica1', clientUrl: dbConfig.REPLICA_URL }],
                     // Needed for HealthCheck
                     driverOptions: {
                         connection: {

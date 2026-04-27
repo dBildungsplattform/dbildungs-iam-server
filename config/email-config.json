@@ -10,7 +10,8 @@
         "DB_NAME": "dbildungs-iam-server",
         "USERNAME": "admin",
         "SECRET": "password",
-        "USE_SSL": false
+        "USE_SSL": false,
+        "REPLICA_URL": "postgres://localhost:---"
     },
     "LDAP": {
         "URL": "ldap://localhost",

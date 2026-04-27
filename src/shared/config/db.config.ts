@@ -22,4 +22,8 @@ export class DbConfig {
     @IsBoolean()
     @IsNotEmpty()
     public readonly USE_SSL!: boolean;
+
+    @IsString()
+    @IsNotEmpty()
+    public readonly REPLICA_URL?: string;
 }

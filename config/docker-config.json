@@ -21,7 +21,8 @@
         "USERNAME": "admin",
         "PASSWORD": "password",
         "USE_SSL": false,
-        "SECRET": "password"
+        "SECRET": "password",
+        "REPLICA_URL": "postgres://db:---"
     },
     "KEYCLOAK": {
         "BASE_URL": "http://keycloak:8080",
