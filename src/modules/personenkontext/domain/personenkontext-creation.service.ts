@@ -94,10 +94,12 @@ export class PersonenkontextCreationService {
         regardless of which contexts will be created afterward. */
         const permissionsToUse: IPersonPermissions = await this.escalatedPersonPermissionsFactory.fromPermissions(
             permissions,
-            [{
-                orgaId: 'ROOT',
-                systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
-            } satisfies EscalatedPermissionAtOrga]
+            [
+                {
+                    orgaId: 'ROOT',
+                    systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
+                } satisfies EscalatedPermissionAtOrga,
+            ],
         );
 
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(

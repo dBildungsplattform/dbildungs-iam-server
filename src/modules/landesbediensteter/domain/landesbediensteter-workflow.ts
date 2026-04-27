@@ -21,9 +21,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import {
-    EscalatedPermissionAtOrga,
-} from '../../permission/escalated-person-permissions.js';
+import { EscalatedPermissionAtOrga } from '../../permission/escalated-person-permissions.js';
 import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
 
 export class LandesbediensteterWorkflowAggregate {
@@ -245,10 +243,12 @@ export class LandesbediensteterWorkflowAggregate {
         regardless of which contexts will be created afterward. */
         const escalatedPermissions: IPersonPermissions = await this.escalatedPersonPermissionsFactory.fromPermissions(
             permissions,
-            [{
-                orgaId: 'ROOT',
-                systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
-            } satisfies EscalatedPermissionAtOrga]
+            [
+                {
+                    orgaId: 'ROOT',
+                    systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
+                } satisfies EscalatedPermissionAtOrga,
+            ],
         );
 
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
