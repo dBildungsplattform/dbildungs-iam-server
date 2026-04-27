@@ -49,7 +49,6 @@ export class Person<WasPersisted extends boolean> {
         public userLock: UserLock[],
         public orgUnassignmentDate: Date | undefined,
         public isLocked: boolean | undefined,
-        public email: string | undefined,
         public oxUserId: string | undefined,
         public istTechnisch: boolean,
         public externalIds: Partial<Record<PersonExternalIdType, string>>,
@@ -79,7 +78,6 @@ export class Person<WasPersisted extends boolean> {
         orgUnassignmentDate?: Date,
         userLock: UserLock[] = [],
         isLocked?: boolean,
-        email?: string,
         oxUserId?: string,
         istTechnisch?: boolean,
         externalIds?: Partial<Record<PersonExternalIdType, string>>,
@@ -98,7 +96,6 @@ export class Person<WasPersisted extends boolean> {
             userLock,
             orgUnassignmentDate,
             isLocked,
-            email,
             oxUserId,
             istTechnisch ?? false,
             externalIds ?? {},
@@ -132,7 +129,6 @@ export class Person<WasPersisted extends boolean> {
             creationParams.personalnummer,
             creationParams.userLock ?? [],
             creationParams.orgUnassignmentDate,
-            undefined,
             undefined,
             undefined,
             creationParams.istTechnisch ?? false,
@@ -172,7 +168,6 @@ export class Person<WasPersisted extends boolean> {
         userLock?: UserLock[],
         orgUnassignmentDate?: Date,
         isLocked?: boolean,
-        email?: string,
         istTechnisch?: boolean,
         externalIds?: Partial<Record<PersonExternalIdType, string>>,
     ): void | DomainError {
@@ -202,7 +197,6 @@ export class Person<WasPersisted extends boolean> {
         this.personalnummer = personalnummer ?? this.personalnummer;
         this.orgUnassignmentDate = orgUnassignmentDate;
         this.isLocked = isLocked;
-        this.email = email;
         this.userLock = userLock ?? [];
         if (istTechnisch !== undefined) {
             this.istTechnisch = istTechnisch;
