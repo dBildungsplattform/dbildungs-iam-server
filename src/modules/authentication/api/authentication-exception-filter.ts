@@ -35,11 +35,10 @@ export class AuthenticationExceptionFilter implements ExceptionFilter<Authentica
     public catch(exception: AuthenticationDomainError | UnauthorizedException, host: ArgumentsHost): void {
         const ctx: HttpArgumentsHost = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
-        const status: number = 403; //all errors regarding organisation specifications are InternalServerErrors at the moment
 
         const dbiamAuthenticationError: DbiamAuthenticationError = this.mapDomainErrorToDbiamError(exception);
 
-        response.status(status);
+        response.status(dbiamAuthenticationError.code);
         response.json(dbiamAuthenticationError);
     }
 
