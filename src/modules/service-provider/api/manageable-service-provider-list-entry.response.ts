@@ -39,14 +39,14 @@ export class ManageableServiceProviderListEntryResponse {
     public rollen: RolleRefResponse[];
 
     @ApiProperty()
-    public isDeleteAuthorized: boolean;
+    public hasSomeVerwaltenPermission: boolean;
 
     public constructor(
         serviceProvider: ServiceProvider<true>,
         organisation: Organisation<true>,
         rollen: Rolle<true>[],
         rollenerweiterungen: RollenerweiterungForManageableServiceProvider[],
-        isDeleteAuthorized: boolean,
+        hasSomeVerwaltenPermission: boolean,
     ) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;
@@ -62,6 +62,6 @@ export class ManageableServiceProviderListEntryResponse {
             RollenerweiterungForManageableServiceProviderResponse.fromRollenerweiterungForManageableServiceProvider(re),
         );
         this.rollen = rollen.map((r: Rolle<true>) => ({ id: r.id, name: r.name }));
-        this.isDeleteAuthorized = isDeleteAuthorized;
+        this.hasSomeVerwaltenPermission = hasSomeVerwaltenPermission;
     }
 }

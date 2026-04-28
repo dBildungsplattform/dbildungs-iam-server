@@ -1,6 +1,7 @@
 import { DoFactory } from '../../../../test/utils/index.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { ServiceProvider } from '../domain/service-provider';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 
@@ -15,8 +16,10 @@ describe('ManageableServiceProviderResponse', () => {
             organisation,
             rollen,
             true,
+            [RollenSystemRecht.ROLLEN_ERWEITERN],
         );
 
         expect(response.administrationsebene.name).toBe('');
+        expect(response.relevantSystemrechte).toEqual([RollenSystemRecht.ROLLEN_ERWEITERN.name]);
     });
 });
