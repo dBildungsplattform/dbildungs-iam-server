@@ -145,7 +145,7 @@ export class ServiceProviderService {
             );
             if (
                 Array.isArray(parents) &&
-                parents.find(
+                parents.some(
                     (parent: Organisation<true>) => parent.id === serviceProvider.providedOnSchulstrukturknoten,
                 )
             ) {
