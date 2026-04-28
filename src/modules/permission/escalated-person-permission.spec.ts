@@ -1,14 +1,14 @@
 import { faker } from '@faker-js/faker';
 import { createPersonPermissionsMock, DoFactory } from '../../../test/utils';
-import { createMock, DeepMocked } from '../../../test/utils/createMock';
+import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { ClassLogger } from '../../core/logging/class-logger';
 import { OrganisationID } from '../../shared/types';
-import { Organisation } from '../organisation/domain/organisation';
-import { OrganisationRepository } from '../organisation/persistence/organisation.repository';
-import { Personenkontext } from '../personenkontext/domain/personenkontext';
-import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo';
+import { Organisation } from '../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
+import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
+import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Rolle } from '../rolle/domain/rolle';
-import { RollenSystemRecht, RollenSystemRechtEnum } from '../rolle/domain/systemrecht';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../rolle/domain/systemrecht.js';
 import {
     EscalatedPermissionAtOrga,
     EscalatedPersonPermissions,

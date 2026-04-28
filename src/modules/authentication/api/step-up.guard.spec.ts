@@ -5,6 +5,7 @@ import { StepUpLevel } from '../passport/oidc.strategy.js';
 import { Request } from 'express';
 import { UserinfoResponse } from 'openid-client';
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { PersonPermissions } from '../domain/person-permissions.js';
 
 describe('StepUpGuard', () => {
     let guard: StepUpGuard;
@@ -22,7 +23,7 @@ describe('StepUpGuard', () => {
             email: 'test@test.com',
         };
 
-        const personPermissionsMock: IPersonPermissions = createPersonPermissionsMock();
+        const personPermissionsMock: PersonPermissions = createPersonPermissionsMock();
 
         const request: Partial<Request> = {
             passportUser: {

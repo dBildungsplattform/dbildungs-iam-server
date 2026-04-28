@@ -36,7 +36,6 @@ import { RollenSystemRecht, RollenSystemRechtEnum } from '../rolle/domain/system
 import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
 import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
 import { EscalatedPersonPermissionsFactory } from '../permission/escalated-person-permissions.factory.js';
-import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -410,7 +409,7 @@ export class CronController {
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while trying to update VIDIS Angebote.',
     })
-    public async updateServiceProvidersForVidisAngebote(@Permissions() permissions: PersonPermissions): Promise<void> {
+    public async updateServiceProvidersForVidisAngebote(@Permissions() permissions: IPersonPermissions): Promise<void> {
         const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
             RollenSystemRecht.CRON_DURCHFUEHREN,
         ]);

@@ -4,7 +4,7 @@ import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonPermissions, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
