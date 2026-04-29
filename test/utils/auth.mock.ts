@@ -7,16 +7,65 @@ import {
     UserinfoResponse as OidcUserinfoResponse,
 } from 'openid-client';
 import { UserinfoResponse } from '../../src/modules/authentication/api/userinfo.response.js';
-import { PersonFields, PersonPermissions } from '../../src/modules/authentication/domain/person-permissions.js';
+import {
+    PermittedOrgas,
+    PersonenkontextRolleWithOrganisation,
+    PersonFields,
+    PersonPermissions,
+} from '../../src/modules/authentication/domain/person-permissions.js';
 import { IPersonPermissions } from '../../src/shared/permissions/person-permissions.interface.js';
 import { createMock, DeepMocked } from './createMock.js';
 import { PassportUser } from '../../src/modules/authentication/types/user.js';
 import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { Request } from 'express';
+import { OrganisationsTyp } from '../../src/modules/organisation/domain/organisation.enums.js';
+import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
+import { RollenSystemRecht } from '../../src/modules/rolle/domain/systemrecht.js';
+import { RolleID } from '../../src/shared/types/aggregate-ids.types.js';
 import { StepUpLevel } from '../../src/modules/authentication/passport/oidc.strategy.js';
 
 export class PersonPermissionsMock implements IPersonPermissions {
+    public id: string;
+    public personFields: PersonFields;
+
+    public constructor() {
+        this.id = '';
+        this.personFields = {
+            id: faker.string.uuid(),
+            keycloakUserId: faker.string.uuid(),
+            vorname: faker.person.firstName(),
+            familienname: faker.person.lastName(),
+            username: faker.internet.username(),
+            updatedAt: faker.date.past(),
+        };
+    }
+
+    public hasSystemrechteAtRootOrganisation(
+        _systemrechte: RollenSystemRecht[],
+        _matchAll?: boolean,
+    ): Promise<boolean> {
+        throw new Error('Method not implemented.');
+    }
+    public getOrgIdsWithSystemrecht(
+        _systemrechte: RollenSystemRecht[],
+        _withChildren: boolean,
+        _matchAll?: boolean,
+    ): Promise<PermittedOrgas> {
+        throw new Error('Method not implemented.');
+    }
+    public getRoleIds(): Promise<RolleID[]> {
+        throw new Error('Method not implemented.');
+    }
+    public getPersonenkontextIds(): Promise<Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[]> {
+        throw new Error('Method not implemented.');
+    }
+    public getPersonenkontexteWithRolesAndOrgs(): Promise<PersonenkontextRolleWithOrganisation[]> {
+        throw new Error('Method not implemented.');
+    }
+    public hasOrgVerwaltenRechtAtOrga(_typ: OrganisationsTyp, _administriertVon?: string): Promise<boolean> {
+        throw new Error('Method not implemented.');
+    }
     public hasSystemrechteAtOrganisation(): Promise<boolean> {
         return Promise.resolve(true);
     }
@@ -35,6 +84,7 @@ export function createPersonPermissionsMock(personFields?: Partial<PersonFields>
     personPermissions.hasSystemrechteAtOrganisation = vi.fn().mockResolvedValue(true);
     personPermissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(true);
     personPermissions.canModifyPerson = vi.fn().mockResolvedValue(true);
+    personPermissions.getPersonenkontexteWithRolesAndOrgs = vi.fn().mockResolvedValue([]);
 
     const personFieldsWithDefaults: PersonFields = {
         id: personFields?.id ?? faker.string.uuid(),
@@ -44,6 +94,11 @@ export function createPersonPermissionsMock(personFields?: Partial<PersonFields>
         username: personFields?.username ?? faker.internet.username(),
         updatedAt: personFields?.updatedAt ?? faker.date.past(),
     };
+
+    // define cached fields so that "isPersonPermissions" type guard works correctly in tests
+    Object.defineProperty(personPermissions, 'cachedPersonenkontextsFields', []);
+    Object.defineProperty(personPermissions, 'cachedRollenFields', []);
+    Object.defineProperty(personPermissions, 'cachedPersonFields', personFieldsWithDefaults);
 
     Object.defineProperty(personPermissions, 'personFields', {
         get: vi.fn(() => personFieldsWithDefaults),

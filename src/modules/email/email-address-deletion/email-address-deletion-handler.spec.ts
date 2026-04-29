@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
-    ConfigTestModule,
+    CommonTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
 } from '../../../../test/utils/index.js';
@@ -51,7 +51,7 @@ describe('EmailAddressDeletionHandler', () => {
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
-                ConfigTestModule,
+                CommonTestModule,
                 EmailAddressDeletionModule,
                 EventModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),

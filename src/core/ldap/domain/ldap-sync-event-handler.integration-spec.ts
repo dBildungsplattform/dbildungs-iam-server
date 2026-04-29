@@ -3,12 +3,7 @@ import { MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    DoFactory,
-} from '../../../../test/utils/index.js';
+import { DatabaseTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, DoFactory } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 
 import { LdapModule } from '../ldap.module.js';
@@ -40,6 +35,7 @@ import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.eve
 import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { PersonIdentifier } from '../../logging/person-identifier.js';
 import { EmailResolverService } from '../../../modules/email-microservice/domain/email-resolver.service.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('LdapSyncEventHandler', () => {
     const oeffentlicheSchulenDomain: string = 'schule-sh.de';
@@ -75,7 +71,7 @@ describe('LdapSyncEventHandler', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), LdapModule],
+            imports: [CommonTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), LdapModule],
             providers: [
                 {
                     provide: APP_PIPE,

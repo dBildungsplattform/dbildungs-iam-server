@@ -12,7 +12,6 @@ import { uniq } from 'lodash-es';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterungen-service.js';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
 import { ApplyRollenerweiterungPathParams } from './apply-rollenerweiterung-changes.path.params.js';
@@ -21,6 +20,7 @@ import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-role
 import { ApplyRollenerweiterungBodyParams } from './apply-rollenerweiterung.body.params.js';
 import { DbiamApplyRollenerweiterungMultiError } from './dbiam-apply-rollenerweiterung-multi.error.js';
 import { RollenerweiterungExceptionFilter } from './rollenerweiterung-exception-filter.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @UseFilters(new RollenerweiterungExceptionFilter(), new ApplyRollenerweiterungMultiExceptionFilter())
 @ApiTags('rolle')
@@ -50,7 +50,7 @@ export class RollenerweiterungController {
     public async applyRollenerweiterungChanges(
         @Param() params: ApplyRollenerweiterungPathParams,
         @Body() body: ApplyRollenerweiterungBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<void> {
         this.logger.info(
             `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} with ${body.addErweiterungenForRolleIds.length} x ADD (${[...body.addErweiterungenForRolleIds].map((id: string) => id).join(', ')}) and ${body.removeErweiterungenForRolleIds.length} x REMOVE (${[...body.removeErweiterungenForRolleIds].map((id: string) => id).join(', ')}).`,

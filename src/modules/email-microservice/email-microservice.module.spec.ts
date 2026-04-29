@@ -1,15 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../test/utils/index.js';
+import { DatabaseTestModule } from '../../../test/utils/index.js';
 import { EmailMicroserviceEventHandler } from './domain/email-microservice-event-handler.js';
 import { EmailResolverService } from './domain/email-resolver.service.js';
 import { EmailMicroserviceModule } from './email-microservice.module.js';
+import { CommonTestModule } from '../../../test/utils/common-test.module.js';
 
 describe('EmailMicroserviceModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot(), EmailMicroserviceModule],
+            imports: [CommonTestModule, DatabaseTestModule.forRoot(), EmailMicroserviceModule],
             providers: [],
         }).compile();
     });

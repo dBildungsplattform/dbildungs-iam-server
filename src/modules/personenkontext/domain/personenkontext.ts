@@ -1,8 +1,8 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, PersonID, PersonUsername, RolleID } from '../../../shared/types/index.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -159,7 +159,7 @@ export class Personenkontext<WasPersisted extends boolean> {
         return undefined;
     }
 
-    public async checkPermissions(permissions: PersonPermissions): Promise<Option<DomainError>> {
+    public async checkPermissions(permissions: IPersonPermissions): Promise<Option<DomainError>> {
         // Check if logged in person has permission
         {
             const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtOrganisation(this.organisationId, [

@@ -10,11 +10,12 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { DBiamPersonenzuordnungResponse } from '../api/personenuebersicht/dbiam-personenzuordnung.response.js';
 import { DBiamPersonenuebersichtResponse } from '../api/personenuebersicht/dbiam-personenuebersicht.response.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export class DbiamPersonenuebersicht {
     public readonly ROOT_ORGANISATION_ID: string;
@@ -47,7 +48,7 @@ export class DbiamPersonenuebersicht {
 
     public async getPersonenkontexte(
         personId: PersonID,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Result<DBiamPersonenuebersichtResponse, EntityNotFoundError>> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
         if (!person) {

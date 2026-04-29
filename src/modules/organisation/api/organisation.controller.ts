@@ -41,7 +41,6 @@ import { OrganisationRepository } from '../persistence/organisation.repository.j
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { DbiamOrganisationError } from './dbiam-organisation.error.js';
@@ -59,6 +58,7 @@ import { ParentOrganisationenResponse } from './organisation.parents.response.js
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { OrganisationDeleteService } from '../organisation-delete/organisation-delete.service.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @UseFilters(new OrganisationExceptionFilter())
 @ApiTags('organisationen')
@@ -81,7 +81,7 @@ export class OrganisationController {
     @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
     public async createOrganisation(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Body() params: CreateOrganisationBodyParams,
     ): Promise<OrganisationResponse> {
         const hasOrgVerwaltenRechtAtOrg: boolean = await permissions.hasOrgVerwaltenRechtAtOrga(
@@ -132,7 +132,7 @@ export class OrganisationController {
     public async updateOrganisation(
         @Param() params: OrganisationByIdParams,
         @Body() body: UpdateOrganisationBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<OrganisationResponse> {
         const existingOrganisation: Option<Organisation<true>> = await this.organisationRepository.findById(
             params.organisationId,
@@ -262,7 +262,7 @@ export class OrganisationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
     public async findOrganizations(
         @Query() queryParams: FindOrganisationQueryParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PagedResponse<OrganisationResponse>> {
         const [organisations, total, pageTotal]: [Organisation<true>[], number, number] =
             await this.organisationRepository.findAuthorized(
@@ -383,7 +383,7 @@ export class OrganisationController {
     public async addZugehoerigeOrganisation(
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByIdBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<void> {
         const res: Result<void, DomainError> = await this.organisationService.setZugehoerigZu(
             params.organisationId,
@@ -410,7 +410,7 @@ export class OrganisationController {
     public async updateOrganisationName(
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByNameBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<OrganisationResponse | DomainError> {
         if (
             !(await permissions.hasSystemrechtAtOrganisation(
@@ -448,7 +448,7 @@ export class OrganisationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
     public async enableForitslearning(
         @Param() params: OrganisationByIdParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<OrganisationResponse | DomainError> {
         const result: DomainError | Organisation<true> = await this.organisationRepository.setEnabledForitslearning(
             permissions,
@@ -476,7 +476,7 @@ export class OrganisationController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to delete the organisation.' })
     public async deleteOrganisation(
         @Param() params: OrganisationByIdParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<void> {
         const organisation: Result<
             Organisation<true>,

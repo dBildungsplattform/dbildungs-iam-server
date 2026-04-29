@@ -1,4 +1,4 @@
-import { Loaded } from '@mikro-orm/core';
+import { EntityData, Loaded, RequiredEntityData } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -6,18 +6,75 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { assignSameKey, objectKeys } from '../../../shared/util/object-utils.js';
 import { Err, Ok } from '../../../shared/util/result.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
-import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
-import { NameUniqueAtOrgaSpecification } from '../specification/name-unique-at-orga.specification.js';
-import { mapAggregateToData, mapEntityToAggregate } from './service-provider-entity-mapper.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
+import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js';
+import { NameUniqueAtOrgaSpecification } from '../specification/name-unique-at-orga.specification.js';
+import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
+
+/**
+ * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
+ */
+export function mapAggregateToData(
+    serviceProvider: ServiceProvider<boolean>,
+): RequiredEntityData<ServiceProviderEntity> {
+    const merkmale: EntityData<ServiceProviderMerkmalEntity>[] = serviceProvider.merkmale.map(
+        (merkmal: ServiceProviderMerkmal) => ({
+            serviceProvider: serviceProvider.id,
+            merkmal,
+        }),
+    );
+
+    return {
+        // Don't assign createdAt and updatedAt, they are auto-generated!
+        id: serviceProvider.id,
+        name: serviceProvider.name,
+        target: serviceProvider.target,
+        url: serviceProvider.url,
+        kategorie: serviceProvider.kategorie,
+        providedOnSchulstrukturknoten: serviceProvider.providedOnSchulstrukturknoten,
+        logo: serviceProvider.logo,
+        logoMimeType: serviceProvider.logoMimeType,
+        keycloakGroup: serviceProvider.keycloakGroup,
+        keycloakRole: serviceProvider.keycloakRole,
+        externalSystem: serviceProvider.externalSystem,
+        requires2fa: serviceProvider.requires2fa,
+        vidisAngebotId: serviceProvider.vidisAngebotId,
+        merkmale,
+    };
+}
+
+function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<boolean> {
+    const merkmale: ServiceProviderMerkmal[] = entity.merkmale.map(
+        (merkmalEntity: ServiceProviderMerkmalEntity) => merkmalEntity.merkmal,
+    );
+
+    return ServiceProvider.construct(
+        entity.id,
+        entity.createdAt,
+        entity.updatedAt,
+        entity.name,
+        entity.target,
+        entity.url,
+        entity.kategorie,
+        entity.providedOnSchulstrukturknoten,
+        entity.logo,
+        entity.logoMimeType,
+        entity.keycloakGroup,
+        entity.keycloakRole,
+        entity.externalSystem,
+        entity.requires2fa,
+        entity.vidisAngebotId,
+        merkmale,
+    );
+}
 
 type ServiceProviderFindOptions = {
     withLogo?: boolean;
@@ -201,7 +258,7 @@ export class ServiceProviderRepo {
     }
 
     public async findAuthorizedById(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         id: string,
     ): Promise<Option<ServiceProvider<true>>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(

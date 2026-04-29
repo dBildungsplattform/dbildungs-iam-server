@@ -16,11 +16,7 @@ import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../..
 import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
-import {
-    intersectPermittedAndRequestedOrgas,
-    PermittedOrgas,
-    PersonPermissions,
-} from '../../authentication/domain/person-permissions.js';
+import { intersectPermittedAndRequestedOrgas, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderMerkmalEntity } from '../../service-provider/repo/service-provider-merkmal.entity.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
@@ -40,6 +36,7 @@ import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-service-providers.specification.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
     const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
@@ -165,7 +162,7 @@ export class RolleRepo {
 
     public async findByIdAuthorized(
         rolleId: RolleID,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Result<Rolle<true>, DomainError>> {
         const rolle: Option<Rolle<true>> = await this.findById(rolleId);
         if (!rolle) {
@@ -306,7 +303,7 @@ export class RolleRepo {
     }
 
     public async findRollenAuthorized(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         includeTechnische: boolean,
         searchStr?: string,
         limit?: number,
@@ -435,7 +432,7 @@ export class RolleRepo {
         serviceProviderIds: string[],
         version: number,
         isAlreadyAssigned: boolean,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Rolle<true> | DomainError> {
         //Reference & Permissions
         const authorizedRoleResult: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
@@ -489,7 +486,7 @@ export class RolleRepo {
         return result;
     }
 
-    public async deleteAuthorized(id: RolleID, permissions: PersonPermissions): Promise<Option<DomainError>> {
+    public async deleteAuthorized(id: RolleID, permissions: IPersonPermissions): Promise<Option<DomainError>> {
         //Permissions
         const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
         if (!authorizedRole.ok) {

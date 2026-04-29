@@ -12,12 +12,13 @@ import { PersonenQueryParams } from './personen-query.param.js';
 import { Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonRepository } from '../persistence/person.repository.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @ApiTags('personen-frontend')
 @ApiBearerAuth()
@@ -44,7 +45,7 @@ export class PersonFrontendController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
     public async findPersons(
         @Query() queryParams: PersonenQueryParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<RawPagedResponse<PersonendatensatzResponse>> {
         // Find all organisations where user has permission
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(

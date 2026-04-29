@@ -4,7 +4,7 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { Err, Ok, UnionToResult } from '../../../shared/util/result.js';
 import { findAllowedRollen } from '../../../shared/util/rollen.helper.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -18,9 +18,11 @@ import { PersonenkontextWorkflowSharedKernel } from '../../personenkontext/domai
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontexteUpdate } from '../../personenkontext/domain/personenkontexte-update.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { EscalatedPermissionAtOrga } from '../../permission/escalated-person-permissions.js';
+import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
 
 export class LandesbediensteterWorkflowAggregate {
     public selectedOrganisationId?: string;
@@ -35,6 +37,7 @@ export class LandesbediensteterWorkflowAggregate {
         private readonly personRepo: PersonRepository,
         private readonly landesbediensteteSearchService: PersonLandesbediensteterSearchService,
         private readonly personenkontextWorkflowSharedKernel: PersonenkontextWorkflowSharedKernel,
+        private readonly escalatedPersonPermissionsFactory: EscalatedPersonPermissionsFactory,
     ) {}
 
     public static createNew(
@@ -45,6 +48,7 @@ export class LandesbediensteterWorkflowAggregate {
         personRepo: PersonRepository,
         landesbediensteteSearchService: PersonLandesbediensteterSearchService,
         personenkontextWorkflowSharedKernel: PersonenkontextWorkflowSharedKernel,
+        escalatedPersonPermissionsFactory: EscalatedPersonPermissionsFactory,
     ): LandesbediensteterWorkflowAggregate {
         return new LandesbediensteterWorkflowAggregate(
             rolleRepo,
@@ -54,6 +58,7 @@ export class LandesbediensteterWorkflowAggregate {
             personRepo,
             landesbediensteteSearchService,
             personenkontextWorkflowSharedKernel,
+            escalatedPersonPermissionsFactory,
         );
     }
 
@@ -65,7 +70,7 @@ export class LandesbediensteterWorkflowAggregate {
 
     // Finds all SSKs that the admin can see
     public async findAllSchulstrukturknoten(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         organisationName: string | undefined,
         organisationId?: string, // Add organisationId as an optional parameter
         limit?: number,
@@ -134,7 +139,7 @@ export class LandesbediensteterWorkflowAggregate {
     }
 
     public async findRollenForOrganisation(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         rolleName?: string,
         rollenIds?: string[],
         limit?: number,
@@ -157,7 +162,7 @@ export class LandesbediensteterWorkflowAggregate {
 
     // Verifies if the selected rolle and organisation can together be assigned to a kontext
     // Also verifies again if the organisationId is allowed to be assigned by the admin
-    public async canCommit(permissions: PersonPermissions): Promise<Result<void, DomainError>> {
+    public async canCommit(permissions: IPersonPermissions): Promise<Result<void, DomainError>> {
         if (this.selectedOrganisationId && this.selectedRolleIds && this.selectedRolleIds.length > 0) {
             // Check references for all selected roles concurrently
             const referenceCheckErrors: Option<DomainError>[] = await Promise.all(
@@ -223,21 +228,35 @@ export class LandesbediensteterWorkflowAggregate {
             return Err(new EntityNotFoundError('Person', personId));
         }
 
-        // Construct permissions
-        const permissionsOverride: IPersonPermissions = {
-            canModifyPerson: (id: string) => Promise.resolve(id === personId), // Grant permission for that user
-            hasSystemrechtAtOrganisation: permissions.hasSystemrechtAtOrganisation.bind(permissions), // Forward check to original permissions
-            hasSystemrechteAtOrganisation: permissions.hasSystemrechteAtOrganisation.bind(permissions), // Forward check to original permissions
-        };
-
         const existingPKs: DbiamPersonenkontextBodyParams[] = await this.personenkontextRepo.findByPerson(personId);
+
+        /* We must grant PERSONEN_VERWALTEN on the ROOT level instead of only on the existing kontexts
+
+        Reason:
+        EscalatedPermission.canModifyPerson is executed and it is possible that the Landesbedienstster has no kontexte in the database.
+
+        As a result, the caller would not be allowed to modify the person based on
+        school-level permissions alone, because there are no associated contexts to
+        validate against.
+
+        Granting PERSONEN_VERWALTEN on ROOT ensures the caller can modify the person
+        regardless of which contexts will be created afterward. */
+        const escalatedPermissions: IPersonPermissions = await this.escalatedPersonPermissionsFactory.fromPermissions(
+            permissions,
+            [
+                {
+                    orgaId: 'ROOT',
+                    systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
+                } satisfies EscalatedPermissionAtOrga,
+            ],
+        );
 
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             personId,
             lastModified,
             count,
             existingPKs.concat(newPersonenkontexte),
-            permissionsOverride,
+            escalatedPermissions,
             personalnummer,
         );
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
@@ -251,7 +270,7 @@ export class LandesbediensteterWorkflowAggregate {
     }
 
     public async checkPermissions(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         organisationId: string,
     ): Promise<Result<void, DomainError>> {
         // Check if logged in person has permission

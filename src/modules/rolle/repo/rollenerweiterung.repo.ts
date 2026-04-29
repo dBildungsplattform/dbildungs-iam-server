@@ -5,7 +5,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { RollenSystemRecht } from '../domain/systemrecht.js';
@@ -15,6 +15,7 @@ import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../spe
 import { NoRedundantRollenerweiterung } from '../specification/no-redundant-rollenerweiterung.specification.js';
 import { ServiceProviderVerfuegbarFuerRollenerweiterung } from '../specification/service-provider-verfuegbar-fuer-rollenerweiterung.specification.js';
 import { Err, Ok } from '../../../shared/util/result.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 type RollenerweiterungIds = {
     organisationId: OrganisationID;
@@ -77,7 +78,7 @@ export class RollenerweiterungRepo {
 
     public async createAuthorized(
         rollenerweiterung: Rollenerweiterung<false>,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Result<Rollenerweiterung<true>, DomainError>> {
         const permissionError: Option<MissingPermissionsError> = await this.checkPermissions(
             permissions,
@@ -117,7 +118,7 @@ export class RollenerweiterungRepo {
     }
 
     private async checkPermissions(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         organisationId: OrganisationID,
     ): Promise<Option<DomainError>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/index.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Personenkontext } from './personenkontext.js';
 import { PersonenkontextWorkflowFactory } from './personenkontext-workflow.factory.js';
 import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow.js';
@@ -10,9 +9,12 @@ import { PersonFactory } from '../../person/domain/person.factory.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
-import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
 import { DbiamCreatePersonenkontextBodyParams } from '../api/param/dbiam-create-personenkontext.body.params.js';
 import { OperationContext } from './personenkontext.enums.js';
+import { EscalatedPermissionAtOrga } from '../../permission/escalated-person-permissions.js';
+import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
+import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export type PersonPersonenkontext = {
     person: Person<true>;
@@ -26,10 +28,11 @@ export class PersonenkontextCreationService {
         private readonly personFactory: PersonFactory,
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
+        private readonly escalatedPersonPermissionsFactory: EscalatedPersonPermissionsFactory,
     ) {}
 
     public async createPersonWithPersonenkontexte(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         vorname: string,
         familienname: string,
         createPersonenkontexte: DbiamCreatePersonenkontextBodyParams[],
@@ -75,6 +78,30 @@ export class PersonenkontextCreationService {
             };
         }
 
+        /* We must grant PERSONEN_VERWALTEN on the ROOT level instead of only on the schools
+        of the newly created Personenkontexte.
+
+        Reason:
+        EscalatedPermission.canModifyPerson is executed *after* the person is persisted,
+        but *before* the Personenkontexte are persisted. At that point, the new person
+        has no contexts in the database yet.
+
+        As a result, the caller would not be allowed to modify the person based on
+        school-level permissions alone, because there are no associated contexts to
+        validate against.
+
+        Granting PERSONEN_VERWALTEN on ROOT ensures the caller can modify the person
+        regardless of which contexts will be created afterward. */
+        const permissionsToUse: IPersonPermissions = await this.escalatedPersonPermissionsFactory.fromPermissions(
+            permissions,
+            [
+                {
+                    orgaId: 'ROOT',
+                    systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
+                } satisfies EscalatedPermissionAtOrga,
+            ],
+        );
+
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             savedPersonOrError.id,
             new Date(),
@@ -85,7 +112,7 @@ export class PersonenkontextCreationService {
                 rolleId: createPersonenkontext.rolleId,
                 befristung,
             })),
-            new PermissionsOverride(permissions).grantPersonModifyPermission(savedPersonOrError.id),
+            permissionsToUse,
         );
 
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();

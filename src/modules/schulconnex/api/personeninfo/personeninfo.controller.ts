@@ -9,13 +9,13 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Permissions } from '../../../authentication/api/permissions.decorator.js';
-import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { PersonInfoResponseV1 } from '../personinfo/v1/person-info.response.v1.js';
 import { PersonenInfoService } from '../../domain/personeninfo/personeninfo.service.js';
 import { ExceedsLimitError } from '../../../../shared/error/exceeds-limit.error.js';
 import { ConfigService } from '@nestjs/config';
 import { SchulconnexConfig } from '../../../../shared/config/schulconnex.config.js';
+import { IPersonPermissions } from '../../../../shared/permissions/person-permissions.interface.js';
 import { SchulConnexAuthenticationDomainErrorFilter } from '../../error/schulconnex-authentication-domain-error-filter.js';
 import { SchulConnexSharedErrorFilter } from '../../error/schulconnex-shared-error-filter.js';
 import { SchulConnexValidationErrorFilter } from '../../error/schulconnex-validation-error.filter.js';
@@ -62,7 +62,7 @@ export class PersonenInfoController {
     @ApiUnauthorizedResponse({ description: 'person is not logged in.' })
     @ApiOkResponse({ description: 'Liste von Personeninformationen', type: PersonInfoResponseV1 })
     public async infoV1(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Headers('x-offset') offset: string,
         @Headers('x-limit') limit: string,
     ): Promise<PersonInfoResponseV1[]> {

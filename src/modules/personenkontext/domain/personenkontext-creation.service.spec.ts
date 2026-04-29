@@ -31,6 +31,8 @@ import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js
 import { MockedObject } from 'vitest';
 import { createPersonenkontexteUpdateMock } from '../../../../test/utils/workflow.mocks.js';
 import { Ok } from '../../../shared/util/result.js';
+import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
+import { EscalatedPersonPermissions } from '../../permission/escalated-person-permissions.js';
 
 describe('PersonenkontextCreationService', () => {
     let module: TestingModule;
@@ -42,6 +44,9 @@ describe('PersonenkontextCreationService', () => {
     let personFactoryMock: DeepMocked<PersonFactory>;
     let dbiamPersonenkontextFactoryMock: DeepMocked<DbiamPersonenkontextFactory>;
     let personenkontextWorkflowSharedKernel: DeepMocked<PersonenkontextWorkflowSharedKernel>;
+    const escalatedPersonPermissionsFactoryMock: DeepMocked<EscalatedPersonPermissionsFactory> = createMock(
+        EscalatedPersonPermissionsFactory,
+    );
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -85,8 +90,15 @@ describe('PersonenkontextCreationService', () => {
                     provide: PersonenkontextWorkflowSharedKernel,
                     useValue: createMock(PersonenkontextWorkflowSharedKernel),
                 },
+                {
+                    provide: EscalatedPersonPermissionsFactory,
+                    useValue: escalatedPersonPermissionsFactoryMock,
+                },
             ],
-        }).compile();
+        })
+            .overrideProvider(EscalatedPersonPermissionsFactory)
+            .useValue(escalatedPersonPermissionsFactoryMock)
+            .compile();
         sut = module.get(PersonenkontextCreationService);
         rolleRepoMock = module.get(RolleRepo);
         organisationRepositoryMock = module.get(OrganisationRepository);
@@ -95,6 +107,10 @@ describe('PersonenkontextCreationService', () => {
         personFactoryMock = module.get(PersonFactory);
         dbiamPersonenkontextFactoryMock = module.get(DbiamPersonenkontextFactory);
         personenkontextWorkflowSharedKernel = module.get(PersonenkontextWorkflowSharedKernel);
+
+        escalatedPersonPermissionsFactoryMock.fromPermissions.mockResolvedValue(
+            personpermissionsMock as unknown as EscalatedPersonPermissions,
+        );
     });
 
     afterAll(async () => {

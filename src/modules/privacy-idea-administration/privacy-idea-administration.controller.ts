@@ -29,7 +29,6 @@ import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-
 import { PersonUsername } from '../../shared/types/aggregate-ids.types.js';
 import { Permissions } from '../authentication/api/permissions.decorator.js';
 import { StepUpGuard } from '../authentication/api/steup-up.guard.js';
-import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { Person } from '../person/domain/person.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { AssignHardwareTokenBodyParams } from './api/assign-hardware-token.body.params.js';
@@ -43,6 +42,7 @@ import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './pri
 import { TokenInitBodyParams } from './token-init.body.params.js';
 import { TokenStateResponse } from './token-state.response.js';
 import { TokenVerifyBodyParams } from './token-verify.params.js';
+import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
 
 @UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
 @ApiTags('2FA')
@@ -66,7 +66,7 @@ export class PrivacyIdeaAdministrationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating a token.' })
     public async initializeSoftwareToken(
         @Body() params: TokenInitBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<string> {
         const selfService: boolean = params.personId === permissions.personFields.id;
         try {
@@ -102,7 +102,7 @@ export class PrivacyIdeaAdministrationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while retrieving token state.' })
     public async getTwoAuthState(
         @Query('personId') personId: string,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<TokenStateResponse> {
         const username: PersonUsername = await this.getUsernameIfAllowedOrSelf(personId, permissions);
         const piToken: PrivacyIdeaToken | undefined =
@@ -121,7 +121,7 @@ export class PrivacyIdeaAdministrationController {
     @UseGuards(StepUpGuard)
     public async resetToken(
         @Query('personId') personId: string,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<boolean> {
         const username: PersonUsername = await this.getUsernameIfAllowed(personId, permissions);
         try {
@@ -161,7 +161,7 @@ export class PrivacyIdeaAdministrationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while assigning a hardware token.' })
     public async assignHardwareToken(
         @Body() params: AssignHardwareTokenBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<AssignHardwareTokenResponse | undefined> {
         const username: PersonUsername = await this.getUsernameIfAllowed(params.userId, permissions);
         try {
@@ -209,7 +209,7 @@ export class PrivacyIdeaAdministrationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while verifying a token.' })
     public async verifyToken(
         @Body() params: TokenVerifyBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<void> {
         const username: PersonUsername = await this.getUsernameIfAllowedOrSelf(params.personId, permissions);
         try {
@@ -239,7 +239,7 @@ export class PrivacyIdeaAdministrationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting requirement information.' })
     public async requiresTwoFactorAuthentication(
         @Query('personId') personId: string,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<TokenRequiredResponse> {
         if (personId !== permissions.personFields.id) {
             await this.getUsernameIfAllowedOrSelf(personId, permissions);
@@ -249,7 +249,7 @@ export class PrivacyIdeaAdministrationController {
         return new TokenRequiredResponse(requires2fa);
     }
 
-    private async getUsernameIfAllowed(personId: string, permissions: PersonPermissions): Promise<string> {
+    private async getUsernameIfAllowed(personId: string, permissions: IPersonPermissions): Promise<string> {
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             personId,
             permissions,
@@ -265,7 +265,7 @@ export class PrivacyIdeaAdministrationController {
 
     private async getUsernameIfAllowedOrSelf(
         personId: string,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<PersonUsername> {
         if (personId === permissions.personFields.id) {
             const person: Option<Person<true>> = await this.personRepository.findById(personId);

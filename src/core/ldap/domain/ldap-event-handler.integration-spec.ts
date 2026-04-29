@@ -6,12 +6,7 @@ import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    DoFactory,
-} from '../../../../test/utils/index.js';
+import { DatabaseTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, DoFactory } from '../../../../test/utils/index.js';
 import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
@@ -40,6 +35,7 @@ import { LdapModule } from '../ldap.module.js';
 import { LdapClientService, PersonData } from './ldap-client.service.js';
 import { LdapEventHandler } from './ldap-event-handler.js';
 import { LdapEntityType } from './ldap.types.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('LdapEventHandler', () => {
     let app: INestApplication;
@@ -54,7 +50,7 @@ describe('LdapEventHandler', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), LdapModule],
+            imports: [CommonTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), LdapModule],
             providers: [
                 {
                     provide: APP_PIPE,

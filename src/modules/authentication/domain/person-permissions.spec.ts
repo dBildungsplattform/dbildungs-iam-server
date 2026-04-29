@@ -24,6 +24,7 @@ import {
     PersonFields,
     PersonPermissions,
 } from './person-permissions.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 describe('PersonPermissions', () => {
     let module: TestingModule;
@@ -115,7 +116,7 @@ describe('PersonPermissions', () => {
                 const person: Person<true> = DoFactory.createPerson(true);
                 const personenkontexte: Personenkontext<true>[] = [createPersonenkontext()];
                 dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
-                const personPermissions: PersonPermissions = new PersonPermissions(
+                const personPermissions: IPersonPermissions = new PersonPermissions(
                     dbiamPersonenkontextRepoMock,
                     organisationRepoMock,
                     rolleRepoMock,
@@ -146,7 +147,7 @@ describe('PersonPermissions', () => {
             );
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -181,7 +182,7 @@ describe('PersonPermissions', () => {
                 DoFactory.createOrganisation(true, { id: '2' }),
             ]);
 
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -217,7 +218,7 @@ describe('PersonPermissions', () => {
                 new Map<string, Rolle<true>>([['1', DoFactory.createRolle(true, { hasSystemRecht: () => true })]]),
             );
 
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -255,7 +256,7 @@ describe('PersonPermissions', () => {
             rolle.systemrechte = [RollenSystemRecht.PERSONEN_LESEN];
             rolleRepoMock.findByIds.mockResolvedValueOnce(new Map<string, Rolle<true>>([['1', rolle]]));
 
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -345,7 +346,7 @@ describe('PersonPermissions', () => {
             );
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -374,7 +375,7 @@ describe('PersonPermissions', () => {
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -405,7 +406,7 @@ describe('PersonPermissions', () => {
             );
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -434,7 +435,7 @@ describe('PersonPermissions', () => {
                 undefined,
                 faker.string.uuid(),
             );
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -459,7 +460,7 @@ describe('PersonPermissions', () => {
                 undefined,
                 faker.string.uuid(),
             );
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -485,7 +486,7 @@ describe('PersonPermissions', () => {
                 undefined,
                 faker.string.uuid(),
             );
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -506,7 +507,7 @@ describe('PersonPermissions', () => {
             organisationRepoMock.findRootDirectChildren.mockResolvedValueOnce([oeffentlich, undefined]);
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -532,7 +533,7 @@ describe('PersonPermissions', () => {
             organisationRepoMock.findRootDirectChildren.mockResolvedValueOnce([oeffentlich, undefined]);
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -553,7 +554,7 @@ describe('PersonPermissions', () => {
             const person: Person<true> = DoFactory.createPerson(true);
             organisationRepoMock.findRootDirectChildren.mockResolvedValueOnce([undefined, undefined]);
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -574,7 +575,7 @@ describe('PersonPermissions', () => {
             const person: Person<true> = DoFactory.createPerson(true);
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -595,7 +596,7 @@ describe('PersonPermissions', () => {
             const person: Person<true> = DoFactory.createPerson(true);
             dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
@@ -615,7 +616,7 @@ describe('PersonPermissions', () => {
         it('should return false if organisation type is not KLASSE or SCHULE', async () => {
             const person: Person<true> = DoFactory.createPerson(true);
 
-            const personPermissions: PersonPermissions = new PersonPermissions(
+            const personPermissions: IPersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,

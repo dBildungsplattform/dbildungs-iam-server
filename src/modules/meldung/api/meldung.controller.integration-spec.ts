@@ -1,8 +1,6 @@
 import { MockedObject, vi } from 'vitest';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { MikroORM } from '@mikro-orm/core';
@@ -24,6 +22,7 @@ import { ValidationExceptionFilter } from '../../../shared/filter/validation-exc
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('Meldung Controller', () => {
     let module: TestingModule;
@@ -31,12 +30,7 @@ describe('Meldung Controller', () => {
     let meldungRepo: MockedObject<MeldungRepo>;
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                ConfigTestModule,
-                LoggingTestModule,
-                MeldungModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-            ],
+            imports: [CommonTestModule, MeldungModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 MeldungController,
                 MeldungRepo,

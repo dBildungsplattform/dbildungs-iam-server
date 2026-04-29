@@ -7,39 +7,39 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 
-import {
-    createAuthInterceptorMock,
-    createOidcClientMock,
-    createPersonPermissionsMock,
-} from '../../../../test/utils/auth.mock.js';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
-import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
 import { RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
-import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderEntity } from '../repo/service-provider.entity.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
+import {
+    createAuthInterceptorMock,
+    createOidcClientMock,
+    createPersonPermissionsMock,
+} from '../../../../test/utils/auth.mock.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 
 describe('ServiceProvider API', () => {
@@ -58,7 +58,7 @@ describe('ServiceProvider API', () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ServiceProviderApiModule,
-                ConfigTestModule,
+                CommonTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],
             providers: [

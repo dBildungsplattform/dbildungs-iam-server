@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PersonPermissions } from '../domain/person-permissions.js';
 import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 import { StepUpLevel } from '../passport/oidc.strategy.js';
 import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export type UserinfoExtension = {
     password_updated_at?: Date;
@@ -70,7 +70,7 @@ export class UserinfoResponse {
     public timeLimits: PersonTimeLimitInfoResponse[];
 
     public constructor(
-        info: PersonPermissions,
+        info: IPersonPermissions,
         personenkontexte: PersonenkontextRolleFieldsResponse[],
         acr: StepUpLevel,
         timeLimits: PersonTimeLimitInfoResponse[],
