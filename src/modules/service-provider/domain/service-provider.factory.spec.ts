@@ -1,11 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ServiceProviderKategorie,
-    ServiceProviderMerkmal,
-    ServiceProviderSystem,
-    ServiceProviderTarget,
-} from './service-provider.enum.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { expectErrResult, expectOkResult } from '../../../../test/utils/test-types.js';
+import { LogoOrLogoIdError } from './errors/logo-or-logo-id.error.js';
 import { ServiceProviderFactory } from './service-provider.factory.js';
 import { ServiceProvider } from './service-provider.js';
 
@@ -30,59 +27,111 @@ describe('ServiceProviderFactory', () => {
     });
 
     describe('construct', () => {
+        const example: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+
         describe('when construct is called on factory', () => {
             it('should return new instance', () => {
-                const name: string = faker.string.alpha();
-                const target: ServiceProviderTarget = faker.helpers.enumValue(ServiceProviderTarget);
-                const url: string = faker.internet.url();
-                const kategorie: ServiceProviderKategorie = faker.helpers.enumValue(ServiceProviderKategorie);
-                const ssk: string = faker.string.uuid();
-                const created: Date = faker.date.past();
-                const updated: Date = faker.date.recent();
-                const id: string = faker.string.uuid();
-                const keycloakGroup: string = faker.string.alpha();
-                const keycloakRole: string = faker.string.alpha();
-                const externalSystem: ServiceProviderSystem = faker.helpers.enumValue(ServiceProviderSystem);
-                const vidisAngebotId: string = faker.string.numeric();
-                const merkmale: ServiceProviderMerkmal[] = [faker.helpers.enumValue(ServiceProviderMerkmal)];
-                const example: ServiceProvider<true> = {
-                    id: id,
-                    createdAt: created,
-                    updatedAt: updated,
-                    name: name,
-                    target: target,
-                    url: url,
-                    kategorie: kategorie,
-                    providedOnSchulstrukturknoten: ssk,
-                    logo: undefined,
-                    logoMimeType: undefined,
-                    keycloakGroup: keycloakGroup,
-                    keycloakRole: keycloakRole,
-                    externalSystem: externalSystem,
-                    requires2fa: false,
-                    vidisAngebotId: vidisAngebotId,
-                    merkmale,
-                };
-                const serviceProvider: ServiceProvider<true> = sut.construct(
-                    id,
-                    created,
-                    updated,
-                    name,
-                    target,
-                    url,
-                    kategorie,
-                    ssk,
-                    undefined,
-                    undefined,
-                    keycloakGroup,
-                    keycloakRole,
-                    externalSystem,
-                    false,
-                    vidisAngebotId,
-                    merkmale,
+                const serviceProvider: Result<ServiceProvider<true>, LogoOrLogoIdError> = sut.construct(
+                    example.id,
+                    example.createdAt,
+                    example.updatedAt,
+                    example.name,
+                    example.target,
+                    example.url,
+                    example.kategorie,
+                    example.providedOnSchulstrukturknoten,
+                    example.logoId,
+                    example.logo,
+                    example.logoMimeType,
+                    example.keycloakGroup,
+                    example.keycloakRole,
+                    example.externalSystem,
+                    example.requires2fa,
+                    example.vidisAngebotId,
+                    example.merkmale,
                 );
+                expectOkResult(serviceProvider);
+                expect(serviceProvider.value).toEqual(example);
+            });
+        });
 
-                expect(serviceProvider).toEqual(example);
+        describe('when logo and logoId are provided', () => {
+            it('should return an error', () => {
+                const serviceProvider: Result<ServiceProvider<true>, LogoOrLogoIdError> = sut.construct(
+                    example.id,
+                    example.createdAt,
+                    example.updatedAt,
+                    example.name,
+                    example.target,
+                    example.url,
+                    example.kategorie,
+                    example.providedOnSchulstrukturknoten,
+                    faker.number.int({ min: 0, max: 1000 }),
+                    example.logo,
+                    example.logoMimeType,
+                    example.keycloakGroup,
+                    example.keycloakRole,
+                    example.externalSystem,
+                    example.requires2fa,
+                    example.vidisAngebotId,
+                    example.merkmale,
+                );
+                expectErrResult(serviceProvider);
+                expect(serviceProvider.error).toBeInstanceOf(LogoOrLogoIdError);
+            });
+        });
+    });
+
+    describe('createNew', () => {
+        const example: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+            id: undefined,
+            createdAt: undefined,
+            updatedAt: undefined,
+        });
+
+        describe('when createNew is called on factory', () => {
+            it('should return new instance', () => {
+                const serviceProvider: Result<ServiceProvider<false>, LogoOrLogoIdError> = sut.createNew(
+                    example.name,
+                    example.target,
+                    example.url,
+                    example.kategorie,
+                    example.providedOnSchulstrukturknoten,
+                    example.logoId,
+                    example.logo,
+                    example.logoMimeType,
+                    example.keycloakGroup,
+                    example.keycloakRole,
+                    example.externalSystem,
+                    example.requires2fa,
+                    example.vidisAngebotId,
+                    example.merkmale,
+                );
+                expectOkResult(serviceProvider);
+                expect(serviceProvider.value).toEqual(example);
+            });
+        });
+
+        describe('when logo and logoId are provided', () => {
+            it('should return an error', () => {
+                const serviceProvider: Result<ServiceProvider<false>, LogoOrLogoIdError> = sut.createNew(
+                    example.name,
+                    example.target,
+                    example.url,
+                    example.kategorie,
+                    example.providedOnSchulstrukturknoten,
+                    faker.number.int({ min: 0, max: 1000 }),
+                    example.logo,
+                    example.logoMimeType,
+                    example.keycloakGroup,
+                    example.keycloakRole,
+                    example.externalSystem,
+                    example.requires2fa,
+                    example.vidisAngebotId,
+                    example.merkmale,
+                );
+                expectErrResult(serviceProvider);
+                expect(serviceProvider.error).toBeInstanceOf(LogoOrLogoIdError);
             });
         });
     });

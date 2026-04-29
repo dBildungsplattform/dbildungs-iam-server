@@ -8,7 +8,6 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { VidisConfig } from '../../../shared/config/vidis.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
@@ -29,6 +28,7 @@ import { OrganisationServiceProviderRepo } from '../repo/organisation-service-pr
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AttachedRollenError } from './errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
+import { LogoOrLogoIdError } from './errors/logo-or-logo-id.error.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
@@ -374,6 +374,7 @@ export class ServiceProviderService {
                         angebot.angebotLink,
                         existingServiceProvider.kategorie,
                         schulstrukturknoten,
+                        existingServiceProvider.logoId,
                         Buffer.from(angebot.angebotLogo, 'base64'),
                         angebotLogoMediaType,
                         vidisKeycloakGroup,
@@ -405,6 +406,7 @@ export class ServiceProviderService {
                         angebot.angebotLink,
                         ServiceProviderKategorie.UNTERRICHT,
                         schulstrukturknoten,
+                        undefined,
                         Buffer.from(angebot.angebotLogo, 'base64'),
                         angebotLogoMediaType,
                         vidisKeycloakGroup,
@@ -469,28 +471,17 @@ export class ServiceProviderService {
         angebotId: ServiceProviderID,
         updateServiceProviderBodyParams: UpdateServiceProviderBodyParams,
     ): Promise<Result<ServiceProvider<true>, DomainError>> {
-        if (!updateServiceProviderBodyParams.name && !updateServiceProviderBodyParams.url) {
-            return {
-                ok: false,
-                error: new MissingAttributeError(
-                    'At least one of the following parameters must be provided: name, url',
-                ),
-            };
-        }
         const existingServiceProvider: Option<ServiceProvider<true>> =
             await this.serviceProviderRepo.findById(angebotId);
         if (!existingServiceProvider) {
-            throw new EntityNotFoundError();
+            return Err(new EntityNotFoundError());
         }
 
-        if (updateServiceProviderBodyParams.name) {
-            existingServiceProvider.name = updateServiceProviderBodyParams.name;
-        }
-        if (updateServiceProviderBodyParams.url) {
-            existingServiceProvider.url = updateServiceProviderBodyParams.url;
-        }
-        if (updateServiceProviderBodyParams.kategorie) {
-            existingServiceProvider.kategorie = updateServiceProviderBodyParams.kategorie;
+        const updateError: Option<LogoOrLogoIdError> = existingServiceProvider.updateWithSafeFields(
+            updateServiceProviderBodyParams,
+        );
+        if (updateError) {
+            return Err(updateError);
         }
 
         const updatedServiceProvider: Promise<Result<ServiceProvider<true>, DomainError>> =

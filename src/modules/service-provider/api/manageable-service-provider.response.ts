@@ -26,6 +26,9 @@ export class ManageableServiceProviderResponse {
     @ApiProperty({ enum: ServiceProviderKategorie, enumName: ServiceProviderKategorieTypName })
     public kategorie: ServiceProviderKategorie;
 
+    @ApiProperty({ description: 'Optional logoId for use with standard logos' })
+    public logoId?: number;
+
     @ApiProperty()
     public requires2fa: boolean;
 
@@ -62,6 +65,7 @@ export class ManageableServiceProviderResponse {
             kennung: organisation.kennung,
         };
         this.kategorie = serviceProvider.kategorie;
+        this.logoId = serviceProvider.logoId;
         this.requires2fa = serviceProvider.requires2fa;
         this.merkmale = serviceProvider.merkmale;
         this.url = serviceProvider.url;

@@ -546,6 +546,7 @@ describe('Provider Controller Test', () => {
                                 rolle: DoFactory.createRolle(true),
                             },
                         ],
+                        hasSomeVerwaltenPermission: true,
                     }),
                 );
 
@@ -608,6 +609,7 @@ describe('Provider Controller Test', () => {
                             rolle,
                         },
                     ],
+                    hasSomeVerwaltenPermission: true,
                 },
             ];
 
@@ -648,6 +650,7 @@ describe('Provider Controller Test', () => {
                     rollen: [DoFactory.createRolle(true)],
                     rollenerweiterungen: [DoFactory.createRollenerweiterung(true)],
                     // rollenerweiterungenWithName is undefined (not included)
+                    hasSomeVerwaltenPermission: true,
                 },
             ];
 
@@ -678,6 +681,7 @@ describe('Provider Controller Test', () => {
                 target: ServiceProviderTarget.EMAIL,
                 url: faker.internet.url(),
                 kategorie: ServiceProviderKategorie.EMAIL,
+                logoId: faker.number.int(),
                 logoBase64: tinyPngBase64,
                 requires2fa: false,
                 vidisAngebotId: undefined,
@@ -704,6 +708,7 @@ describe('Provider Controller Test', () => {
                 body.url,
                 body.kategorie,
                 body.organisationId,
+                body.logoId,
                 Buffer.from(tinyPngBase64, 'base64'),
                 undefined,
                 undefined,
@@ -724,6 +729,7 @@ describe('Provider Controller Test', () => {
                 target: ServiceProviderTarget.EMAIL,
                 url: faker.internet.url(),
                 kategorie: ServiceProviderKategorie.EMAIL,
+                logoId: undefined,
                 logoBase64: undefined,
                 requires2fa: false,
                 vidisAngebotId: undefined,
@@ -750,6 +756,7 @@ describe('Provider Controller Test', () => {
                 body.url,
                 body.kategorie,
                 body.organisationId,
+                undefined,
                 undefined,
                 undefined,
                 undefined,

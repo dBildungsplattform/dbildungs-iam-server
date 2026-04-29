@@ -26,6 +26,9 @@ export class ServiceProviderResponse {
     @ApiProperty({ enum: ServiceProviderKategorie, enumName: ServiceProviderKategorieTypName })
     public kategorie: ServiceProviderKategorie;
 
+    @ApiProperty({ description: 'Optional logoId for use with standard logos' })
+    public logoId?: number;
+
     @ApiProperty()
     public hasLogo: boolean;
 
@@ -41,6 +44,7 @@ export class ServiceProviderResponse {
         this.target = serviceProvider.target;
         this.url = serviceProvider.url;
         this.kategorie = serviceProvider.kategorie;
+        this.logoId = serviceProvider.logoId;
         this.hasLogo = !!serviceProvider.logoMimeType; // serviceProvider.logo might not be loaded, so just check the mime-type
         this.requires2fa = serviceProvider.requires2fa;
         this.merkmale = serviceProvider.merkmale;

@@ -2936,26 +2936,6 @@
       "schema": "public",
       "indexes": [
         {
-          "columnNames": [
-            "keycloak_user_id"
-          ],
-          "composite": false,
-          "keyName": "person_keycloak_user_id_unique",
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "columnNames": [
-            "username"
-          ],
-          "composite": false,
-          "keyName": "person_username_unique",
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
           "keyName": "person_keycloak_user_id_unique",
           "columnNames": [
             "keycloak_user_id"
@@ -6149,6 +6129,15 @@
           ],
           "mappedType": "enum"
         },
+        "logo_id": {
+          "name": "logo_id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        },
         "logo": {
           "name": "logo",
           "type": "bytea",
@@ -6233,7 +6222,13 @@
           "unique": true
         }
       ],
-      "checks": [],
+      "checks": [
+        {
+          "name": "logo_or_logo_id_consistency",
+          "expression": "(logo_id IS NULL AND logo IS NULL) OR (logo_id IS NULL AND logo IS NOT NULL) OR (logo_id IS NOT NULL AND logo IS NULL)",
+          "definition": "check (((logo_id IS NULL AND logo IS NULL) OR (logo_id IS NULL AND logo IS NOT NULL) OR (logo_id IS NOT NULL AND logo IS NULL)))"
+        }
+      ],
       "foreignKeys": {},
       "nativeEnums": {
         "db_seed_status_enum": {

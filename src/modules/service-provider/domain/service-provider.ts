@@ -1,3 +1,5 @@
+import { assignSameKey } from '../../../shared/util/object-utils.js';
+import { LogoOrLogoIdError } from './errors/logo-or-logo-id.error.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
@@ -6,6 +8,13 @@ import {
 } from './service-provider.enum.js';
 
 export class ServiceProvider<WasPersisted extends boolean> {
+    protected static readonly SAFE_UPDATE_FIELDS: (keyof ServiceProvider<false>)[] = [
+        'name',
+        'url',
+        'kategorie',
+        'logoId',
+    ];
+
     protected constructor(
         public id: Persisted<string, WasPersisted>,
         public createdAt: Persisted<Date, WasPersisted>,
@@ -15,6 +24,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         public url: string | undefined,
         public kategorie: ServiceProviderKategorie,
         public providedOnSchulstrukturknoten: string,
+        public logoId: number | undefined,
         public logo: Buffer | undefined,
         public logoMimeType: string | undefined,
         public keycloakGroup: string | undefined,
@@ -34,6 +44,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         url: string | undefined,
         kategorie: ServiceProviderKategorie,
         providedOnSchulstrukturknoten: string,
+        logoId: number | undefined,
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
         keycloakGroup: string | undefined,
@@ -52,6 +63,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
             url,
             kategorie,
             providedOnSchulstrukturknoten,
+            logoId,
             logo,
             logoMimeType,
             keycloakGroup,
@@ -69,6 +81,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         url: string | undefined,
         kategorie: ServiceProviderKategorie,
         providedOnSchulstrukturknoten: string,
+        logoId: number | undefined,
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
         keycloakGroup: string | undefined,
@@ -87,6 +100,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
             url,
             kategorie,
             providedOnSchulstrukturknoten,
+            logoId,
             logo,
             logoMimeType,
             keycloakGroup,
@@ -96,5 +110,17 @@ export class ServiceProvider<WasPersisted extends boolean> {
             vidisAngebotId,
             merkmale,
         );
+    }
+
+    public updateWithSafeFields(update: Partial<ServiceProvider<boolean>>): Option<LogoOrLogoIdError> {
+        if (update.logoId !== undefined && this.logo !== undefined) {
+            return new LogoOrLogoIdError('Cannot update logoId, if there already is a logo');
+        }
+        for (const field of ServiceProvider.SAFE_UPDATE_FIELDS) {
+            if (update[field] !== undefined) {
+                assignSameKey(this, update, field);
+            }
+        }
+        return;
     }
 }

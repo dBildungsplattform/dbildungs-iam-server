@@ -42,6 +42,7 @@ import { RollenerweiterungFile } from '../file/rollenerweiterung-file.js';
 import { Rollenerweiterung } from '../../../modules/rolle/domain/rollenerweiterung.js';
 import { RollenerweiterungFactory } from '../../../modules/rolle/domain/rollenerweiterung.factory.js';
 import { RollenerweiterungRepo } from '../../../modules/rolle/repo/rollenerweiterung.repo.js';
+import { LogoOrLogoIdError } from '../../../modules/service-provider/domain/errors/logo-or-logo-id.error.js';
 
 @Injectable()
 export class DbSeedService {
@@ -238,12 +239,16 @@ export class DbSeedService {
             const referencedOrga: Organisation<true> = await this.getReferencedOrganisation(
                 file.providedOnSchulstrukturknoten,
             );
-            const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
+            const serviceProvider: Result<
+                ServiceProvider<false>,
+                LogoOrLogoIdError
+            > = this.serviceProviderFactory.createNew(
                 file.name,
                 file.target,
                 file.url,
                 file.kategorie,
                 referencedOrga.id,
+                file.logoId,
                 file.logoBase64 ? Buffer.from(file.logoBase64, 'base64') : undefined,
                 file.logoMimeType,
                 file.keycloakGroup,
@@ -253,12 +258,17 @@ export class DbSeedService {
                 file.vidisAngebotId,
                 file.merkmale ?? [],
             );
+            if (!serviceProvider.ok) {
+                this.logger.error('Could not create ServiceProvider: ' + JSON.stringify(serviceProvider.error));
+                continue;
+            }
             if (file.overrideId) {
-                serviceProvider.id = this.getValidUuidOrUndefined(file.overrideId);
+                serviceProvider.value.id = this.getValidUuidOrUndefined(file.overrideId);
             }
 
-            const persistedServiceProvider: ServiceProvider<true> =
-                await this.serviceProviderRepo.createUnsafe(serviceProvider);
+            const persistedServiceProvider: ServiceProvider<true> = await this.serviceProviderRepo.createUnsafe(
+                serviceProvider.value,
+            );
             if (persistedServiceProvider && file.id != null) {
                 const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
                     ReferencedEntityType.SERVICE_PROVIDER,
@@ -268,7 +278,7 @@ export class DbSeedService {
                 await this.dbSeedReferenceRepo.create(dbSeedReference);
             } else {
                 this.logger.error('ServiceProvider without ID thus not referenceable:');
-                this.logger.error(JSON.stringify(serviceProvider));
+                this.logger.error(JSON.stringify(serviceProvider.value));
             }
         }
         this.logger.info(`Insert ${files.length} entities of type ServiceProvider`);

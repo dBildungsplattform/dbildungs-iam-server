@@ -70,6 +70,7 @@ import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweit
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
+import { LogoOrLogoIdError } from '../domain/errors/logo-or-logo-id.error.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -362,12 +363,16 @@ export class ProviderController {
         // Convert base64 to Buffer (if provided)
         const logoBuffer: Buffer | undefined = body.logoBase64 ? Buffer.from(body.logoBase64, 'base64') : undefined;
 
-        const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
+        const serviceProvider: Result<
+            ServiceProvider<false>,
+            LogoOrLogoIdError
+        > = this.serviceProviderFactory.createNew(
             body.name,
             ServiceProviderTarget.URL,
             body.url,
             body.kategorie,
             body.organisationId,
+            body.logoId,
             logoBuffer,
             body.logoMimeType,
             undefined, // keycloakGroup
@@ -377,10 +382,13 @@ export class ProviderController {
             undefined, // vidisAngebotId
             body.merkmale,
         );
+        if (!serviceProvider.ok) {
+            throw serviceProvider.error;
+        }
 
         const result: Result<ServiceProvider<true>, DomainError> = await this.serviceProviderRepo.create(
             permissions,
-            serviceProvider,
+            serviceProvider.value,
         );
 
         if (!result.ok) {

@@ -44,6 +44,8 @@ import {
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { LogoOrLogoIdError } from './errors/logo-or-logo-id.error.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -105,6 +107,7 @@ const mockExistingVidisServiceProviderContainedInVidisAngebote: ServiceProvider<
     url: 'https://login-stage.divomath.de/idp-login?idp=vidis&vidis_idp_hint=vidis-idp',
     kategorie: ServiceProviderKategorie.HINWEISE,
     providedOnSchulstrukturknoten: 'dummy-UUID',
+    logoId: undefined,
     logo: Buffer.from('dummy-logo-string', 'base64'),
     logoMimeType: 'image/svg+xml',
     keycloakGroup: 'VIDIS-service',
@@ -124,6 +127,7 @@ const mockExistingVidisServiceProviderNotInVidisAngebote: ServiceProvider<true> 
     url: 'https://dummy-url-for-VIDIS-ServiceProvider.vidis.dummy.org',
     kategorie: ServiceProviderKategorie.HINWEISE,
     providedOnSchulstrukturknoten: 'dummy-UUID',
+    logoId: undefined,
     logo: Buffer.from('dummy-logo-string', 'base64'),
     logoMimeType: 'image/svg+xml',
     keycloakGroup: 'VIDIS-service',
@@ -980,7 +984,11 @@ describe('ServiceProviderService', () => {
 
         beforeEach(() => {
             permissions = createMock(PersonPermissions);
-            existingServiceProvider = DoFactory.createServiceProvider(true);
+            existingServiceProvider = DoFactory.createServiceProvider(true, {
+                logo: undefined,
+                logoMimeType: undefined,
+                logoId: faker.number.int({ min: 0, max: 1000 }),
+            });
             serviceProviderRepo.findById.mockResolvedValue(existingServiceProvider);
             serviceProviderRepo.update.mockResolvedValue(Ok(existingServiceProvider));
         });
@@ -995,6 +1003,7 @@ describe('ServiceProviderService', () => {
                 name: 'New Name',
                 url: 'https://new-url.com',
                 kategorie: ServiceProviderKategorie.EMAIL,
+                logoId: faker.number.int(),
             };
 
             const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
@@ -1010,17 +1019,20 @@ describe('ServiceProviderService', () => {
                     name: updateData.name,
                     url: updateData.url,
                     kategorie: updateData.kategorie,
+                    logoId: updateData.logoId,
                 }),
             );
             expectOkResult(result);
             expect(result.value).toEqual(existingServiceProvider);
         });
 
-        it('should update service provider name only', async () => {
+        it.each([
+            ['name', { name: 'New Name' }],
+            ['url', { url: 'https://new-url.com' }],
+            ['kategorie', { kategorie: ServiceProviderKategorie.EMAIL }],
+            ['logoId', { logoId: faker.number.int() }],
+        ])('should update service provider %s only', async (_, updateData: UpdateServiceProviderBodyParams) => {
             const newAngebotId: string = faker.string.uuid();
-            const updateData: UpdateServiceProviderBodyParams = {
-                name: 'New Name',
-            };
 
             const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
                 permissions,
@@ -1034,61 +1046,42 @@ describe('ServiceProviderService', () => {
             expect(serviceProviderRepo.update).toHaveBeenCalledWith(
                 permissions,
                 expect.objectContaining({
-                    name: updateData.name,
-                    url: existingServiceProvider.url,
-                    kategorie: existingServiceProvider.kategorie,
+                    ...existingServiceProvider,
+                    ...updateData,
                 }),
             );
             expect(result.value).toEqual(existingServiceProvider);
-        });
-
-        it('should update service provider url only', async () => {
-            const newAngebotId: string = faker.string.uuid();
-            const updateData: UpdateServiceProviderBodyParams = {
-                url: 'https://new-url.com',
-            };
-
-            const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
-                permissions,
-                newAngebotId,
-                updateData,
-            );
-
-            expectOkResult(result);
-            expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId);
-            expect(serviceProviderRepo.update).toHaveBeenCalledWith(
-                permissions,
-                expect.objectContaining({
-                    name: existingServiceProvider.name,
-                    url: updateData.url,
-                    kategorie: existingServiceProvider.kategorie,
-                }),
-            );
-            expect(result.value).toEqual(existingServiceProvider);
-        });
-
-        it('should return error if no update data is provided', async () => {
-            const updateData: UpdateServiceProviderBodyParams = {};
-            const result: Result<ServiceProvider<true>, MissingAttributeError> = await service.updateServiceProvider(
-                permissions,
-                faker.string.uuid(),
-                updateData,
-            );
-            expect(serviceProviderRepo.findById).not.toHaveBeenCalled();
-            expect(serviceProviderRepo.update).not.toHaveBeenCalled();
-            expectErrResult(result);
-            expect(result.error).toBeInstanceOf(MissingAttributeError);
-            expect(result.error.message).toBe('At least one of the following parameters must be provided: name, url');
         });
 
         it('should return error if service provider does not exist', async () => {
             serviceProviderRepo.findById.mockResolvedValue(null);
 
             const updateData: UpdateServiceProviderBodyParams = { name: 'New Name' };
+            const updateResult: Result<ServiceProvider<true>, DomainError> = await service.updateServiceProvider(
+                permissions,
+                'nonexistent-id',
+                updateData,
+            );
 
-            await expect(
-                service.updateServiceProvider(permissions, 'nonexistent-id', updateData),
-            ).rejects.toBeInstanceOf(EntityNotFoundError);
+            expectErrResult(updateResult);
+            expect(updateResult.error).toBeInstanceOf(EntityNotFoundError);
+
+            expect(serviceProviderRepo.update).not.toHaveBeenCalled();
+        });
+
+        it('should return error if logo and logoId are both provided', async () => {
+            const existingServiceProviderWithLogo: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+            serviceProviderRepo.findById.mockResolvedValue(existingServiceProviderWithLogo);
+
+            const updateData: UpdateServiceProviderBodyParams = { logoId: faker.number.int({ min: 0, max: 1000 }) };
+            const updateResult: Result<ServiceProvider<true>, DomainError> = await service.updateServiceProvider(
+                permissions,
+                existingServiceProviderWithLogo.id,
+                updateData,
+            );
+
+            expectErrResult(updateResult);
+            expect(updateResult.error).toBeInstanceOf(LogoOrLogoIdError);
 
             expect(serviceProviderRepo.update).not.toHaveBeenCalled();
         });

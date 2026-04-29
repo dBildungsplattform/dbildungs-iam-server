@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
-import { IsBoolean, IsEnum, IsIn, IsOptional, IsUUID, MaxLength } from 'class-validator';
+import { IsBoolean, IsEnum, IsIn, IsInt, IsOptional, IsUUID, MaxLength } from 'class-validator';
 import { ALLOWED_LOGO_MIME_TYPES } from './allowed-mime-types.js';
 import { IsDIN91379AEXT } from '../../../shared/util/din-91379-validation.js';
 
@@ -24,7 +24,17 @@ export class CreateServiceProviderBodyParams {
 
     @ApiProperty({
         required: false,
-        description: 'Optional logo as base64-encoded string',
+        description:
+            'Optional logoId to use a standard logo. Only one of logoId or logoBase64 with logoMimeType can be provided, not both.',
+    })
+    @IsInt()
+    @IsOptional()
+    public logoId?: number;
+
+    @ApiProperty({
+        required: false,
+        description:
+            'Optional logo as base64-encoded string. Only one of logoId or logoBase64 with logoMimeType can be provided, not both.',
     })
     @IsOptional()
     public logoBase64?: string;

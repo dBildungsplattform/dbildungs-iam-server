@@ -1,4 +1,4 @@
-import { BlobType, Collection, Entity, Enum, OneToMany, Property } from '@mikro-orm/core';
+import { BlobType, Check, Collection, Entity, Enum, OneToMany, Property } from '@mikro-orm/core';
 
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import {
@@ -9,6 +9,11 @@ import {
 import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 
 @Entity({ tableName: 'service_provider' })
+@Check({
+    name: 'logo_or_logo_id_consistency',
+    expression:
+        '(logo_id IS NULL AND logo IS NULL) OR (logo_id IS NULL AND logo IS NOT NULL) OR (logo_id IS NOT NULL AND logo IS NULL)',
+})
 export class ServiceProviderEntity extends TimestampedEntity {
     @Property()
     public name!: string;
@@ -34,6 +39,9 @@ export class ServiceProviderEntity extends TimestampedEntity {
         ],
     })
     public kategorie!: ServiceProviderKategorie;
+
+    @Property({ nullable: true, unsigned: true, columnType: 'int' })
+    public logoId?: number;
 
     @Property({ type: BlobType, nullable: true })
     public logo?: Buffer;

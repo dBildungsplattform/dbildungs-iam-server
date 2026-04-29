@@ -233,7 +233,7 @@ describe('ServiceProvider API', () => {
         });
     });
 
-    describe('/GET manageable service provider for organisation', () => {
+    describe('/GET manageable service providers for organisation', () => {
         let organisation: Organisation<true>;
         let serviceProvider: ServiceProvider<true>;
         let rolle: Rolle<true>;
@@ -277,7 +277,7 @@ describe('ServiceProvider API', () => {
             vi.restoreAllMocks();
         });
 
-        it('should return manageable service provider for organisation', async () => {
+        it('should return manageable service providers for organisation', async () => {
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/provider/manageable-by-organisation')
                 .query({ organisationId: organisation.id })
@@ -403,6 +403,7 @@ describe('ServiceProvider API', () => {
                     kennung: organisation.kennung!,
                 },
                 kategorie: serviceProvider.kategorie,
+                logoId: serviceProvider.logoId,
                 requires2fa: serviceProvider.requires2fa,
                 merkmale: serviceProvider.merkmale,
                 url: serviceProvider.url,
