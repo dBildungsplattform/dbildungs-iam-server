@@ -52,7 +52,10 @@ import { AttachedRollenError } from '../domain/errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from '../domain/errors/attached-rollenerweiterungen.error.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
-import { ManageableServiceProviderWithReferencedObjects } from '../domain/types.js';
+import {
+    ManageableServiceProviderDetailsWithReferencedObjects,
+    ManageableServiceProviderWithReferencedObjects,
+} from '../domain/types.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
@@ -258,7 +261,7 @@ export class ProviderController {
                         spWithData.organisation,
                         spWithData.rollen,
                         spWithData.rollenerweiterungenWithName ?? [],
-                        spWithData.isDeleteAuthorized,
+                        spWithData.hasSomeVerwaltenPermission,
                     ),
             ),
         });
@@ -307,7 +310,7 @@ export class ProviderController {
                         spWithData.organisation,
                         spWithData.rollen,
                         spWithData.rollenerweiterungenWithName ?? [],
-                        spWithData.isDeleteAuthorized,
+                        spWithData.hasSomeVerwaltenPermission,
                     ),
             ),
         });
@@ -326,7 +329,7 @@ export class ProviderController {
         @Permissions() permissions: IPersonPermissions,
         @Param() params: AngebotByIdParams,
     ): Promise<ManageableServiceProviderResponse> {
-        const serviceProviderWithOrganisationRollenAndErweiterungen: Option<ManageableServiceProviderWithReferencedObjects> =
+        const serviceProviderWithOrganisationRollenAndErweiterungen: Option<ManageableServiceProviderDetailsWithReferencedObjects> =
             await this.serviceProviderService.findManageableById(permissions, params.angebotId);
 
         if (!serviceProviderWithOrganisationRollenAndErweiterungen) {
@@ -338,6 +341,7 @@ export class ProviderController {
             serviceProviderWithOrganisationRollenAndErweiterungen.organisation,
             serviceProviderWithOrganisationRollenAndErweiterungen.rollen,
             serviceProviderWithOrganisationRollenAndErweiterungen.rollenerweiterungen.length > 0,
+            serviceProviderWithOrganisationRollenAndErweiterungen.relevantSystemrechte,
         );
     }
 
