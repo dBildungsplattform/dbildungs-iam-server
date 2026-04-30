@@ -8,10 +8,13 @@ import {
     ServiceProviderMerkmalTypName,
 } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
+import {
+    ManageableServiceProviderWithReferencedObjects,
+    RollenerweiterungForManageableServiceProvider,
+} from '../domain/types.js';
 import { OrganisationRefResponse } from './organisation-ref.response.js';
 import { RolleRefResponse } from './rolle-ref.response.js';
 import { RollenerweiterungForManageableServiceProviderResponse } from './RollenerweiterungForManageableServiceProviderResponse.js';
-import { RollenerweiterungForManageableServiceProvider } from '../domain/types.js';
 
 export class ManageableServiceProviderListEntryResponse {
     @ApiProperty()
@@ -63,5 +66,17 @@ export class ManageableServiceProviderListEntryResponse {
         );
         this.rollen = rollen.map((r: Rolle<true>) => ({ id: r.id, name: r.name }));
         this.hasSomeVerwaltenPermission = hasSomeVerwaltenPermission;
+    }
+
+    static fromManageableServiceProviderWithReferencedObjects(
+        manageableServiceProviderWithReferencedObjects: ManageableServiceProviderWithReferencedObjects,
+    ): ManageableServiceProviderListEntryResponse {
+        return new ManageableServiceProviderListEntryResponse(
+            manageableServiceProviderWithReferencedObjects.serviceProvider,
+            manageableServiceProviderWithReferencedObjects.organisation,
+            manageableServiceProviderWithReferencedObjects.rollen,
+            manageableServiceProviderWithReferencedObjects.rollenerweiterungenWithName ?? [],
+            manageableServiceProviderWithReferencedObjects.hasSomeVerwaltenPermission,
+        );
     }
 }

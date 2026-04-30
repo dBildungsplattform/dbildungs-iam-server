@@ -50,6 +50,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { AttachedRollenError } from '../domain/errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from '../domain/errors/attached-rollenerweiterungen.error.js';
+import { LogoOrLogoIdError } from '../domain/errors/logo-or-logo-id.error.js';
 import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProvider } from '../domain/service-provider.js';
@@ -70,7 +71,6 @@ import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweit
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
-import { LogoOrLogoIdError } from '../domain/errors/logo-or-logo-id.error.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -255,14 +255,7 @@ export class ProviderController {
             limit: params.limit ?? total,
             total,
             items: enrichedServiceProviders.map(
-                (spWithData: ManageableServiceProviderWithReferencedObjects) =>
-                    new ManageableServiceProviderListEntryResponse(
-                        spWithData.serviceProvider,
-                        spWithData.organisation,
-                        spWithData.rollen,
-                        spWithData.rollenerweiterungenWithName ?? [],
-                        spWithData.hasSomeVerwaltenPermission,
-                    ),
+                ManageableServiceProviderListEntryResponse.fromManageableServiceProviderWithReferencedObjects,
             ),
         });
     }
@@ -304,14 +297,7 @@ export class ProviderController {
             limit: params.limit ?? total,
             total,
             items: serviceProvidersWithRollenAndErweiterungen.map(
-                (spWithData: ManageableServiceProviderWithReferencedObjects) =>
-                    new ManageableServiceProviderListEntryResponse(
-                        spWithData.serviceProvider,
-                        spWithData.organisation,
-                        spWithData.rollen,
-                        spWithData.rollenerweiterungenWithName ?? [],
-                        spWithData.hasSomeVerwaltenPermission,
-                    ),
+                ManageableServiceProviderListEntryResponse.fromManageableServiceProviderWithReferencedObjects,
             ),
         });
     }
