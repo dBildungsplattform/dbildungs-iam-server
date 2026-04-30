@@ -530,7 +530,7 @@ export class PersonRepository {
 
         const email: Option<PersonEmailResponse> = this.emailResolverService.shouldUseEmailMicroservice()
             ? await this.emailResolverService.findEmailBySpshPerson(person.id)
-            : await this.emailRepo.getEmailAddressAndStatusForPerson(person);
+            : await this.emailRepo.getEmailAddressAndStatusForPerson(person); // maybe we only need the repo here
 
         if (person.username !== undefined) {
             this.eventRoutingLegacyKafkaService.publish(
