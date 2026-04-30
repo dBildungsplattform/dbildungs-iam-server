@@ -25,8 +25,9 @@ export class UpdateServiceProviderBodyParams {
 
     @ApiProperty({
         required: false,
+        nullable: true,
         description:
-            'Optional logoId to use a standard logo. Has to be an integer. Can not be provided, if the service provider already has a custom logo.',
+            'Optional logoId to use a standard logo. Has to be an integer. Can not be provided, if the service provider already has a custom logo. Null removes the logo.',
         maximum: Math.pow(2, 31) - 1,
         minimum: 1,
     })
@@ -34,5 +35,5 @@ export class UpdateServiceProviderBodyParams {
     @Min(1)
     @Max(Math.pow(2, 31) - 1)
     @IsOptional()
-    public logoId?: number;
+    public logoId?: number | null;
 }

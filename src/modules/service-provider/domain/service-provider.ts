@@ -7,13 +7,10 @@ import {
     ServiceProviderTarget,
 } from './service-provider.enum.js';
 
+type SafeUpdateFields = Pick<ServiceProvider<boolean>, 'name' | 'url' | 'kategorie' | 'logoId'>;
+
 export class ServiceProvider<WasPersisted extends boolean> {
-    protected static readonly SAFE_UPDATE_FIELDS: (keyof ServiceProvider<false>)[] = [
-        'name',
-        'url',
-        'kategorie',
-        'logoId',
-    ];
+    protected static readonly SAFE_UPDATE_FIELDS: (keyof SafeUpdateFields)[] = ['name', 'url', 'kategorie', 'logoId'];
 
     protected constructor(
         public id: Persisted<string, WasPersisted>,
@@ -112,12 +109,16 @@ export class ServiceProvider<WasPersisted extends boolean> {
         );
     }
 
-    public updateWithSafeFields(update: Partial<ServiceProvider<boolean>>): Option<LogoOrLogoIdError> {
-        if (update.logoId !== undefined && this.logo !== undefined) {
+    public updateWithSafeFields(
+        update: Partial<Record<keyof SafeUpdateFields, SafeUpdateFields[keyof SafeUpdateFields] | null>>,
+    ): Option<LogoOrLogoIdError> {
+        if (update.logoId && this.logo) {
             return new LogoOrLogoIdError('Cannot update logoId, if there already is a logo');
         }
         for (const field of ServiceProvider.SAFE_UPDATE_FIELDS) {
-            if (update[field] !== undefined) {
+            if (field === 'logoId' && update[field] === null) {
+                this.logoId = undefined;
+            } else if (update[field]) {
                 assignSameKey(this, update, field);
             }
         }
