@@ -259,8 +259,7 @@ export class DbSeedService {
                 file.merkmale ?? [],
             );
             if (!serviceProvider.ok) {
-                this.logger.error('Could not create ServiceProvider: ' + JSON.stringify(serviceProvider.error));
-                continue;
+                throw serviceProvider.error;
             }
             if (file.overrideId) {
                 serviceProvider.value.id = this.getValidUuidOrUndefined(file.overrideId);
