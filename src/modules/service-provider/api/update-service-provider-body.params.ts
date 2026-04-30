@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ServiceProviderKategorie } from '../domain/service-provider.enum.js';
-import { IsEnum, IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { IsDIN91379AEXT } from '../../../shared/util/din-91379-validation.js';
+import { ServiceProviderKategorie } from '../domain/service-provider.enum.js';
 
 export class UpdateServiceProviderBodyParams {
     @ApiProperty({ required: false })
@@ -26,9 +26,13 @@ export class UpdateServiceProviderBodyParams {
     @ApiProperty({
         required: false,
         description:
-            'Optional logoId to use a standard logo. Can not be provided, if the service provider already has a custom logo.',
+            'Optional logoId to use a standard logo. Has to be an integer. Can not be provided, if the service provider already has a custom logo.',
+        maximum: Math.pow(2, 31) - 1,
+        minimum: 1,
     })
     @IsInt()
+    @Min(1)
+    @Max(Math.pow(2, 31) - 1)
     @IsOptional()
     public logoId?: number;
 }
