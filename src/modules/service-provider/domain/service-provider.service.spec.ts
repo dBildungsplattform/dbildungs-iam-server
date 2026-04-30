@@ -8,8 +8,8 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { expectErrResult, expectOkResult } from '../../../../test/utils/test-types.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { OrganisationID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { Err, Ok } from '../../../shared/util/result.js';
@@ -31,12 +31,8 @@ import { DuplicateNameError } from '../specification/error/duplicate-name.error.
 import { ServiceProviderError } from '../specification/error/service-provider.error.js';
 import { AttachedRollenError } from './errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
-import {
-    ServiceProviderKategorie,
-    ServiceProviderMerkmal,
-    ServiceProviderSystem,
-    ServiceProviderTarget,
-} from './service-provider.enum.js';
+import { LogoOrLogoIdError } from './errors/logo-or-logo-id.error.js';
+import { ServiceProviderKategorie, ServiceProviderMerkmal, ServiceProviderTarget } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import { ServiceProviderService } from './service-provider.service.js';
 import {
@@ -44,8 +40,18 @@ import {
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { LogoOrLogoIdError } from './errors/logo-or-logo-id.error.js';
+
+const mockExistingVidisServiceProviderContainedInVidisAngebote: ServiceProvider<true> = DoFactory.createServiceProvider(
+    true,
+    {
+        vidisAngebotId: '7654321',
+        name: 'divomath VIDIS-Testsystem',
+        url: 'https://login-stage.divomath.de/idp-login?idp=vidis&vidis_idp_hint=vidis-idp',
+        kategorie: ServiceProviderKategorie.HINWEISE,
+        keycloakGroup: 'VIDIS-service',
+        keycloakRole: 'VIDIS-user',
+    },
+);
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -63,15 +69,15 @@ const mockVidisAngebote: VidisAngebot[] = [
         schoolActivations: ['DE-VIDIS-vidis_test_20202', 'DE-VIDIS-vidis_test_40404', 'DE-VIDIS-vidis_test_101010'],
     },
     {
-        angebotId: '7654321',
+        angebotId: mockExistingVidisServiceProviderContainedInVidisAngebote.vidisAngebotId!,
         angebotVersion: 1,
         angebotDescription:
             'divomath ist eine Lernumgebung für Mathematik, die insbesondere dem Prinzip der Verstehensorientierung folgt. Sie bietet Unterrichtseinheiten für die dritte bis sechste Jahrgangsstufe.',
-        angebotLink: 'https://login-stage.divomath.de/idp-login?idp=vidis&vidis_idp_hint=vidis-idp',
+        angebotLink: mockExistingVidisServiceProviderContainedInVidisAngebote.url!,
         // Mocked angebotLogo is base64 encoded string for a PNG
         angebotLogo:
             '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',
-        angebotTitle: 'divomath VIDIS-Testsystem',
+        angebotTitle: mockExistingVidisServiceProviderContainedInVidisAngebote.name,
         angebotLongTitle: 'digital und verstehensorientiert Mathematik lernen (Test)',
         educationProviderOrganizationName: 'divomath VIDIS-Testsystem',
         schoolActivations: ['DE-VIDIS-vidis_test_30303', 'DE-VIDIS-vidis_test_20202', 'DE-VIDIS-vidis_test_101010'],
@@ -98,45 +104,18 @@ const mockAllSchoolActivationsInVidisAngebote: string[] = mockVidisAngebote.redu
     [] as string[],
 );
 
-const mockExistingVidisServiceProviderContainedInVidisAngebote: ServiceProvider<true> = {
-    id: 'divomath VIDIS-Testsystem-dummy-UUID',
-    createdAt: new Date('2024-11-04 08:46:54.147+00'),
-    updatedAt: new Date('2024-11-04 08:46:54.147+00'),
-    name: 'divomath VIDIS-Testsystem',
-    target: ServiceProviderTarget.URL,
-    url: 'https://login-stage.divomath.de/idp-login?idp=vidis&vidis_idp_hint=vidis-idp',
-    kategorie: ServiceProviderKategorie.HINWEISE,
-    providedOnSchulstrukturknoten: 'dummy-UUID',
-    logoId: undefined,
-    logo: Buffer.from('dummy-logo-string', 'base64'),
-    logoMimeType: 'image/svg+xml',
-    keycloakGroup: 'VIDIS-service',
-    keycloakRole: 'VIDIS-user',
-    externalSystem: ServiceProviderSystem.NONE,
-    requires2fa: false,
-    vidisAngebotId: '7654321',
-    merkmale: [],
-};
-
-const mockExistingVidisServiceProviderNotInVidisAngebote: ServiceProvider<true> = {
-    id: 'dummy-VIDIS-ServiceProvider-2',
-    createdAt: new Date('2024-11-04 08:46:54.147+00'),
-    updatedAt: new Date('2024-11-04 08:46:54.147+00'),
-    name: 'existing-dummy-VIDIS-ServiceProvider-2',
-    target: ServiceProviderTarget.URL,
-    url: 'https://dummy-url-for-VIDIS-ServiceProvider.vidis.dummy.org',
-    kategorie: ServiceProviderKategorie.HINWEISE,
-    providedOnSchulstrukturknoten: 'dummy-UUID',
-    logoId: undefined,
-    logo: Buffer.from('dummy-logo-string', 'base64'),
-    logoMimeType: 'image/svg+xml',
-    keycloakGroup: 'VIDIS-service',
-    keycloakRole: 'VIDIS-user',
-    externalSystem: ServiceProviderSystem.NONE,
-    requires2fa: false,
-    vidisAngebotId: '9999999',
-    merkmale: [],
-};
+const mockExistingVidisServiceProviderNotInVidisAngebote: ServiceProvider<true> = DoFactory.createServiceProvider(
+    true,
+    {
+        name: 'existing-dummy-VIDIS-ServiceProvider-2',
+        target: ServiceProviderTarget.URL,
+        url: 'https://dummy-url-for-VIDIS-ServiceProvider.vidis.dummy.org',
+        kategorie: ServiceProviderKategorie.HINWEISE,
+        keycloakGroup: 'VIDIS-service',
+        keycloakRole: 'VIDIS-user',
+        vidisAngebotId: '9999999',
+    },
+);
 
 const mockExistingServiceProviders: ServiceProvider<true>[] = [
     mockExistingVidisServiceProviderContainedInVidisAngebote,
@@ -1031,27 +1010,30 @@ describe('ServiceProviderService', () => {
             ['url', { url: 'https://new-url.com' }],
             ['kategorie', { kategorie: ServiceProviderKategorie.EMAIL }],
             ['logoId', { logoId: faker.number.int() }],
-        ])('should update service provider %s only', async (_, updateData: UpdateServiceProviderBodyParams) => {
-            const newAngebotId: string = faker.string.uuid();
+        ] as [keyof UpdateServiceProviderBodyParams, UpdateServiceProviderBodyParams][])(
+            'should update service provider %s only',
+            async (_: keyof UpdateServiceProviderBodyParams, updateData: UpdateServiceProviderBodyParams) => {
+                const newAngebotId: string = faker.string.uuid();
 
-            const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
-                permissions,
-                newAngebotId,
-                updateData,
-            );
+                const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
+                    permissions,
+                    newAngebotId,
+                    updateData,
+                );
 
-            expectOkResult(result);
+                expectOkResult(result);
 
-            expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId);
-            expect(serviceProviderRepo.update).toHaveBeenCalledWith(
-                permissions,
-                expect.objectContaining({
-                    ...existingServiceProvider,
-                    ...updateData,
-                }),
-            );
-            expect(result.value).toEqual(existingServiceProvider);
-        });
+                expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId);
+                expect(serviceProviderRepo.update).toHaveBeenCalledWith(
+                    permissions,
+                    expect.objectContaining({
+                        ...existingServiceProvider,
+                        ...updateData,
+                    }),
+                );
+                expect(result.value).toEqual(existingServiceProvider);
+            },
+        );
 
         it('should return error if service provider does not exist', async () => {
             serviceProviderRepo.findById.mockResolvedValue(null);

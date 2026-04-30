@@ -394,7 +394,7 @@ describe('ServiceProvider API', () => {
             const body: ManageableServiceProviderResponse = response.body as ManageableServiceProviderResponse;
             expect(response.status).toBe(200);
 
-            expect(body).toEqual<ManageableServiceProviderResponse>({
+            expect(body).toEqual({
                 id: serviceProvider.id,
                 name: serviceProvider.name,
                 administrationsebene: {
@@ -403,7 +403,7 @@ describe('ServiceProvider API', () => {
                     kennung: organisation.kennung!,
                 },
                 kategorie: serviceProvider.kategorie,
-                logoId: serviceProvider.logoId,
+                logoId: null,
                 requires2fa: serviceProvider.requires2fa,
                 merkmale: serviceProvider.merkmale,
                 url: serviceProvider.url,
@@ -420,7 +420,7 @@ describe('ServiceProvider API', () => {
                     RollenSystemRechtEnum.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
                     RollenSystemRechtEnum.ROLLEN_ERWEITERN,
                 ],
-            } as ManageableServiceProviderResponse);
+            });
         });
 
         it('should return 404 if service provider is not found', async () => {

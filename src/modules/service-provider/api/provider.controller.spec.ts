@@ -46,6 +46,7 @@ import { MissingAttributeError } from '../../../shared/error/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { LogoOrLogoIdError } from '../domain/errors/logo-or-logo-id.error.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
@@ -668,20 +669,20 @@ describe('Provider Controller Test', () => {
     });
 
     describe('createServiceProvider', () => {
+        const tinyPngBase64: string =
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBg0GwHjcAAAAASUVORK5CYII=';
         beforeEach(() => {
             vi.clearAllMocks();
         });
-        it('should create a new service provider when user has permission', async () => {
-            const tinyPngBase64: string =
-                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBg0GwHjcAAAAASUVORK5CYII=';
 
+        it('should create a new service provider when user has permission', async () => {
             const body: CreateServiceProviderBodyParams = new CreateServiceProviderBodyParams();
             Object.assign(body, {
                 name: faker.company.name(),
                 target: ServiceProviderTarget.EMAIL,
                 url: faker.internet.url(),
                 kategorie: ServiceProviderKategorie.EMAIL,
-                logoId: faker.number.int(),
+                logoId: undefined,
                 logoBase64: tinyPngBase64,
                 requires2fa: false,
                 vidisAngebotId: undefined,
@@ -693,7 +694,7 @@ describe('Provider Controller Test', () => {
             const persistedSp: ServiceProvider<true> = DoFactory.createServiceProvider(true);
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-            serviceProviderFactoryMock.createNew.mockReturnValueOnce(createdDomainSp);
+            serviceProviderFactoryMock.createNew.mockReturnValueOnce(Ok(createdDomainSp));
             serviceProviderRepoMock.create.mockResolvedValueOnce(Ok(persistedSp));
 
             const result: ServiceProviderResponse = await providerController.createServiceProvider(
@@ -741,7 +742,7 @@ describe('Provider Controller Test', () => {
             const persistedSp: ServiceProvider<true> = DoFactory.createServiceProvider(true);
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-            serviceProviderFactoryMock.createNew.mockReturnValueOnce(createdDomainSp);
+            serviceProviderFactoryMock.createNew.mockReturnValueOnce(Ok(createdDomainSp));
             serviceProviderRepoMock.create.mockResolvedValueOnce(Ok(persistedSp));
 
             const result: ServiceProviderResponse = await providerController.createServiceProvider(
@@ -770,6 +771,31 @@ describe('Provider Controller Test', () => {
             expect(result).toBeInstanceOf(ServiceProviderResponse);
         });
 
+        it('should throw error when factory returns error', async () => {
+            const body: CreateServiceProviderBodyParams = new CreateServiceProviderBodyParams();
+            Object.assign(body, {
+                name: faker.company.name(),
+                target: ServiceProviderTarget.EMAIL,
+                url: undefined,
+                kategorie: ServiceProviderKategorie.HINWEISE,
+                logoId: faker.number.int({ min: 1, max: 1000 }),
+                logoBase64: tinyPngBase64,
+                requires2fa: false,
+                vidisAngebotId: undefined,
+                merkmale: [],
+                organisationId: faker.string.uuid(),
+            });
+
+            serviceProviderFactoryMock.createNew.mockReturnValueOnce(
+                Err(new LogoOrLogoIdError('Only Logo or LogoId allowed, not both')),
+            );
+
+            await expect(() =>
+                providerController.createServiceProvider(personPermissionsMock, body),
+            ).rejects.toBeInstanceOf(LogoOrLogoIdError);
+            expect(serviceProviderRepoMock.create).not.toHaveBeenCalled();
+        });
+
         it('should throw error when repo returns error', async () => {
             const body: CreateServiceProviderBodyParams = new CreateServiceProviderBodyParams();
             Object.assign(body, {
@@ -783,6 +809,8 @@ describe('Provider Controller Test', () => {
                 organisationId: faker.string.uuid(),
             });
 
+            const createdDomainSp: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            serviceProviderFactoryMock.createNew.mockReturnValueOnce(Ok(createdDomainSp));
             serviceProviderRepoMock.create.mockResolvedValueOnce(Err(new MissingPermissionsError('Error')));
 
             await expect(() =>
