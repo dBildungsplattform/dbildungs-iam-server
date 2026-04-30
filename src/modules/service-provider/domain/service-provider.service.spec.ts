@@ -66,7 +66,12 @@ const mockVidisAngebote: VidisAngebot[] = [
         angebotTitle: 'Hausaufgaben-Liste',
         angebotLongTitle: 'Testangebot Hausaufgaben-Liste',
         educationProviderOrganizationName: 'VIDIS-Testangebot',
-        schoolActivations: ['DE-VIDIS-vidis_test_20202', 'DE-VIDIS-vidis_test_40404', 'DE-VIDIS-vidis_test_101010'],
+        schoolActivations: [
+            'DE-VIDIS-vidis_test_20202',
+            'DE-VIDIS-vidis_test_40404',
+            'DE-VIDIS-vidis_test_101010',
+            'unknown',
+        ],
     },
     {
         angebotId: mockExistingVidisServiceProviderContainedInVidisAngebote.vidisAngebotId!,
@@ -841,31 +846,47 @@ describe('ServiceProviderService', () => {
             vi.restoreAllMocks();
         });
 
-        it('should update ServiceProvider for VIDIS Angebote if ServiceProvider in VIDIS Angebot response already exists in SPSH.', async () => {
-            vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
-            organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
-            serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(
-                mockExistingVidisServiceProviderContainedInVidisAngebote,
-            );
-            serviceProviderRepo.update.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
-            if (mockExistingSchulen[0]) {
-                organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
-            }
-            serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
-            organisationServiceProviderRepo.save.mockResolvedValue();
+        describe.each([[true], [false]])('when all mappings are deleted:%s', (wereAllMappingsDeleted: boolean) => {
+            it('should update ServiceProvider for VIDIS Angebote if ServiceProvider in VIDIS Angebot response already exists in SPSH.', async () => {
+                vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
+                organisationServiceProviderRepo.deleteAll.mockResolvedValue(wereAllMappingsDeleted);
+                serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(
+                    mockExistingVidisServiceProviderContainedInVidisAngebote,
+                );
+                serviceProviderRepo.update.mockResolvedValue(
+                    Ok(mockExistingVidisServiceProviderContainedInVidisAngebote),
+                );
+                if (mockExistingSchulen[0]) {
+                    organisationRepo.findByNameOrKennung.mockImplementation(
+                        (searchStr: string): Promise<Organisation<true>[]> => {
+                            return Promise.resolve(
+                                mockExistingSchulen.filter(
+                                    (schule) => schule.name === searchStr || schule.kennung === searchStr,
+                                ),
+                            );
+                        },
+                    );
+                }
+                serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
+                organisationServiceProviderRepo.save.mockResolvedValue();
 
-            await service.updateServiceProvidersForVidis();
+                await service.updateServiceProvidersForVidis();
 
-            expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
-            expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
-            expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
-            expect(serviceProviderRepo.update).toHaveBeenCalledTimes(mockVidisAngebote.length);
-            expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
-                mockAllSchoolActivationsInVidisAngebote.length,
-            );
-            expect(organisationServiceProviderRepo.save).toHaveBeenCalledTimes(
-                mockAllSchoolActivationsInVidisAngebote.length,
-            );
+                expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
+                expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
+                expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
+                expect(serviceProviderRepo.update).toHaveBeenCalledTimes(mockVidisAngebote.length);
+                expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
+                    mockAllSchoolActivationsInVidisAngebote.length,
+                );
+                expect(organisationServiceProviderRepo.save).toHaveBeenCalledTimes(
+                    mockAllSchoolActivationsInVidisAngebote.filter((schoolActivation: string) =>
+                        mockExistingSchulen.some(
+                            (schule) => schule.name === schoolActivation || schule.kennung === schoolActivation,
+                        ),
+                    ).length,
+                );
+            });
         });
 
         it('should log error when updating ServiceProvider fails', async () => {
