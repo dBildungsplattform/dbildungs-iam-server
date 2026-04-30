@@ -42,7 +42,7 @@ import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
-import { compareEmailAddressesByUpdatedAtDesc } from '../../email/persistence/email.repo.js';
+import { compareEmailAddressesByUpdatedAtDesc, EmailRepo } from '../../email/persistence/email.repo.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
@@ -63,6 +63,8 @@ import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { PersonEmailResponse } from '../api/person-email-response.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -186,7 +188,6 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.orgUnassignmentDate,
         undefined,
         undefined,
-        getEnabledOrAlternativeEmailAddress(entity),
         oxUserId,
         entity.istTechnisch,
         externalIds,
@@ -229,6 +230,8 @@ export class PersonRepository {
         private readonly userLockRepository: UserLockRepository,
         private readonly em: EntityManager,
         private readonly eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
+        private readonly emailRepo: EmailRepo,
+        private readonly emailResolverService: EmailResolverService,
         private usernameGenerator: UsernameGeneratorService,
         private logger: ClassLogger,
         config: ConfigService<ServerConfig>,
@@ -521,14 +524,18 @@ export class PersonRepository {
         const [personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent]: [
             PersonenkontextUpdatedEvent,
             KafkaPersonenkontextUpdatedEvent,
-        ] = this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
+        ] = await this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
 
         this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
+        const email: Option<PersonEmailResponse> = this.emailResolverService.shouldUseEmailMicroservice()
+            ? await this.emailResolverService.findEmailBySpshPerson(person.id)
+            : await this.emailRepo.getEmailAddressAndStatusForPerson(person); // maybe we only need the repo here
+
         if (person.username !== undefined) {
             this.eventRoutingLegacyKafkaService.publish(
-                new PersonDeletedEvent(personId, person.username, person.email),
-                new KafkaPersonDeletedEvent(personId, person.username, person.email),
+                new PersonDeletedEvent(personId, person.username, email?.address),
+                new KafkaPersonDeletedEvent(personId, person.username, email?.address),
             );
         }
 
@@ -541,18 +548,21 @@ export class PersonRepository {
         };
     }
 
-    private createPersonenkontextUpdatedEvents(
+    private async createPersonenkontextUpdatedEvents(
         personId: PersonID,
         person: Person<true>,
         removedPersonenkontexts: PersonenkontextEventKontextData[],
-    ): [PersonenkontextUpdatedEvent, KafkaPersonenkontextUpdatedEvent] {
+    ): Promise<[PersonenkontextUpdatedEvent, KafkaPersonenkontextUpdatedEvent]> {
+        const email: Option<PersonEmailResponse> = this.emailResolverService.shouldUseEmailMicroservice()
+            ? await this.emailResolverService.findEmailBySpshPerson(person.id)
+            : await this.emailRepo.getEmailAddressAndStatusForPerson(person);
         const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
             {
                 id: personId,
                 username: person.username,
                 familienname: person.familienname,
                 vorname: person.vorname,
-                email: person.email,
+                email: email?.address,
             },
             [],
             removedPersonenkontexts,
@@ -564,7 +574,7 @@ export class PersonRepository {
                 username: person.username,
                 familienname: person.familienname,
                 vorname: person.vorname,
-                email: person.email,
+                email: email?.address,
             },
             [],
             removedPersonenkontexts,
@@ -617,7 +627,7 @@ export class PersonRepository {
         const [personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent]: [
             PersonenkontextUpdatedEvent,
             KafkaPersonenkontextUpdatedEvent,
-        ] = this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
+        ] = await this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
 
         this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
@@ -1063,7 +1073,6 @@ export class PersonRepository {
             personFound.userLock,
             personFound.orgUnassignmentDate,
             personFound.isLocked,
-            personFound.email,
             personFound.istTechnisch,
             personFound.externalIds,
         );

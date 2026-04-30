@@ -30,6 +30,9 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 
 @Injectable()
 export class ItsLearningSyncEventHandler {
@@ -45,6 +48,8 @@ export class ItsLearningSyncEventHandler {
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepository,
+        private readonly emailRepo: EmailRepo,
+        private readonly emailResolverService: EmailResolverService,
         configService: ConfigService<ServerConfig>,
 
         // @ts-expect-error used by EnsureRequestContext decorator
@@ -134,6 +139,10 @@ export class ItsLearningSyncEventHandler {
                 Array.from(rollen.values()).map((rolle: Rolle<true>) => rolle.rollenart),
             );
 
+            const email: Option<PersonEmailResponse> = this.emailResolverService.shouldUseEmailMicroservice()
+                ? await this.emailResolverService.findEmailBySpshPerson(person.id)
+                : await this.emailRepo.getEmailAddressAndStatusForPerson(person);
+
             // Create or update the person in itslearning
             const creationResult: Result<void, DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
                 {
@@ -142,7 +151,7 @@ export class ItsLearningSyncEventHandler {
                     lastName: person.familienname,
                     username: person.username,
                     institutionRoleType: rollenartToIMSESInstitutionRole(targetRole),
-                    email: person.email,
+                    email: email?.address,
                 },
                 `${event.eventID}-SYNC-PERSON`,
             );
