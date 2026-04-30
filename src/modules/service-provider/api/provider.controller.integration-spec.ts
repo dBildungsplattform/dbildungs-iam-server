@@ -40,6 +40,7 @@ import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
+import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -318,7 +319,7 @@ describe('ServiceProvider API', () => {
                                 name: rolle.name,
                             },
                         ],
-                        isDeleteAuthorized: true,
+                        hasSomeVerwaltenPermission: true,
                     },
                 ],
                 limit: 1,
@@ -353,6 +354,8 @@ describe('ServiceProvider API', () => {
         let rolleWithErweiterung: Rolle<true>;
 
         beforeEach(async () => {
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+
             organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
             serviceProvider = await createAndPersistServiceProvider(em, {
                 providedOnSchulstrukturknoten: organisation.id,
@@ -410,6 +413,11 @@ describe('ServiceProvider API', () => {
                         id: rolle.id,
                         name: rolle.name,
                     },
+                ],
+                relevantSystemrechte: [
+                    RollenSystemRechtEnum.ANGEBOTE_VERWALTEN,
+                    RollenSystemRechtEnum.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
+                    RollenSystemRechtEnum.ROLLEN_ERWEITERN,
                 ],
             } as ManageableServiceProviderResponse);
         });
