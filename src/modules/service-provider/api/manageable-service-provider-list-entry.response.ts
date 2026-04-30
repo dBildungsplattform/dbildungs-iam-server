@@ -68,7 +68,7 @@ export class ManageableServiceProviderListEntryResponse {
         this.hasSomeVerwaltenPermission = hasSomeVerwaltenPermission;
     }
 
-    static fromManageableServiceProviderWithReferencedObjects(
+    public static fromManageableServiceProviderWithReferencedObjects(
         manageableServiceProviderWithReferencedObjects: ManageableServiceProviderWithReferencedObjects,
     ): ManageableServiceProviderListEntryResponse {
         return new ManageableServiceProviderListEntryResponse(

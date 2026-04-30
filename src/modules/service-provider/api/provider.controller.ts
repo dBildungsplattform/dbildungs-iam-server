@@ -255,7 +255,10 @@ export class ProviderController {
             limit: params.limit ?? total,
             total,
             items: enrichedServiceProviders.map(
-                ManageableServiceProviderListEntryResponse.fromManageableServiceProviderWithReferencedObjects,
+                (manageableServiceProviderWithReferencedObjects: ManageableServiceProviderWithReferencedObjects) =>
+                    ManageableServiceProviderListEntryResponse.fromManageableServiceProviderWithReferencedObjects(
+                        manageableServiceProviderWithReferencedObjects,
+                    ),
             ),
         });
     }
@@ -297,7 +300,10 @@ export class ProviderController {
             limit: params.limit ?? total,
             total,
             items: serviceProvidersWithRollenAndErweiterungen.map(
-                ManageableServiceProviderListEntryResponse.fromManageableServiceProviderWithReferencedObjects,
+                (manageableServiceProviderWithReferencedObjects: ManageableServiceProviderWithReferencedObjects) =>
+                    ManageableServiceProviderListEntryResponse.fromManageableServiceProviderWithReferencedObjects(
+                        manageableServiceProviderWithReferencedObjects,
+                    ),
             ),
         });
     }

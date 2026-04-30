@@ -847,6 +847,13 @@ describe('ServiceProviderService', () => {
         });
 
         describe.each([[true], [false]])('when all mappings are deleted:%s', (wereAllMappingsDeleted: boolean) => {
+            const filterSchulenBySearchStringFactory: (
+                searchString: string,
+            ) => (schule: Organisation<true>) => boolean = (searchString: string) => {
+                return (schule: Organisation<true>): boolean =>
+                    schule.name === searchString || schule.kennung === searchString;
+            };
+
             it('should update ServiceProvider for VIDIS Angebote if ServiceProvider in VIDIS Angebot response already exists in SPSH.', async () => {
                 vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
                 organisationServiceProviderRepo.deleteAll.mockResolvedValue(wereAllMappingsDeleted);
@@ -860,9 +867,7 @@ describe('ServiceProviderService', () => {
                     organisationRepo.findByNameOrKennung.mockImplementation(
                         (searchStr: string): Promise<Organisation<true>[]> => {
                             return Promise.resolve(
-                                mockExistingSchulen.filter(
-                                    (schule) => schule.name === searchStr || schule.kennung === searchStr,
-                                ),
+                                mockExistingSchulen.filter(filterSchulenBySearchStringFactory(searchStr)),
                             );
                         },
                     );
@@ -881,9 +886,7 @@ describe('ServiceProviderService', () => {
                 );
                 expect(organisationServiceProviderRepo.save).toHaveBeenCalledTimes(
                     mockAllSchoolActivationsInVidisAngebote.filter((schoolActivation: string) =>
-                        mockExistingSchulen.some(
-                            (schule) => schule.name === schoolActivation || schule.kennung === schoolActivation,
-                        ),
+                        mockExistingSchulen.some(filterSchulenBySearchStringFactory(schoolActivation)),
                     ).length,
                 );
             });
