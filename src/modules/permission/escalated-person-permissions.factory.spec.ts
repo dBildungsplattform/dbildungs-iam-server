@@ -83,7 +83,9 @@ describe('EscalatedPersonPermissionsFactory', () => {
         });
         it('should throw if permissions are neither PersonPermissions nor EscalatedPersonPermissions', async () => {
             await expect(
-                sut.fromPermissions({} as unknown as IPersonPermissions, [{ orgaId: '1234', systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN] }]),
+                sut.fromPermissions({} as unknown as IPersonPermissions, [
+                    { orgaId: '1234', systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN] },
+                ]),
             ).rejects.toThrow('Provided permissions are neither PersonPermissions nor EscalatedPersonPermissions');
         });
     });

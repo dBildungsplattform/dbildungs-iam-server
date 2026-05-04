@@ -22,9 +22,7 @@ import { DuplicateNameError } from '../specification/error/duplicate-name.error.
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
  */
-function mapAggregateToData(
-    serviceProvider: ServiceProvider<boolean>,
-): RequiredEntityData<ServiceProviderEntity> {
+function mapAggregateToData(serviceProvider: ServiceProvider<boolean>): RequiredEntityData<ServiceProviderEntity> {
     const merkmale: EntityData<ServiceProviderMerkmalEntity>[] = serviceProvider.merkmale.map(
         (merkmal: ServiceProviderMerkmal) => ({
             serviceProvider: serviceProvider.id,
