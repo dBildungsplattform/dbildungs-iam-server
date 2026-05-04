@@ -80,6 +80,32 @@ describe('ServiceProviderFactory', () => {
                 expect(serviceProvider.error).toBeInstanceOf(LogoOrLogoIdError);
             });
         });
+
+        describe('when logoMimeType and logoId are provided', () => {
+            it('should return an error', () => {
+                const serviceProvider: Result<ServiceProvider<true>, LogoOrLogoIdError> = sut.construct(
+                    example.id,
+                    example.createdAt,
+                    example.updatedAt,
+                    example.name,
+                    example.target,
+                    example.url,
+                    example.kategorie,
+                    example.providedOnSchulstrukturknoten,
+                    faker.number.int({ min: 0, max: 1000 }),
+                    undefined,
+                    example.logoMimeType,
+                    example.keycloakGroup,
+                    example.keycloakRole,
+                    example.externalSystem,
+                    example.requires2fa,
+                    example.vidisAngebotId,
+                    example.merkmale,
+                );
+                expectErrResult(serviceProvider);
+                expect(serviceProvider.error).toBeInstanceOf(LogoOrLogoIdError);
+            });
+        });
     });
 
     describe('createNew', () => {
@@ -122,6 +148,29 @@ describe('ServiceProviderFactory', () => {
                     example.providedOnSchulstrukturknoten,
                     faker.number.int({ min: 0, max: 1000 }),
                     example.logo,
+                    example.logoMimeType,
+                    example.keycloakGroup,
+                    example.keycloakRole,
+                    example.externalSystem,
+                    example.requires2fa,
+                    example.vidisAngebotId,
+                    example.merkmale,
+                );
+                expectErrResult(serviceProvider);
+                expect(serviceProvider.error).toBeInstanceOf(LogoOrLogoIdError);
+            });
+        });
+
+        describe('when logoMimeType and logoId are provided', () => {
+            it('should return an error', () => {
+                const serviceProvider: Result<ServiceProvider<false>, LogoOrLogoIdError> = sut.createNew(
+                    example.name,
+                    example.target,
+                    example.url,
+                    example.kategorie,
+                    example.providedOnSchulstrukturknoten,
+                    faker.number.int({ min: 0, max: 1000 }),
+                    undefined,
                     example.logoMimeType,
                     example.keycloakGroup,
                     example.keycloakRole,

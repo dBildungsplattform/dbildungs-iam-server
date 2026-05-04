@@ -30,7 +30,7 @@ export class ServiceProviderFactory {
         vidisAngebotId: string | undefined,
         merkmale: ServiceProviderMerkmal[],
     ): Result<ServiceProvider<true>, LogoOrLogoIdError> {
-        if (logoId !== undefined && logo !== undefined) {
+        if (!this.isValidLogoCombination(logoId, logo, logoMimeType)) {
             return Err(new LogoOrLogoIdError('Cannot construct ServiceProvider with both logoId and logo'));
         }
         return Ok(
@@ -72,7 +72,7 @@ export class ServiceProviderFactory {
         vidisAngebotId: string | undefined,
         merkmale: ServiceProviderMerkmal[],
     ): Result<ServiceProvider<false>, LogoOrLogoIdError> {
-        if (logoId !== undefined && logo !== undefined) {
+        if (!this.isValidLogoCombination(logoId, logo, logoMimeType)) {
             return Err(new LogoOrLogoIdError('Cannot construct ServiceProvider with both logoId and logo'));
         }
         return Ok(
@@ -93,5 +93,19 @@ export class ServiceProviderFactory {
                 merkmale,
             ),
         );
+    }
+
+    private isValidLogoCombination(
+        logoId: number | undefined,
+        logo: Buffer | undefined,
+        logoMimeType: string | undefined,
+    ): boolean {
+        if (logoId !== undefined) {
+            return logo === undefined && logoMimeType === undefined;
+        }
+        if (logo !== undefined && logoMimeType !== undefined) {
+            return logoId === undefined;
+        }
+        return true;
     }
 }
