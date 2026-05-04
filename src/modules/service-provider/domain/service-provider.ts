@@ -109,6 +109,11 @@ export class ServiceProvider<WasPersisted extends boolean> {
         );
     }
 
+    /**
+     * logoId can be set to null to clear it
+     * @param update
+     * @returns
+     */
     public updateWithSafeFields(
         update: Partial<Record<keyof SafeUpdateFields, SafeUpdateFields[keyof SafeUpdateFields] | null>>,
     ): Option<LogoOrLogoIdError> {

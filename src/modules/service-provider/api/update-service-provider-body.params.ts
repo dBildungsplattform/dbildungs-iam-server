@@ -29,10 +29,10 @@ export class UpdateServiceProviderBodyParams {
         description:
             'Optional logoId to use a standard logo. Has to be an integer. Can not be provided, if the service provider already has a custom logo. Null removes the logo.',
         maximum: Math.pow(2, 31) - 1,
-        minimum: 1,
+        minimum: 0,
     })
     @IsInt()
-    @Min(1)
+    @Min(0)
     @Max(Math.pow(2, 31) - 1)
     @IsOptional()
     public logoId?: number | null;

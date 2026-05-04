@@ -27,10 +27,10 @@ export class CreateServiceProviderBodyParams {
         description:
             'Optional logoId to use a standard logo. Has to be an integer. Only one of logoId or logoBase64 with logoMimeType can be provided, not both.',
         maximum: Math.pow(2, 31) - 1,
-        minimum: 1,
+        minimum: 0,
     })
     @IsInt()
-    @Min(1)
+    @Min(0)
     @Max(Math.pow(2, 31) - 1)
     @IsOptional()
     public logoId?: number;
