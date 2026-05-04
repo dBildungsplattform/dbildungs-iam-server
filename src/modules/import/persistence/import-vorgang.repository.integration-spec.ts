@@ -123,7 +123,7 @@ describe('ImportVorgangRepository', () => {
     async function createOrga(): Promise<string> {
         const organisation: OrganisationEntity = new OrganisationEntity();
         organisation.typ = OrganisationsTyp.SCHULE;
-        await em.persistAndFlush(organisation);
+        await em.persist(organisation).flush();
         await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
         return organisation.id;
     }
@@ -326,11 +326,11 @@ describe('ImportVorgangRepository', () => {
                 entity1 = em.create(ImportVorgangEntity, mapAggregateToData(importVorgang1));
                 entity2 = em.create(ImportVorgangEntity, mapAggregateToData(importVorgang2));
                 entity3 = em.create(ImportVorgangEntity, mapAggregateToData(importVorgang3));
-                await em.persistAndFlush([entity1, entity2, entity3]);
+                await em.persist([entity1, entity2, entity3]).flush();
             });
 
             afterEach(async () => {
-                await em.removeAndFlush([entity1, entity2, entity3]);
+                await em.remove([entity1, entity2, entity3]).flush();
             });
 
             it('when search by importByPersonId', async () => {

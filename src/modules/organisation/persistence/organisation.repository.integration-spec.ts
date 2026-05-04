@@ -160,7 +160,7 @@ describe('OrganisationRepository', () => {
 
             const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
 
-            await em.persistAndFlush(mappedOrga);
+            await em.persist(mappedOrga).flush();
 
             await expect(sut.exists(mappedOrga.id)).resolves.toBe(true);
         });
@@ -184,7 +184,7 @@ describe('OrganisationRepository', () => {
 
             const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
 
-            await em.persistAndFlush(mappedOrga);
+            await em.persist(mappedOrga).flush();
 
             await expect(sut.findById(mappedOrga.id)).resolves.toBeInstanceOf(Organisation);
         });
@@ -248,11 +248,11 @@ describe('OrganisationRepository', () => {
             organisationEntity1 = em.create(OrganisationEntity, mapOrgaAggregateToData(organisation1));
             organisationEntity2 = em.create(OrganisationEntity, mapOrgaAggregateToData(organisation2));
             organisationEntity3 = em.create(OrganisationEntity, mapOrgaAggregateToData(organisation3));
-            await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
+            await em.persist([organisationEntity1, organisationEntity2, organisationEntity3]).flush();
         });
 
         afterEach(async () => {
-            await em.removeAndFlush([organisationEntity1, organisationEntity2]);
+            await em.remove([organisationEntity1, organisationEntity2]).flush();
         });
         describe('When Called Only With searchString', () => {
             it('should return Correct Aggregates By SearchString', async () => {
@@ -389,11 +389,13 @@ describe('OrganisationRepository', () => {
                 undefined,
             );
 
-            await em.persistAndFlush([
-                em.create(OrganisationEntity, mapOrgaAggregateToData(root)),
-                em.create(OrganisationEntity, mapOrgaAggregateToData(traeger)),
-                em.create(OrganisationEntity, mapOrgaAggregateToData(schule)),
-            ]);
+            await em
+                .persist([
+                    em.create(OrganisationEntity, mapOrgaAggregateToData(root)),
+                    em.create(OrganisationEntity, mapOrgaAggregateToData(traeger)),
+                    em.create(OrganisationEntity, mapOrgaAggregateToData(schule)),
+                ])
+                .flush();
 
             return [root.id, traeger.id, schule.id];
         }
@@ -498,11 +500,13 @@ describe('OrganisationRepository', () => {
                 schuleDomain,
             );
 
-            await em.persistAndFlush([
-                em.create(OrganisationEntity, mapOrgaAggregateToData(root)),
-                em.create(OrganisationEntity, mapOrgaAggregateToData(traeger)),
-                em.create(OrganisationEntity, mapOrgaAggregateToData(schule)),
-            ]);
+            await em
+                .persist([
+                    em.create(OrganisationEntity, mapOrgaAggregateToData(root)),
+                    em.create(OrganisationEntity, mapOrgaAggregateToData(traeger)),
+                    em.create(OrganisationEntity, mapOrgaAggregateToData(schule)),
+                ])
+                .flush();
 
             return { root, traeger, schule };
         }
@@ -621,11 +625,13 @@ describe('OrganisationRepository', () => {
                 OrganisationsTyp.ROOT,
             );
 
-            await em.persistAndFlush([
-                em.create(OrganisationEntity, mapOrgaAggregateToData(root)),
-                em.create(OrganisationEntity, mapOrgaAggregateToData(traeger)),
-                em.create(OrganisationEntity, mapOrgaAggregateToData(schule)),
-            ]);
+            await em
+                .persist([
+                    em.create(OrganisationEntity, mapOrgaAggregateToData(root)),
+                    em.create(OrganisationEntity, mapOrgaAggregateToData(traeger)),
+                    em.create(OrganisationEntity, mapOrgaAggregateToData(schule)),
+                ])
+                .flush();
 
             return { root, traeger, schule };
         }
@@ -770,7 +776,7 @@ describe('OrganisationRepository', () => {
             organisationEntity1 = em.create(OrganisationEntity, mapOrgaAggregateToData(root));
             organisationEntity2 = em.create(OrganisationEntity, mapOrgaAggregateToData(oeffentlich));
             organisationEntity3 = em.create(OrganisationEntity, mapOrgaAggregateToData(ersatz));
-            await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
+            await em.persist([organisationEntity1, organisationEntity2, organisationEntity3]).flush();
         });
 
         describe('When Called', () => {
@@ -920,7 +926,7 @@ describe('OrganisationRepository', () => {
                     OrganisationEntity,
                     mapOrgaAggregateToData(otherChildOrga),
                 );
-                await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
+                await em.persist([organisationEntity1, organisationEntity2, organisationEntity3]).flush();
                 em.clear();
                 const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     organisationEntity2.id,
@@ -957,7 +963,7 @@ describe('OrganisationRepository', () => {
                     mapOrgaAggregateToData(organisation),
                 );
 
-                await em.persistAndFlush([organisationEntity1, organisationEntity2]);
+                await em.persist([organisationEntity1, organisationEntity2]).flush();
                 em.clear();
 
                 // Simulate concurrent updates:
@@ -996,7 +1002,7 @@ describe('OrganisationRepository', () => {
                     OrganisationEntity,
                     mapOrgaAggregateToData(organisation),
                 );
-                await em.persistAndFlush([organisationEntity1, organisationEntity2]);
+                await em.persist([organisationEntity1, organisationEntity2]).flush();
 
                 const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     organisationEntity2.id,
@@ -1028,7 +1034,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 savedOeffentlich = em.create(OrganisationEntity, mapOrgaAggregateToData(oeffentlich));
-                await em.persistAndFlush(savedOeffentlich);
+                await em.persist(savedOeffentlich).flush();
             });
 
             describe('when Schulträger is not a direct child of oeffentlich or ersatz', () => {
@@ -1146,7 +1152,7 @@ describe('OrganisationRepository', () => {
             }
 
             const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-            await em.persistAndFlush(mappedOrga);
+            await em.persist(mappedOrga).flush();
 
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
@@ -1203,7 +1209,7 @@ describe('OrganisationRepository', () => {
                 return;
             }
             const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-            await em.persistAndFlush(mappedOrga);
+            await em.persist(mappedOrga).flush();
 
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
@@ -1320,7 +1326,7 @@ describe('OrganisationRepository', () => {
             organisationEntity1 = em.create(OrganisationEntity, mapOrgaAggregateToData(root));
             organisationEntity2 = em.create(OrganisationEntity, mapOrgaAggregateToData(oeffentlich));
             organisationEntity3 = em.create(OrganisationEntity, mapOrgaAggregateToData(ersatz));
-            await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
+            await em.persist([organisationEntity1, organisationEntity2, organisationEntity3]).flush();
         });
 
         describe('When create is called', () => {
@@ -1417,7 +1423,7 @@ describe('OrganisationRepository', () => {
                 return;
             }
             const mappedOrgaA: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaA));
-            await em.persistAndFlush(mappedOrgaA);
+            await em.persist(mappedOrgaA).flush();
             const orgaB: Organisation<false> | DomainError = Organisation.createNew(
                 mappedOrgaA.id,
                 mappedOrgaA.id,
@@ -1428,7 +1434,7 @@ describe('OrganisationRepository', () => {
                 return;
             }
             const mappedOrgaB: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaB));
-            await em.persistAndFlush(mappedOrgaB);
+            await em.persist(mappedOrgaB).flush();
 
             await expect(sut.isOrgaAParentOfOrgaB(mappedOrgaA.id, mappedOrgaB.id)).resolves.toBe(true);
         });
@@ -1444,7 +1450,7 @@ describe('OrganisationRepository', () => {
                 return;
             }
             const mappedOrgaA: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaA));
-            await em.persistAndFlush(mappedOrgaA);
+            await em.persist(mappedOrgaA).flush();
             const orgaB: Organisation<false> | DomainError = Organisation.createNew(
                 sut.ROOT_ORGANISATION_ID,
                 sut.ROOT_ORGANISATION_ID,
@@ -1455,7 +1461,7 @@ describe('OrganisationRepository', () => {
                 return;
             }
             const mappedOrgaB: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaB));
-            await em.persistAndFlush(mappedOrgaB);
+            await em.persist(mappedOrgaB).flush();
 
             await expect(sut.isOrgaAParentOfOrgaB(mappedOrgaA.id, mappedOrgaB.id)).resolves.toBe(false);
         });
@@ -1475,7 +1481,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -1503,7 +1509,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -1532,7 +1538,7 @@ describe('OrganisationRepository', () => {
                         return;
                     }
                     const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                    await em.persistAndFlush(mappedOrga);
+                    await em.persist(mappedOrga).flush();
                     orgas.push(mappedOrga);
                 }
                 const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -1572,7 +1578,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             for (let i: number = 0; i < 3; i++) {
@@ -1586,7 +1592,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -1619,7 +1625,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             for (let i: number = 0; i < 3; i++) {
@@ -1633,7 +1639,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -1668,7 +1674,7 @@ describe('OrganisationRepository', () => {
                 OrganisationEntity,
                 mapOrgaAggregateToData(orgaToFind),
             );
-            await em.persistAndFlush(mappedOrgaToFind);
+            await em.persist(mappedOrgaToFind).flush();
             orgas.push(mappedOrgaToFind);
 
             for (let i: number = 0; i < 3; i++) {
@@ -1682,7 +1688,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -1715,7 +1721,7 @@ describe('OrganisationRepository', () => {
                 OrganisationEntity,
                 mapOrgaAggregateToData(orgaToFind),
             );
-            await em.persistAndFlush(mappedOrgaToFind);
+            await em.persist(mappedOrgaToFind).flush();
             orgas.push(mappedOrgaToFind);
 
             for (let i: number = 0; i < 3; i++) {
@@ -1729,7 +1735,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -1763,7 +1769,7 @@ describe('OrganisationRepository', () => {
                 OrganisationEntity,
                 mapOrgaAggregateToData(orgaToFind),
             );
-            await em.persistAndFlush(mappedOrgaToFind);
+            await em.persist(mappedOrgaToFind).flush();
             orgas.push(mappedOrgaToFind);
 
             for (let i: number = 0; i < 3; i++) {
@@ -1777,7 +1783,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -1811,7 +1817,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
 
@@ -1826,7 +1832,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -1868,7 +1874,7 @@ describe('OrganisationRepository', () => {
                 return;
             }
             const mappedOrgaLand: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaLand));
-            await em.persistAndFlush(mappedOrgaLand);
+            await em.persist(mappedOrgaLand).flush();
             orgas.push(mappedOrgaLand);
 
             for (let i: number = 0; i < 3; i++) {
@@ -1885,7 +1891,7 @@ describe('OrganisationRepository', () => {
                     throw new Error('could not create Schule under Land');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             for (let i: number = 0; i < 3; i++) {
@@ -1902,7 +1908,7 @@ describe('OrganisationRepository', () => {
                     throw new Error('could not create Traeger');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             for (let i: number = 0; i < 3; i++) {
@@ -1919,7 +1925,7 @@ describe('OrganisationRepository', () => {
                     throw new Error('could not create Schule under root');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -2034,7 +2040,7 @@ describe('OrganisationRepository', () => {
                 return;
             }
             const mappedOrgaLand: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaLand));
-            await em.persistAndFlush(mappedOrgaLand);
+            await em.persist(mappedOrgaLand).flush();
             orgas.push(mappedOrgaLand);
 
             for (let i: number = 0; i < 3; i++) {
@@ -2051,7 +2057,7 @@ describe('OrganisationRepository', () => {
                     throw new Error('could not create Schule under Land');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             for (let i: number = 0; i < 3; i++) {
@@ -2068,7 +2074,7 @@ describe('OrganisationRepository', () => {
                     throw new Error('could not create Traeger');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             for (let i: number = 0; i < 3; i++) {
@@ -2085,7 +2091,7 @@ describe('OrganisationRepository', () => {
                     throw new Error('could not create Schule under root');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -2121,7 +2127,7 @@ describe('OrganisationRepository', () => {
                     throw new Error('could not create Schule under Land');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             for (let i: number = 0; i < 2; i++) {
@@ -2138,7 +2144,7 @@ describe('OrganisationRepository', () => {
                     throw new Error('could not create Traeger');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             for (let i: number = 0; i < 2; i++) {
@@ -2155,7 +2161,7 @@ describe('OrganisationRepository', () => {
                     throw new Error('could not create Klasse');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -2189,7 +2195,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -2218,7 +2224,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             for (let i: number = 0; i < 3; i++) {
@@ -2232,7 +2238,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 orgas.push(mappedOrga);
             }
             const personPermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -2266,7 +2272,7 @@ describe('OrganisationRepository', () => {
                         throw new Error('Could not create Organisation');
                     }
                     const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                    await em.persistAndFlush(mappedOrga);
+                    await em.persist(mappedOrga).flush();
                     organisations.push(mappedOrga);
                 }
             });
@@ -2356,7 +2362,7 @@ describe('OrganisationRepository', () => {
                     throw new Error('Could not create Organisation');
                 }
                 const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
+                await em.persist(mappedOrga).flush();
                 organisations.push(mappedOrga);
             }
 
@@ -2403,7 +2409,7 @@ describe('OrganisationRepository', () => {
                     new OrganisationEntity(),
                     DoFactory.createOrganisation<true>,
                 );
-                await em.persistAndFlush(orga);
+                await em.persist(orga).flush();
                 const result: void | DomainError = await sut.delete(orga.id);
                 expect(result).not.toBeInstanceOf(EntityNotFoundError);
                 await expect(em.findOneOrFail(OrganisationEntity, { id: orga.id })).rejects.toThrow();
@@ -2433,7 +2439,7 @@ describe('OrganisationRepository', () => {
                         DoFactory.createOrganisation<true>(true, { id: orgaId }),
                     );
                 });
-                await em.persistAndFlush(orgas);
+                await em.persist(orgas).flush();
 
                 const expectedTypen: Set<OrganisationsTyp> = new Set(
                     orgas.map((o: OrganisationEntity) => o.typ).filter(Boolean),
@@ -2451,7 +2457,7 @@ describe('OrganisationRepository', () => {
                     new OrganisationEntity(),
                     DoFactory.createOrganisation<true>(true, { typ: undefined }),
                 );
-                await em.persistAndFlush(orga);
+                await em.persist(orga).flush();
 
                 const result: OrganisationsTyp[] = await sut.findDistinctOrganisationsTypen([orga.id]);
                 expect(result).not.toContain(undefined);

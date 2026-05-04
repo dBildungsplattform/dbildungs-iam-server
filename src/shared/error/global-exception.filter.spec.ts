@@ -1,5 +1,4 @@
 import { ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { AbstractHttpAdapter, HttpAdapterHost } from '@nestjs/core';
 import { Response } from 'express';
 import { ClassLogger } from '../../core/logging/class-logger.js';
@@ -7,6 +6,8 @@ import { GlobalExceptionFilter } from './global-exception.filter.js';
 import { DriverException } from '@mikro-orm/core';
 import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
 import { DbiamError } from './dbiam.error.js';
+
+type HttpArgumentsHost = ReturnType<ArgumentsHost['switchToHttp']>;
 
 describe('GlobalExceptionFilter', () => {
     let sut: GlobalExceptionFilter;

@@ -344,7 +344,7 @@ describe('RollenerweiterungRepo', () => {
                     rolleId: rolle.id,
                     serviceProviderId: serviceProvider.id,
                 });
-                await em.persistAndFlush(entity);
+                await em.persist(entity).flush();
             }
             const result: boolean = await sut.exists({
                 organisationId: organisation.id,

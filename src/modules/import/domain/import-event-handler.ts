@@ -22,7 +22,8 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { ImportDataItemStatus } from './importDataItem.enum.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaImportExecutedEvent } from '../../../shared/events/kafka-import-executed.event.js';
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
+import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { ImportStatus } from './import.enums.js';
 

@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+
 /* eslint-disable no-console */
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -15,6 +17,9 @@ async function bootstrap(): Promise<void> {
     const backendHostname: string | undefined = config.HOST.HOSTNAME;
     const port: number = config.HOST.PORT;
     const keycloakConfig: KeycloakConfig = config.KEYCLOAK;
+
+    // Starts listening for shutdown hooks
+    app.enableShutdownHooks();
 
     app.enableVersioning({
         type: VersioningType.URI,

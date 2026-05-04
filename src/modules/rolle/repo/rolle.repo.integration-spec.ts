@@ -148,7 +148,7 @@ describe('RolleRepo', () => {
             const rollenResult: Rolle<true>[] = await sut.findByRollenArten(false);
 
             expect(rollenResult).toHaveLength(3);
-            expect(rollenResult).toEqual(rollen);
+            expect(rollenResult).toEqual(expect.arrayContaining(rollen));
         });
 
         it.each([

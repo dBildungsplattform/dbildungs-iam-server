@@ -21,7 +21,8 @@ import { KafkaEmailAddressChangedEvent } from '../../../shared/events/email/kafk
 import { inspect } from 'util';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { Person } from '../../../modules/person/domain/person.js';
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
+import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
 import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
 import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/ldap-email-address-deleted.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';

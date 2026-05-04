@@ -1,4 +1,5 @@
-import { Entity, Index, ManyToOne, Ref, Unique } from '@mikro-orm/core';
+import { Ref } from '@mikro-orm/core';
+import { Entity, Index, ManyToOne, Unique } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';

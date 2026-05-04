@@ -1,4 +1,4 @@
-import { Entity, Property } from '@mikro-orm/core';
+import { Entity, Property } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../../persistence/timestamped.entity.js';
 
 @Entity({ schema: 'email', tableName: 'domain' })

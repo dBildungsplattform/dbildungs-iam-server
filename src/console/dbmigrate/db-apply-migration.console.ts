@@ -1,6 +1,5 @@
-import { MikroORM, UmzugMigration } from '@mikro-orm/core';
-import { CommandRunner, SubCommand, Option } from 'nest-commander';
-import { Migrator } from '@mikro-orm/migrations';
+import { IMigrator, MigrationInfo, MikroORM } from '@mikro-orm/core';
+import { CommandRunner, Option, SubCommand } from 'nest-commander';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 
 export enum MigrationType {
@@ -20,20 +19,20 @@ export class DbApplyMigrationConsole extends CommandRunner {
 
     public override async run(_passedParams: string[], options?: Record<string, unknown>): Promise<void> {
         this.logger.info('Migrating to latest version...');
-        const migrator: Migrator = this.orm.getMigrator();
+        const migrator: IMigrator = this.orm.migrator;
         const migrationType: MigrationType = (options?.['migration'] as MigrationType) || MigrationType.All;
 
-        const allMigrations: UmzugMigration[] = await migrator.getPendingMigrations();
+        const allMigrations: MigrationInfo[] = await migrator.getPending();
 
         if (
             !allMigrations
-                .map((migration: UmzugMigration) => migration.name)
+                .map((migration: MigrationInfo) => migration.name)
                 .every((name: string) => name.endsWith('S') || name.endsWith('D'))
         ) {
             throw new Error('Not all migrations end with a S or D');
         }
 
-        const migrationsToExecute: UmzugMigration[] = allMigrations.filter((migration: UmzugMigration) => {
+        const migrationsToExecute: MigrationInfo[] = allMigrations.filter((migration: MigrationInfo) => {
             if (migrationType === MigrationType.All) {
                 return true;
             }
@@ -45,7 +44,7 @@ export class DbApplyMigrationConsole extends CommandRunner {
             return migration.name.endsWith('D');
         });
 
-        await migrator.up(migrationsToExecute.map((migration: UmzugMigration) => migration.name));
+        await migrator.up(migrationsToExecute.map((migration: MigrationInfo) => migration.name));
         this.logger.info('Finished migration to latest version.');
     }
 

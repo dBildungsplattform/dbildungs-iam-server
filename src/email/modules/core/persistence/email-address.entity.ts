@@ -1,7 +1,8 @@
-import { Collection, DateTimeType, Entity, Index, OneToMany, Property, QueryOrder } from '@mikro-orm/core';
+import { Collection, DateTimeType, QueryOrder } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../../persistence/timestamped.entity.js';
 import { EmailAddressStatusEntity } from './email-address-status.entity.js';
 import { PersonExternalID } from '../../../../shared/types/aggregate-ids.types.js';
+import { Entity, Index, OneToMany, Property } from '@mikro-orm/decorators/legacy';
 
 @Entity({ schema: 'email', tableName: 'address' })
 export class EmailAddrEntity extends TimestampedEntity {
@@ -36,6 +37,7 @@ export class EmailAddrEntity extends TimestampedEntity {
         eager: true,
         orphanRemoval: true,
         orderBy: { createdAt: QueryOrder.DESC },
+        strategy: 'joined',
     })
     public statuses: Collection<EmailAddressStatusEntity> = new Collection<EmailAddressStatusEntity>(this);
 }

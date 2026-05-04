@@ -14,6 +14,9 @@ async function bootstrap(): Promise<void> {
     const config: EmailAppConfig = app.get(EmailAppConfig);
     const port: number = config.HOST.PORT;
 
+    // Starts listening for shutdown hooks
+    app.enableShutdownHooks();
+
     app.enableVersioning({
         type: VersioningType.URI,
     });

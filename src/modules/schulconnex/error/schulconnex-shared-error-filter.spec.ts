@@ -1,6 +1,5 @@
 import { ArgumentsHost } from '@nestjs/common';
 import { Response } from 'express';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexSharedErrorFilter } from './schulconnex-shared-error-filter.js';
 import {
@@ -12,6 +11,8 @@ import {
     MismatchedRevisionError,
     SharedDomainError,
 } from '../../../shared/error/index.js';
+
+type HttpArgumentsHost = ReturnType<ArgumentsHost['switchToHttp']>;
 
 describe('SharedErrorFilter', () => {
     let filter: SchulConnexSharedErrorFilter;

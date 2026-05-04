@@ -1,9 +1,10 @@
-import { DateTimeType, Entity, Enum, Index, ManyToOne, Opt, Property, Ref, Unique } from '@mikro-orm/core';
+import { DateTimeType, Opt, Ref } from '@mikro-orm/core';
+import { Entity, Enum, Index, ManyToOne, Property, Unique } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
-import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
+import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 
 @Entity({ tableName: 'personenkontext' })
 @Unique({ properties: ['personId', 'organisationId', 'rolleId'] })

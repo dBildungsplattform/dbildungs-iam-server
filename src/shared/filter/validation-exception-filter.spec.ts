@@ -1,10 +1,11 @@
 import { ArgumentsHost } from '@nestjs/common';
 import { Response } from 'express';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { ValidationError } from 'class-validator';
 import { DbiamValidationError, ValidationErrorI18nTypes } from '../validation/dbiam-validation.error.js';
 import { ValidationExceptionFilter } from './validation-exception-filter.js';
 import { DetailedValidationError } from '../validation/detailed-validation.error.js';
+
+type HttpArgumentsHost = ReturnType<ArgumentsHost['switchToHttp']>;
 
 describe('SchulconnexValidationErrorFilter', () => {
     let filter: ValidationExceptionFilter;

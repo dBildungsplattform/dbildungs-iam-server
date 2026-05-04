@@ -137,7 +137,7 @@ describe('Organisation API', () => {
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
                 const orga: OrganisationEntity = new OrganisationEntity();
                 Object.assign(orga, DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }));
-                await em.persistAndFlush(orga);
+                await em.persist(orga).flush();
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .delete(`/organisationen/${orga.id}`)

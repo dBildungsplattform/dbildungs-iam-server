@@ -607,7 +607,7 @@ describe('PersonRepository Integration', () => {
                     personEntity.keycloakUserId = faker.string.numeric();
 
                     // Persist a person with the same Personalnummer as the one we send later
-                    await em.persistAndFlush(personEntity);
+                    await em.persist(personEntity).flush();
 
                     // Act: Attempt to create the person
                     const result: Person<true> | DomainError = await sut.create(person);
@@ -1461,7 +1461,7 @@ describe('PersonRepository Integration', () => {
             person = DoFactory.createPerson(true);
             personEntity = new PersonEntity();
             personEntity = personEntity.assign(mapAggregateToData(person));
-            await em.persistAndFlush(personEntity);
+            await em.persist(personEntity).flush();
             person.id = personEntity.id;
         });
 
@@ -1477,9 +1477,9 @@ describe('PersonRepository Integration', () => {
                         return emailAddressEntity;
                     },
                 );
-                await em.persistAndFlush(emailAddressEntities);
+                await em.persist(emailAddressEntities).flush();
                 personEntity.emailAddresses.add(emailAddressEntities);
-                await em.persistAndFlush(personEntity);
+                await em.persist(personEntity).flush();
 
                 const result: Person<true>[] = await sut.findByPrimaryEmailAddress('test@example.com');
 
@@ -1499,9 +1499,9 @@ describe('PersonRepository Integration', () => {
                 emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
                 return emailAddressEntity;
             });
-            await em.persistAndFlush(emailAddressEntities);
+            await em.persist(emailAddressEntities).flush();
             personEntity.emailAddresses.add(emailAddressEntities);
-            await em.persistAndFlush(personEntity);
+            await em.persist(personEntity).flush();
 
             const email: string = emailAddressEntities.find(
                 (e: EmailAddressEntity) => e.status === EmailAddressStatus.DISABLED,
@@ -1527,9 +1527,9 @@ describe('PersonRepository Integration', () => {
                 emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
                 return emailAddressEntity;
             });
-            await em.persistAndFlush(emailAddressEntities);
+            await em.persist(emailAddressEntities).flush();
             personEntity.emailAddresses.add(emailAddressEntities);
-            await em.persistAndFlush(personEntity);
+            await em.persist(personEntity).flush();
 
             const result: Person<true>[] = await sut.findByPrimaryEmailAddress('test@example.com');
 
@@ -1548,7 +1548,7 @@ describe('PersonRepository Integration', () => {
             const person1: Person<true> = DoFactory.createPerson(true);
             person1.personalnummer = personalnummer;
             const personEntity: PersonEntity = new PersonEntity();
-            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+            await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
             person1.id = personEntity.id;
 
             const result: Person<true>[] = await sut.findByPersonalnummer(personalnummer);
@@ -1568,7 +1568,7 @@ describe('PersonRepository Integration', () => {
             const person1: Person<true> = DoFactory.createPerson(true);
             person1.username = username;
             const personEntity: PersonEntity = new PersonEntity();
-            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+            await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
             person1.id = personEntity.id;
 
             const result: Person<true>[] = await sut.findByUsername(username);
@@ -1590,7 +1590,7 @@ describe('PersonRepository Integration', () => {
             person1.vorname = vorname;
             person1.familienname = familienname;
             const personEntity: PersonEntity = new PersonEntity();
-            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+            await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
             person1.id = personEntity.id;
 
             const result: Person<true>[] = await sut.findByFullName(vorname, familienname);
@@ -1611,7 +1611,7 @@ describe('PersonRepository Integration', () => {
             it('should return person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
 
                 const organisation: OrganisationEntity = await createAndPersistOrganisation(
@@ -1627,7 +1627,7 @@ describe('PersonRepository Integration', () => {
                     istTechnisch: false,
                 };
                 const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
-                await em.persistAndFlush(rolleEntity);
+                await em.persist(rolleEntity).flush();
 
                 const personenkontextData: RequiredEntityData<PersonenkontextEntity> = {
                     organisationId: organisation.id,
@@ -1638,7 +1638,7 @@ describe('PersonRepository Integration', () => {
                     PersonenkontextEntity,
                     personenkontextData,
                 );
-                await em.persistAndFlush(personenkontextEntity);
+                await em.persist(personenkontextEntity).flush();
 
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                     all: false,
@@ -1667,7 +1667,7 @@ describe('PersonRepository Integration', () => {
                     all: true,
                 });
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
                 person1.userLock = [
                     {
@@ -1696,7 +1696,7 @@ describe('PersonRepository Integration', () => {
 
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 kcUserServiceMock.findById.mockResolvedValue({
                     ok: true,
                     value: {
@@ -1722,7 +1722,7 @@ describe('PersonRepository Integration', () => {
             const person1: Person<true> = DoFactory.createPerson(true);
             person1.istTechnisch = true;
             const personEntity: PersonEntity = new PersonEntity();
-            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+            await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
             person1.id = personEntity.id;
 
             const organisation: OrganisationEntity = await createAndPersistOrganisation(
@@ -1738,7 +1738,7 @@ describe('PersonRepository Integration', () => {
                 istTechnisch: true,
             };
             const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
-            await em.persistAndFlush(rolleEntity);
+            await em.persist(rolleEntity).flush();
 
             const personenkontextData: RequiredEntityData<PersonenkontextEntity> = {
                 organisationId: organisation.id,
@@ -1746,7 +1746,7 @@ describe('PersonRepository Integration', () => {
                 rolleId: rolleEntity.id,
             };
             const personenkontextEntity: PersonenkontextEntity = em.create(PersonenkontextEntity, personenkontextData);
-            await em.persistAndFlush(personenkontextEntity);
+            await em.persist(personenkontextEntity).flush();
 
             personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
@@ -1780,7 +1780,7 @@ describe('PersonRepository Integration', () => {
             it('should return person and not call getPersonIfAllowed', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
 
                 //mock requester is same person
@@ -1828,7 +1828,7 @@ describe('PersonRepository Integration', () => {
             it('should call getPersonIfAllowed', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
 
                 const organisation: OrganisationEntity = await createAndPersistOrganisation(
@@ -1844,7 +1844,7 @@ describe('PersonRepository Integration', () => {
                     istTechnisch: false,
                 };
                 const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
-                await em.persistAndFlush(rolleEntity);
+                await em.persist(rolleEntity).flush();
 
                 const personenkontextData: RequiredEntityData<PersonenkontextEntity> = {
                     organisationId: organisation.id,
@@ -1855,7 +1855,7 @@ describe('PersonRepository Integration', () => {
                     PersonenkontextEntity,
                     personenkontextData,
                 );
-                await em.persistAndFlush(personenkontextEntity);
+                await em.persist(personenkontextEntity).flush();
 
                 //mock explicitly that requestor is another person
                 personPermissionsMock.personFields.id = faker.string.uuid();
@@ -1898,7 +1898,7 @@ describe('PersonRepository Integration', () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
                 kcUserServiceMock.findById.mockResolvedValue({
                     ok: true,
@@ -1924,7 +1924,7 @@ describe('PersonRepository Integration', () => {
             it('should delete the person as admin of organisation', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
                 const organisation: OrganisationEntity = await createAndPersistOrganisation(
                     em,
@@ -1952,7 +1952,7 @@ describe('PersonRepository Integration', () => {
                 };
 
                 const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
-                await em.persistAndFlush(rolleEntity);
+                await em.persist(rolleEntity).flush();
 
                 const personenkontextData: RequiredEntityData<PersonenkontextEntity> = {
                     organisationId: organisation.id,
@@ -1963,7 +1963,7 @@ describe('PersonRepository Integration', () => {
                     PersonenkontextEntity,
                     personenkontextData,
                 );
-                await em.persistAndFlush(personenkontextEntity);
+                await em.persist(personenkontextEntity).flush();
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                     all: false,
                     orgaIds: [organisation.id],
@@ -1982,11 +1982,11 @@ describe('PersonRepository Integration', () => {
                 it('should delete the person and trigger PersonDeletedEvent', async () => {
                     const person: Person<true> = DoFactory.createPerson(true);
                     const personEntity: PersonEntity = new PersonEntity();
-                    await em.persistAndFlush(personEntity.assign(mapAggregateToData(person)));
+                    await em.persist(personEntity.assign(mapAggregateToData(person))).flush();
                     person.id = personEntity.id;
                     personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
-                    await em.persistAndFlush(personEntity);
+                    await em.persist(personEntity).flush();
 
                     const emailAddress: EmailAddressEntity = new EmailAddressEntity();
                     emailAddress.address = faker.internet.email();
@@ -1994,10 +1994,10 @@ describe('PersonRepository Integration', () => {
                     emailAddress.status = EmailAddressStatus.ENABLED;
 
                     const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
-                    await em.persistAndFlush(pp);
+                    await em.persist(pp).flush();
 
                     personEntity.emailAddresses.add(emailAddress);
-                    await em.persistAndFlush(personEntity);
+                    await em.persist(personEntity).flush();
                     kcUserServiceMock.findById.mockResolvedValue({
                         ok: true,
                         value: {
@@ -2033,7 +2033,7 @@ describe('PersonRepository Integration', () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
 
-                await em.persistAndFlush(em.create(PersonEntity, mapAggregateToData(person1)));
+                await em.persist(em.create(PersonEntity, mapAggregateToData(person1))).flush();
 
                 const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                 const result: Result<void, DomainError> = await sut.deletePerson(
@@ -2055,7 +2055,7 @@ describe('PersonRepository Integration', () => {
                     },
                 );
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
                 kcUserServiceMock.findById.mockResolvedValue({
                     ok: true,
@@ -2086,7 +2086,7 @@ describe('PersonRepository Integration', () => {
                 person1.keycloakUserId = '';
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
 
                 kcUserServiceMock.findById.mockResolvedValue({
@@ -2129,7 +2129,7 @@ describe('PersonRepository Integration', () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
                 kcUserServiceMock.findById.mockResolvedValue({
                     ok: true,
@@ -2155,7 +2155,7 @@ describe('PersonRepository Integration', () => {
             it('should delete the person as admin of organisation', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
                 const organisation: OrganisationEntity = await createAndPersistOrganisation(
                     em,
@@ -2183,7 +2183,7 @@ describe('PersonRepository Integration', () => {
                 };
 
                 const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
-                await em.persistAndFlush(rolleEntity);
+                await em.persist(rolleEntity).flush();
 
                 const personenkontextData: RequiredEntityData<PersonenkontextEntity> = {
                     organisationId: organisation.id,
@@ -2194,7 +2194,7 @@ describe('PersonRepository Integration', () => {
                     PersonenkontextEntity,
                     personenkontextData,
                 );
-                await em.persistAndFlush(personenkontextEntity);
+                await em.persist(personenkontextEntity).flush();
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                     all: false,
                     orgaIds: [organisation.id],
@@ -2213,7 +2213,7 @@ describe('PersonRepository Integration', () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 const personEntity: PersonEntity = new PersonEntity();
                 person1.username = faker.internet.username();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
 
                 const emailAddress: EmailAddressEntity = new EmailAddressEntity();
@@ -2224,10 +2224,10 @@ describe('PersonRepository Integration', () => {
                 emailAddress.oxUserId = oxUserId;
 
                 const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
-                await em.persistAndFlush(pp);
+                await em.persist(pp).flush();
 
                 personEntity.emailAddresses.add(emailAddress);
-                await em.persistAndFlush(personEntity);
+                await em.persist(personEntity).flush();
 
                 const organisation: OrganisationEntity = await createAndPersistOrganisation(
                     em,
@@ -2255,7 +2255,7 @@ describe('PersonRepository Integration', () => {
                 };
 
                 const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
-                await em.persistAndFlush(rolleEntity);
+                await em.persist(rolleEntity).flush();
 
                 const personenkontextData: RequiredEntityData<PersonenkontextEntity> = {
                     organisationId: organisation.id,
@@ -2266,7 +2266,7 @@ describe('PersonRepository Integration', () => {
                     PersonenkontextEntity,
                     personenkontextData,
                 );
-                await em.persistAndFlush(personenkontextEntity);
+                await em.persist(personenkontextEntity).flush();
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                     all: false,
                     orgaIds: [organisation.id],
@@ -2298,7 +2298,7 @@ describe('PersonRepository Integration', () => {
                 person1.username = '';
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
 
                 kcUserServiceMock.findById.mockResolvedValue({
@@ -2343,7 +2343,7 @@ describe('PersonRepository Integration', () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
 
-                await em.persistAndFlush(em.create(PersonEntity, mapAggregateToData(person1)));
+                await em.persist(em.create(PersonEntity, mapAggregateToData(person1))).flush();
 
                 const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                 const result: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
@@ -2365,7 +2365,7 @@ describe('PersonRepository Integration', () => {
                     },
                 );
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
                 kcUserServiceMock.findById.mockResolvedValue({
                     ok: true,
@@ -2396,7 +2396,7 @@ describe('PersonRepository Integration', () => {
                 person1.keycloakUserId = '';
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
                 const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity.id;
 
                 kcUserServiceMock.findById.mockResolvedValue({
@@ -3225,12 +3225,12 @@ describe('PersonRepository Integration', () => {
 
                 const personEntity1: PersonEntity = new PersonEntity();
                 const person1: Person<true> = DoFactory.createPerson(true, { orgUnassignmentDate: daysAgo });
-                await em.persistAndFlush(personEntity1.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity1.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity1.id;
 
                 const personEntity2: PersonEntity = new PersonEntity();
                 const person2: Person<true> = DoFactory.createPerson(true, { orgUnassignmentDate: daysAgo });
-                await em.persistAndFlush(personEntity2.assign(mapAggregateToData(person2)));
+                await em.persist(personEntity2.assign(mapAggregateToData(person2))).flush();
                 person2.id = personEntity2.id;
 
                 // person with personenkontext
@@ -3258,7 +3258,7 @@ describe('PersonRepository Integration', () => {
                 // person without personenkontext but within the time limit for org_unassignment_Date
                 const person4: Person<true> = DoFactory.createPerson(true, { orgUnassignmentDate: new Date() });
                 const personEntity4: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity4.assign(mapAggregateToData(person4)));
+                await em.persist(personEntity4.assign(mapAggregateToData(person4))).flush();
                 person4.id = personEntity4.id;
 
                 //get person ids without personenkontext
@@ -3275,7 +3275,7 @@ describe('PersonRepository Integration', () => {
             it('should return a list of admins', async () => {
                 const personEntity1: PersonEntity = new PersonEntity();
                 const person1: Person<true> = DoFactory.createPerson(true);
-                await em.persistAndFlush(personEntity1.assign(mapAggregateToData(person1)));
+                await em.persist(personEntity1.assign(mapAggregateToData(person1))).flush();
                 person1.id = personEntity1.id;
 
                 const rolle1: Rolle<false> = DoFactory.createRolle(false, {

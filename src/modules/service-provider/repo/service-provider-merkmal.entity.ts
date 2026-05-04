@@ -1,4 +1,5 @@
-import { BaseEntity, Entity, Enum, Index, ManyToOne, PrimaryKeyProp, Rel } from '@mikro-orm/core';
+import { BaseEntity, PrimaryKeyProp, Rel } from '@mikro-orm/core';
+import { Entity, Enum, Index, ManyToOne } from '@mikro-orm/decorators/legacy';
 import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
 

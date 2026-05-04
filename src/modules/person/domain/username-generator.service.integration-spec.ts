@@ -201,7 +201,7 @@ describe('UsernameGeneratorService', () => {
         oxUser.name = 'meyer';
 
         // Persist the OxUserBlacklistEntity to the real database
-        await em.persistAndFlush(oxUser);
+        await em.persist(oxUser).flush();
 
         // Arrange Keycloak response (simulate the user not found in Keycloak)
         kcUserService.findOne.mockResolvedValueOnce({

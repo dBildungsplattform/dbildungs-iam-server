@@ -1,5 +1,6 @@
-import { BlobType, Collection, Entity, Enum, OneToMany, Property } from '@mikro-orm/core';
+import { BlobType, Collection } from '@mikro-orm/core';
 
+import { Entity, Enum, OneToMany, Property } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import {
     ServiceProviderKategorie,

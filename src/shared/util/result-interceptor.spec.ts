@@ -4,8 +4,9 @@ import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { Observable, of } from 'rxjs';
 import { ConfigTestModule } from '../../../test/utils/index.js';
 import { EntityNotFoundError, KeycloakClientError } from '../error/index.js';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
+
+type HttpArgumentsHost = ReturnType<ArgumentsHost['switchToHttp']>;
 
 describe('ResultInterceptor', () => {
     let module: TestingModule;

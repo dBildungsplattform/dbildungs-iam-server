@@ -1,4 +1,6 @@
-import { HeadersObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
+import { ApiResponseCommonMetadata } from '@nestjs/swagger';
+
+type HeadersObject = ApiResponseCommonMetadata['headers'];
 
 export enum PagingHeaders {
     OFFSET = 'X-Paging-Offset',

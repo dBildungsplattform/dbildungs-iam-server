@@ -30,7 +30,8 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
+import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
 import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { DeleteUserAction } from '../actions/user/delete-user.action.js';

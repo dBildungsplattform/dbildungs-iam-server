@@ -245,7 +245,7 @@ export class ServiceProviderRepo {
             mapAggregateToData(serviceProvider),
         );
 
-        await this.em.persistAndFlush(serviceProviderEntity);
+        await this.em.persist(serviceProviderEntity).flush();
 
         return mapEntityToAggregate(serviceProviderEntity);
     }
@@ -284,7 +284,7 @@ export class ServiceProviderRepo {
             mapAggregateToData(serviceProvider),
         );
 
-        await this.em.persistAndFlush(serviceProviderEntity);
+        await this.em.persist(serviceProviderEntity).flush();
 
         return Ok(mapEntityToAggregate(serviceProviderEntity));
     }
@@ -327,7 +327,7 @@ export class ServiceProviderRepo {
 
         serviceProviderEntity.assign(mapAggregateToData(serviceProvider));
 
-        await this.em.persistAndFlush(serviceProviderEntity);
+        await this.em.persist(serviceProviderEntity).flush();
 
         return Ok(mapEntityToAggregate(serviceProviderEntity));
     }
@@ -373,7 +373,7 @@ export class ServiceProviderRepo {
             return Err(new MissingPermissionsError('Not authorized to delete Service Provider!'));
         }
 
-        await this.em.removeAndFlush(entity);
+        await this.em.remove(entity).flush();
         return Ok();
     }
 

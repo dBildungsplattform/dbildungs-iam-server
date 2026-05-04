@@ -2,9 +2,10 @@ import { Observable, from, lastValueFrom } from 'rxjs';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { DISABLE_PAGING_INTERCEPTOR, GlobalPagingHeadersInterceptor } from './global-paging-headers.interceptor.js';
 import { Response } from 'express';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { PagedResponse } from './paged.response.js';
 import { PagingHeaders } from './paging.enums.js';
+
+type HttpArgumentsHost = ReturnType<ArgumentsHost['switchToHttp']>;
 
 describe('GlobalPagingHeadersInterceptor', () => {
     const sut: GlobalPagingHeadersInterceptor = new GlobalPagingHeadersInterceptor();

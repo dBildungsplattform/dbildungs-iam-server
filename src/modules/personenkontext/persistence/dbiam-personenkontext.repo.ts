@@ -1,4 +1,4 @@
-import { Cursor, FilterQuery, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
+import { Cursor, FilterQuery, Loaded, QueryOrder, raw, sql } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -326,9 +326,8 @@ export class DBiamPersonenkontextRepo {
         count: number,
         cursor?: string,
     ): Promise<[pks: Personenkontext<true>[], cursor: string | undefined]> {
-        const personenkontextCursor: Cursor<PersonenkontextEntity> = await this.em.findByCursor(
-            PersonenkontextEntity,
-            {
+        const personenkontextCursor: Cursor<PersonenkontextEntity> = await this.em.findByCursor(PersonenkontextEntity, {
+            where: {
                 rolleId,
                 organisationId: {
                     itslearningEnabled: true,
@@ -353,12 +352,11 @@ export class DBiamPersonenkontextRepo {
                             .getFormattedQuery()})`,
                 )]: [],
             },
-            {
-                after: cursor,
-                first: count,
-                orderBy: { id: QueryOrder.ASC },
-            },
-        );
+
+            after: cursor,
+            first: count,
+            orderBy: { id: QueryOrder.ASC },
+        });
 
         return [
             personenkontextCursor.items.map((pk: PersonenkontextEntity) =>
@@ -510,7 +508,7 @@ export class DBiamPersonenkontextRepo {
     }
 
     public async getPersonenKontexteWithExpiredBefristung(): Promise<Map<PersonID, Personenkontext<true>[]>> {
-        const filters: QBFilterQuery<PersonenkontextEntity> = {
+        const filters: FilterQuery<PersonenkontextEntity> = {
             personId: {
                 personenKontexte: {
                     $some: {

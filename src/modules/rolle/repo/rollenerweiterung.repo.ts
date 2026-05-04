@@ -1,4 +1,4 @@
-import { FilterQuery, Loaded, NoInfer, PopulatePath, RequiredEntityData } from '@mikro-orm/core';
+import { FilterQuery, Loaded, PopulatePath, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EntityManager, QueryBuilder } from '@mikro-orm/postgresql';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -70,7 +70,7 @@ export class RollenerweiterungRepo {
             this.mapAggregateToEntityData(rollenerweiterung),
         );
 
-        await this.em.persistAndFlush(rollenerweiterungEntity);
+        await this.em.persist(rollenerweiterungEntity).flush();
 
         return this.mapEntityToAggregate(rollenerweiterungEntity);
     }
@@ -108,7 +108,7 @@ export class RollenerweiterungRepo {
             RollenerweiterungEntity,
             this.mapAggregateToEntityData(rollenerweiterung),
         );
-        await this.em.persistAndFlush(rollenerweiterungEntity);
+        await this.em.persist(rollenerweiterungEntity).flush();
 
         return {
             ok: true,
@@ -204,7 +204,7 @@ export class RollenerweiterungRepo {
             return new Map();
         }
 
-        const filter: FilterQuery<NoInfer<RollenerweiterungEntity>> = {
+        const filter: FilterQuery<RollenerweiterungEntity> = {
             serviceProviderId: {
                 $in: serviceProviderIds,
             },
@@ -250,25 +250,29 @@ export class RollenerweiterungRepo {
         limit?: number,
     ): Promise<Counted<Rollenerweiterung<true>>> {
         // Get paginated unique organisation IDs using QueryBuilder
-        const qb: QueryBuilder<RollenerweiterungEntity> = this.em.createQueryBuilder(RollenerweiterungEntity, 're');
-        qb.select(['re.organisation_id', 'o.kennung'])
+        // Disable typedev because MikroORM7 does a lot of inference now
+        // eslint-disable-next-line @typescript-eslint/typedef
+        let qb = this.em
+            .createQueryBuilder(RollenerweiterungEntity, 're')
+            .innerJoinAndSelect('re.organisationId', 'o')
+            .select(['re.organisationId', 'o.kennung'] as const)
             .distinct()
-            .innerJoin('re.organisationId', 'o')
-            .where({ serviceProviderId });
+            .where({ 're.serviceProviderId': serviceProviderId });
 
-        qb.orderBy({ 'o.kennung': 'ASC' })
+        qb = qb
+            .orderBy({ 'o.kennung': 'ASC' })
             .limit(limit ?? 999999)
             .offset(offset ?? 0);
 
         if (organisationIds && organisationIds.length > 0) {
-            qb.andWhere({ organisationId: { $in: organisationIds } });
+            qb = qb.andWhere({ organisationId: { $in: organisationIds } });
         }
 
         const pagedOrgIdsResult: Array<{ organisationId: string; kennung: string }> = await qb.execute();
         const pagedOrgIds: string[] = pagedOrgIdsResult.map((row: { organisationId: string }) => row.organisationId);
 
         // Count total unique organisations
-        const countQb: QueryBuilder<RollenerweiterungEntity> = this.em.createQueryBuilder(
+        const countQb: QueryBuilder<RollenerweiterungEntity, 're'> = this.em.createQueryBuilder(
             RollenerweiterungEntity,
             're',
         );
@@ -293,7 +297,9 @@ export class RollenerweiterungRepo {
             RollenerweiterungEntity,
             {
                 serviceProviderId,
-                organisationId: { $in: pagedOrgIds },
+                organisationId: {
+                    $in: pagedOrgIds,
+                },
             },
             {
                 orderBy: {
@@ -302,6 +308,7 @@ export class RollenerweiterungRepo {
                     },
                     id: 'ASC',
                 },
+                populateWhere: 'infer',
             },
         );
 

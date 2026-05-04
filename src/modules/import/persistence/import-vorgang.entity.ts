@@ -1,9 +1,10 @@
+import { Opt, Ref } from '@mikro-orm/core';
+import { Entity, Enum, ManyToOne, Property } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { Entity, Enum, ManyToOne, Opt, Property, Ref } from '@mikro-orm/core';
-import { ImportStatus } from '../domain/import.enums.js';
-import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
+import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { ImportStatus } from '../domain/import.enums.js';
 
 @Entity({ tableName: 'importvorgang' })
 export class ImportVorgangEntity extends TimestampedEntity {

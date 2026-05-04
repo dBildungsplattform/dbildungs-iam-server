@@ -1,4 +1,4 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, Loaded } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EmailAddrEntity } from './email-address.entity.js';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
@@ -10,13 +10,14 @@ import { Err, Ok } from '../../../../shared/util/result.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { uniq } from 'lodash-es';
 
-export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddrEntity> {
-    const statuses: RequiredEntityData<EmailAddressStatusEntity, EmailAddrEntity>[] = emailAddress.sortedStatuses.map(
-        (s: EmailAddressStatus) => ({
-            id: s.id,
-            status: s.status,
-        }),
-    );
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function mapAggregateToData(emailAddress: EmailAddress<boolean>) {
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const statuses = emailAddress.sortedStatuses.map((s: EmailAddressStatus) => ({
+        id: s.id!,
+        status: s.status,
+    }));
 
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
@@ -178,14 +179,16 @@ export class EmailAddressRepo {
 
             // Shift all emails that need to be moved
             let priorityToMove: number = targetPriority;
-            for (const em of emails) {
-                if (em.priority === priorityToMove) {
-                    em.priority += 1;
+            for (const mail of emails) {
+                if (mail.priority === priorityToMove) {
+                    mail.priority += 1;
                     priorityToMove += 1;
+                    em.persist(mail);
                 }
             }
 
             targetEmailAddress.priority = targetPriority;
+            em.persist(targetEmailAddress);
 
             await em.flush();
 
@@ -236,6 +239,8 @@ export class EmailAddressRepo {
                         );
                     }
                 }
+
+                em.persist(email);
             }
 
             await em.flush();
@@ -254,7 +259,7 @@ export class EmailAddressRepo {
 
     private async create(emailAddress: EmailAddress<boolean>): Promise<Result<EmailAddress<true>, DomainError>> {
         const emailAddressEntity: EmailAddrEntity = this.em.create(EmailAddrEntity, mapAggregateToData(emailAddress));
-        await this.em.persistAndFlush(emailAddressEntity);
+        await this.em.persist(emailAddressEntity).flush();
 
         return Ok(mapEntityToAggregate(emailAddressEntity));
     }
@@ -266,7 +271,7 @@ export class EmailAddressRepo {
 
         if (emailAddressEntity) {
             emailAddressEntity.assign(mapAggregateToData(emailAddress), {});
-            await this.em.persistAndFlush(emailAddressEntity);
+            await this.em.persist(emailAddressEntity).flush();
         } else {
             this.logger.error(`Email-Address:${emailAddress.address} with id ${emailAddress.id} could not be found`);
             return Err(new EmailAddressNotFoundError(emailAddress.address));

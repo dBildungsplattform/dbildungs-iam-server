@@ -1,13 +1,4 @@
-import {
-    Cursor,
-    EntityManager,
-    FilterQuery,
-    Loaded,
-    QBFilterQuery,
-    QueryOrder,
-    raw,
-    RequiredEntityData,
-} from '@mikro-orm/postgresql';
+import { Cursor, EntityKey, EntityManager, FilterQuery, Loaded, QueryOrder, raw } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'node:crypto';
@@ -46,7 +37,7 @@ import { compareEmailAddressesByUpdatedAtDesc } from '../../email/persistence/em
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
@@ -136,8 +127,11 @@ export function getOxUserId(entity: PersonEntity): OXUserID | undefined {
     return sortedEmailAddresses[0]?.oxUserId;
 }
 
-export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
-    const externalIds: RequiredEntityData<PersonExternalIdMappingEntity>[] = mapDefinedObjectProperties(
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function mapAggregateToData(person: Person<boolean>) {
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const externalIds = mapDefinedObjectProperties(
         person.externalIds,
         (type: PersonExternalIdType, externalId: string) => ({
             person: person.id,
@@ -362,9 +356,8 @@ export class PersonRepository {
         count: number,
         cursor?: string,
     ): Promise<[persons: Person<true>[], cursor: string | undefined]> {
-        const personCursor: Cursor<PersonEntity> = await this.em.findByCursor(
-            PersonEntity,
-            {
+        const personCursor: Cursor<PersonEntity> = await this.em.findByCursor(PersonEntity, {
+            where: {
                 personenKontexte: {
                     // Only if the person has the requested rolle
                     $some: {
@@ -393,14 +386,13 @@ export class PersonRepository {
                     },
                 },
             },
-            {
-                after: cursor,
-                first: count,
-                orderBy: {
-                    id: QueryOrder.ASC,
-                },
+
+            after: cursor,
+            first: count,
+            orderBy: {
+                id: QueryOrder.ASC,
             },
-        );
+        });
 
         return [
             personCursor.items.map((entity: PersonEntity) => mapEntityToAggregate(entity)),
@@ -779,7 +771,7 @@ export class PersonRepository {
         }
 
         personEntity.assign(mapAggregateToData(person));
-        await this.em.persistAndFlush(personEntity);
+        await this.em.persist(personEntity).flush();
 
         if (isPersonRenamedEventNecessary) {
             this.eventRoutingLegacyKafkaService.publish(
@@ -927,7 +919,7 @@ export class PersonRepository {
         if (criteria === SortFieldPerson.USERNAME) {
             scope.sortBy(criteria, order);
         } else {
-            scope.sortBy(raw<PersonEntity, keyof PersonEntity>(`lower(${criteria})`), order);
+            scope.sortBy(raw<EntityKey<PersonEntity>>(`lower(${criteria})`), order);
         }
     }
 
@@ -1117,7 +1109,7 @@ export class PersonRepository {
         const daysAgo: Date = new Date();
         daysAgo.setDate(daysAgo.getDate() - KOPERS_DEADLINE_IN_DAYS);
 
-        const filters: QBFilterQuery<PersonEntity> = {
+        const filters: FilterQuery<PersonEntity> = {
             $and: [
                 { personalnummer: { $eq: null } },
                 {
@@ -1151,11 +1143,11 @@ export class PersonRepository {
         const daysAgo: Date = new Date();
         daysAgo.setDate(daysAgo.getDate() - NO_KONTEXTE_DEADLINE_IN_DAYS);
 
-        const filters: QBFilterQuery<PersonEntity> = {
+        const filters: FilterQuery<PersonEntity> = {
             personenKontexte: {
                 $exists: false,
             },
-            org_unassignment_date: {
+            orgUnassignmentDate: {
                 $lte: daysAgo,
             },
         };
@@ -1167,16 +1159,17 @@ export class PersonRepository {
     }
 
     public async findOrganisationAdminsByOrganisationId(organisation_id: string): Promise<string[]> {
-        const filters: QBFilterQuery<PersonEntity> = {
+        const filters: FilterQuery<NoInfer<PersonEntity>> = {
             personenKontexte: {
                 $some: {
                     organisationId: organisation_id,
                     rolleId: {
-                        rollenart: 'LEIT',
+                        rollenart: RollenArt.LEIT,
                     },
                 },
             },
         };
+
         const admins: PersonEntity[] = await this.em.find(PersonEntity, filters);
         return admins.map((admin: PersonEntity) => admin.vorname + ' ' + admin.familienname);
     }

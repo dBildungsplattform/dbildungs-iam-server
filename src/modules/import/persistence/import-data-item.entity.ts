@@ -1,7 +1,8 @@
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { ArrayType, Entity, Enum, ManyToOne, Property, Ref } from '@mikro-orm/core';
+import { ArrayType, Ref } from '@mikro-orm/core';
 import { ImportVorgangEntity } from './import-vorgang.entity.js';
 import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
+import { Entity, Enum, ManyToOne, Property } from '@mikro-orm/decorators/legacy';
 
 @Entity({ tableName: 'importdataitem' })
 export class ImportDataItemEntity extends TimestampedEntity {

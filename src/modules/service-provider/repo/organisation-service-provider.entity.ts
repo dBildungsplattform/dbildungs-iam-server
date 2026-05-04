@@ -1,6 +1,7 @@
-import { BaseEntity, Entity, ManyToOne, PrimaryKeyProp, Rel } from '@mikro-orm/core';
+import { BaseEntity, PrimaryKeyProp, Rel } from '@mikro-orm/core';
 import { ServiceProviderEntity } from './service-provider.entity.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
+import { Entity, ManyToOne } from '@mikro-orm/decorators/legacy';
 
 @Entity({ tableName: 'organisation_service_provider' })
 export class OrganisationServiceProviderEntity extends BaseEntity {

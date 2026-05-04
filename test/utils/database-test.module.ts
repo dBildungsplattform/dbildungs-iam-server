@@ -7,6 +7,7 @@ import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers
 import { randomUUID } from 'crypto';
 import { PullPolicy } from 'testcontainers';
 import { DbConfig } from '../../src/shared/config/index.js';
+import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
 
 type DatabaseTestModuleOptions = {
     isDatabaseRequired?: boolean;
@@ -38,10 +39,11 @@ export class DatabaseTestModule implements OnModuleDestroy {
                             dynamicImportProvider: (id: string) => import(id),
                             entities: ['./dist/**/*.entity.js'],
                             entitiesTs: ['./src/**/*.entity.ts'],
+                            metadataProvider: ReflectMetadataProvider,
                             driver: PostgreSqlDriver,
                             allowGlobalContext: true,
-                            connect: options?.isDatabaseRequired ?? false,
                             extensions: [Migrator],
+                            forceUndefined: true,
                             migrations: {
                                 tableName: 'mikro_orm_migrations', // name of database table with log of executed transactions
                                 path: './test-migrations', // path to the folder with migrations
@@ -56,6 +58,7 @@ export class DatabaseTestModule implements OnModuleDestroy {
                                 emit: 'ts', // migration generation mode
                                 generator: TSMigrationGenerator, // migration generator, e.g. to allow custom formatting
                             },
+                            debug: true,
                         });
                     },
                     driver: PostgreSqlDriver,
@@ -67,11 +70,12 @@ export class DatabaseTestModule implements OnModuleDestroy {
 
     public static async setupDatabase(orm: MikroORM): Promise<void> {
         await orm.em.getConnection().execute('CREATE EXTENSION IF NOT EXISTS pg_trgm');
-        await orm.getSchemaGenerator().createSchema();
+        await orm.schema.create();
     }
 
     public static async clearDatabase(orm: MikroORM): Promise<void> {
-        await orm.getSchemaGenerator().clearDatabase();
+        // Explicitly clear default and email schema
+        await Promise.all([orm.schema.clear(), orm.schema.clear({ schema: 'email' })]);
     }
 
     public constructor(private orm?: MikroORM) {}
