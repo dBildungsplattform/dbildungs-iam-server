@@ -18,6 +18,7 @@ import {
     ApiBadRequestResponse,
     ApiBearerAuth,
     ApiConflictResponse,
+    ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNoContentResponse,
@@ -28,8 +29,8 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-
 import { uniq } from 'lodash-es';
+
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
@@ -339,8 +340,9 @@ export class ProviderController {
 
     @Post()
     @UseGuards(StepUpGuard)
+    @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ description: 'Create a new service-provider (Angebot).' })
-    @ApiOkResponse({
+    @ApiCreatedResponse({
         description: 'The service-provider was successfully created.',
         type: ServiceProviderResponse,
     })
