@@ -117,13 +117,13 @@ export class ServiceProvider<WasPersisted extends boolean> {
     public updateWithSafeFields(
         update: Partial<Record<keyof SafeUpdateFields, SafeUpdateFields[keyof SafeUpdateFields] | null>>,
     ): Option<LogoOrLogoIdError> {
-        if (update.logoId && this.logo) {
-            return new LogoOrLogoIdError('Cannot update logoId, if there already is a logo');
+        if (update.logoId !== undefined && this.logo) {
+            return new LogoOrLogoIdError('Cannot set logoId, if there already is a logo');
         }
         for (const field of ServiceProvider.SAFE_UPDATE_FIELDS) {
             if (field === 'logoId' && update[field] === null) {
                 this.logoId = undefined;
-            } else if (update[field]) {
+            } else if (update[field] !== undefined && update[field] !== null) {
                 assignSameKey(this, update, field);
             }
         }

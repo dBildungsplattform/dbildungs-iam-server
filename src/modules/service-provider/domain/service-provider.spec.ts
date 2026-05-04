@@ -7,17 +7,34 @@ import { ServiceProviderKategorie } from './service-provider.enum';
 
 describe('ServiceProvider', () => {
     describe('updateWithSafeFields', () => {
-        it('should update only safe fields', () => {
+        let serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+
+        beforeEach(() => {
+            serviceProvider = DoFactory.createServiceProvider(true, {
+                kategorie: ServiceProviderKategorie.HINWEISE,
+                logo: undefined,
+            });
+        });
+
+        it.each([
+            [
+                {
+                    name: faker.company.buzzNoun(),
+                    url: faker.internet.url(),
+                    kategorie: serviceProvider.kategorie,
+                    logoId: faker.number.int({ min: 0, max: 1000 }),
+                },
+            ],
+            [
+                {
+                    logoId: 0,
+                },
+            ],
+        ])('should update only safe fields', (update: UpdateServiceProviderBodyParams) => {
             const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
                 kategorie: ServiceProviderKategorie.HINWEISE,
                 logo: undefined,
             });
-            const update: UpdateServiceProviderBodyParams = {
-                name: faker.company.buzzNoun(),
-                url: faker.internet.url(),
-                kategorie: serviceProvider.kategorie,
-                logoId: faker.number.int({ min: 1, max: 1000 }),
-            };
             const result: Option<LogoOrLogoIdError> = serviceProvider.updateWithSafeFields(update);
             expect(result).toBeUndefined();
             expect(serviceProvider).toEqual({
@@ -43,16 +60,19 @@ describe('ServiceProvider', () => {
             });
         });
 
-        it('should return an error if logoId is provided when logo is already set', () => {
-            const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
-                kategorie: ServiceProviderKategorie.HINWEISE,
-            });
-            const update: UpdateServiceProviderBodyParams = {
-                logoId: 123,
-            };
-            const result: Option<LogoOrLogoIdError> = serviceProvider.updateWithSafeFields(update);
-            expect(result).toBeInstanceOf(LogoOrLogoIdError);
-            expect(serviceProvider.logoId).toBeUndefined();
-        });
+        it.each([[0], [123]])(
+            'should return an error if logoId=%s is provided when logo is already set',
+            (logoId: number) => {
+                const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    kategorie: ServiceProviderKategorie.HINWEISE,
+                });
+                const update: UpdateServiceProviderBodyParams = {
+                    logoId,
+                };
+                const result: Option<LogoOrLogoIdError> = serviceProvider.updateWithSafeFields(update);
+                expect(result).toBeInstanceOf(LogoOrLogoIdError);
+                expect(serviceProvider.logoId).toBeUndefined();
+            },
+        );
     });
 });
