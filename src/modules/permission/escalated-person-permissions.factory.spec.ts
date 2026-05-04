@@ -8,6 +8,7 @@ import { EscalatedPersonPermissions } from './escalated-person-permissions.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../rolle/domain/systemrecht.js';
 import { createPersonPermissionsMock } from '../../../test/utils/index.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';
+import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
 
 describe('EscalatedPersonPermissionsFactory', () => {
     let sut: EscalatedPersonPermissionsFactory;
@@ -81,9 +82,8 @@ describe('EscalatedPersonPermissionsFactory', () => {
             ).resolves.toBe(true);
         });
         it('should throw if permissions are neither PersonPermissions nor EscalatedPersonPermissions', async () => {
-            // @ts-expect-error purposely passing invalid object
             await expect(
-                sut.fromPermissions({}, [{ orgaId: '1234', systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN] }]),
+                sut.fromPermissions({} as unknown as IPersonPermissions, [{ orgaId: '1234', systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN] }]),
             ).rejects.toThrow('Provided permissions are neither PersonPermissions nor EscalatedPersonPermissions');
         });
     });
