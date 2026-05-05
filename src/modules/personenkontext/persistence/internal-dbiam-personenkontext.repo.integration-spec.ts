@@ -23,6 +23,8 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
+import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -76,6 +78,8 @@ describe('dbiam Personenkontext Repo', () => {
                 OrganisationModule,
                 LoggingTestModule,
                 ServiceProviderModule,
+                EmailPersistenceModule,
+                EmailMicroserviceModule,
             ],
             providers: [
                 DBiamPersonenkontextRepoInternal,

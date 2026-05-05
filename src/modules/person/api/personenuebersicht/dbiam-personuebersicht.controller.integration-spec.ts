@@ -47,6 +47,8 @@ import { ServiceProviderModule } from '../../../service-provider/service-provide
 import { SharedExceptionFilter } from '../../../../shared/filter/shared-exception-filter.js';
 import { ValidationExceptionFilter } from '../../../../shared/filter/validation-exception-filter.js';
 import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
+import { EmailPersistenceModule } from '../../../email/email-persistence.module.js';
+import { EmailMicroserviceModule } from '../../../email-microservice/email-microservice.module.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -82,6 +84,8 @@ describe('Personenuebersicht API', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
                 ServiceProviderModule,
+                EmailPersistenceModule,
+                EmailMicroserviceModule,
             ],
             providers: [
                 {

@@ -52,6 +52,8 @@ import { RollenerweiterungFactory } from '../../rolle/domain/rollenerweiterung.f
 import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 import { ServiceProviderMerkmalEntity } from '../../service-provider/repo/service-provider-merkmal.entity.js';
+import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -111,6 +113,8 @@ describe('dbiam Personenkontext Repo', () => {
                 OrganisationModule,
                 LoggingTestModule,
                 ServiceProviderModule,
+                EmailPersistenceModule,
+                EmailMicroserviceModule,
             ],
             providers: [
                 DBiamPersonenkontextRepo,

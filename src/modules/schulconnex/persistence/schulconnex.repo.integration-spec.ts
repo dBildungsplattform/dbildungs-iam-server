@@ -30,6 +30,8 @@ import { SchulconnexModule } from '../schulconnex.module.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
+import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 
 describe('Schulconnex Repo', () => {
     let module: TestingModule;
@@ -89,6 +91,8 @@ describe('Schulconnex Repo', () => {
                 LoggingTestModule,
                 SchulconnexModule,
                 ServiceProviderModule,
+                EmailPersistenceModule,
+                EmailMicroserviceModule,
             ],
             providers: [
                 SchulconnexRepo,
