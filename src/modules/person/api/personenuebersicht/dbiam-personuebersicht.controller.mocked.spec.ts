@@ -29,6 +29,7 @@ import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.j
 import { PersonLandesbediensteterSearchService } from '../../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
 import { PersonID } from '../../../../shared/types/aggregate-ids.types.js';
 import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
+import { PermissionTestModule } from '../../../../../test/utils/permission-test.module.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -85,6 +86,7 @@ describe('Personenuebersicht API Mocked', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
                 LoggingTestModule,
+                PermissionTestModule,
             ],
             providers: [ServiceProviderRepo, RolleFactory, OrganisationRepository],
         })

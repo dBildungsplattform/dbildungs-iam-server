@@ -1,17 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
+import { DatabaseTestModule } from '../../../test/utils/index.js';
 import { EventModule } from '../../core/eventbus/index.js';
 import { PersonenInfoService } from './domain/personeninfo/personeninfo.service.js';
 import { SchulconnexModule } from './schulconnex.module.js';
 import { PersonInfoController } from './api/personinfo/person-info.controller.js';
 import { PersonenInfoController } from './api/personeninfo/personeninfo.controller.js';
+import { CommonTestModule } from '../../../test/utils/common-test.module.js';
 
 describe('SchulconnexModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), EventModule, SchulconnexModule],
+            imports: [CommonTestModule, DatabaseTestModule.forRoot(), EventModule, SchulconnexModule],
         }).compile();
     });
 

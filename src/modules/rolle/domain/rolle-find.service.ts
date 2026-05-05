@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { intersection } from 'lodash-es';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import {
-    intersectPermittedAndRequestedOrgas,
-    PermittedOrgas,
-    PersonPermissions,
-} from '../../authentication/domain/person-permissions.js';
+import { intersectPermittedAndRequestedOrgas, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -14,9 +10,10 @@ import { RollenArt } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { RollenSystemRecht } from './systemrecht.js';
 import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export interface FindRollenWithPermissionsParams {
-    permissions: PersonPermissions;
+    permissions: IPersonPermissions;
     searchStr?: string;
     organisationIds?: Array<OrganisationID>;
     rollenArten?: Array<RollenArt>;
