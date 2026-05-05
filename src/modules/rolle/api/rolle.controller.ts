@@ -32,10 +32,10 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { Public } from '../../authentication/api/public.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -43,8 +43,8 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { RolleDomainError } from '../domain/rolle-domain.error.js';
 import { RolleDeleteService } from '../domain/rolle-delete.service.js';
+import { RolleDomainError } from '../domain/rolle-domain.error.js';
 import { RolleFindService } from '../domain/rolle-find.service.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
@@ -101,7 +101,7 @@ export class RolleController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })
     public async findRollen(
         @Query() queryParams: FindRolleQueryParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
         const [rollen, total]: [Rolle<true>[], number] =
             queryParams.systemrecht === RollenSystemRechtEnum.ROLLEN_ERWEITERN
@@ -191,7 +191,7 @@ export class RolleController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rolle by id.' })
     public async findRolleByIdWithServiceProviders(
         @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
         const rolleResult: Result<Rolle<true>> = await this.rolleRepo.findByIdAuthorized(
             findRolleByIdParams.rolleId,
@@ -215,7 +215,7 @@ export class RolleController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the rolle.' })
     public async createRolle(
         @Body() params: CreateRolleBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<RolleResponse> {
         const orgResult: Result<Organisation<true>, DomainError> = await this.orgService.findOrganisationById(
             params.administeredBySchulstrukturknoten,
@@ -375,7 +375,7 @@ export class RolleController {
     public async updateRolle(
         @Param() findRolleByIdParams: FindRolleByIdParams,
         @Body() params: UpdateRolleBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         const rolleName: string = rolle?.name ?? 'ROLLE_NOT_FOUND';
@@ -422,7 +422,7 @@ export class RolleController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to delete the role.' })
     public async deleteRolle(
         @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<void> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (!rolle) {
@@ -468,7 +468,7 @@ export class RolleController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the rollenerweiterung.' })
     public async createRollenerweiterung(
         @Body() params: CreateRollenerweiterungBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<RollenerweiterungResponse> {
         const rollenerweiterung: Rollenerweiterung<false> = this.rollenerweiterungFactory.createNew(
             params.organisationId,

@@ -20,7 +20,7 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
 import { RolleDeleteService } from '../domain/rolle-delete.service.js';
@@ -128,7 +128,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
 
     describe('/POST rolle mocked Rolle-repo', () => {
         describe('createRolle', () => {
-            const permissionsMock: PersonPermissions = createPersonPermissionsMock();
+            const permissionsMock: IPersonPermissions = createPersonPermissionsMock();
             it('should throw an HTTP exception when rolleFactory.createNew returns DomainError', async () => {
                 const createRolleParams: CreateRolleBodyParams = {
                     name: ' SuS',
@@ -154,7 +154,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
     describe('POST rolle/erweiterung', () => {
         describe('createRollenerweiterung', () => {
             let createRollenerweiterungParams: CreateRollenerweiterungBodyParams;
-            let permissions: PersonPermissions;
+            let permissions: IPersonPermissions;
             beforeEach(() => {
                 createRollenerweiterungParams = new CreateRollenerweiterungBodyParams();
                 Object.assign(createRollenerweiterungParams, {
@@ -199,7 +199,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
     describe('DELETE rolle/:rolleId', () => {
         it('should delegate deletion to RolleDeleteService', async () => {
             const rolle: Rolle<true> = DoFactory.createRolle(true);
-            const permissions: PersonPermissions = createPersonPermissionsMock();
+            const permissions: IPersonPermissions = createPersonPermissionsMock();
             const params: FindRolleByIdParams = { rolleId: rolle.id };
 
             rolleRepoMock.findById.mockResolvedValueOnce(rolle);
@@ -211,7 +211,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
 
         it('should throw if RolleDeleteService returns a domain error', async () => {
             const rolle: Rolle<true> = DoFactory.createRolle(true);
-            const permissions: PersonPermissions = createPersonPermissionsMock();
+            const permissions: IPersonPermissions = createPersonPermissionsMock();
             const params: FindRolleByIdParams = { rolleId: rolle.id };
             const error: MissingPermissionsError = new MissingPermissionsError('dummy error');
 

@@ -18,13 +18,13 @@ import { OrganisationByIdAndName } from './import-workflow.js';
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ImportPasswordEncryptor } from './import-password-encryptor.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ImportDataItemStatus } from './importDataItem.enum.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaImportExecutedEvent } from '../../../shared/events/kafka-import-executed.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { ImportStatus } from './import.enums.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @Injectable()
 export class ImportEventHandler {
@@ -92,7 +92,7 @@ export class ImportEventHandler {
         let allItemsFailed: boolean = true;
 
         // Load fresh permissions because we can't serialize the permissions object when using kafka
-        const permissions: PersonPermissions = await this.permissionsRepo.loadPersonPermissions(
+        const permissions: IPersonPermissions = await this.permissionsRepo.loadPersonPermissions(
             event.importerKeycloakId,
         );
 
@@ -120,7 +120,7 @@ export class ImportEventHandler {
     private async savePersonWithPersonenkontext(
         importDataItem: ImportDataItem<true>,
         klassenByIDandName: OrganisationByIdAndName[],
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<void> {
         try {
             const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { Rolle } from './rolle.js';
@@ -14,7 +14,7 @@ export class RolleDeleteService {
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
     ) {}
 
-    public async delete(id: RolleID, permissions: PersonPermissions): Promise<Option<DomainError>> {
+    public async delete(id: RolleID, permissions: IPersonPermissions): Promise<Option<DomainError>> {
         const authorizedRole: Result<Rolle<true>, DomainError> = await this.rolleRepo.findByIdAuthorized(
             id,
             permissions,

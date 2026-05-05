@@ -14,7 +14,6 @@ import {
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { DbiamPersonenkontexteUpdateError } from '../../personenkontext/api/dbiam-personenkontexte-update.error.js';
@@ -30,6 +29,7 @@ import { LandesbediensteterWorkflowStepBodyParams } from './param/landesbedienst
 import { LandesbediensteterWorkflowStepResponse } from './response/landesbediensteter-workflow-step.response.js';
 import { LandesbediensteterExceptionFilter } from './landesbediensteter-exception-filter.js';
 import { PersonenkontexteUpdateExceptionFilter } from '../../personenkontext/api/personenkontexte-update-exception-filter.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @ApiTags('landesbediensteter')
 @ApiBearerAuth()
@@ -55,7 +55,7 @@ Note: Providing rolleId without organisationId is invalid.`,
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting data.' })
     public async step(
         @Query() params: LandesbediensteterWorkflowStepBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<LandesbediensteterWorkflowStepResponse> {
         const workflow: LandesbediensteterWorkflowAggregate = this.landesbediensteteWorkflowFactory.createNew();
 
@@ -107,7 +107,7 @@ Note: Providing rolleId without organisationId is invalid.`,
     public async commit(
         @Param() params: LandesbediensteterPersonIdParams,
         @Body() bodyParams: LandesbediensteterWorkflowCommitBodyParams,
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
     ): Promise<PersonenkontexteUpdateResponse> {
         const updateResult: Result<Personenkontext<true>[], PersonenkontexteUpdateError> =
             await this.landesbediensteteWorkflowFactory

@@ -1,15 +1,16 @@
 import { TestingModule, Test } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
+import { DatabaseTestModule } from '../../../test/utils/index.js';
 import { ImportWorkflowFactory } from './domain/import-workflow.factory.js';
 import { ImportDataRepository } from './persistence/import-data.repository.js';
 import { ImportModule } from './import.module.js';
+import { CommonTestModule } from '../../../test/utils/common-test.module.js';
 
 describe('ImportModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), ImportModule],
+            imports: [CommonTestModule, DatabaseTestModule.forRoot(), ImportModule],
         }).compile();
     });
 
