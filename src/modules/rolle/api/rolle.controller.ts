@@ -44,6 +44,7 @@ import { ServiceProviderResponse } from '../../service-provider/api/service-prov
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleDomainError } from '../domain/rolle-domain.error.js';
+import { RolleDeleteService } from '../domain/rolle-delete.service.js';
 import { RolleFindService } from '../domain/rolle-find.service.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
@@ -78,6 +79,7 @@ export class RolleController {
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
         private readonly rolleFindService: RolleFindService,
+        private readonly rolleDeleteService: RolleDeleteService,
         private readonly orgService: OrganisationService,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
@@ -432,7 +434,7 @@ export class RolleController {
         }
         const rolleName: string = rolle.name;
 
-        const result: Option<DomainError> = await this.rolleRepo.deleteAuthorized(
+        const result: Option<DomainError> = await this.rolleDeleteService.delete(
             findRolleByIdParams.rolleId,
             permissions,
         );

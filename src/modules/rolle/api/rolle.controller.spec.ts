@@ -23,7 +23,9 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
+import { RolleDeleteService } from '../domain/rolle-delete.service.js';
 import { RolleFindService } from '../domain/rolle-find.service.js';
+import { Rolle } from '../domain/rolle.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
@@ -36,6 +38,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleController: RolleController;
     let organisationServiceMock: DeepMocked<OrganisationService>;
     let rollenerweiterungRepoMock: DeepMocked<RollenerweiterungRepo>;
+    let rolleDeleteServiceMock: DeepMocked<RolleDeleteService>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -52,6 +55,10 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                 {
                     provide: RolleFindService,
                     useValue: createMock(RolleFindService),
+                },
+                {
+                    provide: RolleDeleteService,
+                    useValue: createMock(RolleDeleteService),
                 },
                 {
                     provide: OrganisationService,
@@ -88,6 +95,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
         rolleController = module.get(RolleController);
         organisationServiceMock = module.get(OrganisationService);
         rollenerweiterungRepoMock = module.get(RollenerweiterungRepo);
+        rolleDeleteServiceMock = module.get(RolleDeleteService);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
@@ -185,6 +193,32 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     rolleController.createRollenerweiterung(createRollenerweiterungParams, permissions),
                 ).rejects.toThrow(MissingPermissionsError);
             });
+        });
+    });
+
+    describe('DELETE rolle/:rolleId', () => {
+        it('should delegate deletion to RolleDeleteService', async () => {
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const permissions: PersonPermissions = createPersonPermissionsMock();
+            const params: FindRolleByIdParams = { rolleId: rolle.id };
+
+            rolleRepoMock.findById.mockResolvedValueOnce(rolle);
+            rolleDeleteServiceMock.delete.mockResolvedValueOnce(undefined);
+
+            await expect(rolleController.deleteRolle(params, permissions)).resolves.toBeUndefined();
+            expect(rolleDeleteServiceMock.delete).toHaveBeenCalledWith(rolle.id, permissions);
+        });
+
+        it('should throw if RolleDeleteService returns a domain error', async () => {
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const permissions: PersonPermissions = createPersonPermissionsMock();
+            const params: FindRolleByIdParams = { rolleId: rolle.id };
+            const error: MissingPermissionsError = new MissingPermissionsError('dummy error');
+
+            rolleRepoMock.findById.mockResolvedValueOnce(rolle);
+            rolleDeleteServiceMock.delete.mockResolvedValueOnce(error);
+
+            await expect(rolleController.deleteRolle(params, permissions)).rejects.toThrow(MissingPermissionsError);
         });
     });
 });

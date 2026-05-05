@@ -489,13 +489,7 @@ export class RolleRepo {
         return result;
     }
 
-    public async deleteAuthorized(id: RolleID, permissions: PersonPermissions): Promise<Option<DomainError>> {
-        //Permissions
-        const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
-        if (!authorizedRole.ok) {
-            return authorizedRole.error;
-        }
-
+    public async deleteInternal(id: RolleID): Promise<Option<DomainError>> {
         const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, id, {
             populate: [
                 'merkmale',
@@ -507,7 +501,7 @@ export class RolleRepo {
         });
 
         try {
-            //Cascade removal
+            // Cascade removal
             await this.em.removeAndFlush(rolleEntity);
         } catch (ex) {
             if (ex instanceof ForeignKeyConstraintViolationException) {
