@@ -12,6 +12,7 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
 import { SchulconnexRepo } from './persistence/schulconnex.repo.js';
 import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
+import { EmailRepoModule } from '../email/email-repo.module.js';
 
 @Module({
     imports: [
@@ -22,6 +23,7 @@ import { EmailMicroserviceModule } from '../email-microservice/email-microservic
         PersonenKontextModule,
         KeycloakAdministrationModule,
         EmailMicroserviceModule,
+        EmailRepoModule,
         LoggerModule.register(SchulconnexModule.name),
     ],
     providers: [PersonenInfoService, SchulconnexRepo, EntityAggregateMapper],

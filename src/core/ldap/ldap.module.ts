@@ -11,6 +11,7 @@ import { PersonModule } from '../../modules/person/person.module.js';
 import { EmailModule } from '../../modules/email/email.module.js';
 import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
 import { EmailMicroserviceModule } from '../../modules/email-microservice/email-microservice.module.js';
+import { EmailRepoModule } from '../../modules/email/email-repo.module.js';
 
 @Module({
     imports: [
@@ -22,6 +23,7 @@ import { EmailMicroserviceModule } from '../../modules/email-microservice/email-
         PersonenKontextModule,
         EmailModule,
         EmailMicroserviceModule,
+        EmailRepoModule,
     ],
     providers: [LdapEventHandler, LdapSyncEventHandler, LdapClientService, LdapClient],
     exports: [LdapEventHandler, LdapSyncEventHandler, LdapClientService, LdapClient],

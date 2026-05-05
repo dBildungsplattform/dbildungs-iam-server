@@ -13,6 +13,7 @@ import { OxSyncEventHandler } from './domain/ox-sync-event-handler.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { OxEventService } from './domain/ox-event.service.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
+import { EmailRepoModule } from '../email/email-repo.module.js';
 
 @Module({
     imports: [
@@ -25,6 +26,7 @@ import { EmailMicroserviceModule } from '../email-microservice/email-microservic
         LoggerModule.register(OxModule.name),
         HttpModule,
         EmailMicroserviceModule,
+        EmailRepoModule,
     ],
     providers: [OxService, OxEventService, OxEventHandler, OxSyncEventHandler],
     exports: [OxService, OxEventService],

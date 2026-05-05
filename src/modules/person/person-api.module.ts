@@ -15,6 +15,7 @@ import { EmailModule } from '../email/email.module.js';
 import { LdapModule } from '../../core/ldap/ldap.module.js';
 import { PersonLandesbediensteterSearchModule } from './person-landesbedienstete-search/person-landesbediensteter-search.module.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
+import { EmailRepoModule } from '../email/email-repo.module.js';
 
 @Module({
     imports: [
@@ -28,6 +29,7 @@ import { EmailMicroserviceModule } from '../email-microservice/email-microservic
         PersonLandesbediensteterSearchModule,
         KeycloakAdministrationModule,
         EmailMicroserviceModule,
+        EmailRepoModule,
         LoggerModule.register(PersonApiModule.name),
     ],
     providers: [PersonApiMapper],
