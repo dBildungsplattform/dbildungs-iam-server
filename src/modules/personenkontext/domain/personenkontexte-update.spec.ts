@@ -41,6 +41,7 @@ import { DuplicateKlassenkontextError } from './error/update-invalid-duplicate-k
 import { UpdateLernNotAtSchuleAndKlasseError } from './error/update-lern-not-at-schule-and-klasse.error.js';
 import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>(
@@ -83,6 +84,7 @@ describe('PersonenkontexteUpdate', () => {
     let personPermissionsMock: PersonPermissionsMock;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let loggerMock: DeepMocked<ClassLogger>;
+    let emailRepoMock: DeepMocked<EmailRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -137,6 +139,8 @@ describe('PersonenkontexteUpdate', () => {
             .useValue(createMock(OrganisationRepository))
             .overrideProvider(RolleRepo)
             .useValue(createMock(RolleRepo))
+            .overrideProvider(EmailRepo)
+            .useValue(createMock(EmailRepo))
             .compile();
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         dBiamPersonenkontextRepoInternalMock = module.get(DBiamPersonenkontextRepoInternal);
@@ -178,6 +182,7 @@ describe('PersonenkontexteUpdate', () => {
         personPermissionsMock = new PersonPermissionsMock();
         rolleRepoMock = module.get(RolleRepo);
         loggerMock = module.get(ClassLogger);
+        emailRepoMock = module.get(EmailRepo);
     });
 
     afterAll(async () => {
@@ -1132,6 +1137,29 @@ describe('PersonenkontexteUpdate', () => {
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateResult).toBeInstanceOf(DuplicateKlassenkontextError);
+            });
+        });
+
+        describe('when getEmailForPerson returns undefined', () => {
+            it('should return undefined', async () => {
+                const newPerson: Person<true> = DoFactory.createPerson(true);
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(undefined);
+
+                const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(updateResult).toBeDefined();
             });
         });
     });
