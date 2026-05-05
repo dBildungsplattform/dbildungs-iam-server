@@ -1763,7 +1763,7 @@ describe('OxEventHandler', () => {
             });
         });
 
-        it('should abort if the removed mail is the last one', async () => {
+        it('should skip ox-request if the removed mail is the last one', async () => {
             const aliases: string[] = [address];
             const event: EmailAddressMarkedForDeletionEvent = new EmailAddressMarkedForDeletionEvent(
                 undefined,
@@ -1788,8 +1788,20 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressMarkedForDeletionEvent(event);
             await vi.runAllTimersAsync();
 
-            expect(loggerMock.error).toHaveBeenCalledWith(
-                `Could Not Remove EmailAddress from OxAccount because user would not have any more addresses, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Could Not Remove EmailAddress from OxAccount because user would not have any more addresses, treat address as deleted. personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+            );
+            expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    personId: undefined,
+                    username: username,
+                    oxUserId: oxUserId,
+                }),
+                expect.objectContaining({
+                    personId: undefined,
+                    username: username,
+                    oxUserId: oxUserId,
+                }),
             );
         });
 
