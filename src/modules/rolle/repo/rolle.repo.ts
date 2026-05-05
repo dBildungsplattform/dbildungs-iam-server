@@ -163,7 +163,7 @@ export class RolleRepo {
     public async findByIdAuthorized(
         rolleId: RolleID,
         permissions: IPersonPermissions,
-    ): Promise<Result<Rolle<true>, DomainError>> {
+    ): Promise<Result<Rolle<true>, EntityNotFoundError | MissingPermissionsError>> {
         const rolle: Option<Rolle<true>> = await this.findById(rolleId);
         if (!rolle) {
             return {
@@ -486,7 +486,7 @@ export class RolleRepo {
         return result;
     }
 
-    public async deleteInternal(id: RolleID): Promise<Option<DomainError>> {
+    public async deleteInternal(id: RolleID): Promise<Option<RolleHatPersonenkontexteError>> {
         const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, id, {
             populate: [
                 'merkmale',

@@ -2,20 +2,21 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { Rolle } from './rolle.js';
-import { RolleDeleteService } from './rolle-delete.service.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
+import { RolleDeleteService } from './rolle-delete.service.js';
+import { RolleHatPersonenkontexteError } from './rolle-hat-personenkontexte.error.js';
+import { Rolle } from './rolle.js';
 
 describe('RolleDeleteService', () => {
     let module: TestingModule;
     let service: RolleDeleteService;
     let rolleRepo: DeepMocked<RolleRepo>;
     let rollenerweiterungRepo: DeepMocked<RollenerweiterungRepo>;
+    let personenkontextRepo: DeepMocked<DBiamPersonenkontextRepo>;
     let permissions: DeepMocked<PersonPermissions>;
 
     beforeAll(async () => {
@@ -30,12 +31,17 @@ describe('RolleDeleteService', () => {
                     provide: RollenerweiterungRepo,
                     useValue: createMock(RollenerweiterungRepo),
                 },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock(DBiamPersonenkontextRepo),
+                },
             ],
         }).compile();
 
         service = module.get(RolleDeleteService);
         rolleRepo = module.get(RolleRepo);
         rollenerweiterungRepo = module.get(RollenerweiterungRepo);
+        personenkontextRepo = module.get(DBiamPersonenkontextRepo);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
@@ -64,24 +70,22 @@ describe('RolleDeleteService', () => {
         });
         rollenerweiterungRepo.deleteByRolleId.mockResolvedValueOnce();
         rolleRepo.deleteInternal.mockResolvedValueOnce(undefined);
+        personenkontextRepo.existsByRolleId.mockResolvedValueOnce(false);
 
         await expect(service.delete('rolle-id', permissions)).resolves.toBeUndefined();
         expect(rollenerweiterungRepo.deleteByRolleId).toHaveBeenCalledWith('rolle-id');
         expect(rolleRepo.deleteInternal).toHaveBeenCalledWith('rolle-id');
     });
 
-    it('should return rolle deletion errors after removing rollenerweiterungen', async () => {
-        const error: DomainError = new EntityNotFoundError('Rolle', 'rolle-id');
-
+    it('should return RolleHatPersonenkontexteError before deleting anything', async () => {
         rolleRepo.findByIdAuthorized.mockResolvedValueOnce({
             ok: true,
             value: createMock<Rolle<true>>(Rolle),
         });
-        rollenerweiterungRepo.deleteByRolleId.mockResolvedValueOnce();
-        rolleRepo.deleteInternal.mockResolvedValueOnce(error);
+        personenkontextRepo.existsByRolleId.mockResolvedValueOnce(true);
 
-        await expect(service.delete('rolle-id', permissions)).resolves.toBe(error);
-        expect(rollenerweiterungRepo.deleteByRolleId).toHaveBeenCalledWith('rolle-id');
-        expect(rolleRepo.deleteInternal).toHaveBeenCalledWith('rolle-id');
+        await expect(service.delete('rolle-id', permissions)).resolves.toBeInstanceOf(RolleHatPersonenkontexteError);
+        expect(rollenerweiterungRepo.deleteByRolleId).not.toHaveBeenCalled();
+        expect(rolleRepo.deleteInternal).not.toHaveBeenCalled();
     });
 });

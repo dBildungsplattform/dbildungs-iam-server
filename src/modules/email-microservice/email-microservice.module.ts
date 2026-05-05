@@ -11,7 +11,7 @@ import { EmailWebhookController } from './api/email-microservice-webhook.control
 @Module({
     imports: [
         HttpModule,
-        RolleModule,
+        forwardRef(() => RolleModule),
         forwardRef(() => PersonenKontextModule),
         forwardRef(() => PersonModule),
         LoggerModule.register(EmailMicroserviceModule.name),

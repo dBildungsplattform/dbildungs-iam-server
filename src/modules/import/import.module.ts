@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ImportWorkflowFactory } from './domain/import-workflow.factory.js';
 import { RolleModule } from '../rolle/rolle.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
@@ -13,7 +13,7 @@ import { AuthenticationModule } from '../authentication/authentication.module.js
 
 @Module({
     imports: [
-        RolleModule,
+        forwardRef(() => RolleModule),
         OrganisationModule,
         PersonenKontextModule,
         LoggerModule.register(ImportModule.name),

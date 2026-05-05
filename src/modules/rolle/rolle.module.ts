@@ -9,9 +9,15 @@ import { RolleFactory } from './domain/rolle.factory.js';
 import { RollenerweiterungFactory } from './domain/rollenerweiterung.factory.js';
 import { RolleRepo } from './repo/rolle.repo.js';
 import { RollenerweiterungRepo } from './repo/rollenerweiterung.repo.js';
+import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 
 @Module({
-    imports: [forwardRef(() => ServiceProviderModule), LoggerModule.register(RolleModule.name), OrganisationModule],
+    imports: [
+        forwardRef(() => ServiceProviderModule),
+        forwardRef(() => PersonenKontextModule),
+        LoggerModule.register(RolleModule.name),
+        OrganisationModule,
+    ],
     providers: [
         RolleRepo,
         RolleFactory,
