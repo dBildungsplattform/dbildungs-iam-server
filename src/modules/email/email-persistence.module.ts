@@ -4,8 +4,8 @@ import { EmailConfigModule } from './email-config.module.js';
 import { LoggerModule } from '../../core/logging/logger.module.js';
 
 @Module({
-    imports: [EmailConfigModule, LoggerModule.register(EmailRepoModule.name)],
+    imports: [EmailConfigModule, LoggerModule.register(EmailPersistenceModule.name)],
     providers: [EmailRepo],
     exports: [EmailRepo],
 })
-export class EmailRepoModule {}
+export class EmailPersistenceModule {}

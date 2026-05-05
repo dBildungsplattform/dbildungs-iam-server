@@ -14,13 +14,13 @@ import { PersonenkontextCreationService } from './domain/personenkontext-creatio
 import { PersonenkontextWorkflowFactory } from './domain/personenkontext-workflow.factory.js';
 import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.js';
 import { PersonenkontextWorkflowSharedKernel } from './domain/personenkontext-workflow-shared-kernel.js';
-import { EmailRepoModule } from '../email/email-repo.module.js';
+import { EmailPersistenceModule } from '../email/email-persistence.module.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
 
 @Module({
     imports: [
         EventModule,
-        EmailRepoModule,
+        EmailPersistenceModule,
         EmailMicroserviceModule,
         forwardRef(() => PersonModule),
         RolleModule,

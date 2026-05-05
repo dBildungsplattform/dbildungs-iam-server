@@ -11,17 +11,15 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
 import { DBiamPersonenuebersichtController } from './api/personenuebersicht/dbiam-personenuebersicht.controller.js';
 import { PersonApiMapper } from './mapper/person-api.mapper.js';
 import { PersonDeleteModule } from './person-deletion/person-delete.module.js';
-import { EmailModule } from '../email/email.module.js';
 import { LdapModule } from '../../core/ldap/ldap.module.js';
 import { PersonLandesbediensteterSearchModule } from './person-landesbedienstete-search/person-landesbediensteter-search.module.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
-import { EmailRepoModule } from '../email/email-repo.module.js';
+import { EmailPersistenceModule } from '../email/email-persistence.module.js';
 
 @Module({
     imports: [
         PersonModule,
         LdapModule,
-        EmailModule,
         RolleModule,
         OrganisationModule,
         PersonenKontextModule,
@@ -29,7 +27,7 @@ import { EmailRepoModule } from '../email/email-repo.module.js';
         PersonLandesbediensteterSearchModule,
         KeycloakAdministrationModule,
         EmailMicroserviceModule,
-        EmailRepoModule,
+        EmailPersistenceModule,
         LoggerModule.register(PersonApiModule.name),
     ],
     providers: [PersonApiMapper],

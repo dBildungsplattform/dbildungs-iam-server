@@ -15,7 +15,7 @@ import { ItsLearningIMSESService } from './itslearning.service.js';
 import { ItslearningGroupRepo } from './repo/itslearning-group.repo.js';
 import { ItslearningMembershipRepo } from './repo/itslearning-membership.repo.js';
 import { ItslearningPersonRepo } from './repo/itslearning-person.repo.js';
-import { EmailRepoModule } from '../email/email-repo.module.js';
+import { EmailPersistenceModule } from '../email/email-persistence.module.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
 
 @Module({
@@ -27,7 +27,7 @@ import { EmailMicroserviceModule } from '../email-microservice/email-microservic
         OrganisationModule,
         PersonenKontextModule,
         ServiceProviderModule,
-        EmailRepoModule,
+        EmailPersistenceModule,
         EmailMicroserviceModule,
     ],
     providers: [
