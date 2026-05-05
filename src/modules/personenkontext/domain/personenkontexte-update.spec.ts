@@ -42,6 +42,7 @@ import { UpdateLernNotAtSchuleAndKlasseError } from './error/update-lern-not-at-
 import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>(
@@ -1140,7 +1141,7 @@ describe('PersonenkontexteUpdate', () => {
             });
         });
 
-        describe('when getEmailForPerson returns undefined', () => {
+        describe('getEmailForPerson', () => {
             it('should return undefined', async () => {
                 const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
@@ -1156,6 +1157,31 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
                 emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(undefined);
+
+                const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(updateResult).toBeDefined();
+            });
+
+            it('should return email address', async () => {
+                const newPerson: Person<true> = DoFactory.createPerson(true);
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                const emailAddress: string = faker.internet.email();
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce({
+                    address: emailAddress,
+                    status: EmailAddressStatus.ENABLED,
+                });
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
