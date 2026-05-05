@@ -21,7 +21,7 @@ import { EmailMicroserviceModule } from '../email-microservice/email-microservic
     imports: [
         EventModule,
         EmailPersistenceModule,
-        EmailMicroserviceModule,
+        forwardRef(() => EmailMicroserviceModule),
         forwardRef(() => PersonModule),
         RolleModule,
         OrganisationModule,

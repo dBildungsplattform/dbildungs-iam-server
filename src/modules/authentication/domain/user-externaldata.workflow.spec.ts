@@ -19,11 +19,15 @@ import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/
 import { EmailAddress } from '../../../email/modules/core/domain/email-address.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { PersonEmailResponse } from '../../person/api/person-email-response.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 describe('UserExternaldataWorkflow', () => {
     let sut: UserExternaldataWorkflowAggregate;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
+    let emailRepoMock: DeepMocked<EmailRepo>;
     let emailResolverServiceMock: DeepMocked<EmailResolverService>;
     let configServiceMock: DeepMocked<ConfigService>;
 
@@ -33,11 +37,13 @@ describe('UserExternaldataWorkflow', () => {
 
         dBiamPersonenkontextRepoMock = createMock<DBiamPersonenkontextRepo>(DBiamPersonenkontextRepo);
         personRepositoryMock = createMock<PersonRepository>(PersonRepository);
+        emailRepoMock = createMock<EmailRepo>(EmailRepo);
         emailResolverServiceMock = createMock<EmailResolverService>(EmailResolverService);
         sut = UserExternaldataWorkflowAggregate.createNew(
             dBiamPersonenkontextRepoMock,
             personRepositoryMock,
             configServiceMock,
+            emailRepoMock,
             emailResolverServiceMock,
         );
     });
@@ -75,7 +81,7 @@ describe('UserExternaldataWorkflow', () => {
             expect(sut.checkedExternalPkData).toBeDefined();
         });
 
-        it('should initialize aggregate with contextID', async () => {
+        it('should initialize aggregate with contextID using EmailMicroservice', async () => {
             const keycloakSub: string = faker.string.uuid();
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
@@ -118,7 +124,36 @@ describe('UserExternaldataWorkflow', () => {
             expect(sut.person).toBeDefined();
             expect(sut.checkedExternalPkData).toBeDefined();
             expect(sut.oxLoginId).toBe(`${oxLoginId}@${oxContextId}`);
-            expect(sut.person?.email).toBe(emailAddress.address);
+            expect(sut.email).toBe(emailAddress.address);
+        });
+
+        it('should initialize aggregate with contextID using email repo', async () => {
+            const keycloakSub: string = faker.string.uuid();
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                keycloakSub,
+                faker.string.uuid(),
+            );
+
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+            const emailAddress: string = faker.internet.email();
+
+            const response: PersonEmailResponse = new PersonEmailResponse(EmailAddressStatus.ENABLED, emailAddress);
+            emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValue(response);
+
+            await sut.initialize(person.id);
+            expect(sut.person).toBeDefined();
+            expect(sut.checkedExternalPkData).toBeDefined();
+            expect(sut.email).toBe(emailAddress);
         });
 
         it('should set email to undefined if user has no email', async () => {
@@ -144,7 +179,7 @@ describe('UserExternaldataWorkflow', () => {
 
             await sut.initialize(person.id);
 
-            expect(sut.person?.email).toBeUndefined();
+            expect(sut.email).toBeUndefined();
         });
 
         it('should not set contextID and address when user has suspended email', async () => {
@@ -188,7 +223,7 @@ describe('UserExternaldataWorkflow', () => {
 
             await sut.initialize(person.id);
             expect(sut.person).toBeDefined();
-            expect(sut.person?.email).toBeUndefined();
+            expect(sut.email).toBeUndefined();
             expect(sut.checkedExternalPkData).toBeDefined();
             expect(sut.oxLoginId).toBeUndefined();
         });
