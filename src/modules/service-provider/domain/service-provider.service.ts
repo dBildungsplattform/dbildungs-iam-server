@@ -1,16 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { uniq } from 'lodash-es';
-
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { FeatureFlagConfig } from '../../../shared/config/featureflag.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
-import { VidisConfig } from '../../../shared/config/vidis.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { Err } from '../../../shared/util/result.js';
@@ -22,18 +18,12 @@ import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
-import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
-import { VidisService } from '../../vidis/vidis.service.js';
 import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
-import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AttachedRollenError } from './errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
 import {
-    ServiceProviderKategorie,
     ServiceProviderMerkmal,
-    ServiceProviderSystem,
-    ServiceProviderTarget,
 } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import {
@@ -44,21 +34,16 @@ import {
 
 @Injectable()
 export class ServiceProviderService {
-    private readonly vidisConfig: VidisConfig;
 
     private readonly isFeatureRolleErweiternEnabled: boolean;
 
     public constructor(
-        private readonly logger: ClassLogger,
         private readonly rolleRepo: RolleRepo,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly organisationRepo: OrganisationRepository,
-        private readonly vidisService: VidisService,
-        private readonly organisationServiceProviderRepo: OrganisationServiceProviderRepo,
         configService: ConfigService<ServerConfig>,
     ) {
-        this.vidisConfig = configService.getOrThrow<VidisConfig>('VIDIS');
         const featureFlags: FeatureFlagConfig = configService.getOrThrow<FeatureFlagConfig>('FEATUREFLAG');
         this.isFeatureRolleErweiternEnabled = featureFlags.FEATURE_FLAG_ROLLE_ERWEITERN;
     }
@@ -335,134 +320,6 @@ export class ServiceProviderService {
         }));
     }
 
-    public async updateServiceProvidersForVidis(): Promise<void> {
-        this.logger.info('Aktualisierung der ServiceProvider für VIDIS-Angebote wurde gestartet.');
-
-        const vidisKeycloakGroup: string = this.vidisConfig.KEYCLOAK_GROUP;
-        const vidisKeycloakRole: string = this.vidisConfig.KEYCLOAK_ROLE;
-        const vidisRegionName: string = this.vidisConfig.REGION_NAME;
-        const schulstrukturknoten: string = this.organisationRepo.ROOT_ORGANISATION_ID;
-
-        const vidisAngebote: VidisAngebot[] = await this.vidisService.getActivatedAngeboteByRegion(vidisRegionName);
-
-        const allMappingsBeenDeleted: boolean = await this.organisationServiceProviderRepo.deleteAll();
-        if (allMappingsBeenDeleted) {
-            this.logger.info('All mappings between Organisation and ServiceProvider were deleted.');
-        }
-
-        await Promise.allSettled(
-            vidisAngebote.map(async (angebot: VidisAngebot) => {
-                const existingServiceProvider: Option<ServiceProvider<true>> =
-                    await this.serviceProviderRepo.findByVidisAngebotId(angebot.angebotId);
-
-                const angebotLogoMediaType: string = this.determineMediaTypeFor(angebot.angebotLogo);
-
-                // The following bypass is really bad, but since this code is not excuted in prod, it is better than keeping ServiceProviderRepo.save() without permission checks
-                const permissionOverride: PermissionsOverride = new PermissionsOverride(
-                    null as unknown as PersonPermissions,
-                );
-                permissionOverride.grantSystemrechteAtOrga(schulstrukturknoten, [RollenSystemRecht.ANGEBOTE_VERWALTEN]);
-
-                let persistedServiceProviderResult: Result<ServiceProvider<true>, DomainError>;
-                if (existingServiceProvider) {
-                    const serviceProvider: ServiceProvider<true> = ServiceProvider.construct(
-                        existingServiceProvider.id,
-                        existingServiceProvider.createdAt,
-                        existingServiceProvider.updatedAt,
-                        angebot.angebotTitle,
-                        ServiceProviderTarget.URL,
-                        angebot.angebotLink,
-                        existingServiceProvider.kategorie,
-                        schulstrukturknoten,
-                        Buffer.from(angebot.angebotLogo, 'base64'),
-                        angebotLogoMediaType,
-                        vidisKeycloakGroup,
-                        vidisKeycloakRole,
-                        ServiceProviderSystem.NONE,
-                        false,
-                        angebot.angebotId,
-                        existingServiceProvider.merkmale,
-                    );
-                    this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' already exists.`);
-
-                    persistedServiceProviderResult = await this.serviceProviderRepo.update(
-                        permissionOverride,
-                        serviceProvider,
-                    );
-
-                    if (!persistedServiceProviderResult.ok) {
-                        this.logger.error(
-                            `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be updated. Error: ${persistedServiceProviderResult.error.message}`,
-                        );
-                        throw new Error(
-                            `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be updated. Error: ${persistedServiceProviderResult.error.message}`,
-                        );
-                    }
-                } else {
-                    const serviceProvider: ServiceProvider<false> = ServiceProvider.createNew(
-                        angebot.angebotTitle,
-                        ServiceProviderTarget.URL,
-                        angebot.angebotLink,
-                        ServiceProviderKategorie.UNTERRICHT,
-                        schulstrukturknoten,
-                        Buffer.from(angebot.angebotLogo, 'base64'),
-                        angebotLogoMediaType,
-                        vidisKeycloakGroup,
-                        vidisKeycloakRole,
-                        ServiceProviderSystem.NONE,
-                        false,
-                        angebot.angebotId,
-                        [],
-                    );
-                    this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' was created.`);
-
-                    persistedServiceProviderResult = await this.serviceProviderRepo.create(
-                        permissionOverride,
-                        serviceProvider,
-                    );
-
-                    if (!persistedServiceProviderResult.ok) {
-                        this.logger.error(
-                            `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be created. Error: ${persistedServiceProviderResult.error.message}`,
-                        );
-                        throw new Error(
-                            `ServiceProvider for VIDIS Angebot '${serviceProvider.name}' could not be created. Error: ${persistedServiceProviderResult.error.message}`,
-                        );
-                    }
-                }
-
-                await Promise.allSettled(
-                    angebot.schoolActivations.map(async (schoolActivation: string) => {
-                        const orga: Organisation<true> | undefined = (
-                            await this.organisationRepo.findByNameOrKennung(schoolActivation)
-                        ).at(0); // Assumption: kennung is unique for an Organisation and is not contained in name or kennung of any other Organisation
-                        if (orga) {
-                            await this.organisationServiceProviderRepo.save(orga, persistedServiceProviderResult.value);
-                            this.logger.info(
-                                `Mapping of '${persistedServiceProviderResult.value.name}' to '${orga.name}' was saved.`,
-                            );
-                        }
-                    }),
-                );
-            }),
-        );
-
-        const vidisServiceProviders: ServiceProvider<true>[] =
-            await this.serviceProviderRepo.findByKeycloakGroup(vidisKeycloakGroup);
-        const angeboteNamesInResponse: string[] = vidisAngebote.map((angebot: VidisAngebot) => angebot.angebotTitle);
-        await Promise.allSettled(
-            vidisServiceProviders.map(async (vsp: ServiceProvider<true>) => {
-                if (!angeboteNamesInResponse.includes(vsp.name)) {
-                    await this.serviceProviderRepo.deleteById(vsp.id);
-                    this.logger.info(
-                        `ServiceProvider '${vsp.name}' was deleted as it was not in VIDIS Angebote API response.`,
-                    );
-                }
-            }),
-        );
-
-        this.logger.info(`ServiceProvider für VIDIS-Angebote erfolgreich aktualisiert.`);
-    }
 
     public async updateServiceProvider(
         permissions: PersonPermissions,
@@ -533,6 +390,7 @@ export class ServiceProviderService {
      * Assumption: Expected media type is always one of the three: 'image/jpeg', 'image/png' or 'image/svg+xml'.
      * @param {base64EncodedLogo} base64EncodedLogo Base64 encoded logo
      */
+    /*
     private determineMediaTypeFor(base64EncodedLogo: string): string {
         const MEDIA_SIGNATURES: { JPG: Buffer; PNG: Buffer } = {
             // JPG/JPEG file signature in hexadeciaml begins with: ff d8 ff
@@ -555,4 +413,5 @@ export class ServiceProviderService {
 
         return 'image/svg+xml';
     }
+        */
 }

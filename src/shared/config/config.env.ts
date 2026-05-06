@@ -122,11 +122,8 @@ export default (): Config => ({
     },
     VIDIS: {
         BASE_URL: process.env['VIDIS_BASE_URL'],
-        USERNAME: process.env['VIDIS_USERNAME'],
-        PASSWORD: process.env['VIDIS_PASSWORD'],
-        REGION_NAME: process.env['VIDIS_REGION_NAME'],
-        KEYCLOAK_GROUP: process.env['VIDIS_KEYCLOAK_GROUP'],
-        KEYCLOAK_ROLE: process.env['VIDIS_KEYCLOAK_ROLE'],
+        CLIENT_ID: process.env['VIDIS_API_CLIENT_ID'],
+        CLIENT_SECRET: process.env['VIDIS_API_CLIENT_SECRET'],
     },
     IMPORT: {
         PASSPHRASE_SECRET: process.env['IMPORT_PASSPHRASE_SECRET'],

@@ -85,11 +85,8 @@ describe('configloader', () => {
                 },
                 VIDIS: {
                     BASE_URL: 'dummy-url',
-                    USERNAME: 'dummy-username',
-                    PASSWORD: 'dummy-password',
-                    REGION_NAME: 'dummy-region',
-                    KEYCLOAK_GROUP: 'VIDIS-service',
-                    KEYCLOAK_ROLE: 'VIDIS-user',
+                    CLIENT_ID: 'dummy-username',
+                    CLIENT_SECRET: 'dummy-password'
                 },
                 OX: {
                     ENABLED: true,
@@ -271,11 +268,8 @@ describe('configloader', () => {
                 },
                 VIDIS: {
                     BASE_URL: 'dummy-url',
-                    USERNAME: 'dummy-username',
-                    PASSWORD: 'dummy-password',
-                    REGION_NAME: 'dummy-region',
-                    KEYCLOAK_GROUP: 'VIDIS-service',
-                    KEYCLOAK_ROLE: 'VIDIS-user',
+                    CLIENT_ID: 'dummy-username',
+                    CLIENT_SECRET: 'dummy-password',
                 },
                 OX: {
                     ENABLED: true,

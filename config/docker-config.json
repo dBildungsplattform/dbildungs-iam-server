@@ -95,11 +95,8 @@
     },
     "VIDIS": {
         "BASE_URL": "https://service-stage.vidis.schule",
-        "USERNAME": "username",
-        "PASSWORD": "password",
-        "REGION_NAME": "test-region",
-        "KEYCLOAK_GROUP": "VIDIS-service",
-        "KEYCLOAK_ROLE": "VIDIS-user"
+        "CLIENT_ID": "clientid",
+        "CLIENT_SECRET": "clientsecret"
     },
     "IMPORT": {
         "CSV_FILE_MAX_SIZE_IN_MB": 5,

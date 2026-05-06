@@ -23,7 +23,7 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
-import { VidisService } from '../../vidis/vidis.service.js';
+import { VidisApiService } from '../../vidis/domain/vidis.api-service.js';
 import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
@@ -221,7 +221,7 @@ describe('ServiceProviderService', () => {
     let rollenerweiterungRepo: DeepMocked<RollenerweiterungRepo>;
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
-    let vidisService: DeepMocked<VidisService>;
+    let vidisService: DeepMocked<VidisApiService>;
     let organisationServiceProviderRepo: DeepMocked<OrganisationServiceProviderRepo>;
     let loggerMock: DeepMocked<ClassLogger>;
 
@@ -234,7 +234,7 @@ describe('ServiceProviderService', () => {
                 { provide: RollenerweiterungRepo, useValue: createMock(RollenerweiterungRepo) },
                 { provide: ServiceProviderRepo, useValue: createMock(ServiceProviderRepo) },
                 { provide: OrganisationRepository, useValue: createMock(OrganisationRepository) },
-                { provide: VidisService, useValue: createMock(VidisService) },
+                { provide: VidisApiService, useValue: createMock(VidisApiService) },
                 { provide: OrganisationServiceProviderRepo, useValue: createMock(OrganisationServiceProviderRepo) },
             ],
         }).compile();
@@ -243,7 +243,7 @@ describe('ServiceProviderService', () => {
         rollenerweiterungRepo = module.get<DeepMocked<RollenerweiterungRepo>>(RollenerweiterungRepo);
         serviceProviderRepo = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         organisationRepo = module.get<DeepMocked<OrganisationRepository>>(OrganisationRepository);
-        vidisService = module.get<DeepMocked<VidisService>>(VidisService);
+        vidisService = module.get<DeepMocked<VidisApiService>>(VidisApiService);
         organisationServiceProviderRepo = module.get<DeepMocked<OrganisationServiceProviderRepo>>(
             OrganisationServiceProviderRepo,
         );

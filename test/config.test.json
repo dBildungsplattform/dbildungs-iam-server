@@ -70,11 +70,8 @@
     },
     "VIDIS": {
         "BASE_URL": "",
-        "USERNAME": "",
-        "PASSWORD": "",
-        "REGION_NAME": "test-region",
-        "KEYCLOAK_GROUP": "VIDIS-service",
-        "KEYCLOAK_ROLE": "VIDIS-user"
+        "CLIENT_ID": "",
+        "CLIENT_SECRET": ""
     },
     "OX": {
         "ENABLED": false,
