@@ -195,7 +195,7 @@ describe('EmailAddressDeletionService', () => {
         });
 
         describe('when an EmailAddress does NOT have an OxUserId', () => {
-            it('should log error about that', async () => {
+            it('should log error about that and change updatedAt', async () => {
                 const [persons, emailAddresses]: [Person<true>[], EmailAddress<true>[]] =
                     createPersonsAndEmailAddresses();
                 const permissionsMock: PersonPermissions = createPersonPermissionsMock();
@@ -220,8 +220,9 @@ describe('EmailAddressDeletionService', () => {
                 expect(emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.findByIds).toHaveBeenCalledTimes(1);
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${emailAddressWithoutOxUserId.personId}`,
+                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${emailAddressWithoutOxUserId.personId}. Setting updated-at to 2027/08/01`,
                 );
+                expect(emailRepoMock.setUpdatedAtToFixedPointInTime).toHaveBeenCalled();
             });
         });
     });
