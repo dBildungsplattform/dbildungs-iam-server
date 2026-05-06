@@ -257,16 +257,6 @@
             "rolleId": 16
         },
         {
-            "personId": 2,
-            "organisationId": 0,
-            "rolleId": 100
-        },
-        {
-            "personId": 3,
-            "organisationId": 0,
-            "rolleId": 102
-        },
-        {
             "personId": 68,
             "organisationId": 5,
             "rolleId": 2
