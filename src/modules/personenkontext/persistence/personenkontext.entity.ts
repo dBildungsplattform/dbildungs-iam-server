@@ -13,6 +13,7 @@ export class PersonenkontextEntity extends TimestampedEntity {
         fieldName: 'person_id',
         columnType: 'uuid',
         deleteRule: 'cascade',
+        updateRule: 'cascade',
         ref: true,
         nullable: false,
         entity: () => PersonEntity,
@@ -24,6 +25,8 @@ export class PersonenkontextEntity extends TimestampedEntity {
     @ManyToOne({
         fieldName: 'organisation_id',
         columnType: 'uuid',
+        deleteRule: 'no action',
+        updateRule: 'cascade',
         ref: true,
         nullable: false,
         entity: () => OrganisationEntity,
@@ -34,6 +37,8 @@ export class PersonenkontextEntity extends TimestampedEntity {
     @ManyToOne({
         fieldName: 'rolle_id',
         columnType: 'uuid',
+        deleteRule: 'no action',
+        updateRule: 'cascade',
         ref: true,
         nullable: false,
         entity: () => RolleEntity,

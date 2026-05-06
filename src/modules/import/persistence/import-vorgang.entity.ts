@@ -11,6 +11,8 @@ export class ImportVorgangEntity extends TimestampedEntity {
     @ManyToOne({
         fieldName: 'person_id',
         columnType: 'uuid',
+        deleteRule: 'set null',
+        updateRule: 'cascade',
         ref: true,
         nullable: true,
         entity: () => PersonEntity,
@@ -23,6 +25,8 @@ export class ImportVorgangEntity extends TimestampedEntity {
     @ManyToOne({
         fieldName: 'rolle_id',
         columnType: 'uuid',
+        deleteRule: 'set null',
+        updateRule: 'cascade',
         ref: true,
         nullable: true,
         entity: () => RolleEntity,
@@ -35,6 +39,8 @@ export class ImportVorgangEntity extends TimestampedEntity {
     @ManyToOne({
         fieldName: 'organisation_id',
         columnType: 'uuid',
+        deleteRule: 'set null',
+        updateRule: 'cascade',
         ref: true,
         nullable: true,
         entity: () => OrganisationEntity,

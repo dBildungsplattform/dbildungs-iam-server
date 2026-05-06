@@ -6,11 +6,11 @@ import { RolleEntity } from './rolle.entity.js';
 @Entity({ tableName: 'rolle_service_provider' })
 export class RolleServiceProviderEntity extends BaseEntity {
     @Index()
-    @ManyToOne({ primary: true, entity: () => RolleEntity })
+    @ManyToOne({ primary: true, entity: () => RolleEntity, deleteRule: 'no action', updateRule: 'cascade' })
     public rolle!: Rel<RolleEntity>;
 
     @Index()
-    @ManyToOne({ primary: true, entity: () => ServiceProviderEntity })
+    @ManyToOne({ primary: true, entity: () => ServiceProviderEntity, deleteRule: 'no action', updateRule: 'cascade' })
     public serviceProvider!: Rel<ServiceProviderEntity>;
 
     public [PrimaryKeyProp]?: ['rolle', 'serviceProvider'];

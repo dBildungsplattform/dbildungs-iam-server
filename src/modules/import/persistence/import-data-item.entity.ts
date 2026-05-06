@@ -9,6 +9,8 @@ export class ImportDataItemEntity extends TimestampedEntity {
     @ManyToOne({
         fieldName: 'importvorgang_id',
         columnType: 'uuid',
+        deleteRule: 'no action',
+        updateRule: 'cascade',
         ref: true,
         nullable: false,
         entity: () => ImportVorgangEntity,

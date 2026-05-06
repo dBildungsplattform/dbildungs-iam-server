@@ -19,6 +19,7 @@ export class EmailAddressStatusEntity extends TimestampedEntity {
         entity: () => EmailAddrEntity,
         fieldName: 'email_address_id',
         deleteRule: 'cascade',
+        updateRule: 'cascade',
     })
     @Index({ name: 'email_address_id', type: 'hash' })
     public emailAddress!: Ref<EmailAddrEntity>;

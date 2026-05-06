@@ -11,6 +11,7 @@ export class PersonExternalIdMappingEntity extends BaseEntity {
         ref: true,
         nullable: false,
         deleteRule: 'cascade',
+        updateRule: 'cascade',
         entity: () => PersonEntity,
     })
     public person!: Rel<PersonEntity>;

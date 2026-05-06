@@ -12,6 +12,7 @@ export class UserLockEntity extends TimestampedEntity {
         fieldName: 'person_id',
         columnType: 'uuid',
         deleteRule: 'cascade',
+        updateRule: 'cascade',
         ref: true,
         nullable: false,
     })

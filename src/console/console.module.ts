@@ -75,15 +75,13 @@ import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
                         generator: TSMigrationGenerator, // migration generator, e.g. to allow custom formatting
                     },
                     driverOptions: {
-                        connection: {
-                            ssl: config.getOrThrow<DbConfig>('DB').USE_SSL,
-                        },
+                        ssl: config.getOrThrow<DbConfig>('DB').USE_SSL,
                     },
-                    driver: PostgreSqlDriver,
                     allowGlobalContext: true,
                 });
             },
             inject: [ConfigService],
+            driver: PostgreSqlDriver,
         }),
     ],
     providers: [

@@ -12,6 +12,7 @@ export class EmailAddressEntity extends TimestampedEntity {
         ref: true,
         nullable: true,
         deleteRule: 'set null',
+        updateRule: 'cascade',
         eager: true,
         entity: () => PersonEntity,
     })

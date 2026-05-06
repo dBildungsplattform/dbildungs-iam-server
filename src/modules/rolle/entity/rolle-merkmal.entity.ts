@@ -5,7 +5,7 @@ import { RolleEntity } from './rolle.entity.js';
 
 @Entity({ tableName: 'rolle_merkmal' })
 export class RolleMerkmalEntity extends BaseEntity {
-    @ManyToOne({ primary: true, entity: () => RolleEntity })
+    @ManyToOne({ primary: true, entity: () => RolleEntity, deleteRule: 'no action', updateRule: 'cascade' })
     @Index({
         name: 'rolle_merkmal_rolle_id_index',
     })

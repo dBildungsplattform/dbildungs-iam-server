@@ -59,7 +59,7 @@ export class PersonEntity extends TimestampedEntity {
     @Property()
     public vorname!: string;
 
-    @ManyToOne({ nullable: true })
+    @ManyToOne({ nullable: true, deleteRule: 'set null', updateRule: 'cascade' })
     public dataProvider?: DataProviderEntity;
 
     @Property({ nullable: false, default: '1' })

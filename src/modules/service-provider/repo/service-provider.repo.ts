@@ -1,4 +1,4 @@
-import { EntityData, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { Loaded } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -22,13 +22,14 @@ import { DuplicateNameError } from '../specification/error/duplicate-name.error.
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
  */
-function mapAggregateToData(serviceProvider: ServiceProvider<boolean>): RequiredEntityData<ServiceProviderEntity> {
-    const merkmale: EntityData<ServiceProviderMerkmalEntity>[] = serviceProvider.merkmale.map(
-        (merkmal: ServiceProviderMerkmal) => ({
-            serviceProvider: serviceProvider.id,
-            merkmal,
-        }),
-    );
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function mapAggregateToData(serviceProvider: ServiceProvider<boolean>) {
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const merkmale = serviceProvider.merkmale.map((merkmal: ServiceProviderMerkmal) => ({
+        serviceProvider: serviceProvider.id,
+        merkmal,
+    }));
 
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
