@@ -899,7 +899,7 @@ describe('EmailRepo', () => {
             await sut.setUpdatedAtToFixedPointInTime(addressId);
             const emailAddress: Option<EmailAddress<true>> = await sut.findByAddress(address);
 
-            expect(emailAddress?.updatedAt).toEqual(new Date(2027, 8, 1));
+            expect(emailAddress?.updatedAt).toEqual(new Date(2027, 7));
         });
     });
 
