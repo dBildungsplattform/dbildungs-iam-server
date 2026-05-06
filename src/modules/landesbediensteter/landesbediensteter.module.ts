@@ -7,16 +7,19 @@ import { RolleModule } from '../rolle/rolle.module.js';
 import { LandesbediensteterController } from './api/landesbediensteter.controller.js';
 import { LandesbediensteterWorkflowFactory } from './domain/landesbediensteter-workflow.factory.js';
 import { PersonModule } from '../person/person.module.js';
+import { EscalatedPersonPermissionsFactory } from '../permission/escalated-person-permissions.factory.js';
+import { LoggerModule } from '../../core/logging/logger.module.js';
 
 @Module({
     imports: [
+        LoggerModule.register(LandesbediensteterModule.name),
         PersonLandesbediensteterSearchModule,
         PersonModule,
         OrganisationModule,
         PersonenKontextModule,
         RolleModule,
     ],
-    providers: [LandesbediensteterWorkflowFactory],
+    providers: [LandesbediensteterWorkflowFactory, EscalatedPersonPermissionsFactory],
     controllers: [LandesbediensteterController],
 })
 export class LandesbediensteterModule {}

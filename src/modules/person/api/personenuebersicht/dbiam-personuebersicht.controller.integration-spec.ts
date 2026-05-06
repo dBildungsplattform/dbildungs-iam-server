@@ -5,12 +5,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
-    ConfigTestModule,
     createPassportUserMock,
     createPersonPermissionsMock,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    LoggingTestModule,
 } from '../../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../../shared/validation/global-validation.pipe.js';
 import { PersonApiModule } from '../../person-api.module.js';
@@ -49,6 +47,7 @@ import { ValidationExceptionFilter } from '../../../../shared/filter/validation-
 import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
 import { EmailPersistenceModule } from '../../../email/email-persistence.module.js';
 import { EmailMicroserviceModule } from '../../../email-microservice/email-microservice.module.js';
+import { CommonTestModule } from '../../../../../test/utils/common-test.module.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -78,11 +77,9 @@ describe('Personenuebersicht API', () => {
 
         const module: TestingModule = await Test.createTestingModule({
             imports: [
-                LoggingTestModule,
+                CommonTestModule,
                 PersonApiModule,
-                ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                LoggingTestModule,
                 ServiceProviderModule,
                 EmailPersistenceModule,
                 EmailMicroserviceModule,

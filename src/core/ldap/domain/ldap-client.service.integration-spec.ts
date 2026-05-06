@@ -4,7 +4,6 @@ import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
-    ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     LdapTestModule,
@@ -34,6 +33,7 @@ import { LdapModifyUserPasswordError } from '../error/ldap-modify-user-password.
 import assert from 'assert';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { LdapDeleteOrganisationError } from '../error/ldap-delete-organisation.error.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 class PublicExecuteWithRetry {
     public async executeWithRetry<T>(
         _func: () => Promise<Result<T>>,
@@ -167,7 +167,7 @@ describe('LDAP Client Service', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
-                ConfigTestModule,
+                CommonTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LdapModule,
                 LdapConfigModule,

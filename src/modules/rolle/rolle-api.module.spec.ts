@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RolleController } from './api/rolle.controller.js';
 import { RolleApiModule } from './rolle-api.module.js';
-import { ConfigTestModule } from '../../../test/utils/config-test.module.js';
 import { DatabaseTestModule } from '../../../test/utils/database-test.module.js';
+import { CommonTestModule } from '../../../test/utils/common-test.module.js';
 
 describe('RolleApiModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), RolleApiModule],
+            imports: [CommonTestModule, DatabaseTestModule.forRoot(), RolleApiModule],
         }).compile();
     });
 

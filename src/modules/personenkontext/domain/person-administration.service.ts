@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { intersection } from 'lodash-es';
 
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -11,6 +11,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationMatchesRollenart } from '../../rolle/domain/specification/organisation-matches-rollenart.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleFindByParameters, RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @Injectable()
 export class PersonAdministrationService {
@@ -20,7 +21,7 @@ export class PersonAdministrationService {
     ) {}
 
     public async findAuthorizedRollen(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         rolleName?: string,
         limit?: number,
         organisationIds?: Array<OrganisationID>,

@@ -16,6 +16,7 @@ import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.
 import { PersonenkontextWorkflowSharedKernel } from './domain/personenkontext-workflow-shared-kernel.js';
 import { EmailPersistenceModule } from '../email/email-persistence.module.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
+import { PermissionModule } from '../permission/permission.module.js';
 
 @Module({
     imports: [
@@ -26,6 +27,7 @@ import { EmailMicroserviceModule } from '../email-microservice/email-microservic
         RolleModule,
         OrganisationModule,
         LoggerModule.register(PersonenKontextModule.name),
+        forwardRef(() => PermissionModule),
     ],
     providers: [
         PersonenkontextService,

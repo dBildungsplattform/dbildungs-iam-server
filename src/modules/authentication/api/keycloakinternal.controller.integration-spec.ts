@@ -3,9 +3,7 @@ import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { MikroORM } from '@mikro-orm/core';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { PersonModule } from '../../person/person.module.js';
@@ -40,6 +38,7 @@ import { AuthenticationExceptionFilter } from './authentication-exception-filter
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
 import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('KeycloakInternalController', () => {
     let module: TestingModule;
@@ -52,8 +51,7 @@ describe('KeycloakInternalController', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
-                ConfigTestModule,
-                LoggingTestModule,
+                CommonTestModule,
                 ServiceProviderModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,
