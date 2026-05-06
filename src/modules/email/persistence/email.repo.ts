@@ -367,6 +367,13 @@ export class EmailRepo {
         }
     }
 
+    /**
+     * @deprecated bandaid-solution for SPSH-3722, DO NOT USE!
+     */
+    public async setUpdatedAtToFixedPointInTime(id: EmailAddressID): Promise<void> {
+        await this.em.nativeUpdate(EmailAddressEntity, { id }, { updatedAt: new Date(2027, 8, 1) });
+    }
+
     private getDeadlineInDaysForNonEnabledEmailAddresses(): number {
         return (
             this.emailInstanceConfig.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS ??

@@ -885,6 +885,24 @@ describe('EmailRepo', () => {
         });
     });
 
+    describe('setUpdatedAtToFixedPointInTime', () => {
+        it('should update the updatedAt field', async () => {
+            const person: Person<true> = await createPerson();
+            const address: string = faker.internet.email();
+            const addressId: string = await createEmailAddressViaEM(
+                EmailAddressStatus.DISABLED,
+                person.id,
+                undefined,
+                address,
+            );
+
+            await sut.setUpdatedAtToFixedPointInTime(addressId);
+            const emailAddress: Option<EmailAddress<true>> = await sut.findByAddress(address);
+
+            expect(emailAddress?.updatedAt).toEqual(new Date(2027, 8, 1));
+        });
+    });
+
     describe('compareFunctions', () => {
         const emailAddressUndefinedUpdatedAt: EmailAddressEntity = createMock<EmailAddressEntity>(EmailAddressEntity, {
             updatedAt: undefined,
