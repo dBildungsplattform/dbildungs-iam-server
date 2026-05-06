@@ -43,6 +43,7 @@ import { EmailPersistenceModule } from '../../email/email-persistence.module.js'
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>(
@@ -86,6 +87,7 @@ describe('PersonenkontexteUpdate', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let loggerMock: DeepMocked<ClassLogger>;
     let emailRepoMock: DeepMocked<EmailRepo>;
+    let emailResolverServiceMock: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -124,6 +126,14 @@ describe('PersonenkontexteUpdate', () => {
                     provide: EventRoutingLegacyKafkaService,
                     useValue: createMock(EventRoutingLegacyKafkaService),
                 },
+                {
+                    provide: EmailRepo,
+                    useValue: createMock(EmailRepo),
+                },
+                {
+                    provide: EmailResolverService,
+                    useValue: createMock(EmailResolverService),
+                },
                 DbiamPersonenkontextFactory,
                 PersonenkontextFactory,
             ],
@@ -142,6 +152,8 @@ describe('PersonenkontexteUpdate', () => {
             .useValue(createMock(RolleRepo))
             .overrideProvider(EmailRepo)
             .useValue(createMock(EmailRepo))
+            .overrideProvider(EmailResolverService)
+            .useValue(createMock(EmailResolverService))
             .compile();
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         dBiamPersonenkontextRepoInternalMock = module.get(DBiamPersonenkontextRepoInternal);
@@ -184,6 +196,7 @@ describe('PersonenkontexteUpdate', () => {
         rolleRepoMock = module.get(RolleRepo);
         loggerMock = module.get(ClassLogger);
         emailRepoMock = module.get(EmailRepo);
+        emailResolverServiceMock = module.get(EmailResolverService);
     });
 
     afterAll(async () => {
@@ -1143,6 +1156,8 @@ describe('PersonenkontexteUpdate', () => {
 
         describe('getEmailForPerson', () => {
             it('should return undefined', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+
                 const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
@@ -1164,6 +1179,8 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return email address', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+
                 const newPerson: Person<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
@@ -1186,6 +1203,57 @@ describe('PersonenkontexteUpdate', () => {
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateResult).toBeDefined();
+            });
+
+            it('should return undefined when using email microservice and no email exists', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+
+                const newPerson: Person<true> = DoFactory.createPerson(true);
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValueOnce(undefined);
+
+                const result: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(result).toBeDefined();
+            });
+
+            it('should return email when using email microservice', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+
+                const newPerson: Person<true> = DoFactory.createPerson(true);
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                const emailAddress: string = faker.internet.email();
+
+                emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValueOnce({
+                    address: emailAddress,
+                    status: EmailAddressStatus.ENABLED,
+                });
+
+                const result: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(result).toBeDefined();
             });
         });
     });
