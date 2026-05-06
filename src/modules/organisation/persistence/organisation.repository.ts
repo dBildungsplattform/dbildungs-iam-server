@@ -28,7 +28,7 @@ import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.
 import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
 import { OrganisationsTyp, RootDirectChildrenType, SortFieldOrganisation } from '../domain/organisation.enums.js';
@@ -36,6 +36,7 @@ import { Organisation } from '../domain/organisation.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationScope } from './organisation.scope.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export function mapOrgaAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -337,7 +338,7 @@ export class OrganisationRepository {
     }
 
     public async findAuthorized(
-        personPermissions: PersonPermissions,
+        personPermissions: IPersonPermissions,
         systemrechte: RollenSystemRecht[],
         searchOptions: OrganisationSearchOptions,
     ): Promise<[Organisation<true>[], total: number, pageTotal: number]> {
@@ -481,7 +482,7 @@ export class OrganisationRepository {
         id: string,
         newName: string,
         version: number,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<DomainError | Organisation<true>> {
         const organisationFound: Option<Organisation<true>> = await this.findById(id);
 
@@ -577,7 +578,7 @@ export class OrganisationRepository {
     }
 
     public async setEnabledForitslearning(
-        personPermissions: PersonPermissions,
+        personPermissions: IPersonPermissions,
         id: string,
     ): Promise<DomainError | Organisation<true>> {
         if (!(await personPermissions.hasSystemrechteAtRootOrganisation([RollenSystemRecht.SCHULEN_VERWALTEN]))) {

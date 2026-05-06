@@ -21,7 +21,7 @@ import { LoginGuard } from './login.guard.js';
 import { RedirectQueryParams } from './redirect.query.params.js';
 import { UserinfoExtension, UserinfoResponse } from './userinfo.response.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonPermissions, PersonenkontextRolleWithOrganisation } from '../domain/person-permissions.js';
+import { PersonenkontextRolleWithOrganisation, PersonPermissions } from '../domain/person-permissions.js';
 import { Permissions } from './permissions.decorator.js';
 import { Public } from './public.decorator.js';
 import { RolleID } from '../../../shared/types/index.js';

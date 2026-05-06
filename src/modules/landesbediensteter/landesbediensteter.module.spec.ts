@@ -1,17 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
+import { DatabaseTestModule } from '../../../test/utils/index.js';
 import { EventModule } from '../../core/eventbus/index.js';
 import { LandesbediensteterController } from './api/landesbediensteter.controller.js';
 import { LandesbediensteterWorkflowFactory } from './domain/landesbediensteter-workflow.factory.js';
 import { LandesbediensteterModule } from './landesbediensteter.module.js';
+import { CommonTestModule } from '../../../test/utils/common-test.module.js';
 
 describe('LandesbediensteterModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [LandesbediensteterModule, ConfigTestModule, DatabaseTestModule.forRoot(), EventModule],
+            imports: [LandesbediensteterModule, CommonTestModule, DatabaseTestModule.forRoot(), EventModule],
         }).compile();
     });
 

@@ -30,6 +30,8 @@ import { OrganisationRepository } from '../organisation/persistence/organisation
 import { DbiamPersonenkontextFactory } from '../personenkontext/domain/dbiam-personenkontext.factory.js';
 import { ConfigService } from '@nestjs/config';
 import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
+import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
+import { EscalatedPersonPermissionsFactory } from '../permission/escalated-person-permissions.factory.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 
 class UnknownError extends DomainError {
@@ -52,6 +54,9 @@ describe('CronController', () => {
     let userLockRepositoryMock: DeepMocked<UserLockRepository>;
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
     let emailAddressDeletionServiceMock: DeepMocked<EmailAddressDeletionService>;
+    const escalatedPersonPermissionsFactoryMock: DeepMocked<EscalatedPersonPermissionsFactory> = createMock(
+        EscalatedPersonPermissionsFactory,
+    );
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -103,9 +108,16 @@ describe('CronController', () => {
                     provide: ServiceProviderService,
                     useValue: createMock(ServiceProviderService),
                 },
+                {
+                    provide: EscalatedPersonPermissionsFactory,
+                    useValue: escalatedPersonPermissionsFactoryMock,
+                },
             ],
             controllers: [CronController],
-        }).compile();
+        })
+            .overrideProvider(EscalatedPersonPermissionsFactory)
+            .useValue(escalatedPersonPermissionsFactoryMock)
+            .compile();
 
         cronController = module.get(CronController);
         keycloakUserServiceMock = module.get(KeycloakUserService);
@@ -473,7 +485,7 @@ describe('CronController', () => {
                     throw new Error('Some internal error');
                 });
 
-                const personPermissionsMock: PersonPermissions = createPersonPermissionsMock();
+                const personPermissionsMock: IPersonPermissions = createPersonPermissionsMock();
                 await expect(cronController.personWithoutOrgDelete(personPermissionsMock)).rejects.toThrow(
                     'Failed to remove users due to an internal server error.',
                 );

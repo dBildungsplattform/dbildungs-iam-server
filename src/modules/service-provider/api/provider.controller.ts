@@ -50,8 +50,6 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { AttachedRollenError } from '../domain/errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from '../domain/errors/attached-rollenerweiterungen.error.js';
-import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
-import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
 import {
@@ -64,6 +62,9 @@ import { CreateServiceProviderBodyParams } from './create-service-provider-body.
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
+import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweiterung-by-service-provider-id.pathparams.js';
 import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
@@ -171,7 +172,7 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollenerweiterungen.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rollenerweiterungen.' })
     public async findRollenerweiterungenByServiceProviderId(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Param() pathParams: RollenerweiterungByServiceProvidersIdPathParams,
         @Query() queryParams: RollenerweiterungByServiceProvidersIdQueryParams,
     ): Promise<RawPagedResponse<RollenerweiterungWithExtendedDataResponse>> {
@@ -243,7 +244,7 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
     public async getManageableServiceProviders(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Query() params: ManageableServiceProvidersParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
         const [enrichedServiceProviders, total]: Counted<ManageableServiceProviderWithReferencedObjects> =
@@ -276,7 +277,7 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
     public async getManageableServiceProvidersForOrganisationId(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Query() params: ManageableServiceProvidersForOrganisationParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
         const result: Result<
@@ -325,7 +326,7 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-provider.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting service-provider.' })
     public async getManageableServiceProviderById(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Param() params: AngebotByIdParams,
     ): Promise<ManageableServiceProviderResponse> {
         const serviceProviderWithOrganisationRollenAndErweiterungen: Option<ManageableServiceProviderDetailsWithReferencedObjects> =
@@ -356,7 +357,7 @@ export class ProviderController {
     @ApiBadRequestResponse({ description: 'Invalid request body.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     public async createServiceProvider(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Body() body: CreateServiceProviderBodyParams,
     ): Promise<ServiceProviderResponse> {
         // Convert base64 to Buffer (if provided)

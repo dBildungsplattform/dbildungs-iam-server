@@ -7,11 +7,11 @@ import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/
 import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddress } from '../domain/email-address.js';
 import { EmailRepo } from '../persistence/email.repo.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @Injectable()
 export class EmailAddressDeletionService {
@@ -29,7 +29,7 @@ export class EmailAddressDeletionService {
      * @returns { processed: number; total: number } - processed: number of email addresses processed in this run, total: total number of email addresses that are marked for deletion or exceeded the deadline
      */
     public async deleteEmailAddresses(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         limit: number,
     ): Promise<{ processed: number; total: number }> {
         const [nonPrimaryEmailAddresses, total]: [EmailAddress<true>[], number] =

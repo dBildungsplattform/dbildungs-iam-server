@@ -1,11 +1,10 @@
 import { MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
-    ConfigTestModule,
+    CommonTestModule,
     DatabaseTestModule,
     EmailConfigTestModule,
     KeycloakConfigTestModule,
-    LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { DbSeedService } from './db-seed.service.js';
 import { UsernameGeneratorService } from '../../../modules/person/domain/username-generator.service.js';
@@ -36,12 +35,11 @@ describe('DbSeedServiceIntegration', () => {
                 PersonModule,
                 RolleModule,
                 ServiceProviderModule,
-                ConfigTestModule,
+                CommonTestModule,
                 EmailConfigTestModule,
                 OrganisationModule,
                 KeycloakAdministrationModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                LoggingTestModule,
                 PersonenKontextModule,
             ],
             providers: [UsernameGeneratorService, DBiamPersonenkontextRepo, OxUserBlacklistRepo, EntityAggregateMapper],
