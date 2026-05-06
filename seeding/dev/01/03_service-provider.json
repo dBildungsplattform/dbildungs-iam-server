@@ -318,7 +318,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  12,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  20,
@@ -328,7 +328,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  13,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  21,
@@ -338,7 +338,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  14,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  22,
@@ -348,7 +348,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  15,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  23,
@@ -358,7 +358,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  16,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  24,
@@ -368,7 +368,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  17,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  25,
@@ -378,7 +378,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  18,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  26,
@@ -388,7 +388,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  19,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  27,
@@ -398,7 +398,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  20,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  28,
@@ -408,7 +408,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  21,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  29,
@@ -418,7 +418,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  22,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  30,
@@ -428,7 +428,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  23,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  31,
@@ -438,7 +438,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  24,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  32,
@@ -448,7 +448,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  25,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  33,
@@ -458,7 +458,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  26,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  34,
@@ -468,7 +468,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  27,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  35,
@@ -478,7 +478,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  28,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  36,
@@ -488,7 +488,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  29,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  37,
@@ -498,7 +498,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  30,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  38,
@@ -508,7 +508,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  31,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  39,
@@ -518,7 +518,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  32,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  40,
@@ -528,7 +528,7 @@
                          "kategorie":  "SCHULISCH",
                          "providedOnSchulstrukturknoten":  33,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      },
                      {
                          "id":  41,
@@ -539,7 +539,7 @@
                          "logoBase64":  "iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAAM6SURBVHhe7ZjtstsgDAXz/i/dTqZ1S1WwDYgv7dkZ//EFI+msczP5/BBoPvaGYCEB4EgAOBIAjgSAIwHgSAA4EgCOBIAjAeBIADgSAI4EgCMB4EgAOBIAjgSAIwHgSAA4EgCOBIAjAeBIADgSAI4EgCMB4EgAOK4CfD6ujxMTcE1MApyHa2IS4DxcE5MA5+GamAQ4D/fEJMFZuKclAc7CPS0JcBbuaUmAs3BPSwKchXtaswX4njf7zEi4T25FGCslWHWuF0Oq9xrKFWzNVYvdX/MMu+/u2pUhlXk1XPOca+2bgd8FU7pvebPm4u681QyryKPZ1mc8DfvubzlK60v3S9Sun8Gwijya7XnGnQSl+xfpG9vznBwte0YytJreZkftL4X6JvSUN2ssLXtGMrQaj2Z7nnG314adrr3bl2L3vaF2/WiGV9MypJTWvT3n1u7LSZTy9PeVTKmodwC1e2vXW3r32mtnplfXMxQ72NLVi8czTmFZp56BebNjTaPYotOSDLl7o1lx5kq269R+nPeE0bK/dv3phO5WAjyD6Lbm0+TNmkiwun2QIXcvOryOE1IZiOF/YXYt/iAB4EgAOBIAjgSAIwHgSAA4EgCOBIAzVQDqr207MzUR+9Mr+SfYXdhi+lYIiTGPradshZAY/hw5TSuExGgn1NSsELtfO7BHFVCsECukmH+iKCIB4EgAMCvC/7LmVPEPq8L/su5kseyLX8ra04Gs/MafY48qgrNb6Cn7VRSEnUNP2bu6g0gD3z30lHMq3YxTA7ecW/lkogRuidPJACIGbonbWSOE0FMYXd4Q9aP9LaiObdjEwC1hJmCDzV3if46cig1W4bZzzORs4Areh2MmWArbClFaJ/KEnJYVQlKUwUzGCiEpfoGeghWCKAar25eQhIjdnQPRJYjbWSf6BIBCCD2F02kB0v/7HLyOf0MN3IKaAPlNL4GZhELPE3oqeuOfCT0ZBf9M6Anp7X8m/HQkwT2Yyej7QB7kNCTCX9BTkAhwAS7IIjC7ziABBFICXscP0CRgdfsSkgScTiuhSMDosgEJAEcCCAQSAI4EgCMB4EgAOBIAjgSAIwHgSAA4EgCOBIDzEzuOohjDzzFTAAAAAElFTkSuQmCC",
                          "providedOnSchulstrukturknoten":  33,
                          "requires2fa":  false,
-                         "merkmale":  "[VERFUEGBAR_FUER_ROLLENERWEITERUNG]"
+                         "merkmale":  ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
                      }
                  ]
 }
