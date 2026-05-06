@@ -30,7 +30,7 @@ import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
 import { mapDefinedObjectProperties } from '../../../shared/util/object-utils.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { compareEmailAddressesByUpdatedAtDesc } from '../../email/persistence/email.repo.js';
@@ -232,7 +232,7 @@ export class PersonRepository {
     }
 
     private async getPersonScopeWithPermissions(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         requiredRights: RollenSystemRecht[],
     ): Promise<PersonScope> {
         // Find all organisations where user has the required permission
@@ -309,7 +309,7 @@ export class PersonRepository {
         return null;
     }
 
-    public async findByIds(ids: string[], permissions: PersonPermissions): Promise<Person<true>[]> {
+    public async findByIds(ids: string[], permissions: IPersonPermissions): Promise<Person<true>[]> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
@@ -402,7 +402,7 @@ export class PersonRepository {
 
     public async getPersonIfAllowed(
         personId: string,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         requiredRights: RollenSystemRecht[] = [RollenSystemRecht.PERSONEN_VERWALTEN],
     ): Promise<Result<Person<true>>> {
         const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions, requiredRights);
@@ -420,7 +420,7 @@ export class PersonRepository {
 
     public async getPersonIfAllowedOrRequesterIsPerson(
         personId: string,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Result<Person<true>>> {
         if (personId === permissions.personFields.id) {
             let person: Option<Person<true>> = await this.findById(personId);
@@ -452,7 +452,7 @@ export class PersonRepository {
 
     private async checkIfDeleteIsAllowed(
         personId: string,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Result<Person<true>>> {
         // Check if the user has permission to delete immediately
         const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions, [
@@ -479,7 +479,7 @@ export class PersonRepository {
      */
     public async deletePerson(
         personId: string,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         removedPersonenkontexts: PersonenkontextEventKontextData[],
     ): Promise<Result<void, DomainError>> {
         // First check if the user has permission to view the person
@@ -575,7 +575,7 @@ export class PersonRepository {
      */
     public async deletePersonAfterDeadlineExceeded(
         personId: string,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         removedPersonenkontexts: PersonenkontextEventKontextData[],
     ): Promise<Result<void, DomainError>> {
         // First check if the user has permission to view the person

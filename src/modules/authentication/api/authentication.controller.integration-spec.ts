@@ -8,7 +8,6 @@ import { SessionData } from 'express-session';
 import { Client, EndSessionParameters, IssuerMetadata } from 'openid-client';
 
 import { MikroORM } from '@mikro-orm/core';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import {
     createOidcClientMock,
     createPassportUserMock,
@@ -16,7 +15,6 @@ import {
     DatabaseTestModule,
     DoFactory,
 } from '../../../../test/utils/index.js';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
 import { KeycloakConfig } from '../../../shared/config/keycloak.config.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
@@ -40,6 +38,7 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleModule } from '../../rolle/rolle.module.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 import { createRequestMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -52,8 +51,7 @@ describe('AuthenticationController', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
-                ConfigTestModule,
-                LoggingTestModule,
+                CommonTestModule,
                 ServiceProviderModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,

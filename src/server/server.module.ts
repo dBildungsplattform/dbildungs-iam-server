@@ -51,6 +51,7 @@ import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js'
 import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis';
 import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
+import { PermissionModule } from '../modules/permission/permission.module.js';
 
 @Module({
     imports: [
@@ -146,6 +147,7 @@ import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
         }),
         LoggerModule.register(ServerModule.name),
         EventModule,
+        PermissionModule,
         AuthenticationApiModule,
         PersonApiModule,
         OrganisationApiModule,

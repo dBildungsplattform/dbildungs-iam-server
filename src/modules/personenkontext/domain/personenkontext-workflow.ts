@@ -6,7 +6,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { PersonID, RolleID } from '../../../shared/types/index.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -67,7 +67,7 @@ export class PersonenkontextWorkflowAggregate {
 
     // Finds all SSKs that the admin can see
     public async findAllSchulstrukturknoten(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         organisationName: string | undefined,
         organisationId?: string, // Add organisationId as an optional parameter
         limit?: number,
@@ -132,7 +132,7 @@ export class PersonenkontextWorkflowAggregate {
     }
 
     public async findRollenForOrganisation(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         rolleName?: string,
         rollenIds?: string[],
         limit?: number,
@@ -183,7 +183,7 @@ export class PersonenkontextWorkflowAggregate {
     // Verifies if the selected rolle and organisation can together be assigned to a kontext
     // Also verifies again if the organisationId is allowed to be assigned by the admin
     public async canCommit(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         operationContext: OperationContext,
     ): Promise<DomainError | boolean> {
         if (this.selectedOrganisationId && this.selectedRolleIds && this.selectedRolleIds.length > 0) {
@@ -248,7 +248,7 @@ export class PersonenkontextWorkflowAggregate {
     }
 
     public async checkPermissions(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         personId: PersonID | undefined,
         organisationId: string,
         rolleIds: RolleID[],

@@ -4,7 +4,6 @@ import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Client } from 'openid-client';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
@@ -44,6 +43,7 @@ import { Err, Ok } from '../../../shared/util/result.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 import { MissingAttributeError } from '../../../shared/error/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 
@@ -64,7 +64,7 @@ describe('Provider Controller Test', () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ServiceProviderApiModule,
-                ConfigTestModule,
+                CommonTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
             ],
             providers: [

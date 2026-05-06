@@ -9,7 +9,7 @@ import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import {
-    ConfigTestModule,
+    CommonTestModule,
     createPersonPermissionsMock,
     DatabaseTestModule,
     DoFactory,
@@ -75,7 +75,7 @@ describe('Rolle API', () => {
             imports: [
                 RolleApiModule,
                 LoggingTestModule,
-                ConfigTestModule,
+                CommonTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],
             providers: [

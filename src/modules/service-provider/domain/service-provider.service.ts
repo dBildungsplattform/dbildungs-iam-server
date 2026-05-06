@@ -10,11 +10,10 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { Err } from '../../../shared/util/result.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -105,7 +104,7 @@ export class ServiceProviderService {
     }
 
     public async findManageableById(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         id: ServiceProviderID,
     ): Promise<Option<ManageableServiceProviderDetailsWithReferencedObjects>> {
         const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(id);
@@ -170,7 +169,7 @@ export class ServiceProviderService {
     }
 
     public async findAuthorized(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         limit?: number,
         offset?: number,
     ): Promise<Counted<ManageableServiceProviderWithReferencedObjects>> {
@@ -199,7 +198,7 @@ export class ServiceProviderService {
 
     public async getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
         organisationId: OrganisationID,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         limit?: number,
         offset?: number,
     ): Promise<Result<Counted<ManageableServiceProviderWithReferencedObjects>, MissingPermissionsError>> {
@@ -335,7 +334,7 @@ export class ServiceProviderService {
         }));
     }
 
-    public async updateServiceProvidersForVidis(): Promise<void> {
+    public async updateServiceProvidersForVidis(permissions: IPersonPermissions): Promise<void> {
         this.logger.info('Aktualisierung der ServiceProvider für VIDIS-Angebote wurde gestartet.');
 
         const vidisKeycloakGroup: string = this.vidisConfig.KEYCLOAK_GROUP;
@@ -356,12 +355,6 @@ export class ServiceProviderService {
                     await this.serviceProviderRepo.findByVidisAngebotId(angebot.angebotId);
 
                 const angebotLogoMediaType: string = this.determineMediaTypeFor(angebot.angebotLogo);
-
-                // The following bypass is really bad, but since this code is not excuted in prod, it is better than keeping ServiceProviderRepo.save() without permission checks
-                const permissionOverride: PermissionsOverride = new PermissionsOverride(
-                    null as unknown as PersonPermissions,
-                );
-                permissionOverride.grantSystemrechteAtOrga(schulstrukturknoten, [RollenSystemRecht.ANGEBOTE_VERWALTEN]);
 
                 let persistedServiceProviderResult: Result<ServiceProvider<true>, DomainError>;
                 if (existingServiceProvider) {
@@ -386,7 +379,7 @@ export class ServiceProviderService {
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' already exists.`);
 
                     persistedServiceProviderResult = await this.serviceProviderRepo.update(
-                        permissionOverride,
+                        permissions,
                         serviceProvider,
                     );
 
@@ -417,7 +410,7 @@ export class ServiceProviderService {
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' was created.`);
 
                     persistedServiceProviderResult = await this.serviceProviderRepo.create(
-                        permissionOverride,
+                        permissions,
                         serviceProvider,
                     );
 
@@ -465,7 +458,7 @@ export class ServiceProviderService {
     }
 
     public async updateServiceProvider(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         angebotId: ServiceProviderID,
         updateServiceProviderBodyParams: UpdateServiceProviderBodyParams,
     ): Promise<Result<ServiceProvider<true>, DomainError>> {

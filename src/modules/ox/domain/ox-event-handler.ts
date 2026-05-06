@@ -396,27 +396,29 @@ export class OxEventHandler {
             }
         }
 
-        if (!newPrimaryMail) {
-            return this.logger.error(
-                `Could Not Remove EmailAddress from OxAccount because user would not have any more addresses, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+        if (newPrimaryMail) {
+            const action: ChangeUserAction = this.oxEventService.createChangeUserAction(
+                event.oxUserId,
+                undefined, // oxUserName
+                newAliasesArray, // aliases
+                undefined, // givenname
+                undefined, // surname
+                undefined, // displayname
+                newPrimaryMail, // defaultSenderAddress
+                newPrimaryMail, // primaryEmail
             );
-        }
+            const result: Result<void, DomainError> = await this.oxService.send(action);
 
-        const action: ChangeUserAction = this.oxEventService.createChangeUserAction(
-            event.oxUserId,
-            undefined, // oxUserName
-            newAliasesArray, // aliases
-            undefined, // givenname
-            undefined, // surname
-            undefined, // displayname
-            newPrimaryMail, // defaultSenderAddress
-            newPrimaryMail, // primaryEmail
-        );
-        const result: Result<void, DomainError> = await this.oxService.send(action);
-
-        if (!result.ok) {
-            return this.logger.error(
-                `Could Not Remove EmailAddress from OxAccount, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}, error:${result.error.message}`,
+            if (!result.ok) {
+                return this.logger.error(
+                    `Could Not Remove EmailAddress from OxAccount, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}, error:${result.error.message}`,
+                );
+            }
+        } else {
+            // If no primary email could be determined, we can't update the ox-user.
+            // Just treat this as a success, so the rest of the event-chain can proceed.
+            this.logger.info(
+                `Could Not Remove EmailAddress from OxAccount because user would not have any more addresses, treat address as deleted. personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
             );
         }
 

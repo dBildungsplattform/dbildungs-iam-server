@@ -11,7 +11,7 @@ import {
     RolleID,
     ServiceProviderID,
 } from '../../../shared/types/index.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
@@ -27,6 +27,7 @@ import { PersonenkontextErweitertVirtualEntity } from './personenkontext-erweite
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { mapEntityToAggregate as mapSPEntityToAggregate } from '../../service-provider/repo/service-provider-entity-mapper.js';
 
@@ -109,7 +110,7 @@ export class DBiamPersonenkontextRepo {
 
     public async findByIDAuthorized(
         id: PersonenkontextID,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Result<Personenkontext<true>, DomainError>> {
         const personenkontext: Option<PersonenkontextEntity> = await this.em.findOne(PersonenkontextEntity, {
             id,

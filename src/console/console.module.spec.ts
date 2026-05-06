@@ -1,26 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    EmailConfigTestModule,
-    LoggingTestModule,
-} from '../../test/utils/index.js';
+import { DatabaseTestModule, EmailConfigTestModule } from '../../test/utils/index.js';
 import { ConsoleModule } from './console.module.js';
 import { DbInitConsole } from './db-init.console.js';
 import { DbConsole } from './db.console.js';
+import { CommonTestModule } from '../../test/utils/common-test.module.js';
 
 describe('ConsoleModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                ConfigTestModule,
-                EmailConfigTestModule,
-                ConsoleModule,
-                LoggingTestModule,
-                DatabaseTestModule.forRoot(),
-            ],
+            imports: [CommonTestModule, EmailConfigTestModule, ConsoleModule, DatabaseTestModule.forRoot()],
         }).compile();
     });
 
