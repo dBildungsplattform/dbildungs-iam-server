@@ -20,7 +20,7 @@ import { PermissionModule } from '../permission/permission.module.js';
     imports: [
         EventModule,
         forwardRef(() => PersonModule),
-        forwardRef(() => RolleModule),
+        RolleModule,
         OrganisationModule,
         LoggerModule.register(PersonenKontextModule.name),
         forwardRef(() => PermissionModule),

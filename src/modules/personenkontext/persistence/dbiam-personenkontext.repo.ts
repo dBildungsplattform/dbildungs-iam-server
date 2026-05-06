@@ -622,9 +622,4 @@ export class DBiamPersonenkontextRepo {
 
         return result;
     }
-
-    public async existsByRolleId(rolleId: RolleID): Promise<boolean> {
-        const count: number = await this.em.count(PersonenkontextEntity, { rolleId });
-        return count > 0;
-    }
 }

@@ -16,10 +16,14 @@ import {
     KeycloakConfigTestModule,
     LoggingTestModule,
 } from '../../../../test/utils/index.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
+import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import {
@@ -43,6 +47,7 @@ import { Rolle } from '../domain/rolle.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { RolleApiModule } from '../rolle-api.module.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
@@ -53,11 +58,6 @@ import { RolleResponse } from './rolle.response.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
-import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
-import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;

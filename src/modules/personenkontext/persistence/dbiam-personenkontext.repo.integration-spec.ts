@@ -1218,38 +1218,4 @@ describe('dbiam Personenkontext Repo', () => {
             expect(result[0]?.serviceProvider.id).toEqual(serviceprovider.id);
         });
     });
-
-    describe('existsByRolleId', () => {
-        it('should return true if any personenkontext exists for the given rolleId', async () => {
-            const person: Person<true> = await createPerson();
-            const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-            const organisation: Organisation<true> = await organisationRepository.save(
-                DoFactory.createOrganisation(false),
-            );
-            if (rolle instanceof DomainError) {
-                throw Error();
-            }
-
-            await personenkontextRepoInternal.save(
-                createPersonenkontext(false, {
-                    rolleId: rolle.id,
-                    personId: person.id,
-                    organisationId: organisation.id,
-                }),
-            );
-
-            const result: boolean = await sut.existsByRolleId(rolle.id);
-            expect(result).toBeTruthy();
-        });
-
-        it('should return false if no personenkontext exists for the given rolleId', async () => {
-            const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-            if (rolle instanceof DomainError) {
-                throw Error();
-            }
-
-            const result: boolean = await sut.existsByRolleId(rolle.id);
-            expect(result).toBeFalsy();
-        });
-    });
 });
