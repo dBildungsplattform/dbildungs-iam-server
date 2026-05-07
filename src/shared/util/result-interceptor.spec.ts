@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ResultInterceptor } from './result-interceptor.js';
-import { CallHandler, ExecutionContext } from '@nestjs/common';
+import { ArgumentsHost, CallHandler, ExecutionContext } from '@nestjs/common';
 import { Observable, of } from 'rxjs';
 import { ConfigTestModule } from '../../../test/utils/index.js';
 import { EntityNotFoundError, KeycloakClientError } from '../error/index.js';

@@ -1,5 +1,5 @@
 import { Observable, from, lastValueFrom } from 'rxjs';
-import { CallHandler, ExecutionContext } from '@nestjs/common';
+import { ArgumentsHost, CallHandler, ExecutionContext } from '@nestjs/common';
 import { DISABLE_PAGING_INTERCEPTOR, GlobalPagingHeadersInterceptor } from './global-paging-headers.interceptor.js';
 import { Response } from 'express';
 import { PagedResponse } from './paged.response.js';

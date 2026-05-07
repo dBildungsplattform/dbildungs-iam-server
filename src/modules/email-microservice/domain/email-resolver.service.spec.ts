@@ -10,16 +10,16 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     expectErrResult,
     expectOkResult,
-} from '../../../../test/utils';
-import { ClassLogger } from '../../../core/logging/class-logger';
-import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams';
-import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response';
-import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity';
-import { DomainError, EmailMicroserviceCommunicationError, EntityNotFoundError } from '../../../shared/error';
-import { EmailAddressStatus } from '../../email/domain/email-address';
-import { PersonEmailResponse } from '../../person/api/person-email-response';
-import { EmailMicroserviceModule } from '../email-microservice.module';
-import { EmailResolverService, PersonIdWithEmailResponse } from './email-resolver.service';
+} from '../../../../test/utils/index.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams.js';
+import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
+import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
+import { DomainError, EmailMicroserviceCommunicationError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { PersonEmailResponse } from '../../person/api/person-email-response.js';
+import { EmailMicroserviceModule } from '../email-microservice.module.js';
+import { EmailResolverService, PersonIdWithEmailResponse } from './email-resolver.service.js';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 

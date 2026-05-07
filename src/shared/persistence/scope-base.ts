@@ -1,5 +1,5 @@
 import { AnyEntity, EntityName, QueryOrderMap, EntityKey, FilterObject } from '@mikro-orm/core';
-import { EntityManager, QBFilterQuery, QueryBuilder, SelectQueryBuilder, FilterQuery } from '@mikro-orm/postgresql';
+import { EntityManager, QBFilterQuery, QueryBuilder, SelectQueryBuilder } from '@mikro-orm/postgresql';
 import { ScopeOrder, ScopeOperator } from './scope.enums.js';
 
 export abstract class ScopeBase<T extends AnyEntity> {
@@ -81,8 +81,8 @@ export abstract class ScopeBase<T extends AnyEntity> {
         substring: string,
         operator: ScopeOperator = ScopeOperator.OR,
     ): this {
-        const likeConditions: FilterQuery<T>[] = fields.map((field: EntityKey<T>): FilterQuery<T> => {
-            return { [field]: { $ilike: `%${substring}%` } } as FilterQuery<T>;
+        const likeConditions: QBFilterQuery<T>[] = fields.map((field: EntityKey<T>): QBFilterQuery<T> => {
+            return { [field]: { $ilike: `%${substring}%` } } as QBFilterQuery<T>;
         });
         const query: QBFilterQuery<T> = { [operator]: likeConditions } as QBFilterQuery<T>;
 

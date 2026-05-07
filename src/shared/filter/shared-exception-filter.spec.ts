@@ -1,11 +1,11 @@
 import { ArgumentsHost } from '@nestjs/common';
 import { Response } from 'express';
 import { MockedObject } from 'vitest';
-import { createResponseMock, createArgumentsHostMock } from '../../../test/utils/http.mocks';
+import { createResponseMock, createArgumentsHostMock } from '../../../test/utils/http.mocks.js';
 import { AuthenticationDomainError } from '../../modules/authentication/domain/authentication-domain.error.js';
 import { DbiamSharedError, SharedErrorI18nTypes } from '../error/dbiam-shared.error.js';
 import { SharedExceptionFilter } from './shared-exception-filter.js';
-import { EntityNotFoundError } from '../error/entity-not-found.error';
+import { EntityNotFoundError } from '../error/entity-not-found.error.js';
 
 describe('SharedExceptionFilter', () => {
     let filter: SharedExceptionFilter;

@@ -1,4 +1,4 @@
-import { DomainError } from '../../src/shared/error';
+import { DomainError } from '../../src/shared/error/index.js';
 
 export class DomainErrorMock extends DomainError {
     public constructor(message?: string) {
