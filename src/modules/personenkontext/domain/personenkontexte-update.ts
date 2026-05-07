@@ -35,6 +35,7 @@ import { DuplicateKlassenkontextError } from './error/update-invalid-duplicate-k
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -441,7 +442,7 @@ export class PersonenkontexteUpdate {
         const email: Option<PersonEmailResponse> = this.emailResolverService.shouldUseEmailMicroservice()
             ? await this.emailResolverService.findEmailBySpshPerson(person.id)
             : await this.emailRepo.getEmailAddressAndStatusForPerson(person);
-        return email?.address;
+        return email?.status === EmailAddressStatus.ENABLED ? email.address : undefined;
     }
 
     private async publishEvent(

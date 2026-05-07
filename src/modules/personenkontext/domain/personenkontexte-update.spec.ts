@@ -1255,6 +1255,34 @@ describe('PersonenkontexteUpdate', () => {
 
                 expect(result).toBeDefined();
             });
+
+            it('should return undefined when email exists but status is DISABLED', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+
+                const newPerson: Person<true> = DoFactory.createPerson(true);
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                const emailAddress: string = faker.internet.email();
+
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce({
+                    address: emailAddress,
+                    status: EmailAddressStatus.DISABLED,
+                });
+
+                const result: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(result).toBeDefined();
+            });
         });
     });
 });
