@@ -256,7 +256,7 @@ export class RollenerweiterungRepo {
         let qb = this.em
             .createQueryBuilder(RollenerweiterungEntity, 're')
             .innerJoinAndSelect('re.organisationId', 'o')
-            .select(['re.organisationId', 'o.kennung'] as const)
+            .select(['re.organisationId.id', 'o.kennung'] as const)
             .distinct()
             .where({ 're.serviceProviderId': serviceProviderId });
 
@@ -269,8 +269,8 @@ export class RollenerweiterungRepo {
             qb = qb.andWhere({ organisationId: { $in: organisationIds } });
         }
 
-        const pagedOrgIdsResult: Array<{ organisationId: string; kennung: string }> = await qb.execute();
-        const pagedOrgIds: string[] = pagedOrgIdsResult.map((row: { organisationId: string }) => row.organisationId);
+        const pagedOrgIdsResult: Array<{ id: string; kennung: string }> = await qb.execute();
+        const pagedOrgIds: string[] = pagedOrgIdsResult.map((row: { id: string }) => row.id);
 
         // Count total unique organisations
         const countQb: QueryBuilder<RollenerweiterungEntity, 're'> = this.em.createQueryBuilder(
