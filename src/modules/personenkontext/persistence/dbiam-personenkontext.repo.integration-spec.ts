@@ -139,7 +139,10 @@ describe('dbiam Personenkontext Repo', () => {
                     useValue: createMock(UserLockRepository),
                 },
             ],
-        }).compile();
+        })
+            .overrideProvider(KeycloakUserService)
+            .useValue(keycloakUserService)
+            .compile();
 
         sut = module.get(DBiamPersonenkontextRepo);
         personenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
