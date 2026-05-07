@@ -15,9 +15,7 @@
                          "keycloakRole":  "E-Mail-user",
                          "externalSystem":  "EMAIL",
                          "requires2fa":  true,
-                         "merkmale":  [
-
-                                      ]
+                         "merkmale":  []
                      },
                      {
                          "id":  1,
@@ -31,9 +29,7 @@
                          "keycloakGroup":  "Kalender-service",
                          "keycloakRole":  "Kalender-user",
                          "requires2fa":  true,
-                         "merkmale":  [
-
-                                      ]
+                         "merkmale":  []
                      },
                      {
                          "id":  2,
@@ -47,9 +43,7 @@
                          "keycloakGroup":  "Adressbuch-service",
                          "keycloakRole":  "Adressbuch-user",
                          "requires2fa":  true,
-                         "merkmale":  [
-
-                                      ]
+                         "merkmale":  []
                      },
                      {
                          "id":  3,
@@ -64,9 +58,7 @@
                          "keycloakRole":  "itslearning-user",
                          "externalSystem":  "ITSLEARNING",
                          "requires2fa":  false,
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  4,
@@ -80,9 +72,7 @@
                          "keycloakGroup":  "OP.SH-service",
                          "keycloakRole":  "OP.SH-user",
                          "requires2fa":  false,
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  5,
@@ -95,9 +85,7 @@
                          "keycloakGroup":  "Schulportal-Administration-service",
                          "keycloakRole":  "Schulportal-Administration-user",
                          "requires2fa":  true,
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  6,
@@ -111,9 +99,7 @@
                          "keycloakGroup":  "School-SH-service",
                          "keycloakRole":  "School-SH-user",
                          "requires2fa":  true,
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  7,
@@ -127,9 +113,7 @@
                          "keycloakGroup":  "WebUntis-service",
                          "keycloakRole":  "WebUntis-user",
                          "requires2fa":  false,
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  8,
@@ -143,9 +127,7 @@
                          "keycloakGroup":  "Anleitungen-service",
                          "keycloakRole":  "Anleitungen-user",
                          "requires2fa":  false,
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  9,
@@ -159,9 +141,7 @@
                          "keycloakGroup":  "Schulrecht A-Z-service",
                          "keycloakRole":  "Schulrecht A-Z-user",
                          "requires2fa":  false,
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  10,
@@ -175,9 +155,7 @@
                          "keycloakGroup":  "Helpdesk kontaktieren-service",
                          "keycloakRole":  "Helpdesk kontaktieren-user",
                          "requires2fa":  false,
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  11,
@@ -191,9 +169,7 @@
                          "keycloakGroup":  "Psychosoziales Beratungsangebot-service",
                          "keycloakRole":  "Psychosoziales Beratungsangebot-user",
                          "requires2fa":  false,
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  12,
@@ -207,9 +183,7 @@
                          "keycloakGroup":  "LeOniE-service",
                          "keycloakRole":  "LeOniE-user",
                          "requires2fa":  false,
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  13,
@@ -223,9 +197,7 @@
                          "keycloakGroup":  "DaZ-Dashboard-service",
                          "keycloakRole":  "DaZ-Dashboard-user",
                          "requires2fa":  false,
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  14,
@@ -239,9 +211,7 @@
                          "keycloakGroup":  "Schuldatenblatt-service",
                          "keycloakRole":  "Schuldatenblatt-user",
                          "requires2fa":  false,
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  15,
@@ -256,9 +226,7 @@
                          "keycloakRole":  "VIDIS-Dienste-user",
                          "requires2fa":  false,
                          "vidis_angebot_id":  "vidis-beispiel-placeholder",
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  16,
@@ -273,9 +241,7 @@
                          "keycloakRole":  "VIDIS-Dienste-user",
                          "requires2fa":  false,
                          "vidis_angebot_id":  "telli-placeholder",
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  17,
@@ -289,9 +255,7 @@
                          "keycloakGroup":  "Firmenfitness Angebot-service",
                          "keycloakRole":  "Firmenfitness Angebot-user",
                          "requires2fa":  false,
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  18,
@@ -306,9 +270,7 @@
                          "keycloakRole":  "Hubbs-user",
                          "requires2fa":  false,
                          "vidis_angebot_id":  "hubbs-placeholder",
-                         "merkmale":  [
-                                          "NACHTRAEGLICH_ZUWEISBAR"
-                                      ]
+                         "merkmale":  ["NACHTRAEGLICH_ZUWEISBAR"]
                      },
                      {
                          "id":  19,
