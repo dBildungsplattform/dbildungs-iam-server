@@ -249,6 +249,67 @@ describe('ItsLearning Rolle Event Handler', () => {
                 );
             });
 
+            it('should send undefined email when repo returns email with DISABLED status', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+
+                const spA: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    externalSystem: ServiceProviderSystem.ITSLEARNING,
+                });
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map([[spA.id, spA]]));
+
+                const person: Person<true> = DoFactory.createPerson(true);
+                personRepoMock.findWithRolleAndNoOtherItslearningKontexteByCursor.mockResolvedValueOnce([
+                    [person],
+                    undefined,
+                ]);
+
+                itslearningPersonRepoMock.createOrUpdatePersons.mockResolvedValueOnce(
+                    Ok({ status: [], value: undefined }),
+                );
+
+                const personenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true);
+                personenkontextRepoMock.findWithRolleAtItslearningOrgaByCursor.mockResolvedValueOnce([
+                    [personenkontext],
+                    undefined,
+                ]);
+
+                itslearningMembershipRepoMock.createMembershipsMass.mockResolvedValueOnce(
+                    Ok({ status: [], value: undefined }),
+                );
+
+                const event: RolleUpdatedEvent = createEvent([spA.id], []);
+
+                emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
+                    ok: true,
+                    value: new Map([
+                        [
+                            person.id,
+                            {
+                                address: faker.internet.email(),
+                                status: EmailAddressStatus.DISABLED,
+                            },
+                        ],
+                    ]),
+                });
+
+                await sut.rolleUpdatedEventHandler(event, () => {});
+
+                expect(emailResolverServiceMock.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith([person.id]);
+
+                expect(itslearningPersonRepoMock.createOrUpdatePersons).toHaveBeenCalledWith(
+                    [
+                        expect.objectContaining({
+                            id: person.id,
+                            email: undefined,
+                        }),
+                    ],
+                    event.eventID,
+                );
+
+                expect(itslearningMembershipRepoMock.createMembershipsMass).toHaveBeenCalled();
+            });
+
             it('should get persons and kontexte from db and send them to itslearning using email repo with email map no entry', async () => {
                 emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
                 const spA: ServiceProvider<true> = DoFactory.createServiceProvider(true, {

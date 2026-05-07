@@ -29,6 +29,7 @@ import { StatusInfoHelpers } from '../utils/status-info.utils.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 type FailedRequests<T> = (readonly [failureDescription: string, T])[];
 
@@ -199,14 +200,19 @@ export class ItsLearningRolleEventHandler {
                 : // eslint-disable-next-line no-await-in-loop
                   await this.emailRepo.getEmailAddressAndStatusForPersonIds(personen.map((p: Person<true>) => p.id));
 
-            const createParams: CreatePersonParams[] = personen.map((p: Person<true>) => ({
-                id: p.id,
-                firstName: p.vorname,
-                lastName: p.familienname,
-                username: p.username!,
-                institutionRoleType: institutionRole,
-                email: emailsForPersons.ok ? emailsForPersons.value.get(p.id)?.address : undefined,
-            }));
+            const createParams: CreatePersonParams[] = personen.map((p: Person<true>) => {
+                const emailResp: PersonEmailResponse | undefined = emailsForPersons.ok
+                    ? emailsForPersons.value.get(p.id)
+                    : undefined;
+                return {
+                    id: p.id,
+                    firstName: p.vorname,
+                    lastName: p.familienname,
+                    username: p.username!,
+                    institutionRoleType: institutionRole,
+                    email: emailResp?.status === EmailAddressStatus.ENABLED ? emailResp.address : undefined,
+                };
+            });
 
             const createResult: Result<MassResult<void>, DomainError> =
                 // eslint-disable-next-line no-await-in-loop
