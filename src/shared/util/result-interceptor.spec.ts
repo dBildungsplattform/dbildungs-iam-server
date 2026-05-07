@@ -40,7 +40,7 @@ describe('ResultInterceptor', () => {
                 setHeader: vi.fn().mockReturnThis(),
             };
             const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
-                getResponse: vi.fn().mockImplementation(<T>() => responseMock as unknown as T),
+                getResponse: vi.fn().mockImplementation(() => responseMock),
             };
             contextMock = {
                 switchToHttp: vi.fn(() => httpArgumentsHostMock as HttpArgumentsHost),

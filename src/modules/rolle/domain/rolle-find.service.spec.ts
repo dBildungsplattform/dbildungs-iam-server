@@ -109,7 +109,7 @@ describe('RolleService', () => {
             await rolleFindService.findRollenAvailableForErweiterung(params);
 
             expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
-                expect.objectContaining({
+                expect.objectContaining<RolleFindByParameters>({
                     allowedOrganisationIds: expect.arrayContaining(
                         requestedOrgas.map((o: Organisation<true>) => o.id),
                     ) as Array<OrganisationID>,
@@ -122,7 +122,7 @@ describe('RolleService', () => {
                                 .flatMap((set: Set<RollenArt>) => Array.from(set)),
                         ),
                     ) as Array<RollenArt>,
-                } as Partial<RolleFindByParameters>),
+                }),
             );
         });
 
@@ -147,7 +147,7 @@ describe('RolleService', () => {
             };
             await rolleFindService.findRollenAvailableForErweiterung(params);
             expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
-                expect.objectContaining({
+                expect.objectContaining<RolleFindByParameters>({
                     allowedOrganisationIds: expect.arrayContaining(
                         allowedOrgas.map((o: Organisation<true>) => o.id),
                     ) as Array<OrganisationID>,
@@ -160,7 +160,7 @@ describe('RolleService', () => {
                                 .flatMap((set: Set<RollenArt>) => Array.from(set)),
                         ),
                     ) as Array<RollenArt>,
-                } as Partial<RolleFindByParameters>),
+                }),
             );
         });
 
@@ -190,12 +190,12 @@ describe('RolleService', () => {
             };
             await rolleFindService.findRollenAvailableForErweiterung(params);
             expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
-                expect.objectContaining({
-                    allowedOrganisationIds: expect.arrayContaining(
+                expect.objectContaining<RolleFindByParameters>({
+                    allowedOrganisationIds: expect.arrayContaining<OrganisationID>(
                         allowedOrgas.map((o: Organisation<true>) => o.id),
                     ) as Array<OrganisationID>,
                     rollenArten: expect.arrayContaining([RollenArt.SYSADMIN]) as Array<RollenArt>,
-                } as Partial<RolleFindByParameters>),
+                }),
             );
         });
 
@@ -219,9 +219,9 @@ describe('RolleService', () => {
             };
             await rolleFindService.findRollenAvailableForErweiterung(params);
             expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
-                expect.objectContaining({
+                expect.objectContaining<RolleFindByParameters>({
                     searchStr: params.searchStr,
-                } as Partial<RolleFindByParameters>),
+                }),
             );
         });
     });

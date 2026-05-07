@@ -31,9 +31,9 @@ export class MeldungRepo {
     public constructor(private readonly em: EntityManager) {}
 
     public async findById(id: string): Promise<Option<Meldung<true>>> {
-        const meldung: Option<MeldungEntity> = (await this.em.findOne(MeldungEntity, {
+        const meldung: Option<MeldungEntity> = await this.em.findOne(MeldungEntity, {
             id,
-        })) as Option<MeldungEntity>;
+        });
 
         return meldung && mapEntityToAggregate(meldung);
     }

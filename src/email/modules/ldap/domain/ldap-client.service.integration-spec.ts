@@ -243,7 +243,7 @@ describe('LDAP Client Service', () => {
 
             vi.restoreAllMocks();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            vi.spyOn(ldapClientService as unknown as any, 'bind').mockResolvedValue({
+            vi.spyOn(ldapClientService as any, 'bind').mockResolvedValue({
                 ok: false,
                 error: new Error('bind failed'),
             });

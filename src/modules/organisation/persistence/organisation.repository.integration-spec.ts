@@ -289,7 +289,7 @@ describe('OrganisationRepository', () => {
             it('should return Correct Aggregates By Filters', async () => {
                 const [result]: Counted<Organisation<true>> = await sut.findBy(
                     new OrganisationScope().findBy({
-                        kennung: organisation1.kennung as string,
+                        kennung: organisation1.kennung,
                     }),
                 );
 
@@ -301,7 +301,7 @@ describe('OrganisationRepository', () => {
             it('should return Correct Aggregates By Filters', async () => {
                 const [result]: Counted<Organisation<true>> = await sut.findBy(
                     new OrganisationScope().findBy({
-                        typ: OrganisationsTyp.SCHULE as string,
+                        typ: OrganisationsTyp.SCHULE,
                     }),
                 );
 
@@ -314,7 +314,7 @@ describe('OrganisationRepository', () => {
                 const [result]: Counted<Organisation<true>> = await sut.findBy(
                     new OrganisationScope()
                         .findBy({
-                            typ: OrganisationsTyp.SCHULE as string,
+                            typ: OrganisationsTyp.SCHULE,
                         })
                         .setScopeWhereOperator(ScopeOperator.AND)
                         .searchString('Test'),
@@ -331,7 +331,7 @@ describe('OrganisationRepository', () => {
                 const [result]: Counted<Organisation<true>> = await sut.findBy(
                     new OrganisationScope()
                         .findBy({
-                            typ: OrganisationsTyp.SCHULE as string,
+                            typ: OrganisationsTyp.SCHULE,
                         })
                         .setScopeWhereOperator(ScopeOperator.OR)
                         .searchString('Test'),

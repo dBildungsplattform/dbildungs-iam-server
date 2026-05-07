@@ -110,11 +110,11 @@ export class ServiceProviderRepo {
     public async findById(id: string, options?: ServiceProviderFindOptions): Promise<Option<ServiceProvider<true>>> {
         const exclude: readonly ['logo'] | undefined = options?.withLogo ? undefined : ['logo'];
 
-        const serviceProvider: Option<ServiceProviderEntity> = (await this.em.findOne(
+        const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(
             ServiceProviderEntity,
             { id },
             { exclude, populate: ['merkmale'] },
-        )) as Option<ServiceProviderEntity>;
+        );
 
         return serviceProvider && mapEntityToAggregate(serviceProvider);
     }
@@ -163,10 +163,10 @@ export class ServiceProviderRepo {
     public async find(options?: ServiceProviderFindOptions): Promise<ServiceProvider<true>[]> {
         const exclude: readonly ['logo'] | undefined = options?.withLogo ? undefined : ['logo'];
 
-        const serviceProviders: ServiceProviderEntity[] = (await this.em.findAll(ServiceProviderEntity, {
+        const serviceProviders: ServiceProviderEntity[] = await this.em.findAll(ServiceProviderEntity, {
             exclude,
             populate: ['merkmale'],
-        })) as ServiceProviderEntity[];
+        });
 
         return serviceProviders.map(mapEntityToAggregate);
     }

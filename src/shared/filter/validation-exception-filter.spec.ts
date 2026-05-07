@@ -45,15 +45,15 @@ describe('SchulconnexValidationErrorFilter', () => {
             status: vi.fn().mockReturnThis(),
             json: vi.fn().mockReturnThis(),
             send: vi.fn().mockReturnThis(),
-        } as unknown as Response;
+        };
 
         const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
             getResponse: vi.fn().mockReturnValue(responseMock),
-            getRequest: vi.fn().mockReturnValue({} as Request),
+            getRequest: vi.fn().mockReturnValue({}),
         };
 
         argumentsHost = {
-            switchToHttp: vi.fn().mockReturnValue(httpArgumentsHostMock as HttpArgumentsHost),
+            switchToHttp: vi.fn().mockReturnValue(httpArgumentsHostMock),
             getHandler: vi.fn().mockReturnValue(() => {}),
             getClass: vi.fn().mockReturnValue(class {}),
         } as unknown as ArgumentsHost;

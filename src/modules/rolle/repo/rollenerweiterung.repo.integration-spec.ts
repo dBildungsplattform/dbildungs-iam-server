@@ -417,7 +417,7 @@ describe('RollenerweiterungRepo', () => {
             return { organisation, rolle: rolleOrError, serviceProvider, permissionMock };
         }
 
-        it.each([['root' as TestCase], ['schuladmin' as TestCase]])(
+        it.each<TestCase[]>([['root'], ['schuladmin']])(
             'should create a new rollenerweiterung as %s',
             async (adminType: TestCase) => {
                 const { organisation, rolle, serviceProvider, permissionMock }: Setup = await setup();

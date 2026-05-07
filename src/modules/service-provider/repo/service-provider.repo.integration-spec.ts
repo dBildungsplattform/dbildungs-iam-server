@@ -616,11 +616,11 @@ describe('ServiceProviderRepo', () => {
         describe.each([
             {
                 all: true,
-            } as PermittedOrgas,
+            } satisfies PermittedOrgas,
             {
                 all: false,
                 orgaIds: [faker.string.uuid()],
-            } as PermittedOrgas,
+            } satisfies PermittedOrgas,
         ])('when permissions are %s', (permittedOrgas: PermittedOrgas) => {
             it('should return service-provider if the user is allowed to manage it', async () => {
                 const permittedOrgaIds: string[] = permittedOrgas.all ? [faker.string.uuid()] : permittedOrgas.orgaIds;

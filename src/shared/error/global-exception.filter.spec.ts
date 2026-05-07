@@ -22,7 +22,7 @@ describe('GlobalExceptionFilter', () => {
         loggerMock = createMock(ClassLogger);
         adapterImplMock = {
             reply: vi.fn(),
-        } as unknown as AbstractHttpAdapter;
+        };
         adapterHostMock = {
             httpAdapter: adapterImplMock,
         } as HttpAdapterHost;
@@ -31,7 +31,7 @@ describe('GlobalExceptionFilter', () => {
         };
         const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
             getRequest: vi.fn().mockReturnValue({ url: '/test-url' }),
-            getResponse: vi.fn().mockImplementation(<T>() => responseMock as unknown as T),
+            getResponse: vi.fn().mockImplementation(() => responseMock),
         };
         argumentsHost = {
             switchToHttp: vi.fn(() => httpArgumentsHostMock as HttpArgumentsHost),

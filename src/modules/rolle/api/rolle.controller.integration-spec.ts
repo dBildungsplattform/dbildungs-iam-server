@@ -474,7 +474,7 @@ describe('Rolle API', () => {
             expect(pagedResponse.items).toContainEqual(
                 expect.objectContaining({
                     administeredBySchulstrukturknoten: orga.id,
-                } as Partial<RolleWithServiceProvidersResponse>),
+                }),
             );
         });
 

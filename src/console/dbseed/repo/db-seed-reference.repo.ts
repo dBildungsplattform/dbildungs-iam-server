@@ -28,9 +28,9 @@ export class DbSeedReferenceRepo {
     }
 
     public async find(virtualId: number, referencedEntityType: ReferencedEntityType): Promise<Option<DbSeedReference>> {
-        const dbSeedReferenceEntity: Option<DbSeedReferenceEntity> = (await this.em.findOne(DbSeedReferenceEntity, {
+        const dbSeedReferenceEntity: Option<DbSeedReferenceEntity> = await this.em.findOne(DbSeedReferenceEntity, {
             $and: [{ virtualId }, { referencedEntityType }],
-        })) as Option<DbSeedReferenceEntity>;
+        });
 
         return dbSeedReferenceEntity && mapEntityToAggregate(dbSeedReferenceEntity);
     }

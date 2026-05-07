@@ -47,7 +47,7 @@ describe('SharedExceptionFilter', () => {
                 const entityNotFoundDomainError: EntityNotFoundError = new EntityNotFoundError(
                     'Entität konnte nicht gefunden werden',
                 );
-                filter.catch(entityNotFoundDomainError, argumentsHost as ArgumentsHost);
+                filter.catch(entityNotFoundDomainError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(entityNotFoundError.code);

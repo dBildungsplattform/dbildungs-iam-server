@@ -162,7 +162,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
             aggr[externalId.type] = externalId.externalId;
             return aggr;
         },
-        {} as Partial<Record<PersonExternalIdType, string>>,
+        {},
     );
     const oxUserId: OXUserID | undefined = getOxUserId(entity);
 

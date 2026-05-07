@@ -41,7 +41,6 @@ import { ImportVorgangResponse } from './importvorgang.response.js';
 import { ImportStatus } from '../domain/import.enums.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { KeycloakAdministrationService } from '../../keycloak-administration/domain/keycloak-admin-client.service.js';
-import { ImportVorgangStatusResponse } from './importvorgang-status.response.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { mapAggregateToData, PersonRepository } from '../../person/persistence/person.repository.js';
 import { ImportResultResponse } from './import-result.response.js';
@@ -211,7 +210,7 @@ describe('Import API', () => {
 
             expect(response.status).toBe(201);
             expect(response.body).toMatchObject({
-                importvorgangId: expect.any(String) as unknown as string,
+                importvorgangId: expect.any(String) as string,
                 isValid: true,
                 totalImportDataItems: 2,
                 totalInvalidImportDataItems: 0,
@@ -261,7 +260,7 @@ describe('Import API', () => {
 
             expect(response.status).toBe(201);
             expect(response.body).toMatchObject({
-                importvorgangId: expect.any(String) as unknown as string,
+                importvorgangId: expect.any(String) as string,
                 isValid: false,
                 totalImportDataItems: 2,
                 totalInvalidImportDataItems: 2,
@@ -502,7 +501,7 @@ describe('Import API', () => {
 
             expect(response.status).toBe(201);
             expect(response.body).toMatchObject({
-                importvorgangId: expect.any(String) as unknown as string,
+                importvorgangId: expect.any(String) as string,
                 isValid: true,
                 totalImportDataItems: 1,
                 totalInvalidImportDataItems: 0,
@@ -919,7 +918,7 @@ describe('Import API', () => {
                 dataItemCount: 100,
                 status: ImportStatus.COMPLETED,
                 totalDataItemImported: 0,
-            } as ImportVorgangStatusResponse);
+            });
         });
 
         it('should return 404 if importvorgang does not exist', async () => {
@@ -1000,7 +999,7 @@ describe('Import API', () => {
                         vorname: importDataItem.vorname,
                         nachname: importDataItem.nachname,
                         benutzername: importDataItem.username,
-                        startpasswort: expect.any(String) as unknown as string,
+                        startpasswort: expect.any(String) as string,
                         status: ImportDataItemStatus.PENDING,
                     },
                 ],
@@ -1075,7 +1074,7 @@ describe('Import API', () => {
                         vorname: importDataItem.vorname,
                         nachname: importDataItem.nachname,
                         benutzername: importDataItem.username,
-                        startpasswort: expect.any(String) as unknown as string,
+                        startpasswort: expect.any(String) as string,
                         status: ImportDataItemStatus.PENDING,
                     },
                     {
@@ -1083,7 +1082,7 @@ describe('Import API', () => {
                         vorname: importDataItem2.vorname,
                         nachname: importDataItem2.nachname,
                         benutzername: importDataItem2.username,
-                        startpasswort: expect.any(String) as unknown as string,
+                        startpasswort: expect.any(String) as string,
                         status: ImportDataItemStatus.PENDING,
                     },
                 ],

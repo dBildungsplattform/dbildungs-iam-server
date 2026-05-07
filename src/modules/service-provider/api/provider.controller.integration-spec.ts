@@ -325,7 +325,7 @@ describe('ServiceProvider API', () => {
                 limit: 1,
                 offset: 0,
                 total: 1,
-            } as RawPagedResponse<ManageableServiceProviderListEntryResponse>);
+            });
         });
 
         it('should return empty list', async () => {
@@ -343,7 +343,7 @@ describe('ServiceProvider API', () => {
                 limit: 0,
                 offset: 0,
                 total: 0,
-            } as RawPagedResponse<ManageableServiceProviderListEntryResponse>);
+            });
         });
     });
 
@@ -419,7 +419,7 @@ describe('ServiceProvider API', () => {
                     RollenSystemRechtEnum.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
                     RollenSystemRechtEnum.ROLLEN_ERWEITERN,
                 ],
-            } as ManageableServiceProviderResponse);
+            });
         });
 
         it('should return 404 if service provider is not found', async () => {

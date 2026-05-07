@@ -62,7 +62,7 @@ describe('EmailExceptionFilter', () => {
 
         it('should map unknown error to UNKNOWN_ERROR response', () => {
             // Simulate an unknown error type
-            const error: object = { constructor: { name: 'SomeUnknownError' } } as object;
+            const error: object = { constructor: { name: 'SomeUnknownError' } };
             filter.catch(error as DomainError, argumentsHost);
 
             expect(responseMock.status).toHaveBeenCalledWith(500);
