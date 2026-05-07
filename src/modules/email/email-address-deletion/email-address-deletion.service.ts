@@ -56,8 +56,10 @@ export class EmailAddressDeletionService {
         for (const ea of nonPrimaryEmailAddresses) {
             if (!ea.oxUserID) {
                 this.logger.error(
-                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${ea.personId}`,
+                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${ea.personId}. Setting updated-at to 2027/08/01`,
                 );
+                // eslint-disable-next-line no-await-in-loop
+                await this.emailRepo.setUpdatedAtToFixedPointInTime(ea.id);
                 continue;
             }
             if (!ea.personId) {
