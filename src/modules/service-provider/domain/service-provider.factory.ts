@@ -7,7 +7,7 @@ import {
 } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import { Err, Ok } from '../../../shared/util/result.js';
-import { LogoOrLogoIdError } from './errors/logo-or-logo-id.error.js';
+import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 
 @Injectable()
 export class ServiceProviderFactory {
@@ -29,9 +29,9 @@ export class ServiceProviderFactory {
         requires2fa: boolean,
         vidisAngebotId: string | undefined,
         merkmale: ServiceProviderMerkmal[],
-    ): Result<ServiceProvider<true>, LogoOrLogoIdError> {
+    ): Result<ServiceProvider<true>, InvalidLogoCombinationError> {
         if (!this.isValidLogoCombination(logoId, logo, logoMimeType)) {
-            return Err(new LogoOrLogoIdError('Cannot construct ServiceProvider with both logoId and logo'));
+            return Err(new InvalidLogoCombinationError('Cannot construct ServiceProvider with both logoId and logo'));
         }
         return Ok(
             ServiceProvider.construct(
@@ -71,9 +71,9 @@ export class ServiceProviderFactory {
         requires2fa: boolean,
         vidisAngebotId: string | undefined,
         merkmale: ServiceProviderMerkmal[],
-    ): Result<ServiceProvider<false>, LogoOrLogoIdError> {
+    ): Result<ServiceProvider<false>, InvalidLogoCombinationError> {
         if (!this.isValidLogoCombination(logoId, logo, logoMimeType)) {
-            return Err(new LogoOrLogoIdError('Cannot construct ServiceProvider with both logoId and logo'));
+            return Err(new InvalidLogoCombinationError('Cannot construct ServiceProvider with both logoId and logo'));
         }
         return Ok(
             ServiceProvider.createNew(
@@ -100,12 +100,11 @@ export class ServiceProviderFactory {
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
     ): boolean {
-        if (logoId !== undefined) {
-            return logo === undefined && logoMimeType === undefined;
-        }
-        if (logo !== undefined && logoMimeType !== undefined) {
-            return logoId === undefined;
-        }
-        return true;
+        const validLogoIdCombination: boolean =
+            logoId !== undefined && logo === undefined && logoMimeType === undefined;
+        const validLogoDataCombination: boolean =
+            logoId === undefined && logo !== undefined && logoMimeType !== undefined;
+        const noLogoCombination: boolean = logoId === undefined && logo === undefined && logoMimeType === undefined;
+        return validLogoIdCombination || validLogoDataCombination || noLogoCombination;
     }
 }

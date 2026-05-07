@@ -46,7 +46,7 @@ import { MissingAttributeError } from '../../../shared/error/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { LogoOrLogoIdError } from '../domain/errors/logo-or-logo-id.error.js';
+import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
@@ -787,12 +787,12 @@ describe('Provider Controller Test', () => {
             });
 
             serviceProviderFactoryMock.createNew.mockReturnValueOnce(
-                Err(new LogoOrLogoIdError('Only Logo or LogoId allowed, not both')),
+                Err(new InvalidLogoCombinationError('Only Logo or LogoId allowed, not both')),
             );
 
             await expect(() =>
                 providerController.createServiceProvider(personPermissionsMock, body),
-            ).rejects.toBeInstanceOf(LogoOrLogoIdError);
+            ).rejects.toBeInstanceOf(InvalidLogoCombinationError);
             expect(serviceProviderRepoMock.create).not.toHaveBeenCalled();
         });
 

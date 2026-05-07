@@ -33,7 +33,7 @@ import { DbSeedReference } from './db-seed-reference.js';
 import { RollenerweiterungRepo } from '../../../modules/rolle/repo/rollenerweiterung.repo.js';
 import { RollenerweiterungFactory } from '../../../modules/rolle/domain/rollenerweiterung.factory.js';
 import { ReferencedEntityType } from '../repo/db-seed-reference.entity.js';
-import { LogoOrLogoIdError } from '../../../modules/service-provider/domain/errors/logo-or-logo-id.error.js';
+import { InvalidLogoCombinationError } from '../../../modules/service-provider/domain/errors/invalid-logo-combination.error.js';
 
 function createDbSeedReference(): DbSeedReference {
     return DbSeedReference.createNew(ReferencedEntityType.ORGANISATION, faker.number.int(), faker.string.uuid());
@@ -506,7 +506,9 @@ describe('DbSeedService', () => {
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID providedOnSchulstrukturknoten
                 organisationRepositoryMock.findById.mockResolvedValue(DoFactory.createOrganisation(true)); // mock get-SSK
 
-                await expect(dbSeedService.seedServiceProvider(fileContentAsStr)).rejects.toThrow(LogoOrLogoIdError);
+                await expect(dbSeedService.seedServiceProvider(fileContentAsStr)).rejects.toThrow(
+                    InvalidLogoCombinationError,
+                );
             });
         });
     });

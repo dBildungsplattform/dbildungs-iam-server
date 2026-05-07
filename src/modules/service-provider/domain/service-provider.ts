@@ -1,5 +1,5 @@
 import { assignSameKey } from '../../../shared/util/object-utils.js';
-import { LogoOrLogoIdError } from './errors/logo-or-logo-id.error.js';
+import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
@@ -116,9 +116,9 @@ export class ServiceProvider<WasPersisted extends boolean> {
      */
     public updateWithSafeFields(
         update: Partial<Record<keyof SafeUpdateFields, SafeUpdateFields[keyof SafeUpdateFields] | null>>,
-    ): Option<LogoOrLogoIdError> {
+    ): Option<InvalidLogoCombinationError> {
         if (update.logoId !== undefined && this.logo) {
-            return new LogoOrLogoIdError('Cannot set logoId, if there already is a logo');
+            return new InvalidLogoCombinationError('Cannot set logoId, if there already is a logo');
         }
         for (const field of ServiceProvider.SAFE_UPDATE_FIELDS) {
             if (field === 'logoId' && update[field] === null) {

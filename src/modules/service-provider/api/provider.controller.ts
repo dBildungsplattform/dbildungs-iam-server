@@ -51,7 +51,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { AttachedRollenError } from '../domain/errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from '../domain/errors/attached-rollenerweiterungen.error.js';
-import { LogoOrLogoIdError } from '../domain/errors/logo-or-logo-id.error.js';
+import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
 import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProvider } from '../domain/service-provider.js';
@@ -359,7 +359,7 @@ export class ProviderController {
 
         const serviceProvider: Result<
             ServiceProvider<false>,
-            LogoOrLogoIdError
+            InvalidLogoCombinationError
         > = this.serviceProviderFactory.createNew(
             body.name,
             ServiceProviderTarget.URL,
@@ -384,7 +384,6 @@ export class ProviderController {
             permissions,
             serviceProvider.value,
         );
-
         if (!result.ok) {
             throw result.error;
         }

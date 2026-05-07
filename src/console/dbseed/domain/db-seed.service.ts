@@ -42,7 +42,7 @@ import { RollenerweiterungFile } from '../file/rollenerweiterung-file.js';
 import { Rollenerweiterung } from '../../../modules/rolle/domain/rollenerweiterung.js';
 import { RollenerweiterungFactory } from '../../../modules/rolle/domain/rollenerweiterung.factory.js';
 import { RollenerweiterungRepo } from '../../../modules/rolle/repo/rollenerweiterung.repo.js';
-import { LogoOrLogoIdError } from '../../../modules/service-provider/domain/errors/logo-or-logo-id.error.js';
+import { InvalidLogoCombinationError } from '../../../modules/service-provider/domain/errors/invalid-logo-combination.error.js';
 
 @Injectable()
 export class DbSeedService {
@@ -241,7 +241,7 @@ export class DbSeedService {
             );
             const serviceProvider: Result<
                 ServiceProvider<false>,
-                LogoOrLogoIdError
+                InvalidLogoCombinationError
             > = this.serviceProviderFactory.createNew(
                 file.name,
                 file.target,

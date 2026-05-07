@@ -28,7 +28,7 @@ import { OrganisationServiceProviderRepo } from '../repo/organisation-service-pr
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AttachedRollenError } from './errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
-import { LogoOrLogoIdError } from './errors/logo-or-logo-id.error.js';
+import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
@@ -477,7 +477,7 @@ export class ServiceProviderService {
             return Err(new EntityNotFoundError());
         }
 
-        const updateError: Option<LogoOrLogoIdError> = existingServiceProvider.updateWithSafeFields(
+        const updateError: Option<InvalidLogoCombinationError> = existingServiceProvider.updateWithSafeFields(
             updateServiceProviderBodyParams,
         );
         if (updateError) {

@@ -31,7 +31,7 @@ import { DuplicateNameError } from '../specification/error/duplicate-name.error.
 import { ServiceProviderError } from '../specification/error/service-provider.error.js';
 import { AttachedRollenError } from './errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
-import { LogoOrLogoIdError } from './errors/logo-or-logo-id.error.js';
+import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 import { ServiceProviderKategorie, ServiceProviderMerkmal, ServiceProviderTarget } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import { ServiceProviderService } from './service-provider.service.js';
@@ -1087,7 +1087,7 @@ describe('ServiceProviderService', () => {
             );
 
             expectErrResult(updateResult);
-            expect(updateResult.error).toBeInstanceOf(LogoOrLogoIdError);
+            expect(updateResult.error).toBeInstanceOf(InvalidLogoCombinationError);
 
             expect(serviceProviderRepo.update).not.toHaveBeenCalled();
         });

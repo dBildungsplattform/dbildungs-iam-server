@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { DoFactory } from '../../../../test/utils';
 import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params';
-import { LogoOrLogoIdError } from './errors/logo-or-logo-id.error';
+import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error';
 import { ServiceProvider } from './service-provider';
 import { ServiceProviderKategorie } from './service-provider.enum';
 
@@ -35,7 +35,7 @@ describe('ServiceProvider', () => {
                 kategorie: ServiceProviderKategorie.HINWEISE,
                 logo: undefined,
             });
-            const result: Option<LogoOrLogoIdError> = serviceProvider.updateWithSafeFields(update);
+            const result: Option<InvalidLogoCombinationError> = serviceProvider.updateWithSafeFields(update);
             expect(result).toBeUndefined();
             expect(serviceProvider).toEqual({
                 ...serviceProvider,
@@ -52,7 +52,7 @@ describe('ServiceProvider', () => {
             const update: UpdateServiceProviderBodyParams = {
                 logoId: null,
             };
-            const result: Option<LogoOrLogoIdError> = serviceProvider.updateWithSafeFields(update);
+            const result: Option<InvalidLogoCombinationError> = serviceProvider.updateWithSafeFields(update);
             expect(result).toBeUndefined();
             expect(serviceProvider).toEqual({
                 ...serviceProvider,
@@ -69,8 +69,8 @@ describe('ServiceProvider', () => {
                 const update: UpdateServiceProviderBodyParams = {
                     logoId,
                 };
-                const result: Option<LogoOrLogoIdError> = serviceProvider.updateWithSafeFields(update);
-                expect(result).toBeInstanceOf(LogoOrLogoIdError);
+                const result: Option<InvalidLogoCombinationError> = serviceProvider.updateWithSafeFields(update);
+                expect(result).toBeInstanceOf(InvalidLogoCombinationError);
                 expect(serviceProvider.logoId).toBeUndefined();
             },
         );
