@@ -219,6 +219,45 @@ describe('ItsLearning Persons Event Handler', () => {
                 );
             });
 
+            it('should create or update user with undefined email when repo email status is DISABLED', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
+                itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
+                    ok: true,
+                    value: { deleted: 0, updated: 0 },
+                });
+
+                const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
+
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValue({
+                    address: faker.internet.email(),
+                    status: EmailAddressStatus.DISABLED, // 👈 key branch
+                });
+
+                await sut.personExternalSystemSyncEventHandler(event);
+
+                expect(emailResolverServiceMock.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(emailRepoMock.getEmailAddressAndStatusForPerson).toHaveBeenCalledWith(
+                    expect.objectContaining({ id: person.id }),
+                );
+
+                expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith(
+                    {
+                        id: person.id,
+                        firstName: person.vorname,
+                        lastName: person.familienname,
+                        username: person.username,
+                        institutionRoleType: rollenartToIMSESInstitutionRole(rolleWithItslearning.rollenart),
+                        email: undefined,
+                    },
+                    `${event.eventID}-SYNC-PERSON`,
+                );
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `[EventID: ${event.eventID}] Updated person with ID ${person.id} in itslearning!`,
+                );
+            });
+
             it('should create or update user using email microservice', async () => {
                 emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
                 itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));

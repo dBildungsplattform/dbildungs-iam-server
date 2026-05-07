@@ -33,6 +33,7 @@ import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 @Injectable()
 export class ItsLearningSyncEventHandler {
@@ -151,7 +152,7 @@ export class ItsLearningSyncEventHandler {
                     lastName: person.familienname,
                     username: person.username,
                     institutionRoleType: rollenartToIMSESInstitutionRole(targetRole),
-                    email: email?.address,
+                    email: email?.status === EmailAddressStatus.ENABLED ? email.address : undefined,
                 },
                 `${event.eventID}-SYNC-PERSON`,
             );
