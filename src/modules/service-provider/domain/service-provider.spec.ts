@@ -22,12 +22,12 @@ describe('ServiceProvider', () => {
                     name: faker.company.buzzNoun(),
                     url: faker.internet.url(),
                     kategorie: serviceProvider.kategorie,
-                    logoId: faker.number.int({ min: 0, max: 1000 }),
+                    logoId: faker.number.int({ min: 1, max: 1000 }),
                 },
             ],
             [
                 {
-                    logoId: 0,
+                    logoId: 1,
                 },
             ],
         ])('should update only safe fields', (update: UpdateServiceProviderBodyParams) => {
@@ -60,7 +60,7 @@ describe('ServiceProvider', () => {
             });
         });
 
-        it.each([[0], [123]])(
+        it.each([[1], [123]])(
             'should return an error if logoId=%s is provided when logo is already set',
             (logoId: number) => {
                 const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {

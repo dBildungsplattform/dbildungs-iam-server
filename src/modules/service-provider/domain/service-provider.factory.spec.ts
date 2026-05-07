@@ -27,7 +27,7 @@ interface InvalidLogoCombinationTestCase {
 
 const validLogoCombinations: ValidLogoCombinationTestCase[] = [
     { logoId: undefined, logo: Buffer.from('fake-logo-data'), logoMimeType: 'image/png' },
-    { logoId: faker.number.int({ min: 0, max: 1000 }), logo: undefined, logoMimeType: undefined },
+    { logoId: faker.number.int({ min: 1, max: 1000 }), logo: undefined, logoMimeType: undefined },
     {
         logoId: undefined,
         logo: undefined,
@@ -50,19 +50,19 @@ const invalidLogoCombinations: InvalidLogoCombinationTestCase[] = [
     },
     {
         description: 'logoMimeType and logoId are provided',
-        logoId: faker.number.int({ min: 0, max: 1000 }),
+        logoId: faker.number.int({ min: 1, max: 1000 }),
         logo: undefined,
         logoMimeType: 'image/png',
     },
     {
         description: 'logo and logoId are provided',
-        logoId: faker.number.int({ min: 0, max: 1000 }),
+        logoId: faker.number.int({ min: 1, max: 1000 }),
         logo: Buffer.from('fake-logo-data'),
         logoMimeType: undefined,
     },
     {
         description: 'logo, logoMimeType and logoId are provided',
-        logoId: faker.number.int({ min: 0, max: 1000 }),
+        logoId: faker.number.int({ min: 1, max: 1000 }),
         logo: Buffer.from('fake-logo-data'),
         logoMimeType: 'image/png',
     },

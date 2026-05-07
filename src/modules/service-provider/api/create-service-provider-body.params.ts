@@ -25,12 +25,12 @@ export class CreateServiceProviderBodyParams {
     @ApiProperty({
         required: false,
         description:
-            'Optional logoId to use a standard logo. Has to be an integer. Only one of logoId or logoBase64 with logoMimeType can be provided, not both.',
+            'Optional logoId to use a standard logo. Has to be a positive integer. Only one of logoId or logoBase64 with logoMimeType can be provided, not both.',
         maximum: Math.pow(2, 31) - 1,
-        minimum: 0,
+        minimum: 1,
     })
     @IsInt()
-    @Min(0)
+    @Min(1)
     @Max(Math.pow(2, 31) - 1)
     @IsOptional()
     public logoId?: number;

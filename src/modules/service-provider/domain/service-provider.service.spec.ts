@@ -990,7 +990,7 @@ describe('ServiceProviderService', () => {
             existingServiceProvider = DoFactory.createServiceProvider(true, {
                 logo: undefined,
                 logoMimeType: undefined,
-                logoId: faker.number.int({ min: 0, max: 1000 }),
+                logoId: faker.number.int({ min: 1, max: 1000 }),
             });
             serviceProviderRepo.findById.mockResolvedValue(existingServiceProvider);
             serviceProviderRepo.update.mockResolvedValue(Ok(existingServiceProvider));
@@ -1006,7 +1006,7 @@ describe('ServiceProviderService', () => {
                 name: 'New Name',
                 url: 'https://new-url.com',
                 kategorie: ServiceProviderKategorie.EMAIL,
-                logoId: faker.number.int(),
+                logoId: faker.number.int({ min: 1, max: 1000 }),
             };
 
             const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
@@ -1033,7 +1033,7 @@ describe('ServiceProviderService', () => {
             ['name', { name: 'New Name' }],
             ['url', { url: 'https://new-url.com' }],
             ['kategorie', { kategorie: ServiceProviderKategorie.EMAIL }],
-            ['logoId', { logoId: faker.number.int() }],
+            ['logoId', { logoId: faker.number.int({ min: 1, max: 1000 }) }],
         ] as [keyof UpdateServiceProviderBodyParams, UpdateServiceProviderBodyParams][])(
             'should update service provider %s only',
             async (_: keyof UpdateServiceProviderBodyParams, updateData: UpdateServiceProviderBodyParams) => {
@@ -1079,7 +1079,7 @@ describe('ServiceProviderService', () => {
             const existingServiceProviderWithLogo: ServiceProvider<true> = DoFactory.createServiceProvider(true);
             serviceProviderRepo.findById.mockResolvedValue(existingServiceProviderWithLogo);
 
-            const updateData: UpdateServiceProviderBodyParams = { logoId: faker.number.int({ min: 0, max: 1000 }) };
+            const updateData: UpdateServiceProviderBodyParams = { logoId: faker.number.int({ min: 1, max: 1000 }) };
             const updateResult: Result<ServiceProvider<true>, DomainError> = await service.updateServiceProvider(
                 permissions,
                 existingServiceProviderWithLogo.id,
