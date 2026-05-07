@@ -156,6 +156,39 @@ describe('UserExternaldataWorkflow', () => {
             expect(sut.email).toBe(emailAddress);
         });
 
+        it('should initialize aggregate with undefined email when repo email status is DISABLED', async () => {
+            const keycloakSub: string = faker.string.uuid();
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                keycloakSub,
+                faker.string.uuid(),
+            );
+
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+
+            const response: PersonEmailResponse = new PersonEmailResponse(
+                EmailAddressStatus.DISABLED,
+                faker.internet.email(),
+            );
+
+            emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValue(response);
+
+            await sut.initialize(person.id);
+
+            expect(sut.person).toBeDefined();
+            expect(sut.checkedExternalPkData).toBeDefined();
+            expect(sut.email).toBeUndefined();
+        });
+
         it('should set email to undefined if user has no email', async () => {
             const keycloakSub: string = faker.string.uuid();
             const person: Person<true> = Person.construct(

@@ -19,6 +19,7 @@ import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 export class UserExternaldataWorkflowAggregate {
     public contextID: OXContextID;
@@ -96,7 +97,9 @@ export class UserExternaldataWorkflowAggregate {
         } else {
             const emailResp: Option<PersonEmailResponse> =
                 await this.emailRepo.getEmailAddressAndStatusForPerson(person);
-            this.email = emailResp?.address;
+            if (emailResp?.status === EmailAddressStatus.ENABLED) {
+                this.email = emailResp.address;
+            }
         }
 
         // Filtering out !expk.kennung || !expk.rollenart automatically leads to only valid organisations of type SCHOOLS are included
