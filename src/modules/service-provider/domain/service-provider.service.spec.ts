@@ -875,7 +875,7 @@ describe('ServiceProviderService', () => {
                 serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
                 organisationServiceProviderRepo.save.mockResolvedValue();
 
-                await service.updateServiceProvidersForVidis();
+                await service.updateServiceProvidersForVidis(createPersonPermissionsMock());
 
                 expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
                 expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
@@ -905,7 +905,7 @@ describe('ServiceProviderService', () => {
             serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
             organisationServiceProviderRepo.save.mockResolvedValue();
 
-            await service.updateServiceProvidersForVidis();
+            await service.updateServiceProvidersForVidis(createPersonPermissionsMock());
 
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `ServiceProvider for VIDIS Angebot 'webtown test offer' could not be updated. Error: Name already in use`,
@@ -922,7 +922,7 @@ describe('ServiceProviderService', () => {
             }
             organisationServiceProviderRepo.save.mockResolvedValue();
             serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
-            await service.updateServiceProvidersForVidis();
+            await service.updateServiceProvidersForVidis(createPersonPermissionsMock());
 
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
@@ -946,7 +946,7 @@ describe('ServiceProviderService', () => {
             }
             organisationServiceProviderRepo.save.mockResolvedValue();
             serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
-            await service.updateServiceProvidersForVidis();
+            await service.updateServiceProvidersForVidis(createPersonPermissionsMock());
 
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `ServiceProvider for VIDIS Angebot 'webtown test offer' could not be created. Error: Name already in use`,
@@ -965,7 +965,7 @@ describe('ServiceProviderService', () => {
             serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
             serviceProviderRepo.deleteById.mockResolvedValue(true);
 
-            await service.updateServiceProvidersForVidis();
+            await service.updateServiceProvidersForVidis(createPersonPermissionsMock());
 
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);

@@ -3,12 +3,10 @@ import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
-    ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     EventSystemTestModule,
-    LoggingTestModule,
 } from '../../../../test/utils';
 import { ClassLogger } from '../../../core/logging/class-logger';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event';
@@ -28,6 +26,7 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event';
 import { PersonRepository } from '../../person/persistence/person.repository';
 import { Person } from '../../person/domain/person';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('EmailMicroserviceEventHandler', () => {
     let app: INestApplication;
@@ -44,8 +43,7 @@ describe('EmailMicroserviceEventHandler', () => {
         module = await Test.createTestingModule({
             imports: [
                 EmailMicroserviceModule,
-                LoggingTestModule,
-                ConfigTestModule,
+                CommonTestModule,
                 EventModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
             ],

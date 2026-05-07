@@ -12,7 +12,6 @@ import { IPersonPermissions } from '../../../shared/permissions/person-permissio
 import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
@@ -54,7 +53,7 @@ export class OrganisationService {
     ) {}
 
     private async logCreation(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         organisation: Organisation<boolean>,
         error?: Error,
     ): Promise<void> {
@@ -89,7 +88,7 @@ export class OrganisationService {
     }
 
     private async logUpdate(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         organisation: Organisation<boolean>,
         error?: Error,
     ): Promise<void> {
@@ -131,7 +130,7 @@ export class OrganisationService {
 
     public async createOrganisation(
         organisationDo: Organisation<false>,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Result<Organisation<true>, DomainError>> {
         if (organisationDo.administriertVon && !(await this.organisationRepo.exists(organisationDo.administriertVon))) {
             const error: DomainError = new EntityNotFoundError('Organisation', organisationDo.administriertVon);
@@ -212,7 +211,7 @@ export class OrganisationService {
 
     public async updateOrganisation(
         organisationDo: Organisation<true>,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Result<Organisation<true>, DomainError>> {
         const storedOrganisation: Option<Organisation<true>> = await this.organisationRepo.findById(organisationDo.id);
         if (!storedOrganisation) {
@@ -560,7 +559,7 @@ export class OrganisationService {
     }
 
     public async findOrganisationByIdAndAnyMatchingPermissions(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         organisationId: OrganisationID,
     ): Promise<Result<Organisation<true>, EntityNotFoundError | MissingPermissionsError>> {
         const [organisations]: [Organisation<true>[], total: number, pageTotal: number] =

@@ -1,13 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Issuer } from 'openid-client';
 
-import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
+import { DatabaseTestModule } from '../../../test/utils/index.js';
 import { AuthenticationController } from './api/authentication.controller.js';
 import { OIDC_CLIENT } from './services/oidc-client.service.js';
 import { AuthenticationApiModule } from './authentication-api.module.js';
 import { PersonModule } from '../person/person.module.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { CACHE_MANAGER, CacheModule } from '@nestjs/cache-manager';
+import { CommonTestModule } from '../../../test/utils/common-test.module.js';
 
 describe('AuthenticationApiModule', () => {
     let module: TestingModule;
@@ -15,7 +16,7 @@ describe('AuthenticationApiModule', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
-                ConfigTestModule,
+                CommonTestModule,
                 AuthenticationApiModule,
                 DatabaseTestModule.forRoot(),
                 PersonModule,

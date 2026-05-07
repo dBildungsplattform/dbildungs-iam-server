@@ -9,7 +9,6 @@ import { Observable } from 'rxjs';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
-    ConfigTestModule,
     createPassportUserMock,
     createPersonPermissionsMock,
     DatabaseTestModule,
@@ -39,6 +38,7 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { OrganisationSpecificationErrorI18nTypes } from './dbiam-organisation.error.js';
 import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('Organisation API', () => {
     let app: INestApplication;
@@ -73,7 +73,7 @@ describe('Organisation API', () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 OrganisationApiModule,
-                ConfigTestModule,
+                CommonTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],
             providers: [

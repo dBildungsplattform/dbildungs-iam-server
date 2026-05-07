@@ -1,11 +1,10 @@
 import { MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
-    ConfigTestModule,
+    CommonTestModule,
     DatabaseTestModule,
     EmailConfigTestModule,
     KeycloakConfigTestModule,
-    LoggingTestModule,
 } from '../../../test/utils/index.js';
 import { DbSeedService } from './domain/db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
@@ -35,12 +34,11 @@ describe('DbSeedConsoleIntegration', () => {
         module = await Test.createTestingModule({
             imports: [
                 DbSeedModule,
-                ConfigTestModule,
+                CommonTestModule,
                 EmailConfigTestModule,
                 OrganisationModule,
                 KeycloakAdministrationModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                LoggingTestModule,
                 PersonModule,
                 RolleModule,
                 ServiceProviderModule,
