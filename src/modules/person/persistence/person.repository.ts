@@ -562,7 +562,7 @@ export class PersonRepository {
                 username: person.username,
                 familienname: person.familienname,
                 vorname: person.vorname,
-                email: email?.address,
+                email: email?.status === EmailAddressStatus.ENABLED ? email.address : undefined,
             },
             [],
             removedPersonenkontexts,
