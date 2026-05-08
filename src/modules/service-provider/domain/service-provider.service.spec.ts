@@ -1015,7 +1015,7 @@ describe('ServiceProviderService', () => {
                 updateData,
             );
 
-            expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId);
+            expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId, { withLogo: true });
             expect(serviceProviderRepo.update).toHaveBeenCalledWith(
                 permissions,
                 expect.objectContaining({
@@ -1047,7 +1047,7 @@ describe('ServiceProviderService', () => {
 
                 expectOkResult(result);
 
-                expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId);
+                expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId, { withLogo: true });
                 expect(serviceProviderRepo.update).toHaveBeenCalledWith(
                     permissions,
                     expect.objectContaining({
