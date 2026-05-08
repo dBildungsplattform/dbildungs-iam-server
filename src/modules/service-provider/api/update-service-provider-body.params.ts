@@ -13,6 +13,7 @@ export class UpdateServiceProviderBodyParams {
     @ApiProperty({ required: false })
     @IsString()
     @IsOptional()
+    @MaxLength(2000)
     public url?: string;
 
     @ApiProperty({

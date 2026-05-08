@@ -6096,12 +6096,12 @@
         },
         "url": {
           "name": "url",
-          "type": "varchar(255)",
+          "type": "text",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "mappedType": "string"
+          "mappedType": "text"
         },
         "provided_on_schulstrukturknoten": {
           "name": "provided_on_schulstrukturknoten",

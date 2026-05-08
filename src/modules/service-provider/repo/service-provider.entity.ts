@@ -21,7 +21,7 @@ export class ServiceProviderEntity extends TimestampedEntity {
     @Enum({ items: () => ServiceProviderTarget, nativeEnumName: 'service_provider_target_enum' })
     public target!: ServiceProviderTarget;
 
-    @Property({ nullable: true })
+    @Property({ nullable: true, type: 'text' })
     public url?: string;
 
     @Property({ columnType: 'uuid' })

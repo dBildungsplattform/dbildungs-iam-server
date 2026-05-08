@@ -20,6 +20,7 @@ export class CreateServiceProviderBodyParams {
 
     @ApiProperty({ required: false })
     @IsOptional()
+    @MaxLength(2000)
     public url?: string;
 
     @ApiProperty({
