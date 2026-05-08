@@ -469,6 +469,7 @@ describe('ServiceProvider API', () => {
                     name: newName,
                     url: newUrl,
                     kategorie: newKategorie,
+                    logoId: null,
                     keycloakGroup: null,
                     keycloakRole: null,
                     updatedAt: updatedServiceProvider.updatedAt,
