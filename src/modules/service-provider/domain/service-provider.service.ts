@@ -464,8 +464,10 @@ export class ServiceProviderService {
         angebotId: ServiceProviderID,
         updateServiceProviderBodyParams: UpdateServiceProviderBodyParams,
     ): Promise<Result<ServiceProvider<true>, DomainError>> {
-        const existingServiceProvider: Option<ServiceProvider<true>> =
-            await this.serviceProviderRepo.findById(angebotId);
+        const existingServiceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
+            angebotId,
+            { withLogo: true },
+        );
         if (!existingServiceProvider) {
             return Err(new EntityNotFoundError());
         }

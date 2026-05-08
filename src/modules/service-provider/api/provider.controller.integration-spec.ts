@@ -34,13 +34,14 @@ import {
     createPersonPermissionsMock,
 } from '../../../../test/utils/auth.mock.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
 import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
+import { mapEntityToAggregate } from '../repo/service-provider-entity-mapper.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -429,6 +430,51 @@ describe('ServiceProvider API', () => {
                 .send();
 
             expect(response.status).toBe(404);
+        });
+    });
+
+    describe('/PATCH update service provider', () => {
+        let organisation: Organisation<true>;
+        let serviceProvider: ServiceProvider<true>;
+
+        beforeEach(async () => {
+            organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
+            serviceProvider = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: organisation.id,
+            });
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+        });
+
+        it('should update service provider', async () => {
+            const newName: string = 'Updated Service Provider Name';
+            const newUrl: string = 'https://updated-url.com';
+            const newKategorie: ServiceProviderKategorie = faker.helpers.enumValue(ServiceProviderKategorie);
+            const response: Response = await request(app.getHttpServer() as App)
+                .patch(`/provider/${serviceProvider.id}`)
+                .send({ name: newName, url: newUrl, kategorie: newKategorie });
+
+            expect(response.status).toBe(200);
+            expect(response.body.name).toBe(newName);
+            expect(response.body.url).toBe(newUrl);
+            expect(response.body.kategorie).toBe(newKategorie);
+
+            const updatedServiceProvider = await em.findOneOrFail(
+                ServiceProviderEntity,
+                { id: serviceProvider.id },
+                { refresh: true },
+            );
+            expect(mapEntityToAggregate(updatedServiceProvider)).toEqual(
+                expect.objectContaining({
+                    ...serviceProvider,
+                    name: newName,
+                    url: newUrl,
+                    kategorie: newKategorie,
+                    keycloakGroup: null,
+                    keycloakRole: null,
+                    updatedAt: updatedServiceProvider.updatedAt,
+                    vidisAngebotId: null,
+                }),
+            );
         });
     });
 
