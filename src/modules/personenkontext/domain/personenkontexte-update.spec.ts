@@ -1326,6 +1326,7 @@ describe('PersonenkontexteUpdate', () => {
 
             it('should return DuplicatePersonalnummerError when updatePersonMetadata fails', async () => {
                 const person: Person<true> = DoFactory.createPerson(true, { id: personId });
+                personRepoMock.findById.mockReset();
                 personRepoMock.findById.mockResolvedValue(person);
 
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
