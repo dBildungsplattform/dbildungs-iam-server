@@ -5,7 +5,91 @@ import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.e
 import { ServiceProvider } from './service-provider';
 import { ServiceProviderKategorie } from './service-provider.enum';
 
+type ValidLogoCombinationTestCase =
+    | { logoId: number; logo: undefined; logoMimeType: undefined }
+    | {
+          logoId: undefined;
+          logo: Buffer;
+          logoMimeType: string;
+      }
+    | {
+          logoId: undefined;
+          logo: undefined;
+          logoMimeType: undefined;
+      };
+interface InvalidLogoCombinationTestCase {
+    description: string;
+    logoId?: number;
+    logo?: Buffer;
+    logoMimeType?: string;
+}
+
+const validLogoCombinations: ValidLogoCombinationTestCase[] = [
+    { logoId: undefined, logo: Buffer.from('fake-logo-data'), logoMimeType: 'image/png' },
+    { logoId: faker.number.int({ min: 1, max: 1000 }), logo: undefined, logoMimeType: undefined },
+    {
+        logoId: undefined,
+        logo: undefined,
+        logoMimeType: undefined,
+    },
+];
+
+const invalidLogoCombinations: InvalidLogoCombinationTestCase[] = [
+    {
+        description: 'only logoMimeType is provided',
+        logoId: undefined,
+        logo: undefined,
+        logoMimeType: 'image/png',
+    },
+    {
+        description: 'only logo is provided',
+        logoId: undefined,
+        logo: Buffer.from('fake-logo-data'),
+        logoMimeType: undefined,
+    },
+    {
+        description: 'logoMimeType and logoId are provided',
+        logoId: faker.number.int({ min: 1, max: 1000 }),
+        logo: undefined,
+        logoMimeType: 'image/png',
+    },
+    {
+        description: 'logo and logoId are provided',
+        logoId: faker.number.int({ min: 1, max: 1000 }),
+        logo: Buffer.from('fake-logo-data'),
+        logoMimeType: undefined,
+    },
+    {
+        description: 'logo, logoMimeType and logoId are provided',
+        logoId: faker.number.int({ min: 1, max: 1000 }),
+        logo: Buffer.from('fake-logo-data'),
+        logoMimeType: 'image/png',
+    },
+];
+
 describe('ServiceProvider', () => {
+    describe('isValidLogoCombination', () => {
+        it.each(validLogoCombinations)(
+            'should return true for valid combination',
+            (validLogoCombination: ValidLogoCombinationTestCase) => {
+                const result: boolean = ServiceProvider.isValidLogoCombination(
+                    validLogoCombination.logoId,
+                    validLogoCombination.logo,
+                    validLogoCombination.logoMimeType,
+                );
+                expect(result).toBe(true);
+            },
+        );
+
+        it.each(invalidLogoCombinations)(
+            'should return false if $description',
+            ({ logoId, logo, logoMimeType }: InvalidLogoCombinationTestCase) => {
+                const result: boolean = ServiceProvider.isValidLogoCombination(logoId, logo, logoMimeType);
+                expect(result).toBe(false);
+            },
+        );
+    });
+
     describe('updateWithSafeFields', () => {
         let serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
 
