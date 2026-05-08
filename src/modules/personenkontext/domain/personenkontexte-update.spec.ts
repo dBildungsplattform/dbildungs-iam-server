@@ -1310,5 +1310,53 @@ describe('PersonenkontexteUpdate', () => {
                 expect(result).toBeDefined();
             });
         });
+
+        describe('when updating personalnummer fails', () => {
+            beforeEach(() => {
+                const count: number = 2;
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    count,
+                    [bodyParam1, bodyParam2],
+                    personPermissionsMock,
+                    'personal-123',
+                );
+            });
+
+            it('should return DuplicatePersonalnummerError when updatePersonMetadata fails', async () => {
+                const person: Person<true> = DoFactory.createPerson(true, { id: personId });
+                personRepoMock.findById.mockResolvedValue(person);
+
+                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
+
+                dBiamPersonenkontextRepoMock.findByPerson
+                    .mockResolvedValueOnce([pk1, pk2])
+                    .mockResolvedValueOnce([pk1, pk2])
+                    .mockResolvedValueOnce([pk1, pk2]);
+
+                rolleRepoMock.findByIds.mockResolvedValue(
+                    new Map([
+                        [pk1.rolleId, DoFactory.createRolle(true, { rollenart: RollenArt.LEHR })],
+                        [pk2.rolleId, DoFactory.createRolle(true, { rollenart: RollenArt.LEHR })],
+                    ]),
+                );
+
+                organisationRepoMock.findByIds.mockResolvedValue(
+                    new Map([
+                        [pk1.organisationId, DoFactory.createOrganisation(true)],
+                        [pk2.organisationId, DoFactory.createOrganisation(true)],
+                    ]),
+                );
+
+                const dupError: DuplicatePersonalnummerError = new DuplicatePersonalnummerError('Duplicate');
+                personRepoMock.updatePersonMetadata.mockResolvedValueOnce(dupError);
+
+                const result: Personenkontext<true>[] | PersonenkontexteUpdateError | DuplicatePersonalnummerError =
+                    await sut.update();
+
+                expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
+            });
+        });
     });
 });
