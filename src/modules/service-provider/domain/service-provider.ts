@@ -114,10 +114,13 @@ export class ServiceProvider<WasPersisted extends boolean> {
      * @param update
      * @returns
      */
-    public updateWithSafeFields(
-        update: Partial<Record<keyof SafeUpdateFields, SafeUpdateFields[keyof SafeUpdateFields] | null>>,
-    ): Option<InvalidLogoCombinationError> {
-        if (update.logoId !== undefined && this.logo) {
+    public updateWithSafeFields(update: {
+        name?: string;
+        url?: string;
+        kategorie?: ServiceProviderKategorie;
+        logoId?: Option<number>;
+    }): Option<InvalidLogoCombinationError> {
+        if (!ServiceProvider.isValidLogoCombination(update.logoId, this.logo, this.logoMimeType)) {
             return new InvalidLogoCombinationError('Cannot set logoId, if there already is a logo');
         }
         for (const field of ServiceProvider.SAFE_UPDATE_FIELDS) {
@@ -128,5 +131,15 @@ export class ServiceProvider<WasPersisted extends boolean> {
             }
         }
         return;
+    }
+
+    static isValidLogoCombination(logoId: Option<number>, logo: Option<Buffer>, logoMimeType: Option<string>): boolean {
+        const logoIdProvided: boolean = logoId !== undefined && logoId !== null;
+        const logoProvided: boolean =
+            logo !== undefined && logo !== null && logoMimeType !== undefined && logoMimeType !== null;
+        const validLogoIdCombination: boolean = logoIdProvided && !logoProvided;
+        const validLogoDataCombination: boolean = !logoIdProvided && logoProvided;
+        const noLogoCombination: boolean = !logoIdProvided && !logoProvided;
+        return validLogoIdCombination || validLogoDataCombination || noLogoCombination;
     }
 }
