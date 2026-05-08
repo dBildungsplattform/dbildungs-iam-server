@@ -66,7 +66,6 @@ import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-t
 import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
 import { PersonEntity } from './person.entity.js';
 import {
-    getEnabledOrAlternativeEmailAddress,
     getOxUserId,
     mapAggregateToData,
     mapEntityToAggregate,
@@ -1211,48 +1210,6 @@ describe('PersonRepository Integration', () => {
                     expect(result.username).toEqual('newtestusername');
                 }
                 expect(usernameGeneratorService.generateUsername).toHaveBeenCalledWith(firstname, lastname);
-            });
-        });
-    });
-
-    describe('getEnabledEmailAddress', () => {
-        let personEntity: PersonEntity;
-
-        beforeEach(() => {
-            personEntity = em.create(
-                PersonEntity,
-                mapAggregateToData(DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() })),
-            );
-            personEntity.emailAddresses = new Collection<EmailAddressEntity>(personEntity);
-        });
-
-        describe('when enabled emailAddress is in collection', () => {
-            it('should return address of (first found) enabled address', () => {
-                const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress();
-                personEntity.emailAddresses.add(emailAddressEntity);
-
-                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
-
-                expect(result).toBeDefined();
-            });
-        });
-
-        describe('when only non-enabled emailAddresses are in collection', () => {
-            it('should return defined emailAddress', () => {
-                const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
-                personEntity.emailAddresses.add(emailAddressEntity);
-
-                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
-
-                expect(result).toBeDefined();
-            });
-        });
-
-        describe('when NO emailAddress at all is found in collection', () => {
-            it('should return undefined', () => {
-                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
-
-                expect(result).toBeUndefined();
             });
         });
     });

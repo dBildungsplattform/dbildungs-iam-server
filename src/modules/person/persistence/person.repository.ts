@@ -67,21 +67,6 @@ import { EmailResolverService } from '../../email-microservice/domain/email-reso
 import { PersonEmailResponse } from '../api/person-email-response.js';
 
 /**
- * Return email-address for person, if an enabled email-address exists, return it.
- * If no enabled email-address exists, return the latest changed one (updatedAt), order is done on PersonEntity.
- * @param entity
- */
-export function getEnabledOrAlternativeEmailAddress(entity: PersonEntity): string | undefined {
-    for (const emailAddress of entity.emailAddresses) {
-        // Email-Repo is responsible to avoid persisting multiple enabled email-addresses for same user
-        if (emailAddress.status === EmailAddressStatus.ENABLED) {
-            return emailAddress.address;
-        }
-    }
-    return entity.emailAddresses[0] ? entity.emailAddresses[0].address : undefined;
-}
-
-/**
  * Trys to find a valid OXUserID in EmailAddresses for a PersonEntity while using the status of EmailAddresses for ordering.
  * First check whether an enabled EmailAddress can be used to return an OXUserID, otherwise check for a disabled EmailAddress to do so,
  * then check EmailAddresses with status DELETED_LDAP, DELETED_OX or DELETED_LDAP, as fourth priority use FAILED status or fifth priority REQUESTED.
