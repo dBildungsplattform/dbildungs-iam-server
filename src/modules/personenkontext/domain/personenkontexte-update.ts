@@ -438,7 +438,7 @@ export class PersonenkontexteUpdate {
         return existingPKsAfterUpdate;
     }
 
-    private async getEmailForPerson(person: Person<true>): Promise<string | undefined> {
+    public async getEmailForPerson(person: Person<true>): Promise<string | undefined> {
         const email: Option<PersonEmailResponse> = this.emailResolverService.shouldUseEmailMicroservice()
             ? await this.emailResolverService.findEmailBySpshPerson(person.id)
             : await this.emailRepo.getEmailAddressAndStatusForPerson(person);

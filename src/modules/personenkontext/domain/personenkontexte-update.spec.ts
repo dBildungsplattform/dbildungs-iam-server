@@ -1155,208 +1155,87 @@ describe('PersonenkontexteUpdate', () => {
         });
 
         describe('getEmailForPerson', () => {
-            it('should return undefined', async () => {
-                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+            let person: Person<true>;
+            const emailAddress: string = 'test@example.com';
 
-                const newPerson: Person<true> = DoFactory.createPerson(true);
-                personRepoMock.findById.mockResolvedValueOnce(newPerson);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+            beforeEach(() => {
+                person = DoFactory.createPerson(true, { id: faker.string.uuid() });
 
-                const mapRollen: Map<string, Rolle<true>> = new Map();
-                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
-                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
-                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
-
-                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(undefined);
-
-                const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
-
-                expect(updateResult).toBeDefined();
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    person.id,
+                    lastModified,
+                    0,
+                    [],
+                    personPermissionsMock,
+                );
             });
 
-            it('should return email address', async () => {
+            it('should return email when using microservice and email is ENABLED', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+                emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValueOnce({
+                    address: emailAddress,
+                    status: EmailAddressStatus.ENABLED,
+                });
+
+                const result: string | undefined = await sut.getEmailForPerson(person);
+
+                expect(result).toBe(emailAddress);
+                expect(emailResolverServiceMock.findEmailBySpshPerson).toHaveBeenCalledWith(person.id);
+            });
+
+            it('should return undefined when using microservice and email is NOT enabled', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+                emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValueOnce({
+                    address: emailAddress,
+                    status: EmailAddressStatus.DISABLED,
+                });
+
+                const result: string | undefined = await sut.getEmailForPerson(person);
+
+                expect(result).toBeUndefined();
+            });
+
+            it('should return email when using EmailRepo and email is ENABLED', async () => {
                 emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
-
-                const newPerson: Person<true> = DoFactory.createPerson(true);
-                personRepoMock.findById.mockResolvedValueOnce(newPerson);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
-
-                const mapRollen: Map<string, Rolle<true>> = new Map();
-                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
-                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
-                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
-
-                const emailAddress: string = faker.internet.email();
                 emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce({
                     address: emailAddress,
                     status: EmailAddressStatus.ENABLED,
                 });
 
-                const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+                const result: string | undefined = await sut.getEmailForPerson(person);
 
-                expect(updateResult).toBeDefined();
+                expect(result).toBe(emailAddress);
+                expect(emailRepoMock.getEmailAddressAndStatusForPerson).toHaveBeenCalledWith(person);
             });
 
-            it('should return undefined when using email microservice and no email exists', async () => {
+            it('should return undefined when using EmailRepo and email is NOT enabled', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce({
+                    address: emailAddress,
+                    status: EmailAddressStatus.DISABLED,
+                });
+
+                const result: string | undefined = await sut.getEmailForPerson(person);
+
+                expect(result).toBeUndefined();
+            });
+
+            it('should return undefined when no email is found (microservice)', async () => {
                 emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-
-                const newPerson: Person<true> = DoFactory.createPerson(true);
-                personRepoMock.findById.mockResolvedValueOnce(newPerson);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
-
-                const mapRollen: Map<string, Rolle<true>> = new Map();
-                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
-                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
-                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
-
                 emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValueOnce(undefined);
 
-                const result: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+                const result: string | undefined = await sut.getEmailForPerson(person);
 
-                expect(result).toBeDefined();
+                expect(result).toBeUndefined();
             });
 
-            it('should return email when using email microservice', async () => {
-                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-
-                const newPerson: Person<true> = DoFactory.createPerson(true);
-                personRepoMock.findById.mockResolvedValueOnce(newPerson);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
-
-                const mapRollen: Map<string, Rolle<true>> = new Map();
-                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
-                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
-                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
-
-                const emailAddress: string = faker.internet.email();
-
-                emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValueOnce({
-                    address: emailAddress,
-                    status: EmailAddressStatus.ENABLED,
-                });
-
-                const result: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
-
-                expect(result).toBeDefined();
-            });
-
-            it('should return undefined when email exists but status is DISABLED', async () => {
+            it('should return undefined when no email is found (repo)', async () => {
                 emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(undefined);
 
-                const newPerson: Person<true> = DoFactory.createPerson(true);
-                personRepoMock.findById.mockResolvedValueOnce(newPerson);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+                const result: string | undefined = await sut.getEmailForPerson(person);
 
-                const mapRollen: Map<string, Rolle<true>> = new Map();
-                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
-                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
-                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
-
-                const emailAddress: string = faker.internet.email();
-
-                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce({
-                    address: emailAddress,
-                    status: EmailAddressStatus.DISABLED,
-                });
-
-                const result: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
-
-                expect(result).toBeDefined();
-            });
-
-            it('should return undefined when using email microservice and status is DISABLED', async () => {
-                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-
-                const newPerson: Person<true> = DoFactory.createPerson(true);
-                personRepoMock.findById.mockResolvedValueOnce(newPerson);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
-
-                const mapRollen: Map<string, Rolle<true>> = new Map();
-                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
-                rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
-                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
-
-                emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValueOnce({
-                    address: faker.internet.email(),
-                    status: EmailAddressStatus.DISABLED,
-                });
-
-                const result: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
-
-                expect(result).toBeDefined();
-            });
-        });
-
-        describe('when updating personalnummer fails', () => {
-            beforeEach(() => {
-                const count: number = 2;
-                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
-                    personId,
-                    lastModified,
-                    count,
-                    [bodyParam1, bodyParam2],
-                    personPermissionsMock,
-                    'personal-123',
-                );
-            });
-
-            it('should return DuplicatePersonalnummerError when updatePersonMetadata fails', async () => {
-                const person: Person<true> = DoFactory.createPerson(true, { id: personId });
-                personRepoMock.findById.mockReset();
-                personRepoMock.findById.mockResolvedValue(person);
-
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
-
-                dBiamPersonenkontextRepoMock.findByPerson
-                    .mockResolvedValueOnce([pk1, pk2])
-                    .mockResolvedValueOnce([pk1, pk2])
-                    .mockResolvedValueOnce([pk1, pk2]);
-
-                rolleRepoMock.findByIds.mockResolvedValue(
-                    new Map([
-                        [pk1.rolleId, DoFactory.createRolle(true, { rollenart: RollenArt.LEHR })],
-                        [pk2.rolleId, DoFactory.createRolle(true, { rollenart: RollenArt.LEHR })],
-                    ]),
-                );
-
-                organisationRepoMock.findByIds.mockResolvedValue(
-                    new Map([
-                        [pk1.organisationId, DoFactory.createOrganisation(true)],
-                        [pk2.organisationId, DoFactory.createOrganisation(true)],
-                    ]),
-                );
-
-                const dupError: DuplicatePersonalnummerError = new DuplicatePersonalnummerError('Duplicate');
-                personRepoMock.updatePersonMetadata.mockResolvedValueOnce(dupError);
-
-                const result: Personenkontext<true>[] | PersonenkontexteUpdateError | DuplicatePersonalnummerError =
-                    await sut.update();
-
-                expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
+                expect(result).toBeUndefined();
             });
         });
     });
