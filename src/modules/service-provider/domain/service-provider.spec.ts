@@ -13,6 +13,7 @@ describe('ServiceProvider', () => {
             serviceProvider = DoFactory.createServiceProvider(true, {
                 kategorie: ServiceProviderKategorie.HINWEISE,
                 logo: undefined,
+                logoMimeType: undefined,
             });
         });
 
@@ -34,6 +35,7 @@ describe('ServiceProvider', () => {
             const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
                 kategorie: ServiceProviderKategorie.HINWEISE,
                 logo: undefined,
+                logoMimeType: undefined,
             });
             const result: Option<InvalidLogoCombinationError> = serviceProvider.updateWithSafeFields(update);
             expect(result).toBeUndefined();
@@ -47,6 +49,7 @@ describe('ServiceProvider', () => {
             const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
                 kategorie: ServiceProviderKategorie.HINWEISE,
                 logo: undefined,
+                logoMimeType: undefined,
                 logoId: 123,
             });
             const update: UpdateServiceProviderBodyParams = {

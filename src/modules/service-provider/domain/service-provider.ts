@@ -139,11 +139,12 @@ export class ServiceProvider<WasPersisted extends boolean> {
         logoMimeType: Option<string>,
     ): boolean {
         const logoIdProvided: boolean = logoId !== undefined && logoId !== null;
-        const logoProvided: boolean =
-            logo !== undefined && logo !== null && logoMimeType !== undefined && logoMimeType !== null;
-        const validLogoIdCombination: boolean = logoIdProvided && !logoProvided;
-        const validLogoDataCombination: boolean = !logoIdProvided && logoProvided;
-        const noLogoCombination: boolean = !logoIdProvided && !logoProvided;
+        const logoProvided: boolean = logo !== undefined && logo !== null;
+        const logoMimeTypeProvided: boolean = logoMimeType !== undefined && logoMimeType !== null;
+
+        const validLogoIdCombination: boolean = logoIdProvided && !logoProvided && !logoMimeTypeProvided;
+        const validLogoDataCombination: boolean = !logoIdProvided && logoProvided && logoMimeTypeProvided;
+        const noLogoCombination: boolean = !logoIdProvided && !logoProvided && !logoMimeTypeProvided;
         return validLogoIdCombination || validLogoDataCombination || noLogoCombination;
     }
 }
