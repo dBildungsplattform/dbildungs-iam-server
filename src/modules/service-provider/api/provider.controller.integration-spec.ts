@@ -453,11 +453,15 @@ describe('ServiceProvider API', () => {
                 .send({ name: newName, url: newUrl, kategorie: newKategorie });
 
             expect(response.status).toBe(200);
-            expect(response.body.name).toBe(newName);
-            expect(response.body.url).toBe(newUrl);
-            expect(response.body.kategorie).toBe(newKategorie);
+            expect(response.body).toEqual(
+                expect.objectContaining({
+                    name: newName,
+                    url: newUrl,
+                    kategorie: newKategorie,
+                }),
+            );
 
-            const updatedServiceProvider = await em.findOneOrFail(
+            const updatedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
                 ServiceProviderEntity,
                 { id: serviceProvider.id },
                 { refresh: true },
