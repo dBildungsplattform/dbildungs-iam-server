@@ -2,6 +2,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../authentication/api/public.decorator.js';
 import { VidisApiService } from '../domain/vidis.api-service.js';
+import { VidisServiceResponseAngebot } from './vidis-angebote-api.types.js';
 
 @ApiTags('vidis-test')
 @Controller({ path: 'vidis-test' })
@@ -11,7 +12,7 @@ export class VidisTestController {
     @Get('by-region')
     @Public()
     @ApiOperation({ summary: 'Get activated Angebote by region.' })
-    public async getActivatedAngeboteByRegion(): Promise<void> {
+    public async getActivatedAngeboteByRegion(): Promise<VidisServiceResponseAngebot[]> {
         return this.vidisApiService.getActivatedAngeboteByRegion();
     }
 

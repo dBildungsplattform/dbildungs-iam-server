@@ -6,7 +6,25 @@ type Actions = {
     [key: string]: ActionProperty;
 };
 
-export type VidisResponse<T> = {
+export type VidisApiResponseSchoolActivation = { 
+    date: string,
+    regionName: string
+}
+
+export type VidisApiResponseAngebot = {
+    clientId: string;
+    educationProviderOrganizationName: string;
+    offerDescription: string;
+    offerId: number;
+    offerLink: string;
+    offerLogo: string;
+    offerLongTitle: string;
+    offerTitle: string;
+    offerVersion: number;
+    schoolActivations: VidisApiResponseSchoolActivation[];
+};
+
+export type VidisApiResponse<T> = {
     facets: {
         facetCriteria: string;
         facetValues: {
@@ -20,4 +38,11 @@ export type VidisResponse<T> = {
     actions: Actions;
     page: number;
     items: T[];
+};
+
+export type VidisServiceResponseAngebot = Omit<VidisApiResponseAngebot, 'schoolActivations'> & {
+    schoolActivations: {
+        date: string;
+        kennung: string;
+    }[];
 };
