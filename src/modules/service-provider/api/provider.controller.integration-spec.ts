@@ -444,7 +444,7 @@ describe('ServiceProvider API', () => {
 
         describe('when service provider has a logo', () => {
             it('should update service provider, but keep logo and logoMimeType set', async () => {
-                let serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
                     providedOnSchulstrukturknoten: organisation.id,
                 });
                 const body: UpdateServiceProviderBodyParams = {
@@ -459,7 +459,7 @@ describe('ServiceProvider API', () => {
                     .send(body);
 
                 expect(response.status).toBe(200);
-                const updatedServiceProvider = await em.findOneOrFail(
+                const updatedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
                     ServiceProviderEntity,
                     { id: serviceProvider.id },
                     { refresh: true },
@@ -482,7 +482,7 @@ describe('ServiceProvider API', () => {
                     .send(body);
 
                 expect(response.status).toBe(400);
-                const storedServiceProvider = await em.findOneOrFail(
+                const storedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
                     ServiceProviderEntity,
                     { id: serviceProvider.id },
                     { refresh: true },
@@ -511,12 +511,16 @@ describe('ServiceProvider API', () => {
                     .send(body);
 
                 expect(response.status).toBe(200);
-                expect(response.body.name).toBe(body.name);
-                expect(response.body.url).toBe(body.url);
-                expect(response.body.kategorie).toBe(body.kategorie);
-                expect(response.body.logoId).toBe(body.logoId);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        name: body.name,
+                        url: body.url,
+                        kategorie: body.kategorie,
+                        logoId: body.logoId,
+                    }),
+                );
 
-                const updatedServiceProvider = await em.findOneOrFail(
+                const updatedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
                     ServiceProviderEntity,
                     { id: serviceProvider.id },
                     { refresh: true },

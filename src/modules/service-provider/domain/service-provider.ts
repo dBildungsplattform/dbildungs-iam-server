@@ -133,7 +133,11 @@ export class ServiceProvider<WasPersisted extends boolean> {
         return;
     }
 
-    static isValidLogoCombination(logoId: Option<number>, logo: Option<Buffer>, logoMimeType: Option<string>): boolean {
+    public static isValidLogoCombination(
+        logoId: Option<number>,
+        logo: Option<Buffer>,
+        logoMimeType: Option<string>,
+    ): boolean {
         const logoIdProvided: boolean = logoId !== undefined && logoId !== null;
         const logoProvided: boolean =
             logo !== undefined && logo !== null && logoMimeType !== undefined && logoMimeType !== null;
