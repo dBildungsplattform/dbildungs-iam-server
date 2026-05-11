@@ -472,10 +472,10 @@ describe('ServiceProvider API', () => {
                     name: newName,
                     url: newUrl,
                     kategorie: newKategorie,
-                    keycloakGroup: null,
-                    keycloakRole: null,
+                    keycloakGroup: undefined,
+                    keycloakRole: undefined,
                     updatedAt: updatedServiceProvider.updatedAt,
-                    vidisAngebotId: null,
+                    vidisAngebotId: undefined,
                 }),
             );
         });
