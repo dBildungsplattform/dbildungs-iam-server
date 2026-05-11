@@ -58,7 +58,6 @@ export class DatabaseTestModule implements OnModuleDestroy {
                                 emit: 'ts', // migration generation mode
                                 generator: TSMigrationGenerator, // migration generator, e.g. to allow custom formatting
                             },
-                            debug: true,
                         });
                     },
                     driver: PostgreSqlDriver,
