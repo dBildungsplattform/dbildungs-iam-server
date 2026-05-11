@@ -26,6 +26,7 @@ export class UpdateServiceProviderBodyParams {
 
     @ApiProperty({
         required: false,
+        type: 'integer',
         nullable: true,
         description:
             'Optional logoId to use a standard logo. Has to be an integer. Can not be provided, if the service provider already has a custom logo. Null removes the logo.',

@@ -25,6 +25,7 @@ export class CreateServiceProviderBodyParams {
 
     @ApiProperty({
         required: false,
+        type: 'integer',
         description:
             'Optional logoId to use a standard logo. Has to be a positive integer. Only one of logoId or logoBase64 with logoMimeType can be provided, not both.',
         maximum: Math.pow(2, 31) - 1,
