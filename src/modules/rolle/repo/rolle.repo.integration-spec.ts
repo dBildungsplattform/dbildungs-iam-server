@@ -962,16 +962,14 @@ describe('RolleRepo', () => {
             let organisationId: OrganisationID;
             let serviceProvider: ServiceProvider<true>;
             let permissions: DeepMocked<PersonPermissions>;
+            let rolle: Rolle<true>;
 
             beforeEach(async () => {
                 organisationId = faker.string.uuid();
                 serviceProvider = await createAndPersistServiceProvider(em);
                 permissions = createPersonPermissionsMock();
                 permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
-            });
-
-            it('it should succeed', async () => {
-                const rolle: Rolle<true> | DomainError = await sut.save(
+                const rolleOrError: Rolle<true> | DomainError = await sut.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisationId,
                         merkmale: [faker.helpers.enumValue(RollenMerkmal)],
@@ -979,14 +977,22 @@ describe('RolleRepo', () => {
                         serviceProviderIds: [serviceProvider.id],
                     }),
                 );
-                if (rolle instanceof DomainError) {
+                if (rolleOrError instanceof DomainError) {
                     throw Error();
                 }
+                rolle = rolleOrError;
+            });
 
+            it('it should succeed', async () => {
                 const rolleResult: Option<DomainError> = await sut.deleteAuthorized(rolle.id, permissions);
                 expect(rolleResult).toBeUndefined();
 
                 await expect(sut.exists(rolle.id)).resolves.toBe(false);
+            });
+
+            it('should rethrow unknown db exception', async () => {
+                vi.spyOn(em, 'removeAndFlush').mockRejectedValueOnce(new Error('Unknown DB error'));
+                expect(sut.deleteAuthorized(rolle.id, permissions)).rejects.toThrow('Unknown DB error');
             });
         });
 

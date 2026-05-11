@@ -505,6 +505,7 @@ export class RolleRepo {
             if (ex instanceof ForeignKeyConstraintViolationException) {
                 return new RolleHatPersonenkontexteError();
             }
+            throw ex;
         }
         return;
     }
