@@ -27,14 +27,12 @@ import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
                     entitiesTs: ['./src/**/*.entity.ts'],
                     metadataProvider: ReflectMetadataProvider,
                     driverOptions: {
-                        connection: {
-                            ssl: dbConfig.USE_SSL,
-                        },
+                        ssl: dbConfig.USE_SSL,
                     },
-                    driver: PostgreSqlDriver,
                 });
             },
             inject: [EmailAppConfig],
+            driver: PostgreSqlDriver,
         }),
         PassportModule.register({
             defaultStrategy: ['api-key'],
