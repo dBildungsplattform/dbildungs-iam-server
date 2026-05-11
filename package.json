@@ -43,11 +43,11 @@
         "@golevelup/nestjs-discovery": "^6.1.2",
         "@keycloak/keycloak-admin-client": "^25.0.6",
         "@keyv/redis": "^5.1.6",
-        "@mikro-orm/core": "^7.0.13",
-        "@mikro-orm/decorators": "^7.0.13",
-        "@mikro-orm/migrations": "^7.0.13",
+        "@mikro-orm/core": "^7.0.15",
+        "@mikro-orm/decorators": "^7.0.15",
+        "@mikro-orm/migrations": "^7.0.15",
         "@mikro-orm/nestjs": "^7.0.1",
-        "@mikro-orm/postgresql": "^7.0.13",
+        "@mikro-orm/postgresql": "^7.0.15",
         "@nestjs/axios": "^4.0.1",
         "@nestjs/cache-manager": "^3.1.0",
         "@nestjs/common": "^11.1.16",
@@ -108,7 +108,6 @@
         "testcontainers": "^11.12.0",
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.59.2",
-        "unplugin-swc": "^1.5.9",
         "vitest": "^4.1.5"
     }
 }

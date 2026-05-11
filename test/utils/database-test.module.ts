@@ -26,7 +26,7 @@ export class DatabaseTestModule implements OnModuleDestroy {
                         const dbName: string = options?.databaseName || `${config.DB_NAME}-${randomUUID()}`;
 
                         if (options?.isDatabaseRequired) {
-                            this.postgres = await new PostgreSqlContainer('docker.io/postgres:15.3-alpine')
+                            this.postgres = await new PostgreSqlContainer('docker.io/postgres:18.3-alpine')
                                 .withDatabase(dbName)
                                 .withPullPolicy(PullPolicy.defaultPolicy())
                                 .withReuse()
