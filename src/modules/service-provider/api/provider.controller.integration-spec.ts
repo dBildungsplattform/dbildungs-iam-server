@@ -31,16 +31,17 @@ import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.j
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
-import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
+import { mapEntityToAggregate } from '../repo/service-provider-entity-mapper.js';
 import { ServiceProviderEntity } from '../repo/service-provider.entity.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
-import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -428,6 +429,55 @@ describe('ServiceProvider API', () => {
                 .send();
 
             expect(response.status).toBe(404);
+        });
+    });
+
+    describe('/PATCH update service provider', () => {
+        let organisation: Organisation<true>;
+        let serviceProvider: ServiceProvider<true>;
+
+        beforeEach(async () => {
+            organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
+            serviceProvider = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: organisation.id,
+            });
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+        });
+
+        it('should update service provider', async () => {
+            const newName: string = 'Updated Service Provider Name';
+            const newUrl: string = 'https://updated-url.com';
+            const newKategorie: ServiceProviderKategorie = faker.helpers.enumValue(ServiceProviderKategorie);
+            const response: Response = await request(app.getHttpServer() as App)
+                .patch(`/provider/${serviceProvider.id}`)
+                .send({ name: newName, url: newUrl, kategorie: newKategorie });
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual(
+                expect.objectContaining({
+                    name: newName,
+                    url: newUrl,
+                    kategorie: newKategorie,
+                }),
+            );
+
+            const updatedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
+                ServiceProviderEntity,
+                { id: serviceProvider.id },
+                { refresh: true },
+            );
+            expect(mapEntityToAggregate(updatedServiceProvider)).toEqual(
+                expect.objectContaining({
+                    ...serviceProvider,
+                    name: newName,
+                    url: newUrl,
+                    kategorie: newKategorie,
+                    keycloakGroup: null,
+                    keycloakRole: null,
+                    updatedAt: updatedServiceProvider.updatedAt,
+                    vidisAngebotId: null,
+                }),
+            );
         });
     });
 

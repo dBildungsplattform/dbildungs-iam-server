@@ -477,8 +477,10 @@ export class ServiceProviderService {
                 ),
             };
         }
-        const existingServiceProvider: Option<ServiceProvider<true>> =
-            await this.serviceProviderRepo.findById(angebotId);
+        const existingServiceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
+            angebotId,
+            { withLogo: true },
+        );
         if (!existingServiceProvider) {
             throw new EntityNotFoundError();
         }
