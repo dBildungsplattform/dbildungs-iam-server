@@ -22,18 +22,24 @@ import { EmailMicroserviceModule } from '../email-microservice.module';
 import { EmailResolverService, PersonIdWithEmailResponse } from './email-resolver.service';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { Person } from '../../person/domain/person.js';
 
 describe('EmailResolverService', () => {
     let module: TestingModule;
     let sut: EmailResolverService;
     let mockHttpService: DeepMocked<HttpService>;
     let loggerMock: DeepMocked<ClassLogger>;
+    let emailRepoMock: DeepMocked<EmailRepo>;
+    let emailResolverMock: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
                 EmailMicroserviceModule,
                 CommonTestModule,
+                EmailPersistenceModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
             ],
             providers: [],
@@ -42,11 +48,17 @@ describe('EmailResolverService', () => {
             .useValue(createMock(ClassLogger))
             .overrideProvider(HttpService)
             .useValue(createMock(HttpService))
+            .overrideProvider(EmailRepo)
+            .useValue(createMock(EmailRepo))
+            .overrideProvider(EmailResolverService)
+            .useValue(createMock(EmailResolverService))
             .compile();
 
         sut = module.get(EmailResolverService);
         mockHttpService = module.get(HttpService);
         loggerMock = module.get(ClassLogger);
+        emailRepoMock = module.get(EmailRepo);
+        emailResolverMock = module.get(EmailResolverService);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
@@ -520,6 +532,82 @@ describe('EmailResolverService', () => {
 
         expect(sut.shouldUseEmailMicroservice()).toBe(false);
     });
+
+    describe('getPrimaryActiveEmailForPerson', () => {
+        let person: DeepMocked<Person<true>>;
+        const emailAddress: string = 'test@example.com';
+
+        beforeEach(() => {
+            person = createMock<Person<true>>(Person, {
+                id: faker.string.uuid(),
+            });
+        });
+
+        it('should return email when using microservice and email is ENABLED', async () => {
+            emailResolverMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+            emailResolverMock.findEmailBySpshPerson.mockResolvedValueOnce({
+                address: emailAddress,
+                status: EmailAddressStatus.ENABLED,
+            });
+
+            const result: string | undefined = await sut.getPrimaryActiveEmailForPerson(person);
+
+            expect(result).toBe(emailAddress);
+            expect(sut.findEmailBySpshPerson).toHaveBeenCalledWith(person.id);
+        });
+
+        it('should return undefined when using microservice and email is NOT enabled', async () => {
+            emailResolverMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+            const result: string | undefined = await sut.getPrimaryActiveEmailForPerson(person);
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should return email when using EmailRepo and email is ENABLED', async () => {
+            emailResolverMock.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+            emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce({
+                address: emailAddress,
+                status: EmailAddressStatus.ENABLED,
+            });
+
+            const result: string | undefined = await sut.getPrimaryActiveEmailForPerson(person);
+
+            expect(result).toBe(emailAddress);
+            expect(emailRepoMock.getEmailAddressAndStatusForPerson).toHaveBeenCalledWith(person);
+        });
+
+        it('should return undefined when using EmailRepo and email is NOT enabled', async () => {
+            emailResolverMock.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+            emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce({
+                address: emailAddress,
+                status: EmailAddressStatus.DISABLED,
+            });
+
+            const result: string | undefined = await sut.getPrimaryActiveEmailForPerson(person);
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should return undefined when no email is found (microservice)', async () => {
+            emailResolverMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+            const result: string | undefined = await sut.getPrimaryActiveEmailForPerson(person);
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should return undefined when no email is found (repo)', async () => {
+            emailResolverMock.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+            emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(undefined);
+
+            const result: string | undefined = await sut.getPrimaryActiveEmailForPerson(person);
+
+            expect(result).toBeUndefined();
+        });
+    });
+
+    //###### Tests for private functions ######
 
     it('should use correct endpoint from config in post call', async () => {
         const spshPersonId: string = faker.string.uuid();
