@@ -1,17 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../test/utils/index.js';
+import { DatabaseTestModule } from '../../../test/utils/index.js';
 import { EmailModule } from './email.module.js';
 import { EmailRepo } from './persistence/email.repo.js';
 import { EmailFactory } from './domain/email.factory.js';
 import { createMock } from '../../../test/utils/createMock.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
+import { CommonTestModule } from '../../../test/utils/common-test.module.js';
 
 describe('EmailModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot(), EmailModule],
+            imports: [CommonTestModule, DatabaseTestModule.forRoot(), EmailModule],
             providers: [],
         })
             .overrideProvider(PersonRepository)

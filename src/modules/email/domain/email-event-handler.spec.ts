@@ -4,12 +4,7 @@ import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    DoFactory,
-} from '../../../../test/utils/index.js';
+import { DatabaseTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, DoFactory } from '../../../../test/utils/index.js';
 import { EventModule } from '../../../core/eventbus/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
@@ -46,6 +41,7 @@ import {
     PersonenkontextEventKontextData,
     PersonenkontextEventPersonData,
 } from '../../../shared/events/personenkontext-event.types.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 function getEmail(address?: string, status?: EmailAddressStatus): EmailAddress<true> {
     const fakePersonId: PersonID = faker.string.uuid();
@@ -77,7 +73,7 @@ describe('EmailEventHandler', () => {
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
-                ConfigTestModule,
+                CommonTestModule,
                 EmailModule,
                 EventModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),

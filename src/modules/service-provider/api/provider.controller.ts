@@ -18,6 +18,7 @@ import {
     ApiBadRequestResponse,
     ApiBearerAuth,
     ApiConflictResponse,
+    ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNoContentResponse,
@@ -28,12 +29,13 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-
 import { uniq } from 'lodash-es';
+
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { ApiOkResponsePaginated, RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
@@ -50,11 +52,15 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { AttachedRollenError } from '../domain/errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from '../domain/errors/attached-rollenerweiterungen.error.js';
+import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
 import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
-import { ManageableServiceProviderWithReferencedObjects } from '../domain/types.js';
+import {
+    ManageableServiceProviderDetailsWithReferencedObjects,
+    ManageableServiceProviderWithReferencedObjects,
+} from '../domain/types.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
@@ -168,7 +174,7 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollenerweiterungen.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rollenerweiterungen.' })
     public async findRollenerweiterungenByServiceProviderId(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Param() pathParams: RollenerweiterungByServiceProvidersIdPathParams,
         @Query() queryParams: RollenerweiterungByServiceProvidersIdQueryParams,
     ): Promise<RawPagedResponse<RollenerweiterungWithExtendedDataResponse>> {
@@ -240,7 +246,7 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
     public async getManageableServiceProviders(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Query() params: ManageableServiceProvidersParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
         const [enrichedServiceProviders, total]: Counted<ManageableServiceProviderWithReferencedObjects> =
@@ -251,13 +257,9 @@ export class ProviderController {
             limit: params.limit ?? total,
             total,
             items: enrichedServiceProviders.map(
-                (spWithData: ManageableServiceProviderWithReferencedObjects) =>
-                    new ManageableServiceProviderListEntryResponse(
-                        spWithData.serviceProvider,
-                        spWithData.organisation,
-                        spWithData.rollen,
-                        spWithData.rollenerweiterungenWithName ?? [],
-                        spWithData.isDeleteAuthorized,
+                (manageableServiceProviderWithReferencedObjects: ManageableServiceProviderWithReferencedObjects) =>
+                    ManageableServiceProviderListEntryResponse.fromManageableServiceProviderWithReferencedObjects(
+                        manageableServiceProviderWithReferencedObjects,
                     ),
             ),
         });
@@ -273,7 +275,7 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
     public async getManageableServiceProvidersForOrganisationId(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Query() params: ManageableServiceProvidersForOrganisationParams,
     ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
         const result: Result<
@@ -300,13 +302,9 @@ export class ProviderController {
             limit: params.limit ?? total,
             total,
             items: serviceProvidersWithRollenAndErweiterungen.map(
-                (spWithData: ManageableServiceProviderWithReferencedObjects) =>
-                    new ManageableServiceProviderListEntryResponse(
-                        spWithData.serviceProvider,
-                        spWithData.organisation,
-                        spWithData.rollen,
-                        spWithData.rollenerweiterungenWithName ?? [],
-                        spWithData.isDeleteAuthorized,
+                (manageableServiceProviderWithReferencedObjects: ManageableServiceProviderWithReferencedObjects) =>
+                    ManageableServiceProviderListEntryResponse.fromManageableServiceProviderWithReferencedObjects(
+                        manageableServiceProviderWithReferencedObjects,
                     ),
             ),
         });
@@ -322,10 +320,10 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-provider.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting service-provider.' })
     public async getManageableServiceProviderById(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Param() params: AngebotByIdParams,
     ): Promise<ManageableServiceProviderResponse> {
-        const serviceProviderWithOrganisationRollenAndErweiterungen: Option<ManageableServiceProviderWithReferencedObjects> =
+        const serviceProviderWithOrganisationRollenAndErweiterungen: Option<ManageableServiceProviderDetailsWithReferencedObjects> =
             await this.serviceProviderService.findManageableById(permissions, params.angebotId);
 
         if (!serviceProviderWithOrganisationRollenAndErweiterungen) {
@@ -337,13 +335,15 @@ export class ProviderController {
             serviceProviderWithOrganisationRollenAndErweiterungen.organisation,
             serviceProviderWithOrganisationRollenAndErweiterungen.rollen,
             serviceProviderWithOrganisationRollenAndErweiterungen.rollenerweiterungen.length > 0,
+            serviceProviderWithOrganisationRollenAndErweiterungen.relevantSystemrechte,
         );
     }
 
     @Post()
     @UseGuards(StepUpGuard)
+    @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ description: 'Create a new service-provider (Angebot).' })
-    @ApiOkResponse({
+    @ApiCreatedResponse({
         description: 'The service-provider was successfully created.',
         type: ServiceProviderResponse,
     })
@@ -352,18 +352,22 @@ export class ProviderController {
     @ApiBadRequestResponse({ description: 'Invalid request body.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     public async createServiceProvider(
-        @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: IPersonPermissions,
         @Body() body: CreateServiceProviderBodyParams,
     ): Promise<ServiceProviderResponse> {
         // Convert base64 to Buffer (if provided)
         const logoBuffer: Buffer | undefined = body.logoBase64 ? Buffer.from(body.logoBase64, 'base64') : undefined;
 
-        const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
+        const serviceProvider: Result<
+            ServiceProvider<false>,
+            InvalidLogoCombinationError
+        > = this.serviceProviderFactory.createNew(
             body.name,
             ServiceProviderTarget.URL,
             body.url,
             body.kategorie,
             body.organisationId,
+            body.logoId,
             logoBuffer,
             body.logoMimeType,
             undefined, // keycloakGroup
@@ -373,12 +377,14 @@ export class ProviderController {
             undefined, // vidisAngebotId
             body.merkmale,
         );
+        if (!serviceProvider.ok) {
+            throw serviceProvider.error;
+        }
 
         const result: Result<ServiceProvider<true>, DomainError> = await this.serviceProviderRepo.create(
             permissions,
-            serviceProvider,
+            serviceProvider.value,
         );
-
         if (!result.ok) {
             throw result.error;
         }

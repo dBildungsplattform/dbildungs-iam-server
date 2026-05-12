@@ -12,7 +12,7 @@ import {
     createOidcClientMock,
     createPersonPermissionsMock,
 } from '../../../../test/utils/auth.mock.js';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
@@ -31,15 +31,18 @@ import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.j
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
-import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
+import { mapEntityToAggregate } from '../repo/service-provider-entity-mapper.js';
 import { ServiceProviderEntity } from '../repo/service-provider.entity.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
+import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -57,7 +60,7 @@ describe('ServiceProvider API', () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ServiceProviderApiModule,
-                ConfigTestModule,
+                CommonTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],
             providers: [
@@ -232,7 +235,7 @@ describe('ServiceProvider API', () => {
         });
     });
 
-    describe('/GET manageable service provider for organisation', () => {
+    describe('/GET manageable service providers for organisation', () => {
         let organisation: Organisation<true>;
         let serviceProvider: ServiceProvider<true>;
         let rolle: Rolle<true>;
@@ -276,7 +279,7 @@ describe('ServiceProvider API', () => {
             vi.restoreAllMocks();
         });
 
-        it('should return manageable service provider for organisation', async () => {
+        it('should return manageable service providers for organisation', async () => {
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/provider/manageable-by-organisation')
                 .query({ organisationId: organisation.id })
@@ -318,7 +321,7 @@ describe('ServiceProvider API', () => {
                                 name: rolle.name,
                             },
                         ],
-                        isDeleteAuthorized: true,
+                        hasSomeVerwaltenPermission: true,
                     },
                 ],
                 limit: 1,
@@ -353,6 +356,8 @@ describe('ServiceProvider API', () => {
         let rolleWithErweiterung: Rolle<true>;
 
         beforeEach(async () => {
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+
             organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
             serviceProvider = await createAndPersistServiceProvider(em, {
                 providedOnSchulstrukturknoten: organisation.id,
@@ -391,7 +396,7 @@ describe('ServiceProvider API', () => {
             const body: ManageableServiceProviderResponse = response.body as ManageableServiceProviderResponse;
             expect(response.status).toBe(200);
 
-            expect(body).toEqual<ManageableServiceProviderResponse>({
+            expect(body).toEqual({
                 id: serviceProvider.id,
                 name: serviceProvider.name,
                 administrationsebene: {
@@ -400,6 +405,7 @@ describe('ServiceProvider API', () => {
                     kennung: organisation.kennung!,
                 },
                 kategorie: serviceProvider.kategorie,
+                logoId: null,
                 requires2fa: serviceProvider.requires2fa,
                 merkmale: serviceProvider.merkmale,
                 url: serviceProvider.url,
@@ -411,7 +417,12 @@ describe('ServiceProvider API', () => {
                         name: rolle.name,
                     },
                 ],
-            } as ManageableServiceProviderResponse);
+                relevantSystemrechte: [
+                    RollenSystemRechtEnum.ANGEBOTE_VERWALTEN,
+                    RollenSystemRechtEnum.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
+                    RollenSystemRechtEnum.ROLLEN_ERWEITERN,
+                ],
+            });
         });
 
         it('should return 404 if service provider is not found', async () => {
@@ -420,6 +431,113 @@ describe('ServiceProvider API', () => {
                 .send();
 
             expect(response.status).toBe(404);
+        });
+    });
+
+    describe('/PATCH update service provider', () => {
+        let organisation: Organisation<true>;
+
+        beforeEach(async () => {
+            organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+        });
+
+        describe('when service provider has a logo', () => {
+            it('should update service provider, but keep logo and logoMimeType set', async () => {
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: organisation.id,
+                });
+                const body: UpdateServiceProviderBodyParams = {
+                    name: 'Updated Service Provider Name',
+                    url: 'https://updated-url.com',
+                    kategorie: faker.helpers.enumValue(ServiceProviderKategorie),
+                    logoId: null,
+                };
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .patch(`/provider/${serviceProvider.id}`)
+                    .send(body);
+
+                expect(response.status).toBe(200);
+                const updatedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
+                    ServiceProviderEntity,
+                    { id: serviceProvider.id },
+                    { refresh: true },
+                );
+                expect(updatedServiceProvider.logoId).toBeNull();
+                expect(updatedServiceProvider.logo).toEqual(serviceProvider.logo);
+                expect(updatedServiceProvider.logoMimeType).toBe(serviceProvider.logoMimeType);
+            });
+
+            it('should reject updates to logoId', async () => {
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: organisation.id,
+                });
+                const body: UpdateServiceProviderBodyParams = {
+                    logoId: 1,
+                };
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .patch(`/provider/${serviceProvider.id}`)
+                    .send(body);
+
+                expect(response.status).toBe(400);
+                const storedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
+                    ServiceProviderEntity,
+                    { id: serviceProvider.id },
+                    { refresh: true },
+                );
+                expect(storedServiceProvider.logoId).toBeNull();
+                expect(storedServiceProvider.logo).toEqual(serviceProvider.logo);
+                expect(storedServiceProvider.logoMimeType).toBe(serviceProvider.logoMimeType);
+            });
+        });
+
+        describe('when service provider has no logo', () => {
+            it('should update service provider with logoId', async () => {
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: organisation.id,
+                    logo: undefined,
+                    logoMimeType: undefined,
+                });
+                const body: UpdateServiceProviderBodyParams = {
+                    name: 'Updated Service Provider Name',
+                    url: 'https://updated-url.com',
+                    kategorie: faker.helpers.enumValue(ServiceProviderKategorie),
+                    logoId: 1,
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .patch(`/provider/${serviceProvider.id}`)
+                    .send(body);
+
+                expect(response.status).toBe(200);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        name: body.name,
+                        url: body.url,
+                        kategorie: body.kategorie,
+                        logoId: body.logoId,
+                    }),
+                );
+
+                const updatedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
+                    ServiceProviderEntity,
+                    { id: serviceProvider.id },
+                    { refresh: true },
+                );
+                expect(mapEntityToAggregate(updatedServiceProvider)).toEqual(
+                    expect.objectContaining({
+                        ...serviceProvider,
+                        ...body,
+                        logo: null,
+                        logoMimeType: null,
+                        keycloakGroup: null,
+                        keycloakRole: null,
+                        updatedAt: updatedServiceProvider.updatedAt,
+                        vidisAngebotId: null,
+                    }),
+                );
+            });
         });
     });
 

@@ -5,12 +5,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
-    ConfigTestModule,
     createPassportUserMock,
     createPersonPermissionsMock,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    LoggingTestModule,
 } from '../../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../../shared/validation/global-validation.pipe.js';
 import { PersonApiModule } from '../../person-api.module.js';
@@ -47,6 +45,7 @@ import { ServiceProviderModule } from '../../../service-provider/service-provide
 import { SharedExceptionFilter } from '../../../../shared/filter/shared-exception-filter.js';
 import { ValidationExceptionFilter } from '../../../../shared/filter/validation-exception-filter.js';
 import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
+import { CommonTestModule } from '../../../../../test/utils/common-test.module.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -76,11 +75,9 @@ describe('Personenuebersicht API', () => {
 
         const module: TestingModule = await Test.createTestingModule({
             imports: [
-                LoggingTestModule,
+                CommonTestModule,
                 PersonApiModule,
-                ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                LoggingTestModule,
                 ServiceProviderModule,
             ],
             providers: [
@@ -138,7 +135,14 @@ describe('Personenuebersicht API', () => {
         orm = module.get<MikroORM>(MikroORM);
         personRepository = module.get<PersonRepository>(PersonRepository);
         usernameGeneratorService = module.get(UsernameGeneratorService);
-        usernameGeneratorService.generateUsername = vi.fn().mockResolvedValue({ ok: true, value: 'mockUsername' });
+        usernameGeneratorService.generateUsername = vi
+            .fn()
+            .mockResolvedValueOnce({ ok: true, value: 'mockUsername1' })
+            .mockResolvedValueOnce({ ok: true, value: 'mockUsername2' })
+            .mockResolvedValueOnce({ ok: true, value: 'mockUsername3' })
+            .mockResolvedValueOnce({ ok: true, value: 'mockUsername4' })
+            .mockResolvedValueOnce({ ok: true, value: 'mockUsername5' })
+            .mockResolvedValueOnce({ ok: true, value: 'mockUsername6' });
         rolleFactory = module.get(RolleFactory);
         rolleRepo = module.get(RolleRepo);
         dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);

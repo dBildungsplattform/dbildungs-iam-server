@@ -4,6 +4,7 @@ import {
     FilterQuery,
     ForeignKeyConstraintViolationException,
     Loaded,
+    PopulatePath,
     RequiredEntityData,
 } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
@@ -15,13 +16,9 @@ import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../..
 import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
-import {
-    intersectPermittedAndRequestedOrgas,
-    PermittedOrgas,
-    PersonPermissions,
-} from '../../authentication/domain/person-permissions.js';
+import { intersectPermittedAndRequestedOrgas, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderMerkmalEntity } from '../../service-provider/repo/service-provider-merkmal.entity.js';
+import { mapEntityToAggregate as mapServiceProviderEntityToAggregate } from '../../service-provider/repo/service-provider-entity-mapper.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
@@ -39,6 +36,7 @@ import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-service-providers.specification.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
     const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
@@ -85,24 +83,7 @@ export function mapRolleEntityToAggregate(entity: RolleEntity, rolleFactory: Rol
     const serviceProviderData: ServiceProvider<true>[] = entity.serviceProvider.map(
         (serviceProvider: RolleServiceProviderEntity) => {
             const sp: ServiceProviderEntity = serviceProvider.serviceProvider;
-            return ServiceProvider.construct(
-                sp.id,
-                sp.createdAt,
-                sp.updatedAt,
-                sp.name,
-                sp.target,
-                sp.url,
-                sp.kategorie,
-                sp.providedOnSchulstrukturknoten,
-                sp.logo,
-                sp.logoMimeType,
-                sp.keycloakGroup,
-                sp.keycloakRole,
-                sp.externalSystem,
-                sp.requires2fa,
-                sp.vidisAngebotId,
-                sp.merkmale.map((merkmalEntity: ServiceProviderMerkmalEntity) => merkmalEntity.merkmal),
-            );
+            return mapServiceProviderEntityToAggregate(sp);
         },
     );
 
@@ -164,7 +145,7 @@ export class RolleRepo {
 
     public async findByIdAuthorized(
         rolleId: RolleID,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Result<Rolle<true>, DomainError>> {
         const rolle: Option<Rolle<true>> = await this.findById(rolleId);
         if (!rolle) {
@@ -305,7 +286,7 @@ export class RolleRepo {
     }
 
     public async findRollenAuthorized(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         includeTechnische: boolean,
         searchStr?: string,
         limit?: number,
@@ -356,38 +337,49 @@ export class RolleRepo {
 
     public async findByServiceProviderIds(
         serviceProviderIds: string[],
-        limitPerProvider?: number,
+        limitPerProvider: number = Infinity,
     ): Promise<Map<ServiceProviderID, Rolle<true>[]>> {
-        const rollenMap: Map<ServiceProviderID, Rolle<true>[]> = new Map<ServiceProviderID, Rolle<true>[]>();
+        if (serviceProviderIds.length === 0) {
+            return new Map();
+        }
 
-        await Promise.all(
-            serviceProviderIds.map(async (spId: ServiceProviderID) => {
-                const query: object = {
-                    serviceProvider: { serviceProvider: { id: spId } },
-                };
+        // Load *all* Rollen that have one of the specified providers.
+        // We can assume there won't be thousands of Rollen in the system and this easier to maintain
 
-                const findOptions: Record<string, unknown> = {
-                    populate: [
-                        'merkmale',
-                        'systemrechte',
-                        'serviceProvider.serviceProvider',
-                        'serviceProvider.serviceProvider.merkmale',
-                    ] as const,
-                    exclude: ['serviceProvider.serviceProvider.logo'] as const,
-                    orderBy: { name: 'ASC' },
-                };
+        // For future reference, the following sql can be used as a starting point if we need to optimize this further
+        // SELECT "sp"."id", "sp"."name", "r"."name" FROM "service_provider" AS "sp" LEFT JOIN LATERAL( SELECT DISTINCT "r_inner".* FROM "rolle" AS "r_inner" JOIN "rolle_service_provider" AS "rsp_inner" ON "rsp_inner"."service_provider_id" = "sp"."id" ORDER BY "r_inner"."name" ASC LIMIT 2) AS "r" ON TRUE WHERE "sp"."id" IN (?) ORDER BY "sp"."name" ASC
 
-                if (limitPerProvider !== undefined) {
-                    findOptions['limit'] = limitPerProvider;
-                }
-
-                const rollen: Rolle<true>[] = (await this.em.find(RolleEntity, query, findOptions)).map(
-                    (rolleEntity: RolleEntity) => mapRolleEntityToAggregate(rolleEntity, this.rolleFactory),
-                );
-
-                rollenMap.set(spId, rollen);
-            }),
+        const result: Loaded<RolleEntity, 'serviceProvider', PopulatePath.ALL, never>[] = await this.em.find(
+            RolleEntity,
+            {
+                serviceProvider: {
+                    serviceProvider: {
+                        id: {
+                            $in: serviceProviderIds,
+                        },
+                    },
+                },
+            },
+            {
+                orderBy: { name: 'ASC' },
+                populateWhere: 'infer',
+                populate: ['serviceProvider.serviceProvider'],
+            },
         );
+
+        const rollenMap: Map<ServiceProviderID, Rolle<true>[]> = new Map(
+            serviceProviderIds.map((id: ServiceProviderID) => [id, []]),
+        );
+
+        // Iterate through every Rolle (already sorted by name) and append them to the map for each ServiceProvider (stop adding after each list has reached 'limitPerProvider' count)
+        for (const rolle of result) {
+            for (const sp of rolle.serviceProvider) {
+                const mapArray: Rolle<true>[] | undefined = rollenMap.get(sp.serviceProvider.id);
+                if (mapArray && mapArray.length < limitPerProvider) {
+                    mapArray.push(mapRolleEntityToAggregate(rolle, this.rolleFactory));
+                }
+            }
+        }
 
         return rollenMap;
     }
@@ -423,7 +415,7 @@ export class RolleRepo {
         serviceProviderIds: string[],
         version: number,
         isAlreadyAssigned: boolean,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
     ): Promise<Rolle<true> | DomainError> {
         //Reference & Permissions
         const authorizedRoleResult: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
@@ -477,7 +469,7 @@ export class RolleRepo {
         return result;
     }
 
-    public async deleteAuthorized(id: RolleID, permissions: PersonPermissions): Promise<Option<DomainError>> {
+    public async deleteAuthorized(id: RolleID, permissions: IPersonPermissions): Promise<Option<DomainError>> {
         //Permissions
         const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
         if (!authorizedRole.ok) {

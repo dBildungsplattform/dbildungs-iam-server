@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
-import { Test, TestingModule } from '@nestjs/testing';
-import { createMock } from '../../../../../test/utils/createMock.js';
 import { MikroORM } from '@mikro-orm/core';
-import { EmailAddressRepo } from './email-address.repo.js';
+import { Test, TestingModule } from '@nestjs/testing';
+import { setTimeout } from 'timers/promises';
+import { createMock } from '../../../../../test/utils/createMock.js';
 import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
@@ -10,12 +10,13 @@ import {
     expectErrResult,
     expectOkResult,
 } from '../../../../../test/utils/index.js';
-import { EmailAddress } from '../domain/email-address.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { EmailCoreModule } from '../email-core.module.js';
-import { EmailAddressStatusEnum } from './email-address-status.entity.js';
 import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
+import { EmailAddress } from '../domain/email-address.js';
+import { EmailCoreModule } from '../email-core.module.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
+import { EmailAddressStatusEnum } from './email-address-status.entity.js';
+import { EmailAddressRepo } from './email-address.repo.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -192,6 +193,9 @@ describe('EmailRepo', () => {
             await setStatus(mail4, EmailAddressStatusEnum.SUSPENDED);
             mail5 = await createAndSaveMail(undefined, 0, spshPersonIds[2]);
             await setStatus(mail5, EmailAddressStatusEnum.ACTIVE);
+            // sometimes we end up with two status with the same timestamp which causes non-deterministic sorting, so we wait a bit to ensure different timestamps
+            // this issue is only relevant for this test and not a real issue in production since the statuses are not set in such quick succession
+            await vi.waitFor(() => setTimeout(10));
             await setStatus(mail5, EmailAddressStatusEnum.SUSPENDED);
         });
 

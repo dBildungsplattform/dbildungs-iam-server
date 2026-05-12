@@ -2947,6 +2947,17 @@
           "expression": "create unique index \"person_keycloak_user_id_unique\" on \"person\" (\"keycloak_user_id\") nulls not distinct;"
         },
         {
+          "keyName": "person_username_unique",
+          "columnNames": [
+            "username"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "create unique index \"person_username_unique\" on \"person\" (\"username\") nulls distinct;"
+        },
+        {
           "keyName": "person_referrer_trgm_index",
           "columnNames": [
             "username"
@@ -3970,6 +3981,16 @@
       "name": "rolle",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "name"
+          ],
+          "composite": false,
+          "keyName": "rolle_name_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "rolle_pkey",
           "columnNames": [
@@ -6075,12 +6096,12 @@
         },
         "url": {
           "name": "url",
-          "type": "varchar(255)",
+          "type": "text",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "mappedType": "string"
+          "mappedType": "text"
         },
         "provided_on_schulstrukturknoten": {
           "name": "provided_on_schulstrukturknoten",
@@ -6107,6 +6128,15 @@
             "HINWEISE"
           ],
           "mappedType": "enum"
+        },
+        "logo_id": {
+          "name": "logo_id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
         },
         "logo": {
           "name": "logo",
@@ -6192,7 +6222,13 @@
           "unique": true
         }
       ],
-      "checks": [],
+      "checks": [
+        {
+          "name": "logo_or_logo_id_consistency",
+          "expression": "(logo_id IS NULL AND logo IS NULL) OR (logo_id IS NULL AND logo IS NOT NULL) OR (logo_id IS NOT NULL AND logo IS NULL)",
+          "definition": "check (((logo_id IS NULL AND logo IS NULL) OR (logo_id IS NULL AND logo IS NOT NULL) OR (logo_id IS NOT NULL AND logo IS NULL)))"
+        }
+      ],
       "foreignKeys": {},
       "nativeEnums": {
         "db_seed_status_enum": {
@@ -6437,6 +6473,26 @@
       "name": "rolle_service_provider",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "rolle_id"
+          ],
+          "composite": false,
+          "keyName": "rolle_service_provider_rolle_id_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "service_provider_id"
+          ],
+          "composite": false,
+          "keyName": "rolle_service_provider_service_provider_id_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "rolle_service_provider_pkey",
           "columnNames": [

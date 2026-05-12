@@ -8,13 +8,11 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { VidisConfig } from '../../../shared/config/vidis.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { Err } from '../../../shared/util/result.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -29,6 +27,7 @@ import { OrganisationServiceProviderRepo } from '../repo/organisation-service-pr
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AttachedRollenError } from './errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
+import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
@@ -37,6 +36,7 @@ import {
 } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import {
+    ManageableServiceProviderDetailsWithReferencedObjects,
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
@@ -104,52 +104,72 @@ export class ServiceProviderService {
     }
 
     public async findManageableById(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         id: ServiceProviderID,
-    ): Promise<Option<ManageableServiceProviderWithReferencedObjects>> {
-        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ROLLEN_ERWEITERN],
-            false,
-            false,
-        );
+    ): Promise<Option<ManageableServiceProviderDetailsWithReferencedObjects>> {
+        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(id);
+        if (!serviceProvider) {
+            return;
+        }
 
-        let serviceProvider: Option<ServiceProvider<true>>;
+        const systemrechte: RollenSystemRecht[] = [];
+        if (
+            await permissions.hasSystemrechtAtOrganisation(
+                serviceProvider.providedOnSchulstrukturknoten,
+                RollenSystemRecht.ANGEBOTE_VERWALTEN,
+            )
+        ) {
+            systemrechte.push(RollenSystemRecht.ANGEBOTE_VERWALTEN);
+        }
+        if (
+            await permissions.hasSystemrechtAtOrganisation(
+                serviceProvider.providedOnSchulstrukturknoten,
+                RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
+            )
+        ) {
+            systemrechte.push(RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN);
+        }
 
-        if (permittedOrgas.all) {
-            serviceProvider = await this.serviceProviderRepo.findById(id);
+        const orgasWithRollenErweiternPermission: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht([
+            RollenSystemRecht.ROLLEN_ERWEITERN,
+        ]);
+        if (
+            orgasWithRollenErweiternPermission.all ||
+            orgasWithRollenErweiternPermission.orgaIds.includes(serviceProvider.providedOnSchulstrukturknoten)
+        ) {
+            systemrechte.push(RollenSystemRecht.ROLLEN_ERWEITERN);
         } else {
             const parents: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds(
-                permittedOrgas.orgaIds,
+                orgasWithRollenErweiternPermission.orgaIds,
             );
-            const parentOrgaIds: OrganisationID[] = parents.map((orga: Organisation<true>) => orga.id);
-            const organisationWithParentsIds: OrganisationID[] = permittedOrgas.orgaIds.concat(parentOrgaIds);
-
-            serviceProvider = await this.serviceProviderRepo.findByIdForOrganisationIds(id, organisationWithParentsIds);
+            if (
+                Array.isArray(parents) &&
+                parents.some(
+                    (parent: Organisation<true>) => parent.id === serviceProvider.providedOnSchulstrukturknoten,
+                )
+            ) {
+                systemrechte.push(RollenSystemRecht.ROLLEN_ERWEITERN);
+            }
         }
 
-        if (!serviceProvider) {
-            return undefined;
+        if (systemrechte.length === 0) {
+            return;
         }
 
-        // Calculate permitted orgas for delete
-        const permittedDeleteOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN],
-            true,
-            false,
-        );
-        const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
-            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
-                [serviceProvider],
-                undefined,
-                undefined,
-                permittedDeleteOrgas,
-            );
+        const enrichedServiceProvider: ManageableServiceProviderWithReferencedObjects = (
+            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders([serviceProvider])
+        )[0]!;
 
-        return enrichedServiceProviders[0];
+        const result: ManageableServiceProviderDetailsWithReferencedObjects = {
+            ...enrichedServiceProvider,
+            relevantSystemrechte: systemrechte,
+        };
+
+        return result;
     }
 
     public async findAuthorized(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         limit?: number,
         offset?: number,
     ): Promise<Counted<ManageableServiceProviderWithReferencedObjects>> {
@@ -178,7 +198,7 @@ export class ServiceProviderService {
 
     public async getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
         organisationId: OrganisationID,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         limit?: number,
         offset?: number,
     ): Promise<Result<Counted<ManageableServiceProviderWithReferencedObjects>, MissingPermissionsError>> {
@@ -207,7 +227,7 @@ export class ServiceProviderService {
         const [serviceProviders, total]: [ServiceProvider<true>[], number] = result;
 
         // Calculate permitted orgas for delete
-        const permittedDeleteOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ANGEBOTE_VERWALTEN, RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN],
             true,
             false,
@@ -217,7 +237,7 @@ export class ServiceProviderService {
                 serviceProviders,
                 20,
                 organisationId,
-                permittedDeleteOrgas,
+                permittedOrgas,
             );
 
         return { ok: true, value: [enrichedServiceProviders, total] };
@@ -227,7 +247,7 @@ export class ServiceProviderService {
         serviceProviders: ServiceProvider<true>[],
         limitRoles?: number,
         organisationId?: OrganisationID,
-        permittedDeleteOrgas?: PermittedOrgas,
+        permittedOrgas?: PermittedOrgas,
     ): Promise<ManageableServiceProviderWithReferencedObjects[]> {
         const serviceProvidersIds: ServiceProviderID[] = serviceProviders.map((sp: ServiceProvider<true>) => sp.id);
 
@@ -243,10 +263,10 @@ export class ServiceProviderService {
             ),
         ]);
 
-        let permittedDeleteOrgaSet: Set<string> = new Set();
-        if (permittedDeleteOrgas) {
-            if (!permittedDeleteOrgas.all) {
-                permittedDeleteOrgaSet = new Set(permittedDeleteOrgas.orgaIds);
+        let permittedOrgaSet: Set<string> = new Set();
+        if (permittedOrgas) {
+            if (!permittedOrgas.all) {
+                permittedOrgaSet = new Set(permittedOrgas.orgaIds);
             }
         }
 
@@ -257,9 +277,8 @@ export class ServiceProviderService {
                     organisation: organisationen.get(serviceProvider.providedOnSchulstrukturknoten)!,
                     rollen: rollen.get(serviceProvider.id) ?? [],
                     rollenerweiterungen: rollenerweiterungen.get(serviceProvider.id) ?? [],
-                    isDeleteAuthorized:
-                        permittedDeleteOrgas?.all ||
-                        permittedDeleteOrgaSet.has(serviceProvider.providedOnSchulstrukturknoten),
+                    hasSomeVerwaltenPermission:
+                        permittedOrgas?.all || permittedOrgaSet.has(serviceProvider.providedOnSchulstrukturknoten),
                 };
             },
         );
@@ -315,7 +334,7 @@ export class ServiceProviderService {
         }));
     }
 
-    public async updateServiceProvidersForVidis(): Promise<void> {
+    public async updateServiceProvidersForVidis(permissions: IPersonPermissions): Promise<void> {
         this.logger.info('Aktualisierung der ServiceProvider für VIDIS-Angebote wurde gestartet.');
 
         const vidisKeycloakGroup: string = this.vidisConfig.KEYCLOAK_GROUP;
@@ -337,12 +356,6 @@ export class ServiceProviderService {
 
                 const angebotLogoMediaType: string = this.determineMediaTypeFor(angebot.angebotLogo);
 
-                // The following bypass is really bad, but since this code is not excuted in prod, it is better than keeping ServiceProviderRepo.save() without permission checks
-                const permissionOverride: PermissionsOverride = new PermissionsOverride(
-                    null as unknown as PersonPermissions,
-                );
-                permissionOverride.grantSystemrechteAtOrga(schulstrukturknoten, [RollenSystemRecht.ANGEBOTE_VERWALTEN]);
-
                 let persistedServiceProviderResult: Result<ServiceProvider<true>, DomainError>;
                 if (existingServiceProvider) {
                     const serviceProvider: ServiceProvider<true> = ServiceProvider.construct(
@@ -354,6 +367,7 @@ export class ServiceProviderService {
                         angebot.angebotLink,
                         existingServiceProvider.kategorie,
                         schulstrukturknoten,
+                        existingServiceProvider.logoId,
                         Buffer.from(angebot.angebotLogo, 'base64'),
                         angebotLogoMediaType,
                         vidisKeycloakGroup,
@@ -366,7 +380,7 @@ export class ServiceProviderService {
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' already exists.`);
 
                     persistedServiceProviderResult = await this.serviceProviderRepo.update(
-                        permissionOverride,
+                        permissions,
                         serviceProvider,
                     );
 
@@ -385,6 +399,7 @@ export class ServiceProviderService {
                         angebot.angebotLink,
                         ServiceProviderKategorie.UNTERRICHT,
                         schulstrukturknoten,
+                        undefined,
                         Buffer.from(angebot.angebotLogo, 'base64'),
                         angebotLogoMediaType,
                         vidisKeycloakGroup,
@@ -397,7 +412,7 @@ export class ServiceProviderService {
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' was created.`);
 
                     persistedServiceProviderResult = await this.serviceProviderRepo.create(
-                        permissionOverride,
+                        permissions,
                         serviceProvider,
                     );
 
@@ -445,32 +460,23 @@ export class ServiceProviderService {
     }
 
     public async updateServiceProvider(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         angebotId: ServiceProviderID,
         updateServiceProviderBodyParams: UpdateServiceProviderBodyParams,
     ): Promise<Result<ServiceProvider<true>, DomainError>> {
-        if (!updateServiceProviderBodyParams.name && !updateServiceProviderBodyParams.url) {
-            return {
-                ok: false,
-                error: new MissingAttributeError(
-                    'At least one of the following parameters must be provided: name, url',
-                ),
-            };
-        }
-        const existingServiceProvider: Option<ServiceProvider<true>> =
-            await this.serviceProviderRepo.findById(angebotId);
+        const existingServiceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
+            angebotId,
+            { withLogo: true },
+        );
         if (!existingServiceProvider) {
-            throw new EntityNotFoundError();
+            return Err(new EntityNotFoundError());
         }
 
-        if (updateServiceProviderBodyParams.name) {
-            existingServiceProvider.name = updateServiceProviderBodyParams.name;
-        }
-        if (updateServiceProviderBodyParams.url) {
-            existingServiceProvider.url = updateServiceProviderBodyParams.url;
-        }
-        if (updateServiceProviderBodyParams.kategorie) {
-            existingServiceProvider.kategorie = updateServiceProviderBodyParams.kategorie;
+        const updateError: Option<InvalidLogoCombinationError> = existingServiceProvider.updateWithSafeFields(
+            updateServiceProviderBodyParams,
+        );
+        if (updateError) {
+            return Err(updateError);
         }
 
         const updatedServiceProvider: Promise<Result<ServiceProvider<true>, DomainError>> =

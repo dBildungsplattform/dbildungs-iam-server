@@ -12,7 +12,7 @@ import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeo
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { OrganisationID } from '../../../shared/types/index.js';
+import { OrganisationID, ServiceProviderID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
@@ -34,6 +34,15 @@ describe('RolleRepo', () => {
     let sut: RolleRepo;
     let orm: MikroORM;
     let em: EntityManager;
+
+    async function createRolle(props?: Partial<Rolle<boolean>>): Promise<Rolle<true>> {
+        const rolle: Rolle<true> | DomainError = await sut.save(DoFactory.createRolle(false, props));
+        if (rolle instanceof DomainError) {
+            throw Error();
+        }
+
+        return rolle;
+    }
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -589,6 +598,44 @@ describe('RolleRepo', () => {
 
             expect(result).toHaveLength(1);
             expect(result).toEqual(expect.arrayContaining([rolle]));
+        });
+    });
+
+    describe('findByServiceProviderIds', () => {
+        it('should return empty map if no ids are given', async () => {
+            const resultMap: Map<ServiceProviderID, Rolle<true>[]> = await sut.findByServiceProviderIds([]);
+
+            expect(resultMap.size).toBe(0);
+        });
+
+        it('should enforce limit for providers', async () => {
+            const serviceProviderA: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+            });
+            const serviceProviderB: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+            });
+
+            await createRolle({ name: 'C', serviceProviderIds: [serviceProviderA.id] });
+            const rolleB: Rolle<true> = await createRolle({ name: 'B', serviceProviderIds: [serviceProviderA.id] });
+            const rolleA: Rolle<true> = await createRolle({
+                name: 'A',
+                serviceProviderIds: [serviceProviderA.id, serviceProviderB.id],
+            });
+
+            const resultMap: Map<ServiceProviderID, Rolle<true>[]> = await sut.findByServiceProviderIds(
+                [serviceProviderA.id],
+                2,
+            );
+
+            expect(resultMap.size).toBe(1);
+            expect(resultMap.get(serviceProviderA.id)).toHaveLength(2);
+            expect(resultMap.get(serviceProviderA.id)).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({ name: rolleA.name }),
+                    expect.objectContaining({ name: rolleB.name }),
+                ]),
+            );
         });
     });
 
