@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { setTimeout } from 'timers/promises';
 import { createMock } from '../../../../../test/utils/createMock.js';
 import {
     DatabaseTestModule,
@@ -190,7 +189,7 @@ describe('EmailRepo', () => {
                 if (mailFromDb?.sortedStatuses.find((s: EmailAddressStatus) => s.status === status)) {
                     return Promise.resolve();
                 } else {
-                    return Promise.reject();
+                    return Promise.reject(new Error('status is not set yet'));
                 }
             });
         }
