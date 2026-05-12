@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PermittedOrgas, PersonPermissions } from '../../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../../authentication/domain/person-permissions.js';
 import {
     DBiamPersonenkontextRepo,
     KontextWithOrgaAndRolle,
@@ -15,6 +15,7 @@ import { Person } from '../../../person/domain/person.js';
 import { PersonInfoResponseV1 } from '../../api/personinfo/v1/person-info.response.v1.js';
 import { PersonID } from '../../../../shared/types/index.js';
 import { SchulconnexRepo } from '../../persistence/schulconnex.repo.js';
+import { IPersonPermissions } from '../../../../shared/permissions/person-permissions.interface.js';
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 import { DomainError } from '../../../../shared/error/index.js';
 import { Ok } from '../../../../shared/util/result.js';
@@ -31,7 +32,7 @@ export class PersonenInfoService {
     ) {}
 
     public async findPersonsForPersonenInfo(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         offset: number,
         limit: number,
     ): Promise<Result<PersonInfoResponseV1[], DomainError>> {

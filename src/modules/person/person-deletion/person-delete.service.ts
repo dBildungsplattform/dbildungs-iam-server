@@ -3,13 +3,13 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError, EntityCouldNotBeDeleted } from '../../../shared/error/index.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @Injectable()
 export class PersonDeleteService {
@@ -21,7 +21,7 @@ export class PersonDeleteService {
 
     public async deletePerson(
         personId: string,
-        personPermissions: PersonPermissions,
+        personPermissions: IPersonPermissions,
     ): Promise<Result<void, DomainError>> {
         this.logger.info(`Deleting person with id ${personId}`);
         const removedPersonenkontextsResult: Result<PersonenkontextEventKontextData[], EntityCouldNotBeDeleted> =
@@ -35,7 +35,7 @@ export class PersonDeleteService {
 
     public async deletePersonAfterDeadlineExceeded(
         personId: string,
-        personPermissions: PersonPermissions,
+        personPermissions: IPersonPermissions,
     ): Promise<Result<void, DomainError>> {
         this.logger.info(`Deleting person with id ${personId} after deadline exceeded`);
         const removedPersonenkontextsResult: Result<PersonenkontextEventKontextData[], EntityCouldNotBeDeleted> =

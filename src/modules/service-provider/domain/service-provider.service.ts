@@ -10,7 +10,7 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { Err } from '../../../shared/util/result.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -90,7 +90,7 @@ export class ServiceProviderService {
     }
 
     public async findManageableById(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         id: ServiceProviderID,
     ): Promise<Option<ManageableServiceProviderDetailsWithReferencedObjects>> {
         const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(id);
@@ -155,7 +155,7 @@ export class ServiceProviderService {
     }
 
     public async findAuthorized(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         limit?: number,
         offset?: number,
     ): Promise<Counted<ManageableServiceProviderWithReferencedObjects>> {
@@ -184,7 +184,7 @@ export class ServiceProviderService {
 
     public async getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(
         organisationId: OrganisationID,
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         limit?: number,
         offset?: number,
     ): Promise<Result<Counted<ManageableServiceProviderWithReferencedObjects>, MissingPermissionsError>> {
@@ -320,9 +320,8 @@ export class ServiceProviderService {
         }));
     }
 
-
     public async updateServiceProvider(
-        permissions: PersonPermissions,
+        permissions: IPersonPermissions,
         angebotId: ServiceProviderID,
         updateServiceProviderBodyParams: UpdateServiceProviderBodyParams,
     ): Promise<Result<ServiceProvider<true>, DomainError>> {
@@ -334,8 +333,10 @@ export class ServiceProviderService {
                 ),
             };
         }
-        const existingServiceProvider: Option<ServiceProvider<true>> =
-            await this.serviceProviderRepo.findById(angebotId);
+        const existingServiceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
+            angebotId,
+            { withLogo: true },
+        );
         if (!existingServiceProvider) {
             throw new EntityNotFoundError();
         }
@@ -384,34 +385,4 @@ export class ServiceProviderService {
 
         return this.serviceProviderRepo.deleteByIdAuthorized(permissions, id);
     }
-
-    /**
-     * Determines the correct media type of the given Angebot logo.
-     * Assumption: Expected media type is always one of the three: 'image/jpeg', 'image/png' or 'image/svg+xml'.
-     * @param {base64EncodedLogo} base64EncodedLogo Base64 encoded logo
-     */
-    /*
-    private determineMediaTypeFor(base64EncodedLogo: string): string {
-        const MEDIA_SIGNATURES: { JPG: Buffer; PNG: Buffer } = {
-            // JPG/JPEG file signature in hexadeciaml begins with: ff d8 ff
-            JPG: Buffer.from([0xff, 0xd8, 0xff]),
-            // PNG file signature in hexadeciaml begins with: 89  50  4e  47  0d  0a  1a  0a
-            PNG: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-        };
-
-        const logoBuffer: Buffer = Buffer.from(base64EncodedLogo, 'base64');
-
-        const first8Bytes: Buffer = logoBuffer.subarray(0, 8);
-        if (first8Bytes.equals(MEDIA_SIGNATURES.PNG)) {
-            return 'image/png';
-        }
-
-        const first3Bytes: Buffer = logoBuffer.subarray(0, 3);
-        if (first3Bytes.equals(MEDIA_SIGNATURES.JPG)) {
-            return 'image/jpeg';
-        }
-
-        return 'image/svg+xml';
-    }
-        */
 }

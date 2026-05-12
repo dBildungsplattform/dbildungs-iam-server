@@ -9,7 +9,6 @@ import {
 } from '@nestjs/swagger';
 import { EntityNotFoundError } from '../../../../shared/error/index.js';
 import { Permissions } from '../../../authentication/api/permissions.decorator.js';
-import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 import { Person } from '../../../person/domain/person.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import {
@@ -24,6 +23,7 @@ import { UserLock } from '../../../keycloak-administration/domain/user-lock.js';
 import { PersonInfoResponse } from './v0/person-info.response.js';
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 import { EmailRepo } from '../../../email/persistence/email.repo.js';
+import { IPersonPermissions } from '../../../../shared/permissions/person-permissions.interface.js';
 import { SchulConnexSharedErrorFilter } from '../../error/schulconnex-shared-error-filter.js';
 import { SchulConnexAuthenticationDomainErrorFilter } from '../../error/schulconnex-authentication-domain-error-filter.js';
 import { SchulConnexValidationErrorFilter } from '../../error/schulconnex-validation-error.filter.js';
@@ -53,7 +53,7 @@ export class PersonInfoController {
     @ApiOperation({ summary: 'Info about logged in person.' })
     @ApiUnauthorizedResponse({ description: 'person is not logged in.' })
     @ApiOkResponse({ description: 'Returns info about the person.', type: PersonInfoResponse })
-    public async info(@Permissions() permissions: PersonPermissions): Promise<PersonInfoResponse> {
+    public async info(@Permissions() permissions: IPersonPermissions): Promise<PersonInfoResponse> {
         const personId: string = permissions.personFields.id;
         const person: Option<Person<true>> = await this.personRepo.findById(personId);
 
@@ -82,7 +82,7 @@ export class PersonInfoController {
     @ApiOperation({ summary: 'Info about logged in person.', operationId: 'personInfoControllerInfoV1' })
     @ApiUnauthorizedResponse({ description: 'person is not logged in.' })
     @ApiOkResponse({ description: 'Returns info about the person.', type: PersonInfoResponseV1 })
-    public async infoV1(@Permissions() permissions: PersonPermissions): Promise<PersonInfoResponseV1> {
+    public async infoV1(@Permissions() permissions: IPersonPermissions): Promise<PersonInfoResponseV1> {
         const personId: string = permissions.personFields.id;
         const person: Option<Person<true>> = await this.personRepo.findById(personId);
 

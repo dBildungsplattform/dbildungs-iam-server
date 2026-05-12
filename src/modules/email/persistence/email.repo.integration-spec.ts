@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
-    ConfigTestModule,
+    CommonTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
@@ -75,7 +75,7 @@ describe('EmailRepo', () => {
         });
 
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailModule],
+            imports: [CommonTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailModule],
             providers: [],
         })
             .overrideProvider(ClassLogger)
@@ -882,6 +882,24 @@ describe('EmailRepo', () => {
                     notFoundError,
                 );
             });
+        });
+    });
+
+    describe('setUpdatedAtToFixedPointInTime', () => {
+        it('should update the updatedAt field', async () => {
+            const person: Person<true> = await createPerson();
+            const address: string = faker.internet.email();
+            const addressId: string = await createEmailAddressViaEM(
+                EmailAddressStatus.DISABLED,
+                person.id,
+                undefined,
+                address,
+            );
+
+            await sut.setUpdatedAtToFixedPointInTime(addressId);
+            const emailAddress: Option<EmailAddress<true>> = await sut.findByAddress(address);
+
+            expect(emailAddress?.updatedAt).toEqual(new Date(2027, 7));
         });
     });
 
