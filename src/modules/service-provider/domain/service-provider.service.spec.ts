@@ -859,7 +859,7 @@ describe('ServiceProviderService', () => {
         });
 
         it('should update ServiceProvider for VIDIS Angebote if ServiceProvider in VIDIS Angebot response already exists in SPSH.', async () => {
-            vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
+            vidisService.getActivatedAngeboteByRegionSH.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(
                 mockExistingVidisServiceProviderContainedInVidisAngebote,
@@ -873,7 +873,7 @@ describe('ServiceProviderService', () => {
 
             await service.updateServiceProvidersForVidis(createPersonPermissionsMock());
 
-            expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
+            expect(vidisService.getActivatedAngeboteByRegionSH).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
             expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(serviceProviderRepo.update).toHaveBeenCalledTimes(mockVidisAngebote.length);
@@ -886,7 +886,7 @@ describe('ServiceProviderService', () => {
         });
 
         it('should log error when updating ServiceProvider fails', async () => {
-            vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
+            vidisService.getActivatedAngeboteByRegionSH.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(
                 mockExistingVidisServiceProviderContainedInVidisAngebote,
@@ -906,7 +906,7 @@ describe('ServiceProviderService', () => {
         });
 
         it('should update ServiceProvider for VIDIS Angebote if ServiceProvider in VIDIS Angebot response does not exist in SPSH yet.', async () => {
-            vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
+            vidisService.getActivatedAngeboteByRegionSH.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
             serviceProviderRepo.create.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
@@ -917,7 +917,7 @@ describe('ServiceProviderService', () => {
             serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
             await service.updateServiceProvidersForVidis(createPersonPermissionsMock());
 
-            expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
+            expect(vidisService.getActivatedAngeboteByRegionSH).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
             expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(serviceProviderRepo.create).toHaveBeenCalledTimes(mockVidisAngebote.length);
@@ -930,7 +930,7 @@ describe('ServiceProviderService', () => {
         });
 
         it('should log error when creating ServiceProvider fails', async () => {
-            vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
+            vidisService.getActivatedAngeboteByRegionSH.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
             serviceProviderRepo.create.mockResolvedValue(Err(new DuplicateNameError('Name already in use')));
@@ -947,7 +947,7 @@ describe('ServiceProviderService', () => {
         });
 
         it('should delete ServiceProvider for VIDIS Angebote in SPSH if ServiceProvider is not in VIDIS Angebot response.', async () => {
-            vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
+            vidisService.getActivatedAngeboteByRegionSH.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
             serviceProviderRepo.create.mockResolvedValue(Ok(mockExistingVidisServiceProviderContainedInVidisAngebote));
@@ -960,7 +960,7 @@ describe('ServiceProviderService', () => {
 
             await service.updateServiceProvidersForVidis(createPersonPermissionsMock());
 
-            expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
+            expect(vidisService.getActivatedAngeboteByRegionSH).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
             expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(serviceProviderRepo.create).toHaveBeenCalledTimes(mockVidisAngebote.length);

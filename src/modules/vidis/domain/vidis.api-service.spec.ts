@@ -150,7 +150,7 @@ describe("VidisApiService", () => {
 		it("should call HttpService.post and HttpService.get", async () => {
 			mockHttpResponses()
 
-			await sut.getActivatedAngeboteByRegion()
+			await sut.getActivatedAngeboteByRegionSH()
 
 			expect(httpServiceMock.post).toHaveBeenCalledWith(
 				"/o/oauth2/token?pageSize=100000",
@@ -184,7 +184,7 @@ describe("VidisApiService", () => {
 				}),
 			)
 
-			const result: VidisAngebotWithSchoolActivations[] = await sut.getActivatedAngeboteByRegion()
+			const result: VidisAngebotWithSchoolActivations[] = await sut.getActivatedAngeboteByRegionSH()
 
 			expect(result).toMatchObject(expectedResult)
 			expect(loggerMock.debug).toHaveBeenNthCalledWith(1, "Received auth token from Vidis API")
