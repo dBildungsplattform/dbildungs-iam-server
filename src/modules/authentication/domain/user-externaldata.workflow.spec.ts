@@ -233,6 +233,7 @@ describe('UserExternaldataWorkflow', () => {
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
+                    rolleId: 'rolle1',
                     serviceProvider: [DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' })],
                     rollenart: RollenArt.LEHR,
                     kennung: 'kennung1',
@@ -261,6 +262,7 @@ describe('UserExternaldataWorkflow', () => {
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
+                    rolleId: 'rolle1',
                     rollenart: RollenArt.LEHR,
                     kennung: faker.string.alpha(),
                     serviceProvider: [DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' })],
@@ -284,6 +286,7 @@ describe('UserExternaldataWorkflow', () => {
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
+                    rolleId: 'rolle1',
                     serviceProvider: [DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' })],
                     rollenart: RollenArt.LEHR,
                     kennung: faker.string.alpha(),
@@ -320,6 +323,7 @@ describe('UserExternaldataWorkflow', () => {
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
+                    rolleId: 'rolle1',
                     serviceProvider: [DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' })],
                     rollenart: RollenArt.LEHR,
                     kennung: faker.string.alpha(),
@@ -351,6 +355,7 @@ describe('UserExternaldataWorkflow', () => {
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
+                    rolleId: 'rolle1',
                     serviceProvider: [
                         createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp1',
@@ -362,7 +367,8 @@ describe('UserExternaldataWorkflow', () => {
                     kennung: faker.string.alpha(),
                 },
                 {
-                    pkId: 'pk1',
+                    pkId: 'pk2',
+                    rolleId: 'rolle2',
                     serviceProvider: [
                         createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp2',
@@ -385,6 +391,7 @@ describe('UserExternaldataWorkflow', () => {
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
+                    rolleId: 'rolle1',
                     serviceProvider: [
                         createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp1',
@@ -397,6 +404,7 @@ describe('UserExternaldataWorkflow', () => {
                 },
                 {
                     pkId: 'pk2',
+                    rolleId: 'rolle2',
                     serviceProvider: [
                         createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp2',
@@ -425,6 +433,7 @@ describe('UserExternaldataWorkflow', () => {
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
+                    rolleId: 'rolle1',
                     serviceProvider: [
                         createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp1',
@@ -453,6 +462,7 @@ describe('UserExternaldataWorkflow', () => {
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
+                    rolleId: 'rolle1',
                     serviceProvider: [
                         createMock<ServiceProvider<true>>(ServiceProvider<true>, {
                             id: 'sp1',

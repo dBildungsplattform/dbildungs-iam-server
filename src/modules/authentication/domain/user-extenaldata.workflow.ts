@@ -92,9 +92,10 @@ export class UserExternaldataWorkflowAggregate {
         // Additionally If there is an data-invalidity the Endpoint still works (If throwing Errors not) and allows the Keycloak the get the data for the other Personenkontexte
         this.checkedExternalPkData = externalPkData
             .map((expk: ExternalPkData) => {
-                if (expk.pkId && expk.kennung && expk.rollenart && expk.serviceProvider) {
+                if (expk.pkId && expk.rolleId && expk.kennung && expk.rollenart && expk.serviceProvider) {
                     return {
                         pkId: expk.pkId,
+                        rolleId: expk.rolleId,
                         rollenart: expk.rollenart,
                         serviceProvider: expk.serviceProvider,
                         kennung: expk.kennung,
