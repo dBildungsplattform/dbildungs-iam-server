@@ -32,10 +32,7 @@ import { UpdateLernNotAtSchuleAndKlasseError } from './error/update-lern-not-at-
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { CheckDuplicateKlassenkontextSpecification } from '../specification/check-duplicate-klassenkontext.js';
 import { DuplicateKlassenkontextError } from './error/update-invalid-duplicate-klassenkontext-for-same-rolle.js';
-import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -52,7 +49,6 @@ export class PersonenkontexteUpdate {
         private readonly count: number,
         private readonly dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
         private readonly permissions: IPersonPermissions,
-        private readonly emailRepo: EmailRepo,
         private readonly emailResolverService: EmailResolverService,
         private readonly personalnummer?: string,
     ) {}
@@ -71,7 +67,6 @@ export class PersonenkontexteUpdate {
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
         permissions: IPersonPermissions,
-        emailRepo: EmailRepo,
         emailResolverService: EmailResolverService,
         personalnummer?: string,
     ): PersonenkontexteUpdate {
@@ -89,7 +84,6 @@ export class PersonenkontexteUpdate {
             count,
             dBiamPersonenkontextBodyParams,
             permissions,
-            emailRepo,
             emailResolverService,
             personalnummer,
         );
@@ -438,13 +432,6 @@ export class PersonenkontexteUpdate {
         return existingPKsAfterUpdate;
     }
 
-    public async getEmailForPerson(person: Person<true>): Promise<string | undefined> {
-        const email: Option<PersonEmailResponse> = this.emailResolverService.shouldUseEmailMicroservice()
-            ? await this.emailResolverService.findEmailBySpshPerson(person.id)
-            : await this.emailRepo.getEmailAddressAndStatusForPerson(person);
-        return email?.status === EmailAddressStatus.ENABLED ? email.address : undefined;
-    }
-
     private async publishEvent(
         deletedPKs: Personenkontext<true>[],
         createdPKs: Personenkontext<true>[],
@@ -489,7 +476,7 @@ export class PersonenkontexteUpdate {
             (pk: Personenkontext<true>) => [pk, orgas.get(pk.organisationId)!, rollen.get(pk.rolleId)!],
         );
 
-        const email: string | undefined = await this.getEmailForPerson(person);
+        const email: string | undefined = await this.emailResolverService.getPrimaryActiveEmailForPerson(person);
 
         this.eventRoutingLegacyKafkaService.publish(
             PersonenkontextUpdatedEvent.fromPersonenkontexte(person, created, deleted, existing, email),

@@ -7,11 +7,13 @@ import { EmailMicroserviceEventHandler } from './domain/email-microservice-event
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { PersonModule } from '../person/person.module.js';
 import { EmailWebhookController } from './api/email-microservice-webhook.controller.js';
+import { EmailPersistenceModule } from '../email/email-persistence.module.js';
 
 @Module({
     imports: [
         HttpModule,
         RolleModule,
+        EmailPersistenceModule,
         forwardRef(() => PersonenKontextModule),
         forwardRef(() => PersonModule),
         LoggerModule.register(EmailMicroserviceModule.name),

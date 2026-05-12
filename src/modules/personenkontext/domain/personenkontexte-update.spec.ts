@@ -42,7 +42,6 @@ import { UpdateLernNotAtSchuleAndKlasseError } from './error/update-lern-not-at-
 import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
@@ -86,8 +85,6 @@ describe('PersonenkontexteUpdate', () => {
     let personPermissionsMock: PersonPermissionsMock;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let loggerMock: DeepMocked<ClassLogger>;
-    let emailRepoMock: DeepMocked<EmailRepo>;
-    let emailResolverServiceMock: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -195,8 +192,6 @@ describe('PersonenkontexteUpdate', () => {
         personPermissionsMock = new PersonPermissionsMock();
         rolleRepoMock = module.get(RolleRepo);
         loggerMock = module.get(ClassLogger);
-        emailRepoMock = module.get(EmailRepo);
-        emailResolverServiceMock = module.get(EmailResolverService);
     });
 
     afterAll(async () => {
@@ -1151,91 +1146,6 @@ describe('PersonenkontexteUpdate', () => {
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateResult).toBeInstanceOf(DuplicateKlassenkontextError);
-            });
-        });
-
-        describe('getEmailForPerson', () => {
-            let person: Person<true>;
-            const emailAddress: string = 'test@example.com';
-
-            beforeEach(() => {
-                person = DoFactory.createPerson(true, { id: faker.string.uuid() });
-
-                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
-                    person.id,
-                    lastModified,
-                    0,
-                    [],
-                    personPermissionsMock,
-                );
-            });
-
-            it('should return email when using microservice and email is ENABLED', async () => {
-                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-                emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValueOnce({
-                    address: emailAddress,
-                    status: EmailAddressStatus.ENABLED,
-                });
-
-                const result: string | undefined = await sut.getEmailForPerson(person);
-
-                expect(result).toBe(emailAddress);
-                expect(emailResolverServiceMock.findEmailBySpshPerson).toHaveBeenCalledWith(person.id);
-            });
-
-            it('should return undefined when using microservice and email is NOT enabled', async () => {
-                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-                emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValueOnce({
-                    address: emailAddress,
-                    status: EmailAddressStatus.DISABLED,
-                });
-
-                const result: string | undefined = await sut.getEmailForPerson(person);
-
-                expect(result).toBeUndefined();
-            });
-
-            it('should return email when using EmailRepo and email is ENABLED', async () => {
-                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
-                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce({
-                    address: emailAddress,
-                    status: EmailAddressStatus.ENABLED,
-                });
-
-                const result: string | undefined = await sut.getEmailForPerson(person);
-
-                expect(result).toBe(emailAddress);
-                expect(emailRepoMock.getEmailAddressAndStatusForPerson).toHaveBeenCalledWith(person);
-            });
-
-            it('should return undefined when using EmailRepo and email is NOT enabled', async () => {
-                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
-                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce({
-                    address: emailAddress,
-                    status: EmailAddressStatus.DISABLED,
-                });
-
-                const result: string | undefined = await sut.getEmailForPerson(person);
-
-                expect(result).toBeUndefined();
-            });
-
-            it('should return undefined when no email is found (microservice)', async () => {
-                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-                emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValueOnce(undefined);
-
-                const result: string | undefined = await sut.getEmailForPerson(person);
-
-                expect(result).toBeUndefined();
-            });
-
-            it('should return undefined when no email is found (repo)', async () => {
-                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
-                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(undefined);
-
-                const result: string | undefined = await sut.getEmailForPerson(person);
-
-                expect(result).toBeUndefined();
             });
         });
     });
