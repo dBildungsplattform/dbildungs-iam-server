@@ -1,11 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ServiceProviderKategorie,
-    ServiceProviderMerkmal,
-    ServiceProviderSystem,
-    ServiceProviderTarget,
-} from './service-provider.enum.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { expectErrResult, expectOkResult } from '../../../../test/utils/test-types.js';
+import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 import { ServiceProviderFactory } from './service-provider.factory.js';
 import { ServiceProvider } from './service-provider.js';
 
@@ -30,60 +27,102 @@ describe('ServiceProviderFactory', () => {
     });
 
     describe('construct', () => {
-        describe('when construct is called on factory', () => {
-            it('should return new instance', () => {
-                const name: string = faker.string.alpha();
-                const target: ServiceProviderTarget = faker.helpers.enumValue(ServiceProviderTarget);
-                const url: string = faker.internet.url();
-                const kategorie: ServiceProviderKategorie = faker.helpers.enumValue(ServiceProviderKategorie);
-                const ssk: string = faker.string.uuid();
-                const created: Date = faker.date.past();
-                const updated: Date = faker.date.recent();
-                const id: string = faker.string.uuid();
-                const keycloakGroup: string = faker.string.alpha();
-                const keycloakRole: string = faker.string.alpha();
-                const externalSystem: ServiceProviderSystem = faker.helpers.enumValue(ServiceProviderSystem);
-                const vidisAngebotId: string = faker.string.numeric();
-                const merkmale: ServiceProviderMerkmal[] = [faker.helpers.enumValue(ServiceProviderMerkmal)];
-                const example: ServiceProvider<true> = {
-                    id: id,
-                    createdAt: created,
-                    updatedAt: updated,
-                    name: name,
-                    target: target,
-                    url: url,
-                    kategorie: kategorie,
-                    providedOnSchulstrukturknoten: ssk,
-                    logo: undefined,
-                    logoMimeType: undefined,
-                    keycloakGroup: keycloakGroup,
-                    keycloakRole: keycloakRole,
-                    externalSystem: externalSystem,
-                    requires2fa: false,
-                    vidisAngebotId: vidisAngebotId,
-                    merkmale,
-                };
-                const serviceProvider: ServiceProvider<true> = sut.construct(
-                    id,
-                    created,
-                    updated,
-                    name,
-                    target,
-                    url,
-                    kategorie,
-                    ssk,
-                    undefined,
-                    undefined,
-                    keycloakGroup,
-                    keycloakRole,
-                    externalSystem,
-                    false,
-                    vidisAngebotId,
-                    merkmale,
-                );
+        const example: ServiceProvider<true> = DoFactory.createServiceProvider(true);
 
-                expect(serviceProvider).toEqual(example);
-            });
+        it('should return new instance for valid logo combination', () => {
+            const serviceProvider: Result<ServiceProvider<true>, InvalidLogoCombinationError> = sut.construct(
+                example.id,
+                example.createdAt,
+                example.updatedAt,
+                example.name,
+                example.target,
+                example.url,
+                example.kategorie,
+                example.providedOnSchulstrukturknoten,
+                undefined,
+                example.logo,
+                example.logoMimeType,
+                example.keycloakGroup,
+                example.keycloakRole,
+                example.externalSystem,
+                example.requires2fa,
+                example.vidisAngebotId,
+                example.merkmale,
+            );
+            expectOkResult(serviceProvider);
+        });
+
+        it('should return an error for invalid logo combination', () => {
+            const serviceProvider: Result<ServiceProvider<true>, InvalidLogoCombinationError> = sut.construct(
+                example.id,
+                example.createdAt,
+                example.updatedAt,
+                example.name,
+                example.target,
+                example.url,
+                example.kategorie,
+                example.providedOnSchulstrukturknoten,
+                faker.number.int({ min: 1, max: 1000 }),
+                Buffer.from('fake-logo-data'),
+                'image/png',
+                example.keycloakGroup,
+                example.keycloakRole,
+                example.externalSystem,
+                example.requires2fa,
+                example.vidisAngebotId,
+                example.merkmale,
+            );
+            expectErrResult(serviceProvider);
+            expect(serviceProvider.error).toBeInstanceOf(InvalidLogoCombinationError);
+        });
+    });
+
+    describe('createNew', () => {
+        const example: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+            id: undefined,
+            createdAt: undefined,
+            updatedAt: undefined,
+        });
+
+        it('should return new instance for valid logo combination', () => {
+            const serviceProvider: Result<ServiceProvider<false>, InvalidLogoCombinationError> = sut.createNew(
+                example.name,
+                example.target,
+                example.url,
+                example.kategorie,
+                example.providedOnSchulstrukturknoten,
+                undefined,
+                example.logo,
+                example.logoMimeType,
+                example.keycloakGroup,
+                example.keycloakRole,
+                example.externalSystem,
+                example.requires2fa,
+                example.vidisAngebotId,
+                example.merkmale,
+            );
+            expectOkResult(serviceProvider);
+        });
+
+        it('should return an error for invalid logo combination', () => {
+            const serviceProvider: Result<ServiceProvider<false>, InvalidLogoCombinationError> = sut.createNew(
+                example.name,
+                example.target,
+                example.url,
+                example.kategorie,
+                example.providedOnSchulstrukturknoten,
+                faker.number.int({ min: 1, max: 1000 }),
+                Buffer.from('fake-logo-data'),
+                'image/png',
+                example.keycloakGroup,
+                example.keycloakRole,
+                example.externalSystem,
+                example.requires2fa,
+                example.vidisAngebotId,
+                example.merkmale,
+            );
+            expectErrResult(serviceProvider);
+            expect(serviceProvider.error).toBeInstanceOf(InvalidLogoCombinationError);
         });
     });
 });
