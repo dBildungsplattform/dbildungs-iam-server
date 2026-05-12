@@ -6,23 +6,7 @@ type Actions = {
     [key: string]: ActionProperty;
 };
 
-export type VidisApiResponseSchoolActivation = { 
-    date: string,
-    regionName: string
-}
-
-export type VidisApiResponseAngebot = {
-    clientId: string;
-    educationProviderOrganizationName: string;
-    offerDescription: string;
-    offerId: number;
-    offerLink: string;
-    offerLogo: string;
-    offerLongTitle: string;
-    offerTitle: string;
-    offerVersion: number;
-    schoolActivations: VidisApiResponseSchoolActivation[];
-};
+// RESPONSE TYPES FROM VIDIS API
 
 export type VidisApiResponse<T> = {
     facets: {
@@ -40,9 +24,40 @@ export type VidisApiResponse<T> = {
     items: T[];
 };
 
-export type VidisServiceResponseAngebot = Omit<VidisApiResponseAngebot, 'schoolActivations'> & {
-    schoolActivations: {
-        date: string;
-        kennung: string;
-    }[];
+type VidisApiResponseAngebotCommon = {
+    clientId: string;
+    educationProviderOrganizationName: string;
+    offerDescription: string;
+    offerId: number;
+    offerLink: string;
+    offerLogo: string;
+    offerLongTitle: string;
+    offerTitle: string;
+    offerVersion: number;
 };
+
+export type VidisApiResponseSchoolActivation = {
+    date: string,
+    regionName: string
+}
+
+export type VidisApiResponseAngebotByRegion = VidisApiResponseAngebotCommon & {
+    schoolActivations: VidisApiResponseSchoolActivation[];
+};
+
+export type VidisApiResponseAngebotBySchool = VidisApiResponseAngebotCommon;
+
+
+// RESPONSE TYPES FROM OUR API SERVICE (after transformation)
+
+export type VidisServiceResponseAngebot = VidisApiResponseAngebotCommon;
+
+export type VidisServiceResponseSchoolActivation = {
+    date: string;
+    kennung: string;
+}
+
+export type VidisAngebotWithSchoolActivations = {
+    angebot: VidisServiceResponseAngebot;
+    schoolActivations: VidisServiceResponseSchoolActivation[];
+}

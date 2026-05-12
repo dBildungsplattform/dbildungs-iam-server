@@ -4,7 +4,7 @@ import { VidisConfig } from '../../../shared/config/vidis.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { ConfigService } from '@nestjs/config';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { VidisApiResponseAngebot, VidisApiResponse, VidisServiceResponseAngebot, VidisApiResponseSchoolActivation } from '../api/vidis-angebote-api.types.js';
+import { VidisApiResponseAngebotByRegion, VidisApiResponse, VidisServiceResponseAngebot, VidisApiResponseSchoolActivation, VidisApiResponseAngebotBySchool, VidisAngebotWithSchoolActivations } from '../api/vidis-angebote-api.types.js';
 import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces.js';
 import { firstValueFrom } from 'rxjs';
 
@@ -31,35 +31,43 @@ export class VidisApiService {
     }
 
 
-    public async getActivatedAngeboteByRegion(): Promise<VidisServiceResponseAngebot []> {
+    public async getActivatedAngeboteByRegion(): Promise<VidisAngebotWithSchoolActivations []> {
             const token: string = await this.getAuthToken();
-            const response: AxiosResponse<VidisApiResponse<VidisApiResponseAngebot>> = await firstValueFrom(
+            const response: AxiosResponse<VidisApiResponse<VidisApiResponseAngebotByRegion>> = await firstValueFrom(
                 this.httpService.get(this.constructUrl(VidisApiService.PATH_GET_ACTIVATED_ANGEBOTE_BY_REGION), {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
             );
-            const result: VidisServiceResponseAngebot [] = response.data.items.map((item: VidisApiResponseAngebot) => ({
-                ...item,
+            const result: VidisAngebotWithSchoolActivations [] = response.data.items.map((item: VidisApiResponseAngebotByRegion) => ({
+                angebot:{
+                    ...item
+                },
                 schoolActivations: item.schoolActivations.map((sa: VidisApiResponseSchoolActivation) => (
                     {
-                    date: sa.date,
-                    kennung: this.convertVidisSchoolIdToKennung(sa.regionName),
+                        date: sa.date,
+                        kennung: this.convertVidisSchoolIdToKennung(sa.regionName),
                     }
                 )),
-            } satisfies VidisServiceResponseAngebot));
+            } satisfies VidisAngebotWithSchoolActivations));
 
+            this.logger.debug(`Fetched ${result.length} activated Angebote for region Schleswig-Holstein from Vidis API`);
             return result;
 
     }
 
-    public async getActivatedAngeboteBySchool(kennung: string): Promise<void> {
+    public async getActivatedAngeboteBySchool(kennung: string): Promise<VidisServiceResponseAngebot []> {
             const token: string = await this.getAuthToken();
-            const response: AxiosResponse<VidisApiResponse<unknown>> = await firstValueFrom(
+            const response: AxiosResponse<VidisApiResponse<VidisApiResponseAngebotBySchool>> = await firstValueFrom(
                 this.httpService.get(this.constructUrl(VidisApiService.pathGetActivatedAngeboteBySchool(this.convertKennungToVidisSchoolId(kennung))), {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
             );
-            this.logger.info('Received response from Vidis API for activated offers by school', { data: response.data });
+            const result: VidisServiceResponseAngebot [] = response.data.items.map((item: VidisApiResponseAngebotBySchool) => ({
+                ...item,
+            } satisfies VidisServiceResponseAngebot));
+
+            this.logger.debug(`Fetched ${result.length} activated Angebote for school with kennung ${kennung} from Vidis API`);
+            return result;
     }
 
 
@@ -83,6 +91,7 @@ export class VidisApiService {
         ),
         );
 
+    this.logger.debug(`Received auth token from Vidis API`);
     return response.data.access_token;
     }
 
