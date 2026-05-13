@@ -35,7 +35,6 @@ import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { KeycloakUserService, PersonHasNoKeycloakId } from '../../keycloak-administration/index.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
@@ -100,7 +99,6 @@ describe('PersonRepository Integration', () => {
     let userLockRepository: UserLockRepository;
     let organisationRepository: OrganisationRepository;
     let loggerMock: DeepMocked<ClassLogger>;
-    let emailRepoMock: DeepMocked<EmailRepo>;
     let emailResolverServiceMock: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
@@ -110,10 +108,6 @@ describe('PersonRepository Integration', () => {
                 PersonRepository,
                 OrganisationRepository,
                 ConfigService,
-                {
-                    provide: EmailRepo,
-                    useValue: createMock(EmailRepo),
-                },
                 {
                     provide: EmailResolverService,
                     useValue: createMock(EmailResolverService),
@@ -161,7 +155,6 @@ describe('PersonRepository Integration', () => {
         organisationRepository = module.get(OrganisationRepository);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         loggerMock = module.get(ClassLogger);
-        emailRepoMock = module.get(EmailRepo);
         emailResolverServiceMock = module.get(EmailResolverService);
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -1950,7 +1943,6 @@ describe('PersonRepository Integration', () => {
 
             describe('Delete the person and all kontexte and trigger event to delete email', () => {
                 it('should delete the person and trigger PersonDeletedEvent using email repo', async () => {
-                    emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
                     const person: Person<true> = DoFactory.createPerson(true);
                     const personEntity: PersonEntity = new PersonEntity();
                     await em.persistAndFlush(personEntity.assign(mapAggregateToData(person)));
@@ -1981,10 +1973,7 @@ describe('PersonRepository Integration', () => {
                         },
                     });
 
-                    emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValue({
-                        address: emailAddress.address,
-                        status: emailAddress.status,
-                    });
+                    emailResolverServiceMock.getPrimaryActiveEmailForPerson.mockResolvedValue(emailAddress.address);
 
                     const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                     const result: Result<void, DomainError> = await sut.deletePerson(
@@ -1994,145 +1983,7 @@ describe('PersonRepository Integration', () => {
                     );
 
                     expect(result.ok).toBeTruthy();
-                    expect(emailResolverServiceMock.shouldUseEmailMicroservice).toHaveBeenCalled();
-                    expect(emailRepoMock.getEmailAddressAndStatusForPerson).toHaveBeenCalledWith(
-                        expect.objectContaining({ id: person.id }),
-                    );
-                    expect(eventServiceMock.publish).toHaveBeenNthCalledWith(
-                        2,
-                        expect.any(PersonDeletedEvent),
-                        expect.any(KafkaPersonDeletedEvent),
-                    );
-
-                    const callArgs: [] | [legacyEvent: BaseEvent, kafkaEvent?: KafkaEvent | undefined] =
-                        eventServiceMock.publish.mock.calls[1] ?? [];
-                    const personDeletedEvent: PersonDeletedEvent | undefined = callArgs[0] as
-                        | PersonDeletedEvent
-                        | undefined;
-                    const kafkaPersonDeletedEvent: KafkaPersonDeletedEvent | undefined = callArgs[1] as
-                        | KafkaPersonDeletedEvent
-                        | undefined;
-
-                    expect(personDeletedEvent?.emailAddress).toBe(emailAddress.address);
-                    expect(kafkaPersonDeletedEvent?.emailAddress).toBe(emailAddress.address);
-                });
-
-                it('should delete the person and trigger PersonDeletedEvent with undefined email when repo status is DISABLED', async () => {
-                    emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
-
-                    const person: Person<true> = DoFactory.createPerson(true);
-                    const personEntity: PersonEntity = new PersonEntity();
-                    await em.persistAndFlush(personEntity.assign(mapAggregateToData(person)));
-                    person.id = personEntity.id;
-
-                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
-                    await em.persistAndFlush(personEntity);
-
-                    const emailAddress: EmailAddressEntity = new EmailAddressEntity();
-                    emailAddress.address = faker.internet.email();
-                    emailAddress.personId = ref(PersonEntity, person.id);
-                    emailAddress.status = EmailAddressStatus.DISABLED;
-
-                    const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
-                    await em.persistAndFlush(pp);
-
-                    personEntity.emailAddresses.add(emailAddress);
-                    await em.persistAndFlush(personEntity);
-
-                    kcUserServiceMock.findById.mockResolvedValue({
-                        ok: true,
-                        value: {
-                            id: person.keycloakUserId!,
-                            username: person.username ?? '',
-                            enabled: true,
-                            email: faker.internet.email(),
-                            createdDate: new Date(),
-                            externalSystemIDs: {},
-                        },
-                    });
-
-                    emailRepoMock.getEmailAddressAndStatusForPerson.mockReturnValueOnce(
-                        Promise.resolve({
-                            address: emailAddress.address,
-                            status: emailAddress.status,
-                        }),
-                    );
-
-                    const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
-
-                    const result: Result<void, DomainError> = await sut.deletePerson(
-                        person.id,
-                        personPermissionsMock,
-                        removedPersonenkontexts,
-                    );
-
-                    expect(result.ok).toBeTruthy();
-                    expect(emailResolverServiceMock.shouldUseEmailMicroservice).toHaveBeenCalled();
-                    expect(emailRepoMock.getEmailAddressAndStatusForPerson).toHaveBeenCalledWith(
-                        expect.objectContaining({ id: person.id }),
-                    );
-
-                    const callArgs: [] | [legacyEvent: BaseEvent, kafkaEvent?: KafkaEvent | undefined] =
-                        eventServiceMock.publish.mock.calls[1] ?? [];
-
-                    const personDeletedEvent: PersonDeletedEvent | undefined = callArgs[0] as
-                        | PersonDeletedEvent
-                        | undefined;
-                    const kafkaPersonDeletedEvent: KafkaPersonDeletedEvent | undefined = callArgs[1] as
-                        | KafkaPersonDeletedEvent
-                        | undefined;
-
-                    expect(personDeletedEvent?.emailAddress).toBeUndefined();
-                    expect(kafkaPersonDeletedEvent?.emailAddress).toBeUndefined();
-                });
-
-                it('should delete the person and trigger PersonDeletedEvent using email microservice', async () => {
-                    emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-                    const person: Person<true> = DoFactory.createPerson(true);
-                    const personEntity: PersonEntity = new PersonEntity();
-                    await em.persistAndFlush(personEntity.assign(mapAggregateToData(person)));
-                    person.id = personEntity.id;
-                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
-
-                    await em.persistAndFlush(personEntity);
-
-                    const emailAddress: EmailAddressEntity = new EmailAddressEntity();
-                    emailAddress.address = faker.internet.email();
-                    emailAddress.personId = ref(PersonEntity, person.id);
-                    emailAddress.status = EmailAddressStatus.ENABLED;
-
-                    const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
-                    await em.persistAndFlush(pp);
-
-                    personEntity.emailAddresses.add(emailAddress);
-                    await em.persistAndFlush(personEntity);
-                    kcUserServiceMock.findById.mockResolvedValue({
-                        ok: true,
-                        value: {
-                            id: person.keycloakUserId!,
-                            username: person.username ?? '',
-                            enabled: true,
-                            email: faker.internet.email(),
-                            createdDate: new Date(),
-                            externalSystemIDs: {},
-                        },
-                    });
-
-                    emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValue({
-                        address: emailAddress.address,
-                        status: emailAddress.status,
-                    });
-
-                    const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
-                    const result: Result<void, DomainError> = await sut.deletePerson(
-                        person.id,
-                        personPermissionsMock,
-                        removedPersonenkontexts,
-                    );
-
-                    expect(result.ok).toBeTruthy();
-                    expect(emailResolverServiceMock.shouldUseEmailMicroservice).toHaveBeenCalled();
-                    expect(emailResolverServiceMock.findEmailBySpshPerson).toHaveBeenCalledWith(person.id);
+                    expect(emailResolverServiceMock.getPrimaryActiveEmailForPerson).toHaveBeenCalled();
                     expect(eventServiceMock.publish).toHaveBeenNthCalledWith(
                         2,
                         expect.any(PersonDeletedEvent),

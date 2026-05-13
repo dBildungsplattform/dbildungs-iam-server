@@ -42,7 +42,7 @@ import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
-import { compareEmailAddressesByUpdatedAtDesc, EmailRepo } from '../../email/persistence/email.repo.js';
+import { compareEmailAddressesByUpdatedAtDesc } from '../../email/persistence/email.repo.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
@@ -64,7 +64,6 @@ import { PersonScope } from './person.scope.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
-import { PersonEmailResponse } from '../api/person-email-response.js';
 
 /**
  * Trys to find a valid OXUserID in EmailAddresses for a PersonEntity while using the status of EmailAddresses for ordering.
@@ -215,7 +214,6 @@ export class PersonRepository {
         private readonly userLockRepository: UserLockRepository,
         private readonly em: EntityManager,
         private readonly eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
-        private readonly emailRepo: EmailRepo,
         private readonly emailResolverService: EmailResolverService,
         private usernameGenerator: UsernameGeneratorService,
         private logger: ClassLogger,
@@ -513,14 +511,12 @@ export class PersonRepository {
 
         this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
-        const email: Option<PersonEmailResponse> = this.emailResolverService.shouldUseEmailMicroservice()
-            ? await this.emailResolverService.findEmailBySpshPerson(person.id)
-            : await this.emailRepo.getEmailAddressAndStatusForPerson(person); // maybe we only need the repo here
+        const emailAddress: string | undefined = await this.emailResolverService.getPrimaryActiveEmailForPerson(person);
 
         if (person.username !== undefined) {
             this.eventRoutingLegacyKafkaService.publish(
-                new PersonDeletedEvent(personId, person.username, email?.address),
-                new KafkaPersonDeletedEvent(personId, person.username, email?.address),
+                new PersonDeletedEvent(personId, person.username, emailAddress),
+                new KafkaPersonDeletedEvent(personId, person.username, emailAddress),
             );
         }
 
@@ -538,16 +534,14 @@ export class PersonRepository {
         person: Person<true>,
         removedPersonenkontexts: PersonenkontextEventKontextData[],
     ): Promise<[PersonenkontextUpdatedEvent, KafkaPersonenkontextUpdatedEvent]> {
-        const email: Option<PersonEmailResponse> = this.emailResolverService.shouldUseEmailMicroservice()
-            ? await this.emailResolverService.findEmailBySpshPerson(person.id)
-            : await this.emailRepo.getEmailAddressAndStatusForPerson(person);
+        const emailAddress: string | undefined = await this.emailResolverService.getPrimaryActiveEmailForPerson(person);
         const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
             {
                 id: personId,
                 username: person.username,
                 familienname: person.familienname,
                 vorname: person.vorname,
-                email: email?.status === EmailAddressStatus.ENABLED ? email.address : undefined,
+                email: emailAddress,
             },
             [],
             removedPersonenkontexts,
@@ -559,7 +553,7 @@ export class PersonRepository {
                 username: person.username,
                 familienname: person.familienname,
                 vorname: person.vorname,
-                email: email?.address,
+                email: emailAddress,
             },
             [],
             removedPersonenkontexts,
