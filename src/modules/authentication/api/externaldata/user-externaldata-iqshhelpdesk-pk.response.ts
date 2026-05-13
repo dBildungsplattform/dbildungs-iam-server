@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { RolleID } from '../../../../shared/types/aggregate-ids.types.js';
 
-export class UserExeternalDataResponseIqshHelpdeskPk {
+export class UserExternalDataResponseIqshHelpdeskPk {
     @ApiProperty()
     public rolleId: RolleID;
 
