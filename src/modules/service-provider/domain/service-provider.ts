@@ -1,3 +1,5 @@
+import { assignSameKey } from '../../../shared/util/object-utils.js';
+import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
@@ -5,7 +7,11 @@ import {
     ServiceProviderTarget,
 } from './service-provider.enum.js';
 
+type SafeUpdateFields = Pick<ServiceProvider<boolean>, 'name' | 'url' | 'kategorie' | 'logoId'>;
+
 export class ServiceProvider<WasPersisted extends boolean> {
+    protected static readonly SAFE_UPDATE_FIELDS: (keyof SafeUpdateFields)[] = ['name', 'url', 'kategorie', 'logoId'];
+
     protected constructor(
         public id: Persisted<string, WasPersisted>,
         public createdAt: Persisted<Date, WasPersisted>,
@@ -15,6 +21,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         public url: string | undefined,
         public kategorie: ServiceProviderKategorie,
         public providedOnSchulstrukturknoten: string,
+        public logoId: number | undefined,
         public logo: Buffer | undefined,
         public logoMimeType: string | undefined,
         public keycloakGroup: string | undefined,
@@ -34,6 +41,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         url: string | undefined,
         kategorie: ServiceProviderKategorie,
         providedOnSchulstrukturknoten: string,
+        logoId: number | undefined,
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
         keycloakGroup: string | undefined,
@@ -52,6 +60,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
             url,
             kategorie,
             providedOnSchulstrukturknoten,
+            logoId,
             logo,
             logoMimeType,
             keycloakGroup,
@@ -69,6 +78,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         url: string | undefined,
         kategorie: ServiceProviderKategorie,
         providedOnSchulstrukturknoten: string,
+        logoId: number | undefined,
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
         keycloakGroup: string | undefined,
@@ -87,6 +97,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
             url,
             kategorie,
             providedOnSchulstrukturknoten,
+            logoId,
             logo,
             logoMimeType,
             keycloakGroup,
@@ -96,5 +107,44 @@ export class ServiceProvider<WasPersisted extends boolean> {
             vidisAngebotId,
             merkmale,
         );
+    }
+
+    /**
+     * logoId can be set to null to clear it
+     * @param update
+     * @returns
+     */
+    public updateWithSafeFields(update: {
+        name?: string;
+        url?: string;
+        kategorie?: ServiceProviderKategorie;
+        logoId?: Option<number>;
+    }): Option<InvalidLogoCombinationError> {
+        if (!ServiceProvider.isValidLogoCombination(update.logoId, this.logo, this.logoMimeType)) {
+            return new InvalidLogoCombinationError('Cannot set logoId, if there already is a logo');
+        }
+        for (const field of ServiceProvider.SAFE_UPDATE_FIELDS) {
+            if (field === 'logoId' && update[field] === null) {
+                this.logoId = undefined;
+            } else if (update[field] !== undefined && update[field] !== null) {
+                assignSameKey(this, update, field);
+            }
+        }
+        return;
+    }
+
+    public static isValidLogoCombination(
+        logoId: Option<number>,
+        logo: Option<Buffer>,
+        logoMimeType: Option<string>,
+    ): boolean {
+        const logoIdProvided: boolean = logoId !== undefined && logoId !== null;
+        const logoProvided: boolean = logo !== undefined && logo !== null;
+        const logoMimeTypeProvided: boolean = logoMimeType !== undefined && logoMimeType !== null;
+
+        const validLogoIdCombination: boolean = logoIdProvided && !logoProvided && !logoMimeTypeProvided;
+        const validLogoDataCombination: boolean = !logoIdProvided && logoProvided && logoMimeTypeProvided;
+        const noLogoCombination: boolean = !logoIdProvided && !logoProvided && !logoMimeTypeProvided;
+        return validLogoIdCombination || validLogoDataCombination || noLogoCombination;
     }
 }
