@@ -140,6 +140,8 @@ describe('configloader', () => {
                 },
                 EMAIL_MICROSERVICE: {
                     USE_EMAIL_MICROSERVICE: false,
+                    LDAP_ENABLED: true,
+                    OX_ENABLED: true,
                     ENDPOINT: 'http://localhost:9091/',
                 },
                 SCHULCONNEX: {
@@ -327,6 +329,8 @@ describe('configloader', () => {
                 },
                 EMAIL_MICROSERVICE: {
                     USE_EMAIL_MICROSERVICE: false,
+                    LDAP_ENABLED: true,
+                    OX_ENABLED: true,
                     ENDPOINT: 'http://localhost:9091/',
                 },
                 SCHULCONNEX: {
