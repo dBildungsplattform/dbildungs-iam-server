@@ -11,7 +11,7 @@ import { UserExeternalDataResponseVidis } from './user-externaldata-vidis.respon
 import { UserExternaldataWorkflowAggregate } from '../../domain/user-extenaldata.workflow.js';
 import { ErweiterterServiceProviderForPK } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UserExternalDataResponseIqshHelpdesk } from './user-externaldata-iqshhelpdesk.response.js';
-import { UserExeternalDataResponseIqshHelpdeskPk } from './user-externaldata-iqshhelpdesk-pk.response.js';
+import { UserExternalDataResponseIqshHelpdeskPk } from './user-externaldata-iqshhelpdesk-pk.response.js';
 
 export class UserExternalDataResponse {
     //optional, um den Zugriff auf OX zu verhindern, falls kein Lehrerkontext mehr an der Person hängt
@@ -86,7 +86,7 @@ export class UserExternalDataResponse {
             person.vorname,
             person.familienname,
             externalPkData.map(
-                (pk: RequiredExternalPkData) => new UserExeternalDataResponseIqshHelpdeskPk(pk.rolleId, pk.kennung),
+                (pk: RequiredExternalPkData) => new UserExternalDataResponseIqshHelpdeskPk(pk.rolleId, pk.kennung),
             ),
             person.email,
         );

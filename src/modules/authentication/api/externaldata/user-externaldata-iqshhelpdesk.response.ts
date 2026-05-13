@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserExeternalDataResponseIqshHelpdeskPk } from './user-externaldata-iqshhelpdesk-pk.response.js';
+import { UserExternalDataResponseIqshHelpdeskPk } from './user-externaldata-iqshhelpdesk-pk.response.js';
 
 export class UserExternalDataResponseIqshHelpdesk {
     @ApiProperty()
@@ -8,8 +8,8 @@ export class UserExternalDataResponseIqshHelpdesk {
     @ApiProperty()
     public nachname: string;
 
-    @ApiProperty({ type: [UserExeternalDataResponseIqshHelpdeskPk] })
-    public personenkontexte: UserExeternalDataResponseIqshHelpdeskPk[];
+    @ApiProperty({ type: [UserExternalDataResponseIqshHelpdeskPk] })
+    public personenkontexte: UserExternalDataResponseIqshHelpdeskPk[];
 
     @ApiProperty()
     public emailAdresse?: string;
@@ -17,7 +17,7 @@ export class UserExternalDataResponseIqshHelpdesk {
     public constructor(
         vorname: string,
         nachname: string,
-        personenkontexte: UserExeternalDataResponseIqshHelpdeskPk[],
+        personenkontexte: UserExternalDataResponseIqshHelpdeskPk[],
         emailAdresse?: string,
     ) {
         this.vorname = vorname;
