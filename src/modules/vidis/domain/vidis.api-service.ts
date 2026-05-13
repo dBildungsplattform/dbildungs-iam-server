@@ -8,6 +8,7 @@ import { VidisApiResponseAngebotByRegion, VidisApiResponse, VidisServiceResponse
 import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces.js';
 import { firstValueFrom } from 'rxjs';
 import { Err, Ok } from '../../../shared/util/result.js';
+import { VidisDomainError } from './vidis-domain.error.js';
 
 @Injectable()
 export class VidisApiService {
@@ -40,7 +41,7 @@ export class VidisApiService {
             );
             if(response.status < 200 || response.status >= 300) {
                 this.logger.error(`Failed to fetch activated Angebote for region Schleswig-Holstein from Vidis API. Status code: ${response.status}, Response data: ${JSON.stringify(response.data)}`);
-                return Err(new Error('Failed to fetch activated Angebote for region Schleswig-Holstein from Vidis API'));
+                return Err(new VidisDomainError('Failed to fetch activated Angebote for region Schleswig-Holstein from Vidis API'));
             }
             const result: VidisAngebotWithSchoolActivations [] = response.data.items.map((item: VidisApiResponseAngebotByRegion) => ({
                 angebot:{
@@ -57,8 +58,8 @@ export class VidisApiService {
             this.logger.debug(`Fetched ${result.length} activated Angebote for region Schleswig-Holstein from Vidis API`);
             return Ok(result);
         } catch (error) {
-            this.logger.error(`Error while fetching activated Angebote for region Schleswig-Holstein from Vidis API: ${error instanceof Error ? error.stack : JSON.stringify(error)}`);
-            return Err(new Error('Error while fetching activated Angebote for region Schleswig-Holstein from Vidis API'));
+            this.logger.error(`Error while fetching activated Angebote for region Schleswig-Holstein from Vidis API: ${JSON.stringify(error)}`);
+            return Err(new VidisDomainError(`Error while fetching activated Angebote for region Schleswig-Holstein from Vidis API`));
         }
 
     }
@@ -73,7 +74,7 @@ export class VidisApiService {
             );
             if(response.status < 200 || response.status >= 300) {
                 this.logger.error(`Failed to fetch activated Angebote for school with kennung ${kennung} from Vidis API. Status code: ${response.status}, Response data: ${JSON.stringify(response.data)}`);
-                return Err(new Error(`Failed to fetch activated Angebote for school with kennung ${kennung} from Vidis API`));
+                return Err(new VidisDomainError(`Failed to fetch activated Angebote for school with kennung ${kennung} from Vidis API`));
             }
             const result: VidisServiceResponseAngebot [] = response.data.items.map((item: VidisApiResponseAngebotBySchool) => ({
                 ...item,
@@ -82,8 +83,8 @@ export class VidisApiService {
             this.logger.debug(`Fetched ${result.length} activated Angebote for school with kennung ${kennung} from Vidis API`);
             return Ok(result);
         } catch (error) {
-            this.logger.error(`Error while fetching activated Angebote for school with kennung ${kennung} from Vidis API: ${error instanceof Error ? error.stack : JSON.stringify(error)}`);
-            return Err(new Error(`Error while fetching activated Angebote for school with kennung ${kennung} from Vidis API`));
+            this.logger.error(`Error while fetching activated Angebote for school with kennung ${kennung} from Vidis API: ${JSON.stringify(error)}`);
+            return Err(new VidisDomainError(`Error while fetching activated Angebote for school with kennung ${kennung} from Vidis API`));
         }
     }
 

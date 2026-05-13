@@ -2,16 +2,21 @@ import { vi } from "vitest"
 import { HttpService } from "@nestjs/axios"
 import { Test, TestingModule } from "@nestjs/testing"
 import { AxiosResponse } from "axios"
-import { of } from "rxjs"
+import { of, throwError } from "rxjs"
 import { createMock, DeepMocked } from "../../../../test/utils/createMock.js"
 import { ConfigTestModule } from "../../../../test/utils/config-test.module.js"
 import { ClassLogger } from "../../../core/logging/class-logger.js"
+import { Err, Ok } from "../../../shared/util/result.js"
 import {
 	VidisAngebotWithSchoolActivations,
 	VidisApiResponse,
+	VidisApiResponseAngebotBySchool,
 	VidisApiResponseAngebotByRegion,
+	VidisApiResponseSchoolActivation,
+	VidisServiceResponseAngebot,
 } from "../api/vidis-angebote-api.types.js"
 import { VidisApiService } from "./vidis.api-service.js"
+import { VidisDomainError } from "./vidis-domain.error.js"
 
 const demoVidisApiResponseAngebotByRegion: VidisApiResponse<VidisApiResponseAngebotByRegion> = {
 	"actions": {
@@ -64,7 +69,6 @@ const demoVidisApiResponseAngebotByRegion: VidisApiResponse<VidisApiResponseAnge
 	"totalCount": 2
 }
 
-/*
 const demoVidisApiResponseAngebotBySchool: VidisApiResponse<VidisApiResponseAngebotBySchool> = {
 	"actions": {
 	},
@@ -88,7 +92,6 @@ const demoVidisApiResponseAngebotBySchool: VidisApiResponse<VidisApiResponseAnge
 	"pageSize": 100000,
 	"totalCount": 1
 }
-    */
 
 describe("VidisApiService", () => {
 	let module: TestingModule
@@ -98,18 +101,46 @@ describe("VidisApiService", () => {
 	let loggerMock: DeepMocked<ClassLogger>
 
 	const authToken: string = "test-auth-token"
+	const kennung: string = "123456"
+	type GetActivatedAngeboteByRegionResult = Awaited<ReturnType<VidisApiService["getActivatedAngeboteByRegionSH"]>>
+	type GetActivatedAngeboteBySchoolResult = Awaited<ReturnType<VidisApiService["getActivatedAngeboteBySchool"]>>
 
-	const mockHttpResponses = (): void => {
+	const mockAuthTokenResponse = (): void => {
 		httpServiceMock.post.mockReturnValueOnce(
 			of({
 				data: { access_token: authToken },
+				status: 200,
 			} as AxiosResponse<{ access_token: string }>),
 		)
+	}
+
+	const mockActivatedAngeboteByRegionResponse = (
+		status: number = 200,
+		data: VidisApiResponse<VidisApiResponseAngebotByRegion> = demoVidisApiResponseAngebotByRegion,
+	): void => {
 		httpServiceMock.get.mockReturnValueOnce(
 			of({
-				data: demoVidisApiResponseAngebotByRegion,
+				data,
+				status,
 			} as AxiosResponse<VidisApiResponse<VidisApiResponseAngebotByRegion>>),
 		)
+	}
+
+	const mockActivatedAngeboteBySchoolResponse = (
+		status: number = 200,
+		data: VidisApiResponse<VidisApiResponseAngebotBySchool> = demoVidisApiResponseAngebotBySchool,
+	): void => {
+		httpServiceMock.get.mockReturnValueOnce(
+			of({
+				data,
+				status,
+			} as AxiosResponse<VidisApiResponse<VidisApiResponseAngebotBySchool>>),
+		)
+	}
+
+	const mockHttpResponses = (): void => {
+		mockAuthTokenResponse()
+		mockActivatedAngeboteByRegionResponse()
 	}
 
 	beforeAll(async () => {
@@ -171,27 +202,186 @@ describe("VidisApiService", () => {
 			)
 		})
 
-		it("should map schoolActivations to kennung and log fetched Angebote", async () => {
+			it("should return mapped schoolActivations as Ok result and log fetched Angebote", async () => {
 			mockHttpResponses()
 
 			const expectedResult: VidisAngebotWithSchoolActivations[] = demoVidisApiResponseAngebotByRegion.items.map(
-				({ schoolActivations, ...angebot }: VidisApiResponseAngebotByRegion) => ({
-					angebot,
-					schoolActivations: schoolActivations.map(({ date, regionName }) => ({
-						date,
-						kennung: regionName.replace("DE-SH-", ""),
-					})),
+					(angebotByRegion: VidisApiResponseAngebotByRegion) => ({
+						angebot: angebotByRegion,
+						schoolActivations: angebotByRegion.schoolActivations.map(
+							(schoolActivation: VidisApiResponseSchoolActivation) => ({
+								date: schoolActivation.date,
+								kennung: schoolActivation.regionName.replace("DE-SH-", ""),
+							}),
+						),
 				}),
 			)
 
-			const result: VidisAngebotWithSchoolActivations[] = await sut.getActivatedAngeboteByRegionSH()
+				const result: GetActivatedAngeboteByRegionResult = await sut.getActivatedAngeboteByRegionSH()
 
-			expect(result).toMatchObject(expectedResult)
+				expect(result).toEqual(Ok(expectedResult))
 			expect(loggerMock.debug).toHaveBeenNthCalledWith(1, "Received auth token from Vidis API")
 			expect(loggerMock.debug).toHaveBeenNthCalledWith(
 				2,
 				"Fetched 2 activated Angebote for region Schleswig-Holstein from Vidis API",
 			)
 		})
+
+			it("should return Err when Vidis API responds with non-success status", async () => {
+				const errorResponseData: { message: string } = {
+					message: "VIDIS unavailable",
+				}
+
+				mockAuthTokenResponse()
+				mockActivatedAngeboteByRegionResponse(
+					500,
+					errorResponseData as unknown as VidisApiResponse<VidisApiResponseAngebotByRegion>,
+				)
+
+				const result: GetActivatedAngeboteByRegionResult = await sut.getActivatedAngeboteByRegionSH()
+
+				expect(result).toEqual(
+					Err(new VidisDomainError("Failed to fetch activated Angebote for region Schleswig-Holstein from Vidis API")),
+				)
+				expect(loggerMock.error).toHaveBeenCalledWith(
+					'Failed to fetch activated Angebote for region Schleswig-Holstein from Vidis API. Status code: 500, Response data: {"message":"VIDIS unavailable"}',
+				)
+			})
+
+			it("should return Err when fetching Angebote throws", async () => {
+				const requestError: Error = new Error("network error")
+
+				mockAuthTokenResponse()
+				httpServiceMock.get.mockReturnValueOnce(throwError(() => requestError))
+
+				const result: GetActivatedAngeboteByRegionResult = await sut.getActivatedAngeboteByRegionSH()
+
+				expect(result).toEqual(
+					Err(new VidisDomainError("Error while fetching activated Angebote for region Schleswig-Holstein from Vidis API")),
+				)
+				expect(loggerMock.error).toHaveBeenCalledWith(
+				"Error while fetching activated Angebote for region Schleswig-Holstein from Vidis API: {}",
+				)
+			})
+
+			it("should return Err when HttpService.get throws", async () => {
+				const requestError: Error = new Error("sync network error")
+
+				mockAuthTokenResponse()
+				httpServiceMock.get.mockImplementationOnce(() => {
+					throw requestError
+				})
+
+				const result: GetActivatedAngeboteByRegionResult = await sut.getActivatedAngeboteByRegionSH()
+
+				expect(result).toEqual(
+					Err(new VidisDomainError("Error while fetching activated Angebote for region Schleswig-Holstein from Vidis API")),
+				)
+				expect(loggerMock.error).toHaveBeenCalledWith(
+				"Error while fetching activated Angebote for region Schleswig-Holstein from Vidis API: {}",
+				)
+			})
 	})
+
+		describe("getActivatedAngeboteBySchool", () => {
+			it("should call HttpService.post and HttpService.get", async () => {
+				mockAuthTokenResponse()
+				mockActivatedAngeboteBySchoolResponse()
+
+				await sut.getActivatedAngeboteBySchool(kennung)
+
+				expect(httpServiceMock.post).toHaveBeenCalledWith(
+					"/o/oauth2/token?pageSize=100000",
+					"client_id=&client_secret=&grant_type=client_credentials",
+					{
+						headers: {
+							"Content-Type": "application/x-www-form-urlencoded",
+						},
+					},
+				)
+				expect(httpServiceMock.get).toHaveBeenCalledWith(
+					"/o/vidis-rest/v1.0/offers/activated/by-school/DE-SH-123456?pageSize=100000",
+					{
+						headers: {
+							Authorization: `Bearer ${authToken}`,
+						},
+					},
+				)
+			})
+
+			it("should return mapped Angebote as Ok result and log fetched Angebote", async () => {
+				mockAuthTokenResponse()
+				mockActivatedAngeboteBySchoolResponse()
+
+				const expectedResult: VidisServiceResponseAngebot[] = demoVidisApiResponseAngebotBySchool.items.map(
+					(angebotBySchool: VidisApiResponseAngebotBySchool) => ({
+						...angebotBySchool,
+					}),
+				)
+
+				const result: GetActivatedAngeboteBySchoolResult = await sut.getActivatedAngeboteBySchool(kennung)
+
+				expect(result).toEqual(Ok(expectedResult))
+				expect(loggerMock.debug).toHaveBeenNthCalledWith(1, "Received auth token from Vidis API")
+				expect(loggerMock.debug).toHaveBeenNthCalledWith(
+					2,
+					"Fetched 1 activated Angebote for school with kennung 123456 from Vidis API",
+				)
+			})
+
+			it("should return Err when Vidis API responds with non-success status", async () => {
+				const errorResponseData: { message: string } = {
+					message: "VIDIS unavailable",
+				}
+
+				mockAuthTokenResponse()
+				mockActivatedAngeboteBySchoolResponse(
+					500,
+					errorResponseData as unknown as VidisApiResponse<VidisApiResponseAngebotBySchool>,
+				)
+
+				const result: GetActivatedAngeboteBySchoolResult = await sut.getActivatedAngeboteBySchool(kennung)
+
+				expect(result).toEqual(
+					Err(new VidisDomainError("Failed to fetch activated Angebote for school with kennung 123456 from Vidis API")),
+				)
+				expect(loggerMock.error).toHaveBeenCalledWith(
+					'Failed to fetch activated Angebote for school with kennung 123456 from Vidis API. Status code: 500, Response data: {"message":"VIDIS unavailable"}',
+				)
+			})
+
+			it("should return Err when fetching Angebote throws", async () => {
+				const requestError: Error = new Error("network error")
+
+				mockAuthTokenResponse()
+				httpServiceMock.get.mockReturnValueOnce(throwError(() => requestError))
+
+				const result: GetActivatedAngeboteBySchoolResult = await sut.getActivatedAngeboteBySchool(kennung)
+
+				expect(result).toEqual(
+					Err(new VidisDomainError("Error while fetching activated Angebote for school with kennung 123456 from Vidis API")),
+				)
+				expect(loggerMock.error).toHaveBeenCalledWith(
+				"Error while fetching activated Angebote for school with kennung 123456 from Vidis API: {}",
+				)
+			})
+
+			it("should return Err when HttpService.get throws", async () => {
+				const requestError: Error = new Error("sync network error")
+
+				mockAuthTokenResponse()
+				httpServiceMock.get.mockImplementationOnce(() => {
+					throw requestError
+				})
+
+				const result: GetActivatedAngeboteBySchoolResult = await sut.getActivatedAngeboteBySchool(kennung)
+
+				expect(result).toEqual(
+					Err(new VidisDomainError("Error while fetching activated Angebote for school with kennung 123456 from Vidis API")),
+				)
+				expect(loggerMock.error).toHaveBeenCalledWith(
+				"Error while fetching activated Angebote for school with kennung 123456 from Vidis API: {}",
+				)
+			})
+		})
 })

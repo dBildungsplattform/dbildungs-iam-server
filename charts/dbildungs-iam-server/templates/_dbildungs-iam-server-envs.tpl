@@ -76,16 +76,16 @@
     secretKeyRef:
         name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
         key: ox-password
-- name: VIDIS_USERNAME
+- name: VIDIS_API_CLIENT_ID
   valueFrom:
     secretKeyRef:
         name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-        key: vidis-username
-- name: VIDIS_PASSWORD
+        key: vidis-api-client-id
+- name: VIDIS_API_CLIENT_SECRET
   valueFrom:
     secretKeyRef:
         name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-        key: vidis-password
+        key: vidis-api-client-secret
 - name: METRICS_BASIC_AUTH
   valueFrom:
     secretKeyRef:
