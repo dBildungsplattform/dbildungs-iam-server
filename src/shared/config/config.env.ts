@@ -160,6 +160,8 @@ export default (): Config => ({
     },
     EMAIL_MICROSERVICE: {
         USE_EMAIL_MICROSERVICE: envToOptionalBoolean('EMAIL_MICROSERVICE__USE_EMAIL_MICROSERVICE'),
+        LDAP_ENABLED: envToOptionalBoolean('EMAIL_MICROSERVICE__LDAP_ENABLED'),
+        OX_ENABLED: envToOptionalBoolean('EMAIL_MICROSERVICE__OX_ENABLED'),
         ENDPOINT: process.env['EMAIL_MICROSERVICE__ENDPOINT'],
     },
     SCHULCONNEX: {

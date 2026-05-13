@@ -5,6 +5,14 @@ export class EmailMicroserviceConfig {
     @IsNotEmpty()
     public readonly USE_EMAIL_MICROSERVICE!: boolean;
 
+    @IsBoolean()
+    @IsNotEmpty()
+    public readonly LDAP_ENABLED!: boolean;
+
+    @IsBoolean()
+    @IsNotEmpty()
+    public readonly OX_ENABLED!: boolean;
+
     @IsString()
     @IsNotEmpty()
     public readonly ENDPOINT!: string;

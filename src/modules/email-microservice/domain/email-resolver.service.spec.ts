@@ -521,6 +521,54 @@ describe('EmailResolverService', () => {
         expect(sut.shouldUseEmailMicroservice()).toBe(false);
     });
 
+    it('should return true when LDAP_ENABLED is true', () => {
+        const configService: ConfigService = module.get(ConfigService);
+        vi.spyOn(configService, 'getOrThrow').mockReturnValueOnce({
+            USE_EMAIL_MICROSERVICE: true,
+            LDAP_ENABLED: true,
+            OX_ENABLED: false,
+            ENDPOINT: 'http://email-service/',
+        });
+
+        expect(sut.useLdap()).toBe(true);
+    });
+
+    it('should return false when LDAP_ENABLED is false', () => {
+        const configService: ConfigService = module.get(ConfigService);
+        vi.spyOn(configService, 'getOrThrow').mockReturnValueOnce({
+            USE_EMAIL_MICROSERVICE: true,
+            LDAP_ENABLED: false,
+            OX_ENABLED: false,
+            ENDPOINT: 'http://email-service/',
+        });
+
+        expect(sut.useLdap()).toBe(false);
+    });
+
+    it('should return true when OX_ENABLED is true', () => {
+        const configService: ConfigService = module.get(ConfigService);
+        vi.spyOn(configService, 'getOrThrow').mockReturnValueOnce({
+            USE_EMAIL_MICROSERVICE: true,
+            LDAP_ENABLED: false,
+            OX_ENABLED: true,
+            ENDPOINT: 'http://email-service/',
+        });
+
+        expect(sut.useOx()).toBe(true);
+    });
+
+    it('should return false when OX_ENABLED is false', () => {
+        const configService: ConfigService = module.get(ConfigService);
+        vi.spyOn(configService, 'getOrThrow').mockReturnValueOnce({
+            USE_EMAIL_MICROSERVICE: true,
+            LDAP_ENABLED: false,
+            OX_ENABLED: false,
+            ENDPOINT: 'http://email-service/',
+        });
+
+        expect(sut.useOx()).toBe(false);
+    });
+
     it('should use correct endpoint from config in post call', async () => {
         const spshPersonId: string = faker.string.uuid();
         const params: SetEmailAddressForSpshPersonBodyParams = {
