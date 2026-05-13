@@ -15,7 +15,7 @@ import { uniq } from 'lodash-es';
 export function mapAggregateToData(emailAddress: EmailAddress<boolean>) {
     // eslint-disable-next-line @typescript-eslint/typedef
     const statuses = emailAddress.sortedStatuses.map((s: EmailAddressStatus) => ({
-        id: s.id!,
+        id: s.id,
         status: s.status,
     }));
 

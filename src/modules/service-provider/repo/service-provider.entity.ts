@@ -1,4 +1,4 @@
-import { BlobType, Collection } from '@mikro-orm/core';
+import { BlobType, Collection, quote } from '@mikro-orm/core';
 import { Check, Entity, Enum, OneToMany, Property } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import {
@@ -11,8 +11,8 @@ import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.
 @Entity({ tableName: 'service_provider' })
 @Check({
     name: 'logo_or_logo_id_consistency',
-    expression:
-        '(logo_id IS NULL AND logo IS NULL) OR (logo_id IS NULL AND logo IS NOT NULL) OR (logo_id IS NOT NULL AND logo IS NULL)',
+    expression: ({ logo, logoId }: Record<keyof ServiceProviderEntity, string>) =>
+        quote`(${logoId} IS NULL AND ${logo} IS NULL) OR (${logoId} IS NULL AND ${logo} IS NOT NULL) OR (${logoId} IS NOT NULL AND ${logo} IS NULL)`,
 })
 export class ServiceProviderEntity extends TimestampedEntity {
     @Property()
