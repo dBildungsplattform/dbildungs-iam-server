@@ -10,7 +10,7 @@ import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
 import { intersectPermittedAndRequestedOrgas, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderMerkmalEntity } from '../../service-provider/repo/service-provider-merkmal.entity.js';
+import { mapEntityToAggregate as mapServiceProviderEntityToAggregate } from '../../service-provider/repo/service-provider-entity-mapper.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
@@ -78,24 +78,7 @@ export function mapRolleEntityToAggregate(entity: RolleEntity, rolleFactory: Rol
     const serviceProviderData: ServiceProvider<true>[] = entity.serviceProvider.map(
         (serviceProvider: RolleServiceProviderEntity) => {
             const sp: ServiceProviderEntity = serviceProvider.serviceProvider;
-            return ServiceProvider.construct(
-                sp.id,
-                sp.createdAt,
-                sp.updatedAt,
-                sp.name,
-                sp.target,
-                sp.url,
-                sp.kategorie,
-                sp.providedOnSchulstrukturknoten,
-                sp.logo,
-                sp.logoMimeType,
-                sp.keycloakGroup,
-                sp.keycloakRole,
-                sp.externalSystem,
-                sp.requires2fa,
-                sp.vidisAngebotId,
-                sp.merkmale.map((merkmalEntity: ServiceProviderMerkmalEntity) => merkmalEntity.merkmal),
-            );
+            return mapServiceProviderEntityToAggregate(sp);
         },
     );
 

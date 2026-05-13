@@ -7,41 +7,42 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
-import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
-import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
-import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
-import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
-import { ServiceProvider } from '../domain/service-provider.js';
-import { ServiceProviderEntity } from '../repo/service-provider.entity.js';
-import { ServiceProviderApiModule } from '../service-provider-api.module.js';
-import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
-import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
-import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 import {
     createAuthInterceptorMock,
     createOidcClientMock,
     createPersonPermissionsMock,
 } from '../../../../test/utils/auth.mock.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
-import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
-import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
+import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
+import { RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
+import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { ServiceProvider } from '../domain/service-provider.js';
 import { mapEntityToAggregate } from '../repo/service-provider-entity-mapper.js';
+import { ServiceProviderEntity } from '../repo/service-provider.entity.js';
+import { ServiceProviderApiModule } from '../service-provider-api.module.js';
+import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
+import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
+import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
+import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -234,7 +235,7 @@ describe('ServiceProvider API', () => {
         });
     });
 
-    describe('/GET manageable service provider for organisation', () => {
+    describe('/GET manageable service providers for organisation', () => {
         let organisation: Organisation<true>;
         let serviceProvider: ServiceProvider<true>;
         let rolle: Rolle<true>;
@@ -278,7 +279,7 @@ describe('ServiceProvider API', () => {
             vi.restoreAllMocks();
         });
 
-        it('should return manageable service provider for organisation', async () => {
+        it('should return manageable service providers for organisation', async () => {
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/provider/manageable-by-organisation')
                 .query({ organisationId: organisation.id })
@@ -395,7 +396,7 @@ describe('ServiceProvider API', () => {
             const body: ManageableServiceProviderResponse = response.body as ManageableServiceProviderResponse;
             expect(response.status).toBe(200);
 
-            expect(body).toEqual<ManageableServiceProviderResponse>({
+            expect(body).toEqual({
                 id: serviceProvider.id,
                 name: serviceProvider.name,
                 administrationsebene: {
@@ -404,6 +405,7 @@ describe('ServiceProvider API', () => {
                     kennung: organisation.kennung!,
                 },
                 kategorie: serviceProvider.kategorie,
+                logoId: null,
                 requires2fa: serviceProvider.requires2fa,
                 merkmale: serviceProvider.merkmale,
                 url: serviceProvider.url,
@@ -434,50 +436,108 @@ describe('ServiceProvider API', () => {
 
     describe('/PATCH update service provider', () => {
         let organisation: Organisation<true>;
-        let serviceProvider: ServiceProvider<true>;
 
         beforeEach(async () => {
             organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
-            serviceProvider = await createAndPersistServiceProvider(em, {
-                providedOnSchulstrukturknoten: organisation.id,
-            });
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
         });
 
-        it('should update service provider', async () => {
-            const newName: string = 'Updated Service Provider Name';
-            const newUrl: string = 'https://updated-url.com';
-            const newKategorie: ServiceProviderKategorie = faker.helpers.enumValue(ServiceProviderKategorie);
-            const response: Response = await request(app.getHttpServer() as App)
-                .patch(`/provider/${serviceProvider.id}`)
-                .send({ name: newName, url: newUrl, kategorie: newKategorie });
+        describe('when service provider has a logo', () => {
+            it('should update service provider, but keep logo and logoMimeType set', async () => {
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: organisation.id,
+                });
+                const body: UpdateServiceProviderBodyParams = {
+                    name: 'Updated Service Provider Name',
+                    url: 'https://updated-url.com',
+                    kategorie: faker.helpers.enumValue(ServiceProviderKategorie),
+                    logoId: null,
+                };
 
-            expect(response.status).toBe(200);
-            expect(response.body).toEqual(
-                expect.objectContaining({
-                    name: newName,
-                    url: newUrl,
-                    kategorie: newKategorie,
-                }),
-            );
+                const response: Response = await request(app.getHttpServer() as App)
+                    .patch(`/provider/${serviceProvider.id}`)
+                    .send(body);
 
-            const updatedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
-                ServiceProviderEntity,
-                { id: serviceProvider.id },
-                { refresh: true },
-            );
-            expect(mapEntityToAggregate(updatedServiceProvider)).toEqual(
-                expect.objectContaining({
-                    ...serviceProvider,
-                    name: newName,
-                    url: newUrl,
-                    kategorie: newKategorie,
-                    keycloakGroup: undefined,
-                    keycloakRole: undefined,
-                    updatedAt: updatedServiceProvider.updatedAt,
-                    vidisAngebotId: undefined,
-                }),
-            );
+                expect(response.status).toBe(200);
+                const updatedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
+                    ServiceProviderEntity,
+                    { id: serviceProvider.id },
+                    { refresh: true },
+                );
+                expect(updatedServiceProvider.logoId).toBeNull();
+                expect(updatedServiceProvider.logo).toEqual(serviceProvider.logo);
+                expect(updatedServiceProvider.logoMimeType).toBe(serviceProvider.logoMimeType);
+            });
+
+            it('should reject updates to logoId', async () => {
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: organisation.id,
+                });
+                const body: UpdateServiceProviderBodyParams = {
+                    logoId: 1,
+                };
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .patch(`/provider/${serviceProvider.id}`)
+                    .send(body);
+
+                expect(response.status).toBe(400);
+                const storedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
+                    ServiceProviderEntity,
+                    { id: serviceProvider.id },
+                    { refresh: true },
+                );
+                expect(storedServiceProvider.logoId).toBeNull();
+                expect(storedServiceProvider.logo).toEqual(serviceProvider.logo);
+                expect(storedServiceProvider.logoMimeType).toBe(serviceProvider.logoMimeType);
+            });
+        });
+
+        describe('when service provider has no logo', () => {
+            it('should update service provider with logoId', async () => {
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: organisation.id,
+                    logo: undefined,
+                    logoMimeType: undefined,
+                });
+                const body: UpdateServiceProviderBodyParams = {
+                    name: 'Updated Service Provider Name',
+                    url: 'https://updated-url.com',
+                    kategorie: faker.helpers.enumValue(ServiceProviderKategorie),
+                    logoId: 1,
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .patch(`/provider/${serviceProvider.id}`)
+                    .send(body);
+
+                expect(response.status).toBe(200);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        name: body.name,
+                        url: body.url,
+                        kategorie: body.kategorie,
+                        logoId: body.logoId,
+                    }),
+                );
+
+                const updatedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
+                    ServiceProviderEntity,
+                    { id: serviceProvider.id },
+                    { refresh: true },
+                );
+                expect(mapEntityToAggregate(updatedServiceProvider)).toEqual(
+                    expect.objectContaining({
+                        ...serviceProvider,
+                        ...body,
+                        logo: null,
+                        logoMimeType: null,
+                        keycloakGroup: null,
+                        keycloakRole: null,
+                        updatedAt: updatedServiceProvider.updatedAt,
+                        vidisAngebotId: null,
+                    }),
+                );
+            });
         });
     });
 
