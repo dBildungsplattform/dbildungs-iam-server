@@ -20,15 +20,16 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
 import { RolleFindService } from '../domain/rolle-find.service.js';
+import { Rolle } from '../domain/rolle.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -185,6 +186,32 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     rolleController.createRollenerweiterung(createRollenerweiterungParams, permissions),
                 ).rejects.toThrow(MissingPermissionsError);
             });
+        });
+    });
+
+    describe('DELETE rolle/:rolleId', () => {
+        it('should delegate deletion to RolleRepo', async () => {
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const permissions: IPersonPermissions = createPersonPermissionsMock();
+            const params: FindRolleByIdParams = { rolleId: rolle.id };
+
+            rolleRepoMock.findById.mockResolvedValueOnce(rolle);
+            rolleRepoMock.deleteAuthorized.mockResolvedValueOnce(undefined);
+
+            await expect(rolleController.deleteRolle(params, permissions)).resolves.toBeUndefined();
+            expect(rolleRepoMock.deleteAuthorized).toHaveBeenCalledWith(rolle.id, permissions);
+        });
+
+        it('should throw if RolleRepo returns a domain error', async () => {
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const permissions: IPersonPermissions = createPersonPermissionsMock();
+            const params: FindRolleByIdParams = { rolleId: rolle.id };
+            const error: MissingPermissionsError = new MissingPermissionsError('dummy error');
+
+            rolleRepoMock.findById.mockResolvedValueOnce(rolle);
+            rolleRepoMock.deleteAuthorized.mockResolvedValueOnce(error);
+
+            await expect(rolleController.deleteRolle(params, permissions)).rejects.toThrow(MissingPermissionsError);
         });
     });
 });
