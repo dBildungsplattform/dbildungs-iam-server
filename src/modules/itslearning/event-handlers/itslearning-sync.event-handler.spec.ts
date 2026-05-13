@@ -24,8 +24,6 @@ import { rollenartToIMSESInstitutionRole } from '../repo/role-utils.js';
 import { ItsLearningSyncEventHandler } from './itslearning-sync.event-handler.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 describe('ItsLearning Persons Event Handler', () => {
     let module: TestingModule;
@@ -38,7 +36,6 @@ describe('ItsLearning Persons Event Handler', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let orgaRepoMock: DeepMocked<OrganisationRepository>;
     let loggerMock: DeepMocked<ClassLogger>;
-    let emailRepoMock: DeepMocked<EmailRepo>;
     let emailResolverServiceMock: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
@@ -46,10 +43,6 @@ describe('ItsLearning Persons Event Handler', () => {
             imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot()],
             providers: [
                 ItsLearningSyncEventHandler,
-                {
-                    provide: EmailRepo,
-                    useValue: createMock(EmailRepo),
-                },
                 {
                     provide: EmailResolverService,
                     useValue: createMock(EmailResolverService),
@@ -82,7 +75,6 @@ describe('ItsLearning Persons Event Handler', () => {
         }).compile();
 
         sut = module.get(ItsLearningSyncEventHandler);
-        emailRepoMock = module.get(EmailRepo);
         emailResolverServiceMock = module.get(EmailResolverService);
         itslearningPersonRepoMock = module.get(ItslearningPersonRepo);
         itslearningMembershipRepoMock = module.get(ItslearningMembershipRepo);
@@ -180,8 +172,7 @@ describe('ItsLearning Persons Event Handler', () => {
                 );
             });
 
-            it('should create or update user using email repo', async () => {
-                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+            it('should create or update user', async () => {
                 itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
                 itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
                     ok: true,
@@ -191,93 +182,11 @@ describe('ItsLearning Persons Event Handler', () => {
                 const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
 
                 const email: string = faker.internet.email();
-                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValue({
-                    address: email,
-                    status: EmailAddressStatus.ENABLED,
-                });
+                emailResolverServiceMock.getPrimaryActiveEmailForPerson.mockResolvedValue(email);
 
                 await sut.personExternalSystemSyncEventHandler(event);
 
-                expect(emailResolverServiceMock.shouldUseEmailMicroservice).toHaveBeenCalled();
-                expect(emailRepoMock.getEmailAddressAndStatusForPerson).toHaveBeenCalledWith(
-                    expect.objectContaining({ id: person.id }),
-                );
-
-                expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith(
-                    {
-                        id: person.id,
-                        firstName: person.vorname,
-                        lastName: person.familienname,
-                        username: person.username,
-                        institutionRoleType: rollenartToIMSESInstitutionRole(rolleWithItslearning.rollenart),
-                        email: email,
-                    },
-                    `${event.eventID}-SYNC-PERSON`,
-                );
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    `[EventID: ${event.eventID}] Updated person with ID ${person.id} in itslearning!`,
-                );
-            });
-
-            it('should create or update user with undefined email when repo email status is DISABLED', async () => {
-                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
-                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
-                itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
-                    ok: true,
-                    value: { deleted: 0, updated: 0 },
-                });
-
-                const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
-
-                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValue({
-                    address: faker.internet.email(),
-                    status: EmailAddressStatus.DISABLED, // 👈 key branch
-                });
-
-                await sut.personExternalSystemSyncEventHandler(event);
-
-                expect(emailResolverServiceMock.shouldUseEmailMicroservice).toHaveBeenCalled();
-                expect(emailRepoMock.getEmailAddressAndStatusForPerson).toHaveBeenCalledWith(
-                    expect.objectContaining({ id: person.id }),
-                );
-
-                expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith(
-                    {
-                        id: person.id,
-                        firstName: person.vorname,
-                        lastName: person.familienname,
-                        username: person.username,
-                        institutionRoleType: rollenartToIMSESInstitutionRole(rolleWithItslearning.rollenart),
-                        email: undefined,
-                    },
-                    `${event.eventID}-SYNC-PERSON`,
-                );
-
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    `[EventID: ${event.eventID}] Updated person with ID ${person.id} in itslearning!`,
-                );
-            });
-
-            it('should create or update user using email microservice', async () => {
-                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
-                itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
-                    ok: true,
-                    value: { deleted: 0, updated: 0 },
-                });
-
-                const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
-
-                const email: string = faker.internet.email();
-                emailResolverServiceMock.findEmailBySpshPerson.mockResolvedValue({
-                    address: email,
-                    status: EmailAddressStatus.ENABLED,
-                });
-
-                await sut.personExternalSystemSyncEventHandler(event);
-
-                expect(emailResolverServiceMock.shouldUseEmailMicroservice).toHaveBeenCalled();
-                expect(emailResolverServiceMock.findEmailBySpshPerson).toHaveBeenCalledWith(person.id);
+                expect(emailResolverServiceMock.getPrimaryActiveEmailForPerson).toHaveBeenCalled();
 
                 expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith(
                     {
