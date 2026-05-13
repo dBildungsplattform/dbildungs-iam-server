@@ -86,7 +86,7 @@ describe('configloader', () => {
                 VIDIS: {
                     BASE_URL: 'dummy-url',
                     CLIENT_ID: 'dummy-username',
-                    CLIENT_SECRET: 'dummy-password'
+                    CLIENT_SECRET: 'dummy-password',
                 },
                 OX: {
                     ENABLED: true,

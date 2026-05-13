@@ -13,8 +13,9 @@ export class VidisTestController {
     @Public()
     @ApiOperation({ summary: 'Get activated Angebote by region.' })
     public async getActivatedAngeboteByRegion(): Promise<VidisAngebotWithSchoolActivations[]> {
-        const res: Result<VidisAngebotWithSchoolActivations[]> = await this.vidisApiService.getActivatedAngeboteByRegionSH();
-        if(res.ok){
+        const res: Result<VidisAngebotWithSchoolActivations[]> =
+            await this.vidisApiService.getActivatedAngeboteByRegionSH();
+        if (res.ok) {
             return res.value;
         }
         return [];
@@ -24,9 +25,12 @@ export class VidisTestController {
     @Public()
     @ApiOperation({ summary: 'Get activated Angebote by school.' })
     @ApiQuery({ name: 'kennung', type: String })
-    public async getActivatedAngeboteBySchool(@Query('kennung') kennung: string): Promise<VidisServiceResponseAngebot []> {
-        const res: Result<VidisServiceResponseAngebot []> = await this.vidisApiService.getActivatedAngeboteBySchool(kennung);
-        if(res.ok){
+    public async getActivatedAngeboteBySchool(
+        @Query('kennung') kennung: string,
+    ): Promise<VidisServiceResponseAngebot[]> {
+        const res: Result<VidisServiceResponseAngebot[]> =
+            await this.vidisApiService.getActivatedAngeboteBySchool(kennung);
+        if (res.ok) {
             return res.value;
         }
         return [];

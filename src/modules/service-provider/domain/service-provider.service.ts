@@ -22,9 +22,7 @@ import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AttachedRollenError } from './errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
-import {
-    ServiceProviderMerkmal,
-} from './service-provider.enum.js';
+import { ServiceProviderMerkmal } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import {
     ManageableServiceProviderDetailsWithReferencedObjects,
@@ -34,7 +32,6 @@ import {
 
 @Injectable()
 export class ServiceProviderService {
-
     private readonly isFeatureRolleErweiternEnabled: boolean;
 
     public constructor(

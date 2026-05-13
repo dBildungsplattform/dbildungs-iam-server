@@ -37,16 +37,15 @@ type VidisApiResponseAngebotCommon = {
 };
 
 export type VidisApiResponseSchoolActivation = {
-    date: string,
-    regionName: string
-}
+    date: string;
+    regionName: string;
+};
 
 export type VidisApiResponseAngebotByRegion = VidisApiResponseAngebotCommon & {
     schoolActivations: VidisApiResponseSchoolActivation[];
 };
 
 export type VidisApiResponseAngebotBySchool = VidisApiResponseAngebotCommon;
-
 
 // RESPONSE TYPES FROM OUR API SERVICE (after transformation)
 
@@ -55,9 +54,9 @@ export type VidisServiceResponseAngebot = VidisApiResponseAngebotCommon;
 export type VidisServiceResponseSchoolActivation = {
     date: string;
     kennung: string;
-}
+};
 
 export type VidisAngebotWithSchoolActivations = {
     angebot: VidisServiceResponseAngebot;
     schoolActivations: VidisServiceResponseSchoolActivation[];
-}
+};

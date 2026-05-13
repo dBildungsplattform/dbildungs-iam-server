@@ -1,4 +1,4 @@
-import { DomainError } from "../../../shared/error";
+import { DomainError } from '../../../shared/error';
 
 export class VidisDomainError extends DomainError {
     public constructor(
