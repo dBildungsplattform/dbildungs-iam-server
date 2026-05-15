@@ -177,7 +177,7 @@ describe('Rolle API', () => {
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const organisation: OrganisationEntity = new OrganisationEntity();
-            await em.persistAndFlush(organisation);
+            await em.persist(organisation).flush();
 
             await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
@@ -211,7 +211,7 @@ describe('Rolle API', () => {
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const organisation: OrganisationEntity = new OrganisationEntity();
-            await em.persistAndFlush(organisation);
+            await em.persist(organisation).flush();
 
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
@@ -271,7 +271,7 @@ describe('Rolle API', () => {
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const organisation: OrganisationEntity = new OrganisationEntity();
-            await em.persistAndFlush(organisation);
+            await em.persist(organisation).flush();
 
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
@@ -302,7 +302,7 @@ describe('Rolle API', () => {
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const organisation: OrganisationEntity = new OrganisationEntity();
-            await em.persistAndFlush(organisation);
+            await em.persist(organisation).flush();
 
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
@@ -333,7 +333,7 @@ describe('Rolle API', () => {
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const organisation: OrganisationEntity = new OrganisationEntity();
-            await em.persistAndFlush(organisation);
+            await em.persist(organisation).flush();
 
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
@@ -352,7 +352,7 @@ describe('Rolle API', () => {
 
         it('should fail Rolle-Name-Unique-On-SSK specification is violated', async () => {
             const organisation: OrganisationEntity = new OrganisationEntity();
-            await em.persistAndFlush(organisation);
+            await em.persist(organisation).flush();
 
             const rolleName: string = faker.person.jobTitle();
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
@@ -477,7 +477,7 @@ describe('Rolle API', () => {
             expect(pagedResponse.items).toContainEqual(
                 expect.objectContaining({
                     administeredBySchulstrukturknoten: orga.id,
-                } as Partial<RolleWithServiceProvidersResponse>),
+                }),
             );
         });
 
@@ -991,7 +991,7 @@ describe('Rolle API', () => {
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const organisation: OrganisationEntity = new OrganisationEntity();
-            await em.persistAndFlush(organisation);
+            await em.persist(organisation).flush();
             await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
@@ -1070,7 +1070,7 @@ describe('Rolle API', () => {
             ];
 
             const organisation: OrganisationEntity = new OrganisationEntity();
-            await em.persistAndFlush(organisation);
+            await em.persist(organisation).flush();
             await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
@@ -1118,7 +1118,7 @@ describe('Rolle API', () => {
             ];
 
             const organisation: OrganisationEntity = new OrganisationEntity();
-            await em.persistAndFlush(organisation);
+            await em.persist(organisation).flush();
             await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
@@ -1183,7 +1183,7 @@ describe('Rolle API', () => {
 
                 const organisation: OrganisationEntity = new OrganisationEntity();
                 organisation.typ = OrganisationsTyp.SCHULE;
-                await em.persistAndFlush(organisation);
+                await em.persist(organisation).flush();
                 await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
@@ -1241,7 +1241,7 @@ describe('Rolle API', () => {
             ];
 
             const organisation: OrganisationEntity = new OrganisationEntity();
-            await em.persistAndFlush(organisation);
+            await em.persist(organisation).flush();
 
             await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 

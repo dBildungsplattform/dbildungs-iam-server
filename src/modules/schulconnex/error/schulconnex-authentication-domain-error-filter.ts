@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter, UnauthorizedException } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { AuthenticationDomainError } from '../../authentication/domain/authentication-domain.error.js';
@@ -42,7 +41,7 @@ export class SchulConnexAuthenticationDomainErrorFilter implements ExceptionFilt
     ]);
 
     public catch(exception: AuthenticationDomainError | UnauthorizedException, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
         const schulConnexError: SchulConnexError = this.mapDomainErrorToSchulConnexError(exception);

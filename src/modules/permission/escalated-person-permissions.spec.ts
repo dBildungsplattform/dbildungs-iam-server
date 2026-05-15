@@ -1,27 +1,27 @@
 import { faker } from '@faker-js/faker';
-import { createPersonPermissionsMock, DoFactory } from '../../../test/utils';
+import { createPersonPermissionsMock, DoFactory } from '../../../test/utils/index.js';
 import { createMock, DeepMocked } from '../../../test/utils/createMock.js';
-import { ClassLogger } from '../../core/logging/class-logger';
-import { OrganisationID } from '../../shared/types';
+import { ClassLogger } from '../../core/logging/class-logger.js';
+import { OrganisationID } from '../../shared/types/index.js';
 import { Organisation } from '../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { Rolle } from '../rolle/domain/rolle';
+import { Rolle } from '../rolle/domain/rolle.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../rolle/domain/systemrecht.js';
 import {
     EscalatedPermissionAtOrga,
     EscalatedPersonPermissions,
     isEscalatedPersonPermissions,
-} from './escalated-person-permissions';
+} from './escalated-person-permissions.js';
 import { Mock } from 'vitest';
-import { OrganisationsTyp } from '../organisation/domain/organisation.enums';
+import { OrganisationsTyp } from '../organisation/domain/organisation.enums.js';
 import {
     PermittedOrgas,
     PersonenkontextRolleWithOrganisation,
     PersonFields,
     PersonPermissions,
-} from '../authentication/domain/person-permissions';
+} from '../authentication/domain/person-permissions.js';
 
 describe('EscalatedPersonPermission', () => {
     const organisationRepo: DeepMocked<OrganisationRepository> =

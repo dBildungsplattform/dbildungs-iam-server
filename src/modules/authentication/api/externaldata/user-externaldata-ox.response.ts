@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { OXContextID } from '../../../../shared/types/ox-ids.types';
+import { OXContextID } from '../../../../shared/types/ox-ids.types.js';
 
 export interface OldOxParams {
     username: string;

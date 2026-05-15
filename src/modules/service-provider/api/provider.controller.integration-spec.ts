@@ -327,7 +327,7 @@ describe('ServiceProvider API', () => {
                 limit: 1,
                 offset: 0,
                 total: 1,
-            } as RawPagedResponse<ManageableServiceProviderListEntryResponse>);
+            });
         });
 
         it('should return empty list', async () => {
@@ -345,7 +345,7 @@ describe('ServiceProvider API', () => {
                 limit: 0,
                 offset: 0,
                 total: 0,
-            } as RawPagedResponse<ManageableServiceProviderListEntryResponse>);
+            });
         });
     });
 
@@ -405,7 +405,7 @@ describe('ServiceProvider API', () => {
                     kennung: organisation.kennung!,
                 },
                 kategorie: serviceProvider.kategorie,
-                logoId: null,
+                logoId: undefined,
                 requires2fa: serviceProvider.requires2fa,
                 merkmale: serviceProvider.merkmale,
                 url: serviceProvider.url,
@@ -464,7 +464,7 @@ describe('ServiceProvider API', () => {
                     { id: serviceProvider.id },
                     { refresh: true },
                 );
-                expect(updatedServiceProvider.logoId).toBeNull();
+                expect(updatedServiceProvider.logoId).toBeUndefined();
                 expect(updatedServiceProvider.logo).toEqual(serviceProvider.logo);
                 expect(updatedServiceProvider.logoMimeType).toBe(serviceProvider.logoMimeType);
             });
@@ -487,7 +487,7 @@ describe('ServiceProvider API', () => {
                     { id: serviceProvider.id },
                     { refresh: true },
                 );
-                expect(storedServiceProvider.logoId).toBeNull();
+                expect(storedServiceProvider.logoId).toBeUndefined();
                 expect(storedServiceProvider.logo).toEqual(serviceProvider.logo);
                 expect(storedServiceProvider.logoMimeType).toBe(serviceProvider.logoMimeType);
             });
@@ -529,12 +529,12 @@ describe('ServiceProvider API', () => {
                     expect.objectContaining({
                         ...serviceProvider,
                         ...body,
-                        logo: null,
-                        logoMimeType: null,
-                        keycloakGroup: null,
-                        keycloakRole: null,
+                        logo: undefined,
+                        logoMimeType: undefined,
+                        keycloakGroup: undefined,
+                        keycloakRole: undefined,
                         updatedAt: updatedServiceProvider.updatedAt,
-                        vidisAngebotId: null,
+                        vidisAngebotId: undefined,
                     }),
                 );
             });

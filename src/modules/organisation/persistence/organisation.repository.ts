@@ -2,7 +2,7 @@ import {
     EntityDictionary,
     EntityManager,
     Loaded,
-    QBFilterQuery,
+    FilterQuery,
     QueryBuilder,
     RawQueryFragment,
     RequiredEntityData,
@@ -361,8 +361,7 @@ export class OrganisationRepository {
         const orderDirection: 'ASC' | 'DESC' = sortOrder === ScopeOrder.ASC ? 'ASC' : 'DESC';
 
         // Create custom ORDER BY using sql helper
-        const typeOrderClause: RawQueryFragment =
-            sql`CASE WHEN typ = 'ROOT' then 1 WHEN typ = 'LAND' THEN 2 WHEN typ = 'TRAEGER' THEN 3 ELSE 4 END` as RawQueryFragment;
+        const typeOrderClause: RawQueryFragment = sql`CASE WHEN typ = 'ROOT' then 1 WHEN typ = 'LAND' THEN 2 WHEN typ = 'TRAEGER' THEN 3 ELSE 4 END`;
         const sortByField: RawQueryFragment = sql.ref(sortBy);
         const secondSortByField: RawQueryFragment = sql.ref(secondSortBy);
 
@@ -384,8 +383,8 @@ export class OrganisationRepository {
             );
         }
 
-        let whereClause: QBFilterQuery<OrganisationEntity> = {};
-        const andClauses: QBFilterQuery<OrganisationEntity>[] = [];
+        let whereClause: FilterQuery<OrganisationEntity> = {};
+        const andClauses: FilterQuery<OrganisationEntity>[] = [];
         if (searchOptions.kennung) {
             andClauses.push({ kennung: searchOptions.kennung });
         }
@@ -604,7 +603,7 @@ export class OrganisationRepository {
             `User with personId:${personPermissions.personFields.id} enabled itslearning for organisationId:${id}`,
         );
 
-        await this.em.persistAndFlush(organisationEntity);
+        await this.em.persist(organisationEntity).flush();
 
         this.eventService.publish(
             new SchuleItslearningEnabledEvent(
@@ -634,7 +633,7 @@ export class OrganisationRepository {
             mapOrgaAggregateToData(organisation),
         );
 
-        await this.em.persistAndFlush(organisationEntity);
+        await this.em.persist(organisationEntity).flush();
 
         if (organisationEntity.typ === OrganisationsTyp.SCHULE) {
             const orgaBaumZuordnung: RootDirectChildrenType = await this.findOrganisationZuordnungErsatzOderOeffentlich(
@@ -685,7 +684,7 @@ export class OrganisationRepository {
 
         organisationEntity.assign(mapOrgaAggregateToData(organisation));
 
-        await this.em.persistAndFlush(organisationEntity);
+        await this.em.persist(organisationEntity).flush();
 
         return mapOrgaEntityToAggregate(organisationEntity);
     }
@@ -719,7 +718,7 @@ export class OrganisationRepository {
             KafkaOrganisationDeletedEvent.fromOrganisation(entity),
         );
 
-        await this.em.removeAndFlush(entity);
+        await this.em.remove(entity).flush();
 
         this.logger.info(`Organisation ${entity.name} vom Typ ${entity.typ} entfernt.`);
     }

@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { faker } from '@faker-js/faker';
 import { plainToInstance } from 'class-transformer';
-import { SetEmailAddressesSuspendedPathParams } from './set-email-addresses-suspended.pathparams';
+import { SetEmailAddressesSuspendedPathParams } from './set-email-addresses-suspended.pathparams.js';
 
 describe('SetEmailAddressesSuspendedPathParams', () => {
     const referenceParams: SetEmailAddressesSuspendedPathParams = {

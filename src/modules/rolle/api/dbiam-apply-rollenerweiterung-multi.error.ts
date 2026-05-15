@@ -21,6 +21,7 @@ export class DbiamApplyRollenerweiterungMultiError {
     @ApiProperty({
         isArray: true,
         required: true,
+        /* v8 ignore next */
         type: () => ({
             rolleId: { type: 'string' },
             i18nKey: { type: 'string', enum: DbiamApplyRollenerweiterungMultiErrorI18NTypes },

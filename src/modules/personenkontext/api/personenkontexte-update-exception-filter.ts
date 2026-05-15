@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { UpdateCountError } from '../domain/error/update-count.error.js';
@@ -102,7 +101,7 @@ export class PersonenkontexteUpdateExceptionFilter implements ExceptionFilter<Pe
     ]);
 
     public catch(exception: PersonenkontexteUpdateError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
         const status: number = 400; //all errors regarding organisation specifications are BadRequests
 

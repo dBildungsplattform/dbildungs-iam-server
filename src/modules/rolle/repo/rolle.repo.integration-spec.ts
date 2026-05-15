@@ -149,7 +149,7 @@ describe('RolleRepo', () => {
             const rollenResult: Rolle<true>[] = await sut.findByRollenArten(false);
 
             expect(rollenResult).toHaveLength(3);
-            expect(rollenResult).toEqual(rollen);
+            expect(rollenResult).toEqual(expect.arrayContaining(rollen));
         });
 
         it.each([
@@ -991,7 +991,7 @@ describe('RolleRepo', () => {
             });
 
             it('should rethrow unknown db exception', async () => {
-                vi.spyOn(em, 'removeAndFlush').mockRejectedValueOnce(new Error('Unknown DB error'));
+                vi.spyOn(em, 'flush').mockRejectedValueOnce(new Error('Unknown DB error'));
                 await expect(sut.deleteAuthorized(rolle.id, permissions)).rejects.toThrow('Unknown DB error');
             });
         });

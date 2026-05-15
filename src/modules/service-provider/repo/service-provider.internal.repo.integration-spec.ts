@@ -7,10 +7,10 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     LoggingTestModule,
-} from '../../../../test/utils';
-import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper';
-import { ServiceProvider } from '../domain/service-provider';
-import { ServiceProviderInternalRepo } from './service-provider.internal.repo';
+} from '../../../../test/utils/index.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { ServiceProvider } from '../domain/service-provider.js';
+import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js';
 
 describe('ServiceProviderInternalRepo', () => {
     let module: TestingModule;

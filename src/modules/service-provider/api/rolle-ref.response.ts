@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { RolleID } from '../../../shared/types';
-import { Rolle } from '../../rolle/domain/rolle';
+import { RolleID } from '../../../shared/types/index.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 
 export class RolleRefResponse {
     @ApiProperty()

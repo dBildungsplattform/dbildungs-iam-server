@@ -1,4 +1,5 @@
-import { BaseEntity, DateTimeType, Opt, PrimaryKey, Property } from '@mikro-orm/core';
+import { BaseEntity, DateTimeType, Opt } from '@mikro-orm/core';
+import { PrimaryKey, Property } from '@mikro-orm/decorators/legacy';
 import { randomUUID } from 'crypto';
 
 export abstract class TimestampedEntity extends BaseEntity {

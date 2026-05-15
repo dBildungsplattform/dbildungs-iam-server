@@ -16,7 +16,7 @@ export async function createAndPersistRootOrganisation(
     };
 
     const organisationEntity: OrganisationEntity = em.create(OrganisationEntity, organisationData);
-    await em.persistAndFlush(organisationEntity);
+    await em.persist(organisationEntity).flush();
 
     return organisationEntity;
 }
@@ -38,7 +38,7 @@ export async function createAndPersistOrganisation(
         itslearningEnabled: false,
     };
     const organisationEntity: OrganisationEntity = em.create(OrganisationEntity, organisationData);
-    await em.persistAndFlush(organisationEntity);
+    await em.persist(organisationEntity).flush();
 
     return organisationEntity;
 }

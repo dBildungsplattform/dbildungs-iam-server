@@ -58,5 +58,5 @@ export function createExecutionContextMock(options?: ArgumentsHostMockOptions): 
 }
 
 export function createArgumentsHostMock(options?: ArgumentsHostMockOptions): MockedObject<ArgumentsHost> {
-    return createExecutionContextMock(options) as MockedObject<ArgumentsHost>;
+    return createExecutionContextMock(options);
 }

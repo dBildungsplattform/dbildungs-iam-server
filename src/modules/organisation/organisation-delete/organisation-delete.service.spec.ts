@@ -2,21 +2,21 @@ import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DoFactory } from '../../../../test/utils';
-import { DomainError } from '../../../shared/error';
-import { OrganisationID } from '../../../shared/types';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo';
-import { RolleRepo } from '../../rolle/repo/rolle.repo';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo';
-import { OrganisationRepository } from '../persistence/organisation.repository';
-import { OrganisationHasChildrenError } from './errors/organisation-has-children.error';
-import { OrganisationHasPersonenkontexteError } from './errors/organisation-has-personenkontexte.error';
-import { OrganisationHasRollenError } from './errors/organisation-has-rollen.error';
-import { OrganisationHasRollenerweiterungError } from './errors/organisation-has-rollenerweiterung.error';
-import { OrganisationHasServiceProvidersError } from './errors/organisation-has-service-provider.error';
-import { OrganisationHasZugehoerigeError } from './errors/organisation-has-zugehoerige.error';
-import { OrganisationDeleteService } from './organisation-delete.service';
+import { DoFactory } from '../../../../test/utils/index.js';
+import { DomainError } from '../../../shared/error/index.js';
+import { OrganisationID } from '../../../shared/types/index.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
+import { OrganisationHasChildrenError } from './errors/organisation-has-children.error.js';
+import { OrganisationHasPersonenkontexteError } from './errors/organisation-has-personenkontexte.error.js';
+import { OrganisationHasRollenError } from './errors/organisation-has-rollen.error.js';
+import { OrganisationHasRollenerweiterungError } from './errors/organisation-has-rollenerweiterung.error.js';
+import { OrganisationHasServiceProvidersError } from './errors/organisation-has-service-provider.error.js';
+import { OrganisationHasZugehoerigeError } from './errors/organisation-has-zugehoerige.error.js';
+import { OrganisationDeleteService } from './organisation-delete.service.js';
 
 describe('OrganisationDeleteService', () => {
     let module: TestingModule;

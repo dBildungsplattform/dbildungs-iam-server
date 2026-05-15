@@ -7,7 +7,8 @@
     "license": "EUPL-1.2",
     "type": "module",
     "engines": {
-        "node": "= 24.14.0"
+        "node": "= 24.14.1",
+        "npm": ">=11.10.0"
     },
     "scripts": {
         "build": "nest build",
@@ -43,10 +44,11 @@
         "@golevelup/nestjs-discovery": "^6.1.2",
         "@keycloak/keycloak-admin-client": "^25.0.6",
         "@keyv/redis": "^5.1.6",
-        "@mikro-orm/core": "6.2.1",
-        "@mikro-orm/migrations": "6.2.1",
-        "@mikro-orm/nestjs": "6.1.1",
-        "@mikro-orm/postgresql": "6.2.1",
+        "@mikro-orm/core": "^7.0.15",
+        "@mikro-orm/decorators": "^7.0.15",
+        "@mikro-orm/migrations": "^7.0.15",
+        "@mikro-orm/nestjs": "^7.0.1",
+        "@mikro-orm/postgresql": "^7.0.15",
         "@nestjs/axios": "^4.0.1",
         "@nestjs/cache-manager": "^3.1.0",
         "@nestjs/common": "^11.1.16",
@@ -83,7 +85,7 @@
         "winston": "^3.19.0"
     },
     "devDependencies": {
-        "@mikro-orm/cli": "6.2.1",
+        "@mikro-orm/cli": "^7.0.15",
         "@nestjs/cli": "^11.0.16",
         "@nestjs/testing": "^11.1.16",
         "@swc/core": "^1.15.18",
@@ -97,7 +99,7 @@
         "@types/passport": "^1.0.17",
         "@types/passport-jwt": "^4.0.1",
         "@types/supertest": "^7.2.0",
-        "@vitest/coverage-v8": "^4.0.18",
+        "@vitest/coverage-v8": "^4.1.5",
         "eslint": "^9.35.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-import": "^2.32.0",
@@ -105,9 +107,8 @@
         "prettier": "^3.8.1",
         "supertest": "^7.2.2",
         "testcontainers": "^11.12.0",
-        "typescript": "^5.9.3",
-        "typescript-eslint": "^8.56.1",
-        "unplugin-swc": "^1.5.9",
-        "vitest": "^4.0.18"
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.59.2",
+        "vitest": "^4.1.5"
     }
 }

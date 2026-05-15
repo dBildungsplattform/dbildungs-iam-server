@@ -1,11 +1,12 @@
 import { ArgumentsHost, UnauthorizedException } from '@nestjs/common';
 import { Response } from 'express';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexAuthenticationDomainErrorFilter } from './schulconnex-authentication-domain-error-filter.js';
 import { AuthenticationDomainError } from '../../authentication/domain/authentication-domain.error.js';
 import { KeycloakUserNotFoundError } from '../../authentication/domain/keycloak-user-not-found.error.js';
 import { RequiredStepUpLevelNotMetError } from '../../authentication/domain/required-step-up-level-not-met.error.js';
+
+type HttpArgumentsHost = ReturnType<ArgumentsHost['switchToHttp']>;
 
 describe('AuthenticationDomainErrorFilter', () => {
     let filter: SchulConnexAuthenticationDomainErrorFilter;
@@ -50,18 +51,16 @@ describe('AuthenticationDomainErrorFilter', () => {
             status: vi.fn().mockReturnThis(),
             json: vi.fn().mockReturnThis(),
             send: vi.fn().mockReturnThis(),
-        } as unknown as Response;
+        };
 
         const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
             getResponse: vi.fn().mockReturnValue(responseMock),
-            getRequest: vi.fn().mockReturnValue({} as Request),
+            getRequest: vi.fn().mockReturnValue({}),
         };
 
         argumentsHost = {
-            switchToHttp: vi.fn().mockReturnValue(httpArgumentsHostMock as HttpArgumentsHost),
-            getHandler: vi.fn().mockReturnValue(() => {}),
-            getClass: vi.fn().mockReturnValue(class {}),
-        } as unknown as ArgumentsHost;
+            switchToHttp: vi.fn().mockReturnValue(httpArgumentsHostMock),
+        };
     });
 
     describe('catch', () => {

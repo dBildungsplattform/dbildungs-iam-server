@@ -55,7 +55,7 @@ describe('Result', () => {
 
     describe('UnionToResult', () => {
         it('should return an okay-result when the union is not an error', () => {
-            const union: string | Error = faker.string.alphanumeric(16) as string | Error;
+            const union: string | Error = faker.string.alphanumeric(16);
 
             const res: Result<string, Error> = UnionToResult(union);
 
@@ -66,7 +66,7 @@ describe('Result', () => {
         });
 
         it('should return an error-result when the union is an error', () => {
-            const union: string | Error = new Error(faker.string.alphanumeric(16)) as string | Error;
+            const union: string | Error = new Error(faker.string.alphanumeric(16));
 
             const res: Result<string, Error> = UnionToResult(union);
 
