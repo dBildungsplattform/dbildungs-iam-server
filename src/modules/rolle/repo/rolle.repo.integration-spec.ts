@@ -991,7 +991,7 @@ describe('RolleRepo', () => {
             });
 
             it('should rethrow unknown db exception', async () => {
-                vi.spyOn(em, 'removeAndFlush').mockRejectedValueOnce(new Error('Unknown DB error'));
+                vi.spyOn(em, 'flush').mockRejectedValueOnce(new Error('Unknown DB error'));
                 await expect(sut.deleteAuthorized(rolle.id, permissions)).rejects.toThrow('Unknown DB error');
             });
         });
