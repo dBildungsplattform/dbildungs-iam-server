@@ -5,7 +5,6 @@ import { FeatureFlagConfig } from '../../../shared/config/featureflag.config.js'
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { MissingAttributeError } from '../../../shared/error/missing-attribute.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
@@ -29,6 +28,7 @@ import {
     ManageableServiceProviderWithReferencedObjects,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
+import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -322,30 +322,19 @@ export class ServiceProviderService {
         angebotId: ServiceProviderID,
         updateServiceProviderBodyParams: UpdateServiceProviderBodyParams,
     ): Promise<Result<ServiceProvider<true>, DomainError>> {
-        if (!updateServiceProviderBodyParams.name && !updateServiceProviderBodyParams.url) {
-            return {
-                ok: false,
-                error: new MissingAttributeError(
-                    'At least one of the following parameters must be provided: name, url',
-                ),
-            };
-        }
         const existingServiceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
             angebotId,
             { withLogo: true },
         );
         if (!existingServiceProvider) {
-            throw new EntityNotFoundError();
+            return Err(new EntityNotFoundError());
         }
 
-        if (updateServiceProviderBodyParams.name) {
-            existingServiceProvider.name = updateServiceProviderBodyParams.name;
-        }
-        if (updateServiceProviderBodyParams.url) {
-            existingServiceProvider.url = updateServiceProviderBodyParams.url;
-        }
-        if (updateServiceProviderBodyParams.kategorie) {
-            existingServiceProvider.kategorie = updateServiceProviderBodyParams.kategorie;
+        const updateError: Option<InvalidLogoCombinationError> = existingServiceProvider.updateWithSafeFields(
+            updateServiceProviderBodyParams,
+        );
+        if (updateError) {
+            return Err(updateError);
         }
 
         const updatedServiceProvider: Promise<Result<ServiceProvider<true>, DomainError>> =

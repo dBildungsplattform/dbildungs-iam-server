@@ -15,10 +15,11 @@ import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
 import { intersectPermittedAndRequestedOrgas, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderMerkmalEntity } from '../../service-provider/repo/service-provider-merkmal.entity.js';
+import { mapEntityToAggregate as mapServiceProviderEntityToAggregate } from '../../service-provider/repo/service-provider-entity-mapper.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
@@ -36,7 +37,6 @@ import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-service-providers.specification.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
     const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
@@ -83,24 +83,7 @@ export function mapRolleEntityToAggregate(entity: RolleEntity, rolleFactory: Rol
     const serviceProviderData: ServiceProvider<true>[] = entity.serviceProvider.map(
         (serviceProvider: RolleServiceProviderEntity) => {
             const sp: ServiceProviderEntity = serviceProvider.serviceProvider;
-            return ServiceProvider.construct(
-                sp.id,
-                sp.createdAt,
-                sp.updatedAt,
-                sp.name,
-                sp.target,
-                sp.url,
-                sp.kategorie,
-                sp.providedOnSchulstrukturknoten,
-                sp.logo,
-                sp.logoMimeType,
-                sp.keycloakGroup,
-                sp.keycloakRole,
-                sp.externalSystem,
-                sp.requires2fa,
-                sp.vidisAngebotId,
-                sp.merkmale.map((merkmalEntity: ServiceProviderMerkmalEntity) => merkmalEntity.merkmal),
-            );
+            return mapServiceProviderEntityToAggregate(sp);
         },
     );
 
@@ -163,7 +146,7 @@ export class RolleRepo {
     public async findByIdAuthorized(
         rolleId: RolleID,
         permissions: IPersonPermissions,
-    ): Promise<Result<Rolle<true>, DomainError>> {
+    ): Promise<Result<Rolle<true>, EntityNotFoundError | MissingPermissionsError>> {
         const rolle: Option<Rolle<true>> = await this.findById(rolleId);
         if (!rolle) {
             return {
@@ -486,32 +469,27 @@ export class RolleRepo {
         return result;
     }
 
-    public async deleteAuthorized(id: RolleID, permissions: IPersonPermissions): Promise<Option<DomainError>> {
-        //Permissions
-        const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
-        if (!authorizedRole.ok) {
-            return authorizedRole.error;
+    public async deleteAuthorized(
+        id: RolleID,
+        permissions: IPersonPermissions,
+    ): Promise<Option<RolleHatPersonenkontexteError | EntityNotFoundError | MissingPermissionsError>> {
+        const rolle: Result<Rolle<true>, EntityNotFoundError | MissingPermissionsError> = await this.findByIdAuthorized(
+            id,
+            permissions,
+        );
+        if (!rolle.ok) {
+            return rolle.error;
         }
 
-        const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, id, {
-            populate: [
-                'merkmale',
-                'systemrechte',
-                'serviceProvider.serviceProvider',
-                'serviceProvider.serviceProvider.merkmale',
-            ] as const,
-            exclude: ['serviceProvider.serviceProvider.logo'] as const,
-        });
-
         try {
-            //Cascade removal
-            await this.em.removeAndFlush(rolleEntity);
+            const entity: RolleEntity = this.em.create(RolleEntity, mapRolleAggregateToData(rolle.value));
+            await this.em.removeAndFlush(entity);
         } catch (ex) {
             if (ex instanceof ForeignKeyConstraintViolationException) {
                 return new RolleHatPersonenkontexteError();
             }
+            throw ex;
         }
-
         return;
     }
 

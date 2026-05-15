@@ -156,6 +156,7 @@ export class DoFactory {
             target: ServiceProviderTarget.URL,
             url: faker.internet.url(),
             kategorie: faker.helpers.enumValue(ServiceProviderKategorie),
+            logoId: undefined,
             logoMimeType: 'image/png',
             // 1x1 black PNG
             logo: Buffer.from(
