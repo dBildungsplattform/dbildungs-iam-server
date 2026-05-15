@@ -45,6 +45,7 @@ type ErweiterterServiceProviderForPKEntity = {
 
 export type ExternalPkData = {
     pkId: string;
+    rolleId: RolleID;
     rollenart?: RollenArt;
     kennung?: string;
     serviceProvider?: ServiceProvider<true>[];
@@ -412,6 +413,7 @@ export class DBiamPersonenkontextRepo {
 
             return {
                 pkId: pk.id,
+                rolleId: pk.rolleId.unwrap().id,
                 rollenart: pk.rolleId.unwrap().rollenart,
                 kennung: pk.organisationId.unwrap().kennung,
                 serviceProvider: serviceProviders.map((sp: ServiceProviderEntity) => mapSPEntityToAggregate(sp)),

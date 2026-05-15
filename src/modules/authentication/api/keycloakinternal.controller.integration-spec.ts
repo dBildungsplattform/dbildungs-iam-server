@@ -121,6 +121,7 @@ describe('KeycloakInternalController', () => {
             const pkExternalData: ExternalPkData[] = [
                 {
                     pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
@@ -131,6 +132,7 @@ describe('KeycloakInternalController', () => {
                 },
                 {
                     pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
@@ -141,6 +143,7 @@ describe('KeycloakInternalController', () => {
                 },
                 {
                     pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
@@ -152,6 +155,7 @@ describe('KeycloakInternalController', () => {
                 },
                 {
                     pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: undefined, //To Be Filtered Out
                     serviceProvider: [],
@@ -192,6 +196,9 @@ describe('KeycloakInternalController', () => {
             expect(result.opsh.nachname).toEqual(person.familienname);
             expect(result.opsh.personenkontexte.length).toEqual(3);
             expect(result.onlineDateiablage.personId).toEqual(person.id);
+            expect(result.iqshHelpdesk.vorname).toEqual(person.vorname);
+            expect(result.iqshHelpdesk.nachname).toEqual(person.familienname);
+            expect(result.iqshHelpdesk.emailAdresse).toEqual(person.email);
         });
 
         it('should omit ox response if user has no email', async () => {
@@ -240,6 +247,7 @@ describe('KeycloakInternalController', () => {
             const pkExternalData: ExternalPkData[] = [
                 {
                     pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
@@ -250,6 +258,7 @@ describe('KeycloakInternalController', () => {
                 },
                 {
                     pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
@@ -260,6 +269,7 @@ describe('KeycloakInternalController', () => {
                 },
                 {
                     pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: undefined, //To Be Filtered Out
                     serviceProvider: [],
@@ -307,6 +317,9 @@ describe('KeycloakInternalController', () => {
             expect(result.opsh.nachname).toEqual(person.familienname);
             expect(result.opsh.personenkontexte.length).toEqual(2);
             expect(result.onlineDateiablage.personId).toEqual(person.id);
+            expect(result.iqshHelpdesk.vorname).toEqual(person.vorname);
+            expect(result.iqshHelpdesk.nachname).toEqual(person.familienname);
+            expect(result.iqshHelpdesk.emailAdresse).toEqual(person.email);
         });
 
         it('should return user external data new Microservice without ox params', async () => {
@@ -327,6 +340,7 @@ describe('KeycloakInternalController', () => {
             const pkExternalData: ExternalPkData[] = [
                 {
                     pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
@@ -337,6 +351,7 @@ describe('KeycloakInternalController', () => {
                 },
                 {
                     pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                     serviceProvider: [
@@ -347,6 +362,7 @@ describe('KeycloakInternalController', () => {
                 },
                 {
                     pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: undefined, //To Be Filtered Out
                     serviceProvider: [],
@@ -389,6 +405,9 @@ describe('KeycloakInternalController', () => {
 
             expect(result.opsh.personenkontexte.length).toEqual(2);
             expect(result.onlineDateiablage.personId).toEqual(person.id);
+            expect(result.iqshHelpdesk.vorname).toEqual(person.vorname);
+            expect(result.iqshHelpdesk.nachname).toEqual(person.familienname);
+            expect(result.iqshHelpdesk.emailAdresse).toEqual(person.email);
         });
 
         it('should throw error if aggregate doesnt initialize fields field correctly', async () => {
@@ -396,11 +415,13 @@ describe('KeycloakInternalController', () => {
             const pkExternalData: ExternalPkData[] = [
                 {
                     pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                 },
                 {
                     pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
                     rollenart: RollenArt.LERN,
                     kennung: faker.lorem.word(),
                 },

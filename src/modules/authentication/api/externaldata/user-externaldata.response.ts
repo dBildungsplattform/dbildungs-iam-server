@@ -10,8 +10,11 @@ import { NewOxParams, OldOxParams, UserExternalDataResponseOx } from './user-ext
 import { UserExeternalDataResponseVidis } from './user-externaldata-vidis.response.js';
 import { UserExternaldataWorkflowAggregate } from '../../domain/user-extenaldata.workflow.js';
 import { ErweiterterServiceProviderForPK } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { UserExternalDataResponseIqshHelpdesk } from './user-externaldata-iqshhelpdesk.response.js';
+import { UserExternalDataResponseIqshHelpdeskPk } from './user-externaldata-iqshhelpdesk-pk.response.js';
 
 export class UserExternalDataResponse {
+    //optional, um den Zugriff auf OX zu verhindern, falls kein Lehrerkontext mehr an der Person hängt
     @ApiPropertyOptional({ type: UserExternalDataResponseOx })
     public ox?: UserExternalDataResponseOx;
 
@@ -27,18 +30,23 @@ export class UserExternalDataResponse {
     @ApiProperty({ type: UserExeternalDataResponseOnlineDateiablage })
     public onlineDateiablage: UserExeternalDataResponseOnlineDateiablage;
 
+    @ApiProperty({ type: UserExternalDataResponseIqshHelpdesk })
+    public iqshHelpdesk: UserExternalDataResponseIqshHelpdesk;
+
     private constructor(
         ox: UserExternalDataResponseOx | undefined,
         itslearning: UserExeternalDataResponseItslearning,
         vidis: UserExeternalDataResponseVidis,
         opsh: UserExeternalDataResponseOpsh,
         onlineDateiablage: UserExeternalDataResponseOnlineDateiablage,
+        iqshHelpdesk: UserExternalDataResponseIqshHelpdesk,
     ) {
         this.ox = ox;
         this.itslearning = itslearning;
         this.vidis = vidis;
         this.opsh = opsh;
         this.onlineDateiablage = onlineDateiablage;
+        this.iqshHelpdesk = iqshHelpdesk;
     }
 
     public static createNew(
@@ -75,7 +83,15 @@ export class UserExternalDataResponse {
         );
         const onlineDateiablage: UserExeternalDataResponseOnlineDateiablage =
             new UserExeternalDataResponseOnlineDateiablage(person.id);
+        const iqshHelpdesk: UserExternalDataResponseIqshHelpdesk = new UserExternalDataResponseIqshHelpdesk(
+            person.vorname,
+            person.familienname,
+            externalPkData.map(
+                (pk: RequiredExternalPkData) => new UserExternalDataResponseIqshHelpdeskPk(pk.rolleId, pk.kennung),
+            ),
+            email,
+        );
 
-        return new UserExternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage);
+        return new UserExternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage, iqshHelpdesk);
     }
 }

@@ -109,6 +109,7 @@ export class UserExternaldataWorkflowAggregate {
                 if (expk.pkId && expk.kennung && expk.rollenart && expk.serviceProvider) {
                     return {
                         pkId: expk.pkId,
+                        rolleId: expk.rolleId,
                         rollenart: expk.rollenart,
                         serviceProvider: expk.serviceProvider,
                         kennung: expk.kennung,
