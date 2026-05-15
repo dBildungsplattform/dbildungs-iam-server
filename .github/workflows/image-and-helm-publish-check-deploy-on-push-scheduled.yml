@@ -71,7 +71,7 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@8
     with:
-      node_version: '24'
+      node_version: '24.14.1'
     permissions:
       contents: read
 
@@ -99,7 +99,7 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@8
     with:
-      node_version: '24'
+      node_version: '24.14.1'
       deploy_stage: 'dev'
       timeout_minutes: 30
     permissions:
