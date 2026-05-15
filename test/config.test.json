@@ -69,9 +69,9 @@
         "REALM": "defrealm"
     },
     "VIDIS": {
-        "BASE_URL": "",
-        "CLIENT_ID": "",
-        "CLIENT_SECRET": ""
+        "BASE_URL": "http://localhost:10000",
+        "CLIENT_ID": "clientid",
+        "CLIENT_SECRET": "clientsecret"
     },
     "OX": {
         "ENABLED": false,

@@ -99,7 +99,7 @@
         "REALM": "defrealm"
     },
     "VIDIS": {
-        "BASE_URL": "https://service-stage.vidis.schule",
+        "BASE_URL": "http://localhost:10000",
         "CLIENT_ID": "clientid",
         "CLIENT_SECRET": "clientsecret"
     },

@@ -121,7 +121,7 @@ export default (): Config => ({
         STEP_UP_TIMEOUT_ENABLED: process.env['SYSTEM_STEP_UP_TIMEOUT_ENABLED']?.toLowerCase() as 'true' | 'false',
     },
     VIDIS: {
-        BASE_URL: process.env['VIDIS_BASE_URL'],
+        BASE_URL: process.env['VIDIS_API_BASE_URL'],
         CLIENT_ID: process.env['VIDIS_API_CLIENT_ID'],
         CLIENT_SECRET: process.env['VIDIS_API_CLIENT_SECRET'],
     },
