@@ -23,6 +23,7 @@ import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
 import { rollenartToIMSESInstitutionRole } from '../repo/role-utils.js';
 import { ItsLearningSyncEventHandler } from './itslearning-sync.event-handler.js';
 import { Err, Ok } from '../../../shared/util/result.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 describe('ItsLearning Persons Event Handler', () => {
     let module: TestingModule;
@@ -35,12 +36,17 @@ describe('ItsLearning Persons Event Handler', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let orgaRepoMock: DeepMocked<OrganisationRepository>;
     let loggerMock: DeepMocked<ClassLogger>;
+    let emailResolverServiceMock: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot()],
             providers: [
                 ItsLearningSyncEventHandler,
+                {
+                    provide: EmailResolverService,
+                    useValue: createMock(EmailResolverService),
+                },
                 {
                     provide: ItslearningPersonRepo,
                     useValue: createMock(ItslearningPersonRepo),
@@ -69,6 +75,7 @@ describe('ItsLearning Persons Event Handler', () => {
         }).compile();
 
         sut = module.get(ItsLearningSyncEventHandler);
+        emailResolverServiceMock = module.get(EmailResolverService);
         itslearningPersonRepoMock = module.get(ItslearningPersonRepo);
         itslearningMembershipRepoMock = module.get(ItslearningMembershipRepo);
         personRepoMock = module.get(PersonRepository);
@@ -173,7 +180,13 @@ describe('ItsLearning Persons Event Handler', () => {
                 });
 
                 const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
+
+                const email: string = faker.internet.email();
+                emailResolverServiceMock.getPrimaryActiveEmailForPerson.mockResolvedValue(email);
+
                 await sut.personExternalSystemSyncEventHandler(event);
+
+                expect(emailResolverServiceMock.getPrimaryActiveEmailForPerson).toHaveBeenCalled();
 
                 expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith(
                     {
@@ -182,6 +195,7 @@ describe('ItsLearning Persons Event Handler', () => {
                         lastName: person.familienname,
                         username: person.username,
                         institutionRoleType: rollenartToIMSESInstitutionRole(rolleWithItslearning.rollenart),
+                        email: email,
                     },
                     `${event.eventID}-SYNC-PERSON`,
                 );

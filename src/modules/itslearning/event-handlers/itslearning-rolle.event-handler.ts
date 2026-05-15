@@ -11,7 +11,7 @@ import { ItsLearningConfig, ServerConfig } from '../../../shared/config/index.js
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
-import { RolleID, ServiceProviderID } from '../../../shared/types/index.js';
+import { PersonID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
@@ -27,6 +27,10 @@ import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
 import { rollenartToIMSESInstitutionRole, rollenartToIMSESRole } from '../repo/role-utils.js';
 import { IMSESInstitutionRoleType, IMSESRoleType } from '../types/role.enum.js';
 import { StatusInfoHelpers } from '../utils/status-info.utils.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { PersonEmailResponse } from '../../person/api/person-email-response.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 type FailedRequests<T> = (readonly [failureDescription: string, T])[];
 
@@ -45,6 +49,8 @@ export class ItsLearningRolleEventHandler {
         private readonly personRepo: PersonRepository,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly serviceproviderRepo: ServiceProviderRepo,
+        private readonly emailRepo: EmailRepo,
+        private readonly emailResolverService: EmailResolverService,
         configService: ConfigService<ServerConfig>,
 
         // @ts-expect-error used by EnsureRequestContext decorator
@@ -186,14 +192,28 @@ export class ItsLearningRolleEventHandler {
 
             this.logger.info(`[EventID: ${syncId}] Sending ${personen.length} Personen to itslearning.`);
 
-            const createParams: CreatePersonParams[] = personen.map((p: Person<true>) => ({
-                id: p.id,
-                firstName: p.vorname,
-                lastName: p.familienname,
-                username: p.username!,
-                email: p.email,
-                institutionRoleType: institutionRole,
-            }));
+            const emailsForPersons: Result<
+                Map<PersonID, PersonEmailResponse | undefined>,
+                DomainError
+            > = this.emailResolverService.shouldUseEmailMicroservice()
+                ? // eslint-disable-next-line no-await-in-loop
+                  await this.emailResolverService.findEmailsBySpshPersons(personen.map((p: Person<true>) => p.id))
+                : // eslint-disable-next-line no-await-in-loop
+                  await this.emailRepo.getEmailAddressAndStatusForPersonIds(personen.map((p: Person<true>) => p.id));
+
+            const createParams: CreatePersonParams[] = personen.map((p: Person<true>) => {
+                const emailResp: PersonEmailResponse | undefined = emailsForPersons.ok
+                    ? emailsForPersons.value.get(p.id)
+                    : undefined;
+                return {
+                    id: p.id,
+                    firstName: p.vorname,
+                    lastName: p.familienname,
+                    username: p.username!,
+                    institutionRoleType: institutionRole,
+                    email: emailResp?.status === EmailAddressStatus.ENABLED ? emailResp.address : undefined,
+                };
+            });
 
             const createResult: Result<MassResult<void>, DomainError> =
                 // eslint-disable-next-line no-await-in-loop

@@ -37,6 +37,7 @@ import { ValidationExceptionFilter } from '../../../shared/filter/validation-exc
 import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
+import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('KeycloakInternalController', () => {
@@ -56,6 +57,7 @@ describe('KeycloakInternalController', () => {
                 PersonModule,
                 PersonenKontextModule,
                 RolleModule,
+                EmailPersistenceModule,
                 EmailMicroserviceModule,
             ],
             providers: [
@@ -184,12 +186,10 @@ describe('KeycloakInternalController', () => {
             expect(result.vidis.personId).toEqual(person.id);
             expect(result.vidis.vorname).toEqual(person.vorname);
             expect(result.vidis.nachname).toEqual(person.familienname);
-            expect(result.vidis.emailAdresse).toEqual(person.email);
             expect(result.vidis.rollenart).toEqual(pkExternalData[0]?.rollenart);
             expect(result.vidis.dienststellenNummern.length).toEqual(2);
             expect(result.opsh.vorname).toEqual(person.vorname);
             expect(result.opsh.nachname).toEqual(person.familienname);
-            expect(result.opsh.emailAdresse).toEqual(person.email);
             expect(result.opsh.personenkontexte.length).toEqual(3);
             expect(result.onlineDateiablage.personId).toEqual(person.id);
         });
@@ -301,12 +301,10 @@ describe('KeycloakInternalController', () => {
             expect(result.vidis.personId).toEqual(person.id);
             expect(result.vidis.vorname).toEqual(person.vorname);
             expect(result.vidis.nachname).toEqual(person.familienname);
-            expect(result.vidis.emailAdresse).toEqual(person.email);
             expect(result.vidis.rollenart).toEqual(pkExternalData[0]?.rollenart);
             expect(result.vidis.dienststellenNummern.length).toEqual(2);
             expect(result.opsh.vorname).toEqual(person.vorname);
             expect(result.opsh.nachname).toEqual(person.familienname);
-            expect(result.opsh.emailAdresse).toEqual(person.email);
             expect(result.opsh.personenkontexte.length).toEqual(2);
             expect(result.onlineDateiablage.personId).toEqual(person.id);
         });
@@ -384,12 +382,11 @@ describe('KeycloakInternalController', () => {
             expect(result.vidis.personId).toEqual(person.id);
             expect(result.vidis.vorname).toEqual(person.vorname);
             expect(result.vidis.nachname).toEqual(person.familienname);
-            expect(result.vidis.emailAdresse).toEqual(person.email);
             expect(result.vidis.rollenart).toEqual(pkExternalData[0]?.rollenart);
             expect(result.vidis.dienststellenNummern.length).toEqual(2);
             expect(result.opsh.vorname).toEqual(person.vorname);
             expect(result.opsh.nachname).toEqual(person.familienname);
-            expect(result.opsh.emailAdresse).toEqual(person.email);
+
             expect(result.opsh.personenkontexte.length).toEqual(2);
             expect(result.onlineDateiablage.personId).toEqual(person.id);
         });

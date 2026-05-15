@@ -8,11 +8,11 @@ import { RolleModule } from '../rolle/rolle.module.js';
 import { PersonModule } from '../person/person.module.js';
 import { ServiceProviderModule } from '../service-provider/service-provider.module.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
-import { EmailModule } from '../email/email.module.js';
 import { OxSyncEventHandler } from './domain/ox-sync-event-handler.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { OxEventService } from './domain/ox-event.service.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
+import { EmailPersistenceModule } from '../email/email-persistence.module.js';
 
 @Module({
     imports: [
@@ -21,10 +21,10 @@ import { EmailMicroserviceModule } from '../email-microservice/email-microservic
         PersonModule,
         PersonenKontextModule,
         ServiceProviderModule,
-        EmailModule,
         LoggerModule.register(OxModule.name),
         HttpModule,
         EmailMicroserviceModule,
+        EmailPersistenceModule,
     ],
     providers: [OxService, OxEventService, OxEventHandler, OxSyncEventHandler],
     exports: [OxService, OxEventService],
