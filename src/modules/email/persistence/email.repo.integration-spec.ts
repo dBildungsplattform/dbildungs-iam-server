@@ -192,7 +192,7 @@ describe('EmailRepo', () => {
             updatedAt: updatedAt ?? faker.date.future(),
         };
         const emailAddressEntity: EmailAddressEntity = em.create(EmailAddressEntity, entityData);
-        await em.persistAndFlush(emailAddressEntity);
+        await em.persist(emailAddressEntity).flush();
 
         return emailAddressEntity.id;
     }

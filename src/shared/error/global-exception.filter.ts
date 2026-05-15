@@ -1,6 +1,5 @@
 import { DriverException } from '@mikro-orm/core';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { AbstractHttpAdapter, HttpAdapterHost } from '@nestjs/core';
 import util from 'util';
 import { ClassLogger } from '../../core/logging/class-logger.js';
@@ -28,7 +27,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         // constructor method, thus we should resolve it here.
         const { httpAdapter }: { httpAdapter: AbstractHttpAdapter } = this.httpAdapterHost;
 
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
 
         if (exception instanceof Error) {
             if (exception instanceof HttpException) {

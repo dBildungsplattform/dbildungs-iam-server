@@ -1,4 +1,4 @@
-import { EmailUpdateInProgressError } from './email-update-in-progress.error';
+import { EmailUpdateInProgressError } from './email-update-in-progress.error.js';
 
 describe('EmailUpdateInProgressError', () => {
     describe('constructor', () => {

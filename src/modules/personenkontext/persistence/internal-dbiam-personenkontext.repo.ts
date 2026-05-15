@@ -1,4 +1,4 @@
-import { Loaded, RequiredEntityData, rel } from '@mikro-orm/core';
+import { Loaded, rel } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 
@@ -9,9 +9,9 @@ import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 
-export function mapAggregateToData(
-    personenKontext: Personenkontext<boolean>,
-): RequiredEntityData<PersonenkontextEntity> {
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function mapAggregateToData(personenKontext: Personenkontext<boolean>) {
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: personenKontext.id,
@@ -67,7 +67,7 @@ export class DBiamPersonenkontextRepoInternal {
             PersonenkontextEntity,
             mapAggregateToData(personenKontext),
         );
-        await this.em.persistAndFlush(personenKontextEntity);
+        await this.em.persist(personenKontextEntity).flush();
 
         return mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory);
     }
@@ -79,7 +79,7 @@ export class DBiamPersonenkontextRepoInternal {
         );
         personenKontextEntity.assign(mapAggregateToData(personenKontext));
 
-        await this.em.persistAndFlush(personenKontextEntity);
+        await this.em.persist(personenKontextEntity).flush();
 
         return mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory);
     }

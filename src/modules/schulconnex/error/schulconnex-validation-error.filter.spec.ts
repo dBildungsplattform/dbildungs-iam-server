@@ -2,9 +2,10 @@ import { DetailedValidationError } from '../../../shared/validation/detailed-val
 import { SchulConnexValidationErrorFilter } from './schulconnex-validation-error.filter.js';
 import { ArgumentsHost } from '@nestjs/common';
 import { Response } from 'express';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { ValidationError } from 'class-validator';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+
+type HttpArgumentsHost = ReturnType<ArgumentsHost['switchToHttp']>;
 
 describe('SchulconnexValidationErrorFilter', () => {
     let filter: SchulConnexValidationErrorFilter;
@@ -75,18 +76,16 @@ describe('SchulconnexValidationErrorFilter', () => {
             status: vi.fn().mockReturnThis(),
             json: vi.fn().mockReturnThis(),
             send: vi.fn().mockReturnThis(),
-        } as unknown as Response;
+        };
 
         const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
             getResponse: vi.fn().mockReturnValue(responseMock),
-            getRequest: vi.fn().mockReturnValue({} as Request),
+            getRequest: vi.fn().mockReturnValue({}),
         };
 
         argumentsHost = {
-            switchToHttp: vi.fn().mockReturnValue(httpArgumentsHostMock as HttpArgumentsHost),
-            getHandler: vi.fn().mockReturnValue(() => {}),
-            getClass: vi.fn().mockReturnValue(class {}),
-        } as unknown as ArgumentsHost;
+            switchToHttp: vi.fn().mockReturnValue(httpArgumentsHostMock),
+        };
     });
 
     describe('catch', () => {

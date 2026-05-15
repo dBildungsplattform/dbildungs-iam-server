@@ -1,16 +1,20 @@
 import { faker } from '@faker-js/faker/locale/af_ZA';
 import { MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DatabaseTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, LoggingTestModule } from '../../../../../test/utils';
-import { EmailConfigTestModule } from '../../../../../test/utils/email-config-test.module';
-import { ClassLogger } from '../../../../core/logging/class-logger';
-import { DomainError } from '../../../../shared/error';
-import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity';
-import { EmailAddressRepo } from '../persistence/email-address.repo';
-import { EmailAddress } from './email-address';
-import { SetEmailSuspendedService } from './set-email-suspended.service';
-import { createMock, DeepMocked } from '../../../../../test/utils/createMock';
-import { WebhookService } from '../../webhook/domain/webhook.service';
+import {
+    DatabaseTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    LoggingTestModule,
+} from '../../../../../test/utils/index.js';
+import { EmailConfigTestModule } from '../../../../../test/utils/email-config-test.module.js';
+import { ClassLogger } from '../../../../core/logging/class-logger.js';
+import { DomainError } from '../../../../shared/error/index.js';
+import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
+import { EmailAddressRepo } from '../persistence/email-address.repo.js';
+import { EmailAddress } from './email-address.js';
+import { SetEmailSuspendedService } from './set-email-suspended.service.js';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
+import { WebhookService } from '../../webhook/domain/webhook.service.js';
 
 describe('SetEmailSuspendedService', () => {
     let module: TestingModule;

@@ -1,4 +1,4 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityData, EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ImportVorgangEntity } from './import-vorgang.entity.js';
 import { ImportVorgang } from '../domain/import-vorgang.js';
@@ -7,7 +7,9 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
-export function mapAggregateToData(importVorgang: ImportVorgang<boolean>): RequiredEntityData<ImportVorgangEntity> {
+export function mapAggregateToData<WasPersisted extends boolean>(
+    importVorgang: ImportVorgang<WasPersisted>,
+): WasPersisted extends true ? EntityData<ImportVorgangEntity> : RequiredEntityData<ImportVorgangEntity> {
     return {
         importByUsername: importVorgang.importByUsername,
         rollename: importVorgang.rollename,
@@ -106,7 +108,7 @@ export class ImportVorgangRepository {
     private async create(importVorgang: ImportVorgang<false>): Promise<ImportVorgang<true>> {
         const entity: ImportVorgangEntity = this.em.create(ImportVorgangEntity, mapAggregateToData(importVorgang));
         try {
-            await this.em.persistAndFlush(entity);
+            await this.em.persist(entity).flush();
         } catch (error) {
             this.logger.error('Error creating ImportVorgang entity', error);
             throw error;
@@ -117,7 +119,7 @@ export class ImportVorgangRepository {
     private async update(importVorgang: ImportVorgang<true>): Promise<ImportVorgang<true>> {
         const entity: Loaded<ImportVorgangEntity> = await this.em.findOneOrFail(ImportVorgangEntity, importVorgang.id);
         this.em.assign(entity, mapAggregateToData(importVorgang));
-        await this.em.persistAndFlush(entity);
+        await this.em.persist(entity).flush();
         return mapEntityToAggregate(entity);
     }
 }

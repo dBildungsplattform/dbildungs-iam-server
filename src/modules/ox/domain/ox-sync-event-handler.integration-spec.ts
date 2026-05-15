@@ -32,6 +32,7 @@ import { EmailResolverService } from '../../email-microservice/domain/email-reso
 describe('OxSyncEventHandler', () => {
     let app: INestApplication;
     let module: TestingModule;
+    let orm: MikroORM;
 
     let sut: OxSyncEventHandler;
     let loggerMock: DeepMocked<ClassLogger>;
@@ -99,7 +100,8 @@ describe('OxSyncEventHandler', () => {
         emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
 
         oxServiceMock = module.get(OxService);
-        await DatabaseTestModule.setupDatabase(module.get(MikroORM));
+        orm = module.get(MikroORM);
+        await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
         await app.init();
     });
@@ -248,6 +250,7 @@ describe('OxSyncEventHandler', () => {
     }
 
     afterAll(async () => {
+        await orm.close();
         await app.close();
     });
 

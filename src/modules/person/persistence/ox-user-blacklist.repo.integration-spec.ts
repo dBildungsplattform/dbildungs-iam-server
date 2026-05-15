@@ -44,7 +44,7 @@ describe('OxUserBlacklistRepo', () => {
         oxUserBlacklistEntity.email = email ?? faker.internet.email();
         oxUserBlacklistEntity.name = name ?? faker.person.lastName();
         oxUserBlacklistEntity.username = username ?? faker.internet.username();
-        await em.persistAndFlush(oxUserBlacklistEntity);
+        await em.persist(oxUserBlacklistEntity).flush();
     }
 
     async function createOxUserBlacklistEntry(
@@ -61,7 +61,7 @@ describe('OxUserBlacklistRepo', () => {
             OxUserBlacklistEntity,
             mapAggregateToData(oxUserBlacklistEntry),
         );
-        await em.persistAndFlush(mappedOxUserBlacklistEntity);
+        await em.persist(mappedOxUserBlacklistEntity).flush();
 
         return mappedOxUserBlacklistEntity;
     }

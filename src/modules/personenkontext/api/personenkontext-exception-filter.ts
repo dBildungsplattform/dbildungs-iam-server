@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
@@ -54,7 +53,7 @@ export class PersonenkontextExceptionFilter implements ExceptionFilter<Personenk
     ]);
 
     public catch(exception: PersonenkontextSpecificationError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
         const status: number = 400; //all errors regarding organisation specifications are BadRequests
 

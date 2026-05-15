@@ -59,10 +59,10 @@ describe('UserLockRepository', () => {
             const personB: PersonEntity = createPersonEntity();
             const personC: PersonEntity = createPersonEntity();
             const personD: PersonEntity = createPersonEntity();
-            await em.persistAndFlush(personA);
-            await em.persistAndFlush(personB);
-            await em.persistAndFlush(personC);
-            await em.persistAndFlush(personD);
+            await em.persist(personA).flush();
+            await em.persist(personB).flush();
+            await em.persist(personC).flush();
+            await em.persist(personD).flush();
 
             // Create multiple UserLocks for the same person to test array retrieval
             const userLockA1: UserLock = UserLock.construct(
@@ -117,7 +117,7 @@ describe('UserLockRepository', () => {
     describe('findPersonById', () => {
         it('should return an array of UserLocks when found by person', async () => {
             const newPerson: PersonEntity = createPersonEntity();
-            await em.persistAndFlush(newPerson);
+            await em.persist(newPerson).flush();
 
             // Create multiple UserLocks for the same person to test array retrieval
             const userLock1: UserLock = UserLock.construct(
@@ -157,7 +157,7 @@ describe('UserLockRepository', () => {
     describe('createUserLock', () => {
         it('should create and return a UserLock', async () => {
             const newPerson: PersonEntity = createPersonEntity();
-            await em.persistAndFlush(newPerson);
+            await em.persist(newPerson).flush();
 
             const userLock: UserLock = UserLock.construct(
                 newPerson.id,
@@ -179,7 +179,7 @@ describe('UserLockRepository', () => {
     describe('update', () => {
         it('should update an existing UserLock', async () => {
             const newPerson: PersonEntity = createPersonEntity();
-            await em.persistAndFlush(newPerson);
+            await em.persist(newPerson).flush();
 
             const userLock: UserLock = UserLock.construct(
                 newPerson.id,
@@ -220,7 +220,7 @@ describe('UserLockRepository', () => {
     describe('deleteUserLock', () => {
         it('should delete UserLocks by person', async () => {
             const newPerson: PersonEntity = createPersonEntity();
-            await em.persistAndFlush(newPerson);
+            await em.persist(newPerson).flush();
 
             const userLock1: UserLock = UserLock.construct(
                 newPerson.id,
@@ -254,9 +254,9 @@ describe('UserLockRepository', () => {
             const mockPerson1: PersonEntity = createPersonEntity();
             const mockPerson2: PersonEntity = createPersonEntity();
             const mockPerson3: PersonEntity = createPersonEntity();
-            await em.persistAndFlush(mockPerson1);
-            await em.persistAndFlush(mockPerson2);
-            await em.persistAndFlush(mockPerson3);
+            await em.persist(mockPerson1).flush();
+            await em.persist(mockPerson2).flush();
+            await em.persist(mockPerson3).flush();
 
             //created userLocks with exceeding lock limitation
             const yesterday: Date = new Date();

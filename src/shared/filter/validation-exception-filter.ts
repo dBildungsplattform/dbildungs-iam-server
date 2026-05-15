@@ -1,14 +1,13 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { DetailedValidationError } from '../validation/detailed-validation.error.js';
 import { ValidationError } from 'class-validator';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { DbiamValidationError, ValidationErrorI18nTypes } from '../validation/dbiam-validation.error.js';
 
 @Catch(DetailedValidationError)
 export class ValidationExceptionFilter implements ExceptionFilter<DetailedValidationError> {
     public catch(exception: DetailedValidationError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
         const status: number = exception.getStatus();
 

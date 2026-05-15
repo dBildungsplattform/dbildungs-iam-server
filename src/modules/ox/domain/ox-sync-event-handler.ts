@@ -1,7 +1,8 @@
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
+import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 import { KafkaLdapSyncCompletedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-completed.event.js';

@@ -1,12 +1,4 @@
-import {
-    EntityData,
-    EntityName,
-    FilterQuery,
-    ForeignKeyConstraintViolationException,
-    Loaded,
-    PopulatePath,
-    RequiredEntityData,
-} from '@mikro-orm/core';
+import { EntityName, FilterQuery, ForeignKeyConstraintViolationException, Loaded, PopulatePath } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { xor } from 'lodash-es';
@@ -38,20 +30,23 @@ import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specificatio
 import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-service-providers.specification.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
 
-export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
-    const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function mapRolleAggregateToData(rolle: Rolle<boolean>) {
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const merkmale = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
         rolle: rolle.id,
         merkmal,
     }));
 
-    const systemrechte: EntityData<RolleSystemrechtEntity>[] = rolle.systemrechte.map(
-        (systemrecht: RollenSystemRecht) => ({
-            rolle: rolle.id,
-            systemrecht: systemrecht.name,
-        }),
-    );
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const systemrechte = rolle.systemrechte.map((systemrecht: RollenSystemRecht) => ({
+        rolle: rolle.id,
+        systemrecht: systemrecht.name,
+    }));
 
-    const serviceProvider: EntityData<RolleServiceProviderEntity>[] = rolle.serviceProviderIds.map((spId: string) => ({
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const serviceProvider = rolle.serviceProviderIds.map((spId: string) => ({
         rolle: rolle.id,
         serviceProvider: spId,
     }));
@@ -483,7 +478,7 @@ export class RolleRepo {
 
         try {
             const entity: RolleEntity = this.em.create(RolleEntity, mapRolleAggregateToData(rolle.value));
-            await this.em.removeAndFlush(entity);
+            await this.em.remove(entity).flush();
         } catch (ex) {
             if (ex instanceof ForeignKeyConstraintViolationException) {
                 return new RolleHatPersonenkontexteError();
@@ -496,7 +491,7 @@ export class RolleRepo {
     public async create(rolle: Rolle<false>): Promise<Rolle<true>> {
         const rolleEntity: RolleEntity = this.em.create(RolleEntity, mapRolleAggregateToData(rolle));
 
-        await this.em.persistAndFlush(rolleEntity);
+        await this.em.persist(rolleEntity).flush();
 
         return mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
     }
@@ -520,7 +515,7 @@ export class RolleRepo {
         const oldRolle: Rolle<true> = mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
 
         rolleEntity.assign(mapRolleAggregateToData(rolle), { updateNestedEntities: true });
-        await this.em.persistAndFlush(rolleEntity);
+        await this.em.persist(rolleEntity).flush();
 
         const updatedRolle: Rolle<true> = mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
         this.eventService.publish(

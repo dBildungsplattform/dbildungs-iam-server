@@ -1,4 +1,5 @@
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
+import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 

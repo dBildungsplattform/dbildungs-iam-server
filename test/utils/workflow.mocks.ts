@@ -1,21 +1,22 @@
 import { MockedObject } from 'vitest';
-import { LandesbediensteterWorkflowAggregate } from '../../src/modules/landesbediensteter/domain/landesbediensteter-workflow';
-import { OrganisationRepository } from '../../src/modules/organisation/persistence/organisation.repository';
-import { PersonRepository } from '../../src/modules/person/persistence/person.repository';
-import { PersonLandesbediensteterSearchService } from '../../src/modules/person/person-landesbedienstete-search/person-landesbediensteter-search.service';
-import { DbiamPersonenkontextFactory } from '../../src/modules/personenkontext/domain/dbiam-personenkontext.factory';
-import { PersonenkontextWorkflowSharedKernel } from '../../src/modules/personenkontext/domain/personenkontext-workflow-shared-kernel';
-import { DBiamPersonenkontextRepo } from '../../src/modules/personenkontext/persistence/dbiam-personenkontext.repo';
-import { RolleRepo } from '../../src/modules/rolle/repo/rolle.repo';
-import { createMock } from './createMock';
-import { EventRoutingLegacyKafkaService } from '../../src/core/eventbus/services/event-routing-legacy-kafka.service';
-import { ClassLogger } from '../../src/core/logging/class-logger';
-import { DbiamPersonenkontextBodyParams } from '../../src/modules/personenkontext/api/param/dbiam-personenkontext.body.params';
-import { PersonenkontextFactory } from '../../src/modules/personenkontext/domain/personenkontext.factory';
-import { PersonenkontexteUpdate } from '../../src/modules/personenkontext/domain/personenkontexte-update';
-import { DBiamPersonenkontextRepoInternal } from '../../src/modules/personenkontext/persistence/internal-dbiam-personenkontext.repo';
-import { IPersonPermissions } from '../../src/shared/permissions/person-permissions.interface';
-import { PersonID } from '../../src/shared/types';
+import { LandesbediensteterWorkflowAggregate } from '../../src/modules/landesbediensteter/domain/landesbediensteter-workflow.js';
+import { OrganisationRepository } from '../../src/modules/organisation/persistence/organisation.repository.js';
+import { PersonRepository } from '../../src/modules/person/persistence/person.repository.js';
+import { PersonLandesbediensteterSearchService } from '../../src/modules/person/person-landesbedienstete-search/person-landesbediensteter-search.service.js';
+import { DbiamPersonenkontextFactory } from '../../src/modules/personenkontext/domain/dbiam-personenkontext.factory.js';
+import { PersonenkontextWorkflowSharedKernel } from '../../src/modules/personenkontext/domain/personenkontext-workflow-shared-kernel.js';
+import { DBiamPersonenkontextRepo } from '../../src/modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleRepo } from '../../src/modules/rolle/repo/rolle.repo.js';
+import { createMock } from './createMock.js';
+import { EventRoutingLegacyKafkaService } from '../../src/core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../src/core/logging/class-logger.js';
+import { DbiamPersonenkontextBodyParams } from '../../src/modules/personenkontext/api/param/dbiam-personenkontext.body.params.js';
+import { PersonenkontextFactory } from '../../src/modules/personenkontext/domain/personenkontext.factory.js';
+import { PersonenkontexteUpdate } from '../../src/modules/personenkontext/domain/personenkontexte-update.js';
+import { DBiamPersonenkontextRepoInternal } from '../../src/modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
+import { IPersonPermissions } from '../../src/shared/permissions/person-permissions.interface.js';
+import { PersonID } from '../../src/shared/types/index.js';
+import { EscalatedPersonPermissionsFactory } from '../../src/modules/permission/escalated-person-permissions.factory.js';
 
 export function createLandesbediensteterWorkflowAggregateMock(): MockedObject<LandesbediensteterWorkflowAggregate> {
     const landesbediensteterWorkflowAggregate: LandesbediensteterWorkflowAggregate =
@@ -27,6 +28,7 @@ export function createLandesbediensteterWorkflowAggregateMock(): MockedObject<La
             createMock(PersonRepository),
             createMock(PersonLandesbediensteterSearchService),
             createMock(PersonenkontextWorkflowSharedKernel),
+            createMock(EscalatedPersonPermissionsFactory),
         );
     return vi.mockObject(landesbediensteterWorkflowAggregate);
 }

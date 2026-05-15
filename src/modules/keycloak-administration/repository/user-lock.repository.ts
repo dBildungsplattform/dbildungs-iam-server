@@ -1,4 +1,4 @@
-import { EntityManager, Loaded, RequiredEntityData, QBFilterQuery } from '@mikro-orm/core';
+import { EntityManager, Loaded, FilterQuery } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { UserLock } from '../domain/user-lock.js';
 import { UserLockEntity } from '../entity/user-lock.entity.js';
@@ -16,7 +16,9 @@ export function mapEntityToAggregate(entity: UserLockEntity): UserLock {
     );
 }
 
-export function mapAggregateToData(userLock: UserLock): RequiredEntityData<UserLockEntity> {
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function mapAggregateToData(userLock: UserLock) {
     return {
         person: userLock.person,
         locked_by: userLock.locked_by,
@@ -75,7 +77,7 @@ export class UserLockRepository {
 
     public async createUserLock(userLock: UserLock): Promise<UserLock | DomainError> {
         const userLockEntity: UserLockEntity = this.em.create(UserLockEntity, mapAggregateToData(userLock));
-        await this.em.persistAndFlush(userLockEntity);
+        await this.em.persist(userLockEntity).flush();
 
         return mapEntityToAggregateInplace(userLockEntity, userLock);
     }
@@ -85,7 +87,7 @@ export class UserLockRepository {
             person: userLock.person,
         });
         userLockEntity.assign(mapAggregateToData(userLock));
-        await this.em.persistAndFlush(userLockEntity);
+        await this.em.persist(userLockEntity).flush();
         return mapEntityToAggregate(userLockEntity);
     }
 
@@ -96,7 +98,7 @@ export class UserLockRepository {
     public async getLocksToUnlock(): Promise<UserLock[]> {
         const today: Date = new Date();
 
-        const filters: QBFilterQuery<UserLockEntity> = {
+        const filters: FilterQuery<UserLockEntity> = {
             locked_until: { $lte: today },
         };
 

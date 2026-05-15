@@ -1,15 +1,18 @@
+import { Opt, Ref } from '@mikro-orm/core';
+import { Entity, Enum, ManyToOne, Property } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { Entity, Enum, ManyToOne, Opt, Property, Ref } from '@mikro-orm/core';
-import { ImportStatus } from '../domain/import.enums.js';
-import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
+import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { ImportStatus } from '../domain/import.enums.js';
 
 @Entity({ tableName: 'importvorgang' })
 export class ImportVorgangEntity extends TimestampedEntity {
     @ManyToOne({
         fieldName: 'person_id',
         columnType: 'uuid',
+        deleteRule: 'set null',
+        updateRule: 'cascade',
         ref: true,
         nullable: true,
         entity: () => PersonEntity,
@@ -22,6 +25,8 @@ export class ImportVorgangEntity extends TimestampedEntity {
     @ManyToOne({
         fieldName: 'rolle_id',
         columnType: 'uuid',
+        deleteRule: 'set null',
+        updateRule: 'cascade',
         ref: true,
         nullable: true,
         entity: () => RolleEntity,
@@ -34,6 +39,8 @@ export class ImportVorgangEntity extends TimestampedEntity {
     @ManyToOne({
         fieldName: 'organisation_id',
         columnType: 'uuid',
+        deleteRule: 'set null',
+        updateRule: 'cascade',
         ref: true,
         nullable: true,
         entity: () => OrganisationEntity,

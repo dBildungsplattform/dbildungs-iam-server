@@ -1,9 +1,10 @@
-import { Collection, DateTimeType, Entity, Index, ManyToOne, OneToMany, Property, QueryOrder } from '@mikro-orm/core';
-import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
+import { Collection, DateTimeType, QueryOrder, quote, SchemaTable } from '@mikro-orm/core';
+import { Entity, Index, ManyToOne, OneToMany, Property } from '@mikro-orm/decorators/legacy';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
-import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
+import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { UserLockEntity } from '../../keycloak-administration/entity/user-lock.entity.js';
+import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
 
 @Entity({ tableName: 'person' })
@@ -25,11 +26,13 @@ export class PersonEntity extends TimestampedEntity {
 
     @Index({
         name: 'person_referrer_trgm_index',
-        expression: 'create index "person_referrer_trgm_index" on "person" using gin ("username" gin_trgm_ops);',
+        expression: (columns: Record<keyof PersonEntity, string>, table: SchemaTable, name: string) =>
+            quote`create index ${name} on ${table} using gin (${columns.username} gin_trgm_ops);`,
     })
     @Index({
         name: 'person_username_unique',
-        expression: 'create unique index "person_username_unique" on "person" ("username") nulls distinct;',
+        expression: (columns: Record<keyof PersonEntity, string>, table: SchemaTable, name: string) =>
+            quote`create unique index ${name} on ${table} (${columns.username}) nulls distinct;`,
     })
     @Property({ nullable: true })
     public username?: string;
@@ -50,12 +53,13 @@ export class PersonEntity extends TimestampedEntity {
 
     @Index({
         name: 'person_vorname_trgm_index',
-        expression: 'create index "person_vorname_trgm_index" on "person" using gin ("vorname" gin_trgm_ops);',
+        expression: (columns: Record<keyof PersonEntity, string>, table: SchemaTable, name: string) =>
+            quote`create index ${name} on ${table} using gin (${columns.vorname} gin_trgm_ops);`,
     })
     @Property()
     public vorname!: string;
 
-    @ManyToOne({ nullable: true })
+    @ManyToOne({ nullable: true, deleteRule: 'set null', updateRule: 'cascade' })
     public dataProvider?: DataProviderEntity;
 
     @Property({ nullable: false, default: '1' })
@@ -63,12 +67,13 @@ export class PersonEntity extends TimestampedEntity {
 
     @Index({
         name: 'person_personalnummer_unique',
-        expression: 'create unique index "person_personalnummer_unique" on "person" ("personalnummer") nulls distinct;',
+        expression: (columns: Record<keyof PersonEntity, string>, table: SchemaTable, name: string) =>
+            quote`create unique index ${name} on ${table} (${columns.personalnummer}) nulls distinct;`,
     })
     @Index({
         name: 'person_personalnummer_trgm_index',
-        expression:
-            'create index "person_personalnummer_trgm_index" on "person" using gin ("personalnummer" gin_trgm_ops);',
+        expression: (columns: Record<keyof PersonEntity, string>, table: SchemaTable, name: string) =>
+            quote`create index ${name} on ${table} using gin (${columns.personalnummer} gin_trgm_ops);`,
     })
     @Property({ nullable: true })
     public personalnummer?: string;
