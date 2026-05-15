@@ -22,7 +22,8 @@ import { OrganisationsTyp } from '../../../modules/organisation/domain/organisat
 import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
 import { KafkaEventHandler } from '../../eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
+import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
 import { KafkaPersonLdapSyncEvent } from '../../../shared/events/kafka-person-ldap-sync.event.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';

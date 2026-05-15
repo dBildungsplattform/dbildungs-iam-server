@@ -20,7 +20,13 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { UpdatePersonNotFoundError } from './error/update-person-not-found.error.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { createPersonPermissionsMock, DoFactory, PersonPermissionsMock } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    createPersonPermissionsMock,
+    DatabaseTestModule,
+    DoFactory,
+    PersonPermissionsMock,
+} from '../../../../test/utils/index.js';
 import { Person } from '../../person/domain/person.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
@@ -33,6 +39,10 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { DuplicateKlassenkontextError } from './error/update-invalid-duplicate-klassenkontext-for-same-rolle.js';
 import { UpdateLernNotAtSchuleAndKlasseError } from './error/update-lern-not-at-schule-and-klasse.error.js';
+import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>(
@@ -78,6 +88,12 @@ describe('PersonenkontexteUpdate', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [
+                ConfigTestModule,
+                EmailPersistenceModule,
+                EmailMicroserviceModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+            ],
             providers: [
                 {
                     provide: ClassLogger,
@@ -107,10 +123,35 @@ describe('PersonenkontexteUpdate', () => {
                     provide: EventRoutingLegacyKafkaService,
                     useValue: createMock(EventRoutingLegacyKafkaService),
                 },
+                {
+                    provide: EmailRepo,
+                    useValue: createMock(EmailRepo),
+                },
+                {
+                    provide: EmailResolverService,
+                    useValue: createMock(EmailResolverService),
+                },
                 DbiamPersonenkontextFactory,
                 PersonenkontextFactory,
             ],
-        }).compile();
+        })
+            .overrideProvider(ClassLogger)
+            .useValue(createMock(ClassLogger))
+            .overrideProvider(DBiamPersonenkontextRepo)
+            .useValue(createMock(DBiamPersonenkontextRepo))
+            .overrideProvider(DBiamPersonenkontextRepoInternal)
+            .useValue(createMock(DBiamPersonenkontextRepoInternal))
+            .overrideProvider(PersonRepository)
+            .useValue(createMock(PersonRepository))
+            .overrideProvider(OrganisationRepository)
+            .useValue(createMock(OrganisationRepository))
+            .overrideProvider(RolleRepo)
+            .useValue(createMock(RolleRepo))
+            .overrideProvider(EmailRepo)
+            .useValue(createMock(EmailRepo))
+            .overrideProvider(EmailResolverService)
+            .useValue(createMock(EmailResolverService))
+            .compile();
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         dBiamPersonenkontextRepoInternalMock = module.get(DBiamPersonenkontextRepoInternal);
         personRepoMock = module.get(PersonRepository);

@@ -1,6 +1,5 @@
-import { MikroORM } from '@mikro-orm/core';
+import { IMigrator, MikroORM } from '@mikro-orm/core';
 import { CommandRunner, SubCommand } from 'nest-commander';
-import { Migrator } from '@mikro-orm/migrations';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 
 @SubCommand({ name: 'migration-create', description: 'creates a new migration for the database' })
@@ -14,8 +13,8 @@ export class DbCreateMigrationConsole extends CommandRunner {
 
     public override async run(_passedParams: string[], _options?: Record<string, unknown>): Promise<void> {
         this.logger.info('Creating new migration...');
-        const migrator: Migrator = this.orm.getMigrator();
-        await migrator.createMigration();
+        const migrator: IMigrator = this.orm.migrator;
+        await migrator.create();
         this.logger.info('Finished creation of new migration.');
     }
 }

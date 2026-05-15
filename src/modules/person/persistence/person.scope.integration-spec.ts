@@ -84,7 +84,7 @@ describe('PersonScope', () => {
                     ),
                 );
 
-                await em.persistAndFlush(persons);
+                await em.persist(persons).flush();
             });
 
             it('should return found persons', async () => {
@@ -111,7 +111,7 @@ describe('PersonScope', () => {
                     PersonEntity,
                     mapAggregateToData(DoFactory.createPerson(false, { vorname: 'John' })),
                 );
-                await em.persistAndFlush([person1, person2]);
+                await em.persist([person1, person2]).flush();
             });
 
             it('should return found persons and not return persons that do not match the suchFilter', async () => {
@@ -133,7 +133,7 @@ describe('PersonScope', () => {
                     em.create(PersonEntity, mapAggregateToData(DoFactory.createPerson(false))),
                 );
 
-                await em.persistAndFlush(persons);
+                await em.persist(persons).flush();
             });
 
             it('should return found persons', async () => {
@@ -160,7 +160,7 @@ describe('PersonScope', () => {
                 }
                 organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
 
-                await em.persistAndFlush([person1, person2]);
+                await em.persist([person1, person2]).flush();
                 await createPersonenkontext(person1.id, organisation.id, rolle.id);
             });
 
@@ -188,7 +188,7 @@ describe('PersonScope', () => {
                 }
                 organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
                 rolleID = rolle.id;
-                await em.persistAndFlush([person1, person2]);
+                await em.persist([person1, person2]).flush();
                 await createPersonenkontext(person1.id, organisation.id, rolle.id);
             });
 
@@ -214,7 +214,7 @@ describe('PersonScope', () => {
                 }
                 organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
 
-                await em.persistAndFlush([person1]);
+                await em.persist([person1]).flush();
                 await createPersonenkontext(person1.id, organisation.id, rolle.id);
             });
 
@@ -242,7 +242,7 @@ describe('PersonScope', () => {
                 organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
 
                 rolleID = rolle.id;
-                await em.persistAndFlush([person1]);
+                await em.persist([person1]).flush();
                 await createPersonenkontext(person1.id, organisation.id, rolleID);
             });
 
@@ -262,10 +262,10 @@ describe('PersonScope', () => {
             beforeEach(async () => {
                 const persons: PersonEntity[] = Array.from({ length: 9 }, () => createPersonEntity());
                 const knownEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(persons);
-                await em.persistAndFlush(
-                    knownEntity.assign(mapAggregateToData(DoFactory.createPerson(false, { id: knownId }))),
-                );
+                await em.persist(persons).flush();
+                await em
+                    .persist(knownEntity.assign(mapAggregateToData(DoFactory.createPerson(false, { id: knownId }))))
+                    .flush();
                 knownId = knownEntity.id;
             });
 
@@ -286,7 +286,7 @@ describe('PersonScope', () => {
             const person2: PersonEntity = createPersonEntity();
             person2.istTechnisch = true;
 
-            await em.persistAndFlush([person1, person2]);
+            await em.persist([person1, person2]).flush();
 
             const scope: PersonScope = new PersonScope()
                 .findBy({ ids: [person1.id, person2.id] })
@@ -309,7 +309,7 @@ describe('PersonScope', () => {
 
             person.externalIds.add(externalId);
 
-            await em.persistAndFlush([person, externalId]);
+            await em.persist([person, externalId]).flush();
 
             const scope: PersonScope = new PersonScope()
                 .findBy({ ids: [person.id] })

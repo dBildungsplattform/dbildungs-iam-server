@@ -31,6 +31,8 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationModule } from '../../organisation/organisation.module.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
+import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 
 describe('ImportVorgangRepository', () => {
     let module: TestingModule;
@@ -48,6 +50,8 @@ describe('ImportVorgangRepository', () => {
                 RolleModule,
                 OrganisationModule,
                 ConfigTestModule,
+                EmailPersistenceModule,
+                EmailMicroserviceModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],
             providers: [
@@ -123,7 +127,7 @@ describe('ImportVorgangRepository', () => {
     async function createOrga(): Promise<string> {
         const organisation: OrganisationEntity = new OrganisationEntity();
         organisation.typ = OrganisationsTyp.SCHULE;
-        await em.persistAndFlush(organisation);
+        await em.persist(organisation).flush();
         await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
         return organisation.id;
     }
@@ -326,11 +330,11 @@ describe('ImportVorgangRepository', () => {
                 entity1 = em.create(ImportVorgangEntity, mapAggregateToData(importVorgang1));
                 entity2 = em.create(ImportVorgangEntity, mapAggregateToData(importVorgang2));
                 entity3 = em.create(ImportVorgangEntity, mapAggregateToData(importVorgang3));
-                await em.persistAndFlush([entity1, entity2, entity3]);
+                await em.persist([entity1, entity2, entity3]).flush();
             });
 
             afterEach(async () => {
-                await em.removeAndFlush([entity1, entity2, entity3]);
+                await em.remove([entity1, entity2, entity3]).flush();
             });
 
             it('when search by importByPersonId', async () => {

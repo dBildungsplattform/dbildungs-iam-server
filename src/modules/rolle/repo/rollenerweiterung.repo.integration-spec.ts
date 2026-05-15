@@ -344,7 +344,7 @@ describe('RollenerweiterungRepo', () => {
                     rolleId: rolle.id,
                     serviceProviderId: serviceProvider.id,
                 });
-                await em.persistAndFlush(entity);
+                await em.persist(entity).flush();
             }
             const result: boolean = await sut.exists({
                 organisationId: organisation.id,
@@ -417,7 +417,7 @@ describe('RollenerweiterungRepo', () => {
             return { organisation, rolle: rolleOrError, serviceProvider, permissionMock };
         }
 
-        it.each([['root' as TestCase], ['schuladmin' as TestCase]])(
+        it.each<TestCase[]>([['root'], ['schuladmin']])(
             'should create a new rollenerweiterung as %s',
             async (adminType: TestCase) => {
                 const { organisation, rolle, serviceProvider, permissionMock }: Setup = await setup();

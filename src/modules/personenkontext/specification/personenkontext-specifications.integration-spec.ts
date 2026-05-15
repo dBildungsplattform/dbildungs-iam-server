@@ -29,6 +29,8 @@ import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
+import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 
 // TODO fix integration test
 // This is not a proper integration test, because most of the repositories are mocked.
@@ -74,6 +76,8 @@ describe('PersonenkontextSpecifications Integration', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 KeycloakAdministrationModule,
                 LoggingTestModule,
+                EmailPersistenceModule,
+                EmailMicroserviceModule,
             ],
             providers: [
                 PersonRepository,
@@ -107,6 +111,10 @@ describe('PersonenkontextSpecifications Integration', () => {
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
             .overrideProvider(DBiamPersonenkontextRepo)
             .useValue(createMock(DBiamPersonenkontextRepo))
+            .overrideProvider(OrganisationRepository)
+            .useValue(createMock(OrganisationRepository))
+            .overrideProvider(RolleRepo)
+            .useValue(createMock(RolleRepo))
             .compile();
         organisationRepoMock = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);

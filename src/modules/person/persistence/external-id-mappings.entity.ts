@@ -1,6 +1,7 @@
-import { BaseEntity, Entity, Enum, ManyToOne, PrimaryKeyProp, Property, Rel } from '@mikro-orm/core';
+import { BaseEntity, PrimaryKeyProp, Rel } from '@mikro-orm/core';
 import { PersonExternalIdType } from '../domain/person.enums.js';
 import { PersonEntity } from './person.entity.js';
+import { Entity, Enum, ManyToOne, Property } from '@mikro-orm/decorators/legacy';
 
 @Entity({ tableName: 'external_id_mapping' })
 export class PersonExternalIdMappingEntity extends BaseEntity {
@@ -10,6 +11,7 @@ export class PersonExternalIdMappingEntity extends BaseEntity {
         ref: true,
         nullable: false,
         deleteRule: 'cascade',
+        updateRule: 'cascade',
         entity: () => PersonEntity,
     })
     public person!: Rel<PersonEntity>;

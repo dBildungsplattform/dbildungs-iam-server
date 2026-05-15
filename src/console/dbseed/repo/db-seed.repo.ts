@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, Loaded } from '@mikro-orm/core';
 import { DbSeed } from '../domain/db-seed.js';
 import { DbSeedEntity } from './db-seed.entity.js';
 
-function mapAggregateToData(dbSeed: DbSeed<boolean>): RequiredEntityData<DbSeedEntity> {
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function mapAggregateToData(dbSeed: DbSeed<boolean>) {
     return {
         // Don't assign executedAt, it is auto-generated!
         hash: dbSeed.hash,
@@ -32,7 +34,7 @@ export class DbSeedRepo {
     public async create(dbSeed: DbSeed<false>): Promise<DbSeed<true>> {
         const dbSeedEntity: DbSeedEntity = this.em.create(DbSeedEntity, mapAggregateToData(dbSeed));
 
-        await this.em.persistAndFlush(dbSeedEntity);
+        await this.em.persist(dbSeedEntity).flush();
 
         return mapEntityToAggregate(dbSeedEntity);
     }
@@ -41,7 +43,7 @@ export class DbSeedRepo {
         const dbSeedEntity: Loaded<DbSeedEntity> = await this.em.findOneOrFail(DbSeedEntity, { hash: dbSeed.hash });
         dbSeedEntity.assign(mapAggregateToData(dbSeed));
 
-        await this.em.persistAndFlush(dbSeedEntity);
+        await this.em.persist(dbSeedEntity).flush();
 
         return mapEntityToAggregate(dbSeedEntity);
     }

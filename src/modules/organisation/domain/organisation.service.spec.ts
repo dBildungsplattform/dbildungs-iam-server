@@ -472,7 +472,7 @@ describe('OrganisationService', () => {
         ];
         it('should update an organisation', async () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
-            organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
+            organisationRepositoryMock.save.mockResolvedValue(organisation);
             organisationRepositoryMock.findById.mockResolvedValue(organisation);
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
                 organisation,
@@ -480,7 +480,7 @@ describe('OrganisationService', () => {
             );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: true,
-                value: organisation as unknown as Organisation<true>,
+                value: organisation,
             });
         });
 
@@ -489,7 +489,7 @@ describe('OrganisationService', () => {
             schule.typ = OrganisationsTyp.SCHULE;
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
             organisationRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
-            organisationRepositoryMock.save.mockResolvedValue(schule as unknown as Organisation<true>);
+            organisationRepositoryMock.save.mockResolvedValue(schule);
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
 
@@ -500,7 +500,7 @@ describe('OrganisationService', () => {
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: true,
-                value: schule as unknown as Organisation<true>,
+                value: schule,
             });
         });
 
@@ -517,7 +517,7 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
             organisationRepositoryMock.findChildOrgasForIds.mockResolvedValueOnce([]);
-            organisationRepositoryMock.save.mockResolvedValue(klasse as unknown as Organisation<true>);
+            organisationRepositoryMock.save.mockResolvedValue(klasse);
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
@@ -527,7 +527,7 @@ describe('OrganisationService', () => {
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: true,
-                value: klasse as unknown as Organisation<true>,
+                value: klasse,
             });
         });
 
@@ -537,7 +537,7 @@ describe('OrganisationService', () => {
             klasse.typ = OrganisationsTyp.KLASSE;
             klasse.zugehoerigZu = schule.id;
             organisationRepositoryMock.findById.mockResolvedValueOnce(klasse);
-            organisationRepositoryMock.save.mockResolvedValue(klasse as unknown as Organisation<true>);
+            organisationRepositoryMock.save.mockResolvedValue(klasse);
             organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
@@ -570,7 +570,7 @@ describe('OrganisationService', () => {
                 typ: OrganisationsTyp.SCHULE,
                 kennung: undefined,
             });
-            organisationRepositoryMock.findById.mockResolvedValueOnce(organisation as unknown as Organisation<true>);
+            organisationRepositoryMock.findById.mockResolvedValueOnce(organisation);
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             organisationRepositoryMock.findById.mockResolvedValueOnce(organisationUser);
 
@@ -594,7 +594,7 @@ describe('OrganisationService', () => {
                 kennung: '1234567',
                 name: undefined,
             });
-            organisationRepositoryMock.findById.mockResolvedValue(organisation as unknown as Organisation<true>);
+            organisationRepositoryMock.findById.mockResolvedValue(organisation);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
                 organisation,
@@ -613,7 +613,7 @@ describe('OrganisationService', () => {
                 emailAdress: 'klassenmail123@spsh.de',
                 name: 'Klasse123',
             });
-            organisationRepositoryMock.findById.mockResolvedValue(organisation as unknown as Organisation<true>);
+            organisationRepositoryMock.findById.mockResolvedValue(organisation);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
                 organisation,
@@ -638,9 +638,9 @@ describe('OrganisationService', () => {
                 name: name,
             });
             const counted: Counted<Organisation<true>> = [[organisation], 1];
-            organisationRepositoryMock.findById.mockResolvedValue(organisation as unknown as Organisation<true>);
+            organisationRepositoryMock.findById.mockResolvedValue(organisation);
             organisationRepositoryMock.findBy.mockResolvedValueOnce(counted);
-            organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
+            organisationRepositoryMock.save.mockResolvedValue(organisation);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
                 organisation,

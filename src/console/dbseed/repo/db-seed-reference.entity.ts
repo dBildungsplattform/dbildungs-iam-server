@@ -1,4 +1,5 @@
-import { BaseEntity, Entity, Enum, PrimaryKeyProp, Property } from '@mikro-orm/core';
+import { BaseEntity, PrimaryKeyProp } from '@mikro-orm/core';
+import { Entity, Enum, Property } from '@mikro-orm/decorators/legacy';
 
 export enum ReferencedEntityType {
     PERSON = 'PERSON',

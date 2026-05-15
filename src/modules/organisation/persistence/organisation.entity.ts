@@ -1,4 +1,5 @@
-import { BigIntType, Entity, Enum, Index, Opt, Property } from '@mikro-orm/core';
+import { BigIntType, Opt } from '@mikro-orm/core';
+import { Entity, Enum, Index, Property } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 

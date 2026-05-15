@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { PersonDomainError } from '../domain/person-domain.error.js';
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
@@ -91,7 +90,7 @@ export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError>
     ]);
 
     public catch(exception: PersonDomainError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
         const dbiamPersonError: DbiamPersonError = this.mapDomainErrorToDbiamError(exception);

@@ -71,7 +71,7 @@ describe('OrganisationServiceSpecificationTest', () => {
             zugehoerigZu: undefined,
             typ: OrganisationsTyp.ROOT,
         });
-        await orm.em.persistAndFlush(orm.em.create(OrganisationEntity, mapOrgaAggregateToData(root)));
+        await orm.em.persist(orm.em.create(OrganisationEntity, mapOrgaAggregateToData(root))).flush();
         oeffentlich = await organisationRepository.save(
             DoFactory.createOrganisation(false, {
                 name: 'Öffentliche Schulen',

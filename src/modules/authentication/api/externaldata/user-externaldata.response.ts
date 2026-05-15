@@ -54,6 +54,7 @@ export class UserExternalDataResponse {
         externalPkData: RequiredExternalPkData[],
         erweiterteSP: ErweiterterServiceProviderForPK[],
         contextParams: OldOxParams | NewOxParams | undefined,
+        email?: string,
     ): UserExternalDataResponse {
         const ox: Option<UserExternalDataResponseOx> =
             contextParams && UserExternalDataResponseOx.createNew(contextParams);
@@ -69,7 +70,7 @@ export class UserExternalDataResponse {
             person.vorname,
             person.familienname,
             externalPkData[0]?.rollenart,
-            person.email,
+            email,
             uniq(externalPkDataWithVidisAngebotId.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean)),
         );
         const opsh: UserExeternalDataResponseOpsh = new UserExeternalDataResponseOpsh(
@@ -78,7 +79,7 @@ export class UserExternalDataResponse {
             externalPkData.map(
                 (pk: RequiredExternalPkData) => new UserExeternalDataResponseOpshPk(pk.rollenart, pk.kennung),
             ),
-            person.email,
+            email,
         );
         const onlineDateiablage: UserExeternalDataResponseOnlineDateiablage =
             new UserExeternalDataResponseOnlineDateiablage(person.id);

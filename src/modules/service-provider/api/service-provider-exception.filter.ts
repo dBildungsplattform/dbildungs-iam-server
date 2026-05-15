@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { Response } from 'express';
 
 import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
@@ -43,7 +42,7 @@ export class ServiceProviderErrorFilter implements ExceptionFilter<ServiceProvid
     ]);
 
     public catch(exception: ServiceProviderError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
         const dbiamServiceProviderError: DbiamServiceProviderError = this.mapDomainErrorToDbiamError(exception);

@@ -41,7 +41,6 @@ import { ImportVorgangResponse } from './importvorgang.response.js';
 import { ImportStatus } from '../domain/import.enums.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { KeycloakAdministrationService } from '../../keycloak-administration/domain/keycloak-admin-client.service.js';
-import { ImportVorgangStatusResponse } from './importvorgang-status.response.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { mapAggregateToData, PersonRepository } from '../../person/persistence/person.repository.js';
 import { ImportResultResponse } from './import-result.response.js';
@@ -173,7 +172,7 @@ describe('Import API', () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.name = 'Import Schule';
-            await em.persistAndFlush(schule);
+            await em.persist(schule).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
             const klasse1A: OrganisationEntity = new OrganisationEntity();
@@ -181,7 +180,7 @@ describe('Import API', () => {
             klasse1A.name = '1a';
             klasse1A.administriertVon = schule.id;
             klasse1A.zugehoerigZu = schule.id;
-            await em.persistAndFlush(klasse1A);
+            await em.persist(klasse1A).flush();
             await em.findOneOrFail(OrganisationEntity, { id: klasse1A.id });
 
             const klasse2B: OrganisationEntity = new OrganisationEntity();
@@ -189,7 +188,7 @@ describe('Import API', () => {
             klasse2B.name = '2b';
             klasse2B.administriertVon = schule.id;
             klasse2B.zugehoerigZu = schule.id;
-            await em.persistAndFlush(klasse2B);
+            await em.persist(klasse2B).flush();
             await em.findOneOrFail(OrganisationEntity, { id: klasse2B.id });
 
             const sus: Rolle<true> | DomainError = await rolleRepo.save(
@@ -211,7 +210,7 @@ describe('Import API', () => {
 
             expect(response.status).toBe(201);
             expect(response.body).toMatchObject({
-                importvorgangId: expect.any(String) as unknown as string,
+                importvorgangId: expect.any(String) as string,
                 isValid: true,
                 totalImportDataItems: 2,
                 totalInvalidImportDataItems: 0,
@@ -231,7 +230,7 @@ describe('Import API', () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.name = 'Import Schule';
-            await em.persistAndFlush(schule);
+            await em.persist(schule).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
             const klasse1A: OrganisationEntity = new OrganisationEntity();
@@ -239,7 +238,7 @@ describe('Import API', () => {
             klasse1A.name = '1A';
             klasse1A.administriertVon = schule.id;
             klasse1A.zugehoerigZu = schule.id;
-            await em.persistAndFlush(klasse1A);
+            await em.persist(klasse1A).flush();
             await em.findOneOrFail(OrganisationEntity, { id: klasse1A.id });
 
             const sus: Rolle<true> | DomainError = await rolleRepo.save(
@@ -261,7 +260,7 @@ describe('Import API', () => {
 
             expect(response.status).toBe(201);
             expect(response.body).toMatchObject({
-                importvorgangId: expect.any(String) as unknown as string,
+                importvorgangId: expect.any(String) as string,
                 isValid: false,
                 totalImportDataItems: 2,
                 totalInvalidImportDataItems: 2,
@@ -320,7 +319,7 @@ describe('Import API', () => {
 
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
-            await em.persistAndFlush(schule);
+            await em.persist(schule).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
             const sus: Rolle<true> | DomainError = await rolleRepo.save(
@@ -357,7 +356,7 @@ describe('Import API', () => {
 
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
-            await em.persistAndFlush(schule);
+            await em.persist(schule).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
             const sus: Rolle<true> | DomainError = await rolleRepo.save(
@@ -412,7 +411,7 @@ describe('Import API', () => {
 
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
-            await em.persistAndFlush(schule);
+            await em.persist(schule).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
             const sus: Rolle<true> | DomainError = await rolleRepo.save(
@@ -471,7 +470,7 @@ describe('Import API', () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.name = 'Import Schule';
-            await em.persistAndFlush(schule);
+            await em.persist(schule).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
             const klasse1A: OrganisationEntity = new OrganisationEntity();
@@ -479,7 +478,7 @@ describe('Import API', () => {
             klasse1A.name = '1a';
             klasse1A.administriertVon = schule.id;
             klasse1A.zugehoerigZu = schule.id;
-            await em.persistAndFlush(klasse1A);
+            await em.persist(klasse1A).flush();
             await em.findOneOrFail(OrganisationEntity, { id: klasse1A.id });
 
             const sus: Rolle<true> | DomainError = await rolleRepo.save(
@@ -502,7 +501,7 @@ describe('Import API', () => {
 
             expect(response.status).toBe(201);
             expect(response.body).toMatchObject({
-                importvorgangId: expect.any(String) as unknown as string,
+                importvorgangId: expect.any(String) as string,
                 isValid: true,
                 totalImportDataItems: 1,
                 totalInvalidImportDataItems: 0,
@@ -521,7 +520,7 @@ describe('Import API', () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.name = 'Import Schule';
-            await em.persistAndFlush(schule);
+            await em.persist(schule).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
             const klasse: OrganisationEntity = new OrganisationEntity();
@@ -529,7 +528,7 @@ describe('Import API', () => {
             klasse.name = '1a';
             klasse.administriertVon = schule.id;
             klasse.zugehoerigZu = schule.id;
-            await em.persistAndFlush(klasse);
+            await em.persist(klasse).flush();
             await em.findOneOrFail(OrganisationEntity, { id: klasse.id });
 
             const sus: Rolle<true> | DomainError = await rolleRepo.save(
@@ -565,7 +564,7 @@ describe('Import API', () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.name = 'Import Schule';
-            await em.persistAndFlush(schule);
+            await em.persist(schule).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
             const klasse: OrganisationEntity = new OrganisationEntity();
@@ -573,7 +572,7 @@ describe('Import API', () => {
             klasse.name = '1a';
             klasse.administriertVon = schule.id;
             klasse.zugehoerigZu = schule.id;
-            await em.persistAndFlush(klasse);
+            await em.persist(klasse).flush();
             await em.findOneOrFail(OrganisationEntity, { id: klasse.id });
 
             const klasse1A: OrganisationEntity = new OrganisationEntity();
@@ -581,7 +580,7 @@ describe('Import API', () => {
             klasse1A.name = '1A';
             klasse1A.administriertVon = schule.id;
             klasse1A.zugehoerigZu = schule.id;
-            await em.persistAndFlush(klasse1A);
+            await em.persist(klasse1A).flush();
             await em.findOneOrFail(OrganisationEntity, { id: klasse1A.id });
 
             const sus: Rolle<true> | DomainError = await rolleRepo.save(
@@ -596,7 +595,7 @@ describe('Import API', () => {
             }
 
             const person: PersonEntity = em.create(PersonEntity, mapAggregateToData(DoFactory.createPerson(false)));
-            await em.persistAndFlush(person);
+            await em.persist(person).flush();
             await em.findOneOrFail(PersonEntity, { id: person.id });
 
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
@@ -672,7 +671,7 @@ describe('Import API', () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.name = 'Import Schule';
-            await em.persistAndFlush(schule);
+            await em.persist(schule).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
             const klasse: OrganisationEntity = new OrganisationEntity();
@@ -680,7 +679,7 @@ describe('Import API', () => {
             klasse.name = '1a';
             klasse.administriertVon = schule.id;
             klasse.zugehoerigZu = schule.id;
-            await em.persistAndFlush(klasse);
+            await em.persist(klasse).flush();
             await em.findOneOrFail(OrganisationEntity, { id: klasse.id });
 
             const sus: Rolle<true> | DomainError = await rolleRepo.save(
@@ -773,13 +772,13 @@ describe('Import API', () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.name = 'Import Schule';
-            await em.persistAndFlush(schule);
+            await em.persist(schule).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
             orgaId1 = schule.id;
 
             const schule2: OrganisationEntity = new OrganisationEntity();
             schule2.typ = OrganisationsTyp.SCHULE;
-            await em.persistAndFlush(schule2);
+            await em.persist(schule2).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule2.id });
             orgaId2 = schule2.id;
 
@@ -919,7 +918,7 @@ describe('Import API', () => {
                 dataItemCount: 100,
                 status: ImportStatus.COMPLETED,
                 totalDataItemImported: 0,
-            } as ImportVorgangStatusResponse);
+            });
         });
 
         it('should return 404 if importvorgang does not exist', async () => {
@@ -936,7 +935,7 @@ describe('Import API', () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.name = 'Import Schule';
-            await em.persistAndFlush(schule);
+            await em.persist(schule).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
             const sus: Rolle<true> | DomainError = await rolleRepo.save(
@@ -1000,7 +999,7 @@ describe('Import API', () => {
                         vorname: importDataItem.vorname,
                         nachname: importDataItem.nachname,
                         benutzername: importDataItem.username,
-                        startpasswort: expect.any(String) as unknown as string,
+                        startpasswort: expect.any(String) as string,
                         status: ImportDataItemStatus.PENDING,
                     },
                 ],
@@ -1011,7 +1010,7 @@ describe('Import API', () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.name = 'Import Schule';
-            await em.persistAndFlush(schule);
+            await em.persist(schule).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
             const sus: Rolle<true> | DomainError = await rolleRepo.save(
@@ -1075,7 +1074,7 @@ describe('Import API', () => {
                         vorname: importDataItem.vorname,
                         nachname: importDataItem.nachname,
                         benutzername: importDataItem.username,
-                        startpasswort: expect.any(String) as unknown as string,
+                        startpasswort: expect.any(String) as string,
                         status: ImportDataItemStatus.PENDING,
                     },
                     {
@@ -1083,7 +1082,7 @@ describe('Import API', () => {
                         vorname: importDataItem2.vorname,
                         nachname: importDataItem2.nachname,
                         benutzername: importDataItem2.username,
-                        startpasswort: expect.any(String) as unknown as string,
+                        startpasswort: expect.any(String) as string,
                         status: ImportDataItemStatus.PENDING,
                     },
                 ],
@@ -1103,7 +1102,7 @@ describe('Import API', () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.name = 'Import Schule';
-            await em.persistAndFlush(schule);
+            await em.persist(schule).flush();
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
             const sus: Rolle<true> | DomainError = await rolleRepo.save(

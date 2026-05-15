@@ -14,14 +14,14 @@ export type PersonenkontextUpdatedPersonData = PersonenkontextEventPersonData;
 
 export type PersonenkontextUpdatedData = PersonenkontextEventKontextData;
 
-function mapPersonToData(person: Person<true>): PersonenkontextUpdatedPersonData {
+function mapPersonToData(person: Person<true>, email?: string): PersonenkontextUpdatedPersonData {
     return {
         id: person.id,
         vorname: person.vorname,
         familienname: person.familienname,
         username: person.username,
         keycloakUserId: person.keycloakUserId,
-        email: person.email,
+        email: email,
     };
 }
 
@@ -63,9 +63,10 @@ export class PersonenkontextUpdatedEvent extends BaseEvent {
         newKontexte: [Personenkontext<true>, Organisation<true>, Rolle<true>][],
         removedKontexte: [Personenkontext<true>, Organisation<true>, Rolle<true>][],
         currentKontexte: [Personenkontext<true>, Organisation<true>, Rolle<true>][],
+        email?: string,
     ): PersonenkontextUpdatedEvent {
         return new PersonenkontextUpdatedEvent(
-            mapPersonToData(person),
+            mapPersonToData(person, email),
             newKontexte.map(mapPersonenkontextAndRolleAggregateToData),
             removedKontexte.map(mapPersonenkontextAndRolleAggregateToData),
             currentKontexte.map(mapPersonenkontextAndRolleAggregateToData),
