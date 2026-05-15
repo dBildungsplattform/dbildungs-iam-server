@@ -89,7 +89,7 @@ export class UserExternalDataResponse {
             externalPkData.map(
                 (pk: RequiredExternalPkData) => new UserExternalDataResponseIqshHelpdeskPk(pk.rolleId, pk.kennung),
             ),
-            person.email,
+            email,
         );
 
         return new UserExternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage, iqshHelpdesk);
