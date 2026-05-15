@@ -2,6 +2,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../authentication/api/public.decorator.js';
 import { VidisApiService } from '../domain/vidis.api-service.js';
+import { VidisDomainError } from '../domain/vidis-domain.error.js';
 import { VidisAngebotWithSchoolActivations, VidisServiceResponseAngebot } from './vidis-angebote-api.types.js';
 
 //NOT TESTED AND NO NEED TO REVIEW THIS CONTROLLER SINCE IT WILL BE DELETED BEFORE MERGE
@@ -15,7 +16,7 @@ export class VidisTestController {
     @Public()
     @ApiOperation({ summary: 'Get activated Angebote by region.' })
     public async getActivatedAngeboteByRegion(): Promise<VidisAngebotWithSchoolActivations[]> {
-        const res: Result<VidisAngebotWithSchoolActivations[]> =
+        const res: Result<VidisAngebotWithSchoolActivations[], VidisDomainError> =
             await this.vidisApiService.getActivatedAngeboteByRegionSH();
         if (res.ok) {
             return res.value;
@@ -30,7 +31,7 @@ export class VidisTestController {
     public async getActivatedAngeboteBySchool(
         @Query('kennung') kennung: string,
     ): Promise<VidisServiceResponseAngebot[]> {
-        const res: Result<VidisServiceResponseAngebot[]> =
+        const res: Result<VidisServiceResponseAngebot[], VidisDomainError> =
             await this.vidisApiService.getActivatedAngeboteBySchool(kennung);
         if (res.ok) {
             return res.value;

@@ -39,7 +39,9 @@ export class VidisApiService {
         this.vidisConfig = configService.getOrThrow<VidisConfig>('VIDIS');
     }
 
-    public async getActivatedAngeboteByRegionSH(): Promise<Result<VidisAngebotWithSchoolActivations[]>> {
+    public async getActivatedAngeboteByRegionSH(): Promise<
+        Result<VidisAngebotWithSchoolActivations[], VidisDomainError>
+    > {
         try {
             const token: string = await this.getAuthToken();
             const response: AxiosResponse<VidisApiResponse<VidisApiResponseAngebotByRegion>> = await firstValueFrom(
@@ -86,7 +88,9 @@ export class VidisApiService {
         }
     }
 
-    public async getActivatedAngeboteBySchool(kennung: string): Promise<Result<VidisServiceResponseAngebot[]>> {
+    public async getActivatedAngeboteBySchool(
+        kennung: string,
+    ): Promise<Result<VidisServiceResponseAngebot[], VidisDomainError>> {
         try {
             const token: string = await this.getAuthToken();
             const response: AxiosResponse<VidisApiResponse<VidisApiResponseAngebotBySchool>> = await firstValueFrom(
