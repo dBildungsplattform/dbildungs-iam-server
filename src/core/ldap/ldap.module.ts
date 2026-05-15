@@ -8,9 +8,9 @@ import { LdapConfigModule } from './ldap-config.module.js';
 import { LdapClient } from './domain/ldap-client.js';
 import { LdapSyncEventHandler } from './domain/ldap-sync-event-handler.js';
 import { PersonModule } from '../../modules/person/person.module.js';
-import { EmailModule } from '../../modules/email/email.module.js';
 import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
 import { EmailMicroserviceModule } from '../../modules/email-microservice/email-microservice.module.js';
+import { EmailPersistenceModule } from '../../modules/email/email-persistence.module.js';
 
 @Module({
     imports: [
@@ -20,8 +20,8 @@ import { EmailMicroserviceModule } from '../../modules/email-microservice/email-
         OrganisationModule,
         PersonModule,
         PersonenKontextModule,
-        EmailModule,
         EmailMicroserviceModule,
+        EmailPersistenceModule,
     ],
     providers: [LdapEventHandler, LdapSyncEventHandler, LdapClientService, LdapClient],
     exports: [LdapEventHandler, LdapSyncEventHandler, LdapClientService, LdapClient],

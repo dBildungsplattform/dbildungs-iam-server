@@ -31,6 +31,8 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationModule } from '../../organisation/organisation.module.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
+import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 
 describe('ImportVorgangRepository', () => {
     let module: TestingModule;
@@ -48,6 +50,8 @@ describe('ImportVorgangRepository', () => {
                 RolleModule,
                 OrganisationModule,
                 ConfigTestModule,
+                EmailPersistenceModule,
+                EmailMicroserviceModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
             ],
             providers: [

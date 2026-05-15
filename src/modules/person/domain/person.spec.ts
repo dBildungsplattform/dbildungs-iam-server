@@ -97,7 +97,6 @@ describe('Person', () => {
                 undefined,
                 undefined,
                 undefined,
-                undefined,
                 input,
             );
 
@@ -358,7 +357,6 @@ describe('Person', () => {
                     undefined,
                     undefined,
                     undefined,
-                    '',
                     true,
                 );
                 expect(result).not.toBeInstanceOf(DomainError);
@@ -374,7 +372,6 @@ describe('Person', () => {
                     undefined,
                     undefined,
                     undefined,
-                    '',
                     false,
                 );
                 expect(result).not.toBeInstanceOf(DomainError);
