@@ -29,9 +29,9 @@ import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../r
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
-
+import { EntityManager } from '@mikro-orm/core';
 @Injectable()
 export class ItsLearningSyncEventHandler {
     public ENABLED: boolean;
