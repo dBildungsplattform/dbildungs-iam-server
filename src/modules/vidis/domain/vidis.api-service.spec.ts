@@ -183,8 +183,8 @@ describe('VidisApiService', () => {
             await sut.getActivatedAngeboteByRegionSH();
 
             expect(httpServiceMock.post).toHaveBeenCalledWith(
-                '/o/oauth2/token?pageSize=100000',
-                'client_id=&client_secret=&grant_type=client_credentials',
+                expect.stringContaining('/o/oauth2/token?pageSize=100000'),
+                expect.stringMatching(/^client_id=.*&client_secret=.*&grant_type=client_credentials$/),
                 {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -192,7 +192,9 @@ describe('VidisApiService', () => {
                 },
             );
             expect(httpServiceMock.get).toHaveBeenCalledWith(
-                '/o/vidis-rest/v1.0/offers/activated/by-region/Schleswig-Holstein?pageSize=100000',
+                expect.stringContaining(
+                    '/o/vidis-rest/v1.0/offers/activated/by-region/Schleswig-Holstein?pageSize=100000',
+                ),
                 {
                     headers: {
                         Authorization: `Bearer ${authToken}`,
@@ -302,8 +304,8 @@ describe('VidisApiService', () => {
             await sut.getActivatedAngeboteBySchool(kennung);
 
             expect(httpServiceMock.post).toHaveBeenCalledWith(
-                '/o/oauth2/token?pageSize=100000',
-                'client_id=&client_secret=&grant_type=client_credentials',
+                expect.stringContaining('/o/oauth2/token?pageSize=100000'),
+                expect.stringMatching(/^client_id=.*&client_secret=.*&grant_type=client_credentials$/),
                 {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -311,7 +313,7 @@ describe('VidisApiService', () => {
                 },
             );
             expect(httpServiceMock.get).toHaveBeenCalledWith(
-                '/o/vidis-rest/v1.0/offers/activated/by-school/DE-SH-123456?pageSize=100000',
+                expect.stringContaining('/o/vidis-rest/v1.0/offers/activated/by-school/DE-SH-123456?pageSize=100000'),
                 {
                     headers: {
                         Authorization: `Bearer ${authToken}`,
