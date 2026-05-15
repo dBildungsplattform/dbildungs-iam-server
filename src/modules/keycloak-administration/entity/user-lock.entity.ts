@@ -1,7 +1,8 @@
-import { Entity, Property, ManyToOne, Rel, Unique } from '@mikro-orm/core';
+import { Rel } from '@mikro-orm/core';
+import { Entity, ManyToOne, Property, Unique } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { PersonLockOccasion } from '../../person/domain/person.enums.js';
+import { PersonEntity } from '../../person/persistence/person.entity.js';
 
 @Entity({ tableName: 'user_lock' })
 @Unique({ properties: ['person', 'locked_occasion'] })
@@ -11,6 +12,7 @@ export class UserLockEntity extends TimestampedEntity {
         fieldName: 'person_id',
         columnType: 'uuid',
         deleteRule: 'cascade',
+        updateRule: 'cascade',
         ref: true,
         nullable: false,
     })

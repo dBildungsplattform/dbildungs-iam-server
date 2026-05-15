@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { faker } from '@faker-js/faker';
 import { plainToInstance } from 'class-transformer';
-import { SetEmailAddressForSpshPersonBodyParams } from './set-email-address-for-spsh-person.bodyparams';
+import { SetEmailAddressForSpshPersonBodyParams } from './set-email-address-for-spsh-person.bodyparams.js';
 
 describe('SetEmailAddressForSpshPersonBodyParams', () => {
     const referenceParams: SetEmailAddressForSpshPersonBodyParams = {

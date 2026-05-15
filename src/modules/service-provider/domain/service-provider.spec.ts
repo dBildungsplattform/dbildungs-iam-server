@@ -1,9 +1,9 @@
 import { faker } from '@faker-js/faker';
-import { DoFactory } from '../../../../test/utils';
-import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params';
-import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error';
-import { ServiceProvider } from './service-provider';
-import { ServiceProviderKategorie } from './service-provider.enum';
+import { DoFactory } from '../../../../test/utils/index.js';
+import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
+import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
+import { ServiceProvider } from './service-provider.js';
+import { ServiceProviderKategorie } from './service-provider.enum.js';
 
 type ValidLogoCombinationTestCase =
     | { logoId: number; logo: undefined; logoMimeType: undefined }

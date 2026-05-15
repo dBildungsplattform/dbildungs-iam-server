@@ -122,49 +122,48 @@ describe('Rollenerweiterung Aggregate', () => {
         });
 
         type RollenerweiterungReference = 'organisation' | 'rolle' | 'serviceProvider';
-        it.each([
-            ['organisation' as RollenerweiterungReference],
-            ['rolle' as RollenerweiterungReference],
-            ['serviceProvider' as RollenerweiterungReference],
-        ])('should return error, if %s reference is invalid', async (reference: RollenerweiterungReference) => {
-            organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
-            const rollenerweiterung: Rollenerweiterung<true> = rollenerweiterungFactory.construct(
-                faker.string.uuid(),
-                faker.date.anytime(),
-                faker.date.anytime(),
-                faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
-            );
-            organisationRepo.findById.mockResolvedValueOnce(
-                reference === 'organisation' ? undefined : DoFactory.createOrganisation(true),
-            );
-            rolleRepo.findById.mockResolvedValueOnce(
-                reference === 'rolle'
-                    ? undefined
-                    : Rolle.construct(
-                          organisationRepo,
-                          serviceProviderRepoMock,
-                          faker.string.uuid(),
-                          faker.date.anytime(),
-                          faker.date.anytime(),
-                          1,
-                          faker.string.alpha(10),
-                          faker.string.uuid(),
-                          RollenArt.LEHR,
-                          [],
-                          [],
-                          [],
-                          false,
-                          undefined,
-                      ),
-            );
-            serviceProviderRepoMock.findById.mockResolvedValueOnce(
-                reference === 'serviceProvider' ? undefined : DoFactory.createServiceProvider(true),
-            );
+        it.each<RollenerweiterungReference[]>([['organisation'], ['rolle'], ['serviceProvider']])(
+            'should return error, if %s reference is invalid',
+            async (reference: RollenerweiterungReference) => {
+                organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
+                const rollenerweiterung: Rollenerweiterung<true> = rollenerweiterungFactory.construct(
+                    faker.string.uuid(),
+                    faker.date.anytime(),
+                    faker.date.anytime(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                );
+                organisationRepo.findById.mockResolvedValueOnce(
+                    reference === 'organisation' ? undefined : DoFactory.createOrganisation(true),
+                );
+                rolleRepo.findById.mockResolvedValueOnce(
+                    reference === 'rolle'
+                        ? undefined
+                        : Rolle.construct(
+                              organisationRepo,
+                              serviceProviderRepoMock,
+                              faker.string.uuid(),
+                              faker.date.anytime(),
+                              faker.date.anytime(),
+                              1,
+                              faker.string.alpha(10),
+                              faker.string.uuid(),
+                              RollenArt.LEHR,
+                              [],
+                              [],
+                              [],
+                              false,
+                              undefined,
+                          ),
+                );
+                serviceProviderRepoMock.findById.mockResolvedValueOnce(
+                    reference === 'serviceProvider' ? undefined : DoFactory.createServiceProvider(true),
+                );
 
-            await expect(rollenerweiterung.checkReferences()).resolves.toBeInstanceOf(EntityNotFoundError);
-        });
+                await expect(rollenerweiterung.checkReferences()).resolves.toBeInstanceOf(EntityNotFoundError);
+            },
+        );
     });
 
     describe('getOrganisation', () => {

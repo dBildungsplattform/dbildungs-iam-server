@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { DbiamSharedError, SharedErrorI18nTypes } from '../error/dbiam-shared.error.js';
 import {
@@ -140,7 +139,7 @@ export class SharedExceptionFilter implements ExceptionFilter<SharedDomainError>
     ]);
 
     public catch(exception: SharedDomainError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
         const dbiamSharedError: DbiamSharedError = this.mapDomainErrorToDbiamError(exception);

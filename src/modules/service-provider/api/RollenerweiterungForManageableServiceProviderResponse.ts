@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RollenerweiterungForManageableServiceProvider } from '../domain/types';
+import { RollenerweiterungForManageableServiceProvider } from '../domain/types.js';
 import { OrganisationRefResponse } from './organisation-ref.response.js';
 import { RolleRefResponse } from './rolle-ref.response.js';
 

@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
 import { DbSeedReference } from '../domain/db-seed-reference.js';
 import { DbSeedReferenceEntity, ReferencedEntityType } from './db-seed-reference.entity.js';
 
-function mapAggregateToData(dbSeedReference: DbSeedReference): RequiredEntityData<DbSeedReferenceEntity> {
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function mapAggregateToData(dbSeedReference: DbSeedReference) {
     return {
         // Don't assign executedAt, it is auto-generated!
         referencedEntityType: dbSeedReference.referencedEntityType,
@@ -26,9 +28,9 @@ export class DbSeedReferenceRepo {
     }
 
     public async find(virtualId: number, referencedEntityType: ReferencedEntityType): Promise<Option<DbSeedReference>> {
-        const dbSeedReferenceEntity: Option<DbSeedReferenceEntity> = (await this.em.findOne(DbSeedReferenceEntity, {
+        const dbSeedReferenceEntity: Option<DbSeedReferenceEntity> = await this.em.findOne(DbSeedReferenceEntity, {
             $and: [{ virtualId }, { referencedEntityType }],
-        })) as Option<DbSeedReferenceEntity>;
+        });
 
         return dbSeedReferenceEntity && mapEntityToAggregate(dbSeedReferenceEntity);
     }
@@ -39,7 +41,7 @@ export class DbSeedReferenceRepo {
             mapAggregateToData(dbSeedReference),
         );
 
-        await this.em.persistAndFlush(dbSeedReferenceEntity);
+        await this.em.persist(dbSeedReferenceEntity).flush();
 
         return mapEntityToAggregate(dbSeedReferenceEntity);
     }

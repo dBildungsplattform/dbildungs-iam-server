@@ -23,7 +23,7 @@ export class OrganisationServiceProviderRepo {
             entityData,
         );
 
-        await this.em.persistAndFlush(organisationServiceProviderEntity);
+        await this.em.persist(organisationServiceProviderEntity).flush();
     }
 
     public async deleteAll(): Promise<boolean> {

@@ -1,4 +1,4 @@
-import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { OxUserBlacklistEntry } from '../domain/ox-user-blacklist-entry.js';
@@ -6,9 +6,9 @@ import { OxUserBlacklistEntity } from './ox-user-blacklist.entity.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { OXEmail, OXUserName } from '../../../shared/types/ox-ids.types.js';
 
-export function mapAggregateToData(
-    oxUserBlacklistEntry: OxUserBlacklistEntry<boolean>,
-): RequiredEntityData<OxUserBlacklistEntity> {
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function mapAggregateToData(oxUserBlacklistEntry: OxUserBlacklistEntry<boolean>) {
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: oxUserBlacklistEntry.id,
@@ -77,7 +77,7 @@ export class OxUserBlacklistRepo {
             OxUserBlacklistEntity,
             mapAggregateToData(oxUserBlacklistEntry),
         );
-        await this.em.persistAndFlush(oxUserBlacklistEntity);
+        await this.em.persist(oxUserBlacklistEntity).flush();
 
         return mapEntityToAggregate(oxUserBlacklistEntity);
     }
@@ -97,7 +97,7 @@ export class OxUserBlacklistRepo {
         }
 
         oxUserBlacklistEntity.assign(mapAggregateToData(oxUserBlacklistEntry));
-        await this.em.persistAndFlush(oxUserBlacklistEntity);
+        await this.em.persist(oxUserBlacklistEntity).flush();
 
         return mapEntityToAggregate(oxUserBlacklistEntity);
     }

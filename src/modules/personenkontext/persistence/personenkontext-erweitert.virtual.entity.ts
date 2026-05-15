@@ -1,7 +1,8 @@
-import { Entity, ManyToOne, Ref } from '@mikro-orm/core';
+import { Ref } from '@mikro-orm/core';
 
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
+import { Entity, ManyToOne } from '@mikro-orm/decorators/legacy';
 
 @Entity({
     expression: `

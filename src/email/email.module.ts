@@ -9,6 +9,7 @@ import { EmailAppConfig } from '../shared/config/email-app.config.js';
 import { PassportModule } from '@nestjs/passport';
 import { InternalCommunicationApiKeyStrategy } from './passport/internalcommunicationapikey.strategy.js';
 import { EmailWebhookModule } from './modules/webhook/webhook.module.js';
+import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
 
 @Module({
     imports: [
@@ -21,18 +22,17 @@ import { EmailWebhookModule } from './modules/webhook/webhook.module.js';
                     user: dbConfig.USERNAME,
                     password: dbConfig.SECRET,
                     dbName: dbConfig.DB_NAME,
+                    forceUndefined: true,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
+                    metadataProvider: ReflectMetadataProvider,
                     driverOptions: {
-                        connection: {
-                            ssl: dbConfig.USE_SSL,
-                        },
+                        ssl: dbConfig.USE_SSL,
                     },
-                    driver: PostgreSqlDriver,
-                    connect: false,
                 });
             },
             inject: [EmailAppConfig],
+            driver: PostgreSqlDriver,
         }),
         PassportModule.register({
             defaultStrategy: ['api-key'],

@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { LandesbediensteterError, LandesbediensteterErrorI18nTypes } from './landesbediensteter.error.js';
@@ -26,7 +25,7 @@ export class LandesbediensteterExceptionFilter implements ExceptionFilter<Domain
     ]);
 
     public catch(exception: DomainError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
         const landesbediensteteError: LandesbediensteterError = this.mapDomainErrorToDbiamError(exception);

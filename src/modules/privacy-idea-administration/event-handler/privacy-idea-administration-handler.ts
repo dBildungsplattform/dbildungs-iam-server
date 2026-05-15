@@ -5,7 +5,8 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PrivacyIdeaAdministrationService } from '../privacy-idea-administration.service.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
+import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
 
 @Injectable()
 export class PrivacyIdeaAdministrationServiceHandler {

@@ -30,7 +30,7 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
     });
 
     type RootNode = 'ROOT' | 'OEFFENTLICH' | 'ERSATZ';
-    it.each([['ROOT' as RootNode], ['OEFFENTLICH' as RootNode], ['ERSATZ' as RootNode]])(
+    it.each<RootNode[]>([['ROOT'], ['OEFFENTLICH'], ['ERSATZ']])(
         'when traeger has the same name as %s, it should return false',
         async (duplicateNodeType: RootNode) => {
             const root: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
@@ -88,7 +88,7 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
         await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(true);
     });
 
-    describe.each([['oeffentlich' as SubtreeType], ['ersatz' as SubtreeType]])(
+    describe.each<SubtreeType[]>([['oeffentlich'], ['ersatz']])(
         'when looking at %s subtree',
         (subtreeType: SubtreeType) => {
             let root: Organisation<true>;

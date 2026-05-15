@@ -7,25 +7,25 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     EventSystemTestModule,
-} from '../../../../test/utils';
-import { ClassLogger } from '../../../core/logging/class-logger';
-import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event';
-import { Rolle } from '../../rolle/domain/rolle';
-import { RollenArt } from '../../rolle/domain/rolle.enums';
-import { RolleRepo } from '../../rolle/repo/rolle.repo';
-import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum';
-import { EmailMicroserviceModule } from '../email-microservice.module';
-import { EmailMicroserviceEventHandler } from './email-microservice-event-handler';
-import { EmailResolverService } from './email-resolver.service';
-import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo';
-import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event';
-import { EventModule } from '../../../core/eventbus';
-import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event';
-import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types';
-import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event';
-import { PersonRepository } from '../../person/persistence/person.repository';
-import { Person } from '../../person/domain/person';
+} from '../../../../test/utils/index.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { EmailMicroserviceModule } from '../email-microservice.module.js';
+import { EmailMicroserviceEventHandler } from './email-microservice-event-handler.js';
+import { EmailResolverService } from './email-resolver.service.js';
+import { SetEmailAddressForSpshPersonBodyParams } from '../../../email/modules/core/api/dtos/params/set-email-address-for-spsh-person.bodyparams.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { EventModule } from '../../../core/eventbus/index.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Person } from '../../person/domain/person.js';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('EmailMicroserviceEventHandler', () => {

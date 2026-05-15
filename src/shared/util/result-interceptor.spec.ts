@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ResultInterceptor } from './result-interceptor.js';
-import { CallHandler, ExecutionContext } from '@nestjs/common';
+import { ArgumentsHost, CallHandler, ExecutionContext } from '@nestjs/common';
 import { Observable, of } from 'rxjs';
 import { ConfigTestModule } from '../../../test/utils/index.js';
 import { EntityNotFoundError, KeycloakClientError } from '../error/index.js';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
+
+type HttpArgumentsHost = ReturnType<ArgumentsHost['switchToHttp']>;
 
 describe('ResultInterceptor', () => {
     let module: TestingModule;
@@ -39,7 +40,7 @@ describe('ResultInterceptor', () => {
                 setHeader: vi.fn().mockReturnThis(),
             };
             const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
-                getResponse: vi.fn().mockImplementation(<T>() => responseMock as unknown as T),
+                getResponse: vi.fn().mockImplementation(() => responseMock),
             };
             contextMock = {
                 switchToHttp: vi.fn(() => httpArgumentsHostMock as HttpArgumentsHost),

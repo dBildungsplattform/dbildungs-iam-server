@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter, UnauthorizedException } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { AuthenticationDomainError } from '../domain/authentication-domain.error.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
@@ -33,7 +32,7 @@ export class AuthenticationExceptionFilter implements ExceptionFilter<Authentica
     ]);
 
     public catch(exception: AuthenticationDomainError | UnauthorizedException, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
         const dbiamAuthenticationError: DbiamAuthenticationError = this.mapDomainErrorToDbiamError(exception);
