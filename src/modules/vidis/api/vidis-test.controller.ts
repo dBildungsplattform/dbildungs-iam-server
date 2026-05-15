@@ -4,6 +4,8 @@ import { Public } from '../../authentication/api/public.decorator.js';
 import { VidisApiService } from '../domain/vidis.api-service.js';
 import { VidisAngebotWithSchoolActivations, VidisServiceResponseAngebot } from './vidis-angebote-api.types.js';
 
+//NOT TESTED AND NO NEED TO REVIEW THIS CONTROLLER SINCE IT WILL BE DELETED BEFORE MERGE
+
 @ApiTags('vidis-test')
 @Controller({ path: 'vidis-test' })
 export class VidisTestController {
