@@ -44,6 +44,7 @@
         "CLUSTERED": false
     },
     "LDAP": {
+        "ENABLED": true,
         "URL": "ldap://localhost",
         "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
         "ADMIN_PASSWORD": "admin",
@@ -78,7 +79,7 @@
         "RETRY_DELAY_MS": 15000
     },
     "OX": {
-        "ENABLED": false,
+        "ENABLED": true,
         "ENDPOINT": "http://ox.dev.spsh.dbildungsplattform.de/webservices/",
         "CONTEXT_ID": "1337",
         "CONTEXT_NAME": "contextname",
