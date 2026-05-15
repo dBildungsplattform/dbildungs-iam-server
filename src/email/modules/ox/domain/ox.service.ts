@@ -435,4 +435,8 @@ export class OxService {
         );
         return changeByModuleAccessAction;
     }
+
+    public useOx(): boolean {
+        return this.config.OX.ENABLED;
+    }
 }

@@ -5,6 +5,7 @@ import { LdapConfig } from '../../../shared/config/ldap.config.js';
 @Injectable()
 export class LdapInstanceConfig implements LdapConfig {
     public constructor(
+        public ENABLED: boolean,
         public URL: string,
         public BIND_DN: string,
         public ADMIN_PASSWORD: string,
@@ -21,6 +22,7 @@ export class LdapInstanceConfig implements LdapConfig {
                 const ldapConfig: LdapConfig = config.LDAP;
 
                 return new LdapInstanceConfig(
+                    ldapConfig.ENABLED,
                     ldapConfig.URL,
                     ldapConfig.BIND_DN,
                     ldapConfig.ADMIN_PASSWORD,

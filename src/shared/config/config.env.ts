@@ -56,6 +56,7 @@ export default (): Config => ({
         EXTERNAL_BASE_URL: process.env['KC_EXTERNAL_BASE_URL'],
     },
     LDAP: {
+        ENABLED: envToOptionalBoolean('LDAP_ENABLED'),
         URL: process.env['LDAP_URL'],
         BIND_DN: process.env['LDAP_BIND_DN'],
         ADMIN_PASSWORD: process.env['LDAP_ADMIN_PASSWORD'],
@@ -160,8 +161,6 @@ export default (): Config => ({
     },
     EMAIL_MICROSERVICE: {
         USE_EMAIL_MICROSERVICE: envToOptionalBoolean('EMAIL_MICROSERVICE__USE_EMAIL_MICROSERVICE'),
-        LDAP_ENABLED: envToOptionalBoolean('EMAIL_MICROSERVICE__LDAP_ENABLED'),
-        OX_ENABLED: envToOptionalBoolean('EMAIL_MICROSERVICE__OX_ENABLED'),
         ENDPOINT: process.env['EMAIL_MICROSERVICE__ENDPOINT'],
     },
     SCHULCONNEX: {

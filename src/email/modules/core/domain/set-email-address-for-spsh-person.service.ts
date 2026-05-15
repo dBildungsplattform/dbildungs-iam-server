@@ -439,6 +439,10 @@ export class SetEmailAddressForSpshPersonService {
         alternativeEmail: EmailAddress<true> | undefined,
         kennungen: string[],
     ): Promise<Result<string>> {
+        if (!this.oxService.useOx()) {
+            this.logger.info('Ox is disabled and will be faked');
+        }
+
         const externalId: string = primaryEmail.externalId;
         const oxUserCounter: string | undefined = primaryEmail.oxUserCounter;
 

@@ -210,18 +210,6 @@ export class EmailResolverService {
         return emailMicroserviceConfig.USE_EMAIL_MICROSERVICE;
     }
 
-    public useLdap(): boolean {
-        const emailMicroserviceConfig: EmailMicroserviceConfig =
-            this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
-        return emailMicroserviceConfig.LDAP_ENABLED;
-    }
-
-    public useOx(): boolean {
-        const emailMicroserviceConfig: EmailMicroserviceConfig =
-            this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
-        return emailMicroserviceConfig.OX_ENABLED;
-    }
-
     // ==== Helper functions ====
 
     private getEndpoint(): string {

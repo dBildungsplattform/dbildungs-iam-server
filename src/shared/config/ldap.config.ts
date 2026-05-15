@@ -1,6 +1,10 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
 export class LdapConfig {
+    @IsBoolean()
+    @IsNotEmpty()
+    public readonly ENABLED!: boolean;
+
     @IsString()
     @IsNotEmpty()
     public readonly URL!: string;

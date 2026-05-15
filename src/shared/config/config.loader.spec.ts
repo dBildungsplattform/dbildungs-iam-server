@@ -61,6 +61,7 @@ describe('configloader', () => {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
                 LDAP: {
+                    ENABLED: true,
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     BASE_DN: 'dc=schule-sh,dc=de',
@@ -140,8 +141,6 @@ describe('configloader', () => {
                 },
                 EMAIL_MICROSERVICE: {
                     USE_EMAIL_MICROSERVICE: false,
-                    LDAP_ENABLED: true,
-                    OX_ENABLED: true,
                     ENDPOINT: 'http://localhost:9091/',
                 },
                 SCHULCONNEX: {
@@ -247,6 +246,7 @@ describe('configloader', () => {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
                 LDAP: {
+                    ENABLED: true,
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     ADMIN_PASSWORD: 'password',
@@ -329,8 +329,6 @@ describe('configloader', () => {
                 },
                 EMAIL_MICROSERVICE: {
                     USE_EMAIL_MICROSERVICE: false,
-                    LDAP_ENABLED: true,
-                    OX_ENABLED: true,
                     ENDPOINT: 'http://localhost:9091/',
                 },
                 SCHULCONNEX: {
@@ -417,6 +415,7 @@ describe('configloader', () => {
                     EMAIL_ADDRESS_DELETED_EVENT_DELAY: 0,
                 },
                 LDAP: {
+                    ENABLED: true,
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     BASE_DN: 'dc=schule-sh,dc=de',
@@ -484,6 +483,7 @@ describe('configloader', () => {
                     PASSWORD: 'x',
                 },
                 LDAP: {
+                    ENABLED: true,
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     BASE_DN: 'dc=schule-sh,dc=de',
