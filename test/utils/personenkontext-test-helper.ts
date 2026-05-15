@@ -63,6 +63,6 @@ export async function createAndPersistPersonenkontext(
     };
     const personenkontext: PersonenkontextEntity = em.create(PersonenkontextEntity, defaultParams);
     Object.assign(personenkontext, params);
-    await em.persistAndFlush(personenkontext);
+    await em.persist(personenkontext).flush();
     return personenkontext;
 }

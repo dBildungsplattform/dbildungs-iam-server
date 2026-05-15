@@ -1,4 +1,3 @@
-import swc from 'unplugin-swc';
 import { resolve } from 'path';
 import { defineConfig } from 'vitest/config';
 import { readFileSync } from 'fs';
@@ -15,13 +14,12 @@ try {
 } catch {}
 
 export default defineConfig({
-    plugins: [
-        // This is required to build the test files with SWC
-        swc.vite({
-            // Explicitly set the module type to avoid inheriting this value from a `.swcrc` config file
-            module: { type: 'es6' },
-        }),
-    ],
+    oxc: {
+        decorator: {
+            legacy: true,
+            emitDecoratorMetadata: true,
+        },
+    },
     test: {
         globals: true,
         environment: 'node',
@@ -49,7 +47,7 @@ export default defineConfig({
             ],
             thresholds: {
                 statements: 100,
-                branches: -89, // Absolute count to avoid regressions
+                branches: -88, // Absolute count to avoid regressions
                 functions: 100,
                 lines: 100,
                 autoUpdate: true, // automatically update coverage to stay up to date

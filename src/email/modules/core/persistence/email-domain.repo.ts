@@ -1,4 +1,4 @@
-import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EmailDomainEntity } from './email-domain.entity.js';
 import { EmailDomain } from '../domain/email-domain.js';
@@ -6,7 +6,9 @@ import { DomainError } from '../../../../shared/error/index.js';
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 
-export function mapAggregateToData(emailDomain: EmailDomain<boolean>): RequiredEntityData<EmailDomainEntity> {
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function mapAggregateToData(emailDomain: EmailDomain<boolean>) {
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: emailDomain.id,
@@ -49,7 +51,7 @@ export class EmailDomainRepo {
     //Public to allow seeding to create entity with fixed Id
     public async create(emailDomain: EmailDomain<boolean>): Promise<EmailDomain<true>> {
         const emailDomainEntity: EmailDomainEntity = this.em.create(EmailDomainEntity, mapAggregateToData(emailDomain));
-        await this.em.persistAndFlush(emailDomainEntity);
+        await this.em.persist(emailDomainEntity).flush();
 
         return mapEntityToAggregate(emailDomainEntity);
     }
@@ -61,7 +63,7 @@ export class EmailDomainRepo {
 
         if (emailDomainEntity) {
             emailDomainEntity.assign(mapAggregateToData(emailDomain), {});
-            await this.em.persistAndFlush(emailDomainEntity);
+            await this.em.persist(emailDomainEntity).flush();
         } else {
             this.logger.error(`Email-Domain:${emailDomain.domain} with id ${emailDomain.id} could not be found`);
             return new EmailDomainNotFoundError(emailDomain.domain);

@@ -1,11 +1,11 @@
-import { AnyEntity, EntityName, QBFilterQuery, QBQueryOrderMap } from '@mikro-orm/core';
-import { EntityManager, QueryBuilder, SelectQueryBuilder } from '@mikro-orm/postgresql';
+import { AnyEntity, EntityName, QueryOrderMap, EntityKey, FilterObject } from '@mikro-orm/core';
+import { EntityManager, QBFilterQuery, QueryBuilder, SelectQueryBuilder } from '@mikro-orm/postgresql';
 import { ScopeOrder, ScopeOperator } from './scope.enums.js';
 
 export abstract class ScopeBase<T extends AnyEntity> {
-    private readonly queryFilters: QBFilterQuery<T>[] = [];
+    private readonly queryFilters: FilterObject<T>[] = [];
 
-    private readonly queryOrderMaps: QBQueryOrderMap<T>[] = [];
+    private readonly queryOrderMaps: QueryOrderMap<T>[] = [];
 
     private scopeWhereOperator?: ScopeOperator;
 
@@ -31,9 +31,12 @@ export abstract class ScopeBase<T extends AnyEntity> {
 
     public getQueryBuilder(em: EntityManager): SelectQueryBuilder<T> {
         const qb: QueryBuilder<T> = em.createQueryBuilder(this.entityName);
-        const combinedFilters: {
-            [x: string]: QBFilterQuery<T>[];
-        } = { [this.scopeWhereOperator || ScopeOperator.OR]: this.queryFilters };
+
+        const scopeOperator: ScopeOperator = this.scopeWhereOperator ?? ScopeOperator.OR;
+        const combinedFilters: QBFilterQuery<T> = {
+            [scopeOperator]: this.queryFilters,
+        } as QBFilterQuery<T>;
+
         const result: SelectQueryBuilder<T> = qb
             .select('*')
             .where(combinedFilters)
@@ -44,8 +47,8 @@ export abstract class ScopeBase<T extends AnyEntity> {
         return result;
     }
 
-    public sortBy(prop: keyof T, order: ScopeOrder): this {
-        const queryOrderMap: QBQueryOrderMap<T> = { [prop]: order };
+    public sortBy(prop: EntityKey<T>, order: ScopeOrder): this {
+        const queryOrderMap: QueryOrderMap<T> = { [prop]: order } as QueryOrderMap<T>;
 
         this.queryOrderMaps.push(queryOrderMap);
 
@@ -63,12 +66,10 @@ export abstract class ScopeBase<T extends AnyEntity> {
         const query: QBFilterQuery<T> = {
             [operator]: Object.keys(props)
                 .filter((key: string) => props[key] !== undefined)
-                .map((key: string) => {
-                    return {
-                        [key]: props[key],
-                    };
-                }),
-        };
+                .map((key: string) => ({
+                    [key]: props[key],
+                })),
+        } as QBFilterQuery<T>;
 
         this.queryFilters.push(query);
 
@@ -76,21 +77,21 @@ export abstract class ScopeBase<T extends AnyEntity> {
     }
 
     public findBySubstring(
-        fields: Array<keyof T>,
+        fields: EntityKey<T>[],
         substring: string,
         operator: ScopeOperator = ScopeOperator.OR,
     ): this {
-        const likeConditions: QBFilterQuery<T>[] = fields.map((field: keyof T): QBFilterQuery<T> => {
-            return { [field]: { $ilike: `%${substring}%` } };
+        const likeConditions: QBFilterQuery<T>[] = fields.map((field: EntityKey<T>): QBFilterQuery<T> => {
+            return { [field]: { $ilike: `%${substring}%` } } as QBFilterQuery<T>;
         });
-        const query: QBFilterQuery<T> = { [operator]: likeConditions };
+        const query: QBFilterQuery<T> = { [operator]: likeConditions } as QBFilterQuery<T>;
 
         this.queryFilters.push(query);
 
         return this;
     }
 
-    protected findByQuery(filter: QBFilterQuery<T>): this {
+    protected findByQuery(filter: FilterObject<T>): this {
         this.queryFilters.push(filter);
 
         return this;

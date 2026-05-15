@@ -2,8 +2,8 @@ import { Global, Module } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { readFileSync } from 'fs';
 
-import { DbConfig, EmailAppConfig } from '../../src/shared/config';
-import { LoggingConfig } from '../../src/shared/config/logging.config';
+import { DbConfig, EmailAppConfig } from '../../src/shared/config/index.js';
+import { LoggingConfig } from '../../src/shared/config/logging.config.js';
 
 @Global()
 @Module({

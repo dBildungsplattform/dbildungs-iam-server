@@ -1,4 +1,4 @@
-import { EntityManager, QueryBuilder } from '@mikro-orm/postgresql';
+import { EntityManager, SelectQueryBuilder } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { PersonID } from '../../../shared/types/index.js';
 import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
@@ -30,7 +30,7 @@ export class SchulconnexRepo {
             return [];
         }
 
-        let qb: QueryBuilder<PersonenkontextEntity>;
+        let qb: SelectQueryBuilder<PersonenkontextEntity>;
         if (organisationIds !== 'all' && organisationIds.size > 0) {
             qb = this.em
                 .createQueryBuilder(PersonenkontextEntity, 'pk')

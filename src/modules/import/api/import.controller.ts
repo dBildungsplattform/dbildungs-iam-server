@@ -256,7 +256,7 @@ export class ImportController {
             const fileName: string = importWorkflow.getFileName(params.importvorgangId);
             const contentDisposition: string = `attachment; filename="${fileName}"`;
 
-            const headers: Record<string, string> = {} as Record<string, string>;
+            const headers: Record<string, string> = {};
             headers[ContentType] = 'text/plain';
             headers[ContentDisposition] = contentDisposition;
             res.set(headers);

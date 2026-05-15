@@ -70,7 +70,7 @@ describe('PersonenkontextScope', () => {
         describe('when filtering for personenkontexte', () => {
             beforeEach(async () => {
                 const person: PersonEntity = createPersonEntity();
-                await em.persistAndFlush(person);
+                await em.persist(person).flush();
                 const organisation1: Organisation<true> = await organisationRepo.save(
                     DoFactory.createOrganisation(false),
                 );
@@ -106,7 +106,7 @@ describe('PersonenkontextScope', () => {
 
             beforeEach(async () => {
                 const person: PersonEntity = createPersonEntity();
-                await em.persistAndFlush(person);
+                await em.persist(person).flush();
                 const organisation1: Organisation<true> = await organisationRepo.save(
                     DoFactory.createOrganisation(false),
                 );
@@ -150,7 +150,7 @@ describe('PersonenkontextScope', () => {
 
                 for (const rolleArt of rolleArten) {
                     const person: PersonEntity = createPersonEntity();
-                    await em.persistAndFlush(person);
+                    await em.persist(person).flush();
 
                     const personenkontextPromises: Promise<PersonenkontextEntity>[] = [];
                     for (let i: number = 0; i < 10; i++) {

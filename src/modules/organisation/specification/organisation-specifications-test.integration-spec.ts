@@ -75,20 +75,22 @@ describe('OrganisationSpecificationTests', () => {
             zugehoerigZu: undefined,
         });
 
-        await orm.em.persistAndFlush(
-            orm.em.create(
-                OrganisationEntity,
-                mapOrgaAggregateToData(
-                    DoFactory.createOrganisation(false, {
-                        id: repo.ROOT_ORGANISATION_ID,
-                        name: 'Root',
-                        typ: OrganisationsTyp.ROOT,
-                        administriertVon: undefined,
-                        zugehoerigZu: undefined,
-                    }),
+        await orm.em
+            .persist(
+                orm.em.create(
+                    OrganisationEntity,
+                    mapOrgaAggregateToData(
+                        DoFactory.createOrganisation(false, {
+                            id: repo.ROOT_ORGANISATION_ID,
+                            name: 'Root',
+                            typ: OrganisationsTyp.ROOT,
+                            administriertVon: undefined,
+                            zugehoerigZu: undefined,
+                        }),
+                    ),
                 ),
-            ),
-        );
+            )
+            .flush();
 
         oeffentlich = await repo.save(
             DoFactory.createOrganisation(false, {

@@ -1,6 +1,7 @@
-import { Entity, Enum, Index, ManyToOne, Property, Ref } from '@mikro-orm/core';
-import { PersonEntity } from '../../person/persistence/person.entity.js';
+import { Ref } from '@mikro-orm/core';
+import { Entity, Enum, Index, ManyToOne, Property } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
+import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { EmailAddressStatus } from '../domain/email-address.js';
 
 @Entity({ tableName: 'email_address' })
@@ -11,6 +12,7 @@ export class EmailAddressEntity extends TimestampedEntity {
         ref: true,
         nullable: true,
         deleteRule: 'set null',
+        updateRule: 'cascade',
         eager: true,
         entity: () => PersonEntity,
     })

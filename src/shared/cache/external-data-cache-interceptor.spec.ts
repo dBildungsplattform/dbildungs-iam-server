@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as crypto from 'crypto';
 import { createMock } from '../../../test/utils/createMock.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
-import { ExternalDataCacheInterceptor } from './external-data-cache-interceptor';
+import { ExternalDataCacheInterceptor } from './external-data-cache-interceptor.js';
 
 describe('ExternalDataCacheInterceptor', () => {
     let module: TestingModule;

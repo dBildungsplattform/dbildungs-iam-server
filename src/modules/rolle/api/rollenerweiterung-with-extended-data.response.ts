@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
-import { Rollenerweiterung } from '../domain/rollenerweiterung';
-import { Rolle } from '../domain/rolle';
-import { Organisation } from '../../organisation/domain/organisation';
+import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
+import { Rolle } from '../domain/rolle.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 export class RollenerweiterungWithExtendedDataResponse extends RollenerweiterungResponse {
     public constructor(
