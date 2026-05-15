@@ -557,7 +557,6 @@ describe('DbSeedService', () => {
                 const personPersisted: Person<true> = DoFactory.createPerson(true, {
                     vorname: personNotPersisted.vorname,
                     familienname: personNotPersisted.familienname,
-                    email: personNotPersisted.email,
                 });
                 const existingUser: User<true> = User.construct<true>(
                     faker.string.uuid(),
