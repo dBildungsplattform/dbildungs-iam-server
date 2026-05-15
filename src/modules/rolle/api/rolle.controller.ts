@@ -31,7 +31,9 @@ import {
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingPermissionsError } from '../../../shared/error/index.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { Public } from '../../authentication/api/public.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
@@ -44,6 +46,7 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleDomainError } from '../domain/rolle-domain.error.js';
 import { RolleFindService } from '../domain/rolle-find.service.js';
+import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
@@ -66,7 +69,6 @@ import { RolleResponse } from './rolle.response.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -432,17 +434,9 @@ export class RolleController {
         }
         const rolleName: string = rolle.name;
 
-        const result: Option<DomainError> = await this.rolleRepo.deleteAuthorized(
-            findRolleByIdParams.rolleId,
-            permissions,
-        );
+        const result: Option<RolleHatPersonenkontexteError | EntityNotFoundError | MissingPermissionsError> =
+            await this.rolleRepo.deleteAuthorized(findRolleByIdParams.rolleId, permissions);
         if (result instanceof DomainError) {
-            if (result instanceof RolleDomainError) {
-                this.logger.error(
-                    `Admin: ${permissions.personFields.id}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
-                );
-                throw result;
-            }
             this.logger.error(
                 `Admin: ${permissions.personFields.id}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
             );

@@ -6893,6 +6893,7 @@
             "id"
           ],
           "referencedTableName": "public.rolle",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         },
         "rollenerweiterung_service_provider_id_foreign": {

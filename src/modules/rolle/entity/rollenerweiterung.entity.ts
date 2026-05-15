@@ -21,7 +21,7 @@ export class RollenerweiterungEntity extends TimestampedEntity {
     @Index({ name: 'rolle_erweiterung_organisation_id_index', type: 'hash' })
     public organisationId!: Ref<OrganisationEntity>;
 
-    @ManyToOne({ fieldName: 'rolle_id', entity: () => RolleEntity, deleteRule: 'no action', updateRule: 'cascade' })
+    @ManyToOne({ fieldName: 'rolle_id', entity: () => RolleEntity, deleteRule: 'cascade', updateRule: 'cascade' })
     @Index({ name: 'rolle_erweiterung_rolle_id_index', type: 'hash' })
     public rolleId!: Ref<RolleEntity>;
 
