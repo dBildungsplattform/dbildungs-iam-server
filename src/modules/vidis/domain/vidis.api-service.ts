@@ -60,16 +60,24 @@ export class VidisApiService {
                 );
             }
             const result: VidisAngebotWithSchoolActivations[] = response.data.items.map(
-                (item: VidisApiResponseAngebotByRegion) =>
-                    ({
+                (item: VidisApiResponseAngebotByRegion) => {
+                    const {
+                    schoolActivations,
+                    ...angebotWithoutSchoolActivations
+                    }: {
+                    schoolActivations: VidisApiResponseSchoolActivation[];
+                    } & Omit<VidisApiResponseAngebotByRegion, 'schoolActivations'> = item;
+
+                    return {
                         angebot: {
-                            ...item,
+                            ...angebotWithoutSchoolActivations,
                         },
-                        schoolActivations: item.schoolActivations.map((sa: VidisApiResponseSchoolActivation) => ({
+                        schoolActivations: schoolActivations.map((sa: VidisApiResponseSchoolActivation) => ({
                             date: sa.date,
                             kennung: this.convertVidisSchoolIdToKennung(sa.regionName),
                         })),
-                    }) satisfies VidisAngebotWithSchoolActivations,
+                    } satisfies VidisAngebotWithSchoolActivations;
+                }
             );
 
             this.logger.debug(
