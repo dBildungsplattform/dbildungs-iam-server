@@ -207,15 +207,25 @@ describe('VidisApiService', () => {
             mockHttpResponses();
 
             const expectedResult: VidisAngebotWithSchoolActivations[] = demoVidisApiResponseAngebotByRegion.items.map(
-                (angebotByRegion: VidisApiResponseAngebotByRegion) => ({
-                    angebot: angebotByRegion,
-                    schoolActivations: angebotByRegion.schoolActivations.map(
-                        (schoolActivation: VidisApiResponseSchoolActivation) => ({
-                            date: schoolActivation.date,
-                            kennung: schoolActivation.regionName.replace('DE-SH-', ''),
-                        }),
-                    ),
-                }),
+                (angebotByRegion: VidisApiResponseAngebotByRegion) => {
+
+                    const {
+                    schoolActivations,
+                    ...angebotWithoutSchoolActivations
+                    }: {
+                    schoolActivations: VidisApiResponseSchoolActivation[];
+                    } & Omit<VidisApiResponseAngebotByRegion, 'schoolActivations'> = angebotByRegion;
+
+                    return {
+                        angebot: angebotWithoutSchoolActivations,
+                        schoolActivations: schoolActivations.map(
+                            (schoolActivation: VidisApiResponseSchoolActivation) => ({
+                                date: schoolActivation.date,
+                                kennung: schoolActivation.regionName.replace('DE-SH-', ''),
+                            }),
+                        ),
+                    };
+                },
             );
 
             const result: GetActivatedAngeboteByRegionResult = await sut.getActivatedAngeboteByRegionSH();
