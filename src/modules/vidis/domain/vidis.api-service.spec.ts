@@ -208,12 +208,11 @@ describe('VidisApiService', () => {
 
             const expectedResult: VidisAngebotWithSchoolActivations[] = demoVidisApiResponseAngebotByRegion.items.map(
                 (angebotByRegion: VidisApiResponseAngebotByRegion) => {
-
                     const {
-                    schoolActivations,
-                    ...angebotWithoutSchoolActivations
+                        schoolActivations,
+                        ...angebotWithoutSchoolActivations
                     }: {
-                    schoolActivations: VidisApiResponseSchoolActivation[];
+                        schoolActivations: VidisApiResponseSchoolActivation[];
                     } & Omit<VidisApiResponseAngebotByRegion, 'schoolActivations'> = angebotByRegion;
 
                     return {

@@ -62,10 +62,10 @@ export class VidisApiService {
             const result: VidisAngebotWithSchoolActivations[] = response.data.items.map(
                 (item: VidisApiResponseAngebotByRegion) => {
                     const {
-                    schoolActivations,
-                    ...angebotWithoutSchoolActivations
+                        schoolActivations,
+                        ...angebotWithoutSchoolActivations
                     }: {
-                    schoolActivations: VidisApiResponseSchoolActivation[];
+                        schoolActivations: VidisApiResponseSchoolActivation[];
                     } & Omit<VidisApiResponseAngebotByRegion, 'schoolActivations'> = item;
 
                     return {
@@ -77,7 +77,7 @@ export class VidisApiService {
                             kennung: this.convertVidisSchoolIdToKennung(sa.regionName),
                         })),
                     } satisfies VidisAngebotWithSchoolActivations;
-                }
+                },
             );
 
             this.logger.debug(
