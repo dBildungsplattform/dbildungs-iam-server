@@ -35,7 +35,6 @@ import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { KeycloakUserService, PersonHasNoKeycloakId } from '../../keycloak-administration/index.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
@@ -66,7 +65,6 @@ import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-t
 import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
 import { PersonEntity } from './person.entity.js';
 import {
-    getEnabledOrAlternativeEmailAddress,
     getOxUserId,
     mapAggregateToData,
     mapEntityToAggregate,
@@ -79,6 +77,11 @@ import { PersonScope } from './person.scope.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
+import { BaseEvent } from '../../../shared/events/index.js';
+import { KafkaEvent } from '../../../shared/events/kafka-event.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -96,6 +99,7 @@ describe('PersonRepository Integration', () => {
     let userLockRepository: UserLockRepository;
     let organisationRepository: OrganisationRepository;
     let loggerMock: DeepMocked<ClassLogger>;
+    let emailResolverServiceMock: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -105,8 +109,8 @@ describe('PersonRepository Integration', () => {
                 OrganisationRepository,
                 ConfigService,
                 {
-                    provide: EmailRepo,
-                    useValue: createMock(EmailRepo),
+                    provide: EmailResolverService,
+                    useValue: createMock(EmailResolverService),
                 },
                 {
                     provide: ServiceProviderRepo,
@@ -151,6 +155,7 @@ describe('PersonRepository Integration', () => {
         organisationRepository = module.get(OrganisationRepository);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         loggerMock = module.get(ClassLogger);
+        emailResolverServiceMock = module.get(EmailResolverService);
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
@@ -1202,48 +1207,6 @@ describe('PersonRepository Integration', () => {
         });
     });
 
-    describe('getEnabledEmailAddress', () => {
-        let personEntity: PersonEntity;
-
-        beforeEach(() => {
-            personEntity = em.create(
-                PersonEntity,
-                mapAggregateToData(DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() })),
-            );
-            personEntity.emailAddresses = new Collection<EmailAddressEntity>(personEntity);
-        });
-
-        describe('when enabled emailAddress is in collection', () => {
-            it('should return address of (first found) enabled address', () => {
-                const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress();
-                personEntity.emailAddresses.add(emailAddressEntity);
-
-                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
-
-                expect(result).toBeDefined();
-            });
-        });
-
-        describe('when only non-enabled emailAddresses are in collection', () => {
-            it('should return defined emailAddress', () => {
-                const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
-                personEntity.emailAddresses.add(emailAddressEntity);
-
-                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
-
-                expect(result).toBeDefined();
-            });
-        });
-
-        describe('when NO emailAddress at all is found in collection', () => {
-            it('should return undefined', () => {
-                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
-
-                expect(result).toBeUndefined();
-            });
-        });
-    });
-
     describe('getOxUserId', () => {
         let personEntity: PersonEntity;
 
@@ -2010,6 +1973,8 @@ describe('PersonRepository Integration', () => {
                         },
                     });
 
+                    emailResolverServiceMock.getPrimaryActiveEmailForPerson.mockResolvedValue(emailAddress.address);
+
                     const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                     const result: Result<void, DomainError> = await sut.deletePerson(
                         person.id,
@@ -2017,15 +1982,25 @@ describe('PersonRepository Integration', () => {
                         removedPersonenkontexts,
                     );
 
-                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
-                        expect.objectContaining({
-                            emailAddress: emailAddress.address,
-                        }),
-                        expect.objectContaining({
-                            emailAddress: emailAddress.address,
-                        }),
-                    );
                     expect(result.ok).toBeTruthy();
+                    expect(emailResolverServiceMock.getPrimaryActiveEmailForPerson).toHaveBeenCalled();
+                    expect(eventServiceMock.publish).toHaveBeenNthCalledWith(
+                        2,
+                        expect.any(PersonDeletedEvent),
+                        expect.any(KafkaPersonDeletedEvent),
+                    );
+
+                    const callArgs: [] | [legacyEvent: BaseEvent, kafkaEvent?: KafkaEvent | undefined] =
+                        eventServiceMock.publish.mock.calls[1] ?? [];
+                    const personDeletedEvent: PersonDeletedEvent | undefined = callArgs[0] as
+                        | PersonDeletedEvent
+                        | undefined;
+                    const kafkaPersonDeletedEvent: KafkaPersonDeletedEvent | undefined = callArgs[1] as
+                        | KafkaPersonDeletedEvent
+                        | undefined;
+
+                    expect(personDeletedEvent?.emailAddress).toBe(emailAddress.address);
+                    expect(kafkaPersonDeletedEvent?.emailAddress).toBe(emailAddress.address);
                 });
             });
 
@@ -2475,7 +2450,6 @@ describe('PersonRepository Integration', () => {
                     existingPerson.username,
                     existingPerson.keycloakUserId,
                     existingPerson.stammorganisation,
-                    undefined,
                     undefined,
                     undefined,
                     undefined,

@@ -54,21 +54,7 @@ import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-
-/**
- * Return email-address for person, if an enabled email-address exists, return it.
- * If no enabled email-address exists, return the latest changed one (updatedAt), order is done on PersonEntity.
- * @param entity
- */
-export function getEnabledOrAlternativeEmailAddress(entity: PersonEntity): string | undefined {
-    for (const emailAddress of entity.emailAddresses) {
-        // Email-Repo is responsible to avoid persisting multiple enabled email-addresses for same user
-        if (emailAddress.status === EmailAddressStatus.ENABLED) {
-            return emailAddress.address;
-        }
-    }
-    return entity.emailAddresses[0] ? entity.emailAddresses[0].address : undefined;
-}
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 /**
  * Trys to find a valid OXUserID in EmailAddresses for a PersonEntity while using the status of EmailAddresses for ordering.
@@ -180,7 +166,6 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.orgUnassignmentDate,
         undefined,
         undefined,
-        getEnabledOrAlternativeEmailAddress(entity),
         oxUserId,
         entity.istTechnisch,
         externalIds,
@@ -223,6 +208,7 @@ export class PersonRepository {
         private readonly userLockRepository: UserLockRepository,
         private readonly em: EntityManager,
         private readonly eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
+        private readonly emailResolverService: EmailResolverService,
         private usernameGenerator: UsernameGeneratorService,
         private logger: ClassLogger,
         config: ConfigService<ServerConfig>,
@@ -513,14 +499,16 @@ export class PersonRepository {
         const [personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent]: [
             PersonenkontextUpdatedEvent,
             KafkaPersonenkontextUpdatedEvent,
-        ] = this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
+        ] = await this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
 
         this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
+        const emailAddress: string | undefined = await this.emailResolverService.getPrimaryActiveEmailForPerson(person);
+
         if (person.username !== undefined) {
             this.eventRoutingLegacyKafkaService.publish(
-                new PersonDeletedEvent(personId, person.username, person.email),
-                new KafkaPersonDeletedEvent(personId, person.username, person.email),
+                new PersonDeletedEvent(personId, person.username, emailAddress),
+                new KafkaPersonDeletedEvent(personId, person.username, emailAddress),
             );
         }
 
@@ -533,18 +521,19 @@ export class PersonRepository {
         };
     }
 
-    private createPersonenkontextUpdatedEvents(
+    private async createPersonenkontextUpdatedEvents(
         personId: PersonID,
         person: Person<true>,
         removedPersonenkontexts: PersonenkontextEventKontextData[],
-    ): [PersonenkontextUpdatedEvent, KafkaPersonenkontextUpdatedEvent] {
+    ): Promise<[PersonenkontextUpdatedEvent, KafkaPersonenkontextUpdatedEvent]> {
+        const emailAddress: string | undefined = await this.emailResolverService.getPrimaryActiveEmailForPerson(person);
         const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
             {
                 id: personId,
                 username: person.username,
                 familienname: person.familienname,
                 vorname: person.vorname,
-                email: person.email,
+                email: emailAddress,
             },
             [],
             removedPersonenkontexts,
@@ -556,7 +545,7 @@ export class PersonRepository {
                 username: person.username,
                 familienname: person.familienname,
                 vorname: person.vorname,
-                email: person.email,
+                email: emailAddress,
             },
             [],
             removedPersonenkontexts,
@@ -609,7 +598,7 @@ export class PersonRepository {
         const [personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent]: [
             PersonenkontextUpdatedEvent,
             KafkaPersonenkontextUpdatedEvent,
-        ] = this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
+        ] = await this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
 
         this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
@@ -1055,7 +1044,6 @@ export class PersonRepository {
             personFound.userLock,
             personFound.orgUnassignmentDate,
             personFound.isLocked,
-            personFound.email,
             personFound.istTechnisch,
             personFound.externalIds,
         );

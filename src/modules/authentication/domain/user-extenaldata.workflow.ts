@@ -17,6 +17,9 @@ import { RequiredExternalPkData } from '../api/authentication.controller.js';
 import { OXContextID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { PersonEmailResponse } from '../../person/api/person-email-response.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 export class UserExternaldataWorkflowAggregate {
     public contextID: OXContextID;
@@ -24,6 +27,8 @@ export class UserExternaldataWorkflowAggregate {
     public oxLoginId?: string;
 
     public person?: Person<true>;
+
+    public email?: string;
 
     public checkedExternalPkData?: RequiredExternalPkData[];
 
@@ -33,6 +38,7 @@ export class UserExternaldataWorkflowAggregate {
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personRepo: PersonRepository,
         configService: ConfigService<ServerConfig>,
+        private readonly emailRepo: EmailRepo,
         private readonly emailResolverService: EmailResolverService,
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
@@ -43,12 +49,14 @@ export class UserExternaldataWorkflowAggregate {
         personenkontextRepo: DBiamPersonenkontextRepo,
         personRepo: PersonRepository,
         configService: ConfigService<ServerConfig>,
+        emailRepo: EmailRepo,
         emailResolverService: EmailResolverService,
     ): UserExternaldataWorkflowAggregate {
         return new UserExternaldataWorkflowAggregate(
             personenkontextRepo,
             personRepo,
             configService,
+            emailRepo,
             emailResolverService,
         );
     }
@@ -70,13 +78,13 @@ export class UserExternaldataWorkflowAggregate {
             > = await this.emailResolverService.findEmailBySpshPersonAsEmailAddressResponse(personId);
 
             // Set undefined as default, if microservice is enabled
-            this.person.email = undefined;
+            this.email = undefined;
             this.oxLoginId = undefined;
 
             if (personEmailResponse.ok) {
                 if (personEmailResponse.value) {
                     if (personEmailResponse.value.status === EmailAddressStatusEnum.ACTIVE) {
-                        this.person.email = personEmailResponse.value.address;
+                        this.email = personEmailResponse.value.address;
                     }
 
                     if (personEmailResponse.value.status !== EmailAddressStatusEnum.SUSPENDED) {
@@ -85,6 +93,12 @@ export class UserExternaldataWorkflowAggregate {
                 }
             } else {
                 return personEmailResponse.error;
+            }
+        } else {
+            const emailResp: Option<PersonEmailResponse> =
+                await this.emailRepo.getEmailAddressAndStatusForPerson(person);
+            if (emailResp?.status === EmailAddressStatus.ENABLED) {
+                this.email = emailResp.address;
             }
         }
 
@@ -95,6 +109,7 @@ export class UserExternaldataWorkflowAggregate {
                 if (expk.pkId && expk.kennung && expk.rollenart && expk.serviceProvider) {
                     return {
                         pkId: expk.pkId,
+                        rolleId: expk.rolleId,
                         rollenart: expk.rollenart,
                         serviceProvider: expk.serviceProvider,
                         kennung: expk.kennung,

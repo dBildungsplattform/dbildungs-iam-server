@@ -69,6 +69,7 @@ export class KeycloakInternalController {
                 workflow.checkedExternalPkData,
                 workflow.erweiterteSP!,
                 oxParams,
+                workflow.email,
             );
         } else {
             // Check if user has email sp
@@ -97,6 +98,7 @@ export class KeycloakInternalController {
                 workflow.checkedExternalPkData,
                 workflow.erweiterteSP!,
                 oxParams,
+                workflow.email,
             );
         }
     }

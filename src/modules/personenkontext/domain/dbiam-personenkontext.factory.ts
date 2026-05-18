@@ -11,6 +11,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 @Injectable()
 export class DbiamPersonenkontextFactory {
@@ -23,6 +24,7 @@ export class DbiamPersonenkontextFactory {
         private readonly personRepo: PersonRepository,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepository,
+        private readonly emailResolverService: EmailResolverService,
     ) {}
 
     public createNewPersonenkontexteUpdate(
@@ -47,6 +49,7 @@ export class DbiamPersonenkontextFactory {
             count,
             dBiamPersonenkontextBodyParams,
             permissions,
+            this.emailResolverService,
             personalnummer,
         );
     }

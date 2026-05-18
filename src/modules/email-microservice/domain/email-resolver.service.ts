@@ -16,6 +16,8 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { HeaderApiKeyConfig } from '../../../shared/config/headerapikey.config.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { EmailMicroserviceCommunicationError } from '../../../shared/error/index.js';
+import { Person } from '../../person/domain/person.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
 
 export interface PersonIdWithEmailResponse {
     personId: string;
@@ -31,6 +33,7 @@ export class EmailResolverService {
         private readonly logger: ClassLogger,
         private readonly configService: ConfigService,
         private readonly httpService: HttpService,
+        private readonly emailRepo: EmailRepo,
     ) {}
 
     public async findEmailBySpshPerson(personId: string): Promise<Option<PersonEmailResponse>> {
@@ -208,6 +211,13 @@ export class EmailResolverService {
         const emailMicroserviceConfig: EmailMicroserviceConfig =
             this.configService.getOrThrow<EmailMicroserviceConfig>('EMAIL_MICROSERVICE');
         return emailMicroserviceConfig.USE_EMAIL_MICROSERVICE;
+    }
+
+    public async getPrimaryActiveEmailForPerson(person: Person<true>): Promise<string | undefined> {
+        const email: Option<PersonEmailResponse> = this.shouldUseEmailMicroservice()
+            ? await this.findEmailBySpshPerson(person.id)
+            : await this.emailRepo.getEmailAddressAndStatusForPerson(person);
+        return email?.status === EmailAddressStatus.ENABLED ? email.address : undefined;
     }
 
     // ==== Helper functions ====
