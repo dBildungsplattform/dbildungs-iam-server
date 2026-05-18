@@ -11,7 +11,7 @@ import {
 } from '../../../../../test/utils/index.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
-import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
+import { EmailAddress } from '../domain/email-address.js';
 import { EmailCoreModule } from '../email-core.module.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { EmailAddressStatusEnum } from './email-address-status.entity.js';
@@ -35,6 +35,7 @@ describe('EmailRepo', () => {
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);
+        vi.useFakeTimers();
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
@@ -73,6 +74,10 @@ describe('EmailRepo', () => {
     }
 
     async function setStatus(mail: EmailAddress<true>, status: EmailAddressStatusEnum): Promise<EmailAddress<true>> {
+        // sometimes we end up with two status with the same timestamp which causes non-deterministic sorting, so we wait a bit to ensure different timestamps
+        // this issue is only relevant for this test and not a real issue in production since the statuses are not set in such quick succession
+        await vi.advanceTimersByTimeAsync(10);
+
         mail.setStatus(status);
         const saveResult: Result<EmailAddress<true>> = await sut.save(mail);
         expectOkResult(saveResult);
@@ -95,6 +100,7 @@ describe('EmailRepo', () => {
 
         it('should return EmailAddress with sorted statuses', async () => {
             async function setStatusAndSave(status: EmailAddressStatusEnum): Promise<void> {
+                await vi.advanceTimersByTimeAsync(10);
                 createdMail.setStatus(status);
                 const saveResult: Result<EmailAddress<true>> = await sut.save(createdMail);
 
@@ -181,19 +187,6 @@ describe('EmailRepo', () => {
         let mail4: EmailAddress<true>;
         let mail5: EmailAddress<true>;
 
-        // sometimes we end up with two status with the same timestamp which causes non-deterministic sorting, so we wait a bit to ensure different timestamps
-        // this issue is only relevant for this test and not a real issue in production since the statuses are not set in such quick succession
-        async function waitForStatusToBeSet(mail: EmailAddress<true>, status: EmailAddressStatusEnum): Promise<void> {
-            await vi.waitFor(async () => {
-                const mailFromDb: Option<EmailAddress<true>> = await sut.findEmailAddress(mail.address);
-                if (mailFromDb?.sortedStatuses.find((s: EmailAddressStatus) => s.status === status)) {
-                    return Promise.resolve();
-                } else {
-                    return Promise.reject(new Error('status is not set yet'));
-                }
-            });
-        }
-
         beforeEach(async () => {
             mail1 = await createAndSaveMail(undefined, 1, spshPersonIds[0]);
             await setStatus(mail1, EmailAddressStatusEnum.SUSPENDED);
@@ -205,7 +198,6 @@ describe('EmailRepo', () => {
             await setStatus(mail4, EmailAddressStatusEnum.SUSPENDED);
             mail5 = await createAndSaveMail(undefined, 0, spshPersonIds[2]);
             await setStatus(mail5, EmailAddressStatusEnum.ACTIVE);
-            await waitForStatusToBeSet(mail5, EmailAddressStatusEnum.ACTIVE);
             await setStatus(mail5, EmailAddressStatusEnum.SUSPENDED);
         });
 
@@ -232,7 +224,6 @@ describe('EmailRepo', () => {
 
             const mail3: EmailAddress<true> = await createAndSaveMail(undefined, 0, pid);
             await setStatus(mail3, EmailAddressStatusEnum.ACTIVE);
-            await waitForStatusToBeSet(mail3, EmailAddressStatusEnum.ACTIVE);
             await setStatus(mail3, EmailAddressStatusEnum.SUSPENDED);
 
             const result: EmailAddress<true>[] = await sut.findPrimaryBySpshPersonIds([pid]);
@@ -531,6 +522,7 @@ describe('EmailRepo', () => {
             );
             await setStatus(mail2, EmailAddressStatusEnum.SUSPENDED);
 
+            await vi.advanceTimersByTimeAsync(10);
             await sut.ensureStatusesAndCronDateForPerson(personId, cronDate);
 
             const emailsAfterwards: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(personId);
