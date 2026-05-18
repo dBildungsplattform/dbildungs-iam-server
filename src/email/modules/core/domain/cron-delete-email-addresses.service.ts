@@ -94,24 +94,28 @@ export class CronDeleteEmailsAddressesService {
         let isCanDeletePrio1FromDb: boolean = true;
 
         if (oxUserCounter) {
-            const changeResult: Result<void, DomainError> = await this.oxSendService.send(
-                this.oxService.createChangeUserAction(
-                    oxUserCounter,
-                    undefined,
-                    [prio0ToKeep.address],
-                    undefined,
-                    undefined,
-                    undefined,
-                    prio0ToKeep.address,
-                    prio0ToKeep.address,
-                ),
-            );
-
-            if (!changeResult.ok) {
-                this.logger.logUnknownAsError(`Could not update in ox`, changeResult.error);
-                isCanDeletePrio1FromDb = false;
+            if (!this.oxService.useOx()) {
+                this.logger.info('OX is disabled -> faking OX change user action');
             } else {
-                this.logger.info(`Successfully updated userdata in ox for person ${spshPersonId}`);
+                const changeResult: Result<void, DomainError> = await this.oxSendService.send(
+                    this.oxService.createChangeUserAction(
+                        oxUserCounter,
+                        undefined,
+                        [prio0ToKeep.address],
+                        undefined,
+                        undefined,
+                        undefined,
+                        prio0ToKeep.address,
+                        prio0ToKeep.address,
+                    ),
+                );
+
+                if (!changeResult.ok) {
+                    this.logger.logUnknownAsError(`Could not update in ox`, changeResult.error);
+                    isCanDeletePrio1FromDb = false;
+                } else {
+                    this.logger.info(`Successfully updated userdata in ox for person ${spshPersonId}`);
+                }
             }
         } else {
             //Still Valid to delete in db because doesnt exist in Ox (e.g. all retries of email creation fail)
@@ -120,7 +124,9 @@ export class CronDeleteEmailsAddressesService {
             );
         }
 
-        if (domain) {
+        if (!this.ldapClientService.useLdap()) {
+            this.logger.info('LDAP is disabled -> faking LDAP email update');
+        } else if (domain) {
             const changeResult: Result<string> = await this.ldapClientService.updatePersonEmails(
                 externalId,
                 domain,
