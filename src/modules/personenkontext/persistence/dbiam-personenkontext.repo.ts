@@ -1,4 +1,4 @@
-import { Cursor, FilterQuery, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
+import { Cursor, FilterQuery, Loaded, QueryOrder, raw, sql } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -45,6 +45,7 @@ type ErweiterterServiceProviderForPKEntity = {
 
 export type ExternalPkData = {
     pkId: string;
+    rolleId: RolleID;
     rollenart?: RollenArt;
     kennung?: string;
     serviceProvider?: ServiceProvider<true>[];
@@ -327,9 +328,8 @@ export class DBiamPersonenkontextRepo {
         count: number,
         cursor?: string,
     ): Promise<[pks: Personenkontext<true>[], cursor: string | undefined]> {
-        const personenkontextCursor: Cursor<PersonenkontextEntity> = await this.em.findByCursor(
-            PersonenkontextEntity,
-            {
+        const personenkontextCursor: Cursor<PersonenkontextEntity> = await this.em.findByCursor(PersonenkontextEntity, {
+            where: {
                 rolleId,
                 organisationId: {
                     itslearningEnabled: true,
@@ -354,12 +354,11 @@ export class DBiamPersonenkontextRepo {
                             .getFormattedQuery()})`,
                 )]: [],
             },
-            {
-                after: cursor,
-                first: count,
-                orderBy: { id: QueryOrder.ASC },
-            },
-        );
+
+            after: cursor,
+            first: count,
+            orderBy: { id: QueryOrder.ASC },
+        });
 
         return [
             personenkontextCursor.items.map((pk: PersonenkontextEntity) =>
@@ -414,6 +413,7 @@ export class DBiamPersonenkontextRepo {
 
             return {
                 pkId: pk.id,
+                rolleId: pk.rolleId.unwrap().id,
                 rollenart: pk.rolleId.unwrap().rollenart,
                 kennung: pk.organisationId.unwrap().kennung,
                 serviceProvider: serviceProviders.map((sp: ServiceProviderEntity) => mapSPEntityToAggregate(sp)),
@@ -511,7 +511,7 @@ export class DBiamPersonenkontextRepo {
     }
 
     public async getPersonenKontexteWithExpiredBefristung(): Promise<Map<PersonID, Personenkontext<true>[]>> {
-        const filters: QBFilterQuery<PersonenkontextEntity> = {
+        const filters: FilterQuery<PersonenkontextEntity> = {
             personId: {
                 personenKontexte: {
                     $some: {

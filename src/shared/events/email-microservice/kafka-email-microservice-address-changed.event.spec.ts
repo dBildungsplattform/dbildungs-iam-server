@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { KafkaEmailMicroserviceAddressChangedEvent } from './kafka-email-microservice-address-changed.event';
+import { KafkaEmailMicroserviceAddressChangedEvent } from './kafka-email-microservice-address-changed.event.js';
 
 describe('KafkaEmailMicroserviceAddressChangedEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {

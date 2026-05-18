@@ -353,7 +353,7 @@ describe('OrganisationController', () => {
                 });
                 await expect(
                     organisationController.updateOrganisation(
-                        { organisationId: faker.string.uuid() } as OrganisationByIdParams,
+                        { organisationId: faker.string.uuid() },
                         new UpdateOrganisationBodyParams(),
                         permissionsMock,
                     ),
@@ -370,7 +370,7 @@ describe('OrganisationController', () => {
                 });
                 await expect(
                     organisationController.updateOrganisation(
-                        { organisationId: faker.string.uuid() } as OrganisationByIdParams,
+                        { organisationId: faker.string.uuid() },
                         new UpdateOrganisationBodyParams(),
                         permissionsMock,
                     ),
@@ -384,7 +384,7 @@ describe('OrganisationController', () => {
                 organisationRepositoryMock.findById.mockResolvedValueOnce(null);
                 await expect(
                     organisationController.updateOrganisation(
-                        { organisationId: organisationId } as OrganisationByIdParams,
+                        { organisationId: organisationId },
                         new UpdateOrganisationBodyParams(),
                         permissionsMock,
                     ),

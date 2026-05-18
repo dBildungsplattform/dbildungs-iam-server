@@ -1,13 +1,4 @@
-import {
-    Cursor,
-    EntityManager,
-    FilterQuery,
-    Loaded,
-    QBFilterQuery,
-    QueryOrder,
-    raw,
-    RequiredEntityData,
-} from '@mikro-orm/postgresql';
+import { Cursor, EntityKey, EntityManager, FilterQuery, Loaded, QueryOrder, raw } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'node:crypto';
@@ -46,7 +37,7 @@ import { compareEmailAddressesByUpdatedAtDesc } from '../../email/persistence/em
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
@@ -63,21 +54,7 @@ import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-
-/**
- * Return email-address for person, if an enabled email-address exists, return it.
- * If no enabled email-address exists, return the latest changed one (updatedAt), order is done on PersonEntity.
- * @param entity
- */
-export function getEnabledOrAlternativeEmailAddress(entity: PersonEntity): string | undefined {
-    for (const emailAddress of entity.emailAddresses) {
-        // Email-Repo is responsible to avoid persisting multiple enabled email-addresses for same user
-        if (emailAddress.status === EmailAddressStatus.ENABLED) {
-            return emailAddress.address;
-        }
-    }
-    return entity.emailAddresses[0] ? entity.emailAddresses[0].address : undefined;
-}
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 /**
  * Trys to find a valid OXUserID in EmailAddresses for a PersonEntity while using the status of EmailAddresses for ordering.
@@ -136,8 +113,11 @@ export function getOxUserId(entity: PersonEntity): OXUserID | undefined {
     return sortedEmailAddresses[0]?.oxUserId;
 }
 
-export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
-    const externalIds: RequiredEntityData<PersonExternalIdMappingEntity>[] = mapDefinedObjectProperties(
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function mapAggregateToData(person: Person<boolean>) {
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const externalIds = mapDefinedObjectProperties(
         person.externalIds,
         (type: PersonExternalIdType, externalId: string) => ({
             person: person.id,
@@ -168,7 +148,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
             aggr[externalId.type] = externalId.externalId;
             return aggr;
         },
-        {} as Partial<Record<PersonExternalIdType, string>>,
+        {},
     );
     const oxUserId: OXUserID | undefined = getOxUserId(entity);
 
@@ -186,7 +166,6 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.orgUnassignmentDate,
         undefined,
         undefined,
-        getEnabledOrAlternativeEmailAddress(entity),
         oxUserId,
         entity.istTechnisch,
         externalIds,
@@ -229,6 +208,7 @@ export class PersonRepository {
         private readonly userLockRepository: UserLockRepository,
         private readonly em: EntityManager,
         private readonly eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
+        private readonly emailResolverService: EmailResolverService,
         private usernameGenerator: UsernameGeneratorService,
         private logger: ClassLogger,
         config: ConfigService<ServerConfig>,
@@ -362,9 +342,8 @@ export class PersonRepository {
         count: number,
         cursor?: string,
     ): Promise<[persons: Person<true>[], cursor: string | undefined]> {
-        const personCursor: Cursor<PersonEntity> = await this.em.findByCursor(
-            PersonEntity,
-            {
+        const personCursor: Cursor<PersonEntity> = await this.em.findByCursor(PersonEntity, {
+            where: {
                 personenKontexte: {
                     // Only if the person has the requested rolle
                     $some: {
@@ -393,14 +372,13 @@ export class PersonRepository {
                     },
                 },
             },
-            {
-                after: cursor,
-                first: count,
-                orderBy: {
-                    id: QueryOrder.ASC,
-                },
+
+            after: cursor,
+            first: count,
+            orderBy: {
+                id: QueryOrder.ASC,
             },
-        );
+        });
 
         return [
             personCursor.items.map((entity: PersonEntity) => mapEntityToAggregate(entity)),
@@ -521,14 +499,16 @@ export class PersonRepository {
         const [personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent]: [
             PersonenkontextUpdatedEvent,
             KafkaPersonenkontextUpdatedEvent,
-        ] = this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
+        ] = await this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
 
         this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
+        const emailAddress: string | undefined = await this.emailResolverService.getPrimaryActiveEmailForPerson(person);
+
         if (person.username !== undefined) {
             this.eventRoutingLegacyKafkaService.publish(
-                new PersonDeletedEvent(personId, person.username, person.email),
-                new KafkaPersonDeletedEvent(personId, person.username, person.email),
+                new PersonDeletedEvent(personId, person.username, emailAddress),
+                new KafkaPersonDeletedEvent(personId, person.username, emailAddress),
             );
         }
 
@@ -541,18 +521,19 @@ export class PersonRepository {
         };
     }
 
-    private createPersonenkontextUpdatedEvents(
+    private async createPersonenkontextUpdatedEvents(
         personId: PersonID,
         person: Person<true>,
         removedPersonenkontexts: PersonenkontextEventKontextData[],
-    ): [PersonenkontextUpdatedEvent, KafkaPersonenkontextUpdatedEvent] {
+    ): Promise<[PersonenkontextUpdatedEvent, KafkaPersonenkontextUpdatedEvent]> {
+        const emailAddress: string | undefined = await this.emailResolverService.getPrimaryActiveEmailForPerson(person);
         const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
             {
                 id: personId,
                 username: person.username,
                 familienname: person.familienname,
                 vorname: person.vorname,
-                email: person.email,
+                email: emailAddress,
             },
             [],
             removedPersonenkontexts,
@@ -564,7 +545,7 @@ export class PersonRepository {
                 username: person.username,
                 familienname: person.familienname,
                 vorname: person.vorname,
-                email: person.email,
+                email: emailAddress,
             },
             [],
             removedPersonenkontexts,
@@ -617,7 +598,7 @@ export class PersonRepository {
         const [personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent]: [
             PersonenkontextUpdatedEvent,
             KafkaPersonenkontextUpdatedEvent,
-        ] = this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
+        ] = await this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
 
         this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
@@ -779,7 +760,7 @@ export class PersonRepository {
         }
 
         personEntity.assign(mapAggregateToData(person));
-        await this.em.persistAndFlush(personEntity);
+        await this.em.persist(personEntity).flush();
 
         if (isPersonRenamedEventNecessary) {
             this.eventRoutingLegacyKafkaService.publish(
@@ -927,7 +908,7 @@ export class PersonRepository {
         if (criteria === SortFieldPerson.USERNAME) {
             scope.sortBy(criteria, order);
         } else {
-            scope.sortBy(raw<PersonEntity, keyof PersonEntity>(`lower(${criteria})`), order);
+            scope.sortBy(raw<EntityKey<PersonEntity>>(`lower(${criteria})`), order);
         }
     }
 
@@ -1063,7 +1044,6 @@ export class PersonRepository {
             personFound.userLock,
             personFound.orgUnassignmentDate,
             personFound.isLocked,
-            personFound.email,
             personFound.istTechnisch,
             personFound.externalIds,
         );
@@ -1117,7 +1097,7 @@ export class PersonRepository {
         const daysAgo: Date = new Date();
         daysAgo.setDate(daysAgo.getDate() - KOPERS_DEADLINE_IN_DAYS);
 
-        const filters: QBFilterQuery<PersonEntity> = {
+        const filters: FilterQuery<PersonEntity> = {
             $and: [
                 { personalnummer: { $eq: null } },
                 {
@@ -1151,11 +1131,11 @@ export class PersonRepository {
         const daysAgo: Date = new Date();
         daysAgo.setDate(daysAgo.getDate() - NO_KONTEXTE_DEADLINE_IN_DAYS);
 
-        const filters: QBFilterQuery<PersonEntity> = {
+        const filters: FilterQuery<PersonEntity> = {
             personenKontexte: {
                 $exists: false,
             },
-            org_unassignment_date: {
+            orgUnassignmentDate: {
                 $lte: daysAgo,
             },
         };
@@ -1167,16 +1147,17 @@ export class PersonRepository {
     }
 
     public async findOrganisationAdminsByOrganisationId(organisation_id: string): Promise<string[]> {
-        const filters: QBFilterQuery<PersonEntity> = {
+        const filters: FilterQuery<NoInfer<PersonEntity>> = {
             personenKontexte: {
                 $some: {
                     organisationId: organisation_id,
                     rolleId: {
-                        rollenart: 'LEIT',
+                        rollenart: RollenArt.LEIT,
                     },
                 },
             },
         };
+
         const admins: PersonEntity[] = await this.em.find(PersonEntity, filters);
         return admins.map((admin: PersonEntity) => admin.vorname + ' ' + admin.familienname);
     }

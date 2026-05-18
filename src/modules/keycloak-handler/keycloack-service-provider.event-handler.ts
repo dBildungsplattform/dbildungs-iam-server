@@ -12,7 +12,8 @@ import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { Rolle } from '../rolle/domain/rolle.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../shared/events/kafka-personenkontext-updated.event.js';
 import { KafkaEventHandler } from '../../core/eventbus/decorators/kafka-event-handler.decorator.js';
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
+import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
 
 export type KontextIdsAndDuplicationFlag = {
     hasDuplicateRolleIds: boolean;

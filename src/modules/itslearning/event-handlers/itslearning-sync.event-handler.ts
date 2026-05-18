@@ -29,8 +29,9 @@ import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../r
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
-
+import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EntityManager } from '@mikro-orm/core';
 @Injectable()
 export class ItsLearningSyncEventHandler {
     public ENABLED: boolean;
@@ -45,6 +46,7 @@ export class ItsLearningSyncEventHandler {
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepository,
+        private readonly emailResolverService: EmailResolverService,
         configService: ConfigService<ServerConfig>,
 
         // @ts-expect-error used by EnsureRequestContext decorator
@@ -134,6 +136,9 @@ export class ItsLearningSyncEventHandler {
                 Array.from(rollen.values()).map((rolle: Rolle<true>) => rolle.rollenart),
             );
 
+            const emailAddress: string | undefined =
+                await this.emailResolverService.getPrimaryActiveEmailForPerson(person);
+
             // Create or update the person in itslearning
             const creationResult: Result<void, DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
                 {
@@ -142,7 +147,7 @@ export class ItsLearningSyncEventHandler {
                     lastName: person.familienname,
                     username: person.username,
                     institutionRoleType: rollenartToIMSESInstitutionRole(targetRole),
-                    email: person.email,
+                    email: emailAddress,
                 },
                 `${event.eventID}-SYNC-PERSON`,
             );

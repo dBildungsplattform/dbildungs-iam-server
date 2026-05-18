@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { EmailDomainNotFoundError } from './email-domain-not-found.error.js';
 import { EmailAddressNotFoundError } from './email-address-not-found.error.js';
@@ -42,7 +41,7 @@ export class EmailExceptionFilter implements ExceptionFilter<DomainError> {
     ]);
 
     public catch(exception: DomainError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
         const emailError: EmailServerCommunicationInternalError = this.mapDomainErrorToEmailError(exception);

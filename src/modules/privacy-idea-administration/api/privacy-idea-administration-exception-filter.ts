@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { TokenError } from './error/token.error.js';
 import { DbiamPersonError } from '../../person/api/dbiam-person.error.js';
@@ -110,7 +109,7 @@ export class PrivacyIdeaAdministrationExceptionFilter implements ExceptionFilter
     ]);
 
     public catch(exception: TokenError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
         const dbiamPersonError: DbiamPersonError = this.mapDomainErrorToDbiamError(exception);

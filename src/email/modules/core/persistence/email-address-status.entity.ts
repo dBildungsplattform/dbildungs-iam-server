@@ -1,4 +1,5 @@
-import { Entity, Enum, Index, ManyToOne, Ref } from '@mikro-orm/core';
+import { Ref } from '@mikro-orm/core';
+import { Entity, Enum, Index, ManyToOne } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../../persistence/timestamped.entity.js';
 import { EmailAddrEntity } from './email-address.entity.js';
 
@@ -18,6 +19,7 @@ export class EmailAddressStatusEntity extends TimestampedEntity {
         entity: () => EmailAddrEntity,
         fieldName: 'email_address_id',
         deleteRule: 'cascade',
+        updateRule: 'cascade',
     })
     @Index({ name: 'email_address_id', type: 'hash' })
     public emailAddress!: Ref<EmailAddrEntity>;

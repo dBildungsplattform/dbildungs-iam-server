@@ -1,8 +1,8 @@
-import { DoFactory } from '../../../../test/utils';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock';
-import { ServiceProvider } from '../domain/service-provider';
-import { ServiceProviderInternalRepo } from '../repo/service-provider.internal.repo';
-import { NameUniqueAtOrgaSpecification } from './name-unique-at-orga.specification';
+import { DoFactory } from '../../../../test/utils/index.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { ServiceProvider } from '../domain/service-provider.js';
+import { ServiceProviderInternalRepo } from '../repo/service-provider.internal.repo.js';
+import { NameUniqueAtOrgaSpecification } from './name-unique-at-orga.specification.js';
 
 describe('NameUniqueAtOrgaSpecification', () => {
     const spRepoMock: DeepMocked<ServiceProviderInternalRepo> = createMock(ServiceProviderInternalRepo);

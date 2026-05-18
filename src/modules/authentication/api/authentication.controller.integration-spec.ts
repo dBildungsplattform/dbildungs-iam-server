@@ -38,6 +38,7 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleModule } from '../../rolle/rolle.module.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 import { createRequestMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
+import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('AuthenticationController', () => {
@@ -57,6 +58,7 @@ describe('AuthenticationController', () => {
                 PersonModule,
                 PersonenKontextModule,
                 RolleModule,
+                EmailPersistenceModule,
                 EmailMicroserviceModule,
             ],
             providers: [

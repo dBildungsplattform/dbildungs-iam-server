@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
@@ -21,7 +20,7 @@ export class ApplyRollenerweiterungMultiExceptionFilter implements ExceptionFilt
     ]);
 
     public catch(exception: ApplyRollenerweiterungRolesError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
         const dbiamRolleError: DbiamRolleError | DbiamApplyRollenerweiterungMultiError =

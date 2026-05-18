@@ -45,6 +45,8 @@ import { ServiceProviderModule } from '../../../service-provider/service-provide
 import { SharedExceptionFilter } from '../../../../shared/filter/shared-exception-filter.js';
 import { ValidationExceptionFilter } from '../../../../shared/filter/validation-exception-filter.js';
 import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
+import { EmailPersistenceModule } from '../../../email/email-persistence.module.js';
+import { EmailMicroserviceModule } from '../../../email-microservice/email-microservice.module.js';
 import { CommonTestModule } from '../../../../../test/utils/common-test.module.js';
 
 describe('Personenuebersicht API', () => {
@@ -79,6 +81,8 @@ describe('Personenuebersicht API', () => {
                 PersonApiModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 ServiceProviderModule,
+                EmailPersistenceModule,
+                EmailMicroserviceModule,
             ],
             providers: [
                 {

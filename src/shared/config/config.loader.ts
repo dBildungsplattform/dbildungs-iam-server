@@ -9,7 +9,7 @@ import { EmailAppConfig } from './email-app.config.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function parseFileToJSON(path: string): any {
-    const file: string = fs.readFileSync(path, { encoding: 'utf8' }) as unknown as string;
+    const file: string = fs.readFileSync(path, { encoding: 'utf8' });
     return JSON.parse(file);
 }
 

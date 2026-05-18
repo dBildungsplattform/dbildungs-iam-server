@@ -1,9 +1,11 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, Loaded } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { Meldung } from '../domain/meldung.js';
 import { MeldungEntity, MeldungStatus } from './meldung.entity.js';
 
-export function mapAggregateToData(meldung: Meldung<boolean>): RequiredEntityData<MeldungEntity> {
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function mapAggregateToData(meldung: Meldung<boolean>) {
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: meldung.id,
@@ -29,9 +31,9 @@ export class MeldungRepo {
     public constructor(private readonly em: EntityManager) {}
 
     public async findById(id: string): Promise<Option<Meldung<true>>> {
-        const meldung: Option<MeldungEntity> = (await this.em.findOne(MeldungEntity, {
+        const meldung: Option<MeldungEntity> = await this.em.findOne(MeldungEntity, {
             id,
-        })) as Option<MeldungEntity>;
+        });
 
         return meldung && mapEntityToAggregate(meldung);
     }
@@ -52,7 +54,7 @@ export class MeldungRepo {
     private async create(meldung: Meldung<false>): Promise<Meldung<true>> {
         const meldungEntity: MeldungEntity = this.em.create(MeldungEntity, mapAggregateToData(meldung));
 
-        await this.em.persistAndFlush(meldungEntity);
+        await this.em.persist(meldungEntity).flush();
         return mapEntityToAggregate(meldungEntity);
     }
 
@@ -60,7 +62,7 @@ export class MeldungRepo {
         const meldungEntity: Loaded<MeldungEntity> = await this.em.findOneOrFail(MeldungEntity, meldung.id);
         meldungEntity.assign(mapAggregateToData(meldung));
 
-        await this.em.persistAndFlush(meldungEntity);
+        await this.em.persist(meldungEntity).flush();
 
         return mapEntityToAggregate(meldungEntity);
     }

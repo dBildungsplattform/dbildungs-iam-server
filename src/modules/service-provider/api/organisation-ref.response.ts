@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { OrganisationID } from '../../../shared/types';
-import { Organisation } from '../../organisation/domain/organisation';
+import { OrganisationID } from '../../../shared/types/index.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 export class OrganisationRefResponse {
     @ApiProperty()

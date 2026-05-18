@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DbConfig } from './db.config';
-import { EmailAppConfig } from './email-app.config';
-import { EmailConfigModule } from './email-config.module';
-import { LoggingConfig } from './logging.config';
+import { DbConfig } from './db.config.js';
+import { EmailAppConfig } from './email-app.config.js';
+import { EmailConfigModule } from './email-config.module.js';
+import { LoggingConfig } from './logging.config.js';
 
 describe('EmailConfigModule', () => {
     let module: TestingModule;

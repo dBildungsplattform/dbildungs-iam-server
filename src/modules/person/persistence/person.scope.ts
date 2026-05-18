@@ -1,4 +1,4 @@
-import { EntityName, QBFilterQuery } from '@mikro-orm/core';
+import { EntityName, FilterObject, FilterQuery } from '@mikro-orm/core';
 import { ScopeBase, ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonEntity } from './person.entity.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
@@ -17,7 +17,7 @@ export class PersonScope extends ScopeBase<PersonEntity> {
     }
 
     public findBy(findProps: Findable<FindProps>, operator: ScopeOperator = ScopeOperator.AND): this {
-        const filters: QBFilterQuery<PersonEntity> = {
+        const filters: FilterObject<PersonEntity> = {
             [operator]: [
                 findProps.ids !== undefined && {
                     id: { $in: findProps.ids },
@@ -47,7 +47,7 @@ export class PersonScope extends ScopeBase<PersonEntity> {
     }
 
     public findByPersonenKontext(organisationen?: string[], rollen?: string[]): this {
-        const filters: QBFilterQuery<PersonEntity> = {
+        const filters: FilterQuery<PersonEntity> = {
             personenKontexte: {
                 ...(organisationen ? { organisationId: { $in: organisationen } } : {}),
                 ...(rollen ? { rolleId: { $in: rollen } } : {}),

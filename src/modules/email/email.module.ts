@@ -6,12 +6,12 @@ import { ServiceProviderModule } from '../service-provider/service-provider.modu
 import { EventModule } from '../../core/eventbus/event.module.js';
 import { EmailEventHandler } from './domain/email-event-handler.js';
 import { EmailFactory } from './domain/email.factory.js';
-import { EmailRepo } from './persistence/email.repo.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { EmailConfigModule } from './email-config.module.js';
 import { HttpModule } from '@nestjs/axios';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
+import { EmailPersistenceModule } from './email-persistence.module.js';
 
 @Module({
     imports: [
@@ -24,9 +24,9 @@ import { EmailMicroserviceModule } from '../email-microservice/email-microservic
         PersonenKontextModule,
         EventModule,
         EmailMicroserviceModule,
+        EmailPersistenceModule,
         LoggerModule.register(EmailModule.name),
     ],
-    providers: [EmailRepo, EmailFactory, EmailEventHandler],
-    exports: [EmailRepo],
+    providers: [EmailFactory, EmailEventHandler],
 })
 export class EmailModule {}

@@ -1,12 +1,4 @@
-import {
-    EntityData,
-    EntityName,
-    FilterQuery,
-    ForeignKeyConstraintViolationException,
-    Loaded,
-    PopulatePath,
-    RequiredEntityData,
-} from '@mikro-orm/core';
+import { EntityName, FilterQuery, ForeignKeyConstraintViolationException, Loaded, PopulatePath } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { xor } from 'lodash-es';
@@ -15,6 +7,7 @@ import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
 import { intersectPermittedAndRequestedOrgas, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
@@ -36,22 +29,24 @@ import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-service-providers.specification.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
-export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
-    const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function mapRolleAggregateToData(rolle: Rolle<boolean>) {
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const merkmale = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
         rolle: rolle.id,
         merkmal,
     }));
 
-    const systemrechte: EntityData<RolleSystemrechtEntity>[] = rolle.systemrechte.map(
-        (systemrecht: RollenSystemRecht) => ({
-            rolle: rolle.id,
-            systemrecht: systemrecht.name,
-        }),
-    );
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const systemrechte = rolle.systemrechte.map((systemrecht: RollenSystemRecht) => ({
+        rolle: rolle.id,
+        systemrecht: systemrecht.name,
+    }));
 
-    const serviceProvider: EntityData<RolleServiceProviderEntity>[] = rolle.serviceProviderIds.map((spId: string) => ({
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const serviceProvider = rolle.serviceProviderIds.map((spId: string) => ({
         rolle: rolle.id,
         serviceProvider: spId,
     }));
@@ -146,7 +141,7 @@ export class RolleRepo {
     public async findByIdAuthorized(
         rolleId: RolleID,
         permissions: IPersonPermissions,
-    ): Promise<Result<Rolle<true>, DomainError>> {
+    ): Promise<Result<Rolle<true>, EntityNotFoundError | MissingPermissionsError>> {
         const rolle: Option<Rolle<true>> = await this.findById(rolleId);
         if (!rolle) {
             return {
@@ -469,39 +464,34 @@ export class RolleRepo {
         return result;
     }
 
-    public async deleteAuthorized(id: RolleID, permissions: IPersonPermissions): Promise<Option<DomainError>> {
-        //Permissions
-        const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
-        if (!authorizedRole.ok) {
-            return authorizedRole.error;
+    public async deleteAuthorized(
+        id: RolleID,
+        permissions: IPersonPermissions,
+    ): Promise<Option<RolleHatPersonenkontexteError | EntityNotFoundError | MissingPermissionsError>> {
+        const rolle: Result<Rolle<true>, EntityNotFoundError | MissingPermissionsError> = await this.findByIdAuthorized(
+            id,
+            permissions,
+        );
+        if (!rolle.ok) {
+            return rolle.error;
         }
 
-        const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, id, {
-            populate: [
-                'merkmale',
-                'systemrechte',
-                'serviceProvider.serviceProvider',
-                'serviceProvider.serviceProvider.merkmale',
-            ] as const,
-            exclude: ['serviceProvider.serviceProvider.logo'] as const,
-        });
-
         try {
-            //Cascade removal
-            await this.em.removeAndFlush(rolleEntity);
+            const entity: RolleEntity = this.em.create(RolleEntity, mapRolleAggregateToData(rolle.value));
+            await this.em.remove(entity).flush();
         } catch (ex) {
             if (ex instanceof ForeignKeyConstraintViolationException) {
                 return new RolleHatPersonenkontexteError();
             }
+            throw ex;
         }
-
         return;
     }
 
     public async create(rolle: Rolle<false>): Promise<Rolle<true>> {
         const rolleEntity: RolleEntity = this.em.create(RolleEntity, mapRolleAggregateToData(rolle));
 
-        await this.em.persistAndFlush(rolleEntity);
+        await this.em.persist(rolleEntity).flush();
 
         return mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
     }
@@ -525,7 +515,7 @@ export class RolleRepo {
         const oldRolle: Rolle<true> = mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
 
         rolleEntity.assign(mapRolleAggregateToData(rolle), { updateNestedEntities: true });
-        await this.em.persistAndFlush(rolleEntity);
+        await this.em.persist(rolleEntity).flush();
 
         const updatedRolle: Rolle<true> = mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
         this.eventService.publish(

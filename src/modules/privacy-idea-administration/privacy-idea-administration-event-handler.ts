@@ -6,7 +6,8 @@ import { PersonDeletedEvent } from '../../shared/events/person-deleted.event.js'
 import { PrivacyIdeaToken } from './privacy-idea-api.types.js';
 import { KafkaPersonDeletedEvent } from '../../shared/events/kafka-person-deleted.event.js';
 import { KafkaEventHandler } from '../../core/eventbus/decorators/kafka-event-handler.decorator.js';
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
+import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
 
 @Injectable()
 export class PrivacyIdeaAdministrationEventHandler {

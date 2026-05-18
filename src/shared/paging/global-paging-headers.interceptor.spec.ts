@@ -1,10 +1,11 @@
 import { Observable, from, lastValueFrom } from 'rxjs';
-import { CallHandler, ExecutionContext } from '@nestjs/common';
+import { ArgumentsHost, CallHandler, ExecutionContext } from '@nestjs/common';
 import { DISABLE_PAGING_INTERCEPTOR, GlobalPagingHeadersInterceptor } from './global-paging-headers.interceptor.js';
 import { Response } from 'express';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { PagedResponse } from './paged.response.js';
 import { PagingHeaders } from './paging.enums.js';
+
+type HttpArgumentsHost = ReturnType<ArgumentsHost['switchToHttp']>;
 
 describe('GlobalPagingHeadersInterceptor', () => {
     const sut: GlobalPagingHeadersInterceptor = new GlobalPagingHeadersInterceptor();
@@ -19,7 +20,7 @@ describe('GlobalPagingHeadersInterceptor', () => {
                     setHeader: vi.fn().mockReturnThis(),
                 };
                 const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
-                    getResponse: vi.fn().mockImplementation(<T>() => responseMock as unknown as T),
+                    getResponse: vi.fn().mockImplementation(() => responseMock),
                 };
                 contextMock = {
                     switchToHttp: vi.fn(() => httpArgumentsHostMock as HttpArgumentsHost),
@@ -61,7 +62,7 @@ describe('GlobalPagingHeadersInterceptor', () => {
                     setHeader: vi.fn().mockReturnThis(),
                 };
                 const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
-                    getResponse: vi.fn().mockImplementation(<T>() => responseMock as unknown as T),
+                    getResponse: vi.fn().mockImplementation(() => responseMock),
                 };
                 contextMock = {
                     switchToHttp: vi.fn(() => httpArgumentsHostMock as HttpArgumentsHost),
@@ -100,7 +101,7 @@ describe('GlobalPagingHeadersInterceptor', () => {
                     setHeader: vi.fn().mockReturnThis(),
                 };
                 const httpArgumentsHostMock: Partial<HttpArgumentsHost> = {
-                    getResponse: vi.fn().mockImplementation(<T>() => responseMock as unknown as T),
+                    getResponse: vi.fn().mockImplementation(() => responseMock),
                 };
                 const handlerMock = (): void => {};
                 Reflect.defineMetadata(DISABLE_PAGING_INTERCEPTOR, true, handlerMock);

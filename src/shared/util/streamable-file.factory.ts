@@ -1,8 +1,9 @@
 import { Injectable, StreamableFile } from '@nestjs/common';
-import { StreamableFileOptions } from '@nestjs/common/file-stream/interfaces';
 import { Readable } from 'stream';
 
 import { ClassLogger } from '../../core/logging/class-logger.js';
+
+type StreamableFileOptions = NonNullable<ConstructorParameters<typeof StreamableFile>[1]>;
 
 @Injectable()
 export class StreamableFileFactory {
