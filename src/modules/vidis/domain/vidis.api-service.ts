@@ -168,7 +168,7 @@ export class VidisApiService {
     }
 
     private constructUrl(path: string): string {
-        return `${this.vidisConfig.BASE_URL}${path}?pageSize=100000`;
+        return `${this.vidisConfig.BASE_URL}${path}?pageSize=100000`; //Since we will never have 100000 Angebote, we can set pageSize to a very high number to avoid pagination and multiple requests to the Vidis API. This simplifies the implementation and testing of our service.
     }
 
     private convertKennungToVidisSchoolId(kennung: string): string {
