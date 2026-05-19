@@ -8,6 +8,7 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { NameForRolleWithTrailingSpaceError } from './name-with-trailing-space.error.js';
 import { RollenArt, RollenMerkmal } from './rolle.enums.js';
+import { ServiceProviderProvidedOutOfTreeError } from './service-provider-provided-out-of-tree.error.js';
 import { OrganisationMatchesRollenartError } from './specification/error/organisation-matches-rollenart.error.js';
 import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
 import { RollenSystemRecht } from './systemrecht.js';
@@ -237,6 +238,19 @@ export class Rolle<WasPersisted extends boolean> {
         const missingIds: string[] = serviceProviderIds.filter((id: string) => !serviceProviderMap.has(id));
         if (missingIds.length > 0) {
             return Err(new EntityNotFoundError('ServiceProvider', missingIds.join(', ')));
+        }
+
+        const rolleParentOrganisations: Organisation<true>[] =
+            await this.organisationRepo.findParentOrgasForIdSortedByDepthAsc(this.administeredBySchulstrukturknoten);
+        for (const serviceProviderId of serviceProviderIds) {
+            const serviceProvider: ServiceProvider<true> = serviceProviderMap.get(serviceProviderId)!;
+            if (
+                !rolleParentOrganisations.some(
+                    (orga: Organisation<true>) => orga.id === serviceProvider.providedOnSchulstrukturknoten,
+                )
+            ) {
+                return Err(new ServiceProviderProvidedOutOfTreeError(serviceProviderId));
+            }
         }
 
         this.serviceProviderIds = serviceProviderIds;
