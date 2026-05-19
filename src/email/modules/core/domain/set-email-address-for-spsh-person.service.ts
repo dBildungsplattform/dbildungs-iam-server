@@ -440,7 +440,7 @@ export class SetEmailAddressForSpshPersonService {
         kennungen: string[],
     ): Promise<Result<string>> {
         if (!this.oxService.useOx()) {
-            this.logger.info('Ox is disabled and will be faked');
+            this.logger.info('Ox is disabled -> faking upsertUser');
 
             return Ok(primaryEmail.oxUserCounter ?? `Fake-OX-${primaryEmail.spshPersonId}`);
         }
