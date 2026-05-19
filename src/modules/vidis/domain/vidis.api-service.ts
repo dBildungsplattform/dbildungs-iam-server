@@ -45,7 +45,7 @@ export class VidisApiService {
         try {
             const token: string = await this.getAuthToken();
             const response: AxiosResponse<VidisApiResponse<VidisApiResponseAngebotByRegion>> = await firstValueFrom(
-                this.httpService.get(this.constructUrl(VidisApiService.PATH_GET_ACTIVATED_ANGEBOTE_BY_REGION), {
+                this.httpService.get(this.constructUrl(VidisApiService.PATH_GET_ACTIVATED_ANGEBOTE_BY_REGION, true), {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
             );
@@ -107,6 +107,7 @@ export class VidisApiService {
                         VidisApiService.PATH_GET_ACTIVATED_ANGEBOTE_BY_SCHOOL(
                             this.convertKennungToVidisSchoolId(kennung),
                         ),
+                        true,
                     ),
                     {
                         headers: { Authorization: `Bearer ${token}` },
@@ -156,7 +157,7 @@ export class VidisApiService {
         });
 
         const response: AxiosResponse<{ access_token: string }> = await firstValueFrom(
-            this.httpService.post(this.constructUrl(VidisApiService.PATH_GET_AUTH_TOKEN), body.toString(), {
+            this.httpService.post(this.constructUrl(VidisApiService.PATH_GET_AUTH_TOKEN, false), body.toString(), {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
@@ -167,8 +168,8 @@ export class VidisApiService {
         return response.data.access_token;
     }
 
-    private constructUrl(path: string): string {
-        return `${this.vidisConfig.BASE_URL}${path}?pageSize=100000`; //Since we will never have 100000 Angebote, we can set pageSize to a very high number to avoid pagination and multiple requests to the Vidis API. This simplifies the implementation and testing of our service.
+    private constructUrl(path: string, withMaxPageSize: boolean): string {
+        return `${this.vidisConfig.BASE_URL}${path}${withMaxPageSize ? '?pageSize=100000' : ''}`; //Since we will never have 100000 Angebote, we can set pageSize to a very high number to avoid pagination and multiple requests to the Vidis API. This simplifies the implementation and testing of our service.
     }
 
     private convertKennungToVidisSchoolId(kennung: string): string {
