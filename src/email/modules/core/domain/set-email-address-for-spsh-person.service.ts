@@ -22,7 +22,6 @@ import { uniq } from 'lodash-es';
 import { OxError } from '../../../../shared/error/ox.error.js';
 import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
 import { WebhookService } from '../../webhook/domain/webhook.service.js';
-import { createHash } from 'crypto';
 
 const MAX_EMAIL_PRIORITY: number = 99999; // E-Mails will be created with this priority before being activated
 
@@ -31,10 +30,6 @@ export class SetEmailAddressForSpshPersonService {
     public RETRY_ATTEMPTS: number = 5;
 
     private NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: number;
-
-    private fakeOxUsersByExternalId: Map<string, string> = new Map<string, string>();
-
-    private fakeLdapDirectory: Set<string> = new Set<string>();
 
     public constructor(
         private readonly emailAddressRepo: EmailAddressRepo,
@@ -447,18 +442,7 @@ export class SetEmailAddressForSpshPersonService {
         if (!this.oxService.useOx()) {
             this.logger.info('Ox is disabled and will be faked');
 
-            if (primaryEmail.oxUserCounter) {
-                return Ok(primaryEmail.oxUserCounter);
-            }
-
-            const externalId: string = primaryEmail.externalId;
-            const existing: string | undefined = this.fakeOxUsersByExternalId.get(externalId);
-            if (existing) {
-                return Ok(existing);
-            }
-
-            const newId: string = createHash('sha1').update(externalId).digest('hex').slice(0, 12);
-            return Ok(newId);
+            return Ok(primaryEmail.oxUserCounter ?? `Fake-OX-${primaryEmail.spshPersonId}`);
         }
 
         const externalId: string = primaryEmail.externalId;
@@ -546,16 +530,9 @@ export class SetEmailAddressForSpshPersonService {
         if (!this.ldapClientService.useLdap()) {
             this.logger.info('LDAP is disabled -> faking upsertUser');
 
-            const key: string = `${domain}::${uid}`.toLowerCase();
-            if (this.fakeLdapDirectory.has(key)) {
-                this.logger.debug(`FAKE LDAP update: ${key} (${primaryEmail})`);
-            } else {
-                this.logger.debug(`FAKE LDAP create: ${key} (${primaryEmail})`);
-                this.fakeLdapDirectory.add(key);
-            }
-
             return Ok(undefined);
         }
+
         const exists: Result<boolean> = await this.ldapClientService.isPersonExisting(uid, domain);
 
         if (!exists.ok) {
