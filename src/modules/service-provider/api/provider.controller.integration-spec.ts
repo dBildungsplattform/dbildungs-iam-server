@@ -127,6 +127,33 @@ describe('ServiceProvider API', () => {
             expect(response.body).toBeInstanceOf(Array);
             expect(response.body).toHaveLength(3);
         });
+
+        it('should return all service provider for a specific organisation', async () => {
+            const parent: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const orga: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { administriertVon: parent.id }),
+            );
+            const child: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { administriertVon: orga.id }),
+            );
+            const serviceProviders: ServiceProvider<true>[] = await Promise.all([
+                createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: parent.id }),
+                createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: orga.id }),
+                createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: child.id }),
+                createAndPersistServiceProvider(em),
+            ]);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/provider/all')
+                .query({ organisationId: orga.id })
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Array);
+            expect(response.body).toHaveLength(2);
+            expect(response.body).toContainEqual(expect.objectContaining({ id: serviceProviders[0]!.id }));
+            expect(response.body).toContainEqual(expect.objectContaining({ id: serviceProviders[1]!.id }));
+        });
     });
 
     describe('/GET logo', () => {

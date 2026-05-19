@@ -73,6 +73,7 @@ import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweit
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
+import { FindServiceProviderQueryParams } from './find-service-provider-query.params.ts.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -100,8 +101,19 @@ export class ProviderController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
-    public async getAllServiceProviders(): Promise<ServiceProviderResponse[]> {
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find({ withLogo: false });
+    public async getAllServiceProviders(
+        @Query() query: FindServiceProviderQueryParams,
+    ): Promise<ServiceProviderResponse[]> {
+        let serviceProviders: ServiceProvider<true>[] = [];
+        if (query.organisationId) {
+            const parentOrganisations: Organisation<true>[] =
+                await this.organisationRepo.findParentOrgasForIdSortedByDepthAsc(query.organisationId);
+            serviceProviders = await this.serviceProviderRepo.findBySchulstrukturknoten(
+                parentOrganisations.map((o: Organisation<true>) => o.id),
+            );
+        } else {
+            serviceProviders = await this.serviceProviderRepo.find({ withLogo: false });
+        }
         const response: ServiceProviderResponse[] = serviceProviders.map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );
