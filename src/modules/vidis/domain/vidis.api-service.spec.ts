@@ -14,7 +14,7 @@ import {
     VidisApiResponseAngebotByRegion,
     VidisApiResponseSchoolActivation,
     VidisServiceResponseAngebot,
-} from '../api/vidis-angebote-api.types.js';
+} from './vidis.types.js';
 import { VidisApiService } from './vidis.api-service.js';
 import { VidisDomainError } from './vidis-domain.error.js';
 

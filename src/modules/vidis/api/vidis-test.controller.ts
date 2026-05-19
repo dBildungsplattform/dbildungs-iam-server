@@ -3,7 +3,7 @@ import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../authentication/api/public.decorator.js';
 import { VidisApiService } from '../domain/vidis.api-service.js';
 import { VidisDomainError } from '../domain/vidis-domain.error.js';
-import { VidisAngebotWithSchoolActivations, VidisServiceResponseAngebot } from './vidis-angebote-api.types.js';
+import { VidisAngebotWithSchoolActivations, VidisServiceResponseAngebot } from '../domain/vidis.types.js';
 
 //NOT TESTED AND NO NEED TO REVIEW THIS CONTROLLER SINCE IT WILL BE DELETED BEFORE MERGE
 

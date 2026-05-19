@@ -11,7 +11,7 @@ import {
     VidisApiResponseSchoolActivation,
     VidisApiResponseAngebotBySchool,
     VidisAngebotWithSchoolActivations,
-} from '../api/vidis-angebote-api.types.js';
+} from './vidis.types.js';
 import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces.js';
 import { firstValueFrom } from 'rxjs';
 import { Err, Ok } from '../../../shared/util/result.js';
