@@ -440,7 +440,7 @@ export class SetEmailAddressForSpshPersonService {
         kennungen: string[],
     ): Promise<Result<string>> {
         if (!this.oxService.useOx()) {
-            this.logger.info('Ox is disabled -> faking upsertUser');
+            this.logger.info('Ox is disabled -> faking upsertOxUser');
 
             return Ok(primaryEmail.oxUserCounter ?? `Fake-OX-${primaryEmail.spshPersonId}`);
         }
@@ -528,7 +528,7 @@ export class SetEmailAddressForSpshPersonService {
         domain: string,
     ): Promise<Result<void>> {
         if (!this.ldapClientService.useLdap()) {
-            this.logger.info('LDAP is disabled -> faking upsertUser');
+            this.logger.info('LDAP is disabled -> faking upsertLdapUser');
 
             return Ok(undefined);
         }
