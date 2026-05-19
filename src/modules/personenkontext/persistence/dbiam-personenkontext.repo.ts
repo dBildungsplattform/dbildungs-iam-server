@@ -139,6 +139,39 @@ export class DBiamPersonenkontextRepo {
         return { ok: true, value: mapEntityToAggregate(personenkontext, this.personenkontextFactory) };
     }
 
+    public async hasPersonAnyKontext(
+        personId: PersonID,
+        permissions: IPersonPermissions,
+    ): Promise<Result<boolean, DomainError>> {
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
+            personId,
+        });
+
+        if (personenKontexte.length === 0) {
+            return { ok: true, value: false };
+        }
+
+        const organisationIds: OrganisationID[] = [
+            ...new Set(personenKontexte.map((pk: PersonenkontextEntity) => pk.organisationId.id)),
+        ];
+        const hasReadAccessAtAnyKontext: boolean = (
+            await Promise.all(
+                organisationIds.map((organisationId: OrganisationID) =>
+                    permissions.hasSystemrechtAtOrganisation(organisationId, RollenSystemRecht.PERSONEN_LESEN),
+                ),
+            )
+        ).some((hasReadAccess: boolean) => hasReadAccess);
+
+        if (!hasReadAccessAtAnyKontext) {
+            return {
+                ok: false,
+                error: new MissingPermissionsError('Access denied'),
+            };
+        }
+
+        return { ok: true, value: true };
+    }
+
     public async findByPerson(personId: PersonID): Promise<Personenkontext<true>[]> {
         const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
             personId,

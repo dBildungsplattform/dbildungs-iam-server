@@ -41,6 +41,13 @@ import { OrganisationDeletedEvent } from '../../../shared/events/organisation-de
 import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { Ok } from '../../../shared/util/result.js';
+import { EmailMicroserviceAddressChangedEvent } from '../../../shared/events/email-microservice/email-microservice-address-changed.event.js';
+import { KafkaEmailMicroserviceAddressChangedEvent } from '../../../shared/events/email-microservice/kafka-email-microservice-address-changed.event.js';
+import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { EscalatedPersonPermissionsFactory } from '../../../modules/permission/escalated-person-permissions.factory.js';
+import { RollenSystemRechtEnum } from '../../../modules/rolle/domain/systemrecht.js';
+import { EscalatedPersonPermissions } from '../../../modules/permission/escalated-person-permissions.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -49,6 +56,8 @@ export class LdapEventHandler {
         private readonly ldapClientService: LdapClientService,
         private readonly organisationRepository: OrganisationRepository,
         private readonly personRepo: PersonRepository,
+        private readonly dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly escalatedPersonPermissionsFactory: EscalatedPersonPermissionsFactory,
         private readonly eventService: EventRoutingLegacyKafkaService,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
@@ -105,6 +114,41 @@ export class LdapEventHandler {
         }
 
         return deletionResult;
+    }
+
+    @KafkaEventHandler(KafkaEmailMicroserviceAddressChangedEvent)
+    @EventHandler(EmailMicroserviceAddressChangedEvent)
+    @EnsureRequestContext()
+    public async microserviceEmailChangedEventHandler(event: EmailMicroserviceAddressChangedEvent): Promise<void> {
+        const permissions: EscalatedPersonPermissions = this.escalatedPersonPermissionsFactory.createNew([{ orgaId: 'ROOT', systemrechte: [RollenSystemRechtEnum.PERSONEN_LESEN] }]);
+        const hasAnyKontexts: Result<boolean, DomainError> = await this.dbiamPersonenkontextRepo.hasPersonAnyKontext(event.personId, permissions);
+        const person: Option<Person<true>> = await this.personRepo.findById(event.personId);
+
+        if(!person || !person.username){
+            this.logger.error(`Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, but person not found or has no username. Skipping LDAP update.`);
+            return;
+        }
+
+        if(!hasAnyKontexts.ok){
+            this.logger.info(`Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, username:${person.username}, but failed to check kontexts. Skipping LDAP update.`);
+            return;
+        }
+
+        if(!event.newPrimaryAddress){
+            this.logger.warning(`Received EmailMicroserviceAddressChangedEvent with empty newPrimaryAddress for personId:${event.personId}, username:${person.username}. Skipping LDAP update.`);
+            return;
+        }
+
+        if(hasAnyKontexts.value){
+            await this.ldapClientService.changeEmailAddressByPersonId(
+                event.personId,
+                person.username,
+                event.newPrimaryAddress,
+                undefined,
+            );
+            return;
+        }
+        this.logger.info(`Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, username:${person.username}, but person has no kontext. Skipping LDAP update.`);
     }
 
     @KafkaEventHandler(KafkaPersonRenamedEvent)
