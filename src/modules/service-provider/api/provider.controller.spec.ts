@@ -458,7 +458,7 @@ describe('Provider Controller Test', () => {
 
                 serviceProviderRepoMock.find.mockResolvedValueOnce([sp]);
 
-                const spResponse: ServiceProviderResponse[] = await providerController.getAllServiceProviders();
+                const spResponse: ServiceProviderResponse[] = await providerController.getAllServiceProviders({});
                 expect(spResponse).toBeDefined();
                 expect(spResponse).toBeInstanceOf(Array);
                 expect(spResponse).toHaveLength(1);
@@ -469,7 +469,7 @@ describe('Provider Controller Test', () => {
             it('should return empty list as response', async () => {
                 serviceProviderRepoMock.find.mockResolvedValueOnce([]);
 
-                const spResponse: ServiceProviderResponse[] = await providerController.getAllServiceProviders();
+                const spResponse: ServiceProviderResponse[] = await providerController.getAllServiceProviders({});
                 expect(spResponse).toBeDefined();
                 expect(spResponse).toBeInstanceOf(Array);
                 expect(spResponse).toHaveLength(0);
