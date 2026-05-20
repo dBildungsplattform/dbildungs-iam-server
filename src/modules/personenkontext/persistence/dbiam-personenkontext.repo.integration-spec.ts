@@ -1011,6 +1011,48 @@ describe('dbiam Personenkontext Repo', () => {
             });
         });
 
+        it('should check repeated kontexte at the same organisation only once', async () => {
+            const caller: Person<true> = await createPerson();
+            const target: Person<true> = await createPerson();
+
+            const rootOrga: OrganisationID = (await createAndPersistRootOrganisation(em, organisationRepository)).id;
+
+            const callerRole: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
+                RollenSystemRecht.PERSONEN_LESEN,
+            ]);
+            const targetRoleA: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
+            const targetRoleB: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
+
+            await Promise.all([
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, { personId: caller.id, organisationId: rootOrga, rolleId: callerRole.id }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, { personId: target.id, organisationId: rootOrga, rolleId: targetRoleA.id }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, { personId: target.id, organisationId: rootOrga, rolleId: targetRoleB.id }),
+                ),
+            ]);
+
+            const permissions: IPersonPermissions = createPermissions(caller);
+            const hasSystemrechtAtOrganisationSpy: Mock = vi.spyOn(permissions, 'hasSystemrechtAtOrganisation');
+
+            const result: Result<boolean, DomainError> = await sut.hasPersonAnyKontext(target.id, permissions);
+
+            expect(result).toEqual({
+                ok: true,
+                value: true,
+            });
+            expect(hasSystemrechtAtOrganisationSpy).toHaveBeenCalledTimes(1);
+            expect(hasSystemrechtAtOrganisationSpy).toHaveBeenCalledWith(
+                rootOrga,
+                RollenSystemRecht.PERSONEN_LESEN,
+            );
+
+            hasSystemrechtAtOrganisationSpy.mockRestore();
+        });
+
         it('should return MissingPermissionsError if the person has kontexte but the caller cannot read any of them', async () => {
             const caller: Person<true> = await createPerson();
             const target: Person<true> = await createPerson();
