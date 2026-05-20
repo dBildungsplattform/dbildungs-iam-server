@@ -47,6 +47,7 @@ export class LdapTestModule implements OnModuleDestroy {
                             : ldapConfig.URL;
 
                         return new LdapInstanceConfig(
+                            ldapConfig.ENABLED,
                             baseUrl,
                             ldapConfig.BIND_DN,
                             ldapConfig.ADMIN_PASSWORD,
