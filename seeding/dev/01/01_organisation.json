@@ -301,6 +301,22 @@
             "zugehoerigZu": 1,
             "emailAdress": "grundschule-ohne-klassen@qs.schule-sh.de"
         },
+              {
+            "id": 34,
+            "kennung": "1111138",
+            "name": "Playwrightschule",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1
+        },
+        {
+            "id": 35,
+            "kennung": "1111139",
+            "name": "Playwright Schule",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1
+        },
         {
             "id": 3201,
             "name": "1a",
