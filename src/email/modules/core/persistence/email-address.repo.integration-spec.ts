@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { setTimeout } from 'timers/promises';
 import { createMock } from '../../../../../test/utils/createMock.js';
 import {
     DatabaseTestModule,
@@ -36,6 +35,7 @@ describe('EmailRepo', () => {
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);
+        vi.useFakeTimers();
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
@@ -74,6 +74,10 @@ describe('EmailRepo', () => {
     }
 
     async function setStatus(mail: EmailAddress<true>, status: EmailAddressStatusEnum): Promise<EmailAddress<true>> {
+        // sometimes we end up with two status with the same timestamp which causes non-deterministic sorting, so we wait a bit to ensure different timestamps
+        // this issue is only relevant for this test and not a real issue in production since the statuses are not set in such quick succession
+        await vi.advanceTimersByTimeAsync(10);
+
         mail.setStatus(status);
         const saveResult: Result<EmailAddress<true>> = await sut.save(mail);
         expectOkResult(saveResult);
@@ -96,6 +100,7 @@ describe('EmailRepo', () => {
 
         it('should return EmailAddress with sorted statuses', async () => {
             async function setStatusAndSave(status: EmailAddressStatusEnum): Promise<void> {
+                await vi.advanceTimersByTimeAsync(10);
                 createdMail.setStatus(status);
                 const saveResult: Result<EmailAddress<true>> = await sut.save(createdMail);
 
@@ -193,9 +198,6 @@ describe('EmailRepo', () => {
             await setStatus(mail4, EmailAddressStatusEnum.SUSPENDED);
             mail5 = await createAndSaveMail(undefined, 0, spshPersonIds[2]);
             await setStatus(mail5, EmailAddressStatusEnum.ACTIVE);
-            // sometimes we end up with two status with the same timestamp which causes non-deterministic sorting, so we wait a bit to ensure different timestamps
-            // this issue is only relevant for this test and not a real issue in production since the statuses are not set in such quick succession
-            await vi.waitFor(() => setTimeout(10));
             await setStatus(mail5, EmailAddressStatusEnum.SUSPENDED);
         });
 
@@ -520,6 +522,7 @@ describe('EmailRepo', () => {
             );
             await setStatus(mail2, EmailAddressStatusEnum.SUSPENDED);
 
+            await vi.advanceTimersByTimeAsync(10);
             await sut.ensureStatusesAndCronDateForPerson(personId, cronDate);
 
             const emailsAfterwards: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(personId);
