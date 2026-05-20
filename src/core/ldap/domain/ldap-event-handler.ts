@@ -120,26 +120,37 @@ export class LdapEventHandler {
     @EventHandler(EmailMicroserviceAddressChangedEvent)
     @EnsureRequestContext()
     public async microserviceEmailChangedEventHandler(event: EmailMicroserviceAddressChangedEvent): Promise<void> {
-        const permissions: EscalatedPersonPermissions = this.escalatedPersonPermissionsFactory.createNew([{ orgaId: 'ROOT', systemrechte: [RollenSystemRechtEnum.PERSONEN_LESEN] }]);
-        const hasAnyKontexts: Result<boolean, DomainError> = await this.dbiamPersonenkontextRepo.hasPersonAnyKontext(event.personId, permissions);
+        const permissions: EscalatedPersonPermissions = this.escalatedPersonPermissionsFactory.createNew([
+            { orgaId: 'ROOT', systemrechte: [RollenSystemRechtEnum.PERSONEN_LESEN] },
+        ]);
+        const hasAnyKontexts: Result<boolean, DomainError> = await this.dbiamPersonenkontextRepo.hasPersonAnyKontext(
+            event.personId,
+            permissions,
+        );
         const person: Option<Person<true>> = await this.personRepo.findById(event.personId);
 
-        if(!person || !person.username){
-            this.logger.error(`Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, but person not found or has no username. Skipping LDAP update.`);
+        if (!person || !person.username) {
+            this.logger.error(
+                `Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, but person not found or has no username. Skipping LDAP update.`,
+            );
             return;
         }
 
-        if(!hasAnyKontexts.ok){
-            this.logger.info(`Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, username:${person.username}, but failed to check kontexts. Skipping LDAP update.`);
+        if (!hasAnyKontexts.ok) {
+            this.logger.info(
+                `Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, username:${person.username}, but failed to check kontexts. Skipping LDAP update.`,
+            );
             return;
         }
 
-        if(!event.newPrimaryAddress){
-            this.logger.warning(`Received EmailMicroserviceAddressChangedEvent with empty newPrimaryAddress for personId:${event.personId}, username:${person.username}. Skipping LDAP update.`);
+        if (!event.newPrimaryAddress) {
+            this.logger.warning(
+                `Received EmailMicroserviceAddressChangedEvent with empty newPrimaryAddress for personId:${event.personId}, username:${person.username}. Skipping LDAP update.`,
+            );
             return;
         }
 
-        if(hasAnyKontexts.value){
+        if (hasAnyKontexts.value) {
             await this.ldapClientService.changeEmailAddressByPersonId(
                 event.personId,
                 person.username,
@@ -148,7 +159,9 @@ export class LdapEventHandler {
             );
             return;
         }
-        this.logger.info(`Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, username:${person.username}, but person has no kontext. Skipping LDAP update.`);
+        this.logger.info(
+            `Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, username:${person.username}, but person has no kontext. Skipping LDAP update.`,
+        );
     }
 
     @KafkaEventHandler(KafkaPersonRenamedEvent)

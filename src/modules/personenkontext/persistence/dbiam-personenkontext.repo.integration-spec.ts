@@ -992,13 +992,25 @@ describe('dbiam Personenkontext Repo', () => {
             const targetRoleB: Rolle<true> = await createRolle(rootOrgaB, RollenArt.LEHR, []);
 
             await personenkontextRepoInternal.save(
-                createPersonenkontext(false, { personId: caller.id, organisationId: rootOrgaA, rolleId: callerRole.id }),
+                createPersonenkontext(false, {
+                    personId: caller.id,
+                    organisationId: rootOrgaA,
+                    rolleId: callerRole.id,
+                }),
             );
             await personenkontextRepoInternal.save(
-                createPersonenkontext(false, { personId: target.id, organisationId: rootOrgaA, rolleId: targetRoleA.id }),
+                createPersonenkontext(false, {
+                    personId: target.id,
+                    organisationId: rootOrgaA,
+                    rolleId: targetRoleA.id,
+                }),
             );
             await personenkontextRepoInternal.save(
-                createPersonenkontext(false, { personId: target.id, organisationId: rootOrgaB, rolleId: targetRoleB.id }),
+                createPersonenkontext(false, {
+                    personId: target.id,
+                    organisationId: rootOrgaB,
+                    rolleId: targetRoleB.id,
+                }),
             );
 
             const permissions: IPersonPermissions = createPermissions(caller);
@@ -1025,13 +1037,25 @@ describe('dbiam Personenkontext Repo', () => {
 
             await Promise.all([
                 personenkontextRepoInternal.save(
-                    createPersonenkontext(false, { personId: caller.id, organisationId: rootOrga, rolleId: callerRole.id }),
+                    createPersonenkontext(false, {
+                        personId: caller.id,
+                        organisationId: rootOrga,
+                        rolleId: callerRole.id,
+                    }),
                 ),
                 personenkontextRepoInternal.save(
-                    createPersonenkontext(false, { personId: target.id, organisationId: rootOrga, rolleId: targetRoleA.id }),
+                    createPersonenkontext(false, {
+                        personId: target.id,
+                        organisationId: rootOrga,
+                        rolleId: targetRoleA.id,
+                    }),
                 ),
                 personenkontextRepoInternal.save(
-                    createPersonenkontext(false, { personId: target.id, organisationId: rootOrga, rolleId: targetRoleB.id }),
+                    createPersonenkontext(false, {
+                        personId: target.id,
+                        organisationId: rootOrga,
+                        rolleId: targetRoleB.id,
+                    }),
                 ),
             ]);
 
@@ -1045,10 +1069,7 @@ describe('dbiam Personenkontext Repo', () => {
                 value: true,
             });
             expect(hasSystemrechtAtOrganisationSpy).toHaveBeenCalledTimes(1);
-            expect(hasSystemrechtAtOrganisationSpy).toHaveBeenCalledWith(
-                rootOrga,
-                RollenSystemRecht.PERSONEN_LESEN,
-            );
+            expect(hasSystemrechtAtOrganisationSpy).toHaveBeenCalledWith(rootOrga, RollenSystemRecht.PERSONEN_LESEN);
 
             hasSystemrechtAtOrganisationSpy.mockRestore();
         });
