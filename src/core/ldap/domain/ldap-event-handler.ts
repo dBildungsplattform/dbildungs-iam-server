@@ -130,27 +130,29 @@ export class LdapEventHandler {
         const person: Option<Person<true>> = await this.personRepo.findById(event.personId);
 
         if (!person || !person.username) {
-            this.logger.error(
+            this.logger.warning(
                 `Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, but person not found or has no username. Skipping LDAP update.`,
             );
             return;
         }
 
         if (!hasAnyKontexts.ok) {
-            this.logger.info(
+            this.logger.error(
                 `Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, username:${person.username}, but failed to check kontexts. Skipping LDAP update.`,
             );
             return;
         }
 
-        if (!event.newPrimaryAddress) {
-            this.logger.warning(
-                `Received EmailMicroserviceAddressChangedEvent with empty newPrimaryAddress for personId:${event.personId}, username:${person.username}. Skipping LDAP update.`,
-            );
-            return;
-        }
-
         if (hasAnyKontexts.value) {
+            this.logger.info(
+                `Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, username:${person.username}, updating LDAP primary email address.`,
+            );
+            if (!event.newPrimaryAddress) {
+                this.logger.error(
+                    `Received EmailMicroserviceAddressChangedEvent with empty newPrimaryAddress for personId:${event.personId}, username:${person.username}. Skipping LDAP update.`,
+                );
+                return;
+            }
             await this.ldapClientService.changeEmailAddressByPersonId(
                 event.personId,
                 person.username,

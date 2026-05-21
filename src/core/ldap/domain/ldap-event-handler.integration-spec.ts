@@ -189,7 +189,7 @@ describe('LdapEventHandler', () => {
         });
 
         describe('when person can not be found', () => {
-            it('should log error and skip LDAP update', async () => {
+                it('should log warning and skip LDAP update', async () => {
                 dbiamPersonenkontextRepoMock.hasPersonAnyKontext.mockResolvedValueOnce({
                     ok: true,
                     value: true,
@@ -198,7 +198,7 @@ describe('LdapEventHandler', () => {
 
                 await ldapEventHandler.microserviceEmailChangedEventHandler(event);
 
-                expect(loggerMock.error).toHaveBeenCalledWith(
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
                     `Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, but person not found or has no username. Skipping LDAP update.`,
                 );
                 expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(0);
@@ -206,7 +206,7 @@ describe('LdapEventHandler', () => {
         });
 
         describe('when person has no username', () => {
-            it('should log error and skip LDAP update', async () => {
+                it('should log warning and skip LDAP update', async () => {
                 dbiamPersonenkontextRepoMock.hasPersonAnyKontext.mockResolvedValueOnce({
                     ok: true,
                     value: true,
@@ -217,7 +217,7 @@ describe('LdapEventHandler', () => {
 
                 await ldapEventHandler.microserviceEmailChangedEventHandler(event);
 
-                expect(loggerMock.error).toHaveBeenCalledWith(
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
                     `Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, but person not found or has no username. Skipping LDAP update.`,
                 );
                 expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(0);
@@ -225,7 +225,7 @@ describe('LdapEventHandler', () => {
         });
 
         describe('when checking kontexts is not successful', () => {
-            it('should log info and skip LDAP update', async () => {
+                it('should log error and skip LDAP update', async () => {
                 const error: MissingPermissionsError = new MissingPermissionsError('Access denied');
                 const hasAnyKontextsResult: Result<boolean, DomainError> = {
                     ok: false,
@@ -237,7 +237,7 @@ describe('LdapEventHandler', () => {
 
                 await ldapEventHandler.microserviceEmailChangedEventHandler(event);
 
-                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect(loggerMock.error).toHaveBeenCalledWith(
                     `Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, username:${person.username}, but failed to check kontexts. Skipping LDAP update.`,
                 );
                 expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(0);
@@ -245,7 +245,7 @@ describe('LdapEventHandler', () => {
         });
 
         describe('when newPrimaryAddress is UNDEFINED', () => {
-            it('should log warning and skip LDAP update', async () => {
+                it('should log error and skip LDAP update', async () => {
                 event = new EmailMicroserviceAddressChangedEvent(
                     event.personId,
                     undefined,
@@ -263,7 +263,7 @@ describe('LdapEventHandler', () => {
 
                 await ldapEventHandler.microserviceEmailChangedEventHandler(event);
 
-                expect(loggerMock.warning).toHaveBeenCalledWith(
+                expect(loggerMock.error).toHaveBeenCalledWith(
                     `Received EmailMicroserviceAddressChangedEvent with empty newPrimaryAddress for personId:${event.personId}, username:${person.username}. Skipping LDAP update.`,
                 );
                 expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(0);
