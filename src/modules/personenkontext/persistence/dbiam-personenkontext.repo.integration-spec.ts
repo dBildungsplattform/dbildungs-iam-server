@@ -963,14 +963,14 @@ describe('dbiam Personenkontext Repo', () => {
         });
     });
 
-    describe('hasPersonAnyKontext', () => {
+    describe('hasPersonAnyReadableKontext', () => {
         it('should return false if the person has no kontext', async () => {
             const caller: Person<true> = await createPerson();
             const target: Person<true> = await createPerson();
 
             const permissions: IPersonPermissions = createPermissions(caller);
 
-            const result: Result<boolean, DomainError> = await sut.hasPersonAnyKontext(target.id, permissions);
+            const result: Result<boolean, DomainError> = await sut.hasPersonAnyReadableKontext(target.id, permissions);
 
             expect(result).toEqual({
                 ok: true,
@@ -1015,7 +1015,7 @@ describe('dbiam Personenkontext Repo', () => {
 
             const permissions: IPersonPermissions = createPermissions(caller);
 
-            const result: Result<boolean, DomainError> = await sut.hasPersonAnyKontext(target.id, permissions);
+            const result: Result<boolean, DomainError> = await sut.hasPersonAnyReadableKontext(target.id, permissions);
 
             expect(result).toEqual({
                 ok: true,
@@ -1062,7 +1062,7 @@ describe('dbiam Personenkontext Repo', () => {
             const permissions: IPersonPermissions = createPermissions(caller);
             const hasSystemrechtAtOrganisationSpy: Mock = vi.spyOn(permissions, 'hasSystemrechtAtOrganisation');
 
-            const result: Result<boolean, DomainError> = await sut.hasPersonAnyKontext(target.id, permissions);
+            const result: Result<boolean, DomainError> = await sut.hasPersonAnyReadableKontext(target.id, permissions);
 
             expect(result).toEqual({
                 ok: true,
@@ -1092,7 +1092,7 @@ describe('dbiam Personenkontext Repo', () => {
 
             const permissions: IPersonPermissions = createPermissions(caller);
 
-            const result: Result<boolean, DomainError> = await sut.hasPersonAnyKontext(target.id, permissions);
+            const result: Result<boolean, DomainError> = await sut.hasPersonAnyReadableKontext(target.id, permissions);
 
             expect(result).toEqual({
                 ok: false,

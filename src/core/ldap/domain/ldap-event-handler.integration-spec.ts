@@ -190,7 +190,7 @@ describe('LdapEventHandler', () => {
 
         describe('when person can not be found', () => {
                 it('should log warning and skip LDAP update', async () => {
-                dbiamPersonenkontextRepoMock.hasPersonAnyKontext.mockResolvedValueOnce({
+                dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext.mockResolvedValueOnce({
                     ok: true,
                     value: true,
                 });
@@ -207,7 +207,7 @@ describe('LdapEventHandler', () => {
 
         describe('when person has no username', () => {
                 it('should log warning and skip LDAP update', async () => {
-                dbiamPersonenkontextRepoMock.hasPersonAnyKontext.mockResolvedValueOnce({
+                dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext.mockResolvedValueOnce({
                     ok: true,
                     value: true,
                 });
@@ -232,7 +232,7 @@ describe('LdapEventHandler', () => {
                     error: error,
                 };
 
-                dbiamPersonenkontextRepoMock.hasPersonAnyKontext.mockResolvedValueOnce(hasAnyKontextsResult);
+                dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext.mockResolvedValueOnce(hasAnyKontextsResult);
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
 
                 await ldapEventHandler.microserviceEmailChangedEventHandler(event);
@@ -255,7 +255,7 @@ describe('LdapEventHandler', () => {
                 );
                 person = DoFactory.createPerson(true, { id: event.personId });
 
-                dbiamPersonenkontextRepoMock.hasPersonAnyKontext.mockResolvedValueOnce({
+                dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext.mockResolvedValueOnce({
                     ok: true,
                     value: true,
                 });
@@ -272,7 +272,7 @@ describe('LdapEventHandler', () => {
 
         describe('when person has at least one kontext', () => {
             it('should call LdapClientService changeEmailAddressByPersonId', async () => {
-                dbiamPersonenkontextRepoMock.hasPersonAnyKontext.mockResolvedValueOnce({
+                dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext.mockResolvedValueOnce({
                     ok: true,
                     value: true,
                 });
@@ -280,7 +280,7 @@ describe('LdapEventHandler', () => {
 
                 await ldapEventHandler.microserviceEmailChangedEventHandler(event);
 
-                expect(dbiamPersonenkontextRepoMock.hasPersonAnyKontext).toHaveBeenCalledWith(
+                expect(dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext).toHaveBeenCalledWith(
                     event.personId,
                     expect.anything(),
                 );
@@ -296,7 +296,7 @@ describe('LdapEventHandler', () => {
 
         describe('when person has no kontext', () => {
             it('should log info and skip LDAP update', async () => {
-                dbiamPersonenkontextRepoMock.hasPersonAnyKontext.mockResolvedValueOnce({
+                dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext.mockResolvedValueOnce({
                     ok: true,
                     value: false,
                 });

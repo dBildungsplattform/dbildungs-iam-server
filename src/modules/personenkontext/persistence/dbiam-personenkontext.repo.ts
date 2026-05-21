@@ -139,7 +139,7 @@ export class DBiamPersonenkontextRepo {
         return { ok: true, value: mapEntityToAggregate(personenkontext, this.personenkontextFactory) };
     }
 
-    public async hasPersonAnyKontext(
+    public async hasPersonAnyReadableKontext(
         personId: PersonID,
         permissions: IPersonPermissions,
     ): Promise<Result<boolean, DomainError>> {
