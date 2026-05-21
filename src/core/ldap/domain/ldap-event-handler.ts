@@ -123,10 +123,8 @@ export class LdapEventHandler {
         const permissions: EscalatedPersonPermissions = this.escalatedPersonPermissionsFactory.createNew([
             { orgaId: 'ROOT', systemrechte: [RollenSystemRechtEnum.PERSONEN_LESEN] },
         ]);
-        const hasAnyKontexts: Result<boolean, DomainError> = await this.dbiamPersonenkontextRepo.hasPersonAnyReadableKontext(
-            event.personId,
-            permissions,
-        );
+        const hasAnyKontexts: Result<boolean, DomainError> =
+            await this.dbiamPersonenkontextRepo.hasPersonAnyReadableKontext(event.personId, permissions);
         const person: Option<Person<true>> = await this.personRepo.findById(event.personId);
 
         if (!person || !person.username) {
