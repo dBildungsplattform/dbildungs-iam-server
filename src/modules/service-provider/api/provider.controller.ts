@@ -73,7 +73,7 @@ import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweit
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
-import { FindServiceProviderQueryParams } from './find-service-provider-query.params.ts.js';
+import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.ts.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -92,9 +92,9 @@ export class ProviderController {
         private readonly logger: ClassLogger,
     ) {}
 
-    @Get('all')
+    @Get('assignable-for-rolle')
     @UseGuards(StepUpGuard)
-    @ApiOperation({ description: 'Get all service-providers.' })
+    @ApiOperation({ description: 'Get all service-providers assignable for a role.' })
     @ApiOkResponse({
         description: 'The service-providers were successfully returned.',
         type: [ServiceProviderResponse],
@@ -102,19 +102,14 @@ export class ProviderController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
-    public async getAllServiceProviders(
-        @Query() query: FindServiceProviderQueryParams,
+    public async getAssignableServiceProvidersForRolle(
+        @Query() query: FindServiceProviderForRolleQueryParams,
     ): Promise<ServiceProviderResponse[]> {
-        let serviceProviders: ServiceProvider<true>[] = [];
-        if (query.organisationId) {
-            const parentOrganisations: Organisation<true>[] =
-                await this.organisationRepo.findParentOrgasForIdSortedByDepthAsc(query.organisationId);
-            serviceProviders = await this.serviceProviderRepo.findBySchulstrukturknoten(
-                parentOrganisations.map((o: Organisation<true>) => o.id),
-            );
-        } else {
-            serviceProviders = await this.serviceProviderRepo.find({ withLogo: false });
-        }
+        const parentOrganisations: Organisation<true>[] =
+            await this.organisationRepo.findParentOrgasForIdSortedByDepthAsc(query.schulstrukturknotenOfRolle);
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.findBySchulstrukturknoten(
+            parentOrganisations.map((o: Organisation<true>) => o.id),
+        );
         const response: ServiceProviderResponse[] = serviceProviders.map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );

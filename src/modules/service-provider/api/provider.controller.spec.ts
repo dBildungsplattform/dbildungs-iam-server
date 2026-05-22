@@ -53,6 +53,7 @@ describe('Provider Controller Test', () => {
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let serviceProviderFactoryMock: DeepMocked<ServiceProviderFactory>;
+    let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let providerController: ProviderController;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let loggerMock: DeepMocked<ClassLogger>;
@@ -85,6 +86,8 @@ describe('Provider Controller Test', () => {
             .useValue(createMock<ServiceProviderRepo>(ServiceProviderRepo))
             .overrideProvider(ServiceProviderFactory)
             .useValue(createMock<ServiceProviderFactory>(ServiceProviderFactory))
+            .overrideProvider(OrganisationRepository)
+            .useValue(createMock<OrganisationRepository>(OrganisationRepository))
             .overrideProvider(ClassLogger)
             .useValue(createMock(ClassLogger))
             .compile();
@@ -92,6 +95,7 @@ describe('Provider Controller Test', () => {
         serviceProviderServiceMock = module.get<DeepMocked<ServiceProviderService>>(ServiceProviderService);
         serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         serviceProviderFactoryMock = module.get<DeepMocked<ServiceProviderFactory>>(ServiceProviderFactory);
+        organisationRepoMock = module.get<DeepMocked<OrganisationRepository>>(OrganisationRepository);
         providerController = module.get(ProviderController);
         loggerMock = module.get<DeepMocked<ClassLogger>>(ClassLogger);
         personPermissionsMock = createPersonPermissionsMock();
@@ -450,15 +454,22 @@ describe('Provider Controller Test', () => {
         });
     });
 
-    describe('getAllServiceProviders', () => {
+    describe('getAssignableServiceProvidersForRolle', () => {
         describe('when service providers were found', () => {
-            it('should return all service provider', async () => {
+            it('should return assignable service providers', async () => {
+                const orga: Organisation<true> = DoFactory.createOrganisation(true);
                 const spId: string = faker.string.uuid();
-                const sp: ServiceProvider<true> = DoFactory.createServiceProvider(true, { id: spId });
+                const sp: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    id: spId,
+                    providedOnSchulstrukturknoten: orga.id,
+                });
+                organisationRepoMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([orga]);
+                serviceProviderRepoMock.findBySchulstrukturknoten.mockResolvedValueOnce([sp]);
 
-                serviceProviderRepoMock.find.mockResolvedValueOnce([sp]);
-
-                const spResponse: ServiceProviderResponse[] = await providerController.getAllServiceProviders({});
+                const spResponse: ServiceProviderResponse[] =
+                    await providerController.getAssignableServiceProvidersForRolle({
+                        schulstrukturknotenOfRolle: orga.id,
+                    });
                 expect(spResponse).toBeDefined();
                 expect(spResponse).toBeInstanceOf(Array);
                 expect(spResponse).toHaveLength(1);
@@ -467,9 +478,13 @@ describe('Provider Controller Test', () => {
 
         describe('when no service providers were found', () => {
             it('should return empty list as response', async () => {
-                serviceProviderRepoMock.find.mockResolvedValueOnce([]);
+                organisationRepoMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([]);
+                serviceProviderRepoMock.findBySchulstrukturknoten.mockResolvedValueOnce([]);
 
-                const spResponse: ServiceProviderResponse[] = await providerController.getAllServiceProviders({});
+                const spResponse: ServiceProviderResponse[] =
+                    await providerController.getAssignableServiceProvidersForRolle({
+                        schulstrukturknotenOfRolle: faker.string.uuid(),
+                    });
                 expect(spResponse).toBeDefined();
                 expect(spResponse).toBeInstanceOf(Array);
                 expect(spResponse).toHaveLength(0);

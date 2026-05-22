@@ -43,6 +43,8 @@ import { ManageableServiceProviderListEntryResponse } from './manageable-service
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
+import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.ts.js';
+import { ServiceProviderResponse } from './service-provider.response.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -111,24 +113,9 @@ describe('ServiceProvider API', () => {
         permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
     });
 
-    describe('/GET all service provider', () => {
-        it('should return all service provider', async () => {
-            await Promise.all([
-                createAndPersistServiceProvider(em),
-                createAndPersistServiceProvider(em),
-                createAndPersistServiceProvider(em),
-            ]);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .get('/provider/all')
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Array);
-            expect(response.body).toHaveLength(3);
-        });
-
-        it('should return all service provider for a specific organisation', async () => {
+    describe('/GET provider/assignable-for-rolle', () => {
+        const url: string = '/provider/assignable-for-rolle';
+        it('should return all service providers for a specific organisation', async () => {
             const parent: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
             const orga: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { administriertVon: parent.id }),
@@ -142,17 +129,20 @@ describe('ServiceProvider API', () => {
                 createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: child.id }),
                 createAndPersistServiceProvider(em),
             ]);
+            const query: FindServiceProviderForRolleQueryParams = {
+                schulstrukturknotenOfRolle: orga.id,
+            };
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/provider/all')
-                .query({ organisationId: orga.id })
+                .get(url)
+                .query(query)
                 .send();
 
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Array);
             expect(response.body).toHaveLength(2);
-            expect(response.body).toContainEqual(expect.objectContaining({ id: serviceProviders[0]!.id }));
-            expect(response.body).toContainEqual(expect.objectContaining({ id: serviceProviders[1]!.id }));
+            expect(response.body).toContainEqual(new ServiceProviderResponse(serviceProviders[0]!));
+            expect(response.body).toContainEqual(new ServiceProviderResponse(serviceProviders[1]!));
         });
     });
 
