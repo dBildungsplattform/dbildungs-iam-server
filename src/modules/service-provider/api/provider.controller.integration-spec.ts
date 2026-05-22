@@ -649,13 +649,13 @@ describe('ServiceProvider API', () => {
             expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'ATTACHED_ROLLENERWEITERUNGEN' }));
         });
 
-        it('should return 403 if permissions are missing', async () => {
+        it('should return 404 if permissions are missing', async () => {
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
             const response: Response = await request(app.getHttpServer() as App)
                 .delete(`/provider/${serviceProvider.id}`)
                 .send();
 
-            expect(response.status).toBe(403);
+            expect(response.status).toBe(404);
             expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'MISSING_PERMISSIONS' }));
         });
     });
