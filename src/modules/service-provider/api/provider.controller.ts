@@ -93,6 +93,7 @@ export class ProviderController {
     ) {}
 
     @Get('all')
+    @UseGuards(StepUpGuard)
     @ApiOperation({ description: 'Get all service-providers.' })
     @ApiOkResponse({
         description: 'The service-providers were successfully returned.',
@@ -174,6 +175,7 @@ export class ProviderController {
     }
 
     @Get(':angebotId/rollenerweiterung')
+    @UseGuards(StepUpGuard)
     @ApiOperation({
         description:
             'Get rollenerweiterungen for service-provider with provided id. Total is the amount of organisations.',
@@ -249,6 +251,7 @@ export class ProviderController {
     }
 
     @Get('manageable')
+    @UseGuards(StepUpGuard)
     @ApiOperation({ description: 'Get service-providers the logged-in user is allowed to manage.' })
     @ApiOkResponsePaginated(ManageableServiceProviderListEntryResponse, {
         description:
@@ -278,6 +281,7 @@ export class ProviderController {
     }
 
     @Get('manageable-by-organisation')
+    @UseGuards(StepUpGuard)
     @ApiOperation({ description: 'Get service-providers the logged-in user is allowed to manage for an Organisation.' })
     @ApiOkResponsePaginated(ManageableServiceProviderListEntryResponse, {
         description:
@@ -323,6 +327,7 @@ export class ProviderController {
     }
 
     @Get('manageable/:angebotId')
+    @UseGuards(StepUpGuard)
     @ApiOperation({ description: 'Get service-provider the logged-in user is allowed to manage.' })
     @ApiOkResponse({
         description: 'The service-provider was successfully returned.',
