@@ -9,7 +9,6 @@ import { LdapCreatePersonError } from '../error/ldap-create-person.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { PersonExternalID, PersonUsername } from '../../../../shared/types/aggregate-ids.types.js';
 import { LdapModifyPersonError } from '../error/ldap-modify-person.error.js';
-import { EmailAppConfig } from '../../../../shared/config/email-app.config.js';
 
 export type LdapPersonAttributes = {
     entryUUID?: string;
@@ -76,7 +75,6 @@ export class LdapClientService {
         private readonly ldapClient: LdapClient,
         private readonly ldapInstanceConfig: LdapInstanceConfig,
         private readonly logger: ClassLogger,
-        private readonly config: EmailAppConfig,
     ) {
         this.mutex = new Mutex();
     }
@@ -193,7 +191,7 @@ export class LdapClientService {
     }
 
     public useLdap(): boolean {
-        return this.config.LDAP.ENABLED;
+        return this.ldapInstanceConfig.ENABLED;
     }
 
     private async deletePersonInternal(externalId: string, domain: string): Promise<Result<void>> {

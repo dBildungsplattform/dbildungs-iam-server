@@ -21,6 +21,7 @@ import { OXGroup } from '../actions/group/ox-group.types.js';
 import { OxError } from '../../../../shared/error/ox.error.js';
 import { ListGroupsForUserResponse } from '../actions/group/list-groups-for-user.action.js';
 import { Mock } from 'vitest';
+import { EmailAppConfig } from '../../../../shared/config/index.js';
 
 describe('OxService', () => {
     let module: TestingModule;
@@ -525,6 +526,46 @@ describe('OxService', () => {
                 `Could Not Retrieve OxGroups For OxUser, oxUserId:${oxUserId}`,
             );
             expect(result).toEqual({ ok: false, error });
+        });
+    });
+
+    describe('useOx should return correct value based on config', () => {
+        it('should return false when OX.ENABLED is false', () => {
+            const sut: OxService = new OxService(
+                createMock(ClassLogger),
+                createMock(OxSendService),
+                createMock(EmailAppConfig, {
+                    OX: {
+                        ENABLED: false,
+                        USERNAME: '',
+                        PASSWORD: '',
+                        CONTEXT_ID: '',
+                        ENDPOINT: '',
+                        CONTEXT_NAME: '',
+                        USER_PASSWORD_DEFAULT: '',
+                    },
+                }),
+            );
+            expect(sut.useOx()).toBe(false);
+        });
+
+        it('should return true when OX.ENABLED is true', () => {
+            const sut: OxService = new OxService(
+                createMock(ClassLogger),
+                createMock(OxSendService),
+                createMock(EmailAppConfig, {
+                    OX: {
+                        ENABLED: true,
+                        USERNAME: '',
+                        PASSWORD: '',
+                        CONTEXT_ID: '',
+                        ENDPOINT: '',
+                        CONTEXT_NAME: '',
+                        USER_PASSWORD_DEFAULT: '',
+                    },
+                }),
+            );
+            expect(sut.useOx()).toBe(true);
         });
     });
 });
