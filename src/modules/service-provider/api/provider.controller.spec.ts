@@ -12,6 +12,7 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { ServiceProvider } from '../domain/service-provider.js';
+import { ServiceProviderFindService } from '../domain/service-provider-find.service.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
@@ -50,10 +51,10 @@ import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combi
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
+    let serviceProviderFindServiceMock: DeepMocked<ServiceProviderFindService>;
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let serviceProviderFactoryMock: DeepMocked<ServiceProviderFactory>;
-    let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let providerController: ProviderController;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let loggerMock: DeepMocked<ClassLogger>;
@@ -80,6 +81,8 @@ describe('Provider Controller Test', () => {
                 },
             ],
         })
+            .overrideProvider(ServiceProviderFindService)
+            .useValue(createMock(ServiceProviderFindService))
             .overrideProvider(ServiceProviderService)
             .useValue(createMock(ServiceProviderService))
             .overrideProvider(ServiceProviderRepo)
@@ -92,10 +95,10 @@ describe('Provider Controller Test', () => {
             .useValue(createMock(ClassLogger))
             .compile();
 
+        serviceProviderFindServiceMock = module.get<DeepMocked<ServiceProviderFindService>>(ServiceProviderFindService);
         serviceProviderServiceMock = module.get<DeepMocked<ServiceProviderService>>(ServiceProviderService);
         serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         serviceProviderFactoryMock = module.get<DeepMocked<ServiceProviderFactory>>(ServiceProviderFactory);
-        organisationRepoMock = module.get<DeepMocked<OrganisationRepository>>(OrganisationRepository);
         providerController = module.get(ProviderController);
         loggerMock = module.get<DeepMocked<ClassLogger>>(ClassLogger);
         personPermissionsMock = createPersonPermissionsMock();
@@ -124,6 +127,7 @@ describe('Provider Controller Test', () => {
                 createMock(StreamableFileFactory),
                 createMock(ServiceProviderFactory),
                 createMock(ServiceProviderRepo),
+                createMock(ServiceProviderFindService),
                 createMock(ServiceProviderService),
                 rollenerweiterungRepoMock,
                 rolleRepoMock,
@@ -455,39 +459,62 @@ describe('Provider Controller Test', () => {
     });
 
     describe('getAssignableServiceProvidersForRolle', () => {
+        beforeEach(() => {
+            serviceProviderFindServiceMock.findServiceProviderForRolleBySchulstrukturknotenAuthorized.mockReset();
+        });
+
         describe('when service providers were found', () => {
             it('should return assignable service providers', async () => {
                 const orga: Organisation<true> = DoFactory.createOrganisation(true);
                 const spId: string = faker.string.uuid();
                 const sp: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
                     id: spId,
-                    providedOnSchulstrukturknoten: orga.id,
                 });
-                organisationRepoMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([orga]);
-                serviceProviderRepoMock.findBySchulstrukturknoten.mockResolvedValueOnce([sp]);
+                serviceProviderFindServiceMock.findServiceProviderForRolleBySchulstrukturknotenAuthorized.mockResolvedValueOnce(
+                    Ok([sp]),
+                );
 
                 const spResponse: ServiceProviderResponse[] =
-                    await providerController.getAssignableServiceProvidersForRolle({
+                    await providerController.getAssignableServiceProvidersForRolle(personPermissionsMock, {
                         schulstrukturknotenOfRolle: orga.id,
                     });
                 expect(spResponse).toBeDefined();
                 expect(spResponse).toBeInstanceOf(Array);
                 expect(spResponse).toHaveLength(1);
+                expect(
+                    serviceProviderFindServiceMock.findServiceProviderForRolleBySchulstrukturknotenAuthorized,
+                ).toHaveBeenCalledWith(personPermissionsMock, orga.id);
             });
         });
 
         describe('when no service providers were found', () => {
             it('should return empty list as response', async () => {
-                organisationRepoMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([]);
-                serviceProviderRepoMock.findBySchulstrukturknoten.mockResolvedValueOnce([]);
+                const orgaId: string = faker.string.uuid();
+                serviceProviderFindServiceMock.findServiceProviderForRolleBySchulstrukturknotenAuthorized.mockResolvedValueOnce(
+                    Ok([]),
+                );
 
                 const spResponse: ServiceProviderResponse[] =
-                    await providerController.getAssignableServiceProvidersForRolle({
-                        schulstrukturknotenOfRolle: faker.string.uuid(),
+                    await providerController.getAssignableServiceProvidersForRolle(personPermissionsMock, {
+                        schulstrukturknotenOfRolle: orgaId,
                     });
                 expect(spResponse).toBeDefined();
                 expect(spResponse).toBeInstanceOf(Array);
                 expect(spResponse).toHaveLength(0);
+            });
+        });
+
+        describe('when permissions are missing', () => {
+            it('should throw missing permissions error', async () => {
+                serviceProviderFindServiceMock.findServiceProviderForRolleBySchulstrukturknotenAuthorized.mockResolvedValueOnce(
+                    Err(new MissingPermissionsError('Rollen Verwalten Systemrecht Required For This Endpoint')),
+                );
+
+                await expect(
+                    providerController.getAssignableServiceProvidersForRolle(personPermissionsMock, {
+                        schulstrukturknotenOfRolle: faker.string.uuid(),
+                    }),
+                ).rejects.toBeInstanceOf(MissingPermissionsError);
             });
         });
     });

@@ -31,7 +31,7 @@ import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.j
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
@@ -115,6 +115,7 @@ describe('ServiceProvider API', () => {
 
     describe('/GET provider/assignable-for-rolle', () => {
         const url: string = '/provider/assignable-for-rolle';
+
         it('should return all service providers for a specific organisation', async () => {
             const parent: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
             const orga: Organisation<true> = await organisationRepo.save(
@@ -143,6 +144,26 @@ describe('ServiceProvider API', () => {
             expect(response.body).toHaveLength(2);
             expect(response.body).toContainEqual(new ServiceProviderResponse(serviceProviders[0]!));
             expect(response.body).toContainEqual(new ServiceProviderResponse(serviceProviders[1]!));
+        });
+
+        it('should return 404 if permissions are missing', async () => {
+            const schulstrukturknotenOfRolle: string = faker.string.uuid();
+            const query: FindServiceProviderForRolleQueryParams = {
+                schulstrukturknotenOfRolle,
+            };
+            permissionsMock.hasSystemrechteAtOrganisation.mockClear();
+            permissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(url)
+                .query(query)
+                .send();
+
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'MISSING_PERMISSIONS' }));
+            expect(permissionsMock.hasSystemrechteAtOrganisation).toHaveBeenCalledWith(schulstrukturknotenOfRolle, [
+                RollenSystemRecht.ROLLEN_VERWALTEN,
+            ]);
         });
     });
 
@@ -628,13 +649,13 @@ describe('ServiceProvider API', () => {
             expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'ATTACHED_ROLLENERWEITERUNGEN' }));
         });
 
-        it('should return 404 if permissions are missing', async () => {
+        it('should return 403 if permissions are missing', async () => {
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
             const response: Response = await request(app.getHttpServer() as App)
                 .delete(`/provider/${serviceProvider.id}`)
                 .send();
 
-            expect(response.status).toBe(404);
+            expect(response.status).toBe(403);
             expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'MISSING_PERMISSIONS' }));
         });
     });

@@ -55,6 +55,7 @@ import { AttachedRollenerweiterungenError } from '../domain/errors/attached-roll
 import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
 import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
+import { ServiceProviderFindService } from '../domain/service-provider-find.service.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
 import {
@@ -85,6 +86,7 @@ export class ProviderController {
         private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderFactory: ServiceProviderFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly serviceProviderFindService: ServiceProviderFindService,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly rolleRepo: RolleRepo,
@@ -103,14 +105,20 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
     public async getAssignableServiceProvidersForRolle(
+        @Permissions() permissions: PersonPermissions,
         @Query() query: FindServiceProviderForRolleQueryParams,
     ): Promise<ServiceProviderResponse[]> {
-        const parentOrganisations: Organisation<true>[] =
-            await this.organisationRepo.findParentOrgasForIdSortedByDepthAsc(query.schulstrukturknotenOfRolle);
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.findBySchulstrukturknoten(
-            parentOrganisations.map((o: Organisation<true>) => o.id),
-        );
-        const response: ServiceProviderResponse[] = serviceProviders.map(
+        const result: Result<ServiceProvider<true>[], DomainError> =
+            await this.serviceProviderFindService.findServiceProviderForRolleBySchulstrukturknotenAuthorized(
+                permissions,
+                query.schulstrukturknotenOfRolle,
+            );
+
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        const response: ServiceProviderResponse[] = result.value.map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );
 
