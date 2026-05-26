@@ -20,6 +20,7 @@ import { EmailAddressChangedEvent } from '../../../shared/events/email/email-add
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
+import { EmailMicroserviceAddressChangedEvent } from '../../../shared/events/email-microservice/email-microservice-address-changed.event.js';
 import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
 import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
@@ -36,6 +37,8 @@ import { LdapClientService, PersonData } from './ldap-client.service.js';
 import { LdapEventHandler } from './ldap-event-handler.js';
 import { LdapEntityType } from './ldap.types.js';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
+import { Person } from '../../../modules/person/domain/person.js';
+import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 
 describe('LdapEventHandler', () => {
     let app: INestApplication;
@@ -45,6 +48,7 @@ describe('LdapEventHandler', () => {
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
+    let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
     let loggerMock: DeepMocked<ClassLogger>;
 
@@ -82,6 +86,7 @@ describe('LdapEventHandler', () => {
         ldapClientServiceMock = module.get(LdapClientService);
         organisationRepositoryMock = module.get(OrganisationRepository);
         personRepositoryMock = module.get(PersonRepository);
+        dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         loggerMock = module.get(ClassLogger);
 
@@ -164,6 +169,145 @@ describe('LdapEventHandler', () => {
 
                 expect(loggerMock.error).toHaveBeenCalledTimes(1);
                 expect(loggerMock.error).toHaveBeenCalledWith(error.message);
+            });
+        });
+    });
+
+    describe('microserviceEmailChangedEventHandler', () => {
+        let event: EmailMicroserviceAddressChangedEvent;
+        let person: Person<true>;
+
+        beforeEach(() => {
+            event = new EmailMicroserviceAddressChangedEvent(
+                faker.string.uuid(),
+                faker.internet.email(),
+                faker.internet.email(),
+                faker.internet.email(),
+                faker.internet.email(),
+            );
+            person = DoFactory.createPerson(true, { id: event.personId });
+        });
+
+        describe('when person can not be found', () => {
+            it('should log warning and skip LDAP update', async () => {
+                dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext.mockResolvedValueOnce({
+                    ok: true,
+                    value: true,
+                });
+                personRepositoryMock.findById.mockResolvedValueOnce(undefined);
+
+                await ldapEventHandler.microserviceEmailChangedEventHandler(event);
+
+                expect(loggerMock.warning).toHaveBeenCalledWith(
+                    `Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, but person not found or has no username. Skipping LDAP update.`,
+                );
+                expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when person has no username', () => {
+            it('should log warning and skip LDAP update', async () => {
+                dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext.mockResolvedValueOnce({
+                    ok: true,
+                    value: true,
+                });
+                personRepositoryMock.findById.mockResolvedValueOnce(
+                    DoFactory.createPerson(true, { id: event.personId, username: undefined }),
+                );
+
+                await ldapEventHandler.microserviceEmailChangedEventHandler(event);
+
+                expect(loggerMock.warning).toHaveBeenCalledWith(
+                    `Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, but person not found or has no username. Skipping LDAP update.`,
+                );
+                expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when checking kontexts is not successful', () => {
+            it('should log error and skip LDAP update', async () => {
+                const error: MissingPermissionsError = new MissingPermissionsError('Access denied');
+                const hasAnyKontextsResult: Result<boolean, DomainError> = {
+                    ok: false,
+                    error: error,
+                };
+
+                dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext.mockResolvedValueOnce(hasAnyKontextsResult);
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                await ldapEventHandler.microserviceEmailChangedEventHandler(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, username:${person.username}, but failed to check kontexts. Skipping LDAP update.`,
+                );
+                expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when newPrimaryAddress is UNDEFINED', () => {
+            it('should log error and skip LDAP update', async () => {
+                event = new EmailMicroserviceAddressChangedEvent(
+                    event.personId,
+                    undefined,
+                    event.newAlternativeAddress,
+                    event.previousPrimaryAddress,
+                    event.previousAlternativeAddress,
+                );
+                person = DoFactory.createPerson(true, { id: event.personId });
+
+                dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext.mockResolvedValueOnce({
+                    ok: true,
+                    value: true,
+                });
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                await ldapEventHandler.microserviceEmailChangedEventHandler(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Received EmailMicroserviceAddressChangedEvent with empty newPrimaryAddress for personId:${event.personId}, username:${person.username}. Skipping LDAP update.`,
+                );
+                expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when person has at least one kontext', () => {
+            it('should call LdapClientService changeEmailAddressByPersonId', async () => {
+                dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext.mockResolvedValueOnce({
+                    ok: true,
+                    value: true,
+                });
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                await ldapEventHandler.microserviceEmailChangedEventHandler(event);
+
+                expect(dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext).toHaveBeenCalledWith(
+                    event.personId,
+                    expect.anything(),
+                );
+                expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
+                expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledWith(
+                    event.personId,
+                    person.username,
+                    event.newPrimaryAddress,
+                    undefined,
+                );
+            });
+        });
+
+        describe('when person has no kontext', () => {
+            it('should log info and skip LDAP update', async () => {
+                dbiamPersonenkontextRepoMock.hasPersonAnyReadableKontext.mockResolvedValueOnce({
+                    ok: true,
+                    value: false,
+                });
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                await ldapEventHandler.microserviceEmailChangedEventHandler(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Received EmailMicroserviceAddressChangedEvent for personId:${event.personId}, username:${person.username}, but person has no kontext. Skipping LDAP update.`,
+                );
+                expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(0);
             });
         });
     });
