@@ -255,6 +255,8 @@ export class ServerModule implements NestModule {
                     cookie: {
                         maxAge: this.configService.getOrThrow<FrontendConfig>('FRONTEND').SESSION_TTL_MS,
                         secure: this.configService.getOrThrow<FrontendConfig>('FRONTEND').SECURE_COOKIE,
+                        sameSite: 'lax',
+                        httpOnly: true,
                     },
                     secret: this.configService.getOrThrow<FrontendConfig>('FRONTEND').SESSION_SECRET,
                 }),
