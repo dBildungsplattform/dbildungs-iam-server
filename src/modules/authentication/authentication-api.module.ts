@@ -1,5 +1,6 @@
 import { HttpModule } from '@nestjs/axios';
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { AuthenticationController } from './api/authentication.controller.js';
 import { OpenIdConnectStrategy } from './passport/oidc.strategy.js';
@@ -18,6 +19,9 @@ import { UserExternaldataWorkflowFactory } from './domain/user-extenaldata.facto
 import { KeycloakInternalController } from './api/keycloakinternal.controller.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
 import { ExternalDataCacheInterceptor } from '../../shared/cache/external-data-cache-interceptor.js';
+import { CsrfTokenService } from './services/csrf-token-service.js';
+import { CsrfProtectionGuard } from './api/csrf-token-guard.js';
+import { CsrfRefreshMiddleware } from './middleware/csrf-refresh.middleware.js';
 import { EmailPersistenceModule } from '../email/email-persistence.module.js';
 
 @Module({
@@ -42,8 +46,17 @@ import { EmailPersistenceModule } from '../email/email-persistence.module.js';
         SessionAccessTokenMiddleware,
         UserExternaldataWorkflowFactory,
         ExternalDataCacheInterceptor,
+        CsrfTokenService,
+        {
+            provide: APP_GUARD,
+            useClass: CsrfProtectionGuard,
+        },
     ],
     controllers: [AuthenticationController, KeycloakInternalController],
     exports: [OIDCClientProvider, PersonPermissionsRepo],
 })
-export class AuthenticationApiModule {}
+export class AuthenticationApiModule implements NestModule {
+    public configure(consumer: MiddlewareConsumer): void {
+        consumer.apply(CsrfRefreshMiddleware).forRoutes({ path: '*', method: RequestMethod.ALL });
+    }
+}
