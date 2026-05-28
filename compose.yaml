@@ -45,7 +45,7 @@ services:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
 
   keycloak-db-microservice:
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server:spsh-3716
     profiles:
       - kc-service
     build:
@@ -75,7 +75,7 @@ services:
   backend:
     profiles:
       - backend
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server:spsh-3716
     container_name: spsh-backend
     # build:
     #   context: .
@@ -111,7 +111,7 @@ services:
     profiles:
       - db-init
       - db-seed
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server:spsh-3716
     build:
       context: .
     depends_on:
@@ -134,7 +134,7 @@ services:
   db-seed:
     profiles:
       - db-seed
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server:spsh-3716
     build:
       context: .
     depends_on:
@@ -160,7 +160,7 @@ services:
   db-migrate:
     profiles:
       - db-migrate
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server:spsh-3716
     build:
       context: .
     depends_on:
@@ -183,7 +183,7 @@ services:
   keycloak-client-update:
     profiles:
       - keycloak-client-update
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server:spsh-3716
     build:
       context: .
     depends_on:
