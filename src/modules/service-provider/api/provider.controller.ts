@@ -74,7 +74,7 @@ import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweit
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
-import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.ts.js';
+import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')

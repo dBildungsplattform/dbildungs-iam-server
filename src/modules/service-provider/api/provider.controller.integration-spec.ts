@@ -43,7 +43,7 @@ import { ManageableServiceProviderListEntryResponse } from './manageable-service
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
-import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.ts.js';
+import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 
 describe('ServiceProvider API', () => {
