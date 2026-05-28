@@ -79,6 +79,8 @@ auth:
   redis_password: ""
   vidis_username: ""
   vidis_password: ""
+  vidis_api_client_id: ""
+  vidis_api_client_secret: ""
   import_passphrase_secret: ""
   import_passphrase_salt: ""
   ox_password: ""
