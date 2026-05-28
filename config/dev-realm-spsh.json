@@ -1348,7 +1348,9 @@
                     "protocolMapper": "spsh-custom-oidc-api-mapper",
                     "consentRequired": false,
                     "config": {
+                        "introspection.token.claim": "true",
                         "fetchUrl": "http://spsh-backend:9090/keycloakinternal/externaldata",
+                        "multivalued": "true",
                         "userinfo.token.claim": "true",
                         "id.token.claim": "true",
                         "lightweight.claim": "true",
