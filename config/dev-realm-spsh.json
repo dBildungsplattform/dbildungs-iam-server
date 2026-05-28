@@ -1250,6 +1250,121 @@
               "offline_access",
               "microprofile-jwt"
             ]
+        },
+        {
+            "id": "ba7dbae5-eefb-4e02-ba94-6a48414ea568",
+            "clientId": "iqshhelpdesk",
+            "name": "IQSH Helpdesk",
+            "description": "",
+            "rootUrl": "http://localhost:9999",
+            "adminUrl": "",
+            "baseUrl": "",
+            "surrogateAuthRequired": false,
+            "enabled": true,
+            "alwaysDisplayInConsole": false,
+            "clientAuthenticatorType": "client-secret",
+            "secret": "iqsh-helpdesk-secret",
+            "redirectUris": ["/*"],
+            "webOrigins": ["/*"],
+            "notBefore": 0,
+            "bearerOnly": false,
+            "consentRequired": false,
+            "standardFlowEnabled": true,
+            "implicitFlowEnabled": false,
+            "directAccessGrantsEnabled": false,
+            "serviceAccountsEnabled": false,
+            "publicClient": false,
+            "frontchannelLogout": true,
+            "protocol": "openid-connect",
+            "attributes": {
+                "realm_client": "false",
+                "oidc.ciba.grant.enabled": "false",
+                "client.secret.creation.time": "1779881930",
+                "backchannel.logout.session.required": "true",
+                "standard.token.exchange.enabled": "false",
+                "frontchannel.logout.session.required": "true",
+                "post.logout.redirect.uris": "/*",
+                "oauth2.device.authorization.grant.enabled": "false",
+                "display.on.consent.screen": "false",
+                "backchannel.logout.revoke.offline.tokens": "false",
+                "dpop.bound.access.tokens": "false"
+            },
+            "authenticationFlowBindingOverrides": {},
+            "fullScopeAllowed": true,
+            "nodeReRegistrationTimeout": -1,
+            "protocolMappers": [
+                {
+                    "name": "email",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "spsh-custom-oidc-api-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "fetchUrl": "http://spsh-backend:9090/keycloakinternal/externaldata",
+                        "userinfo.token.claim": "true",
+                        "ignoreMissingPath": "true",
+                        "id.token.claim": "true",
+                        "lightweight.claim": "true",
+                        "extractJsonPath": "$.iqshHelpdesk.emailAdresse",
+                        "access.token.claim": "true",
+                        "claim.name": "email"
+                    }
+                },
+                {
+                    "name": "nachname",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "spsh-custom-oidc-api-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "fetchUrl": "http://spsh-backend:9090/keycloakinternal/externaldata",
+                        "userinfo.token.claim": "true",
+                        "id.token.claim": "true",
+                        "lightweight.claim": "true",
+                        "extractJsonPath": "$.iqshHelpdesk.nachname",
+                        "access.token.claim": "true",
+                        "claim.name": "nachname"
+                    }
+                },
+                {
+                    "name": "vorname",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "spsh-custom-oidc-api-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "introspection.token.claim": "true",
+                        "fetchUrl": "http://spsh-backend:9090/keycloakinternal/externaldata",
+                        "multivalued": "false",
+                        "userinfo.token.claim": "true",
+                        "ignoreMissingPath": "false",
+                        "id.token.claim": "true",
+                        "lightweight.claim": "true",
+                        "extractJsonPath": "$.iqshHelpdesk.vorname",
+                        "access.token.claim": "true",
+                        "claim.name": "vorname"
+                    }
+                },
+                {
+                    "name": "personenkontexte",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "spsh-custom-oidc-api-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "fetchUrl": "http://spsh-backend:9090/keycloakinternal/externaldata",
+                        "userinfo.token.claim": "true",
+                        "id.token.claim": "true",
+                        "lightweight.claim": "true",
+                        "extractJsonPath": "$.iqshHelpdesk.personenkontexte",
+                        "access.token.claim": "true",
+                        "claim.name": "personenkontexte"
+                    }
+                }
+            ],
+            "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "basic", "email"],
+            "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"],
+            "access": {
+                "view": true,
+                "configure": true,
+                "manage": true
+            }
         }
     ],
     "clientScopes": [

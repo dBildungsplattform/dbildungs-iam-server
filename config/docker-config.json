@@ -20,8 +20,7 @@
         "DB_NAME": "dbildungs-iam-server",
         "USERNAME": "admin",
         "PASSWORD": "password",
-        "USE_SSL": false,
-        "SECRET": "password"
+        "USE_SSL": false
     },
     "KEYCLOAK": {
         "BASE_URL": "http://keycloak:8080",
@@ -84,10 +83,16 @@
         "CONTEXT_ID": "1337",
         "CONTEXT_NAME": "contextname",
         "USERNAME": "username",
-        "PASSWORD": "password"
+        "PASSWORD": "password",
+        "NUMBER_OF_RETRIES": 3,
+        "USER_PASSWORD_DEFAULT": "placeholder",
+        "EMAIL_ADDRESS_DELETED_EVENT_DELAY": 0
+    },
+    "EMAIL": {
+        "NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS": 180
     },
     "PRIVACYIDEA": {
-        "ENDPOINT": "http://localhost:5000",
+        "ENDPOINT": "http://privacy-idea:8080",
         "USERNAME": "admin",
         "PASSWORD": "admin",
         "USER_RESOLVER": "mariadb_resolver",
@@ -123,7 +128,7 @@
         "FEATURE_FLAG_SCHULISCHE_ANGEBOTE_ERSTELLEN": true
     },
     "KAFKA": {
-        "BROKER": "localhost:9094",
+        "BROKER": "kafka:9092",
         "TOPIC_PREFIX": "local.",
         "USER_TOPIC": "spsh-user-topic",
         "USER_DLQ_TOPIC": "spsh-user-dlq-topic",
@@ -135,6 +140,10 @@
     },
     "PORTAL": {
         "LIMITED_ROLLENART_ALLOWLIST": ["LERN", "EXTERN"]
+    },
+    "CRON": {
+        "PERSON_WITHOUT_ORG_LIMIT": 30,
+        "EMAIL_ADDRESSES_DELETE_LIMIT": 10
     },
     "EMAIL_MICROSERVICE": {
         "USE_EMAIL_MICROSERVICE": false,

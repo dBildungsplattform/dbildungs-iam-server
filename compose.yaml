@@ -103,6 +103,9 @@ services:
       - source: 'config/docker-config.json'
         target: '/app/config/config.json'
         type: bind
+      - source: 'config/docker-email-config.json'
+        target: '/app/config/email-config.json'
+        type: bind
 
   db-init:
     profiles:
@@ -123,6 +126,9 @@ services:
         type: bind
       - source: 'config/docker-config.json'
         target: '/app/config/config.json'
+        type: bind
+      - source: 'config/docker-email-config.json'
+        target: '/app/config/email-config.json'
         type: bind
 
   db-seed:
@@ -147,6 +153,9 @@ services:
       - source: 'config/docker-config.json'
         target: '/app/config/config.json'
         type: bind
+      - source: 'config/docker-email-config.json'
+        target: '/app/config/email-config.json'
+        type: bind
 
   db-migrate:
     profiles:
@@ -166,6 +175,9 @@ services:
         type: bind
       - source: 'config/docker-config.json'
         target: '/app/config/config.json'
+        type: bind
+      - source: 'config/docker-email-config.json'
+        target: '/app/config/email-config.json'
         type: bind
 
   keycloak-client-update:
@@ -187,6 +199,9 @@ services:
         type: bind
       - source: 'config/docker-config.json'
         target: '/app/config/config.json'
+        type: bind
+      - source: 'config/docker-email-config.json'
+        target: '/app/config/email-config.json'
         type: bind
 
   kafka:
