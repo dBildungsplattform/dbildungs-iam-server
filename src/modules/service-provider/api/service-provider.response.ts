@@ -20,19 +20,19 @@ export class ServiceProviderResponse {
     @ApiProperty({ enum: ServiceProviderTarget, enumName: ServiceProviderTargetTypName })
     public target: ServiceProviderTarget;
 
-    @ApiProperty({ description: 'Can be undefined, if `target` is not equal to `URL`' })
+    @ApiProperty({ description: 'Can be undefined, if `target` is not equal to `URL`', required: false })
     public url?: string;
 
     @ApiProperty({ enum: ServiceProviderKategorie, enumName: ServiceProviderKategorieTypName })
     public kategorie: ServiceProviderKategorie;
 
-    @ApiProperty({ description: 'Optional logoId for use with standard logos' })
+    @ApiProperty({ description: 'Optional logoId for use with standard logos', required: false })
     public logoId?: number;
 
-    @ApiProperty()
+    @ApiProperty({ description: 'Indicates if a custom logo is available for fetching', required: true })
     public hasLogo: boolean;
 
-    @ApiProperty()
+    @ApiProperty({ description: 'Optional, indicates if 2FA is required', required: false })
     public requires2fa?: boolean;
 
     @ApiProperty({ enum: ServiceProviderMerkmal, enumName: ServiceProviderMerkmalTypName, isArray: true })
