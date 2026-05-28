@@ -19,8 +19,8 @@ import { UserExternaldataWorkflowFactory } from './domain/user-extenaldata.facto
 import { KeycloakInternalController } from './api/keycloakinternal.controller.js';
 import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
 import { ExternalDataCacheInterceptor } from '../../shared/cache/external-data-cache-interceptor.js';
-import { CsrfTokenService } from './services/csrf-token-service.js';
-import { CsrfProtectionGuard } from './api/csrf-token-guard.js';
+import { CsrfTokenService } from './services/csrf-token.service.js';
+import { CsrfProtectionGuard } from './api/csrf-token.guard.js';
 import { EmailPersistenceModule } from '../email/email-persistence.module.js';
 
 @Module({

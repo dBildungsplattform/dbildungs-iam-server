@@ -38,7 +38,7 @@ import { OrganisationResponse } from '../../organisation/api/organisation.respon
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { CsrfTokenErrorResponse } from './csrf-token-error.response.js';
 import { CsrfTokenResponse } from './csrf-token.response.js';
-import { CsrfTokenService } from '../services/csrf-token-service.js';
+import { CsrfTokenService } from '../services/csrf-token.service.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];

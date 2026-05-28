@@ -40,7 +40,7 @@ import { EmailMicroserviceModule } from '../../email-microservice/email-microser
 import { createRequestMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
 import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
-import { CsrfTokenService } from '../services/csrf-token-service.js';
+import { CsrfTokenService } from '../services/csrf-token.service.js';
 import { CsrfTokenErrorResponse } from './csrf-token-error.response.js';
 import { CsrfTokenResponse } from './csrf-token.response.js';
 
