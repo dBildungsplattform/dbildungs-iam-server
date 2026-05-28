@@ -48,6 +48,7 @@ import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
+import { CreateServiceProviderResponse } from './create-service-provider.response.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
@@ -739,7 +740,7 @@ describe('Provider Controller Test', () => {
             serviceProviderFactoryMock.createNew.mockReturnValueOnce(Ok(createdDomainSp));
             serviceProviderRepoMock.create.mockResolvedValueOnce(Ok(persistedSp));
 
-            const result: ServiceProviderResponse = await providerController.createServiceProvider(
+            const result: CreateServiceProviderResponse = await providerController.createServiceProvider(
                 personPermissionsMock,
                 body,
             );
@@ -762,7 +763,7 @@ describe('Provider Controller Test', () => {
                 body.merkmale,
             );
             expect(serviceProviderRepoMock.create).toHaveBeenCalledWith(personPermissionsMock, createdDomainSp);
-            expect(result).toBeInstanceOf(ServiceProviderResponse);
+            expect(result).toBeInstanceOf(CreateServiceProviderResponse);
         });
 
         it('should create a new service provider without logo when user has permission', async () => {
@@ -787,7 +788,7 @@ describe('Provider Controller Test', () => {
             serviceProviderFactoryMock.createNew.mockReturnValueOnce(Ok(createdDomainSp));
             serviceProviderRepoMock.create.mockResolvedValueOnce(Ok(persistedSp));
 
-            const result: ServiceProviderResponse = await providerController.createServiceProvider(
+            const result: CreateServiceProviderResponse = await providerController.createServiceProvider(
                 personPermissionsMock,
                 body,
             );
@@ -810,7 +811,7 @@ describe('Provider Controller Test', () => {
                 body.merkmale,
             );
             expect(serviceProviderRepoMock.create).toHaveBeenCalledWith(personPermissionsMock, createdDomainSp);
-            expect(result).toBeInstanceOf(ServiceProviderResponse);
+            expect(result).toBeInstanceOf(CreateServiceProviderResponse);
         });
 
         it('should throw error when factory returns error', async () => {

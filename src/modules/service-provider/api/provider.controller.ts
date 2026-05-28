@@ -75,6 +75,7 @@ import { ServiceProviderErrorFilter } from './service-provider-exception.filter.
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.js';
+import { CreateServiceProviderResponse } from './create-service-provider.response.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -366,7 +367,7 @@ export class ProviderController {
     @ApiOperation({ description: 'Create a new service-provider (Angebot).' })
     @ApiCreatedResponse({
         description: 'The service-provider was successfully created.',
-        type: ServiceProviderResponse,
+        type: CreateServiceProviderResponse,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions.' })
@@ -375,7 +376,7 @@ export class ProviderController {
     public async createServiceProvider(
         @Permissions() permissions: IPersonPermissions,
         @Body() body: CreateServiceProviderBodyParams,
-    ): Promise<ServiceProviderResponse> {
+    ): Promise<CreateServiceProviderResponse> {
         // Convert base64 to Buffer (if provided)
         const logoBuffer: Buffer | undefined = body.logoBase64 ? Buffer.from(body.logoBase64, 'base64') : undefined;
 
@@ -410,7 +411,7 @@ export class ProviderController {
             throw result.error;
         }
 
-        return new ServiceProviderResponse(result.value);
+        return new CreateServiceProviderResponse(result.value);
     }
 
     @Patch(':angebotId')
