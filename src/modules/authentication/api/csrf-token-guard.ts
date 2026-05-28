@@ -7,7 +7,7 @@ export class CsrfProtectionGuard implements CanActivate {
     public constructor(private readonly csrfTokenService: CsrfTokenService) {}
 
     public canActivate(context: ExecutionContext): boolean {
-        const request = context.switchToHttp().getRequest<Request>();
+        const request: Request = context.switchToHttp().getRequest<Request>();
 
         // Skip safe methods
         if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {

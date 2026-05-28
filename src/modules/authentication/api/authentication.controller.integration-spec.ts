@@ -40,6 +40,9 @@ import { EmailMicroserviceModule } from '../../email-microservice/email-microser
 import { createRequestMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
 import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
+import { CsrfTokenService } from '../services/csrf-token-service.js';
+import { CsrfTokenErrorResponse } from './csrf-token-error.response.js';
+import { CsrfTokenResponse } from './csrf-token.response.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -289,6 +292,67 @@ describe('AuthenticationController', () => {
             const keyCloakRealm: string = keyCloakConfig.REALM_NAME.toLowerCase();
             const expectedUrl: string = `${oidcClient.issuer.metadata.authorization_endpoint}?client_id=${keyCloakRealm}&login_hint=${loginHint}&response_type=code&scope=openid&kc_action=UPDATE_PASSWORD&redirect_uri=${redirectUrl}`;
             expect(responseMock.redirect).toHaveBeenCalledWith(expectedUrl);
+        });
+    });
+
+    describe('getCsrfToken', () => {
+        function setupRequest(isAuthenticated: boolean, csrfToken?: string): Request {
+            const requestMock: DeepMocked<Request> = createRequestMock();
+            (requestMock.isAuthenticated as unknown as Mock).mockReturnValue(isAuthenticated);
+            if (csrfToken) {
+                requestMock.session.csrfToken = csrfToken;
+            }
+            return requestMock;
+        }
+
+        describe('when user is not authenticated', () => {
+            it('should return CsrfTokenErrorResponse', () => {
+                const requestMock: Request = setupRequest(false);
+
+                const result: CsrfTokenResponse | CsrfTokenErrorResponse = authController.getCsrfToken(requestMock);
+
+                expect(result).toBeInstanceOf(CsrfTokenErrorResponse);
+            });
+        });
+
+        describe('when user is authenticated and session has existing token', () => {
+            it('should return existing token from session', () => {
+                const existingToken: string = faker.string.alphanumeric(32);
+                const requestMock: Request = setupRequest(true, existingToken);
+
+                const result: CsrfTokenResponse | CsrfTokenErrorResponse = authController.getCsrfToken(requestMock);
+
+                expect(result).toBeInstanceOf(CsrfTokenResponse);
+                expect((result as CsrfTokenResponse).csrfToken).toBe(existingToken);
+            });
+        });
+
+        describe('when user is authenticated and session has no token', () => {
+            it('should generate and return a new token', () => {
+                const newToken: string = faker.string.alphanumeric(32);
+                const requestMock: Request = setupRequest(true);
+                const csrfTokenService: DeepMocked<CsrfTokenService> = module.get(CsrfTokenService);
+                csrfTokenService.generateToken.mockReturnValueOnce(newToken);
+
+                const result: CsrfTokenResponse | CsrfTokenErrorResponse = authController.getCsrfToken(requestMock);
+
+                expect(result).toBeInstanceOf(CsrfTokenResponse);
+                expect((result as CsrfTokenResponse).csrfToken).toBe(newToken);
+            });
+        });
+
+        describe('when token generation throws', () => {
+            it('should return CsrfTokenErrorResponse', () => {
+                const requestMock: Request = setupRequest(true);
+                const csrfTokenService: DeepMocked<CsrfTokenService> = module.get(CsrfTokenService);
+                csrfTokenService.generateToken.mockImplementationOnce(() => {
+                    throw new Error('Generation failed');
+                });
+
+                const result: CsrfTokenResponse | CsrfTokenErrorResponse = authController.getCsrfToken(requestMock);
+
+                expect(result).toBeInstanceOf(CsrfTokenErrorResponse);
+            });
         });
     });
 });
