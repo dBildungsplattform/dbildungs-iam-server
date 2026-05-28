@@ -1,6 +1,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { CsrfTokenService } from '../services/csrf-token-service';
+import { CsrfTokenService } from '../services/csrf-token-service.js';
 
 @Injectable()
 export class CsrfRefreshMiddleware implements NestMiddleware {

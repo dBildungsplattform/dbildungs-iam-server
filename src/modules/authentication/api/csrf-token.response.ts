@@ -7,21 +7,7 @@ export class CsrfTokenResponse {
     })
     public readonly csrfToken: string;
 
-    @ApiProperty({
-        description: 'Whether the user is authenticated',
-        example: true,
-    })
-    public readonly authenticated: boolean;
-
-    @ApiProperty({
-        description: 'Timestamp when token was generated',
-        example: 1672531200000,
-    })
-    public readonly timestamp: number;
-
-    public constructor(csrfToken: string, authenticated: boolean, timestamp: number) {
+    public constructor(csrfToken: string) {
         this.csrfToken = csrfToken;
-        this.authenticated = authenticated;
-        this.timestamp = timestamp;
     }
 }

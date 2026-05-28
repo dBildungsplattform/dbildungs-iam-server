@@ -1,6 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, BadRequestException } from '@nestjs/common';
 import { Request } from 'express';
-import { CsrfTokenService } from '../services/csrf-token-service';
+import { CsrfTokenService } from '../services/csrf-token-service.js';
 
 @Injectable()
 export class CsrfProtectionGuard implements CanActivate {

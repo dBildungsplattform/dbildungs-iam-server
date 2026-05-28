@@ -137,7 +137,7 @@ export class AuthenticationController {
     })
     public getCsrfToken(@Req() request: Request): CsrfTokenResponse | CsrfTokenErrorResponse {
         if (!request.isAuthenticated()) {
-            this.logger.debug('CSRF token requested by unauthenticated user');
+            this.logger.info('CSRF token requested by unauthenticated user');
             return new CsrfTokenErrorResponse('User is not authenticated');
         }
 
@@ -145,9 +145,9 @@ export class AuthenticationController {
             // Generate new token or retrieve existing from session
             const token: string = request.session?.csrfToken || this.csrfTokenService.generateToken(request);
 
-            this.logger.debug('CSRF token provided to authenticated user');
+            this.logger.info('CSRF token provided to authenticated user');
 
-            return new CsrfTokenResponse(token, true, Date.now());
+            return new CsrfTokenResponse(token);
         } catch (error) {
             this.logger.error('Failed to generate CSRF token', error);
             return new CsrfTokenErrorResponse('Failed to generate CSRF token');
