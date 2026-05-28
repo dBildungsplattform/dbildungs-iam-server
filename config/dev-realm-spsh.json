@@ -1310,7 +1310,7 @@
                     }
                 },
                 {
-                    "name": "nachname",
+                    "name": "family_name",
                     "protocol": "openid-connect",
                     "protocolMapper": "spsh-custom-oidc-api-mapper",
                     "consentRequired": false,
@@ -1321,11 +1321,11 @@
                         "lightweight.claim": "true",
                         "extractJsonPath": "$.iqshHelpdesk.nachname",
                         "access.token.claim": "true",
-                        "claim.name": "nachname"
+                        "claim.name": "family_name"
                     }
                 },
                 {
-                    "name": "vorname",
+                    "name": "given_name",
                     "protocol": "openid-connect",
                     "protocolMapper": "spsh-custom-oidc-api-mapper",
                     "consentRequired": false,
@@ -1339,7 +1339,7 @@
                         "lightweight.claim": "true",
                         "extractJsonPath": "$.iqshHelpdesk.vorname",
                         "access.token.claim": "true",
-                        "claim.name": "vorname"
+                        "claim.name": "given_name"
                     }
                 },
                 {
