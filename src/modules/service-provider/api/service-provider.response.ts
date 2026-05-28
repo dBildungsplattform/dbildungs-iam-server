@@ -32,8 +32,8 @@ export class ServiceProviderResponse {
     @ApiProperty({ description: 'Indicates if a custom logo is available for fetching', required: true })
     public hasLogo: boolean;
 
-    @ApiProperty({ description: 'Optional, indicates if 2FA is required', required: false })
-    public requires2fa?: boolean;
+    @ApiProperty({ description: 'Indicates if 2FA is required', required: true })
+    public requires2fa: boolean;
 
     @ApiProperty({ enum: ServiceProviderMerkmal, enumName: ServiceProviderMerkmalTypName, isArray: true })
     public merkmale: ServiceProviderMerkmal[];
