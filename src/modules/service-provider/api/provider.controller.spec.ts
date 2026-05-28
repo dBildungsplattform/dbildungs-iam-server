@@ -460,7 +460,7 @@ describe('Provider Controller Test', () => {
 
     describe('getAssignableServiceProvidersForRolle', () => {
         beforeEach(() => {
-            serviceProviderFindServiceMock.findServiceProviderForRolleBySchulstrukturknotenAuthorized.mockReset();
+            serviceProviderFindServiceMock.findServiceProvidersForRolleBySchulstrukturknotenAuthorized.mockReset();
         });
 
         describe('when service providers were found', () => {
@@ -470,7 +470,7 @@ describe('Provider Controller Test', () => {
                 const sp: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
                     id: spId,
                 });
-                serviceProviderFindServiceMock.findServiceProviderForRolleBySchulstrukturknotenAuthorized.mockResolvedValueOnce(
+                serviceProviderFindServiceMock.findServiceProvidersForRolleBySchulstrukturknotenAuthorized.mockResolvedValueOnce(
                     Ok([sp]),
                 );
 
@@ -482,7 +482,7 @@ describe('Provider Controller Test', () => {
                 expect(spResponse).toBeInstanceOf(Array);
                 expect(spResponse).toHaveLength(1);
                 expect(
-                    serviceProviderFindServiceMock.findServiceProviderForRolleBySchulstrukturknotenAuthorized,
+                    serviceProviderFindServiceMock.findServiceProvidersForRolleBySchulstrukturknotenAuthorized,
                 ).toHaveBeenCalledWith(personPermissionsMock, orga.id);
             });
         });
@@ -490,7 +490,7 @@ describe('Provider Controller Test', () => {
         describe('when no service providers were found', () => {
             it('should return empty list as response', async () => {
                 const orgaId: string = faker.string.uuid();
-                serviceProviderFindServiceMock.findServiceProviderForRolleBySchulstrukturknotenAuthorized.mockResolvedValueOnce(
+                serviceProviderFindServiceMock.findServiceProvidersForRolleBySchulstrukturknotenAuthorized.mockResolvedValueOnce(
                     Ok([]),
                 );
 
@@ -506,7 +506,7 @@ describe('Provider Controller Test', () => {
 
         describe('when permissions are missing', () => {
             it('should throw missing permissions error', async () => {
-                serviceProviderFindServiceMock.findServiceProviderForRolleBySchulstrukturknotenAuthorized.mockResolvedValueOnce(
+                serviceProviderFindServiceMock.findServiceProvidersForRolleBySchulstrukturknotenAuthorized.mockResolvedValueOnce(
                     Err(new MissingPermissionsError('Rollen Verwalten Systemrecht Required For This Endpoint')),
                 );
 

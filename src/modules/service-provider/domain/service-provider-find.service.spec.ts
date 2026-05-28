@@ -27,13 +27,13 @@ describe('ServiceProviderFindService', () => {
         sut = new ServiceProviderFindService(organisationRepoMock, serviceProviderRepoMock);
     });
 
-    describe('findServiceProviderForRolleBySchulstrukturknotenAuthorized', () => {
+    describe('findServiceProvidersForRolleBySchulstrukturknotenAuthorized', () => {
         it('should return missing permissions error when user is not authorized', async () => {
             const schulstrukturknotenId: string = faker.string.uuid();
             permissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false);
 
             const result: Result<ServiceProvider<true>[], MissingPermissionsError> =
-                await sut.findServiceProviderForRolleBySchulstrukturknotenAuthorized(
+                await sut.findServiceProvidersForRolleBySchulstrukturknotenAuthorized(
                     permissionsMock,
                     schulstrukturknotenId,
                 );
@@ -60,7 +60,7 @@ describe('ServiceProviderFindService', () => {
             serviceProviderRepoMock.findBySchulstrukturknoten.mockResolvedValueOnce([serviceProvider]);
 
             const result: Result<ServiceProvider<true>[], MissingPermissionsError> =
-                await sut.findServiceProviderForRolleBySchulstrukturknotenAuthorized(
+                await sut.findServiceProvidersForRolleBySchulstrukturknotenAuthorized(
                     permissionsMock,
                     schulstrukturknotenId,
                 );
@@ -82,7 +82,7 @@ describe('ServiceProviderFindService', () => {
             serviceProviderRepoMock.findBySchulstrukturknoten.mockResolvedValueOnce([]);
 
             const result: Result<ServiceProvider<true>[], MissingPermissionsError> =
-                await sut.findServiceProviderForRolleBySchulstrukturknotenAuthorized(
+                await sut.findServiceProvidersForRolleBySchulstrukturknotenAuthorized(
                     permissionsMock,
                     schulstrukturknotenId,
                 );

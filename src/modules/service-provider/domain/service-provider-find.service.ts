@@ -18,7 +18,7 @@ export class ServiceProviderFindService {
         private readonly serviceProviderRepo: ServiceProviderRepo,
     ) {}
 
-    public async findServiceProviderForRolleBySchulstrukturknotenAuthorized(
+    public async findServiceProvidersForRolleBySchulstrukturknotenAuthorized(
         permissions: IPersonPermissions,
         schulstrukturknotenId: OrganisationID,
     ): Promise<Result<ServiceProvider<true>[], DomainError>> {

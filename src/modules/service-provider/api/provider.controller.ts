@@ -110,7 +110,7 @@ export class ProviderController {
         @Query() query: FindServiceProviderForRolleQueryParams,
     ): Promise<ServiceProviderResponse[]> {
         const result: Result<ServiceProvider<true>[], DomainError> =
-            await this.serviceProviderFindService.findServiceProviderForRolleBySchulstrukturknotenAuthorized(
+            await this.serviceProviderFindService.findServiceProvidersForRolleBySchulstrukturknotenAuthorized(
                 permissions,
                 query.schulstrukturknotenOfRolle,
             );
