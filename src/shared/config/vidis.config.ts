@@ -5,17 +5,8 @@ export class VidisConfig {
     public readonly BASE_URL!: string;
 
     @IsString()
-    public readonly USERNAME!: string;
+    public readonly CLIENT_ID!: string;
 
     @IsString()
-    public readonly PASSWORD!: string;
-
-    @IsString()
-    public readonly REGION_NAME!: string;
-
-    @IsString()
-    public readonly KEYCLOAK_GROUP!: string;
-
-    @IsString()
-    public readonly KEYCLOAK_ROLE!: string;
+    public readonly CLIENT_SECRET!: string;
 }
