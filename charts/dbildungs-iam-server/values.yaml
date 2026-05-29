@@ -30,6 +30,7 @@ database:
   username: "dbildungs_iam_server"
 
 ldap:
+  eflkLdapEnabled: true # dont know if we would need this here
   url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
@@ -37,6 +38,7 @@ ldap:
   retryWrapperDefaultRetries: 3
 
 eflkLdap:
+  eflkLdapEnabled: true
   url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
@@ -94,6 +96,7 @@ emailMicroserviceAuth:
   ox_password: ""
 
 ox:
+  eflkOxEnabled: true
   enabled: false
   username: "oxadmin"
   endpoint: "https://webmail.example.com"
