@@ -44,7 +44,7 @@
         "CLUSTERED": false
     },
     "LDAP": {
-        "EFLK_DLAP_ENABLED": true,
+        "EFLK_LDAP_ENABLED": true,
         "URL": "ldap://localhost",
         "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
         "ADMIN_PASSWORD": "admin",
