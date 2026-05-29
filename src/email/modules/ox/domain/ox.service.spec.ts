@@ -556,7 +556,7 @@ describe('OxService', () => {
                 createMock(OxSendService),
                 createMock(EmailAppConfig, {
                     OX: {
-                        EFLK_OX_ENABLED: false,
+                        EFLK_OX_ENABLED: true,
                         ENABLED: true,
                         USERNAME: '',
                         PASSWORD: '',
