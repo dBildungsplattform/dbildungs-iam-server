@@ -54,7 +54,7 @@ export class DeleteEmailsAddressesForSpshPersonService {
                     externalId: a.externalId,
                 }));
                 this.logger.info(
-                    `OX disabled - faking deleteUser. Data: oxUserCounter=${oxUserCounter}, addresses=${JSON.stringify(oxUserAddresses)}`,
+                    `OX disabled -> faking deleteUser. Data: oxUserCounter=${oxUserCounter}, addresses=${JSON.stringify(oxUserAddresses)}`,
                 );
 
                 deleteUserResult = Ok(undefined);
@@ -88,7 +88,7 @@ export class DeleteEmailsAddressesForSpshPersonService {
                     externalId: a.externalId,
                 }));
                 this.logger.info(
-                    `LDAP disabled - faking deletePerson. Data: externalId=${externalId}, domain=${domain}, addresses=${JSON.stringify(
+                    `LDAP disabled -> faking deletePerson. Data: externalId=${externalId}, domain=${domain}, addresses=${JSON.stringify(
                         ldapUserAddresses,
                     )}`,
                 );

@@ -716,7 +716,9 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(await emailAddressRepo.existsEmailAddress(email0.address)).toBeTruthy();
             expect(await emailAddressRepo.existsEmailAddress(email1.address)).toBeFalsy();
 
-            expect(loggerMock.info).toHaveBeenCalledWith('OX is disabled -> faking OX change user action');
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining('OX is disabled -> faking OX change user action'),
+            );
             expect(oxSendServiceMock.send).not.toHaveBeenCalled();
             expect(oxServiceMock.createChangeUserAction).not.toHaveBeenCalled();
 
@@ -770,7 +772,9 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(await emailAddressRepo.existsEmailAddress(email0.address)).toBeTruthy();
             expect(await emailAddressRepo.existsEmailAddress(email1.address)).toBeFalsy();
 
-            expect(loggerMock.info).toHaveBeenCalledWith('LDAP is disabled -> faking LDAP email update');
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining('LDAP is disabled -> faking LDAP email update'),
+            );
             expect(ldapClientServiceMock.updatePersonEmails).not.toHaveBeenCalled();
 
             expect(oxServiceMock.createChangeUserAction).toHaveBeenCalled();

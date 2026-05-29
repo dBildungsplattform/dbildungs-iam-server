@@ -792,7 +792,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 oxServiceMock.useOx.mockReturnValue(false);
 
                 await sut.setEmailAddressForSpshPerson({ ...params[0], ...params[1] });
-                expect(loggerMock.info).toHaveBeenCalledWith('Ox is disabled -> faking upsertOxUser');
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect.stringContaining('Ox is disabled -> faking upsertOxUser'),
+                );
                 expect(oxSendServiceMock.send).not.toHaveBeenCalled();
             });
         });
@@ -887,7 +889,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 ldapClientServiceMock.useLdap.mockReturnValue(false);
 
                 await sut.setEmailAddressForSpshPerson({ ...params[0], ...params[1] });
-                expect(loggerMock.info).toHaveBeenCalledWith('LDAP is disabled -> faking upsertLdapUser');
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect.stringContaining('LDAP is disabled -> faking upsertLdapUser'),
+                );
                 expect(ldapClientServiceMock.isPersonExisting).not.toHaveBeenCalled();
                 expect(ldapClientServiceMock.createPerson).not.toHaveBeenCalled();
                 expect(ldapClientServiceMock.updatePerson).not.toHaveBeenCalled();

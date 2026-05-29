@@ -310,7 +310,7 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
 
         await sut.deleteEmailAddressesForSpshPerson({ spshPersonId });
 
-        expect(loggerMock.info).toHaveBeenCalledWith('OX is disabled -> faking ox deleteUser');
+        expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('OX disabled -> faking deleteUser'));
         expect(oxServiceMock.deleteUser).not.toHaveBeenCalled();
         expect(ldapClientServiceMock.deletePerson).toHaveBeenCalled();
         expect(emailAddressRepoMock.delete).toHaveBeenCalledWith(email);
@@ -338,7 +338,7 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
 
         await sut.deleteEmailAddressesForSpshPerson({ spshPersonId });
 
-        expect(loggerMock.info).toHaveBeenCalledWith('LDAP is disabled -> faking ldap deletePerson');
+        expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('LDAP disabled -> faking deletePerson'));
         expect(ldapClientServiceMock.deletePerson).not.toHaveBeenCalled();
         expect(emailAddressRepoMock.delete).toHaveBeenCalledWith(email);
         expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
