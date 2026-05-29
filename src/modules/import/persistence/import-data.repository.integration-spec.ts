@@ -165,6 +165,9 @@ describe('ImportDataRepository', () => {
             );
 
             expect(result?.length).toBe(2);
+            expect(result).toEqual(
+                [entity1, entity2].map((entity: ImportDataItemEntity) => mapEntityToAggregate(entity)),
+            );
             expect(total).toBe(2);
         });
     });
