@@ -90,6 +90,7 @@ describe('configloader', () => {
                     CLIENT_SECRET: 'dummy-password',
                 },
                 OX: {
+                    EFLK_OX_ENABLED: true,
                     ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
