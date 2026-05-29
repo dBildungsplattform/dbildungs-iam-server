@@ -95,7 +95,9 @@ export class CronDeleteEmailsAddressesService {
 
         if (oxUserCounter) {
             if (!this.oxService.useOx()) {
-                this.logger.info('OX is disabled -> faking OX change user action');
+                this.logger.info(
+                    `OX is disabled -> faking OX change user action - externalId=${externalId}, oxUserCounter=${oxUserCounter}, domain=${domain}`,
+                );
             } else {
                 const changeResult: Result<void, DomainError> = await this.oxSendService.send(
                     this.oxService.createChangeUserAction(
@@ -125,7 +127,9 @@ export class CronDeleteEmailsAddressesService {
         }
 
         if (!this.ldapClientService.useLdap()) {
-            this.logger.info('LDAP is disabled -> faking LDAP email update');
+            this.logger.info(
+                `LDAP is disabled -> faking LDAP email update- externalId=${externalId}, domain=${domain}`,
+            );
         } else if (domain) {
             const changeResult: Result<string> = await this.ldapClientService.updatePersonEmails(
                 externalId,

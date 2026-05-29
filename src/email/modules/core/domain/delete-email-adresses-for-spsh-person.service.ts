@@ -48,7 +48,15 @@ export class DeleteEmailsAddressesForSpshPersonService {
             let deleteUserResult: Result<void, Error>;
 
             if (!this.oxService.useOx()) {
-                this.logger.info('OX is disabled -> faking ox deleteUser');
+                const oxUserAddresses: object = addresses.map((a: EmailAddress<true>) => ({
+                    address: a.address,
+                    priority: a.priority,
+                    externalId: a.externalId,
+                }));
+                this.logger.info(
+                    `OX disabled - faking deleteUser. Data: oxUserCounter=${oxUserCounter}, addresses=${JSON.stringify(oxUserAddresses)}`,
+                );
+
                 deleteUserResult = Ok(undefined);
             } else {
                 deleteUserResult = await this.oxService.deleteUser(oxUserCounter);
@@ -74,7 +82,16 @@ export class DeleteEmailsAddressesForSpshPersonService {
             let deleteLdapPersonResult: Result<void, Error>;
 
             if (!this.ldapClientService.useLdap()) {
-                this.logger.info('LDAP is disabled -> faking ldap deletePerson');
+                const ldapUserAddresses: object = addresses.map((a: EmailAddress<true>) => ({
+                    address: a.address,
+                    priority: a.priority,
+                    externalId: a.externalId,
+                }));
+                this.logger.info(
+                    `LDAP disabled - faking deletePerson. Data: externalId=${externalId}, domain=${domain}, addresses=${JSON.stringify(
+                        ldapUserAddresses,
+                    )}`,
+                );
                 deleteLdapPersonResult = Ok(undefined);
             } else {
                 deleteLdapPersonResult = await this.ldapClientService.deletePerson(externalId, domain);

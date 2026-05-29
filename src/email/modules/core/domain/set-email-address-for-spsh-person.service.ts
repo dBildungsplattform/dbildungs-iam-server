@@ -440,7 +440,13 @@ export class SetEmailAddressForSpshPersonService {
         kennungen: string[],
     ): Promise<Result<string>> {
         if (!this.oxService.useOx()) {
-            this.logger.info('Ox is disabled -> faking upsertOxUser');
+            this.logger.info(
+                `Ox is disabled -> faking upsertOxUser - spshUsername=${spshUsername}, firstname=${firstname}, lastname=${lastname}, ` +
+                    `primaryEmail=${primaryEmail.address}, alternativeEmail=${alternativeEmail?.address ?? 'none'}, ` +
+                    `externalId=${primaryEmail.externalId}, spshPersonId=${primaryEmail.spshPersonId}, kennungen=${JSON.stringify(
+                        kennungen,
+                    )}`,
+            );
 
             return Ok(primaryEmail.oxUserCounter ?? `Fake-OX-${primaryEmail.spshPersonId}`);
         }
@@ -528,7 +534,9 @@ export class SetEmailAddressForSpshPersonService {
         domain: string,
     ): Promise<Result<void>> {
         if (!this.ldapClientService.useLdap()) {
-            this.logger.info('LDAP is disabled -> faking upsertLdapUser');
+            this.logger.info(
+                `LDAP is disabled -> faking upsertLdapUser - uid=${uid}, username=${username}, firstName=${firstName}, lastName=${lastName}, primaryEmail=${primaryEmail}, alternativeEmail=${alternativeEmail ?? 'none'}, domain=${domain}`,
+            );
 
             return Ok(undefined);
         }
