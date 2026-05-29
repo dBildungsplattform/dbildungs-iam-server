@@ -69,12 +69,9 @@
         "REALM": "defrealm"
     },
     "VIDIS": {
-        "BASE_URL": "",
-        "USERNAME": "",
-        "PASSWORD": "",
-        "REGION_NAME": "test-region",
-        "KEYCLOAK_GROUP": "VIDIS-service",
-        "KEYCLOAK_ROLE": "VIDIS-user"
+        "BASE_URL": "http://localhost:10000",
+        "CLIENT_ID": "clientid",
+        "CLIENT_SECRET": "clientsecret"
     },
     "OX": {
         "ENABLED": false,
