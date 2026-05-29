@@ -32,10 +32,8 @@ import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/per
 import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/personenkontext-workflow.factory.js';
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RollenSystemRecht, RollenSystemRechtEnum } from '../rolle/domain/systemrecht.js';
-import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
+import { RollenSystemRecht } from '../rolle/domain/systemrecht.js';
 import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
-import { EscalatedPersonPermissionsFactory } from '../permission/escalated-person-permissions.factory.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -53,8 +51,6 @@ export class CronController {
         private readonly userLockRepository: UserLockRepository,
         private readonly emailAddressDeletionService: EmailAddressDeletionService,
         private readonly logger: ClassLogger,
-        private readonly serviceProviderService: ServiceProviderService,
-        private readonly escalatedPersonPermissionsFactory: EscalatedPersonPermissionsFactory,
         configService: ConfigService,
     ) {
         this.config = configService.getOrThrow<CronConfig>('CRON');
@@ -396,41 +392,6 @@ export class CronController {
         } catch (error) {
             this.logger.logUnknownAsError('Could not unlock users', error);
             throw new Error('Failed to unlock users due to an internal server error.');
-        }
-    }
-
-    @Put('vidis-angebote')
-    @HttpCode(HttpStatus.OK)
-    @ApiCreatedResponse({ description: 'VIDIS Angebote were successfully updated.', type: Boolean })
-    @ApiBadRequestResponse({ description: 'VIDIS Angebote were not successfully updated.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to update VIDIS Angebote.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to update VIDIS Angebote.' })
-    @ApiNotFoundResponse({ description: 'Insufficient permissions to update VIDIS Angebote.' })
-    @ApiInternalServerErrorResponse({
-        description: 'Internal server error while trying to update VIDIS Angebote.',
-    })
-    public async updateServiceProvidersForVidisAngebote(@Permissions() permissions: IPersonPermissions): Promise<void> {
-        const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
-            RollenSystemRecht.CRON_DURCHFUEHREN,
-        ]);
-        if (!hasCronJobPermission) {
-            throw new MissingPermissionsError('Insufficient permissions');
-        }
-        try {
-            const escalatedPermissions: IPersonPermissions =
-                await this.escalatedPersonPermissionsFactory.fromPermissions(permissions, [
-                    { orgaId: 'ROOT', systemrechte: [RollenSystemRechtEnum.ANGEBOTE_VERWALTEN] },
-                ]);
-            await this.serviceProviderService.updateServiceProvidersForVidis(escalatedPermissions);
-        } catch (error) {
-            let errorMessage: string = 'unbekannt';
-            if (error instanceof DomainError) {
-                errorMessage = error.message;
-            }
-            this.logger.info(
-                `ServiceProvider für VIDIS-Angebote konnten nicht aktualisiert werden. Fehler: ${errorMessage}`,
-            );
-            throw error;
         }
     }
 
