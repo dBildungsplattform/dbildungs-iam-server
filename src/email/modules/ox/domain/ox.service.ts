@@ -61,7 +61,7 @@ export class OxService {
         protected config: EmailAppConfig,
     ) {
         const oxConfig: OxConfig = config.OX;
-        this.enabled = oxConfig.ENABLED;
+        this.enabled = oxConfig.EFLK_OX_ENABLED;
         this.authUser = oxConfig.USERNAME;
         this.authPassword = oxConfig.PASSWORD;
         this.contextID = oxConfig.CONTEXT_ID;

@@ -3,7 +3,7 @@ import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-v
 export class LdapConfig {
     @IsBoolean()
     @IsNotEmpty()
-    public readonly ENABLED!: boolean;
+    public readonly EFLK_LDAP_ENABLED!: boolean;
 
     @IsString()
     @IsNotEmpty()

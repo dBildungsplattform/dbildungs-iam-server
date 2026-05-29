@@ -191,7 +191,7 @@ export class LdapClientService {
     }
 
     public useLdap(): boolean {
-        return this.ldapInstanceConfig.ENABLED;
+        return this.ldapInstanceConfig.EFLK_LDAP_ENABLED;
     }
 
     private async deletePersonInternal(externalId: string, domain: string): Promise<Result<void>> {

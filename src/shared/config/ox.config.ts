@@ -2,6 +2,9 @@ import { IsBoolean, IsInt, IsNumberString, IsOptional, IsString, Min } from 'cla
 
 export class OxConfig {
     @IsBoolean()
+    public readonly EFLK_OX_ENABLED!: boolean;
+
+    @IsBoolean()
     public readonly ENABLED!: boolean;
 
     @IsString()
