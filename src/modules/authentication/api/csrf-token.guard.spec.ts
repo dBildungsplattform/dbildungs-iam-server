@@ -3,6 +3,8 @@ import { ExecutionContext, BadRequestException } from '@nestjs/common';
 import { createExecutionContextMock, createRequestMock } from '../../../../test/utils/http.mocks.js';
 import { CsrfTokenService } from '../services/csrf-token.service.js';
 import { CsrfProtectionGuard } from './csrf-token.guard.js';
+import { MockedObject } from 'vitest';
+import type { Request as ExpressRequest } from 'express';
 
 describe('The CSRF protection guard', () => {
     let csrfTokenService: DeepMocked<CsrfTokenService>;
@@ -14,7 +16,7 @@ describe('The CSRF protection guard', () => {
     });
 
     it('should allow GET requests', () => {
-        const request = createRequestMock({
+        const request: MockedObject<ExpressRequest> = createRequestMock({
             method: 'GET',
             path: '/api/something',
         });
@@ -25,28 +27,28 @@ describe('The CSRF protection guard', () => {
     });
 
     it('should allow HEAD/OPTIONS requests', () => {
-        const headRequest = createRequestMock({ method: 'HEAD' });
-        const optionsRequest = createRequestMock({ method: 'OPTIONS' });
+        const headRequest: MockedObject<ExpressRequest> = createRequestMock({ method: 'HEAD' });
+        const optionsRequest: MockedObject<ExpressRequest> = createRequestMock({ method: 'OPTIONS' });
 
         expect(sut.canActivate(createExecutionContextMock({ request: headRequest }))).toEqual(true);
         expect(sut.canActivate(createExecutionContextMock({ request: optionsRequest }))).toEqual(true);
     });
 
     it('should allow JWT requests (Bearer token)', () => {
-        const request = createRequestMock({
+        const request: MockedObject<ExpressRequest> = createRequestMock({
             method: 'POST',
             headers: {
                 authorization: 'Bearer some-token',
             },
         });
 
-        const context = createExecutionContextMock({ request });
+        const context: ExecutionContext = createExecutionContextMock({ request });
 
         expect(sut.canActivate(context)).toEqual(true);
     });
 
     it('should allow public routes', () => {
-        const request = createRequestMock({
+        const request: MockedObject<ExpressRequest> = createRequestMock({
             method: 'POST',
             path: '/api/health',
         });
@@ -57,12 +59,12 @@ describe('The CSRF protection guard', () => {
     });
 
     it('should allow other public route prefixes', () => {
-        const request = createRequestMock({
+        const request: MockedObject<ExpressRequest> = createRequestMock({
             method: 'POST',
             path: '/api/docs/something-deep',
         });
 
-        const context = createExecutionContextMock({ request });
+        const context: ExecutionContext = createExecutionContextMock({ request });
 
         expect(sut.canActivate(context)).toEqual(true);
     });
@@ -70,13 +72,13 @@ describe('The CSRF protection guard', () => {
     it('should throw BadRequestException when CSRF token is invalid', () => {
         csrfTokenService.validateToken.mockReturnValue(false);
 
-        const request = createRequestMock({
+        const request: MockedObject<ExpressRequest> = createRequestMock({
             method: 'POST',
             path: '/api/protected',
             headers: {},
         });
 
-        const context = createExecutionContextMock({ request });
+        const context: ExecutionContext = createExecutionContextMock({ request });
 
         expect(() => sut.canActivate(context)).toThrow(BadRequestException);
         expect(csrfTokenService.validateToken).toHaveBeenCalledWith(request);
@@ -85,13 +87,13 @@ describe('The CSRF protection guard', () => {
     it('should allow request when CSRF token is valid', () => {
         csrfTokenService.validateToken.mockReturnValue(true);
 
-        const request = createRequestMock({
+        const request: MockedObject<ExpressRequest> = createRequestMock({
             method: 'POST',
             path: '/api/protected',
             headers: {},
         });
 
-        const context = createExecutionContextMock({ request });
+        const context: ExecutionContext = createExecutionContextMock({ request });
 
         expect(sut.canActivate(context)).toEqual(true);
         expect(csrfTokenService.validateToken).toHaveBeenCalledWith(request);

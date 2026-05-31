@@ -52,6 +52,7 @@ describe('AuthenticationController', () => {
     const keycloakUserServiceMock: DeepMocked<KeycloakUserService> = createMock(KeycloakUserService);
     let keyCloakConfig: KeycloakConfig;
     const personTimeLimitServiceMock: DeepMocked<PersonTimeLimitService> = createMock(PersonTimeLimitService);
+    const csrfTokenServiceMock: DeepMocked<CsrfTokenService> = createMock(CsrfTokenService);
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
@@ -91,6 +92,10 @@ describe('AuthenticationController', () => {
                     provide: PersonTimeLimitService,
                     useValue: personTimeLimitServiceMock,
                 },
+                {
+                    provide: CsrfTokenService,
+                    useValue: csrfTokenServiceMock,
+                },
             ],
         })
             .overrideProvider(PersonRepository)
@@ -112,7 +117,9 @@ describe('AuthenticationController', () => {
     });
 
     afterAll(async () => {
-        await module.get(MikroORM).close();
+        const orm: MikroORM = module.get(MikroORM);
+
+        await orm.close(true);
         await module.close();
     });
 
