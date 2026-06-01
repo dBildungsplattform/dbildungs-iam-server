@@ -31,7 +31,7 @@ import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.j
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
@@ -43,6 +43,8 @@ import { ManageableServiceProviderListEntryResponse } from './manageable-service
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
+import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.js';
+import { ServiceProviderResponse } from './service-provider.response.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -111,21 +113,57 @@ describe('ServiceProvider API', () => {
         permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
     });
 
-    describe('/GET all service provider', () => {
-        it('should return all service provider', async () => {
-            await Promise.all([
-                createAndPersistServiceProvider(em),
-                createAndPersistServiceProvider(em),
+    describe('/GET provider/assignable-for-rolle', () => {
+        const url: string = '/provider/assignable-for-rolle';
+
+        it('should return all service providers for a specific organisation', async () => {
+            const parent: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const orga: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { administriertVon: parent.id }),
+            );
+            const child: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { administriertVon: orga.id }),
+            );
+            const serviceProviders: ServiceProvider<true>[] = await Promise.all([
+                createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: parent.id }),
+                createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: orga.id }),
+                createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: child.id }),
                 createAndPersistServiceProvider(em),
             ]);
+            const query: FindServiceProviderForRolleQueryParams = {
+                schulstrukturknotenOfRolle: orga.id,
+            };
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/provider/all')
+                .get(url)
+                .query(query)
                 .send();
 
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Array);
-            expect(response.body).toHaveLength(3);
+            expect(response.body).toHaveLength(2);
+            expect(response.body).toContainEqual(new ServiceProviderResponse(serviceProviders[0]!));
+            expect(response.body).toContainEqual(new ServiceProviderResponse(serviceProviders[1]!));
+        });
+
+        it('should return 404 if permissions are missing', async () => {
+            const schulstrukturknotenOfRolle: string = faker.string.uuid();
+            const query: FindServiceProviderForRolleQueryParams = {
+                schulstrukturknotenOfRolle,
+            };
+            permissionsMock.hasSystemrechteAtOrganisation.mockClear();
+            permissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(url)
+                .query(query)
+                .send();
+
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'MISSING_PERMISSIONS' }));
+            expect(permissionsMock.hasSystemrechteAtOrganisation).toHaveBeenCalledWith(schulstrukturknotenOfRolle, [
+                RollenSystemRecht.ROLLEN_VERWALTEN,
+            ]);
         });
     });
 

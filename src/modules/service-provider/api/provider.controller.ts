@@ -55,6 +55,7 @@ import { AttachedRollenerweiterungenError } from '../domain/errors/attached-roll
 import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
 import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
+import { ServiceProviderFindService } from '../domain/service-provider-find.service.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
 import {
@@ -73,6 +74,8 @@ import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweit
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
+import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.js';
+import { CreateServiceProviderResponse } from './create-service-provider.response.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -84,6 +87,7 @@ export class ProviderController {
         private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderFactory: ServiceProviderFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly serviceProviderFindService: ServiceProviderFindService,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly rolleRepo: RolleRepo,
@@ -91,18 +95,32 @@ export class ProviderController {
         private readonly logger: ClassLogger,
     ) {}
 
-    @Get('all')
-    @ApiOperation({ description: 'Get all service-providers.' })
+    @Get('assignable-for-rolle')
+    @UseGuards(StepUpGuard)
+    @ApiOperation({ description: 'Get all service-providers assignable for a role.' })
     @ApiOkResponse({
         description: 'The service-providers were successfully returned.',
         type: [ServiceProviderResponse],
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
+    @ApiNotFoundResponse({ description: 'No service-providers found or lacking permissions.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
-    public async getAllServiceProviders(): Promise<ServiceProviderResponse[]> {
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find({ withLogo: false });
-        const response: ServiceProviderResponse[] = serviceProviders.map(
+    public async getAssignableServiceProvidersForRolle(
+        @Permissions() permissions: PersonPermissions,
+        @Query() query: FindServiceProviderForRolleQueryParams,
+    ): Promise<ServiceProviderResponse[]> {
+        const result: Result<ServiceProvider<true>[], DomainError> =
+            await this.serviceProviderFindService.findServiceProvidersForRolleBySchulstrukturknotenAuthorized(
+                permissions,
+                query.schulstrukturknotenOfRolle,
+            );
+
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        const response: ServiceProviderResponse[] = result.value.map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );
 
@@ -162,6 +180,7 @@ export class ProviderController {
     }
 
     @Get(':angebotId/rollenerweiterung')
+    @UseGuards(StepUpGuard)
     @ApiOperation({
         description:
             'Get rollenerweiterungen for service-provider with provided id. Total is the amount of organisations.',
@@ -237,6 +256,7 @@ export class ProviderController {
     }
 
     @Get('manageable')
+    @UseGuards(StepUpGuard)
     @ApiOperation({ description: 'Get service-providers the logged-in user is allowed to manage.' })
     @ApiOkResponsePaginated(ManageableServiceProviderListEntryResponse, {
         description:
@@ -266,6 +286,7 @@ export class ProviderController {
     }
 
     @Get('manageable-by-organisation')
+    @UseGuards(StepUpGuard)
     @ApiOperation({ description: 'Get service-providers the logged-in user is allowed to manage for an Organisation.' })
     @ApiOkResponsePaginated(ManageableServiceProviderListEntryResponse, {
         description:
@@ -311,6 +332,7 @@ export class ProviderController {
     }
 
     @Get('manageable/:angebotId')
+    @UseGuards(StepUpGuard)
     @ApiOperation({ description: 'Get service-provider the logged-in user is allowed to manage.' })
     @ApiOkResponse({
         description: 'The service-provider was successfully returned.',
@@ -345,7 +367,7 @@ export class ProviderController {
     @ApiOperation({ description: 'Create a new service-provider (Angebot).' })
     @ApiCreatedResponse({
         description: 'The service-provider was successfully created.',
-        type: ServiceProviderResponse,
+        type: CreateServiceProviderResponse,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions.' })
@@ -354,7 +376,7 @@ export class ProviderController {
     public async createServiceProvider(
         @Permissions() permissions: IPersonPermissions,
         @Body() body: CreateServiceProviderBodyParams,
-    ): Promise<ServiceProviderResponse> {
+    ): Promise<CreateServiceProviderResponse> {
         // Convert base64 to Buffer (if provided)
         const logoBuffer: Buffer | undefined = body.logoBase64 ? Buffer.from(body.logoBase64, 'base64') : undefined;
 
@@ -389,7 +411,7 @@ export class ProviderController {
             throw result.error;
         }
 
-        return new ServiceProviderResponse(result.value);
+        return new CreateServiceProviderResponse(result.value);
     }
 
     @Patch(':angebotId')
