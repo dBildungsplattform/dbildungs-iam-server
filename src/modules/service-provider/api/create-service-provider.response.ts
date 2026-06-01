@@ -1,11 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 
-export class CreateServiceProviderResponse extends ServiceProviderResponse {
+export class CreateServiceProviderResponse extends OmitType(ServiceProviderResponse, ['url'] as const) {
     @ApiProperty()
-    declare public url: string;
+    public url!: string;
 
     public constructor(serviceProvider: ServiceProvider<true>) {
         super(serviceProvider);
