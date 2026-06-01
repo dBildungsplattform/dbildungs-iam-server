@@ -124,7 +124,7 @@ export class AuthenticationController {
         summary: 'Get CSRF token for session-based requests',
         description:
             'Returns a CSRF token that must be included in X-CSRF-Token header for state-changing requests (POST, PUT, DELETE). ' +
-            'Call this endpoint after successful login. The token is stored in the session and automatically refreshed on each authenticated request.',
+            'Call this endpoint after successful login. The token is stored in the session.',
     })
     @ApiOkResponse({
         description: 'CSRF token successfully retrieved for authenticated user',
