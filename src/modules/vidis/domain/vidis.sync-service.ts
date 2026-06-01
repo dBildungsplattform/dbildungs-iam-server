@@ -11,6 +11,17 @@ import type {
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { OrganisationScope } from '../../organisation/persistence/organisation.scope.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import {
+	ServiceProviderKategorie,
+	ServiceProviderMerkmal,
+	ServiceProviderSystem,
+	ServiceProviderTarget,
+} from '../../service-provider/domain/service-provider.enum.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
+import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 
 type VidisSchoolActivatedAngebot = {
@@ -19,9 +30,21 @@ type VidisSchoolActivatedAngebot = {
 };
 
 const SCHOOLS_PAGE_SIZE: number = 100;
+const PNG_FILE_SIGNATURE: Buffer = Buffer.from('89504e470d0a1a0a', 'hex');
+const JPEG_FILE_SIGNATURE: Buffer = Buffer.from('ffd8ff', 'hex');
+const WEBP_RIFF_SIGNATURE: Buffer = Buffer.from('RIFF');
+const WEBP_FILE_SIGNATURE: Buffer = Buffer.from('WEBP');
+const DEFAULT_VIDIS_SERVICE_PROVIDER_MERKMALE: ServiceProviderMerkmal[] = [
+	ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+	ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
+];
 
 type VidisAngeboteByOrganisationId = Record<string, VidisSchoolActivatedAngebot[]>;
 type VidisOrganisationIdByKennung = Record<string, string>;
+type DecodedVidisLogo = {
+	logo: Buffer | undefined;
+	logoMimeType: string | undefined;
+};
 
 @Injectable()
 export class VidisSyncService {
@@ -30,6 +53,8 @@ export class VidisSyncService {
 	public constructor(
 		private readonly vidisApiService: VidisApiService,
 		private readonly organisationRepo: OrganisationRepository,
+		private readonly serviceProviderRepo: ServiceProviderRepo,
+		private readonly escalatedPersonPermissionsFactory: EscalatedPersonPermissionsFactory,
 		private readonly rollenerweiterungRepo: RollenerweiterungRepo,
 		private readonly logger: ClassLogger,
 	) {}
@@ -43,19 +68,179 @@ export class VidisSyncService {
 			return;
 		}
 
-		await this.syncSchoolsPage(activatedAngebote.value, 0);
+		const permissions: IPersonPermissions = this.escalatedPersonPermissionsFactory.createNew([
+			{ orgaId: 'ROOT', systemrechte: [RollenSystemRechtEnum.ANGEBOTE_VERWALTEN, RollenSystemRechtEnum.ROLLEN_ERWEITERN] },
+		]);
+
+		await this.syncSchoolsPage(activatedAngebote.value, 0, permissions);
 	}
 
 	private syncForSchoolInternal(
 		organisationId: string,
-		vidisAngeboteForSchool: VidisSchoolActivatedAngebot[],
+		angeboteInVidis: VidisSchoolActivatedAngebot[],
+		angeboteInDb: ServiceProvider<true>[],
+		permissions: IPersonPermissions
 	): Promise<void> {
+		const vidisAngebotIds: Set<string> = new Set(
+			angeboteInVidis.map(({ angebot }: VidisSchoolActivatedAngebot) => angebot.offerId.toString()),
+		);
 
+		const existingVidisAngebotIdsInDb: Set<string> = new Set(
+			angeboteInDb
+				.map((angebotInDb: ServiceProvider<true>) => angebotInDb.vidisAngebotId)
+				.filter((vidisAngebotId: string | undefined): vidisAngebotId is string => vidisAngebotId !== undefined),
+		);
 
-		void organisationId;
-		void vidisAngeboteForSchool;
+		const missingAngeboteInDb: VidisSchoolActivatedAngebot[] = angeboteInVidis.filter(
+			({ angebot }: VidisSchoolActivatedAngebot) =>
+				!existingVidisAngebotIdsInDb.has(angebot.offerId.toString()),
+		);
+		const serviceProviderIdsMissingInVidis: string[] = angeboteInDb
+			.filter(
+				(angebotInDb: ServiceProvider<true>) =>
+					angebotInDb.vidisAngebotId !== undefined && !vidisAngebotIds.has(angebotInDb.vidisAngebotId),
+			)
+			.map((angebotInDb: ServiceProvider<true>) => angebotInDb.id);
 
-		return Promise.resolve();
+		if (missingAngeboteInDb.length === 0 && serviceProviderIdsMissingInVidis.length === 0) {
+			return Promise.resolve();
+		}
+
+		const syncOperations: Promise<unknown>[] = missingAngeboteInDb.map(
+			({ angebot }: VidisSchoolActivatedAngebot) =>
+				this.serviceProviderRepo.create(permissions, this.createVidisServiceProvider(organisationId, angebot)),
+		);
+
+		if (serviceProviderIdsMissingInVidis.length > 0) {
+			syncOperations.push(
+				this.rollenerweiterungRepo.deleteByOrganisationIdAndServiceProviderIds(
+					organisationId,
+					serviceProviderIdsMissingInVidis,
+					permissions,
+				),
+			);
+			syncOperations.push(
+				...serviceProviderIdsMissingInVidis.map((serviceProviderId: string) =>
+					this.serviceProviderRepo.deleteByIdAuthorized(permissions, serviceProviderId),
+				),
+			);
+		}
+
+		return Promise.allSettled(syncOperations).then((results: PromiseSettledResult<unknown>[]) => {
+			const failedOperations: PromiseSettledResult<unknown>[] = results.filter(
+				(result: PromiseSettledResult<unknown>) =>
+					result.status === 'rejected' ||
+					(
+						result.status === 'fulfilled' &&
+						typeof result.value === 'object' &&
+						result.value !== null &&
+						'ok' in result.value &&
+						result.value.ok === false
+					),
+			);
+
+			if (failedOperations.length === 0) {
+				return;
+			}
+
+			this.logger.error(
+				`VIDIS sync for organisation ${organisationId} finished with ${failedOperations.length} failed operations.`,
+			);
+
+			failedOperations.forEach((result: PromiseSettledResult<unknown>) => {
+				if (result.status === 'rejected') {
+					this.logger.logUnknownAsError(
+						`VIDIS sync operation for organisation ${organisationId} rejected`,
+						result.reason,
+					);
+					return;
+				}
+
+				const failedResult: unknown = result.value;
+				const error: unknown =
+					typeof failedResult === 'object' && failedResult !== null && 'error' in failedResult
+						? failedResult.error
+						: failedResult;
+
+				this.logger.logUnknownAsError(
+					`VIDIS sync operation for organisation ${organisationId} returned an error result`,
+					error,
+					false,
+				);
+			});
+		});
+	}
+
+	private createVidisServiceProvider(
+		organisationId: string,
+		angebot: VidisServiceResponseAngebot,
+	): ServiceProvider<false> {
+		const { logo, logoMimeType }: DecodedVidisLogo = VidisSyncService.decodeVidisLogo(angebot.offerLogo);
+
+		return ServiceProvider.createNew(
+			angebot.offerTitle.toString(),
+			ServiceProviderTarget.URL,
+			angebot.offerLink,
+			ServiceProviderKategorie.SCHULISCH,
+			organisationId,
+			undefined,
+			logo,
+			logoMimeType,
+			undefined,
+			undefined,
+			ServiceProviderSystem.NONE,
+			false,
+			angebot.offerId.toString(),
+			DEFAULT_VIDIS_SERVICE_PROVIDER_MERKMALE,
+		);
+	}
+
+	private static decodeVidisLogo(offerLogo: string): DecodedVidisLogo {
+		if (!offerLogo) {
+			return { logo: undefined, logoMimeType: undefined };
+		}
+
+		const trimmedLogo: string = offerLogo.trim();
+		const dataUriMatch: RegExpMatchArray | null = trimmedLogo.match(
+			/^data:(image\/(?:png|jpeg|webp|svg\+xml));base64,(.+)$/u,
+		);
+		const encodedLogo: string = dataUriMatch?.[2] ?? trimmedLogo;
+		const logo: Buffer = Buffer.from(encodedLogo, 'base64');
+
+		if (logo.length === 0) {
+			return { logo: undefined, logoMimeType: undefined };
+		}
+
+		const logoMimeType: string | undefined = dataUriMatch?.[1] ?? VidisSyncService.detectLogoMimeType(logo);
+		if (!logoMimeType) {
+			return { logo: undefined, logoMimeType: undefined };
+		}
+
+		return { logo, logoMimeType };
+	}
+
+	private static detectLogoMimeType(logo: Buffer): string | undefined {
+		if (logo.subarray(0, PNG_FILE_SIGNATURE.length).equals(PNG_FILE_SIGNATURE)) {
+			return 'image/png';
+		}
+
+		if (logo.subarray(0, JPEG_FILE_SIGNATURE.length).equals(JPEG_FILE_SIGNATURE)) {
+			return 'image/jpeg';
+		}
+
+		if (
+			logo.subarray(0, WEBP_RIFF_SIGNATURE.length).equals(WEBP_RIFF_SIGNATURE) &&
+			logo.subarray(8, 8 + WEBP_FILE_SIGNATURE.length).equals(WEBP_FILE_SIGNATURE)
+		) {
+			return 'image/webp';
+		}
+
+		const logoAsText: string = logo.toString('utf8').trimStart();
+		if (logoAsText.startsWith('<svg') || (logoAsText.startsWith('<?xml') && logoAsText.includes('<svg'))) {
+			return 'image/svg+xml';
+		}
+
+		return undefined;
 	}
 
 	private mapOrganisationIdsByKennung(schools: Organisation<true>[]): VidisOrganisationIdByKennung {
@@ -74,6 +259,7 @@ export class VidisSyncService {
 	private async syncSchoolsPage(
 		activatedAngebote: VidisAngebotWithSchoolActivations[],
 		schoolOffset: number,
+		permissions: IPersonPermissions
 	): Promise<void> {
 		const [schools, total]: Counted<Organisation<true>> = await this.organisationRepo.findBy(
 			new OrganisationScope().findBy({
@@ -91,11 +277,12 @@ export class VidisSyncService {
 			activatedAngebote,
 			organisationIdByKennung,
 		);
+		const vidisAngeboteForSchools: ServiceProvider<true>[] =await this.serviceProviderRepo.findVidisAngeboteforSchools(Object.values(organisationIdByKennung));
 
 		await Promise.all(
 			Object.keys(angeboteByOrganisationId).map((organisationId: string) => {
 				const angebote: VidisSchoolActivatedAngebot[] = angeboteByOrganisationId[organisationId] ?? [];
-				return this.syncForSchoolInternal(organisationId, angebote);
+				return this.syncForSchoolInternal(organisationId, angebote, vidisAngeboteForSchools.filter((sp: ServiceProvider<true>) => sp.providedOnSchulstrukturknoten === organisationId), permissions);
 			}),
 		);
 
@@ -104,7 +291,7 @@ export class VidisSyncService {
 			return;
 		}
 
-		return this.syncSchoolsPage(activatedAngebote, nextSchoolOffset);
+		return this.syncSchoolsPage(activatedAngebote, nextSchoolOffset, permissions);
 	}
 
 	private groupAngeboteByOrganisationId(
