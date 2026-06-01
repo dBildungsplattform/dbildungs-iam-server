@@ -36,6 +36,9 @@ import PersonTimeLimitService from '../../person/domain/person-time-limit-info.s
 import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { CsrfTokenErrorResponse } from './csrf-token-error.response.js';
+import { CsrfTokenResponse } from './csrf-token.response.js';
+import { CsrfTokenService } from '../services/csrf-token.service.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -58,6 +61,7 @@ export class AuthenticationController {
         private readonly logger: ClassLogger,
         private keycloakUserService: KeycloakUserService,
         private readonly personTimeLimitService: PersonTimeLimitService,
+        private readonly csrfTokenService: CsrfTokenService,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
         const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
@@ -112,6 +116,42 @@ export class AuthenticationController {
                 }
             });
         });
+    }
+
+    @Get('csrf-token')
+    @Public()
+    @ApiOperation({
+        summary: 'Get CSRF token for session-based requests',
+        description:
+            'Returns a CSRF token that must be included in X-CSRF-Token header for state-changing requests (POST, PUT, DELETE). ' +
+            'Call this endpoint after successful login. The token is stored in the session.',
+    })
+    @ApiOkResponse({
+        description: 'CSRF token successfully retrieved for authenticated user',
+        type: CsrfTokenResponse,
+    })
+    @ApiResponse({
+        status: 401,
+        description: 'User is not authenticated',
+        type: CsrfTokenErrorResponse,
+    })
+    public getCsrfToken(@Req() request: Request): CsrfTokenResponse | CsrfTokenErrorResponse {
+        if (!request.isAuthenticated()) {
+            this.logger.info('CSRF token requested by unauthenticated user');
+            return new CsrfTokenErrorResponse('User is not authenticated');
+        }
+
+        try {
+            // Generate new token or retrieve existing from session
+            const token: string = request.session?.csrfToken || this.csrfTokenService.generateToken(request);
+
+            this.logger.info('CSRF token provided to authenticated user');
+
+            return new CsrfTokenResponse(token);
+        } catch (error) {
+            this.logger.error('Failed to generate CSRF token', error);
+            return new CsrfTokenErrorResponse('Failed to generate CSRF token');
+        }
     }
 
     @Get('logininfo')
