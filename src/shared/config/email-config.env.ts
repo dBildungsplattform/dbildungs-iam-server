@@ -30,6 +30,7 @@ export function getEmailConfig(): EmailAppConfig {
             CLIENT_URL: process.env['DB_CLIENT_URL'],
         },
         LDAP: {
+            EFLK_LDAP_ENABLED: envToOptionalBoolean('EFLK_LDAP_ENABLED'),
             URL: process.env['LDAP_URL'],
             BIND_DN: process.env['LDAP_BIND_DN'],
             ADMIN_PASSWORD: process.env['LDAP_ADMIN_PASSWORD'],
@@ -39,6 +40,7 @@ export function getEmailConfig(): EmailAppConfig {
             RETRY_WRAPPER_DEFAULT_RETRIES: envToOptionalInteger('RETRY_WRAPPER_DEFAULT_RETRIES'),
         },
         OX: {
+            EFLK_OX_ENABLED: envToOptionalBoolean('EFLK_OX_ENABLED'),
             ENABLED: envToOptionalBoolean('OX_ENABLED'),
             ENDPOINT: process.env['OX_ENDPOINT'],
             USERNAME: process.env['OX_USERNAME'],

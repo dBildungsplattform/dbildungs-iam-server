@@ -190,6 +190,10 @@ export class LdapClientService {
         return this.executeWithRetry(() => this.deletePersonInternal(externalId, domain), this.getNrOfRetries());
     }
 
+    public useLdap(): boolean {
+        return this.ldapInstanceConfig.EFLK_LDAP_ENABLED;
+    }
+
     private async deletePersonInternal(externalId: string, domain: string): Promise<Result<void>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
         if (!rootName.ok) {

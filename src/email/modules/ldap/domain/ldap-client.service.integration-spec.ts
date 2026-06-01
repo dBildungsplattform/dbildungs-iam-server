@@ -47,6 +47,7 @@ describe('LDAP Client Service', () => {
     let instanceConfig: LdapInstanceConfig;
 
     const mockLdapInstanceConfig: LdapInstanceConfig = {
+        EFLK_LDAP_ENABLED: true,
         BASE_DN: 'dc=example,dc=com',
         OEFFENTLICHE_SCHULEN_DOMAIN: 'schule-sh.de',
         ERSATZSCHULEN_DOMAIN: 'ersatzschule-sh.de',
@@ -822,6 +823,18 @@ describe('LDAP Client Service', () => {
             expect(loggerMock.error).toHaveBeenCalledWith(
                 expect.stringContaining('Could not get root-name because email-domain is invalid'),
             );
+        });
+    });
+
+    describe('useLdap should return correct value based on config', () => {
+        it('should return false when LDAP.ENABLED is false', () => {
+            instanceConfig.EFLK_LDAP_ENABLED = false;
+            expect(ldapClientService.useLdap()).toBe(false);
+        });
+
+        it('should return true when LDAP.ENABLED is true', () => {
+            instanceConfig.EFLK_LDAP_ENABLED = true;
+            expect(ldapClientService.useLdap()).toBe(true);
         });
     });
 });

@@ -56,6 +56,7 @@ export default (): Config => ({
         EXTERNAL_BASE_URL: process.env['KC_EXTERNAL_BASE_URL'],
     },
     LDAP: {
+        EFLK_LDAP_ENABLED: envToOptionalBoolean('LDAP_ENABLED'),
         URL: process.env['LDAP_URL'],
         BIND_DN: process.env['LDAP_BIND_DN'],
         ADMIN_PASSWORD: process.env['LDAP_ADMIN_PASSWORD'],

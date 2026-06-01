@@ -241,6 +241,9 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should keep the primary mail and remove only the alternative mail', async () => {
+            oxServiceMock.useOx.mockReturnValue(true);
+            ldapClientServiceMock.useLdap.mockReturnValue(true);
+
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
             const personId1: string = faker.string.uuid();
@@ -302,6 +305,9 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should still remove the alternative mail from db if ox user counter not found', async () => {
+            oxServiceMock.useOx.mockReturnValue(true);
+            ldapClientServiceMock.useLdap.mockReturnValue(true);
+
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
             const personId1: string = faker.string.uuid();
@@ -356,6 +362,9 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should fallback to oxUserCounter from prio 0 address if oxUserCounter from prio 1 address is missing', async () => {
+            oxServiceMock.useOx.mockReturnValue(true);
+            ldapClientServiceMock.useLdap.mockReturnValue(true);
+
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
             const personId1: string = faker.string.uuid();
@@ -409,6 +418,9 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should fail removing the alternative mail due to ox error and leave email in status TO_BE_DELETED', async () => {
+            oxServiceMock.useOx.mockReturnValue(true);
+            ldapClientServiceMock.useLdap.mockReturnValue(true);
+
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
             const personId1: string = faker.string.uuid();
@@ -481,6 +493,9 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should fail removing the alternative mail due ldap domain missing and leave email in status TO_BE_DELETED', async () => {
+            oxServiceMock.useOx.mockReturnValue(true);
+            ldapClientServiceMock.useLdap.mockReturnValue(true);
+
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
             const personId1: string = faker.string.uuid();
@@ -548,6 +563,9 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should fail removing the alternative mail due to ldap error and leave email in status TO_BE_DELETED', async () => {
+            oxServiceMock.useOx.mockReturnValue(true);
+            ldapClientServiceMock.useLdap.mockReturnValue(true);
+
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
             const personId1: string = faker.string.uuid();
@@ -662,6 +680,113 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(oxServiceMock.createChangeUserAction).not.toHaveBeenCalled();
             expect(ldapClientServiceMock.updatePersonEmails).not.toHaveBeenCalled();
             expect(webhookServiceMock.sendEmailsChanged).not.toHaveBeenCalled();
+        });
+
+        it('should log "OX is disabled -> faking OX change user action" and still remove prio1 from DB', async () => {
+            oxServiceMock.useOx.mockReturnValue(false);
+            ldapClientServiceMock.useLdap.mockReturnValue(true);
+
+            const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+            const personId1: string = faker.string.uuid();
+            const domain: EmailDomain<true> = await setupDomain();
+
+            const oxUserCounter: string = '123456';
+
+            const email0: EmailAddress<true> = await createAndPersistEmail(
+                personId1,
+                0,
+                undefined,
+                oxUserCounter,
+                domain,
+            );
+
+            const email1: EmailAddress<true> = await createAndPersistEmail(
+                personId1,
+                1,
+                oneDayInPast,
+                undefined,
+                domain,
+            );
+
+            ldapClientServiceMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
+
+            await sut.deleteEmailAddresses();
+
+            expect(await emailAddressRepo.existsEmailAddress(email0.address)).toBeTruthy();
+            expect(await emailAddressRepo.existsEmailAddress(email1.address)).toBeFalsy();
+
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining('OX is disabled -> faking OX change user action'),
+            );
+            expect(oxSendServiceMock.send).not.toHaveBeenCalled();
+            expect(oxServiceMock.createChangeUserAction).not.toHaveBeenCalled();
+
+            expect(ldapClientServiceMock.updatePersonEmails).toHaveBeenCalledWith(
+                email0.externalId,
+                domain.domain,
+                email0.address,
+                undefined,
+            );
+
+            expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+                spshPersonId: personId1,
+                newPrimaryEmail: email0.address,
+                newAlternativeEmail: undefined,
+                previousPrimaryEmail: email0.address,
+                previousAlternativeEmail: email1.address,
+            });
+        });
+
+        it('should log "LDAP is disabled -> faking LDAP email update" and still remove prio1 from DB', async () => {
+            oxServiceMock.useOx.mockReturnValue(true);
+            ldapClientServiceMock.useLdap.mockReturnValue(false);
+
+            const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+            const personId1: string = faker.string.uuid();
+            const domain: EmailDomain<true> = await setupDomain();
+
+            const oxUserCounter: string = '123456';
+
+            const email0: EmailAddress<true> = await createAndPersistEmail(
+                personId1,
+                0,
+                undefined,
+                oxUserCounter,
+                domain,
+            );
+
+            const email1: EmailAddress<true> = await createAndPersistEmail(
+                personId1,
+                1,
+                oneDayInPast,
+                undefined,
+                domain,
+            );
+
+            oxSendServiceMock.send.mockResolvedValueOnce(Ok(undefined));
+
+            await sut.deleteEmailAddresses();
+
+            expect(await emailAddressRepo.existsEmailAddress(email0.address)).toBeTruthy();
+            expect(await emailAddressRepo.existsEmailAddress(email1.address)).toBeFalsy();
+
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining('LDAP is disabled -> faking LDAP email update'),
+            );
+            expect(ldapClientServiceMock.updatePersonEmails).not.toHaveBeenCalled();
+
+            expect(oxServiceMock.createChangeUserAction).toHaveBeenCalled();
+            expect(oxSendServiceMock.send).toHaveBeenCalled();
+
+            expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+                spshPersonId: personId1,
+                newPrimaryEmail: email0.address,
+                newAlternativeEmail: undefined,
+                previousPrimaryEmail: email0.address,
+                previousAlternativeEmail: email1.address,
+            });
         });
     });
 });
