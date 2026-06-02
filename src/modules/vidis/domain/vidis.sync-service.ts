@@ -23,13 +23,14 @@ import { IPersonPermissions } from '../../../shared/permissions/person-permissio
 import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
 import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { ServerConfig, VidisConfig } from '../../../shared/config/index.js';
+import { ConfigService } from '@nestjs/config';
 
 type VidisSchoolActivatedAngebot = {
 	angebot: VidisServiceResponseAngebot;
 	date: string;
 };
 
-const SCHOOLS_PAGE_SIZE: number = 100;
 const PNG_FILE_SIGNATURE: Buffer = Buffer.from('89504e470d0a1a0a', 'hex');
 const JPEG_FILE_SIGNATURE: Buffer = Buffer.from('ffd8ff', 'hex');
 const WEBP_RIFF_SIGNATURE: Buffer = Buffer.from('RIFF');
@@ -49,6 +50,7 @@ type DecodedVidisLogo = {
 @Injectable()
 export class VidisSyncService {
 
+	private readonly vidisConfig: VidisConfig;
 
 	public constructor(
 		private readonly vidisApiService: VidisApiService,
@@ -57,7 +59,11 @@ export class VidisSyncService {
 		private readonly escalatedPersonPermissionsFactory: EscalatedPersonPermissionsFactory,
 		private readonly rollenerweiterungRepo: RollenerweiterungRepo,
 		private readonly logger: ClassLogger,
-	) {}
+		configService: ConfigService<ServerConfig>,
+	) {
+		this.vidisConfig = configService.getOrThrow<VidisConfig>('VIDIS');
+	}
+
 
 	public async sync(): Promise<void> {
 		const activatedAngebote: Result<VidisAngebotWithSchoolActivations[], VidisDomainError> =
@@ -73,6 +79,44 @@ export class VidisSyncService {
 		]);
 
 		await this.syncSchoolsPage(activatedAngebote.value, 0, permissions);
+	}
+
+	private async syncSchoolsPage(
+		activatedAngebote: VidisAngebotWithSchoolActivations[],
+		schoolOffset: number,
+		permissions: IPersonPermissions
+	): Promise<void> {
+		const [schools, total]: Counted<Organisation<true>> = await this.organisationRepo.findBy(
+			new OrganisationScope().findBy({
+				typ: 'SCHULE',
+			}).paged(schoolOffset, this.vidisConfig.SYNC_SCHOOLS_PAGE_SIZE),
+		);
+
+		if (schools.length === 0) {
+			return;
+		}
+
+
+		const organisationIdByKennung: VidisOrganisationIdByKennung = this.mapOrganisationIdsByKennung(schools);
+		const angeboteByOrganisationId: VidisAngeboteByOrganisationId = this.groupAngeboteByOrganisationId(
+			activatedAngebote,
+			organisationIdByKennung,
+		);
+		const vidisAngeboteForSchools: ServiceProvider<true>[] =await this.serviceProviderRepo.findVidisAngeboteforSchools(Object.values(organisationIdByKennung));
+
+		await Promise.all(
+			Object.keys(angeboteByOrganisationId).map((organisationId: string) => {
+				const angebote: VidisSchoolActivatedAngebot[] = angeboteByOrganisationId[organisationId] ?? [];
+				return this.syncForSchoolInternal(organisationId, angebote, vidisAngeboteForSchools.filter((sp: ServiceProvider<true>) => sp.providedOnSchulstrukturknoten === organisationId), permissions);
+			}),
+		);
+
+		const nextSchoolOffset: number = schoolOffset + this.vidisConfig.SYNC_SCHOOLS_PAGE_SIZE;
+		if (nextSchoolOffset >= total) {
+			return;
+		}
+
+		return this.syncSchoolsPage(activatedAngebote, nextSchoolOffset, permissions);
 	}
 
 	private syncForSchoolInternal(
@@ -254,44 +298,6 @@ export class VidisSyncService {
 			},
 			{},
 		);
-	}
-
-	private async syncSchoolsPage(
-		activatedAngebote: VidisAngebotWithSchoolActivations[],
-		schoolOffset: number,
-		permissions: IPersonPermissions
-	): Promise<void> {
-		const [schools, total]: Counted<Organisation<true>> = await this.organisationRepo.findBy(
-			new OrganisationScope().findBy({
-				typ: 'SCHULE',
-			}).paged(schoolOffset, SCHOOLS_PAGE_SIZE),
-		);
-
-		if (schools.length === 0) {
-			return;
-		}
-
-
-		const organisationIdByKennung: VidisOrganisationIdByKennung = this.mapOrganisationIdsByKennung(schools);
-		const angeboteByOrganisationId: VidisAngeboteByOrganisationId = this.groupAngeboteByOrganisationId(
-			activatedAngebote,
-			organisationIdByKennung,
-		);
-		const vidisAngeboteForSchools: ServiceProvider<true>[] =await this.serviceProviderRepo.findVidisAngeboteforSchools(Object.values(organisationIdByKennung));
-
-		await Promise.all(
-			Object.keys(angeboteByOrganisationId).map((organisationId: string) => {
-				const angebote: VidisSchoolActivatedAngebot[] = angeboteByOrganisationId[organisationId] ?? [];
-				return this.syncForSchoolInternal(organisationId, angebote, vidisAngeboteForSchools.filter((sp: ServiceProvider<true>) => sp.providedOnSchulstrukturknoten === organisationId), permissions);
-			}),
-		);
-
-		const nextSchoolOffset: number = schoolOffset + SCHOOLS_PAGE_SIZE;
-		if (nextSchoolOffset >= total) {
-			return;
-		}
-
-		return this.syncSchoolsPage(activatedAngebote, nextSchoolOffset, permissions);
 	}
 
 	private groupAngeboteByOrganisationId(

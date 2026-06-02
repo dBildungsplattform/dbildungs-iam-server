@@ -18,7 +18,7 @@ import { OrganisationServiceProviderRepo } from './repo/organisation-service-pro
         KeycloakAdministrationModule,
         EventModule,
         forwardRef(() => RolleModule),
-        VidisModule,
+        forwardRef(() => VidisModule),
         OrganisationModule,
     ],
     providers: [

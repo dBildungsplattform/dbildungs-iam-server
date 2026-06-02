@@ -87,6 +87,8 @@ describe('configloader', () => {
                     BASE_URL: 'dummy-url',
                     CLIENT_ID: 'dummy-username',
                     CLIENT_SECRET: 'dummy-password',
+                    SYNC_SCHOOLS_PAGE_SIZE:1000,
+                    REGION: 'Schleswig-Holstein'
                 },
                 OX: {
                     ENABLED: true,
