@@ -20,6 +20,7 @@
         "DB_NAME": "dbildungs-iam-server",
         "USERNAME": "admin",
         "PASSWORD": "password",
+        "SECRET": "password",
         "USE_SSL": false
     },
     "KEYCLOAK": {
