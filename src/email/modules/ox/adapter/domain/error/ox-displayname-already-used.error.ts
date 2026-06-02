@@ -1,4 +1,4 @@
-import { OxNonRetryableError } from '../../../../../../modules/ox/adapter/domain/error/ox-non-retryable.error.js';
+import { OxNonRetryableError } from './ox-non-retryable.error.js';
 
 export class OxDisplaynameAlreadyUsedError extends OxNonRetryableError {
     public constructor(message: string, details?: unknown[] | Record<string, unknown>) {
