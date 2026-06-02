@@ -6,22 +6,28 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/index.js';
-import { OxService } from './ox.service.js';
-import { CreateUserAction, CreateUserResponse } from '../actions/user/create-user.action.js';
+import { OxSendService } from '../adapter/technical/ox.send-service.js';
+import { CreateUserAction, CreateUserResponse } from '../adapter/technical/actions/user/create-user.action.js';
 import { OrganisationKennung, PersonID, PersonUsername } from '../../../shared/types/index.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
-import { ExistsUserAction, ExistsUserResponse } from '../actions/user/exists-user.action.js';
+import { ExistsUserAction, ExistsUserResponse } from '../adapter/technical/actions/user/exists-user.action.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { OXGroupID, OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
-import { ChangeUserAction } from '../actions/user/change-user.action.js';
-import { GetDataForUserAction, GetDataForUserResponse } from '../actions/user/get-data-user.action.js';
+import { ChangeUserAction } from '../adapter/technical/actions/user/change-user.action.js';
+import {
+    GetDataForUserAction,
+    GetDataForUserResponse,
+} from '../adapter/technical/actions/user/get-data-user.action.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
-import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/group/add-member-to-group.action.js';
-import { ChangeByModuleAccessAction } from '../actions/user/change-by-module-access.action.js';
+import {
+    AddMemberToGroupAction,
+    AddMemberToGroupResponse,
+} from '../adapter/technical/actions/group/add-member-to-group.action.js';
+import { ChangeByModuleAccessAction } from '../adapter/technical/actions/user/change-by-module-access.action.js';
 import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email/email-address-already-exists.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
@@ -34,7 +40,7 @@ import { EntityManager } from '@mikro-orm/core';
 import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
 import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
-import { DeleteUserAction } from '../actions/user/delete-user.action.js';
+import { DeleteUserAction } from '../adapter/technical/actions/user/delete-user.action.js';
 import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
 import { OxAccountDeletedEvent } from '../../../shared/events/ox/ox-account-deleted.event.js';
 import { KafkaEmailAddressChangedEvent } from '../../../shared/events/email/kafka-email-address-changed.event.js';
@@ -49,7 +55,7 @@ import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kaf
 import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
-import { OxNoSuchUserError } from '../error/ox-no-such-user.error.js';
+import { OxNoSuchUserError } from '../adapter/domain/error/ox-no-such-user.error.js';
 import {
     generateDisabledOxUserChangedEvent,
     generateOxSyncUserCreatedEvent,
@@ -57,9 +63,9 @@ import {
     generateOxUserCreatedEvent,
     OxUserChangedEventCreator,
     OxUserCreatedEventCreator,
-    OxEventService,
-} from './ox-event.service.js';
-import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
+    OxAdapter,
+} from '../adapter/domain/ox.adapter.js';
+import { OxMemberAlreadyInGroupError } from '../adapter/domain/error/ox-member-already-in-group.error.js';
 import { EmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/email-address-generated-after-ldap-sync-failed.event.js';
 import { KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/kafka-email-address-generated-after-ldap-sync-failed.event.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
@@ -76,8 +82,8 @@ export class OxEventHandler {
     public constructor(
         protected readonly logger: ClassLogger,
         protected readonly emailResolverService: EmailResolverService,
-        protected readonly oxService: OxService,
-        protected readonly oxEventService: OxEventService,
+        protected readonly oxService: OxSendService,
+        protected readonly oxEventService: OxAdapter,
         protected readonly oxSyncEventHandler: OxSyncEventHandler,
         protected readonly emailRepo: EmailRepo,
         protected readonly personRepository: PersonRepository,
@@ -246,11 +252,11 @@ export class OxEventHandler {
         /* eslint-disable no-await-in-loop */
         for (const pk of rollenArtLehrPKs) {
             const oxGroupId: OXGroupID | DomainError = await this.oxEventService.getOxGroupByName(
-                OxEventService.LEHRER_OX_GROUP_NAME_PREFIX + pk.orgaKennung,
+                OxAdapter.LEHRER_OX_GROUP_NAME_PREFIX + pk.orgaKennung,
             );
             if (oxGroupId instanceof DomainError) {
                 return this.logger.error(
-                    `Could Not Get OxGroupId For oxGroupName:${OxEventService.LEHRER_OX_GROUP_NAME_PREFIX + pk.orgaKennung}`,
+                    `Could Not Get OxGroupId For oxGroupName:${OxAdapter.LEHRER_OX_GROUP_NAME_PREFIX + pk.orgaKennung}`,
                 );
             }
             //Logging is done in removeOxUserFromOxGroup
@@ -621,8 +627,8 @@ export class OxEventHandler {
         }
 
         const oxGroupId: Result<OXGroupID> = await this.oxEventService.getExistingOxGroupByNameOrCreateOxGroup(
-            OxEventService.LEHRER_OX_GROUP_NAME_PREFIX + orgaKennung,
-            OxEventService.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + orgaKennung,
+            OxAdapter.LEHRER_OX_GROUP_NAME_PREFIX + orgaKennung,
+            OxAdapter.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + orgaKennung,
         );
         if (!oxGroupId.ok) {
             mostRecentRequestedEmailAddress.failed();

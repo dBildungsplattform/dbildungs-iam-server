@@ -7,19 +7,19 @@ import { EmailAddressRepo } from '../persistence/email-address.repo.js';
 import { DeleteEmailsAddressesForSpshPersonService } from './delete-email-adresses-for-spsh-person.service.js';
 import { EmailAddress } from './email-address.js';
 import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
-import { OxService } from '../../ox/domain/ox.service.js';
-import { LdapClientService } from '../../ldap/domain/ldap-client.service.js';
+import { OxAdapter } from '../../ox/adapter/domain/ox.adapter.js';
+import { LdapClientAdapter } from '../../ldap/adapter/domain/ldap-client.adapter.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { Ok, Err } from '../../../../shared/util/result.js';
-import { OxNoSuchUserError } from '../../ox/error/ox-no-such-user.error.js';
+import { OxNoSuchUserError } from '../../ox/adapter/domain/error/ox-no-such-user.error.js';
 import { WebhookService } from '../../webhook/domain/webhook.service.js';
 
 describe('DeleteEmailsAddressesForSpshPersonService', () => {
     let module: TestingModule;
     let sut: DeleteEmailsAddressesForSpshPersonService;
     let emailAddressRepoMock: DeepMocked<EmailAddressRepo>;
-    let oxServiceMock: DeepMocked<OxService>;
-    let ldapClientServiceMock: DeepMocked<LdapClientService>;
+    let oxServiceMock: DeepMocked<OxAdapter>;
+    let ldapClientServiceMock: DeepMocked<LdapClientAdapter>;
     let loggerMock: DeepMocked<ClassLogger>;
     let webhookServiceMock: DeepMocked<WebhookService>;
 
@@ -33,12 +33,12 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
                     useValue: createMock(EmailAddressRepo),
                 },
                 {
-                    provide: OxService,
-                    useValue: createMock(OxService),
+                    provide: OxAdapter,
+                    useValue: createMock(OxAdapter),
                 },
                 {
-                    provide: LdapClientService,
-                    useValue: createMock(LdapClientService),
+                    provide: LdapClientAdapter,
+                    useValue: createMock(LdapClientAdapter),
                 },
                 {
                     provide: WebhookService,
@@ -52,8 +52,8 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
 
         sut = module.get(DeleteEmailsAddressesForSpshPersonService);
         emailAddressRepoMock = module.get(EmailAddressRepo);
-        oxServiceMock = module.get(OxService);
-        ldapClientServiceMock = module.get(LdapClientService);
+        oxServiceMock = module.get(OxAdapter);
+        ldapClientServiceMock = module.get(LdapClientAdapter);
         loggerMock = module.get(ClassLogger);
         webhookServiceMock = module.get(WebhookService);
     });

@@ -18,10 +18,13 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { Person } from '../../person/domain/person.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
-import { PersonResponse } from '../actions/read-person.action.js';
-import { ItslearningMembershipRepo, SetMembershipsResult } from '../repo/itslearning-membership.repo.js';
-import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
-import { IMSESInstitutionRoleType } from '../types/role.enum.js';
+import { PersonResponse } from '../adapter/technical/actions/read-person.action.js';
+import {
+    ItslearningMembershipAdapter,
+    SetMembershipsResult,
+} from '../adapter/domain/itslearning-membership.adapter.js';
+import { ItslearningPersonAdapter } from '../adapter/domain/itslearning-person.adapter.js';
+import { IMSESInstitutionRoleType } from '../adapter/domain/role.enum.js';
 import { ItsLearningPersonsEventHandler } from './itslearning-persons.event-handler.js';
 import { EmailMicroserviceAddressChangedEvent } from '../../../shared/events/email-microservice/email-microservice-address-changed.event.js';
 import { Err, Ok } from '../../../shared/util/result.js';
@@ -43,8 +46,8 @@ describe('ItsLearning Persons Event Handler', () => {
     let module: TestingModule;
 
     let sut: ItsLearningPersonsEventHandler;
-    let itslearningPersonRepoMock: DeepMocked<ItslearningPersonRepo>;
-    let itslearningMembershipRepoMock: DeepMocked<ItslearningMembershipRepo>;
+    let itslearningPersonRepoMock: DeepMocked<ItslearningPersonAdapter>;
+    let itslearningMembershipRepoMock: DeepMocked<ItslearningMembershipAdapter>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -53,19 +56,19 @@ describe('ItsLearning Persons Event Handler', () => {
             providers: [
                 ItsLearningPersonsEventHandler,
                 {
-                    provide: ItslearningPersonRepo,
-                    useValue: createMock(ItslearningPersonRepo),
+                    provide: ItslearningPersonAdapter,
+                    useValue: createMock(ItslearningPersonAdapter),
                 },
                 {
-                    provide: ItslearningMembershipRepo,
-                    useValue: createMock(ItslearningMembershipRepo),
+                    provide: ItslearningMembershipAdapter,
+                    useValue: createMock(ItslearningMembershipAdapter),
                 },
             ],
         }).compile();
 
         sut = module.get(ItsLearningPersonsEventHandler);
-        itslearningPersonRepoMock = module.get(ItslearningPersonRepo);
-        itslearningMembershipRepoMock = module.get(ItslearningMembershipRepo);
+        itslearningPersonRepoMock = module.get(ItslearningPersonAdapter);
+        itslearningMembershipRepoMock = module.get(ItslearningMembershipAdapter);
         loggerMock = module.get(ClassLogger);
     });
 

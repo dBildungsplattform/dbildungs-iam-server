@@ -10,8 +10,8 @@ import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-its
 import { OrganisationsTyp, RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { CreateGroupParams } from '../actions/create-group.params.js';
-import { ItslearningGroupRepo } from '../repo/itslearning-group.repo.js';
+import { CreateGroupParams } from '../adapter/technical/actions/create-group.params.js';
+import { ItslearningGroupAdapter } from '../adapter/domain/itslearning-group.adapter.js';
 import { ItsLearningOrganisationsEventHandler } from './itslearning-organisations.event-handler.js';
 import { OrganisationDeletedEvent } from '../../../shared/events/organisation-deleted.event.js';
 import { DomainErrorMock } from '../../../../test/utils/error.mock.js';
@@ -21,7 +21,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
     let sut: ItsLearningOrganisationsEventHandler;
     let orgaRepoMock: DeepMocked<OrganisationRepository>;
-    let itslearningGroupRepoMock: DeepMocked<ItslearningGroupRepo>;
+    let itslearningGroupRepoMock: DeepMocked<ItslearningGroupAdapter>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -34,14 +34,14 @@ describe('ItsLearning Organisations Event Handler', () => {
                     useValue: createMock(OrganisationRepository),
                 },
                 {
-                    provide: ItslearningGroupRepo,
-                    useValue: createMock(ItslearningGroupRepo),
+                    provide: ItslearningGroupAdapter,
+                    useValue: createMock(ItslearningGroupAdapter),
                 },
             ],
         }).compile();
 
         sut = module.get(ItsLearningOrganisationsEventHandler);
-        itslearningGroupRepoMock = module.get(ItslearningGroupRepo);
+        itslearningGroupRepoMock = module.get(ItslearningGroupAdapter);
         orgaRepoMock = module.get(OrganisationRepository);
         loggerMock = module.get(ClassLogger);
     });

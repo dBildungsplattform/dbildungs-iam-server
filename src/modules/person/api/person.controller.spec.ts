@@ -10,7 +10,7 @@ import {
     DoFactory,
 } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
+import { LdapAdapter } from '../../../core/ldap/adapter/domain/ldap.adapter.js';
 import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
@@ -71,7 +71,7 @@ describe('PersonController', () => {
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let dBiamPersonenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
     let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
-    let ldapClientServiceMock: DeepMocked<LdapClientService>;
+    let ldapClientServiceMock: DeepMocked<LdapAdapter>;
 
     const rootOrgaId: string = faker.string.uuid();
     const configServiceMock: DeepMocked<ConfigService> = createMock(ConfigService);
@@ -145,8 +145,8 @@ describe('PersonController', () => {
                     useValue: createMock(EmailRepo),
                 },
                 {
-                    provide: LdapClientService,
-                    useValue: createMock(LdapClientService),
+                    provide: LdapAdapter,
+                    useValue: createMock(LdapAdapter),
                 },
                 {
                     provide: LdapSyncEventHandler,
@@ -174,7 +174,7 @@ describe('PersonController', () => {
         keycloakUserService = module.get(KeycloakUserService);
         dBiamPersonenkontextServiceMock = module.get(DBiamPersonenkontextService);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
-        ldapClientServiceMock = module.get(LdapClientService);
+        ldapClientServiceMock = module.get(LdapAdapter);
         personLandesbediensteterSearchServiceMock = module.get(PersonLandesbediensteterSearchService);
     });
 

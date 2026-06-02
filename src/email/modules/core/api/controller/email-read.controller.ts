@@ -13,7 +13,7 @@ import { EmailAddressResponse } from '../dtos/response/email-address.response.js
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { Public } from '../../decorator/public.decorator.js';
 import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
-import { OxService } from '../../../ox/domain/ox.service.js';
+import { OxAdapter } from '../../../ox/adapter/domain/ox.adapter.js';
 import { FindEmailAddressPathParams } from '../dtos/params/find-email-address.pathparams.js';
 import { EmailAddressNotFoundError } from '../../error/email-address-not-found.error.js';
 import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
@@ -33,7 +33,7 @@ export class EmailReadController {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly emailAddressRepo: EmailAddressRepo,
-        private readonly oxService: OxService,
+        private readonly oxService: OxAdapter,
     ) {}
 
     @Get('spshperson/:spshPersonId')

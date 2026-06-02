@@ -16,11 +16,11 @@ import {
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
-import { PersonResponse } from '../actions/read-person.action.js';
-import { ItslearningMembershipRepo } from '../repo/itslearning-membership.repo.js';
-import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
-import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../repo/role-utils.js';
-import { IMSESInstitutionRoleType } from '../types/role.enum.js';
+import { PersonResponse } from '../adapter/technical/actions/read-person.action.js';
+import { ItslearningMembershipAdapter } from '../adapter/domain/itslearning-membership.adapter.js';
+import { ItslearningPersonAdapter } from '../adapter/domain/itslearning-person.adapter.js';
+import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../adapter/domain/role-utils.js';
+import { IMSESInstitutionRoleType } from '../adapter/domain/role.enum.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
@@ -39,8 +39,8 @@ export class ItsLearningPersonsEventHandler {
 
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly itslearningPersonRepo: ItslearningPersonRepo,
-        private readonly itslearningMembershipRepo: ItslearningMembershipRepo,
+        private readonly itslearningPersonRepo: ItslearningPersonAdapter,
+        private readonly itslearningMembershipRepo: ItslearningMembershipAdapter,
         configService: ConfigService<ServerConfig>,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally

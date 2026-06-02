@@ -31,11 +31,11 @@ import { Ok } from '../../../shared/util/result.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { LdapSearchError } from '../error/ldap-search.error.js';
+import { LdapSearchError } from '../adapter/domain/error/ldap-search.error.js';
 import { LdapModule } from '../ldap.module.js';
-import { LdapClientService, PersonData } from './ldap-client.service.js';
+import { LdapAdapter, PersonData } from '../adapter/domain/ldap.adapter.js';
 import { LdapEventHandler } from './ldap-event-handler.js';
-import { LdapEntityType } from './ldap.types.js';
+import { LdapEntityType } from '../adapter/domain/ldap.types.js';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
@@ -45,7 +45,7 @@ describe('LdapEventHandler', () => {
     let orm: MikroORM;
 
     let ldapEventHandler: LdapEventHandler;
-    let ldapClientServiceMock: DeepMocked<LdapClientService>;
+    let ldapClientServiceMock: DeepMocked<LdapAdapter>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
@@ -64,8 +64,8 @@ describe('LdapEventHandler', () => {
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock(ClassLogger))
-            .overrideProvider(LdapClientService)
-            .useValue(createMock(LdapClientService))
+            .overrideProvider(LdapAdapter)
+            .useValue(createMock(LdapAdapter))
             .overrideProvider(PersonRepository)
             .useValue(createMock(PersonRepository))
             .overrideProvider(PersonenkontextFactory)
@@ -83,7 +83,7 @@ describe('LdapEventHandler', () => {
         orm = module.get(MikroORM);
 
         ldapEventHandler = module.get(LdapEventHandler);
-        ldapClientServiceMock = module.get(LdapClientService);
+        ldapClientServiceMock = module.get(LdapAdapter);
         organisationRepositoryMock = module.get(OrganisationRepository);
         personRepositoryMock = module.get(PersonRepository);
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);

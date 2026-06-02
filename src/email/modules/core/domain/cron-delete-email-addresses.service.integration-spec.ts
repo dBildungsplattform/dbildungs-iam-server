@@ -8,9 +8,9 @@ import { EmailConfigTestModule } from '../../../../../test/utils/email-config-te
 import { LoggingTestModule } from '../../../../../test/utils/logging-test.module.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../../test/utils/timeouts.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
-import { LdapClientService } from '../../ldap/domain/ldap-client.service.js';
-import { OxSendService } from '../../ox/domain/ox-send.service.js';
-import { OxService } from '../../ox/domain/ox.service.js';
+import { LdapClientAdapter } from '../../ldap/adapter/domain/ldap-client.adapter.js';
+import { OxSendService } from '../../ox/adapter/technical/ox-send.service.js';
+import { OxAdapter } from '../../ox/adapter/domain/ox.adapter.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
 import { EmailDomainRepo } from '../persistence/email-domain.repo.js';
 import { EmailAddressGenerator } from './email-address-generator.js';
@@ -33,8 +33,8 @@ describe('CronDeleteEmailsAddressesService', () => {
     let emailAddressRepo: EmailAddressRepo;
     let emailDomainRepo: EmailDomainRepo;
     let oxSendServiceMock: DeepMocked<OxSendService>;
-    let ldapClientServiceMock: DeepMocked<LdapClientService>;
-    let oxServiceMock: DeepMocked<OxService>;
+    let ldapClientServiceMock: DeepMocked<LdapClientAdapter>;
+    let oxServiceMock: DeepMocked<OxAdapter>;
     let webhookServiceMock: DeepMocked<WebhookService>;
 
     beforeAll(async () => {
@@ -57,16 +57,16 @@ describe('CronDeleteEmailsAddressesService', () => {
                     useValue: createMock(EmailAddressGenerator),
                 },
                 {
-                    provide: OxService,
-                    useValue: createMock(OxService),
+                    provide: OxAdapter,
+                    useValue: createMock(OxAdapter),
                 },
                 {
                     provide: OxSendService,
                     useValue: createMock(OxSendService),
                 },
                 {
-                    provide: LdapClientService,
-                    useValue: createMock(LdapClientService),
+                    provide: LdapClientAdapter,
+                    useValue: createMock(LdapClientAdapter),
                 },
                 {
                     provide: WebhookService,
@@ -81,8 +81,8 @@ describe('CronDeleteEmailsAddressesService', () => {
         emailAddressRepo = module.get(EmailAddressRepo);
         emailDomainRepo = module.get(EmailDomainRepo);
         oxSendServiceMock = module.get(OxSendService);
-        ldapClientServiceMock = module.get(LdapClientService);
-        oxServiceMock = module.get(OxService);
+        ldapClientServiceMock = module.get(LdapClientAdapter);
+        oxServiceMock = module.get(OxAdapter);
         deleteEmailsAddressesForSpshPersonServiceMock = module.get(DeleteEmailsAddressesForSpshPersonService);
         webhookServiceMock = module.get(WebhookService);
 

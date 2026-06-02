@@ -19,7 +19,7 @@ import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
-import { VidisApiService } from '../../vidis/domain/vidis.api-service.js';
+import { VidisApiAdapter } from '../../vidis/adapter/domain/vidis-api.adapter.js';
 import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
@@ -62,7 +62,7 @@ describe('ServiceProviderService', () => {
                 { provide: RollenerweiterungRepo, useValue: createMock(RollenerweiterungRepo) },
                 { provide: ServiceProviderRepo, useValue: createMock(ServiceProviderRepo) },
                 { provide: OrganisationRepository, useValue: createMock(OrganisationRepository) },
-                { provide: VidisApiService, useValue: createMock(VidisApiService) },
+                { provide: VidisApiAdapter, useValue: createMock(VidisApiAdapter) },
                 { provide: OrganisationServiceProviderRepo, useValue: createMock(OrganisationServiceProviderRepo) },
             ],
         }).compile();

@@ -20,10 +20,10 @@ import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-its
 import { OrganisationsTyp, RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { CreateGroupParams } from '../actions/create-group.params.js';
-import { UpdateGroupParams } from '../actions/update-group.action.js';
-import { ItslearningGroupRepo } from '../repo/itslearning-group.repo.js';
-import { ItslearningGroupLengthLimits } from '../types/groups.enum.js';
+import { CreateGroupParams } from '../adapter/technical/actions/create-group.params.js';
+import { UpdateGroupParams } from '../adapter/technical/actions/update-group.action.js';
+import { ItslearningGroupAdapter } from '../adapter/domain/itslearning-group.adapter.js';
+import { ItslearningGroupLengthLimits } from '../adapter/domain/groups.enum.js';
 
 const SAFE_NAME_LIMIT: number = Math.floor(ItslearningGroupLengthLimits.SHORT_DESC * 0.75);
 
@@ -36,7 +36,7 @@ export class ItsLearningOrganisationsEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly organisationRepo: OrganisationRepository,
-        private readonly itslearningGroupRepo: ItslearningGroupRepo,
+        private readonly itslearningGroupRepo: ItslearningGroupAdapter,
         configService: ConfigService<ServerConfig>,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally

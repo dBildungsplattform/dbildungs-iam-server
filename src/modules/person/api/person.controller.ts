@@ -34,7 +34,7 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
+import { LdapAdapter } from '../../../core/ldap/adapter/domain/ldap.adapter.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
@@ -99,7 +99,7 @@ export class PersonController {
         private readonly logger: ClassLogger,
         private keycloakUserService: KeycloakUserService,
         private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
-        private readonly ldapClientService: LdapClientService,
+        private readonly ldapClientService: LdapAdapter,
         private readonly personApiMapper: PersonApiMapper,
         private readonly eventService: EventRoutingLegacyKafkaService,
         config: ConfigService<ServerConfig>,

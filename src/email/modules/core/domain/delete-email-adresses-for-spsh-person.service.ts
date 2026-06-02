@@ -2,20 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
 import { EmailAddress } from './email-address.js';
 import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
-import { OxService } from '../../ox/domain/ox.service.js';
+import { OxAdapter } from '../../ox/adapter/domain/ox.adapter.js';
 import { OXUserID } from '../../../../shared/types/ox-ids.types.js';
-import { LdapClientService } from '../../ldap/domain/ldap-client.service.js';
+import { LdapClientAdapter } from '../../ldap/adapter/domain/ldap-client.adapter.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { OxNoSuchUserError } from '../../ox/error/ox-no-such-user.error.js';
+import { OxNoSuchUserError } from '../../ox/adapter/domain/error/ox-no-such-user.error.js';
 import { WebhookService } from '../../webhook/domain/webhook.service.js';
 
 @Injectable()
 export class DeleteEmailsAddressesForSpshPersonService {
     public constructor(
         private readonly emailAddressRepo: EmailAddressRepo,
-        private readonly oxService: OxService,
+        private readonly oxService: OxAdapter,
         private readonly logger: ClassLogger,
-        private readonly ldapClientService: LdapClientService,
+        private readonly ldapClientService: LdapClientAdapter,
         private readonly webhookService: WebhookService,
     ) {}
     public async deleteEmailAddressesForSpshPerson(params: { spshPersonId: string }): Promise<void> {

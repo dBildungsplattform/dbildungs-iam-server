@@ -10,9 +10,9 @@ import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../../test/utils/ti
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { Err, Ok } from '../../../../shared/util/result.js';
-import { LdapClientService, PersonData } from '../../ldap/domain/ldap-client.service.js';
-import { OxSendService } from '../../ox/domain/ox-send.service.js';
-import { OxService } from '../../ox/domain/ox.service.js';
+import { LdapClientAdapter, PersonData } from '../../ldap/adapter/domain/ldap-client.adapter.js';
+import { OxSendService } from '../../ox/adapter/technical/ox-send.service.js';
+import { OxAdapter } from '../../ox/adapter/domain/ox.adapter.js';
 import { SetEmailAddressForSpshPersonBodyParams } from '../api/dtos/params/set-email-address-for-spsh-person.bodyparams.js';
 import { EmailAddressGenerationAttemptsExceededError } from '../error/email-address-generation-attempts-exceeds.error.js';
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
@@ -26,7 +26,7 @@ import { EmailDomain } from './email-domain.js';
 import { SetEmailAddressForSpshPersonService } from './set-email-address-for-spsh-person.service.js';
 import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
 import { OxError } from '../../../../shared/error/ox.error.js';
-import { OxPrimaryMailAlreadyExistsError } from '../../ox/error/ox-primary-mail-already-exists.error.js';
+import { OxPrimaryMailAlreadyExistsError } from '../../ox/adapter/domain/error/ox-primary-mail-already-exists.error.js';
 import { expectOkResult } from '../../../../../test/utils/test-types.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { SetEmailAddressForSpshPersonPathParams } from '../api/dtos/params/set-email-address-for-spsh-person.pathparams.js';
@@ -43,8 +43,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
     let loggerMock: DeepMocked<ClassLogger>;
     let emailAddressGeneratorMock: DeepMocked<EmailAddressGenerator>;
     let oxSendServiceMock: DeepMocked<OxSendService>;
-    let ldapClientServiceMock: DeepMocked<LdapClientService>;
-    let oxServiceMock: DeepMocked<OxService>;
+    let ldapClientServiceMock: DeepMocked<LdapClientAdapter>;
+    let oxServiceMock: DeepMocked<OxAdapter>;
     let webhookServiceMock: DeepMocked<WebhookService>;
 
     beforeAll(async () => {
@@ -63,16 +63,16 @@ describe('SetEmailAddressForSpshPersonService', () => {
                     useValue: createMock(EmailAddressGenerator),
                 },
                 {
-                    provide: OxService,
-                    useValue: createMock(OxService),
+                    provide: OxAdapter,
+                    useValue: createMock(OxAdapter),
                 },
                 {
                     provide: OxSendService,
                     useValue: createMock(OxSendService),
                 },
                 {
-                    provide: LdapClientService,
-                    useValue: createMock(LdapClientService),
+                    provide: LdapClientAdapter,
+                    useValue: createMock(LdapClientAdapter),
                 },
                 {
                     provide: WebhookService,
@@ -90,8 +90,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
         loggerMock = module.get(ClassLogger);
         emailAddressGeneratorMock = module.get(EmailAddressGenerator);
         oxSendServiceMock = module.get(OxSendService);
-        ldapClientServiceMock = module.get(LdapClientService);
-        oxServiceMock = module.get(OxService);
+        ldapClientServiceMock = module.get(LdapClientAdapter);
+        oxServiceMock = module.get(OxAdapter);
         webhookServiceMock = module.get(WebhookService);
 
         await DatabaseTestModule.setupDatabase(orm);

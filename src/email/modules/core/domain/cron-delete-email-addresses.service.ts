@@ -4,11 +4,11 @@ import { EmailAddressRepo } from '../persistence/email-address.repo.js';
 import { EmailAddress } from './email-address.js';
 import { DeleteEmailsAddressesForSpshPersonService } from './delete-email-adresses-for-spsh-person.service.js';
 import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
-import { OxService } from '../../ox/domain/ox.service.js';
-import { OxSendService } from '../../ox/domain/ox-send.service.js';
+import { OxAdapter } from '../../ox/adapter/domain/ox.adapter.js';
+import { OxSendService } from '../../ox/adapter/technical/ox-send.service.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { OXUserID } from '../../../../shared/types/ox-ids.types.js';
-import { LdapClientService } from '../../ldap/domain/ldap-client.service.js';
+import { LdapClientAdapter } from '../../ldap/adapter/domain/ldap-client.adapter.js';
 import { WebhookService } from '../../webhook/domain/webhook.service.js';
 
 @Injectable()
@@ -17,9 +17,9 @@ export class CronDeleteEmailsAddressesService {
         private readonly logger: ClassLogger,
         private readonly emailAddressRepo: EmailAddressRepo,
         private readonly deleteEmailsAddressesForSpshPersonService: DeleteEmailsAddressesForSpshPersonService,
-        private readonly oxService: OxService,
+        private readonly oxService: OxAdapter,
         private readonly oxSendService: OxSendService,
-        private readonly ldapClientService: LdapClientService,
+        private readonly ldapClientService: LdapClientAdapter,
         private readonly webhookService: WebhookService,
     ) {}
     public async deleteEmailAddresses(): Promise<void> {

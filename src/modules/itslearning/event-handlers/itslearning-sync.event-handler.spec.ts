@@ -18,9 +18,12 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ItslearningMembershipRepo, SetMembershipsResult } from '../repo/itslearning-membership.repo.js';
-import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
-import { rollenartToIMSESInstitutionRole } from '../repo/role-utils.js';
+import {
+    ItslearningMembershipAdapter,
+    SetMembershipsResult,
+} from '../adapter/domain/itslearning-membership.adapter.js';
+import { ItslearningPersonAdapter } from '../adapter/domain/itslearning-person.adapter.js';
+import { rollenartToIMSESInstitutionRole } from '../adapter/domain/role-utils.js';
 import { ItsLearningSyncEventHandler } from './itslearning-sync.event-handler.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
@@ -29,8 +32,8 @@ describe('ItsLearning Persons Event Handler', () => {
     let module: TestingModule;
 
     let sut: ItsLearningSyncEventHandler;
-    let itslearningPersonRepoMock: DeepMocked<ItslearningPersonRepo>;
-    let itslearningMembershipRepoMock: DeepMocked<ItslearningMembershipRepo>;
+    let itslearningPersonRepoMock: DeepMocked<ItslearningPersonAdapter>;
+    let itslearningMembershipRepoMock: DeepMocked<ItslearningMembershipAdapter>;
     let personRepoMock: DeepMocked<PersonRepository>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -48,12 +51,12 @@ describe('ItsLearning Persons Event Handler', () => {
                     useValue: createMock(EmailResolverService),
                 },
                 {
-                    provide: ItslearningPersonRepo,
-                    useValue: createMock(ItslearningPersonRepo),
+                    provide: ItslearningPersonAdapter,
+                    useValue: createMock(ItslearningPersonAdapter),
                 },
                 {
-                    provide: ItslearningMembershipRepo,
-                    useValue: createMock(ItslearningMembershipRepo),
+                    provide: ItslearningMembershipAdapter,
+                    useValue: createMock(ItslearningMembershipAdapter),
                 },
                 {
                     provide: PersonRepository,
@@ -76,8 +79,8 @@ describe('ItsLearning Persons Event Handler', () => {
 
         sut = module.get(ItsLearningSyncEventHandler);
         emailResolverServiceMock = module.get(EmailResolverService);
-        itslearningPersonRepoMock = module.get(ItslearningPersonRepo);
-        itslearningMembershipRepoMock = module.get(ItslearningMembershipRepo);
+        itslearningPersonRepoMock = module.get(ItslearningPersonAdapter);
+        itslearningMembershipRepoMock = module.get(ItslearningMembershipAdapter);
         personRepoMock = module.get(PersonRepository);
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         rolleRepoMock = module.get(RolleRepo);

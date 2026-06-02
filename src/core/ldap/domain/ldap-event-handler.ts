@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EventHandler } from '../../eventbus/decorators/event-handler.decorator.js';
-import { LdapClientService, PersonData } from './ldap-client.service.js';
+import { LdapAdapter, PersonData } from '../adapter/domain/ldap.adapter.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
@@ -8,7 +8,7 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { OrganisationID, PersonID, PersonUsername } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
-import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
+import { LdapEmailDomainError } from '../adapter/domain/error/ldap-email-domain.error.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
 import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
@@ -32,7 +32,7 @@ import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/
 import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/kafka-person-deleted-after-deadline-exceeded.event.js';
 import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-renamed.event.js';
 import { KafkaLdapEntryDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-entry-deleted.event.js';
-import { LdapDeleteLehrerError } from '../error/ldap-delete-lehrer.error.js';
+import { LdapDeleteLehrerError } from '../adapter/domain/error/ldap-delete-lehrer.error.js';
 import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
 import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
@@ -53,7 +53,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 export class LdapEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly ldapClientService: LdapClientService,
+        private readonly ldapClientService: LdapAdapter,
         private readonly organisationRepository: OrganisationRepository,
         private readonly personRepo: PersonRepository,
         private readonly dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,

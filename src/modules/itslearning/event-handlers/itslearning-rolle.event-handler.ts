@@ -19,14 +19,14 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { FailureStatusInfo, MassResult } from '../actions/base-mass-action.js';
-import { CreateMembershipParams } from '../actions/create-memberships.action.js';
-import { CreatePersonParams } from '../actions/create-person.action.js';
-import { ItslearningMembershipRepo } from '../repo/itslearning-membership.repo.js';
-import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
-import { rollenartToIMSESInstitutionRole, rollenartToIMSESRole } from '../repo/role-utils.js';
-import { IMSESInstitutionRoleType, IMSESRoleType } from '../types/role.enum.js';
-import { StatusInfoHelpers } from '../utils/status-info.utils.js';
+import { FailureStatusInfo, MassResult } from '../adapter/technical/actions/base-mass-action.js';
+import { CreateMembershipParams } from '../adapter/technical/actions/create-memberships.action.js';
+import { CreatePersonParams } from '../adapter/technical/actions/create-person.action.js';
+import { ItslearningMembershipAdapter } from '../adapter/domain/itslearning-membership.adapter.js';
+import { ItslearningPersonAdapter } from '../adapter/domain/itslearning-person.adapter.js';
+import { rollenartToIMSESInstitutionRole, rollenartToIMSESRole } from '../adapter/domain/role-utils.js';
+import { IMSESInstitutionRoleType, IMSESRoleType } from '../adapter/domain/role.enum.js';
+import { StatusInfoHelpers } from '../adapter/technical/utils/status-info.utils.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
@@ -43,8 +43,8 @@ export class ItsLearningRolleEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
 
-        private readonly itslearningPersonRepo: ItslearningPersonRepo,
-        private readonly itslearningMembershipRepo: ItslearningMembershipRepo,
+        private readonly itslearningPersonRepo: ItslearningPersonAdapter,
+        private readonly itslearningMembershipRepo: ItslearningMembershipAdapter,
 
         private readonly personRepo: PersonRepository,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,

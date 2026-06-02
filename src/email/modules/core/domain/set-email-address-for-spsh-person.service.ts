@@ -3,12 +3,12 @@ import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { PersonID, PersonUsername } from '../../../../shared/types/index.js';
 import { Err, Ok } from '../../../../shared/util/result.js';
-import { LdapClientService, PersonData } from '../../ldap/domain/ldap-client.service.js';
-import { CreateUserAction, CreateUserResponse } from '../../ox/actions/user/create-user.action.js';
-import { GetDataForUserResponse } from '../../ox/actions/user/get-data-user.action.js';
-import { OxSendService } from '../../ox/domain/ox-send.service.js';
-import { OxService } from '../../ox/domain/ox.service.js';
-import { OxPrimaryMailAlreadyExistsError } from '../../ox/error/ox-primary-mail-already-exists.error.js';
+import { LdapClientAdapter, PersonData } from '../../ldap/adapter/domain/ldap-client.adapter.js';
+import { CreateUserAction, CreateUserResponse } from '../../ox/adapter/technical/actions/user/create-user.action.js';
+import { GetDataForUserResponse } from '../../ox/adapter/technical/actions/user/get-data-user.action.js';
+import { OxSendService } from '../../ox/adapter/technical/ox-send.service.js';
+import { OxAdapter } from '../../ox/adapter/domain/ox.adapter.js';
+import { OxPrimaryMailAlreadyExistsError } from '../../ox/adapter/domain/error/ox-primary-mail-already-exists.error.js';
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
@@ -36,9 +36,9 @@ export class SetEmailAddressForSpshPersonService {
         private readonly emailDomainRepo: EmailDomainRepo,
         private readonly logger: ClassLogger,
         private readonly emailAddressGenerator: EmailAddressGenerator,
-        private readonly oxService: OxService,
+        private readonly oxService: OxAdapter,
         private readonly oxSendService: OxSendService,
-        private readonly ldapClientService: LdapClientService,
+        private readonly ldapClientService: LdapClientAdapter,
         private readonly webhookService: WebhookService,
         config: EmailAppConfig,
     ) {

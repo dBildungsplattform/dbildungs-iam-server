@@ -8,7 +8,7 @@ import { GlobalValidationPipe } from '../../../shared/validation/global-validati
 
 import { LdapModule } from '../ldap.module.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { LdapClientService, LdapPersonAttributes } from './ldap-client.service.js';
+import { LdapAdapter, LdapPersonAttributes } from '../adapter/domain/ldap.adapter.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { OrganisationID, PersonID, PersonUsername, RolleID } from '../../../shared/types/aggregate-ids.types.js';
@@ -18,7 +18,7 @@ import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-ex
 import { EmailRepo } from '../../../modules/email/persistence/email.repo.js';
 import { LdapSyncEventHandler } from './ldap-sync-event-handler.js';
 import { EmailAddress, EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
-import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
+import { LdapFetchAttributeError } from '../adapter/domain/error/ldap-fetch-attribute.error.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { faker } from '@faker-js/faker';
 import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -27,8 +27,8 @@ import { Personenkontext } from '../../../modules/personenkontext/domain/persone
 import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
-import { LdapSearchError } from '../error/ldap-search.error.js';
-import { LdapEntityType } from './ldap.types.js';
+import { LdapSearchError } from '../adapter/domain/error/ldap-search.error.js';
+import { LdapEntityType } from '../adapter/domain/ldap.types.js';
 import assert from 'assert';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
@@ -44,7 +44,7 @@ describe('LdapSyncEventHandler', () => {
     let orm: MikroORM;
 
     let sut: LdapSyncEventHandler;
-    let ldapClientServiceMock: DeepMocked<LdapClientService>;
+    let ldapClientServiceMock: DeepMocked<LdapAdapter>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -81,8 +81,8 @@ describe('LdapSyncEventHandler', () => {
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock(ClassLogger))
-            .overrideProvider(LdapClientService)
-            .useValue(createMock(LdapClientService))
+            .overrideProvider(LdapAdapter)
+            .useValue(createMock(LdapAdapter))
             .overrideProvider(PersonRepository)
             .useValue(createMock(PersonRepository))
             .overrideProvider(RolleRepo)
@@ -106,7 +106,7 @@ describe('LdapSyncEventHandler', () => {
         loggerMock = module.get(ClassLogger);
 
         sut = module.get(LdapSyncEventHandler);
-        ldapClientServiceMock = module.get(LdapClientService);
+        ldapClientServiceMock = module.get(LdapAdapter);
         personRepositoryMock = module.get(PersonRepository);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         rolleRepoMock = module.get(RolleRepo);

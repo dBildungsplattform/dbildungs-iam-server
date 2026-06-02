@@ -20,12 +20,12 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import {
-    ItslearningMembershipRepo,
+    ItslearningMembershipAdapter,
     SetMembershipParams,
     SetMembershipsResult,
-} from '../repo/itslearning-membership.repo.js';
-import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
-import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../repo/role-utils.js';
+} from '../adapter/domain/itslearning-membership.adapter.js';
+import { ItslearningPersonAdapter } from '../adapter/domain/itslearning-person.adapter.js';
+import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../adapter/domain/role-utils.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
@@ -39,8 +39,8 @@ export class ItsLearningSyncEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
 
-        private readonly itslearningPersonRepo: ItslearningPersonRepo,
-        private readonly itslearningMembershipRepo: ItslearningMembershipRepo,
+        private readonly itslearningPersonRepo: ItslearningPersonAdapter,
+        private readonly itslearningMembershipRepo: ItslearningMembershipAdapter,
 
         private readonly personRepo: PersonRepository,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
