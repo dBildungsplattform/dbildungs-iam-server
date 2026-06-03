@@ -3,7 +3,6 @@ import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { EmailLdapConfigModule } from '../ldap-config.module.js';
 import { EmailLdapModule } from '../email-ldap.module.js';
 import { faker } from '@faker-js/faker';
 import { LdapClientService, PersonData } from './ldap-client.service.js';
@@ -24,6 +23,7 @@ import {
     expectOkResult,
 } from '../../../../../test/utils/index.js';
 import { LdapModifyPersonError } from '../error/ldap-modify-person.error.js';
+import { LdapEmailMicroserviceInstanceConfig } from '../ldap-email-microservice-instance-config.js';
 
 class PublicExecuteWithRetry {
     public async executeWithRetry<T>(
@@ -44,10 +44,10 @@ describe('LDAP Client Service', () => {
     let ldapClientMock: DeepMocked<LdapClient>;
     let loggerMock: DeepMocked<ClassLogger>;
     let clientMock: DeepMocked<Client>;
-    let instanceConfig: LdapInstanceConfig;
+    let instanceConfig: LdapEmailMicroserviceInstanceConfig;
 
-    const mockLdapInstanceConfig: LdapInstanceConfig = {
-        EFLK_LDAP_ENABLED: true,
+    const mockLdapInstanceConfig: LdapEmailMicroserviceInstanceConfig = {
+        ENABLED: true,
         BASE_DN: 'dc=example,dc=com',
         OEFFENTLICHE_SCHULEN_DOMAIN: 'schule-sh.de',
         ERSATZSCHULEN_DOMAIN: 'ersatzschule-sh.de',
@@ -72,12 +72,7 @@ describe('LDAP Client Service', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                EmailConfigTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                EmailLdapModule,
-                EmailLdapConfigModule,
-            ],
+            imports: [EmailConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailLdapModule],
             providers: [
                 {
                     provide: APP_PIPE,
@@ -828,12 +823,12 @@ describe('LDAP Client Service', () => {
 
     describe('useLdap should return correct value based on config', () => {
         it('should return false when LDAP.ENABLED is false', () => {
-            instanceConfig.EFLK_LDAP_ENABLED = false;
+            instanceConfig.ENABLED = false;
             expect(ldapClientService.useLdap()).toBe(false);
         });
 
         it('should return true when LDAP.ENABLED is true', () => {
-            instanceConfig.EFLK_LDAP_ENABLED = true;
+            instanceConfig.ENABLED = true;
             expect(ldapClientService.useLdap()).toBe(true);
         });
     });

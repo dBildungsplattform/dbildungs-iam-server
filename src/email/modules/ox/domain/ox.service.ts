@@ -11,7 +11,6 @@ import { DeleteUserAction } from '../actions/user/delete-user.action.js';
 import { ExistsUserAction } from '../actions/user/exists-user.action.js';
 import { GetDataForUserAction } from '../actions/user/get-data-user.action.js';
 import { OxGroupNotFoundError } from '../error/ox-group-not-found.error.js';
-import { OxConfig } from '../../../../shared/config/ox.config.js';
 import { CreateGroupAction, CreateGroupParams, CreateGroupResponse } from '../actions/group/create-group.action.js';
 import { Injectable } from '@nestjs/common';
 import { OxSendService } from './ox-send.service.js';
@@ -34,6 +33,7 @@ import {
     RemoveMemberFromGroupAction,
     RemoveMemberFromGroupResponse,
 } from '../actions/group/remove-member-from-group.action.js';
+import { OxEmailMicroserviceConfig } from '../../../config/ox-email-microservice.config.js';
 
 @Injectable()
 export class OxService {
@@ -60,8 +60,8 @@ export class OxService {
         protected readonly oxSendService: OxSendService,
         protected config: EmailAppConfig,
     ) {
-        const oxConfig: OxConfig = config.OX;
-        this.enabled = oxConfig.EFLK_OX_ENABLED;
+        const oxConfig: OxEmailMicroserviceConfig = config.OX;
+        this.enabled = oxConfig.ENABLED;
         this.authUser = oxConfig.USERNAME;
         this.authPassword = oxConfig.PASSWORD;
         this.contextID = oxConfig.CONTEXT_ID;

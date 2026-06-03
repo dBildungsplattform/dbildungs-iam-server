@@ -62,7 +62,7 @@ import {
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 import { EmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/email-address-generated-after-ldap-sync-failed.event.js';
 import { KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/kafka-email-address-generated-after-ldap-sync-failed.event.js';
-import { OxConfig } from '../../../shared/config/ox.config.js';
+import { OxServerConfig } from '../../../shared/config/ox-server.config.js';
 import { OxSyncEventHandler } from './ox-sync-event-handler.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { KafkaOrganisationDeletedEvent } from '../../../shared/events/kafka-organisation-deleted.event.js';
@@ -88,7 +88,7 @@ export class OxEventHandler {
         // to create the request-bound EntityManager context. Removing it would break context creation.
         private readonly em: EntityManager,
     ) {
-        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
+        const oxConfig: OxServerConfig = configService.getOrThrow<OxServerConfig>('OX');
         this.ENABLED = oxConfig.ENABLED;
     }
 

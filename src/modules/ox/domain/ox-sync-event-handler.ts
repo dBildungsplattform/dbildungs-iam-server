@@ -32,7 +32,7 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { Injectable } from '@nestjs/common';
 import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/group/add-member-to-group.action.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
-import { OxConfig } from '../../../shared/config/ox.config.js';
+import { OxServerConfig } from '../../../shared/config/ox-server.config.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 @Injectable()
@@ -57,7 +57,7 @@ export class OxSyncEventHandler {
         // to create the request-bound EntityManager context. Removing it would break context creation.
         private readonly em: EntityManager,
     ) {
-        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
+        const oxConfig: OxServerConfig = configService.getOrThrow<OxServerConfig>('OX');
         this.ENABLED = oxConfig.ENABLED;
     }
 

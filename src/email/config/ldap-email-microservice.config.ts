@@ -1,9 +1,9 @@
 import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
-export class LdapConfig {
+export class LdapEmailMicroserviceConfig {
     @IsBoolean()
     @IsNotEmpty()
-    public readonly EFLK_LDAP_ENABLED!: boolean;
+    public readonly ENABLED!: boolean;
 
     @IsString()
     @IsNotEmpty()

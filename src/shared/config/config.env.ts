@@ -9,8 +9,8 @@ import { ImportConfig } from './import.config.js';
 import { ItsLearningConfig } from './itslearning.config.js';
 import { KafkaConfig } from './kafka.config.js';
 import { KeycloakConfig } from './keycloak.config.js';
-import { LdapConfig } from './ldap.config.js';
-import { OxConfig } from './ox.config.js';
+import { LdapServerConfig } from './ldap-server.config.js';
+import { OxServerConfig } from './ox-server.config.js';
 import { PortalConfig } from './portal.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { RedisConfig } from './redis.config.js';
@@ -23,13 +23,13 @@ export type Config = {
     DB: Partial<DbConfig>;
     KEYCLOAK: Partial<KeycloakConfig>;
     REDIS: Partial<RedisConfig>;
-    LDAP: Partial<LdapConfig>;
+    LDAP: Partial<LdapServerConfig>;
     FRONTEND: Partial<FrontendConfig>;
     FEATUREFLAG: Partial<FeatureFlagConfig>;
     HOST: Partial<HostConfig>;
     ITSLEARNING: Partial<ItsLearningConfig>;
     PRIVACYIDEA: Partial<PrivacyIdeaConfig>;
-    OX: Partial<OxConfig>;
+    OX: Partial<OxServerConfig>;
     SYSTEM: Partial<SystemConfig>;
     VIDIS: Partial<VidisConfig>;
     IMPORT: Partial<ImportConfig>;
@@ -56,7 +56,6 @@ export default (): Config => ({
         EXTERNAL_BASE_URL: process.env['KC_EXTERNAL_BASE_URL'],
     },
     LDAP: {
-        EFLK_LDAP_ENABLED: envToOptionalBoolean('LDAP_ENABLED'),
         URL: process.env['LDAP_URL'],
         BIND_DN: process.env['LDAP_BIND_DN'],
         ADMIN_PASSWORD: process.env['LDAP_ADMIN_PASSWORD'],

@@ -1,18 +1,18 @@
+import { LdapEmailMicroserviceConfig } from '../../email/config/ldap-email-microservice.config.js';
+import { OxEmailMicroserviceConfig } from '../../email/config/ox-email-microservice.config.js';
 import { DbConfig } from './db.config.js';
 import { EmailConfig } from './email.config.js';
 import { HeaderApiKeyConfig } from './headerapikey.config.js';
 import { HostConfig } from './host.config.js';
-import { LdapConfig } from './ldap.config.js';
 import { LoggingConfig } from './logging.config.js';
-import { OxConfig } from './ox.config.js';
 import { envToOptionalBoolean, envToOptionalInteger } from './utils.js';
 
 export type EmailAppConfig = {
     HOST: Partial<HostConfig>;
     LOGGING: Partial<LoggingConfig>;
     DB: Partial<DbConfig>;
-    LDAP: Partial<LdapConfig>;
-    OX: Partial<OxConfig>;
+    LDAP: Partial<LdapEmailMicroserviceConfig>;
+    OX: Partial<OxEmailMicroserviceConfig>;
     EMAIL: Partial<EmailConfig>;
     HEADER_API_KEY: Partial<HeaderApiKeyConfig>;
 };
@@ -30,7 +30,7 @@ export function getEmailConfig(): EmailAppConfig {
             CLIENT_URL: process.env['DB_CLIENT_URL'],
         },
         LDAP: {
-            EFLK_LDAP_ENABLED: envToOptionalBoolean('EFLK_LDAP_ENABLED'),
+            ENABLED: envToOptionalBoolean('LDAP_ENABLED'),
             URL: process.env['LDAP_URL'],
             BIND_DN: process.env['LDAP_BIND_DN'],
             ADMIN_PASSWORD: process.env['LDAP_ADMIN_PASSWORD'],
@@ -40,7 +40,6 @@ export function getEmailConfig(): EmailAppConfig {
             RETRY_WRAPPER_DEFAULT_RETRIES: envToOptionalInteger('RETRY_WRAPPER_DEFAULT_RETRIES'),
         },
         OX: {
-            EFLK_OX_ENABLED: envToOptionalBoolean('EFLK_OX_ENABLED'),
             ENABLED: envToOptionalBoolean('OX_ENABLED'),
             ENDPOINT: process.env['OX_ENDPOINT'],
             USERNAME: process.env['OX_USERNAME'],

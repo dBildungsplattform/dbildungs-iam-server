@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { Attribute, Change, Client, SearchResult } from 'ldapts';
 import { LdapPersonEntry } from './ldap.types.js';
 import { LdapClient } from './ldap-client.js';
-import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { Mutex } from 'async-mutex';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapCreatePersonError } from '../error/ldap-create-person.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { PersonExternalID, PersonUsername } from '../../../../shared/types/aggregate-ids.types.js';
 import { LdapModifyPersonError } from '../error/ldap-modify-person.error.js';
+import { LdapEmailMicroserviceInstanceConfig } from '../ldap-email-microservice-instance-config.js';
 
 export type LdapPersonAttributes = {
     entryUUID?: string;
@@ -73,7 +73,7 @@ export class LdapClientService {
 
     public constructor(
         private readonly ldapClient: LdapClient,
-        private readonly ldapInstanceConfig: LdapInstanceConfig,
+        private readonly ldapInstanceConfig: LdapEmailMicroserviceInstanceConfig,
         private readonly logger: ClassLogger,
     ) {
         this.mutex = new Mutex();
@@ -191,7 +191,7 @@ export class LdapClientService {
     }
 
     public useLdap(): boolean {
-        return this.ldapInstanceConfig.EFLK_LDAP_ENABLED;
+        return this.ldapInstanceConfig.ENABLED;
     }
 
     private async deletePersonInternal(externalId: string, domain: string): Promise<Result<void>> {

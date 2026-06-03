@@ -32,7 +32,6 @@
     },
 
     "LDAP": {
-        "EFLK_LDAP_ENABLED": true,
         "URL": "ldap://spsh-xxx.svc.cluster.local",
         "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
         "ADMIN_PASSWORD": "password",

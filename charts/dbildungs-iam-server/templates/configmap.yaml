@@ -18,7 +18,6 @@ data:
   FRONTEND_LOGOUT_REDIRECT: "https://{{ .Values.backendHostname }}/"
   BACKEND_HOSTNAME: "{{ .Values.backendHostname }}"
   ERROR_PAGE_REDIRECT: "https://{{ .Values.backendHostname }}/login-error"
-  LDAP_EFLK_LDAP_ENABLED: "{{ .Values.ldap.eflkLdapEnabled }}" # dont know if we would need this here
   LDAP_URL: '{{ .Values.ldap.url | replace "spsh-xxx" .Release.Namespace }}'
   LDAP_BASE_DN: "{{ .Values.ldap.base_dn }}"
   LDAP_OEFFENTLICHE_SCHULEN_DOMAIN: "{{ .Values.ldap.oeffentlicheSchulenDomain }}"

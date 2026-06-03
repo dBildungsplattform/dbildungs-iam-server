@@ -1,9 +1,6 @@
 import { IsBoolean, IsInt, IsNumberString, IsOptional, IsString, Min } from 'class-validator';
 
-export class OxConfig {
-    @IsBoolean()
-    public readonly EFLK_OX_ENABLED!: boolean;
-
+export class OxServerConfig {
     @IsBoolean()
     public readonly ENABLED!: boolean;
 

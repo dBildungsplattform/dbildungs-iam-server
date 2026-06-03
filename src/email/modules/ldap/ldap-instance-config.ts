@@ -1,11 +1,10 @@
 import { Injectable, Provider } from '@nestjs/common';
 import { EmailAppConfig } from '../../../shared/config/email-app.config.js';
-import { LdapConfig } from '../../../shared/config/ldap.config.js';
+import { LdapServerConfig } from '../../../shared/config/ldap-server.config.js';
 
 @Injectable()
-export class LdapInstanceConfig implements LdapConfig {
+export class LdapInstanceConfig implements LdapServerConfig {
     public constructor(
-        public EFLK_LDAP_ENABLED: boolean,
         public URL: string,
         public BIND_DN: string,
         public ADMIN_PASSWORD: string,
@@ -19,10 +18,9 @@ export class LdapInstanceConfig implements LdapConfig {
         return {
             provide: LdapInstanceConfig,
             useFactory: (config: EmailAppConfig): LdapInstanceConfig => {
-                const ldapConfig: LdapConfig = config.LDAP;
+                const ldapConfig: LdapServerConfig = config.LDAP;
 
                 return new LdapInstanceConfig(
-                    ldapConfig.EFLK_LDAP_ENABLED,
                     ldapConfig.URL,
                     ldapConfig.BIND_DN,
                     ldapConfig.ADMIN_PASSWORD,

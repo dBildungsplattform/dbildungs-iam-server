@@ -61,7 +61,6 @@ describe('configloader', () => {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
                 LDAP: {
-                    EFLK_LDAP_ENABLED: true,
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     BASE_DN: 'dc=schule-sh,dc=de',
@@ -90,7 +89,6 @@ describe('configloader', () => {
                     CLIENT_SECRET: 'dummy-password',
                 },
                 OX: {
-                    EFLK_OX_ENABLED: true,
                     ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
@@ -244,7 +242,6 @@ describe('configloader', () => {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
                 LDAP: {
-                    EFLK_LDAP_ENABLED: true,
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     ADMIN_PASSWORD: 'password',
@@ -275,7 +272,6 @@ describe('configloader', () => {
                     CLIENT_SECRET: 'dummy-password',
                 },
                 OX: {
-                    EFLK_OX_ENABLED: true,
                     ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
@@ -402,7 +398,6 @@ describe('configloader', () => {
                     USE_SSL: false,
                 },
                 OX: {
-                    EFLK_OX_ENABLED: true,
                     ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
@@ -412,7 +407,7 @@ describe('configloader', () => {
                     EMAIL_ADDRESS_DELETED_EVENT_DELAY: 0,
                 },
                 LDAP: {
-                    EFLK_LDAP_ENABLED: true,
+                    ENABLED: true,
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     BASE_DN: 'dc=schule-sh,dc=de',
@@ -470,7 +465,6 @@ describe('configloader', () => {
                     SECRET: 'x',
                 },
                 OX: {
-                    EFLK_OX_ENABLED: true,
                     ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
@@ -481,7 +475,7 @@ describe('configloader', () => {
                     PASSWORD: 'x',
                 },
                 LDAP: {
-                    EFLK_LDAP_ENABLED: true,
+                    ENABLED: true,
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     BASE_DN: 'dc=schule-sh,dc=de',
