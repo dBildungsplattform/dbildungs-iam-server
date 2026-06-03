@@ -47,6 +47,18 @@ describe('The CSRF protection guard', () => {
         expect(sut.canActivate(context)).toEqual(true);
     });
 
+    it('should allow API Header requests (Bearer token)', () => {
+        const request: MockedObject<ExpressRequest> = createRequestMock({
+            method: 'POST',
+            headers: {
+                'api-key': 'api-key-value',
+            },
+        });
+
+        const context: ExecutionContext = createExecutionContextMock({ request });
+
+        expect(sut.canActivate(context)).toEqual(true);
+    });
     it('should allow public routes', () => {
         const request: MockedObject<ExpressRequest> = createRequestMock({
             method: 'POST',
