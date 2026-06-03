@@ -4,6 +4,7 @@ import { ImportDataItemEntity } from './import-data-item.entity.js';
 import { ImportDataItemScope } from './import-data-item.scope.js';
 import { ImportDataItem } from '../domain/import-data-item.js';
 import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
+import { ScopeOrder } from '../../../shared/persistence/index.js';
 
 // Disable explicit types here because it's virtually impossible to do this correctly
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -56,7 +57,11 @@ export class ImportDataRepository {
     ): Promise<Counted<ImportDataItem<true>>> {
         const scope: ImportDataItemScope = new ImportDataItemScope()
             .findByImportvorgangId(importvorgangId)
-            .paged(offset, limit);
+            .paged(offset, limit)
+            .sortBy('klasse', ScopeOrder.ASC)
+            .sortBy('nachname', ScopeOrder.ASC)
+            .sortBy('vorname', ScopeOrder.ASC)
+            .sortBy('id', ScopeOrder.ASC);
 
         const [entities, total]: Counted<ImportDataItemEntity> = await scope.executeQuery(this.em);
         const importDataItems: ImportDataItem<true>[] = entities.map((entity: ImportDataItemEntity) =>
