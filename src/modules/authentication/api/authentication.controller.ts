@@ -1,4 +1,15 @@
-import { Controller, Get, Inject, Req, Res, Session, UseGuards, Query } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Inject,
+    Req,
+    Res,
+    Session,
+    UseGuards,
+    Query,
+    UnauthorizedException,
+    InternalServerErrorException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
     ApiBearerAuth,
@@ -36,7 +47,6 @@ import PersonTimeLimitService from '../../person/domain/person-time-limit-info.s
 import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
-import { CsrfTokenErrorResponse } from './csrf-token-error.response.js';
 import { CsrfTokenResponse } from './csrf-token.response.js';
 import { CsrfTokenService } from '../services/csrf-token.service.js';
 
@@ -133,12 +143,12 @@ export class AuthenticationController {
     @ApiResponse({
         status: 401,
         description: 'User is not authenticated',
-        type: CsrfTokenErrorResponse,
+        type: UnauthorizedException,
     })
-    public getCsrfToken(@Req() request: Request): CsrfTokenResponse | CsrfTokenErrorResponse {
+    public getCsrfToken(@Req() request: Request): CsrfTokenResponse {
         if (!request.isAuthenticated()) {
             this.logger.info('CSRF token requested by unauthenticated user');
-            return new CsrfTokenErrorResponse('User is not authenticated');
+            throw new UnauthorizedException('User is not authenticated');
         }
 
         try {
@@ -150,7 +160,7 @@ export class AuthenticationController {
             return new CsrfTokenResponse(token);
         } catch (error) {
             this.logger.error('Failed to generate CSRF token', error);
-            return new CsrfTokenErrorResponse('Failed to generate CSRF token');
+            throw new InternalServerErrorException('Failed to generate CSRF token');
         }
     }
 

@@ -41,8 +41,8 @@ import { createRequestMock, createResponseMock } from '../../../../test/utils/ht
 import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 import { CsrfTokenService } from '../services/csrf-token.service.js';
-import { CsrfTokenErrorResponse } from './csrf-token-error.response.js';
 import { CsrfTokenResponse } from './csrf-token.response.js';
+import { InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -313,12 +313,10 @@ describe('AuthenticationController', () => {
         }
 
         describe('when user is not authenticated', () => {
-            it('should return CsrfTokenErrorResponse', () => {
+            it('should throw UnauthorizedException', () => {
                 const requestMock: Request = setupRequest(false);
 
-                const result: CsrfTokenResponse | CsrfTokenErrorResponse = authController.getCsrfToken(requestMock);
-
-                expect(result).toBeInstanceOf(CsrfTokenErrorResponse);
+                expect(() => authController.getCsrfToken(requestMock)).toThrow(UnauthorizedException);
             });
         });
 
@@ -327,10 +325,10 @@ describe('AuthenticationController', () => {
                 const existingToken: string = faker.string.alphanumeric(32);
                 const requestMock: Request = setupRequest(true, existingToken);
 
-                const result: CsrfTokenResponse | CsrfTokenErrorResponse = authController.getCsrfToken(requestMock);
+                const result: CsrfTokenResponse = authController.getCsrfToken(requestMock);
 
                 expect(result).toBeInstanceOf(CsrfTokenResponse);
-                expect((result as CsrfTokenResponse).csrfToken).toBe(existingToken);
+                expect(result.csrfToken).toBe(existingToken);
             });
         });
 
@@ -341,24 +339,22 @@ describe('AuthenticationController', () => {
                 const csrfTokenService: DeepMocked<CsrfTokenService> = module.get(CsrfTokenService);
                 csrfTokenService.generateToken.mockReturnValueOnce(newToken);
 
-                const result: CsrfTokenResponse | CsrfTokenErrorResponse = authController.getCsrfToken(requestMock);
+                const result: CsrfTokenResponse = authController.getCsrfToken(requestMock);
 
                 expect(result).toBeInstanceOf(CsrfTokenResponse);
-                expect((result as CsrfTokenResponse).csrfToken).toBe(newToken);
+                expect(result.csrfToken).toBe(newToken);
             });
         });
 
         describe('when token generation throws', () => {
-            it('should return CsrfTokenErrorResponse', () => {
+            it('should throw InternalServerErrorException', () => {
                 const requestMock: Request = setupRequest(true);
                 const csrfTokenService: DeepMocked<CsrfTokenService> = module.get(CsrfTokenService);
                 csrfTokenService.generateToken.mockImplementationOnce(() => {
                     throw new Error('Generation failed');
                 });
 
-                const result: CsrfTokenResponse | CsrfTokenErrorResponse = authController.getCsrfToken(requestMock);
-
-                expect(result).toBeInstanceOf(CsrfTokenErrorResponse);
+                expect(() => authController.getCsrfToken(requestMock)).toThrow(InternalServerErrorException);
             });
         });
     });

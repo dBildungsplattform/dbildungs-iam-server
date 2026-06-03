@@ -19,6 +19,12 @@ export class CsrfProtectionGuard implements CanActivate {
             return true;
         }
 
+        // Skip API-key requests
+        const apiKeyHeader: string | string[] | undefined = request.headers['api-key'];
+        if (typeof apiKeyHeader === 'string' || Array.isArray(apiKeyHeader)) {
+            return true;
+        }
+
         // Skip public routes
         if (this.isPublicRoute(request.path)) {
             return true;
