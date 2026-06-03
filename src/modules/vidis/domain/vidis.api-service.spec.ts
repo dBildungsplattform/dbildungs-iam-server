@@ -183,7 +183,7 @@ describe('VidisApiService', () => {
             await sut.getActivatedAngeboteByRegionSH();
 
             expect(httpServiceMock.post).toHaveBeenCalledWith(
-                expect.stringContaining('/o/oauth2/token?pageSize=100000'),
+                expect.stringContaining('/o/oauth2/token'),
                 expect.stringMatching(/^client_id=.*&client_secret=.*&grant_type=client_credentials$/),
                 {
                     headers: {
@@ -313,7 +313,7 @@ describe('VidisApiService', () => {
             await sut.getActivatedAngeboteBySchool(kennung);
 
             expect(httpServiceMock.post).toHaveBeenCalledWith(
-                expect.stringContaining('/o/oauth2/token?pageSize=100000'),
+                expect.stringContaining('/o/oauth2/token'),
                 expect.stringMatching(/^client_id=.*&client_secret=.*&grant_type=client_credentials$/),
                 {
                     headers: {
