@@ -666,7 +666,7 @@ describe('Import API', () => {
         });
     });
 
-    describe('/GET doownload', () => {
+    describe('/GET download', () => {
         it('should return 200 OK with the file', async () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
@@ -973,7 +973,7 @@ describe('Import API', () => {
             await importDataRepository.save(
                 DoFactory.createImportDataItem(false, {
                     importvorgangId: importVorgang.id,
-                    klasse: '1a',
+                    klasse: '2a',
                     personalnummer: undefined,
                     username: faker.internet.username(),
                     password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
@@ -1040,6 +1040,8 @@ describe('Import API', () => {
                     importvorgangId: importVorgang.id,
                     klasse: '1a',
                     personalnummer: undefined,
+                    vorname: 'Alice',
+                    nachname: 'Schmidt',
                     username: faker.internet.username(),
                     password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
                 }),
@@ -1050,6 +1052,8 @@ describe('Import API', () => {
                     importvorgangId: importVorgang.id,
                     klasse: '1a',
                     personalnummer: undefined,
+                    vorname: 'Bob',
+                    nachname: 'Schmidt',
                     username: faker.internet.username(),
                     password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
                 }),
