@@ -39,12 +39,14 @@ import { ServiceProvider } from '../domain/service-provider.js';
 import { mapEntityToAggregate } from '../repo/service-provider-entity-mapper.js';
 import { ServiceProviderEntity } from '../repo/service-provider.entity.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
+import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
+import { CreateServiceProviderResponse } from './create-service-provider.response.js';
+import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
-import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
-import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
+import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -576,6 +578,56 @@ describe('ServiceProvider API', () => {
                     }),
                 );
             });
+        });
+    });
+
+    describe('/POST create service provider', () => {
+        it('should return created service provider in expected response shape', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const body: CreateServiceProviderBodyParams = {
+                organisationId: organisation.id,
+                name: faker.company.name(),
+                url: faker.internet.url(),
+                kategorie: faker.helpers.enumValue(ServiceProviderKategorie),
+                requires2fa: faker.datatype.boolean(),
+                merkmale: [],
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/provider')
+                .send(body);
+            const responseBody: CreateServiceProviderResponse = response.body as CreateServiceProviderResponse;
+
+            expect(response.status).toBe(201);
+            expect(responseBody).toEqual({
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                id: expect.any(String),
+                name: body.name,
+                target: 'URL',
+                url: body.url,
+                kategorie: body.kategorie,
+                hasLogo: false,
+                requires2fa: body.requires2fa,
+                merkmale: body.merkmale,
+            });
+
+            const persistedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
+                ServiceProviderEntity,
+                { id: responseBody.id },
+                { refresh: true },
+            );
+            expect(persistedServiceProvider).toEqual(
+                expect.objectContaining({
+                    id: responseBody.id,
+                    name: body.name,
+                    target: 'URL',
+                    url: body.url,
+                    kategorie: body.kategorie,
+                    providedOnSchulstrukturknoten: organisation.id,
+                    requires2fa: body.requires2fa,
+                }),
+            );
+            expect(persistedServiceProvider.merkmale).toHaveLength(0);
         });
     });
 
