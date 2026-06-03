@@ -28,7 +28,6 @@ data:
   PI_RENAME_WAITING_TIME:  "{{ .Values.privacyidea.renameWaitingTime }}"
   PI_REALM: "{{ .Values.privacyidea.realm }}"
   PI_USER_RESOLVER: "{{ .Values.privacyidea.userResolver }}"
-  OX_EFLK_OX_ENABLED: "{{ .Values.ox.eflkOxEnabled }}"
   OX_ENABLED: "{{ .Values.ox.enabled }}"
   OX_USERNAME: "{{ .Values.ox.username }}"
   OX_ENDPOINT: "{{ .Values.ox.endpoint }}"
