@@ -1,5 +1,5 @@
-import { LdapEmailMicroserviceConfig } from '../../email/config/ldap-email-microservice.config.js';
-import { OxEmailMicroserviceConfig } from '../../email/config/ox-email-microservice.config.js';
+import { LdapEmailMicroserviceConfig } from './ldap-email-microservice.config.js';
+import { OxEmailMicroserviceConfig } from './ox-email-microservice.config.js';
 import { DbConfig } from './db.config.js';
 import { EmailConfig } from './email.config.js';
 import { HeaderApiKeyConfig } from './headerapikey.config.js';

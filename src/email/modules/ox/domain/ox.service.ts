@@ -33,7 +33,7 @@ import {
     RemoveMemberFromGroupAction,
     RemoveMemberFromGroupResponse,
 } from '../actions/group/remove-member-from-group.action.js';
-import { OxEmailMicroserviceConfig } from '../../../config/ox-email-microservice.config.js';
+import { OxEmailMicroserviceConfig } from '../../../../shared/config/ox-email-microservice.config.js';
 
 @Injectable()
 export class OxService {

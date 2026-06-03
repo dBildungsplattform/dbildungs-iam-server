@@ -9,8 +9,8 @@ import { HostConfig } from './host.config.js';
 import { LoggingConfig } from './logging.config.js';
 import { HeaderApiKeyConfig } from './headerapikey.config.js';
 import { EmailWebhookConfig } from './email-webhook.config.js';
-import { OxEmailMicroserviceConfig } from '../../email/config/ox-email-microservice.config.js';
-import { LdapEmailMicroserviceConfig } from '../../email/config/ldap-email-microservice.config.js';
+import { OxEmailMicroserviceConfig } from './ox-email-microservice.config.js';
+import { LdapEmailMicroserviceConfig } from './ldap-email-microservice.config.js';
 
 @Injectable()
 export class EmailAppConfig {
