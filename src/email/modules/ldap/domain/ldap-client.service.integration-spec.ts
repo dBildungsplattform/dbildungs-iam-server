@@ -79,7 +79,7 @@ describe('LDAP Client Service', () => {
                     useClass: GlobalValidationPipe,
                 },
                 {
-                    provide: LdapInstanceConfig,
+                    provide: LdapEmailMicroserviceInstanceConfig,
                     useValue: mockLdapInstanceConfig,
                 },
             ],
@@ -88,7 +88,7 @@ describe('LDAP Client Service', () => {
             .useValue(createMock(LdapClient))
             .overrideProvider(ClassLogger)
             .useValue(createMock(ClassLogger))
-            .overrideProvider(LdapInstanceConfig)
+            .overrideProvider(LdapEmailMicroserviceInstanceConfig)
             .useValue(mockLdapInstanceConfig)
             .compile();
 
@@ -98,7 +98,7 @@ describe('LDAP Client Service', () => {
         ldapClientMock = module.get(LdapClient);
         loggerMock = module.get(ClassLogger);
         clientMock = createMock(Client);
-        instanceConfig = module.get(LdapInstanceConfig);
+        instanceConfig = module.get(LdapEmailMicroserviceInstanceConfig);
 
         //currently only used to wait for the LDAP container, because setupDatabase() is blocking
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
