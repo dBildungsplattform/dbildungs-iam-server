@@ -11,7 +11,6 @@ import { LdapClient } from './ldap-client.js';
 import { Client, SearchResult } from 'ldapts';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapCreatePersonError } from '../error/ldap-create-person.error.js';
-import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import assert from 'assert';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { DatabaseTestModule } from '../../../../../test/utils/database-test.module.js';
