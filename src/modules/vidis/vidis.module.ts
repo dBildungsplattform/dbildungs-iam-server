@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { VidisApiService } from './domain/vidis.api-service.js';
 import { HttpModule } from '@nestjs/axios';
 import { LoggerModule } from '../../core/logging/logger.module.js';
@@ -12,11 +12,11 @@ import { ServiceProviderModule } from '../service-provider/service-provider.modu
         LoggerModule.register(VidisModule.name),
         HttpModule,
         OrganisationModule,
-        forwardRef(() => RolleModule),
-        forwardRef(() => ServiceProviderModule),
+        RolleModule,
+        ServiceProviderModule,
     ],
     providers: [VidisApiService, VidisSyncService],
-    exports: [],
+    exports: [VidisSyncService],
     controllers: [],
 })
 export class VidisModule {}

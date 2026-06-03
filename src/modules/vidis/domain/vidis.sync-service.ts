@@ -31,15 +31,6 @@ type VidisSchoolActivatedAngebot = {
 	date: string;
 };
 
-const PNG_FILE_SIGNATURE: Buffer = Buffer.from('89504e470d0a1a0a', 'hex');
-const JPEG_FILE_SIGNATURE: Buffer = Buffer.from('ffd8ff', 'hex');
-const WEBP_RIFF_SIGNATURE: Buffer = Buffer.from('RIFF');
-const WEBP_FILE_SIGNATURE: Buffer = Buffer.from('WEBP');
-const DEFAULT_VIDIS_SERVICE_PROVIDER_MERKMALE: ServiceProviderMerkmal[] = [
-	ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
-	ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
-];
-
 type VidisAngeboteByOrganisationId = Record<string, VidisSchoolActivatedAngebot[]>;
 type VidisOrganisationIdByKennung = Record<string, string>;
 type DecodedVidisLogo = {
@@ -49,6 +40,15 @@ type DecodedVidisLogo = {
 
 @Injectable()
 export class VidisSyncService {
+
+	private static readonly PNG_FILE_SIGNATURE: Buffer = Buffer.from('89504e470d0a1a0a', 'hex');
+	private static readonly JPEG_FILE_SIGNATURE: Buffer = Buffer.from('ffd8ff', 'hex');
+	private static readonly WEBP_RIFF_SIGNATURE: Buffer = Buffer.from('RIFF');
+	private static readonly WEBP_FILE_SIGNATURE: Buffer = Buffer.from('WEBP');
+	private static readonly DEFAULT_VIDIS_SERVICE_PROVIDER_MERKMALE: ServiceProviderMerkmal[] = [
+		ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+		ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
+	];
 
 	private readonly vidisConfig: VidisConfig;
 
@@ -125,6 +125,7 @@ export class VidisSyncService {
 		angeboteInDb: ServiceProvider<true>[],
 		permissions: IPersonPermissions
 	): Promise<void> {
+		this.logger.info(`Syncing VIDIS Angebote for school with organisationId: ${organisationId}`);
 		const vidisAngebotIds: Set<string> = new Set(
 			angeboteInVidis.map(({ angebot }: VidisSchoolActivatedAngebot) => angebot.offerId.toString()),
 		);
@@ -147,8 +148,23 @@ export class VidisSyncService {
 			.map((angebotInDb: ServiceProvider<true>) => angebotInDb.id);
 
 		if (missingAngeboteInDb.length === 0 && serviceProviderIdsMissingInVidis.length === 0) {
+			this.logger.info(`No differences between VIDIS API and database for school with organisationId: ${organisationId}`);
 			return Promise.resolve();
 		}
+		this.logger.info(
+			`Differences found between VIDIS API and database for school with organisationId: ${organisationId}. ` +
+			`VIDIS Angebote to add to DB: [${missingAngeboteInDb
+				.map(({ angebot }: VidisSchoolActivatedAngebot) => `${angebot.offerId} (${angebot.offerTitle.toString().substring(0, 50)})`)
+				.join(', ')}]. ` +
+			`VIDIS Angebote to remove from DB: [${angeboteInDb
+				.filter(
+					(angebotInDb: ServiceProvider<true>) =>
+						angebotInDb.vidisAngebotId !== undefined &&
+						!vidisAngebotIds.has(angebotInDb.vidisAngebotId),
+				)
+				.map((angebotInDb: ServiceProvider<true>) => `${angebotInDb.vidisAngebotId} (${angebotInDb.name.substring(0, 50)})`)
+				.join(', ')}]`,
+		);
 
 		const syncOperations: Promise<unknown>[] = missingAngeboteInDb.map(
 			({ angebot }: VidisSchoolActivatedAngebot) =>
@@ -235,7 +251,7 @@ export class VidisSyncService {
 			ServiceProviderSystem.NONE,
 			false,
 			angebot.offerId.toString(),
-			DEFAULT_VIDIS_SERVICE_PROVIDER_MERKMALE,
+			VidisSyncService.DEFAULT_VIDIS_SERVICE_PROVIDER_MERKMALE,
 		);
 	}
 
@@ -264,17 +280,17 @@ export class VidisSyncService {
 	}
 
 	private static detectLogoMimeType(logo: Buffer): string | undefined {
-		if (logo.subarray(0, PNG_FILE_SIGNATURE.length).equals(PNG_FILE_SIGNATURE)) {
+		if (logo.subarray(0, VidisSyncService.PNG_FILE_SIGNATURE.length).equals(VidisSyncService.PNG_FILE_SIGNATURE)) {
 			return 'image/png';
 		}
 
-		if (logo.subarray(0, JPEG_FILE_SIGNATURE.length).equals(JPEG_FILE_SIGNATURE)) {
+		if (logo.subarray(0, VidisSyncService.JPEG_FILE_SIGNATURE.length).equals(VidisSyncService.JPEG_FILE_SIGNATURE)) {
 			return 'image/jpeg';
 		}
 
 		if (
-			logo.subarray(0, WEBP_RIFF_SIGNATURE.length).equals(WEBP_RIFF_SIGNATURE) &&
-			logo.subarray(8, 8 + WEBP_FILE_SIGNATURE.length).equals(WEBP_FILE_SIGNATURE)
+			logo.subarray(0, VidisSyncService.WEBP_RIFF_SIGNATURE.length).equals(VidisSyncService.WEBP_RIFF_SIGNATURE) &&
+			logo.subarray(8, 8 + VidisSyncService.WEBP_FILE_SIGNATURE.length).equals(VidisSyncService.WEBP_FILE_SIGNATURE)
 		) {
 			return 'image/webp';
 		}

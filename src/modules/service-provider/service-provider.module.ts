@@ -8,9 +8,8 @@ import { ServiceProviderService } from './domain/service-provider.service.js';
 import { CreateGroupAndRoleHandler } from './repo/service-provider-event-handler.js';
 import { ServiceProviderRepo } from './repo/service-provider.repo.js';
 import { ServiceProviderInternalRepo } from './repo/service-provider.internal.repo.js';
-import { VidisModule } from '../vidis/vidis.module.js';
-import { OrganisationModule } from '../organisation/organisation.module.js';
 import { OrganisationServiceProviderRepo } from './repo/organisation-service-provider.repo.js';
+import { OrganisationModule } from '../organisation/organisation.module.js';
 
 @Module({
     imports: [
@@ -18,7 +17,6 @@ import { OrganisationServiceProviderRepo } from './repo/organisation-service-pro
         KeycloakAdministrationModule,
         EventModule,
         forwardRef(() => RolleModule),
-        forwardRef(() => VidisModule),
         OrganisationModule,
     ],
     providers: [
