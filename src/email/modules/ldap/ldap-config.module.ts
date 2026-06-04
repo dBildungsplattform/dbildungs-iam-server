@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { LdapInstanceConfig } from './ldap-instance-config.js';
+import { LdapEmailMicroserviceInstanceConfig } from './ldap-email-microservice-instance-config.js';
 
 @Module({
-    providers: [LdapInstanceConfig.fromConfigService()],
-    exports: [LdapInstanceConfig],
+    providers: [LdapEmailMicroserviceInstanceConfig.fromConfigService()],
+    exports: [LdapEmailMicroserviceInstanceConfig],
 })
 export class EmailLdapConfigModule {}
