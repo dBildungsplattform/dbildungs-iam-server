@@ -39,8 +39,8 @@ export class ItsLearningPersonsEventHandler {
 
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly itslearningPersonRepo: ItslearningPersonAdapter,
-        private readonly itslearningMembershipRepo: ItslearningMembershipAdapter,
+        private readonly itslearningPersonAdapter: ItslearningPersonAdapter,
+        private readonly itslearningMembershipAdapter: ItslearningMembershipAdapter,
         configService: ConfigService<ServerConfig>,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
@@ -69,7 +69,7 @@ export class ItsLearningPersonsEventHandler {
                 );
             }
 
-            const readPersonResult: Option<PersonResponse> = await this.itslearningPersonRepo.readPerson(
+            const readPersonResult: Option<PersonResponse> = await this.itslearningPersonAdapter.readPerson(
                 event.personId,
                 `${event.eventID}-PERSON-EXISTS-CHECK`,
             );
@@ -80,16 +80,17 @@ export class ItsLearningPersonsEventHandler {
                 );
             }
 
-            const updatePersonResult: Result<void, DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
-                {
-                    id: event.personId,
-                    firstName: event.vorname,
-                    lastName: event.familienname,
-                    username: event.username,
-                    institutionRoleType: readPersonResult.institutionRole,
-                },
-                `${event.eventID}-PERSON-RENAMED-UPDATE`,
-            );
+            const updatePersonResult: Result<void, DomainError> =
+                await this.itslearningPersonAdapter.createOrUpdatePerson(
+                    {
+                        id: event.personId,
+                        firstName: event.vorname,
+                        lastName: event.familienname,
+                        username: event.username,
+                        institutionRoleType: readPersonResult.institutionRole,
+                    },
+                    `${event.eventID}-PERSON-RENAMED-UPDATE`,
+                );
 
             if (!updatePersonResult.ok) {
                 return this.logger.logUnknownAsError(
@@ -113,7 +114,7 @@ export class ItsLearningPersonsEventHandler {
         await this.personUpdateMutex.runExclusive(async () => {
             this.logger.info(`[EventID: ${event.eventID}] Received OxUserChangedEvent, ${event.personId}`);
 
-            const updateResult: Result<void, DomainError> = await this.itslearningPersonRepo.updateEmail(
+            const updateResult: Result<void, DomainError> = await this.itslearningPersonAdapter.updateEmail(
                 event.personId,
                 event.primaryEmail,
                 `${event.eventID}-EMAIL-UPDATE`,
@@ -145,7 +146,7 @@ export class ItsLearningPersonsEventHandler {
                 `[EventID: ${event.eventID}] Received EmailMicroserviceAddressChangedEvent, ${event.personId}`,
             );
 
-            const updateResult: Result<void, DomainError> = await this.itslearningPersonRepo.updateEmail(
+            const updateResult: Result<void, DomainError> = await this.itslearningPersonAdapter.updateEmail(
                 event.personId,
                 event.newPrimaryAddress,
                 `${event.eventID}-EMAIL-UPDATE`,
@@ -208,11 +209,15 @@ export class ItsLearningPersonsEventHandler {
         currentKontexte: PersonenkontextUpdatedData[],
         eventID: string,
     ): Promise<void> {
-        const setMembershipsResult: Result<unknown, DomainError> = await this.itslearningMembershipRepo.setMemberships(
-            personId,
-            currentKontexte.map((pk: PersonenkontextUpdatedData) => ({ organisationId: pk.orgaId, role: pk.rolle })),
-            eventID,
-        );
+        const setMembershipsResult: Result<unknown, DomainError> =
+            await this.itslearningMembershipAdapter.setMemberships(
+                personId,
+                currentKontexte.map((pk: PersonenkontextUpdatedData) => ({
+                    organisationId: pk.orgaId,
+                    role: pk.rolle,
+                })),
+                eventID,
+            );
 
         if (!setMembershipsResult.ok) {
             this.logger.error(
@@ -240,7 +245,7 @@ export class ItsLearningPersonsEventHandler {
             determineHighestRollenart(currentPersonenkontexte.map((pk: PersonenkontextUpdatedData) => pk.rolle)),
         );
 
-        const createResult: Result<void, DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
+        const createResult: Result<void, DomainError> = await this.itslearningPersonAdapter.createOrUpdatePerson(
             {
                 id: person.id,
                 firstName: person.vorname,
@@ -265,7 +270,7 @@ export class ItsLearningPersonsEventHandler {
      * Delete this person in itslearning
      */
     public async deletePerson(personID: PersonID, eventID: string): Promise<void> {
-        const deleteError: Option<DomainError> = await this.itslearningPersonRepo.deletePerson(personID, eventID);
+        const deleteError: Option<DomainError> = await this.itslearningPersonAdapter.deletePerson(personID, eventID);
 
         if (!deleteError) {
             this.logger.info(`[EventID: ${eventID}] Person with ID ${personID} deleted.`);

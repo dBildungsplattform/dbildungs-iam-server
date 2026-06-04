@@ -36,9 +36,9 @@ export class SetEmailAddressForSpshPersonService {
         private readonly emailDomainRepo: EmailDomainRepo,
         private readonly logger: ClassLogger,
         private readonly emailAddressGenerator: EmailAddressGenerator,
-        private readonly oxService: OxAdapter,
+        private readonly oxAdapter: OxAdapter,
         private readonly oxSendService: OxSendService,
-        private readonly ldapClientService: LdapClientAdapter,
+        private readonly ldapClientAdapter: LdapClientAdapter,
         private readonly webhookService: WebhookService,
         config: EmailAppConfig,
     ) {
@@ -446,7 +446,7 @@ export class SetEmailAddressForSpshPersonService {
             // Check if OX User exists -> otherwise error
 
             const exists: Result<GetDataForUserResponse, DomainError> = await this.oxSendService.send(
-                this.oxService.createGetDataForUserAction(oxUserCounter),
+                this.oxAdapter.createGetDataForUserAction(oxUserCounter),
             );
 
             if (!exists.ok) {
@@ -464,7 +464,7 @@ export class SetEmailAddressForSpshPersonService {
             const aliases: string[] = [primaryEmail.address, alternativeEmail?.address].filter(Boolean);
 
             const changeResult: Result<void, DomainError> = await this.oxSendService.send(
-                this.oxService.createChangeUserAction(
+                this.oxAdapter.createChangeUserAction(
                     oxUserCounter,
                     externalId,
                     aliases,
@@ -481,12 +481,12 @@ export class SetEmailAddressForSpshPersonService {
                 return changeResult;
             }
 
-            await this.oxService.setUserOxGroups(oxUserCounter, kennungen);
+            await this.oxAdapter.setUserOxGroups(oxUserCounter, kennungen);
 
             return Ok(oxUserCounter);
         } else {
             // create ox user (returning ID!)
-            const createAction: CreateUserAction = this.oxService.createCreateUserAction({
+            const createAction: CreateUserAction = this.oxAdapter.createCreateUserAction({
                 username: externalId,
                 displayName: spshUsername,
                 firstname,
@@ -501,7 +501,7 @@ export class SetEmailAddressForSpshPersonService {
                 return createResult;
             }
 
-            await this.oxService.setUserOxGroups(createResult.value.id, kennungen);
+            await this.oxAdapter.setUserOxGroups(createResult.value.id, kennungen);
 
             return Ok(createResult.value.id);
         }
@@ -521,7 +521,7 @@ export class SetEmailAddressForSpshPersonService {
 
         domain: string,
     ): Promise<Result<void>> {
-        const exists: Result<boolean> = await this.ldapClientService.isPersonExisting(uid, domain);
+        const exists: Result<boolean> = await this.ldapClientAdapter.isPersonExisting(uid, domain);
 
         if (!exists.ok) {
             return exists;
@@ -529,7 +529,7 @@ export class SetEmailAddressForSpshPersonService {
 
         if (exists.value) {
             // Update
-            const updateResult: Result<PersonData> = await this.ldapClientService.updatePerson(
+            const updateResult: Result<PersonData> = await this.ldapClientAdapter.updatePerson(
                 {
                     uid,
                     username,
@@ -546,7 +546,7 @@ export class SetEmailAddressForSpshPersonService {
             }
         } else {
             // Create
-            const createResult: Result<PersonData> = await this.ldapClientService.createPerson(
+            const createResult: Result<PersonData> = await this.ldapClientAdapter.createPerson(
                 {
                     uid,
                     username,

@@ -43,8 +43,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
     let loggerMock: DeepMocked<ClassLogger>;
     let emailAddressGeneratorMock: DeepMocked<EmailAddressGenerator>;
     let oxSendServiceMock: DeepMocked<OxSendService>;
-    let ldapClientServiceMock: DeepMocked<LdapClientAdapter>;
-    let oxServiceMock: DeepMocked<OxAdapter>;
+    let ldapClientAdapterMock: DeepMocked<LdapClientAdapter>;
+    let oxAdapterMock: DeepMocked<OxAdapter>;
     let webhookServiceMock: DeepMocked<WebhookService>;
 
     beforeAll(async () => {
@@ -90,8 +90,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
         loggerMock = module.get(ClassLogger);
         emailAddressGeneratorMock = module.get(EmailAddressGenerator);
         oxSendServiceMock = module.get(OxSendService);
-        ldapClientServiceMock = module.get(LdapClientAdapter);
-        oxServiceMock = module.get(OxAdapter);
+        ldapClientAdapterMock = module.get(LdapClientAdapter);
+        oxAdapterMock = module.get(OxAdapter);
         webhookServiceMock = module.get(WebhookService);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -158,8 +158,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
             emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce(Ok(expectedEmailAddress));
             oxSendServiceMock.send.mockResolvedValueOnce(Ok({ id: newOxId }));
-            ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Ok(false));
-            ldapClientServiceMock.createPerson.mockResolvedValueOnce(
+            ldapClientAdapterMock.isPersonExisting.mockResolvedValueOnce(Ok(false));
+            ldapClientAdapterMock.createPerson.mockResolvedValueOnce(
                 Ok({
                     firstName: bodyParams.firstName,
                     lastName: bodyParams.lastName,
@@ -170,14 +170,14 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
             await sut.setEmailAddressForSpshPerson({ ...pathParams, ...bodyParams });
 
-            expect(oxServiceMock.createCreateUserAction).toHaveBeenCalledWith({
+            expect(oxAdapterMock.createCreateUserAction).toHaveBeenCalledWith({
                 username: pathParams.spshPersonId,
                 displayName: bodyParams.spshUsername,
                 firstname: bodyParams.firstName,
                 lastname: bodyParams.lastName,
                 primaryEmail: expectedEmailAddress,
             });
-            expect(ldapClientServiceMock.isPersonExisting).toHaveBeenCalledWith(pathParams.spshPersonId, domain.domain);
+            expect(ldapClientAdapterMock.isPersonExisting).toHaveBeenCalledWith(pathParams.spshPersonId, domain.domain);
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `SET EMAIL FOR SPSHPERSONID: ${pathParams.spshPersonId} - Success`,
             );
@@ -241,8 +241,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
             oxSendServiceMock.send.mockResolvedValueOnce(Ok({})); // Check if person exists
             oxSendServiceMock.send.mockResolvedValueOnce(Ok({})); // Update person
-            ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Ok(true)); // Check if person exists
-            ldapClientServiceMock.updatePerson.mockResolvedValueOnce(Ok({} as PersonData));
+            ldapClientAdapterMock.isPersonExisting.mockResolvedValueOnce(Ok(true)); // Check if person exists
+            ldapClientAdapterMock.updatePerson.mockResolvedValueOnce(Ok({} as PersonData));
 
             await sut.setEmailAddressForSpshPerson({ ...pathParams, ...bodyParams });
 
@@ -288,7 +288,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
             );
             expect(emailResult[2]?.getStatus()).toEqual(EmailAddressStatusEnum.DEACTIVE);
 
-            expect(oxServiceMock.createChangeUserAction).toHaveBeenCalledWith(
+            expect(oxAdapterMock.createChangeUserAction).toHaveBeenCalledWith(
                 oldOxId,
                 pathParams.spshPersonId,
                 expect.arrayContaining([email3.address]),
@@ -298,8 +298,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 email3.address,
                 email3.address,
             );
-            expect(ldapClientServiceMock.isPersonExisting).toHaveBeenCalledWith(pathParams.spshPersonId, domain.domain);
-            expect(ldapClientServiceMock.updatePerson).toHaveBeenCalledWith(
+            expect(ldapClientAdapterMock.isPersonExisting).toHaveBeenCalledWith(pathParams.spshPersonId, domain.domain);
+            expect(ldapClientAdapterMock.updatePerson).toHaveBeenCalledWith(
                 {
                     firstName: bodyParams.firstName,
                     lastName: bodyParams.lastName,
@@ -344,8 +344,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
             emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce(Ok(expectedEmailAddress));
             oxSendServiceMock.send.mockResolvedValueOnce(Ok({})); // Check if person exists
             oxSendServiceMock.send.mockResolvedValueOnce(Ok({})); // Update person
-            ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Ok(true)); // Check if person exists
-            ldapClientServiceMock.updatePerson.mockResolvedValueOnce(Ok({} as PersonData));
+            ldapClientAdapterMock.isPersonExisting.mockResolvedValueOnce(Ok(true)); // Check if person exists
+            ldapClientAdapterMock.updatePerson.mockResolvedValueOnce(Ok({} as PersonData));
 
             await sut.setEmailAddressForSpshPerson({ ...pathParams, ...bodyParams });
 
@@ -411,8 +411,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
             emailAddressGeneratorMock.generateAvailableAddress.mockResolvedValueOnce(Ok(expectedEmailAddress));
             oxSendServiceMock.send.mockResolvedValueOnce(Ok({})); // Check if person exists
             oxSendServiceMock.send.mockResolvedValueOnce(Ok({})); // Update person
-            ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Ok(true)); // Check if person exists
-            ldapClientServiceMock.updatePerson.mockResolvedValueOnce(Ok({} as PersonData));
+            ldapClientAdapterMock.isPersonExisting.mockResolvedValueOnce(Ok(true)); // Check if person exists
+            ldapClientAdapterMock.updatePerson.mockResolvedValueOnce(Ok({} as PersonData));
 
             const error: EntityNotFoundError = new EntityNotFoundError('test error');
             vi.spyOn(emailAddressRepo, 'shiftPriorities').mockResolvedValueOnce(Err(error));
@@ -451,8 +451,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
             emailAddressGeneratorMock.isEqualIgnoreCount.mockReturnValueOnce(true);
             oxSendServiceMock.send.mockResolvedValueOnce(Ok({})); // Check if person exists
             oxSendServiceMock.send.mockResolvedValueOnce(Ok({})); // Update person
-            ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Ok(true)); // Check if person exists
-            ldapClientServiceMock.updatePerson.mockResolvedValueOnce(Ok({} as PersonData));
+            ldapClientAdapterMock.isPersonExisting.mockResolvedValueOnce(Ok(true)); // Check if person exists
+            ldapClientAdapterMock.updatePerson.mockResolvedValueOnce(Ok({} as PersonData));
 
             const shiftPrioritiesSpy: Mock = vi.spyOn(emailAddressRepo, 'shiftPriorities');
 
@@ -587,8 +587,8 @@ describe('SetEmailAddressForSpshPersonService', () => {
             const newOxId: string = faker.string.numeric(5);
             emailAddressGeneratorMock.isEqualIgnoreCount.mockReturnValueOnce(true);
             oxSendServiceMock.send.mockResolvedValueOnce(Ok({ id: newOxId }));
-            ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Ok(false));
-            ldapClientServiceMock.createPerson.mockResolvedValueOnce(Ok({} as PersonData));
+            ldapClientAdapterMock.isPersonExisting.mockResolvedValueOnce(Ok(false));
+            ldapClientAdapterMock.createPerson.mockResolvedValueOnce(Ok({} as PersonData));
 
             const originalSave: EmailAddressRepo['save'] = emailAddressRepo.save;
             vi.spyOn(emailAddressRepo, 'save')
@@ -785,7 +785,7 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
             it('should error when exists-check fails', async () => {
                 const error: Error = new Error('Test Error');
-                ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Err(error));
+                ldapClientAdapterMock.isPersonExisting.mockResolvedValueOnce(Err(error));
 
                 await expect(() =>
                     sut.setEmailAddressForSpshPerson({ ...params[0], ...params[1] }),
@@ -804,9 +804,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
             });
 
             it('should error when ldap upsert create fails', async () => {
-                ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Ok(false));
+                ldapClientAdapterMock.isPersonExisting.mockResolvedValueOnce(Ok(false));
                 const error: Error = new Error('Test Error');
-                ldapClientServiceMock.createPerson.mockResolvedValueOnce(Err(error));
+                ldapClientAdapterMock.createPerson.mockResolvedValueOnce(Err(error));
 
                 await expect(() =>
                     sut.setEmailAddressForSpshPerson({ ...params[0], ...params[1] }),
@@ -825,9 +825,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
             });
 
             it('should error when ldap upsert update fails', async () => {
-                ldapClientServiceMock.isPersonExisting.mockResolvedValueOnce(Ok(true));
+                ldapClientAdapterMock.isPersonExisting.mockResolvedValueOnce(Ok(true));
                 const error: Error = new Error('Test Error');
-                ldapClientServiceMock.updatePerson.mockResolvedValueOnce(Err(error));
+                ldapClientAdapterMock.updatePerson.mockResolvedValueOnce(Err(error));
 
                 await expect(() =>
                     sut.setEmailAddressForSpshPerson({ ...params[0], ...params[1] }),

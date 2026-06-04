@@ -99,7 +99,7 @@ export class PersonController {
         private readonly logger: ClassLogger,
         private keycloakUserService: KeycloakUserService,
         private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
-        private readonly ldapClientService: LdapAdapter,
+        private readonly ldapClientAdapter: LdapAdapter,
         private readonly personApiMapper: PersonApiMapper,
         private readonly eventService: EventRoutingLegacyKafkaService,
         config: ConfigService<ServerConfig>,
@@ -552,7 +552,7 @@ export class PersonController {
         if (!personResult.value.username) {
             throw new PersonDomainError('Person-Username NOT defined', params.personId);
         }
-        const changeUserPasswordResult: Result<PersonID> = await this.ldapClientService.changeUserPasswordByPersonId(
+        const changeUserPasswordResult: Result<PersonID> = await this.ldapClientAdapter.changeUserPasswordByPersonId(
             personResult.value.id,
             personResult.value.username,
         );
@@ -582,7 +582,7 @@ export class PersonController {
         if (!username) {
             throw new PersonDomainError('Person-Username NOT defined', id);
         }
-        const changeUserPasswordResult: Result<PersonID> = await this.ldapClientService.changeUserPasswordByPersonId(
+        const changeUserPasswordResult: Result<PersonID> = await this.ldapClientAdapter.changeUserPasswordByPersonId(
             id,
             username,
         );

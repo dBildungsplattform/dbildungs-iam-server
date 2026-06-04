@@ -46,8 +46,8 @@ describe('ItsLearning Persons Event Handler', () => {
     let module: TestingModule;
 
     let sut: ItsLearningPersonsEventHandler;
-    let itslearningPersonRepoMock: DeepMocked<ItslearningPersonAdapter>;
-    let itslearningMembershipRepoMock: DeepMocked<ItslearningMembershipAdapter>;
+    let itslearningPersonAdapterMock: DeepMocked<ItslearningPersonAdapter>;
+    let itslearningMembershipAdapterMock: DeepMocked<ItslearningMembershipAdapter>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -67,8 +67,8 @@ describe('ItsLearning Persons Event Handler', () => {
         }).compile();
 
         sut = module.get(ItsLearningPersonsEventHandler);
-        itslearningPersonRepoMock = module.get(ItslearningPersonAdapter);
-        itslearningMembershipRepoMock = module.get(ItslearningMembershipAdapter);
+        itslearningPersonAdapterMock = module.get(ItslearningPersonAdapter);
+        itslearningMembershipAdapterMock = module.get(ItslearningMembershipAdapter);
         loggerMock = module.get(ClassLogger);
     });
 
@@ -88,7 +88,7 @@ describe('ItsLearning Persons Event Handler', () => {
         it('should call repo with current kontexte', async () => {
             const personId: string = faker.string.uuid();
             const currentKontexte: PersonenkontextUpdatedData[] = [makeKontextEventData()];
-            itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
+            itslearningMembershipAdapterMock.setMemberships.mockResolvedValueOnce({
                 ok: true,
                 value: { deleted: 0, updated: 1 },
             } satisfies Result<SetMembershipsResult, DomainError>);
@@ -96,7 +96,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
             await sut.updateMemberships(personId, currentKontexte, eventID);
 
-            expect(itslearningMembershipRepoMock.setMemberships).toHaveBeenCalledTimes(1);
+            expect(itslearningMembershipAdapterMock.setMemberships).toHaveBeenCalledTimes(1);
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `[EventID: ${eventID}] Set ${currentKontexte.length} memberships for person ${personId}`,
             );
@@ -106,7 +106,7 @@ describe('ItsLearning Persons Event Handler', () => {
             const error: DomainError = new ItsLearningError('Test Error');
             const personId: string = faker.string.uuid();
             const currentKontexte: PersonenkontextUpdatedData[] = [makeKontextEventData()];
-            itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({ ok: false, error } satisfies Result<
+            itslearningMembershipAdapterMock.setMemberships.mockResolvedValueOnce({ ok: false, error } satisfies Result<
                 SetMembershipsResult,
                 DomainError
             >);
@@ -114,7 +114,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
             await sut.updateMemberships(personId, currentKontexte, eventID);
 
-            expect(itslearningMembershipRepoMock.setMemberships).toHaveBeenCalledTimes(1);
+            expect(itslearningMembershipAdapterMock.setMemberships).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `[EventID: ${eventID}] Could not set ${currentKontexte.length} memberships for person ${personId}`,
                 error,
@@ -125,23 +125,23 @@ describe('ItsLearning Persons Event Handler', () => {
     describe('deletePerson', () => {
         it('should delete person in itsLearning', async () => {
             const personID: string = faker.string.uuid();
-            itslearningPersonRepoMock.deletePerson.mockResolvedValueOnce(undefined);
+            itslearningPersonAdapterMock.deletePerson.mockResolvedValueOnce(undefined);
             const eventID: string = faker.string.uuid();
 
             await sut.deletePerson(personID, eventID);
 
-            expect(itslearningPersonRepoMock.deletePerson).toHaveBeenCalledWith(personID, eventID);
+            expect(itslearningPersonAdapterMock.deletePerson).toHaveBeenCalledWith(personID, eventID);
             expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${eventID}] Person with ID ${personID} deleted.`);
         });
 
         it('should log error if person could not be deleted', async () => {
             const personID: string = faker.string.uuid();
-            itslearningPersonRepoMock.deletePerson.mockResolvedValueOnce(new ItsLearningError('Test Error'));
+            itslearningPersonAdapterMock.deletePerson.mockResolvedValueOnce(new ItsLearningError('Test Error'));
             const eventID: string = faker.string.uuid();
 
             await sut.deletePerson(personID, eventID);
 
-            expect(itslearningPersonRepoMock.deletePerson).toHaveBeenCalledWith(personID, eventID);
+            expect(itslearningPersonAdapterMock.deletePerson).toHaveBeenCalledWith(personID, eventID);
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `[EventID: ${eventID}] Could not delete person with ID ${personID} from itsLearning.`,
             );
@@ -172,8 +172,8 @@ describe('ItsLearning Persons Event Handler', () => {
 
         it('should send person to itsLearning', async () => {
             const [person, personResponse]: [Person<true>, PersonResponse] = createPersonAndResponse();
-            itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(personResponse); // Read person
-            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined)); // Create person
+            itslearningPersonAdapterMock.readPerson.mockResolvedValueOnce(personResponse); // Read person
+            itslearningPersonAdapterMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined)); // Create person
             const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(
                 person,
                 faker.internet.username(),
@@ -183,7 +183,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
             await sut.personRenamedEventHandler(event);
 
-            expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith(
+            expect(itslearningPersonAdapterMock.createOrUpdatePerson).toHaveBeenCalledWith(
                 {
                     id: person.id,
                     firstName: person.vorname,
@@ -201,8 +201,8 @@ describe('ItsLearning Persons Event Handler', () => {
         it('should log error if person could not be updated', async () => {
             const [person, personResponse]: [Person<true>, PersonResponse] = createPersonAndResponse();
             const error: DomainError = new ItsLearningError('Test Error');
-            itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(personResponse); // Read person
-            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Err(error)); // Create person
+            itslearningPersonAdapterMock.readPerson.mockResolvedValueOnce(personResponse); // Read person
+            itslearningPersonAdapterMock.createOrUpdatePerson.mockResolvedValueOnce(Err(error)); // Create person
             const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(
                 person,
                 faker.internet.username(),
@@ -239,7 +239,7 @@ describe('ItsLearning Persons Event Handler', () => {
         describe("when person doesn't exist in itslearning", () => {
             it('should log info', async () => {
                 const [person]: [Person<true>, PersonResponse] = createPersonAndResponse();
-                itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(undefined); // Read person
+                itslearningPersonAdapterMock.readPerson.mockResolvedValueOnce(undefined); // Read person
                 const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(
                     person,
                     faker.internet.username(),
@@ -281,12 +281,12 @@ describe('ItsLearning Persons Event Handler', () => {
 
         it('should send person to itsLearning', async () => {
             const kontextData: PersonenkontextUpdatedData = makeKontextEventData({ rolle: RollenArt.LERN });
-            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
+            itslearningPersonAdapterMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
             const eventID: string = faker.string.uuid();
 
             await sut.updatePerson(person, [kontextData], eventID);
 
-            expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith(
+            expect(itslearningPersonAdapterMock.createOrUpdatePerson).toHaveBeenCalledWith(
                 {
                     id: person.id,
                     firstName: person.vorname,
@@ -303,7 +303,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
         it('should log error if person could not be created', async () => {
             const kontextData: PersonenkontextUpdatedData = makeKontextEventData({ rolle: RollenArt.LERN });
-            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(
+            itslearningPersonAdapterMock.createOrUpdatePerson.mockResolvedValueOnce(
                 Err(new ItsLearningError('Test Error')),
             );
             const eventID: string = faker.string.uuid();
@@ -343,11 +343,11 @@ describe('ItsLearning Persons Event Handler', () => {
         );
 
         it('should update email', async () => {
-            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(Ok(undefined)); // Update email
+            itslearningPersonAdapterMock.updateEmail.mockResolvedValueOnce(Ok(undefined)); // Update email
 
             await sut.oxUserChangedEventHandler(generatedEvent);
 
-            expect(itslearningPersonRepoMock.updateEmail).toHaveBeenCalledWith(
+            expect(itslearningPersonAdapterMock.updateEmail).toHaveBeenCalledWith(
                 personId,
                 email,
                 `${generatedEvent.eventID}-EMAIL-UPDATE`,
@@ -359,7 +359,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
         it('should log error, if email could not be updated', async () => {
             const error: DomainError = new ItsLearningError('Test Error');
-            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(Err(error)); // Update email
+            itslearningPersonAdapterMock.updateEmail.mockResolvedValueOnce(Err(error)); // Update email
 
             await sut.oxUserChangedEventHandler(generatedEvent);
 
@@ -371,7 +371,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
         it('should skip event, if not enabled', async () => {
             sut.ENABLED = false;
-            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(Ok(undefined)); // Update email
+            itslearningPersonAdapterMock.updateEmail.mockResolvedValueOnce(Ok(undefined)); // Update email
 
             await sut.oxUserChangedEventHandler(generatedEvent);
 
@@ -393,11 +393,11 @@ describe('ItsLearning Persons Event Handler', () => {
         );
 
         it('should update email', async () => {
-            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(Ok(undefined)); // Update email
+            itslearningPersonAdapterMock.updateEmail.mockResolvedValueOnce(Ok(undefined)); // Update email
 
             await sut.microserviceEmailChangedEventHandler(generatedEvent);
 
-            expect(itslearningPersonRepoMock.updateEmail).toHaveBeenCalledWith(
+            expect(itslearningPersonAdapterMock.updateEmail).toHaveBeenCalledWith(
                 personId,
                 newPrimaryEmail,
                 `${generatedEvent.eventID}-EMAIL-UPDATE`,
@@ -409,7 +409,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
         it('should log error, if email could not be updated', async () => {
             const error: DomainError = new ItsLearningError('Test Error');
-            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(Err(error)); // Update email
+            itslearningPersonAdapterMock.updateEmail.mockResolvedValueOnce(Err(error)); // Update email
 
             await sut.microserviceEmailChangedEventHandler(generatedEvent);
 
@@ -421,7 +421,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
         it('should skip event, if not enabled', async () => {
             sut.ENABLED = false;
-            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(Ok(undefined)); // Update email
+            itslearningPersonAdapterMock.updateEmail.mockResolvedValueOnce(Ok(undefined)); // Update email
 
             await sut.microserviceEmailChangedEventHandler(generatedEvent);
 

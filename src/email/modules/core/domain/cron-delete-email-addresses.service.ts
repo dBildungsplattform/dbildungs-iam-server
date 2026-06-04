@@ -17,9 +17,9 @@ export class CronDeleteEmailsAddressesService {
         private readonly logger: ClassLogger,
         private readonly emailAddressRepo: EmailAddressRepo,
         private readonly deleteEmailsAddressesForSpshPersonService: DeleteEmailsAddressesForSpshPersonService,
-        private readonly oxService: OxAdapter,
+        private readonly oxAdapter: OxAdapter,
         private readonly oxSendService: OxSendService,
-        private readonly ldapClientService: LdapClientAdapter,
+        private readonly ldapClientAdapter: LdapClientAdapter,
         private readonly webhookService: WebhookService,
     ) {}
     public async deleteEmailAddresses(): Promise<void> {
@@ -95,7 +95,7 @@ export class CronDeleteEmailsAddressesService {
 
         if (oxUserCounter) {
             const changeResult: Result<void, DomainError> = await this.oxSendService.send(
-                this.oxService.createChangeUserAction(
+                this.oxAdapter.createChangeUserAction(
                     oxUserCounter,
                     undefined,
                     [prio0ToKeep.address],
@@ -121,7 +121,7 @@ export class CronDeleteEmailsAddressesService {
         }
 
         if (domain) {
-            const changeResult: Result<string> = await this.ldapClientService.updatePersonEmails(
+            const changeResult: Result<string> = await this.ldapClientAdapter.updatePersonEmails(
                 externalId,
                 domain,
                 prio0ToKeep.address,

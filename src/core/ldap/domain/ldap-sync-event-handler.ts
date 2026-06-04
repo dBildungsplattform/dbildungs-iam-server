@@ -60,7 +60,7 @@ export class LdapSyncEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly ldapInstanceConfig: LdapInstanceConfig,
-        private readonly ldapClientService: LdapAdapter,
+        private readonly ldapClientAdapter: LdapAdapter,
         private readonly personRepository: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly rolleRepo: RolleRepo,
@@ -240,7 +240,7 @@ export class LdapSyncEventHandler {
         );
 
         // Get current attributes for person from LDAP
-        const personAttributes: Result<LdapPersonAttributes> = await this.ldapClientService.getPersonAttributes(
+        const personAttributes: Result<LdapPersonAttributes> = await this.ldapClientAdapter.getPersonAttributes(
             personId,
             person.username,
             emailDomain,
@@ -266,7 +266,7 @@ export class LdapSyncEventHandler {
         );
 
         // Get current groups for person from LDAP
-        const groups: Result<string[]> = await this.ldapClientService.getGroupsForPerson(personId, person.username);
+        const groups: Result<string[]> = await this.ldapClientAdapter.getGroupsForPerson(personId, person.username);
         if (!groups.ok) {
             return this.logger.error(
                 `Error while fetching groups for personId:${personId} in LDAP, msg:${groups.error.message}`,
@@ -314,7 +314,7 @@ export class LdapSyncEventHandler {
                     this.logger.warning(
                         `MailPrimaryAddress undefined for personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
                     );
-                    await this.ldapClientService.changeEmailAddressByPersonId(
+                    await this.ldapClientAdapter.changeEmailAddressByPersonId(
                         ldapSyncData.personId,
                         ldapSyncData.username,
                         ldapSyncData.enabledEmailAddress,
@@ -332,7 +332,7 @@ export class LdapSyncEventHandler {
                         this.logger.info(
                             `Overwriting LDAP:${currentMailPrimaryAddress} with person:${ldapSyncData.enabledEmailAddress}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
                         );
-                        await this.ldapClientService.changeEmailAddressByPersonId(
+                        await this.ldapClientAdapter.changeEmailAddressByPersonId(
                             ldapSyncData.personId,
                             ldapSyncData.username,
                             ldapSyncData.enabledEmailAddress,
@@ -362,7 +362,7 @@ export class LdapSyncEventHandler {
                         `Mismatch mailAlternativeAddress, person:${ldapSyncData.enabledEmailAddress}, LDAP:${currentMailAlternativeAddress}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
                     );
                     if (ldapSyncData.disabledEmailAddresses[0]) {
-                        await this.ldapClientService.setMailAlternativeAddress(
+                        await this.ldapClientAdapter.setMailAlternativeAddress(
                             ldapSyncData.personId,
                             ldapSyncData.username,
                             ldapSyncData.disabledEmailAddresses[0],
@@ -393,7 +393,7 @@ export class LdapSyncEventHandler {
             );
         }
 
-        await this.ldapClientService.modifyPersonAttributes(
+        await this.ldapClientAdapter.modifyPersonAttributes(
             ldapSyncData.username,
             ldapSyncData.givenName,
             ldapSyncData.surName,
@@ -403,11 +403,11 @@ export class LdapSyncEventHandler {
         await Promise.all([
             ...ldapSyncData.groupsToAdd.map(
                 (kennung: string): Promise<Result<boolean>> =>
-                    this.ldapClientService.addPersonToGroup(ldapSyncData.username, kennung, personAttributes.dn),
+                    this.ldapClientAdapter.addPersonToGroup(ldapSyncData.username, kennung, personAttributes.dn),
             ),
             ...ldapSyncData.groupsToRemove.map(
                 (kennung: string): Promise<Result<boolean>> =>
-                    this.ldapClientService.removePersonFromGroup(ldapSyncData.username, kennung, personAttributes.dn),
+                    this.ldapClientAdapter.removePersonFromGroup(ldapSyncData.username, kennung, personAttributes.dn),
             ),
         ]);
     }

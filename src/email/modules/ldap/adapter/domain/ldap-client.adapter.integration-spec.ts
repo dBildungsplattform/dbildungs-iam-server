@@ -40,7 +40,7 @@ describe('LDAP Client Adapter', () => {
     let module: TestingModule;
     let orm: MikroORM;
     let em: EntityManager;
-    let ldapClientService: LdapClientAdapter;
+    let ldapClientAdapter: LdapClientAdapter;
     let ldapClientMock: DeepMocked<LdapClient>;
     let loggerMock: DeepMocked<ClassLogger>;
     let clientMock: DeepMocked<Client>;
@@ -98,7 +98,7 @@ describe('LDAP Client Adapter', () => {
 
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        ldapClientService = module.get(LdapClientAdapter);
+        ldapClientAdapter = module.get(LdapClientAdapter);
         ldapClientMock = module.get(LdapClient);
         loggerMock = module.get(ClassLogger);
         clientMock = createMock(Client);
@@ -123,7 +123,7 @@ describe('LDAP Client Adapter', () => {
         clientMock = createMock(Client);
         await DatabaseTestModule.clearDatabase(orm);
 
-        vi.spyOn(ldapClientService as unknown as PublicExecuteWithRetry, 'executeWithRetry').mockImplementation(
+        vi.spyOn(ldapClientAdapter as unknown as PublicExecuteWithRetry, 'executeWithRetry').mockImplementation(
             (...args: unknown[]) => {
                 //Needed To globally mock the private executeWithRetry function (otherwise test run too long)
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -145,7 +145,7 @@ describe('LDAP Client Adapter', () => {
                 clientMock.search.mockResolvedValueOnce({ searchEntries: [], searchReferences: [] });
                 return clientMock;
             });
-            const result: Result<boolean> = await ldapClientService.isPersonExisting('user123', 'wrong-domain.de');
+            const result: Result<boolean> = await ldapClientAdapter.isPersonExisting('user123', 'wrong-domain.de');
 
             assert(!result.ok);
             expect(result.error).toBeInstanceOf(LdapEmailDomainError);
@@ -162,16 +162,16 @@ describe('LDAP Client Adapter', () => {
             instanceConfig.OEFFENTLICHE_SCHULEN_DOMAIN = 'weird-domain.ina.foreign.country.co.uk';
             instanceConfig.ERSATZSCHULEN_DOMAIN = 'normaldomain.co.jp';
 
-            const resultOeffentlich: Result<boolean> = await ldapClientService.isPersonExisting(
+            const resultOeffentlich: Result<boolean> = await ldapClientAdapter.isPersonExisting(
                 'user123',
                 'weird-domain.ina.foreign.country.co.uk',
             );
 
-            const resultErsatz: Result<boolean> = await ldapClientService.isPersonExisting(
+            const resultErsatz: Result<boolean> = await ldapClientAdapter.isPersonExisting(
                 'user123',
                 'normaldomain.co.jp',
             );
-            const resultOldDefault: Result<boolean> = await ldapClientService.isPersonExisting(
+            const resultOldDefault: Result<boolean> = await ldapClientAdapter.isPersonExisting(
                 'user123',
                 'schule-sh.de',
             );
@@ -200,7 +200,7 @@ describe('LDAP Client Adapter', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean> = await ldapClientService.isPersonExisting(uid, domain);
+            const result: Result<boolean> = await ldapClientAdapter.isPersonExisting(uid, domain);
 
             expect(result.ok).toBeTruthy();
             if (result.ok) {
@@ -223,7 +223,7 @@ describe('LDAP Client Adapter', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean> = await ldapClientService.isPersonExisting(uid, domain);
+            const result: Result<boolean> = await ldapClientAdapter.isPersonExisting(uid, domain);
 
             expect(result.ok).toBeTruthy();
             if (result.ok) {
@@ -243,12 +243,12 @@ describe('LDAP Client Adapter', () => {
 
             vi.restoreAllMocks();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            vi.spyOn(ldapClientService as any, 'bind').mockResolvedValue({
+            vi.spyOn(ldapClientAdapter as any, 'bind').mockResolvedValue({
                 ok: false,
                 error: new Error('bind failed'),
             });
 
-            const result: Result<boolean> = await ldapClientService.isPersonExisting(uid, domain);
+            const result: Result<boolean> = await ldapClientAdapter.isPersonExisting(uid, domain);
 
             expect(result.ok).toBeFalsy();
             if (!result.ok) {
@@ -269,7 +269,7 @@ describe('LDAP Client Adapter', () => {
 
                 return clientMock;
             });
-            const result: Result<boolean> = await ldapClientService.isPersonExisting(
+            const result: Result<boolean> = await ldapClientAdapter.isPersonExisting(
                 faker.lorem.word(),
                 'schule-sh.de',
             );
@@ -289,7 +289,7 @@ describe('LDAP Client Adapter', () => {
                 .fn()
                 .mockResolvedValue({ ok: false, error: customError });
 
-            await expect(ldapClientService['executeWithRetry'](failingFunc, 1)).resolves.toEqual({
+            await expect(ldapClientAdapter['executeWithRetry'](failingFunc, 1)).resolves.toEqual({
                 ok: false,
                 error: customError,
             });
@@ -303,7 +303,7 @@ describe('LDAP Client Adapter', () => {
 
                 return clientMock;
             });
-            const result: Result<boolean> = await ldapClientService.isPersonExisting(
+            const result: Result<boolean> = await ldapClientAdapter.isPersonExisting(
                 faker.lorem.word(),
                 'schule-sh.de',
             );
@@ -332,7 +332,7 @@ describe('LDAP Client Adapter', () => {
 
                 return clientMock;
             });
-            const result: Result<boolean> = await ldapClientService.isPersonExisting(
+            const result: Result<boolean> = await ldapClientAdapter.isPersonExisting(
                 faker.lorem.word(),
                 'schule-sh.de',
             );
@@ -382,7 +382,7 @@ describe('LDAP Client Adapter', () => {
                 const testLehrer: PersonData = getPersonData();
                 const lehrerUid: string =
                     'uid=' + testLehrer.uid + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
-                const result: Result<PersonData> = await ldapClientService.createPerson(
+                const result: Result<PersonData> = await ldapClientAdapter.createPerson(
                     testLehrer,
                     fakeEmailDomain,
                     fakeOrgaKennung,
@@ -419,7 +419,7 @@ describe('LDAP Client Adapter', () => {
                 const testLehrer: PersonData = getPersonData();
                 const lehrerUid: string =
                     'uid=' + testLehrer.uid + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
-                const result: Result<PersonData> = await ldapClientService.createPerson(
+                const result: Result<PersonData> = await ldapClientAdapter.createPerson(
                     testLehrer,
                     fakeEmailDomain,
                     fakeOrgaKennung,
@@ -445,7 +445,7 @@ describe('LDAP Client Adapter', () => {
                 const testLehrer: PersonData = getPersonData();
                 const lehrerUid: string =
                     'uid=' + testLehrer.uid + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
-                const result: Result<PersonData> = await ldapClientService.createPerson(
+                const result: Result<PersonData> = await ldapClientAdapter.createPerson(
                     testLehrer,
                     fakeEmailDomain,
                     fakeOrgaKennung,
@@ -485,7 +485,7 @@ describe('LDAP Client Adapter', () => {
                 const fakeErsatzSchuleAddressDomain: string = 'ersatzschule-sh.de';
                 const lehrerUid: string =
                     'uid=' + testLehrer.uid + ',ou=ersatzSchulen,' + mockLdapInstanceConfig.BASE_DN;
-                const result: Result<PersonData> = await ldapClientService.createPerson(
+                const result: Result<PersonData> = await ldapClientAdapter.createPerson(
                     testLehrer,
                     fakeErsatzSchuleAddressDomain,
                     fakeEmailAddress,
@@ -514,7 +514,7 @@ describe('LDAP Client Adapter', () => {
 
                     return clientMock;
                 });
-                const result: Result<PersonData> = await ldapClientService.createPerson(
+                const result: Result<PersonData> = await ldapClientAdapter.createPerson(
                     personData,
                     fakeEmailDomain,
                     fakeOrgaKennung,
@@ -532,7 +532,7 @@ describe('LDAP Client Adapter', () => {
                     return clientMock;
                 });
                 const testLehrer: PersonData = getPersonData();
-                const result: Result<PersonData> = await ldapClientService.createPerson(
+                const result: Result<PersonData> = await ldapClientAdapter.createPerson(
                     testLehrer,
                     fakeEmailDomain,
                     fakeOrgaKennung,
@@ -544,7 +544,7 @@ describe('LDAP Client Adapter', () => {
 
             it('when called with invalid emailDomain returns LdapEmailDomainError', async () => {
                 const testLehrer: PersonData = getPersonData();
-                const result: Result<PersonData> = await ldapClientService.createPerson(
+                const result: Result<PersonData> = await ldapClientAdapter.createPerson(
                     testLehrer,
                     'wrong-email-domain.de',
                     fakeOrgaKennung,
@@ -568,7 +568,7 @@ describe('LDAP Client Adapter', () => {
             const primaryMail: string = faker.internet.email();
             const alternativeEmail: string = faker.internet.email();
 
-            const result: Result<string> = await ldapClientService.updatePersonEmails(
+            const result: Result<string> = await ldapClientAdapter.updatePersonEmails(
                 faker.string.uuid(),
                 fakeEmailDomain,
                 primaryMail,
@@ -582,7 +582,7 @@ describe('LDAP Client Adapter', () => {
         it('should return error if domain is invalid', async () => {
             const primaryMail: string = faker.internet.email();
 
-            const result: Result<string> = await ldapClientService.updatePersonEmails(
+            const result: Result<string> = await ldapClientAdapter.updatePersonEmails(
                 faker.string.uuid(),
                 'invalid@domain',
                 primaryMail,
@@ -604,7 +604,7 @@ describe('LDAP Client Adapter', () => {
 
             const primaryMail: string = faker.internet.email();
 
-            const result: Result<string> = await ldapClientService.updatePersonEmails(
+            const result: Result<string> = await ldapClientAdapter.updatePersonEmails(
                 faker.string.uuid(),
                 fakeEmailDomain,
                 primaryMail,
@@ -624,7 +624,7 @@ describe('LDAP Client Adapter', () => {
 
             const primaryMail: string = faker.internet.email();
 
-            const result: Result<string> = await ldapClientService.updatePersonEmails(
+            const result: Result<string> = await ldapClientAdapter.updatePersonEmails(
                 faker.string.uuid(),
                 fakeEmailDomain,
                 primaryMail,
@@ -649,7 +649,7 @@ describe('LDAP Client Adapter', () => {
             const primaryMail: string = faker.internet.email();
             const alternativeEmail: string = faker.internet.email();
 
-            const result: Result<PersonData> = await ldapClientService.updatePerson(
+            const result: Result<PersonData> = await ldapClientAdapter.updatePerson(
                 personData,
                 fakeEmailDomain,
                 primaryMail,
@@ -675,7 +675,7 @@ describe('LDAP Client Adapter', () => {
             const personData: PersonData = getPersonData();
             const primaryMail: string = faker.internet.email();
 
-            const result: Result<PersonData> = await ldapClientService.updatePerson(
+            const result: Result<PersonData> = await ldapClientAdapter.updatePerson(
                 personData,
                 'invalid@domain',
                 primaryMail,
@@ -698,7 +698,7 @@ describe('LDAP Client Adapter', () => {
             const personData: PersonData = getPersonData();
             const primaryMail: string = faker.internet.email();
 
-            const result: Result<PersonData> = await ldapClientService.updatePerson(
+            const result: Result<PersonData> = await ldapClientAdapter.updatePerson(
                 personData,
                 fakeEmailDomain,
                 primaryMail,
@@ -719,7 +719,7 @@ describe('LDAP Client Adapter', () => {
             const personData: PersonData = getPersonData();
             const primaryMail: string = faker.internet.email();
 
-            const result: Result<PersonData> = await ldapClientService.updatePerson(
+            const result: Result<PersonData> = await ldapClientAdapter.updatePerson(
                 personData,
                 fakeEmailDomain,
                 primaryMail,
@@ -747,7 +747,7 @@ describe('LDAP Client Adapter', () => {
                 clientMock.del.mockResolvedValue();
                 return clientMock;
             });
-            const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
+            const result: Result<void, Error> = await ldapClientAdapter.deletePerson(externalId, domain);
             expectOkResult(result);
             expect(loggerMock.info).toHaveBeenCalledWith(`LDAP: Person ${personUid} does not exist, nothing to delete`);
         });
@@ -763,7 +763,7 @@ describe('LDAP Client Adapter', () => {
                 clientMock.del.mockResolvedValue();
                 return clientMock;
             });
-            const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
+            const result: Result<void, Error> = await ldapClientAdapter.deletePerson(externalId, domain);
             expectOkResult(result);
             expect(loggerMock.info).toHaveBeenCalledWith(`LDAP: Successfully deleted person ${personUid}`);
         });
@@ -774,7 +774,7 @@ describe('LDAP Client Adapter', () => {
                 clientMock.bind.mockRejectedValueOnce(new Error('bind failed'));
                 return clientMock;
             });
-            const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
+            const result: Result<void, Error> = await ldapClientAdapter.deletePerson(externalId, domain);
             expectErrResult(result);
             expect(result.error).toEqual(new Error('LDAP bind FAILED'));
         });
@@ -787,7 +787,7 @@ describe('LDAP Client Adapter', () => {
                 clientMock.search.mockRejectedValueOnce(new Error('search failed'));
                 return clientMock;
             });
-            const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
+            const result: Result<void, Error> = await ldapClientAdapter.deletePerson(externalId, domain);
             expectErrResult(result);
             expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
                 `LDAP: Deleting person FAILED, uid:${personUid}`,
@@ -806,7 +806,7 @@ describe('LDAP Client Adapter', () => {
                 clientMock.del.mockRejectedValueOnce(new Error('delete failed'));
                 return clientMock;
             });
-            const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, domain);
+            const result: Result<void, Error> = await ldapClientAdapter.deletePerson(externalId, domain);
             expectErrResult(result);
             expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
                 `LDAP: Deleting person FAILED, uid:${personUid}`,
@@ -816,7 +816,7 @@ describe('LDAP Client Adapter', () => {
 
         it('should return error if domain is invalid', async () => {
             const externalId: string = faker.string.uuid();
-            const result: Result<void, Error> = await ldapClientService.deletePerson(externalId, 'invalid');
+            const result: Result<void, Error> = await ldapClientAdapter.deletePerson(externalId, 'invalid');
             expectErrResult(result);
             expect(result.error).toBeInstanceOf(LdapEmailDomainError);
             expect(loggerMock.error).toHaveBeenCalledWith(

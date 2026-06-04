@@ -21,7 +21,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
     let sut: ItsLearningOrganisationsEventHandler;
     let orgaRepoMock: DeepMocked<OrganisationRepository>;
-    let itslearningGroupRepoMock: DeepMocked<ItslearningGroupAdapter>;
+    let itslearningGroupRepoAdapter: DeepMocked<ItslearningGroupAdapter>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -41,7 +41,7 @@ describe('ItsLearning Organisations Event Handler', () => {
         }).compile();
 
         sut = module.get(ItsLearningOrganisationsEventHandler);
-        itslearningGroupRepoMock = module.get(ItslearningGroupAdapter);
+        itslearningGroupRepoAdapter = module.get(ItslearningGroupAdapter);
         orgaRepoMock = module.get(OrganisationRepository);
         loggerMock = module.get(ClassLogger);
     });
@@ -62,7 +62,7 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.alphanumeric(),
                 faker.string.uuid(),
             );
-            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce({
+            itslearningGroupRepoAdapter.readGroup.mockResolvedValueOnce({
                 name: faker.string.alphanumeric(),
                 parentId: faker.string.uuid(),
                 type: 'Unspecified',
@@ -70,11 +70,13 @@ describe('ItsLearning Organisations Event Handler', () => {
             orgaRepoMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { itslearningEnabled: true }),
             );
-            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined); // CreateGroupAction
+            itslearningGroupRepoAdapter.createOrUpdateGroup.mockResolvedValueOnce(undefined); // CreateGroupAction
 
             await sut.createKlasseEventHandler(event);
 
-            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams, string]>(
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroup).toHaveBeenLastCalledWith<
+                [CreateGroupParams, string]
+            >(
                 {
                     id: event.id,
                     name: event.name!,
@@ -94,7 +96,7 @@ describe('ItsLearning Organisations Event Handler', () => {
                 'Klasse with a name that is way too long should be truncated',
                 faker.string.uuid(),
             );
-            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce({
+            itslearningGroupRepoAdapter.readGroup.mockResolvedValueOnce({
                 name: faker.string.alphanumeric(),
                 parentId: faker.string.uuid(),
                 type: 'Unspecified',
@@ -102,11 +104,13 @@ describe('ItsLearning Organisations Event Handler', () => {
             orgaRepoMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { itslearningEnabled: true }),
             );
-            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined); // CreateGroupAction
+            itslearningGroupRepoAdapter.createOrUpdateGroup.mockResolvedValueOnce(undefined); // CreateGroupAction
 
             await sut.createKlasseEventHandler(event);
 
-            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams, string]>(
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroup).toHaveBeenLastCalledWith<
+                [CreateGroupParams, string]
+            >(
                 {
                     id: event.id,
                     name: 'Klasse with a name that is way too long shoul...',
@@ -128,7 +132,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.createKlasseEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
-            expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
         it('should log error, if administriertVon is undefined', async () => {
@@ -183,7 +187,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             orgaRepoMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { itslearningEnabled: true }),
             );
-            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(new DomainErrorMock('Error')); // CreateGroupAction
+            itslearningGroupRepoAdapter.createOrUpdateGroup.mockResolvedValueOnce(new DomainErrorMock('Error')); // CreateGroupAction
 
             await sut.createKlasseEventHandler(event);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
@@ -205,7 +209,9 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.updatedKlasseEventHandler(event);
 
-            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams, string]>(
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroup).toHaveBeenLastCalledWith<
+                [CreateGroupParams, string]
+            >(
                 {
                     id: event.organisationId,
                     name: event.name,
@@ -230,7 +236,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.updatedKlasseEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
-            expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
         it('should log error, if administriertVon is undefined', async () => {
@@ -245,7 +251,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `[EventID: ${event.eventID}] Klasse has no parent organisation. Aborting.`,
             );
-            expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
         it('should log error, if the klasse has no name', async () => {
@@ -254,7 +260,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.updatedKlasseEventHandler(event);
 
             expect(loggerMock.error).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Klasse has no name. Aborting.`);
-            expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
         it('should log info, if the parent school is not itslearning enabled', async () => {
@@ -283,7 +289,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             orgaRepoMock.findById.mockResolvedValueOnce(
                 DoFactory.createOrganisation(true, { itslearningEnabled: true }),
             );
-            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(new DomainErrorMock('Error')); // UpdateGroupAction
+            itslearningGroupRepoAdapter.createOrUpdateGroup.mockResolvedValueOnce(new DomainErrorMock('Error')); // UpdateGroupAction
 
             await sut.updatedKlasseEventHandler(event);
 
@@ -306,7 +312,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.schuleItslearningEnabledEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
-            expect(itslearningGroupRepoMock.createOrUpdateGroups).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroups).not.toHaveBeenCalled();
         });
 
         it('should log error, if organisation is not a schule', async () => {
@@ -322,7 +328,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `[EventID: ${event.eventID}] The organisation with ID ${event.organisationId} is not of type "SCHULE"!`,
             );
-            expect(itslearningGroupRepoMock.createOrUpdateGroups).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroups).not.toHaveBeenCalled();
         });
 
         it('should skip event, when schule is ersatzschule', async () => {
@@ -339,7 +345,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.schuleItslearningEnabledEventHandler(event);
 
             expect(loggerMock.error).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Ersatzschule, ignoring.`);
-            expect(itslearningGroupRepoMock.createOrUpdateGroups).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroups).not.toHaveBeenCalled();
         });
 
         it('should log error, if creation failed', async () => {
@@ -353,7 +359,7 @@ describe('ItsLearning Organisations Event Handler', () => {
                 RootDirectChildrenType.OEFFENTLICH,
             );
             orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
-            itslearningGroupRepoMock.createOrUpdateGroups.mockResolvedValueOnce(new DomainErrorMock('Error'));
+            itslearningGroupRepoAdapter.createOrUpdateGroups.mockResolvedValueOnce(new DomainErrorMock('Error'));
 
             await sut.schuleItslearningEnabledEventHandler(event);
 
@@ -381,14 +387,16 @@ describe('ItsLearning Organisations Event Handler', () => {
                 RootDirectChildrenType.OEFFENTLICH,
             );
             orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([klasse1, klasse2]);
-            itslearningGroupRepoMock.createOrUpdateGroups.mockResolvedValueOnce(undefined);
+            itslearningGroupRepoAdapter.createOrUpdateGroups.mockResolvedValueOnce(undefined);
 
             await sut.schuleItslearningEnabledEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} and its 2 Klassen were created.`,
             );
-            expect(itslearningGroupRepoMock.createOrUpdateGroups).toHaveBeenCalledWith<[CreateGroupParams[], string]>(
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroups).toHaveBeenCalledWith<
+                [CreateGroupParams[], string]
+            >(
                 [
                     {
                         id: event.organisationId,
@@ -424,14 +432,16 @@ describe('ItsLearning Organisations Event Handler', () => {
                 RootDirectChildrenType.OEFFENTLICH,
             );
             orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
-            itslearningGroupRepoMock.createOrUpdateGroups.mockResolvedValueOnce(undefined);
+            itslearningGroupRepoAdapter.createOrUpdateGroups.mockResolvedValueOnce(undefined);
 
             await sut.schuleItslearningEnabledEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} and its 0 Klassen were created.`,
             );
-            expect(itslearningGroupRepoMock.createOrUpdateGroups).toHaveBeenCalledWith<[CreateGroupParams[], string]>(
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroups).toHaveBeenCalledWith<
+                [CreateGroupParams[], string]
+            >(
                 [
                     {
                         id: event.organisationId,
@@ -455,14 +465,16 @@ describe('ItsLearning Organisations Event Handler', () => {
                 RootDirectChildrenType.OEFFENTLICH,
             );
             orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
-            itslearningGroupRepoMock.createOrUpdateGroups.mockResolvedValueOnce(undefined);
+            itslearningGroupRepoAdapter.createOrUpdateGroups.mockResolvedValueOnce(undefined);
 
             await sut.schuleItslearningEnabledEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} and its 0 Klassen were created.`,
             );
-            expect(itslearningGroupRepoMock.createOrUpdateGroups).toHaveBeenCalledWith<[CreateGroupParams[], string]>(
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroups).toHaveBeenCalledWith<
+                [CreateGroupParams[], string]
+            >(
                 [
                     {
                         id: event.organisationId,
@@ -486,14 +498,16 @@ describe('ItsLearning Organisations Event Handler', () => {
                 RootDirectChildrenType.OEFFENTLICH,
             );
             orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
-            itslearningGroupRepoMock.createOrUpdateGroups.mockResolvedValueOnce(undefined);
+            itslearningGroupRepoAdapter.createOrUpdateGroups.mockResolvedValueOnce(undefined);
 
             await sut.schuleItslearningEnabledEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} and its 0 Klassen were created.`,
             );
-            expect(itslearningGroupRepoMock.createOrUpdateGroups).toHaveBeenCalledWith<[CreateGroupParams[], string]>(
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroups).toHaveBeenCalledWith<
+                [CreateGroupParams[], string]
+            >(
                 [
                     {
                         id: event.organisationId,
@@ -519,7 +533,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.organisationDeletedEventHandler(event);
             expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
-            expect(itslearningGroupRepoMock.deleteGroup).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoAdapter.deleteGroup).not.toHaveBeenCalled();
         });
 
         it('should log error, if organisation is not a schule or klasse', async () => {
@@ -535,7 +549,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `[EventID: ${event.eventID}] The organisation with ID ${event.organisationId} is not of type "SCHULE" or "KLASSE"!`,
             );
-            expect(itslearningGroupRepoMock.createOrUpdateGroups).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoAdapter.createOrUpdateGroups).not.toHaveBeenCalled();
         });
 
         it('should log error, if deletion failed', async () => {
@@ -546,7 +560,7 @@ describe('ItsLearning Organisations Event Handler', () => {
                 OrganisationsTyp.SCHULE,
             );
             orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
-            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(new DomainErrorMock('Error'));
+            itslearningGroupRepoAdapter.deleteGroup.mockResolvedValueOnce(new DomainErrorMock('Error'));
 
             await sut.organisationDeletedEventHandler(event);
 
@@ -562,14 +576,14 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.numeric(7),
                 OrganisationsTyp.SCHULE,
             );
-            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(undefined);
+            itslearningGroupRepoAdapter.deleteGroup.mockResolvedValueOnce(undefined);
 
             await sut.organisationDeletedEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} was deleted.`,
             );
-            expect(itslearningGroupRepoMock.deleteGroup).toHaveBeenCalledWith(
+            expect(itslearningGroupRepoAdapter.deleteGroup).toHaveBeenCalledWith(
                 event.organisationId,
                 `${event.eventID}-ORGANISATION-DELETED`,
             );

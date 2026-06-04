@@ -39,8 +39,8 @@ export class ItsLearningSyncEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
 
-        private readonly itslearningPersonRepo: ItslearningPersonAdapter,
-        private readonly itslearningMembershipRepo: ItslearningMembershipAdapter,
+        private readonly itslearningPersonAdapter: ItslearningPersonAdapter,
+        private readonly itslearningMembershipAdapter: ItslearningMembershipAdapter,
 
         private readonly personRepo: PersonRepository,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
@@ -140,7 +140,7 @@ export class ItsLearningSyncEventHandler {
                 await this.emailResolverService.getPrimaryActiveEmailForPerson(person);
 
             // Create or update the person in itslearning
-            const creationResult: Result<void, DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
+            const creationResult: Result<void, DomainError> = await this.itslearningPersonAdapter.createOrUpdatePerson(
                 {
                     id: person.id,
                     firstName: person.vorname,
@@ -170,7 +170,7 @@ export class ItsLearningSyncEventHandler {
             }));
 
             const setMembershipsResult: Result<SetMembershipsResult, DomainError> =
-                await this.itslearningMembershipRepo.setMemberships(
+                await this.itslearningMembershipAdapter.setMemberships(
                     person.id,
                     memberships,
                     `${event.eventID}-SYNC-PERSON-MEMBERSHIPS`,
@@ -191,7 +191,7 @@ export class ItsLearningSyncEventHandler {
             );
 
             // We don't have any relevant personenkontexte for this person, so we delete it
-            const deleteError: Option<DomainError> = await this.itslearningPersonRepo.deletePerson(
+            const deleteError: Option<DomainError> = await this.itslearningPersonAdapter.deletePerson(
                 person.id,
                 `${event.eventID}-DELETE`,
             );

@@ -43,8 +43,8 @@ export class ItsLearningRolleEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
 
-        private readonly itslearningPersonRepo: ItslearningPersonAdapter,
-        private readonly itslearningMembershipRepo: ItslearningMembershipAdapter,
+        private readonly itslearningPersonAdapter: ItslearningPersonAdapter,
+        private readonly itslearningMembershipAdapter: ItslearningMembershipAdapter,
 
         private readonly personRepo: PersonRepository,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
@@ -217,7 +217,7 @@ export class ItsLearningRolleEventHandler {
 
             const createResult: Result<MassResult<void>, DomainError> =
                 // eslint-disable-next-line no-await-in-loop
-                await this.itslearningPersonRepo.createOrUpdatePersons(createParams, syncId);
+                await this.itslearningPersonAdapter.createOrUpdatePersons(createParams, syncId);
 
             if (!createResult.ok) {
                 // The network request failed (with retries), nothing we can do. Mark all these persons as failed.
@@ -265,7 +265,7 @@ export class ItsLearningRolleEventHandler {
 
             const deleteResult: Result<MassResult<void>, DomainError> =
                 // eslint-disable-next-line no-await-in-loop
-                await this.itslearningPersonRepo.deletePersons(
+                await this.itslearningPersonAdapter.deletePersons(
                     personen.map((p: Person<true>) => p.id),
                     syncId,
                 );
@@ -327,7 +327,7 @@ export class ItsLearningRolleEventHandler {
 
             const createResult: Result<MassResult<void>, DomainError> =
                 // eslint-disable-next-line no-await-in-loop
-                await this.itslearningMembershipRepo.createMembershipsMass(createParams, syncId);
+                await this.itslearningMembershipAdapter.createMembershipsMass(createParams, syncId);
 
             if (!createResult.ok) {
                 // The network request failed (with retries), nothing we can do. Mark all these memberships as failed.
@@ -380,7 +380,7 @@ export class ItsLearningRolleEventHandler {
 
             const removeResult: Result<MassResult<void>, DomainError> =
                 // eslint-disable-next-line no-await-in-loop
-                await this.itslearningMembershipRepo.removeMembershipsMass(
+                await this.itslearningMembershipAdapter.removeMembershipsMass(
                     personenkontexte.map(
                         (pk: Personenkontext<true>) => `membership-${pk.personId}-${pk.organisationId}`,
                     ),

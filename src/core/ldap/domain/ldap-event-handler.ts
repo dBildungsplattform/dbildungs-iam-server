@@ -53,7 +53,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 export class LdapEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly ldapClientService: LdapAdapter,
+        private readonly ldapClientAdapter: LdapAdapter,
         private readonly organisationRepository: OrganisationRepository,
         private readonly personRepo: PersonRepository,
         private readonly dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,
@@ -87,7 +87,7 @@ export class LdapEventHandler {
         this.logger.info(
             `Received PersonenkontextDeletedEvent, personId:${event.personId}, username:${event.username}`,
         );
-        const deletionResult: Result<PersonID | null> = await this.ldapClientService.deleteLehrerByUsername(
+        const deletionResult: Result<PersonID | null> = await this.ldapClientAdapter.deleteLehrerByUsername(
             event.username,
         );
         if (!deletionResult.ok) {
@@ -106,7 +106,7 @@ export class LdapEventHandler {
         this.logger.info(
             `Received PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );
-        const deletionResult: Result<PersonID | null> = await this.ldapClientService.deleteLehrerByUsername(
+        const deletionResult: Result<PersonID | null> = await this.ldapClientAdapter.deleteLehrerByUsername(
             event.username,
         );
         if (!deletionResult.ok) {
@@ -151,7 +151,7 @@ export class LdapEventHandler {
                 );
                 return;
             }
-            await this.ldapClientService.changeEmailAddressByPersonId(
+            await this.ldapClientAdapter.changeEmailAddressByPersonId(
                 event.personId,
                 person.username,
                 event.newPrimaryAddress,
@@ -173,7 +173,7 @@ export class LdapEventHandler {
         this.logger.info(
             `Received PersonRenamedEvent, personId:${event.personId}, username:${event.username}, oldUsername:${event.oldUsername}`,
         );
-        const modifyResult: Result<PersonUsername> = await this.ldapClientService.modifyPersonAttributes(
+        const modifyResult: Result<PersonUsername> = await this.ldapClientAdapter.modifyPersonAttributes(
             event.oldUsername,
             event.vorname,
             event.familienname,
@@ -221,7 +221,7 @@ export class LdapEventHandler {
                         .then((emailDomain: Result<string>) => {
                             if (emailDomain.ok) {
                                 this.logger.info(`Call LdapClientService because rollenArt is LEHR, pkId: ${pk.id}`);
-                                return this.ldapClientService
+                                return this.ldapClientAdapter
                                     .removePersonFromGroupByUsernameAndKennung(
                                         event.person.username!,
                                         pk.orgaKennung!,
@@ -263,7 +263,7 @@ export class LdapEventHandler {
                         })
                         .then((emailDomain: Result<string>) => {
                             if (emailDomain.ok) {
-                                return this.ldapClientService
+                                return this.ldapClientAdapter
                                     .createLehrer(event.person, emailDomain.value, pk.orgaKennung!)
                                     .then(async (creationResult: Result<PersonData>) => {
                                         if (!creationResult.ok) {
@@ -328,7 +328,7 @@ export class LdapEventHandler {
             `Received EmailAddressGeneratedEvent, personId:${event.personId}, username:${event.username}, emailAddress:${event.address}`,
         );
 
-        const result: Result<PersonID> = await this.ldapClientService.changeEmailAddressByPersonId(
+        const result: Result<PersonID> = await this.ldapClientAdapter.changeEmailAddressByPersonId(
             event.personId,
             event.username,
             event.address,
@@ -348,7 +348,7 @@ export class LdapEventHandler {
             `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress:${event.newAddress}, oldEmailAddress:${event.oldAddress}`,
         );
 
-        const result: Result<PersonID> = await this.ldapClientService.changeEmailAddressByPersonId(
+        const result: Result<PersonID> = await this.ldapClientAdapter.changeEmailAddressByPersonId(
             event.personId,
             event.username,
             event.newAddress,
@@ -378,7 +378,7 @@ export class LdapEventHandler {
             );
             return { ok: true, value: undefined };
         }
-        const result: Result<boolean> = await this.ldapClientService.removeMailAlternativeAddress(
+        const result: Result<boolean> = await this.ldapClientAdapter.removeMailAlternativeAddress(
             event.personId,
             event.username,
             event.address,
@@ -409,7 +409,7 @@ export class LdapEventHandler {
             };
         }
 
-        const deletionResult: Result<PersonID | null> = await this.ldapClientService.deleteLehrerByUsername(
+        const deletionResult: Result<PersonID | null> = await this.ldapClientAdapter.deleteLehrerByUsername(
             event.username,
             true,
         );
@@ -438,7 +438,7 @@ export class LdapEventHandler {
             return Ok(undefined);
         }
 
-        return this.ldapClientService.deleteOrganisation(event.kennung);
+        return this.ldapClientAdapter.deleteOrganisation(event.kennung);
     }
 
     public hatZuordnungZuOrganisationNachLoeschen(

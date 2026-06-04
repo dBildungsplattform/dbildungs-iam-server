@@ -83,7 +83,7 @@ export class OxEventHandler {
         protected readonly logger: ClassLogger,
         protected readonly emailResolverService: EmailResolverService,
         protected readonly oxService: OxSendService,
-        protected readonly oxEventService: OxAdapter,
+        protected readonly oxAdapter: OxAdapter,
         protected readonly oxSyncEventHandler: OxSyncEventHandler,
         protected readonly emailRepo: EmailRepo,
         protected readonly personRepository: PersonRepository,
@@ -217,7 +217,7 @@ export class OxEventHandler {
 
         //remove oxUser as member from all its oxGroups
         //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
-        await this.oxEventService.removeOxUserFromAllItsOxGroups(person.oxUserId, {
+        await this.oxAdapter.removeOxUserFromAllItsOxGroups(person.oxUserId, {
             personId: event.personId,
             username: event.username,
         });
@@ -251,7 +251,7 @@ export class OxEventHandler {
         // Await the requests to OX explicitly to avoid transaction-exceptions on OX-side regarding concurrent modifications
         /* eslint-disable no-await-in-loop */
         for (const pk of rollenArtLehrPKs) {
-            const oxGroupId: OXGroupID | DomainError = await this.oxEventService.getOxGroupByName(
+            const oxGroupId: OXGroupID | DomainError = await this.oxAdapter.getOxGroupByName(
                 OxAdapter.LEHRER_OX_GROUP_NAME_PREFIX + pk.orgaKennung,
             );
             if (oxGroupId instanceof DomainError) {
@@ -260,7 +260,7 @@ export class OxEventHandler {
                 );
             }
             //Logging is done in removeOxUserFromOxGroup
-            await this.oxEventService.removeOxUserFromOxGroup(oxGroupId, person.oxUserId, {
+            await this.oxAdapter.removeOxUserFromOxGroup(oxGroupId, person.oxUserId, {
                 personId: person.id,
                 username: person.username,
             });
@@ -289,7 +289,7 @@ export class OxEventHandler {
         oxUserId: OXUserID,
     ): Promise<void> {
         //change oxUserName to avoid conflicts for future OX-createUser-requests
-        const action: ChangeUserAction = this.oxEventService.createChangeUserAction(oxUserId, personId);
+        const action: ChangeUserAction = this.oxAdapter.createChangeUserAction(oxUserId, personId);
         const result: Result<void, DomainError> = await this.oxService.send(action);
 
         if (!result.ok) {
@@ -354,11 +354,11 @@ export class OxEventHandler {
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
         }
-        const getDataAction: GetDataForUserAction = this.oxEventService.createGetDataForUserAction(event.oxUserId);
+        const getDataAction: GetDataForUserAction = this.oxAdapter.createGetDataForUserAction(event.oxUserId);
         const getDataResult: Result<GetDataForUserResponse, DomainError> = await this.oxService.send(getDataAction);
 
         if (!getDataResult.ok && getDataResult.error instanceof OxNoSuchUserError) {
-            this.oxEventService.publishOxEmailAddressDeletedEvent(
+            this.oxAdapter.publishOxEmailAddressDeletedEvent(
                 event.personId,
                 event.username,
                 event.oxUserId,
@@ -403,7 +403,7 @@ export class OxEventHandler {
         }
 
         if (newPrimaryMail) {
-            const action: ChangeUserAction = this.oxEventService.createChangeUserAction(
+            const action: ChangeUserAction = this.oxAdapter.createChangeUserAction(
                 event.oxUserId,
                 undefined, // oxUserName
                 newAliasesArray, // aliases
@@ -428,12 +428,7 @@ export class OxEventHandler {
             );
         }
 
-        this.oxEventService.publishOxEmailAddressDeletedEvent(
-            event.personId,
-            event.username,
-            event.oxUserId,
-            event.address,
-        );
+        this.oxAdapter.publishOxEmailAddressDeletedEvent(event.personId, event.username, event.oxUserId, event.address);
         return this.logger.info(
             `Successfully Removed EmailAddress from OxAccount, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );
@@ -475,7 +470,7 @@ export class OxEventHandler {
             return this.logger.info('OrganisationDeletedEvent does not apply, ignoring event');
         }
 
-        await this.oxEventService.removeOxGroup(event.kennung);
+        await this.oxAdapter.removeOxGroup(event.kennung);
     }
 
     private async removeOxUserFromAllItsGroupsAndDeleteOxAccount(
@@ -489,9 +484,9 @@ export class OxEventHandler {
 
         //remove oxUser as member from all its oxGroups
         //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
-        await this.oxEventService.removeOxUserFromAllItsOxGroups(oxUserId, personIdentifier);
+        await this.oxAdapter.removeOxUserFromAllItsOxGroups(oxUserId, personIdentifier);
 
-        const action: DeleteUserAction = this.oxEventService.createDeleteUserAction(oxUserId);
+        const action: DeleteUserAction = this.oxAdapter.createDeleteUserAction(oxUserId);
         const result: Result<void, DomainError> = await this.oxService.send(action);
 
         if (!result.ok) {
@@ -530,7 +525,7 @@ export class OxEventHandler {
         oxUserId: OXUserID,
         personIdentifier: PersonIdentifier,
     ): Promise<Result<AddMemberToGroupResponse>> {
-        const action: AddMemberToGroupAction = this.oxEventService.createAddMemberToGroupAction(oxGroupId, oxUserId);
+        const action: AddMemberToGroupAction = this.oxAdapter.createAddMemberToGroupAction(oxGroupId, oxUserId);
         const result: Result<AddMemberToGroupResponse, DomainError> = await this.oxService.send(action);
 
         if (!result.ok) {
@@ -583,7 +578,7 @@ export class OxEventHandler {
         }
         const requestedEmailAddressString: string = mostRecentRequestedEmailAddress.address;
 
-        const existsAction: ExistsUserAction = this.oxEventService.createExistsUserAction(person.username);
+        const existsAction: ExistsUserAction = this.oxAdapter.createExistsUserAction(person.username);
         const existsResult: Result<ExistsUserResponse, DomainError> = await this.oxService.send(existsAction);
 
         if (existsResult.ok && existsResult.value.exists) {
@@ -592,7 +587,7 @@ export class OxEventHandler {
             return this.logger.errorPersonalized(`Cannot create user in OX, user already exists`, personIdentifier);
         }
 
-        const action: CreateUserAction = this.oxEventService.createCreateUserAction(
+        const action: CreateUserAction = this.oxAdapter.createCreateUserAction(
             person.username,
             person.username,
             person.vorname,
@@ -626,7 +621,7 @@ export class OxEventHandler {
             return this.logger.errorPersonalized(`Persisting oxUserId on emailAddress failed`, personIdentifier);
         }
 
-        const oxGroupId: Result<OXGroupID> = await this.oxEventService.getExistingOxGroupByNameOrCreateOxGroup(
+        const oxGroupId: Result<OXGroupID> = await this.oxAdapter.getExistingOxGroupByNameOrCreateOxGroup(
             OxAdapter.LEHRER_OX_GROUP_NAME_PREFIX + orgaKennung,
             OxAdapter.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + orgaKennung,
         );
@@ -656,8 +651,9 @@ export class OxEventHandler {
             );
         }
 
-        const changeByModuleAccessAction: ChangeByModuleAccessAction =
-            this.oxEventService.createChangeByModuleAccessAction(createUserResult.value.id);
+        const changeByModuleAccessAction: ChangeByModuleAccessAction = this.oxAdapter.createChangeByModuleAccessAction(
+            createUserResult.value.id,
+        );
         const changeByModuleAccessResult: Result<void, DomainError> =
             await this.oxService.send(changeByModuleAccessAction);
 
@@ -669,7 +665,7 @@ export class OxEventHandler {
             );
         }
 
-        this.oxEventService.publishOxUserChangedEvent2(
+        this.oxAdapter.publishOxUserChangedEvent2(
             oxUserCreatedEventCreator,
             personId,
             person.username,
@@ -710,7 +706,7 @@ export class OxEventHandler {
         } //logging is done in getMostRecentRequestedEmailAddress
         const requestedEmailAddressString: string = mostRecentRequestedEmailAddress.address;
 
-        const getDataAction: GetDataForUserAction = this.oxEventService.createGetDataForUserAction(person.oxUserId);
+        const getDataAction: GetDataForUserAction = this.oxAdapter.createGetDataForUserAction(person.oxUserId);
         const getDataResult: Result<GetDataForUserResponse, DomainError> = await this.oxService.send(getDataAction);
 
         if (!getDataResult.ok) {
@@ -730,7 +726,7 @@ export class OxEventHandler {
             `Added New alias:${requestedEmailAddressString}, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
         );
 
-        const action: ChangeUserAction = this.oxEventService.createChangeUserAction(
+        const action: ChangeUserAction = this.oxAdapter.createChangeUserAction(
             person.oxUserId,
             person.username,
             newAliasesArray,
@@ -757,7 +753,7 @@ export class OxEventHandler {
             personIdentifier,
         );
 
-        this.oxEventService.publishOxUserChangedEvent2(
+        this.oxAdapter.publishOxUserChangedEvent2(
             eventCreator,
             personId,
             person.username,

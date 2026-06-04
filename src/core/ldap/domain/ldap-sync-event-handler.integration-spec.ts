@@ -44,7 +44,7 @@ describe('LdapSyncEventHandler', () => {
     let orm: MikroORM;
 
     let sut: LdapSyncEventHandler;
-    let ldapClientServiceMock: DeepMocked<LdapAdapter>;
+    let ldapClientAdapterMock: DeepMocked<LdapAdapter>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -106,7 +106,7 @@ describe('LdapSyncEventHandler', () => {
         loggerMock = module.get(ClassLogger);
 
         sut = module.get(LdapSyncEventHandler);
-        ldapClientServiceMock = module.get(LdapAdapter);
+        ldapClientAdapterMock = module.get(LdapAdapter);
         personRepositoryMock = module.get(PersonRepository);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         rolleRepoMock = module.get(RolleRepo);
@@ -242,11 +242,11 @@ describe('LdapSyncEventHandler', () => {
     }
 
     function mockPersonAttributesFoundGroupsNotFound(): void {
-        ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
+        ldapClientAdapterMock.getPersonAttributes.mockResolvedValueOnce({
             ok: true,
             value: personAttributes,
         });
-        ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
+        ldapClientAdapterMock.getGroupsForPerson.mockResolvedValueOnce({
             ok: true,
             value: [],
         });
@@ -467,7 +467,7 @@ describe('LdapSyncEventHandler', () => {
                 ] = getPkArrayOrgaMapAndRolleMap(person);
                 mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
 
-                ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
+                ldapClientAdapterMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: true,
                     value: {
                         entryUUID: faker.string.uuid(),
@@ -475,7 +475,7 @@ describe('LdapSyncEventHandler', () => {
                     },
                 });
 
-                ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
+                ldapClientAdapterMock.getGroupsForPerson.mockResolvedValueOnce({
                     ok: true,
                     value: [],
                 });
@@ -509,7 +509,7 @@ describe('LdapSyncEventHandler', () => {
                 );
 
                 const error: LdapFetchAttributeError = new LdapFetchAttributeError(personId, username, 'attribute');
-                ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
+                ldapClientAdapterMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: false,
                     error: error,
                 });
@@ -544,12 +544,12 @@ describe('LdapSyncEventHandler', () => {
                     entryUUID: undefined, // entryUUID is only set in LdapClientService when an empty PersonEntry had to be created
                     dn: 'dn',
                 };
-                ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
+                ldapClientAdapterMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: true,
                     value: personAttributes,
                 });
 
-                ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
+                ldapClientAdapterMock.getGroupsForPerson.mockResolvedValueOnce({
                     ok: false,
                     error: new LdapSearchError(LdapEntityType.LEHRER),
                 });
@@ -788,7 +788,7 @@ describe('LdapSyncEventHandler', () => {
                     expect(loggerMock.warning).toHaveBeenCalledWith(
                         `MailPrimaryAddress undefined for personId:${personId}, username:${username}`,
                     );
-                    expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledWith(
+                    expect(ldapClientAdapterMock.changeEmailAddressByPersonId).toHaveBeenCalledWith(
                         personId,
                         username,
                         email,
@@ -824,7 +824,7 @@ describe('LdapSyncEventHandler', () => {
                     expect(loggerMock.crit).toHaveBeenCalledWith(
                         `COULD NOT find ${mailPrimaryAddress} in DISABLED addresses, Overwriting ABORTED, personId:${personId}, username:${username}`,
                     );
-                    expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(0);
+                    expect(ldapClientAdapterMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(0);
                 });
             });
 
@@ -874,7 +874,7 @@ describe('LdapSyncEventHandler', () => {
                     expect(loggerMock.info).toHaveBeenCalledWith(
                         `Overwriting LDAP:${mailPrimaryAddress} with person:${email}, personId:${personId}, username:${username}`,
                     );
-                    expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledWith(
+                    expect(ldapClientAdapterMock.changeEmailAddressByPersonId).toHaveBeenCalledWith(
                         personId,
                         username,
                         email,
@@ -907,7 +907,7 @@ describe('LdapSyncEventHandler', () => {
                     oeffentlicheSchulenDomain,
                 );
 
-                ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
+                ldapClientAdapterMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: true,
                     value: personAttributes,
                 });
@@ -917,7 +917,7 @@ describe('LdapSyncEventHandler', () => {
                 const corruptGroupDn1: string = `cn=topanga-${groupWithoutPkKennung},cn=is,ou=${groupWithoutPkKennung},dc=hot,dc=tonight`;
                 const corruptGroupDn2: string = `cn=these-${groupWithoutPkKennung},cn=groups,ou=${groupWithoutPkKennung},dc=are,dc=crazy`;
                 //mock: LDAP-group for existing PK (orga1Kennung) is NOT found, but an LDAP-group for non-existing PK and a corrupt group-dn are found
-                ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
+                ldapClientAdapterMock.getGroupsForPerson.mockResolvedValueOnce({
                     ok: true,
                     value: [groupWithoutPkDn, corruptGroupDn1, corruptGroupDn2],
                 });

@@ -13,9 +13,9 @@ import { WebhookService } from '../../webhook/domain/webhook.service.js';
 export class DeleteEmailsAddressesForSpshPersonService {
     public constructor(
         private readonly emailAddressRepo: EmailAddressRepo,
-        private readonly oxService: OxAdapter,
+        private readonly oxAdapter: OxAdapter,
         private readonly logger: ClassLogger,
-        private readonly ldapClientService: LdapClientAdapter,
+        private readonly ldapClientAdapter: LdapClientAdapter,
         private readonly webhookService: WebhookService,
     ) {}
     public async deleteEmailAddressesForSpshPerson(params: { spshPersonId: string }): Promise<void> {
@@ -44,7 +44,7 @@ export class DeleteEmailsAddressesForSpshPersonService {
         const domain: string | undefined = addresses.find((a: EmailAddress<true>) => a.getDomain())?.getDomain();
         if (oxUserCounter) {
             //Deleting the Group Relations extra is not necessary as Ox deletes them automatically when deleting the user
-            const deleteUserResult: Result<void, Error> = await this.oxService.deleteUser(oxUserCounter);
+            const deleteUserResult: Result<void, Error> = await this.oxAdapter.deleteUser(oxUserCounter);
             if (deleteUserResult.ok) {
                 this.logger.info(
                     `Successfully deleted for spshPerson ${params.spshPersonId} the corresponding Ox user ${oxUserCounter}.`,
@@ -62,7 +62,7 @@ export class DeleteEmailsAddressesForSpshPersonService {
             );
         }
         if (externalId && domain) {
-            const deleteLdapPersonResult: Result<void, Error> = await this.ldapClientService.deletePerson(
+            const deleteLdapPersonResult: Result<void, Error> = await this.ldapClientAdapter.deletePerson(
                 externalId,
                 domain,
             );

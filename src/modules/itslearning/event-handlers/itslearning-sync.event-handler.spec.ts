@@ -32,8 +32,8 @@ describe('ItsLearning Persons Event Handler', () => {
     let module: TestingModule;
 
     let sut: ItsLearningSyncEventHandler;
-    let itslearningPersonRepoMock: DeepMocked<ItslearningPersonAdapter>;
-    let itslearningMembershipRepoMock: DeepMocked<ItslearningMembershipAdapter>;
+    let itslearningPersonAdapterMock: DeepMocked<ItslearningPersonAdapter>;
+    let itslearningMembershipAdapterMock: DeepMocked<ItslearningMembershipAdapter>;
     let personRepoMock: DeepMocked<PersonRepository>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -79,8 +79,8 @@ describe('ItsLearning Persons Event Handler', () => {
 
         sut = module.get(ItsLearningSyncEventHandler);
         emailResolverServiceMock = module.get(EmailResolverService);
-        itslearningPersonRepoMock = module.get(ItslearningPersonAdapter);
-        itslearningMembershipRepoMock = module.get(ItslearningMembershipAdapter);
+        itslearningPersonAdapterMock = module.get(ItslearningPersonAdapter);
+        itslearningMembershipAdapterMock = module.get(ItslearningMembershipAdapter);
         personRepoMock = module.get(PersonRepository);
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         rolleRepoMock = module.get(RolleRepo);
@@ -176,8 +176,8 @@ describe('ItsLearning Persons Event Handler', () => {
             });
 
             it('should create or update user', async () => {
-                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
-                itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
+                itslearningPersonAdapterMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
+                itslearningMembershipAdapterMock.setMemberships.mockResolvedValueOnce({
                     ok: true,
                     value: { deleted: 0, updated: 0 },
                 });
@@ -191,7 +191,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
                 expect(emailResolverServiceMock.getPrimaryActiveEmailForPerson).toHaveBeenCalled();
 
-                expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith(
+                expect(itslearningPersonAdapterMock.createOrUpdatePerson).toHaveBeenCalledWith(
                     {
                         id: person.id,
                         firstName: person.vorname,
@@ -209,12 +209,12 @@ describe('ItsLearning Persons Event Handler', () => {
 
             it('should log error if creation failed', async () => {
                 const error: DomainError = new ItsLearningError('Error Test');
-                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Err(error));
+                itslearningPersonAdapterMock.createOrUpdatePerson.mockResolvedValueOnce(Err(error));
 
                 const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
                 await sut.personExternalSystemSyncEventHandler(event);
 
-                expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledTimes(1);
+                expect(itslearningPersonAdapterMock.createOrUpdatePerson).toHaveBeenCalledTimes(1);
                 expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
                     `[EventID: ${event.eventID}] Could not create/update person with ID ${person.id} in itslearning!`,
                     error,
@@ -222,8 +222,8 @@ describe('ItsLearning Persons Event Handler', () => {
             });
 
             it('should set memberships', async () => {
-                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
-                itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
+                itslearningPersonAdapterMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
+                itslearningMembershipAdapterMock.setMemberships.mockResolvedValueOnce({
                     ok: true,
                     value: { deleted: 0, updated: 1 },
                 } satisfies Result<SetMembershipsResult, DomainError>);
@@ -231,7 +231,7 @@ describe('ItsLearning Persons Event Handler', () => {
                 const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
                 await sut.personExternalSystemSyncEventHandler(event);
 
-                expect(itslearningMembershipRepoMock.setMemberships).toHaveBeenCalledWith(
+                expect(itslearningMembershipAdapterMock.setMemberships).toHaveBeenCalledWith(
                     person.id,
                     expect.arrayContaining([
                         {
@@ -251,8 +251,8 @@ describe('ItsLearning Persons Event Handler', () => {
             });
 
             it('should log error if setting memberships failed', async () => {
-                itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
-                itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
+                itslearningPersonAdapterMock.createOrUpdatePerson.mockResolvedValueOnce(Ok(undefined));
+                itslearningMembershipAdapterMock.setMemberships.mockResolvedValueOnce({
                     ok: false,
                     error: new ItsLearningError('Error Test'),
                 } satisfies Result<SetMembershipsResult, DomainError>);
@@ -288,19 +288,19 @@ describe('ItsLearning Persons Event Handler', () => {
             });
 
             it('should delete person', async () => {
-                itslearningPersonRepoMock.deletePerson.mockResolvedValueOnce(undefined);
+                itslearningPersonAdapterMock.deletePerson.mockResolvedValueOnce(undefined);
 
                 const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
                 await sut.personExternalSystemSyncEventHandler(event);
 
-                expect(itslearningPersonRepoMock.deletePerson).toHaveBeenCalledWith(
+                expect(itslearningPersonAdapterMock.deletePerson).toHaveBeenCalledWith(
                     person.id,
                     `${event.eventID}-DELETE`,
                 );
             });
 
             it('should log error if deletion failed', async () => {
-                itslearningPersonRepoMock.deletePerson.mockResolvedValueOnce(new ItsLearningError('Error Test'));
+                itslearningPersonAdapterMock.deletePerson.mockResolvedValueOnce(new ItsLearningError('Error Test'));
 
                 const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
                 await sut.personExternalSystemSyncEventHandler(event);

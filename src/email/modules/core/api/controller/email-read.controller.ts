@@ -33,7 +33,7 @@ export class EmailReadController {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly emailAddressRepo: EmailAddressRepo,
-        private readonly oxService: OxAdapter,
+        private readonly oxAdapter: OxAdapter,
     ) {}
 
     @Get('spshperson/:spshPersonId')
@@ -61,7 +61,7 @@ export class EmailReadController {
             .map((address: EmailAddress<true>) => {
                 const status: EmailAddressStatusEnum | undefined = address.getStatus();
                 if (status) {
-                    return new EmailAddressResponse(address, status, this.oxService.contextID);
+                    return new EmailAddressResponse(address, status, this.oxAdapter.contextID);
                 }
                 return undefined;
             })
@@ -96,7 +96,7 @@ export class EmailReadController {
             throw new EmailAddressMissingStatusError(emailAddress.address);
         }
 
-        return new EmailAddressResponse(emailAddress, latestStatus, this.oxService.contextID);
+        return new EmailAddressResponse(emailAddress, latestStatus, this.oxAdapter.contextID);
     }
 
     @Post('spshpersons')
@@ -130,7 +130,7 @@ export class EmailReadController {
         return primaryEmails
             .map((addr: EmailAddress<true>) => {
                 const status: EmailAddressStatusEnum | undefined = addr.getStatus();
-                return status ? new EmailAddressResponse(addr, status, this.oxService.contextID) : null;
+                return status ? new EmailAddressResponse(addr, status, this.oxAdapter.contextID) : null;
             })
             .filter((e: EmailAddressResponse | null): e is EmailAddressResponse => e !== null);
     }
