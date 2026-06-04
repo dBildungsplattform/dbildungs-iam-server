@@ -3,16 +3,19 @@ import { ExecutionContext, BadRequestException } from '@nestjs/common';
 import { createExecutionContextMock, createRequestMock } from '../../../../test/utils/http.mocks.js';
 import { CsrfTokenService } from '../services/csrf-token.service.js';
 import { CsrfProtectionGuard } from './csrf-token.guard.js';
+import { Reflector } from '@nestjs/core';
 import { MockedObject } from 'vitest';
 import type { Request as ExpressRequest } from 'express';
 
 describe('The CSRF protection guard', () => {
     let csrfTokenService: DeepMocked<CsrfTokenService>;
+    let reflector: DeepMocked<Reflector>;
     let sut: CsrfProtectionGuard;
 
     beforeEach(() => {
         csrfTokenService = createMock(CsrfTokenService);
-        sut = new CsrfProtectionGuard(csrfTokenService);
+        reflector = createMock(Reflector);
+        sut = new CsrfProtectionGuard(csrfTokenService, reflector);
     });
 
     it('should allow GET requests', () => {
@@ -59,24 +62,14 @@ describe('The CSRF protection guard', () => {
 
         expect(sut.canActivate(context)).toEqual(true);
     });
-    it('should allow public routes', () => {
+
+    it('should allow routes marked as public', () => {
         const request: MockedObject<ExpressRequest> = createRequestMock({
             method: 'POST',
-            path: '/api/health',
         });
 
         const context: ExecutionContext = createExecutionContextMock({ request });
-
-        expect(sut.canActivate(context)).toEqual(true);
-    });
-
-    it('should allow other public route prefixes', () => {
-        const request: MockedObject<ExpressRequest> = createRequestMock({
-            method: 'POST',
-            path: '/api/docs/something-deep',
-        });
-
-        const context: ExecutionContext = createExecutionContextMock({ request });
+        reflector.getAllAndOverride.mockReturnValueOnce(true);
 
         expect(sut.canActivate(context)).toEqual(true);
     });
