@@ -33,14 +33,34 @@ There are services for cross-cutting concerns as well like logging or configurat
 
 ### Example of a typical call:
 
-1. The *controller* calls <br>
-    a. the *factory* to create a new instance of an *aggregate*<br>
-    b. the *repository* to load or
-2. *factory* (a) or *repository* (b) construct an instance of the *aggregate*
-3. The *controller* calls methods of the *aggregate*
-4. the *controller* persists changes by calling the *repository* with the *aggregate* as parameter
+1. The _controller_ calls <br>
+   a. the _factory_ to create a new instance of an _aggregate_<br>
+   b. the _repository_ to load or
+2. _factory_ (a) or _repository_ (b) construct an instance of the _aggregate_
+3. The _controller_ calls methods of the _aggregate_
+4. the _controller_ persists changes by calling the _repository_ with the _aggregate_ as parameter
 
-![Class Structure](./img/class-structure.v2.svg "Source of draw.io diagram is embedded in the file")
+![Class Structure](./img/class-structure.v2.svg 'Source of draw.io diagram is embedded in the file')
+
+### Adapters
+
+> [!NOTE]
+> This is currently not perfectly implemented everywhere, but it should be seen as a goal when writing new or refactoring old code
+
+Whenever there is an external service involved (i.e. OX, LDAP, itslearning etc.) we try to encapsulate the related code as an "adapter".
+
+The structure should be as follows:
+
+- **\<module\>**
+    - **\<other non-adapter files\>**
+    - **\[adapter\]**
+        - **\[domain\]** (_Only contains code, that should be used by the server to do domain-related work_)
+            - Code with "repo-like" functionality (reading / writing of the external resources, related to domain)
+            - Error types
+        - **\[technical\]** (_Code related to the technical access to the external service, for example:_)
+            - Actual code to send requests to the external service
+            - DTOs (SOAP actions etc.)
+            - Internally used configs
 
 ## Modules
 
