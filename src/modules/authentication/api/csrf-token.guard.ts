@@ -2,7 +2,7 @@ import { Injectable, CanActivate, ExecutionContext, BadRequestException } from '
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { CsrfTokenService } from '../services/csrf-token.service.js';
-import { Public } from './public.decorator.js';
+import { DISABLE_ACCESS_GUARD_FLAG } from './access.guard.js';
 @Injectable()
 export class CsrfProtectionGuard implements CanActivate {
     public constructor(
@@ -48,6 +48,11 @@ export class CsrfProtectionGuard implements CanActivate {
     }
 
     private isPublicRoute(context: ExecutionContext): boolean {
-        return this.reflector.getAllAndOverride<boolean>(Public, [context.getHandler(), context.getClass()]) ?? false;
+        return (
+            this.reflector.getAllAndOverride<boolean>(DISABLE_ACCESS_GUARD_FLAG, [
+                context.getHandler(),
+                context.getClass(),
+            ]) ?? false
+        );
     }
 }
