@@ -30,14 +30,14 @@ database:
   username: "dbildungs_iam_server"
 
 ldap:
-  url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
+  url: ldap://dbildungs-iam-ldap-internal.spsh-xxx.svc.cluster.local:389
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
   base_dn: dc=schule-sh,dc=de
   retryWrapperDefaultRetries: 3
 
 eflkLdap:
-  url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
+  url: ldap://dbildungs-iam-ldap-internal.spsh-xxx.svc.cluster.local:389
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
   base_dn: dc=schule-sh,dc=de
@@ -364,7 +364,7 @@ cronjobsEmail:
     cron-trigger-email:
       schedule: "0 4 * * *"
       endpoint: "api/cron/delete"
-      httpMethod: 'DELETE'
+      httpMethod: "DELETE"
       script: "cron_trigger_email.sh"
       suspended: true
 
