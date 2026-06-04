@@ -33,16 +33,20 @@ export class CsrfTokenService {
     }
 
     private extractTokenFromRequest(request: Request): string | undefined {
-        // Header (preferred)
-        if (request.headers['x-csrf-token']) {
-            return request.headers['x-csrf-token'] as string;
+        const headerToken: unknown = request.headers['x-csrf-token'];
+        if (this.isNonEmptyString(headerToken)) {
+            return headerToken;
         }
 
-        // Query fallback
-        if (request.query['csrfToken']) {
-            return request.query['csrfToken'] as string;
+        const queryToken: unknown = request.query['csrfToken'];
+        if (this.isNonEmptyString(queryToken)) {
+            return queryToken;
         }
 
         return undefined;
+    }
+
+    private isNonEmptyString(value: unknown): value is string {
+        return typeof value === 'string' && value.length > 0;
     }
 }

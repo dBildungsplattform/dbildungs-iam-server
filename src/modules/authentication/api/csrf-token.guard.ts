@@ -1,10 +1,14 @@
 import { Injectable, CanActivate, ExecutionContext, BadRequestException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { CsrfTokenService } from '../services/csrf-token.service.js';
-
+import { Public } from './public.decorator.js';
 @Injectable()
 export class CsrfProtectionGuard implements CanActivate {
-    public constructor(private readonly csrfTokenService: CsrfTokenService) {}
+    public constructor(
+        private readonly csrfTokenService: CsrfTokenService,
+        private readonly reflector: Reflector,
+    ) {}
 
     public canActivate(context: ExecutionContext): boolean {
         const request: Request = context.switchToHttp().getRequest<Request>();
@@ -26,7 +30,7 @@ export class CsrfProtectionGuard implements CanActivate {
         }
 
         // Skip public routes
-        if (this.isPublicRoute(request.path)) {
+        if (this.isPublicRoute(context)) {
             return true;
         }
 
@@ -43,8 +47,7 @@ export class CsrfProtectionGuard implements CanActivate {
         return authHeader.startsWith('Bearer ');
     }
 
-    private isPublicRoute(path: string): boolean {
-        const publicRoutes: string[] = ['/api/health', '/api/auth/login', '/api/docs', '/api/docs-json'];
-        return publicRoutes.some((route: string) => path.startsWith(route));
+    private isPublicRoute(context: ExecutionContext): boolean {
+        return this.reflector.getAllAndOverride<boolean>(Public, [context.getHandler(), context.getClass()]) ?? false;
     }
 }
