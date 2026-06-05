@@ -719,9 +719,7 @@ describe('ServiceProviderRepo', () => {
             const result: ServiceProvider<true>[] = await sut.findVidisAngeboteforSchools([schoolAId, schoolBId]);
 
             expect(result).toHaveLength(2);
-            expect(result).toEqual(
-                expect.arrayContaining([matchingServiceProviderA, matchingServiceProviderB]),
-            );
+            expect(result).toEqual(expect.arrayContaining([matchingServiceProviderA, matchingServiceProviderB]));
         });
 
         it('should return an empty array for an empty school list', async () => {

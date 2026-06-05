@@ -201,7 +201,10 @@ export class RollenerweiterungRepo {
         serviceProviderIds: ServiceProviderID[],
         permissions: IPersonPermissions,
     ): Promise<Result<null, DomainError>> {
-        const isCanDelete: boolean = await permissions.hasSystemrechtAtOrganisation(organisationId, RollenSystemRecht.ROLLEN_ERWEITERN);
+        const isCanDelete: boolean = await permissions.hasSystemrechtAtOrganisation(
+            organisationId,
+            RollenSystemRecht.ROLLEN_ERWEITERN,
+        );
         if (!isCanDelete) {
             return Err(new MissingPermissionsError(`Missing systemrecht ${RollenSystemRecht.ROLLEN_ERWEITERN.name}.`));
         }
