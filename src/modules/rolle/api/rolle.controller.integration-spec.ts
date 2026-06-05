@@ -573,11 +573,36 @@ describe('Rolle API', () => {
         });
 
         it('should return rollen available for erweiterung if systemrecht is set', async () => {
-            const orgaIds: string[] = (
+            const [orgaA, orgaB, orgaC]: [Organisation<true>, Organisation<true>, Organisation<true>] =
                 await Promise.all([
-                    rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: false })),
-                    rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: false })),
-                    rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: false })),
+                    organisationRepo.save(DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE })),
+                    organisationRepo.save(DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE })),
+                    organisationRepo.save(DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE })),
+                ]);
+
+            (
+                await Promise.all([
+                    rolleRepo.save(
+                        DoFactory.createRolle(false, {
+                            istTechnisch: false,
+                            rollenart: RollenArt.LEHR,
+                            administeredBySchulstrukturknoten: orgaA.id,
+                        }),
+                    ),
+                    rolleRepo.save(
+                        DoFactory.createRolle(false, {
+                            istTechnisch: false,
+                            rollenart: RollenArt.LERN,
+                            administeredBySchulstrukturknoten: orgaB.id,
+                        }),
+                    ),
+                    rolleRepo.save(
+                        DoFactory.createRolle(false, {
+                            istTechnisch: false,
+                            rollenart: RollenArt.LEIT,
+                            administeredBySchulstrukturknoten: orgaC.id,
+                        }),
+                    ),
                 ])
             ).map((r: Rolle<true> | DomainError) => {
                 if (r instanceof DomainError) {
@@ -586,7 +611,7 @@ describe('Rolle API', () => {
                 return r.administeredBySchulstrukturknoten;
             });
 
-            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgaIds.slice(0, 2) });
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [orgaA.id, orgaB.id] });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/rolle?systemrecht=ROLLEN_ERWEITERN')
