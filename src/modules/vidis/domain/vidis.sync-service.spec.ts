@@ -19,6 +19,7 @@ import {
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { VidisApiService } from './vidis.api-service.js';
+import { VidisDomainError } from './vidis-domain.error.js';
 import { VidisSyncService } from './vidis.sync-service.js';
 import type { VidisAngebotWithSchoolActivations, VidisServiceResponseAngebot } from './vidis.types.js';
 import { EscalatedPersonPermissions } from '../../permission/escalated-person-permissions.js';
@@ -46,6 +47,7 @@ describe('VidisSyncService', () => {
 	type FindVidisAngeboteForSchoolsResult = Awaited<ReturnType<ServiceProviderRepo['findVidisAngeboteforSchools']>>;
 	type CreateServiceProviderResult = Awaited<ReturnType<ServiceProviderRepo['create']>>;
 	type VidisSchoolActivatedAngebot = { angebot: VidisServiceResponseAngebot; date: string };
+	type DecodedVidisLogoResult = { logo: Buffer | undefined; logoMimeType: string | undefined };
 
 	const tinyPngBase64: string = 'iVBORw0KGgo=';
 	const vidisApiServiceProviderMock: Pick<VidisApiService, 'getActivatedAngeboteByRegionSH'> = {
@@ -124,11 +126,23 @@ describe('VidisSyncService', () => {
 			[],
 		);
 
+	const decodeVidisLogo = (offerLogo: string): DecodedVidisLogoResult =>
+		(VidisSyncService as unknown as { decodeVidisLogo: (offerLogo: string) => DecodedVidisLogoResult }).decodeVidisLogo(offerLogo);
+
+	const detectLogoMimeType = (logo: Buffer): string | undefined =>
+		(VidisSyncService as unknown as { detectLogoMimeType: (logo: Buffer) => string | undefined }).detectLogoMimeType(logo);
+
+	const mapOrganisationIdsByKennung = (schools: Organisation<true>[]): Record<string, string> =>
+		(
+			sut as unknown as {
+				mapOrganisationIdsByKennung: (schools: Organisation<true>[]) => Record<string, string>;
+			}
+		).mapOrganisationIdsByKennung(schools);
+
 	beforeAll(async () => {
 		getOrThrowMock = vi.fn().mockReturnValue({
 			SYNC_SCHOOLS_PAGE_SIZE: 100,
 		});
-
 		module = await Test.createTestingModule({
 			providers: [
 				{
@@ -192,6 +206,43 @@ describe('VidisSyncService', () => {
 			SYNC_SCHOOLS_PAGE_SIZE: 100,
 		});
 		escalatedPersonPermissionsFactoryMock.createNew.mockReturnValue(permissionsMock);
+	});
+
+	it('should skip VIDIS sync when loading activated Angebote fails', async () => {
+		const getActivatedAngeboteResult: GetActivatedAngeboteByRegionResult = Err(
+			new VidisDomainError('VIDIS unavailable'),
+		);
+
+		vidisApiServiceMock.getActivatedAngeboteByRegionSH.mockResolvedValue(getActivatedAngeboteResult);
+
+		await sut.sync();
+
+		expect(loggerMock.debug).toHaveBeenCalledWith(
+			'Skipping VIDIS sync because loading activated Angebote failed',
+		);
+		expect(escalatedPersonPermissionsFactoryMock.createNew).not.toHaveBeenCalled();
+		expect(organisationRepoMock.findBy).not.toHaveBeenCalled();
+		expect(serviceProviderRepoMock.findVidisAngeboteforSchools).not.toHaveBeenCalled();
+	});
+
+	it('should stop syncing when no schools are returned for the current page', async () => {
+		const getActivatedAngeboteResult: GetActivatedAngeboteByRegionResult = Ok(activatedAngebote);
+		const schools: FindSchoolsResult = [[], 0];
+
+		vidisApiServiceMock.getActivatedAngeboteByRegionSH.mockResolvedValue(getActivatedAngeboteResult);
+		organisationRepoMock.findBy.mockResolvedValue(schools);
+		const syncForSchoolSpy: ReturnType<typeof vi.spyOn> = vi
+			.spyOn(
+				sut as unknown as { syncForSchoolInternal: (...args: unknown[]) => Promise<void> },
+				'syncForSchoolInternal',
+			)
+			.mockResolvedValue();
+
+		await sut.sync();
+
+		expect(organisationRepoMock.findBy).toHaveBeenCalledTimes(1);
+		expect(serviceProviderRepoMock.findVidisAngeboteforSchools).not.toHaveBeenCalled();
+		expect(syncForSchoolSpy).not.toHaveBeenCalled();
 	});
 
 	it('should group activated Angebote by organisationId and pass existing service providers per school', async () => {
@@ -294,6 +345,38 @@ describe('VidisSyncService', () => {
 		expect(syncForSchoolSpy).toHaveBeenCalledTimes(101);
 	});
 
+	it('should stop syncing for a school when there are no differences between VIDIS and the database', async () => {
+		const orga: TorgaIds = {
+			id: faker.string.uuid(),
+			kennung: faker.string.alphanumeric(8),
+		};
+		const angeboteInVidis: VidisSchoolActivatedAngebot[] = [
+			{
+				angebot: createAngebot(1, 'Existing Angebot'),
+				date: '2026-05-02',
+			},
+		];
+		const angeboteInDb: ServiceProvider<true>[] = [createExistingVidisServiceProvider(orga.id, '1')];
+
+		await (
+			sut as unknown as {
+				syncForSchoolInternal: (
+					organisationId: string,
+					angeboteInVidis: VidisSchoolActivatedAngebot[],
+					angeboteInDb: ServiceProvider<true>[],
+					permissions: IPersonPermissions,
+				) => Promise<void>;
+			}
+		).syncForSchoolInternal(orga.id, angeboteInVidis, angeboteInDb, permissionsMock);
+
+		expect(loggerMock.info).toHaveBeenCalledWith(
+			`No differences between VIDIS API and database for school with organisationId: ${orga.id}`,
+		);
+		expect(serviceProviderRepoMock.create).not.toHaveBeenCalled();
+		expect(rollenerweiterungRepoMock.deleteByOrganisationIdAndServiceProviderIds).not.toHaveBeenCalled();
+		expect(serviceProviderRepoMock.deleteByIdAuthorized).not.toHaveBeenCalled();
+	});
+
 	it('should create missing VIDIS Angebote for the school and skip existing ones', async () => {
 		const orga: TorgaIds = {
 			id: faker.string.uuid(),
@@ -344,6 +427,119 @@ describe('VidisSyncService', () => {
 			ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
 			ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
 		]);
+	});
+
+	it('should return undefined logo data when offerLogo is empty', () => {
+		expect(decodeVidisLogo('')).toEqual({
+			logo: undefined,
+			logoMimeType: undefined,
+		});
+	});
+
+	it('should return undefined logo data when the trimmed logo decodes to an empty buffer', () => {
+		expect(decodeVidisLogo('   ')).toEqual({
+			logo: undefined,
+			logoMimeType: undefined,
+		});
+	});
+
+	it('should decode raw base64 logos and detect their mime type', () => {
+		expect(decodeVidisLogo(tinyPngBase64)).toEqual({
+			logo: Buffer.from(tinyPngBase64, 'base64'),
+			logoMimeType: 'image/png',
+		});
+	});
+
+	it('should decode data URI logos using the declared mime type', () => {
+		expect(decodeVidisLogo(`data:image/png;base64,${tinyPngBase64}`)).toEqual({
+			logo: Buffer.from(tinyPngBase64, 'base64'),
+			logoMimeType: 'image/png',
+		});
+	});
+
+	it('should return undefined logo data when the mime type cannot be detected', () => {
+		expect(decodeVidisLogo('aGVsbG8=')).toEqual({
+			logo: undefined,
+			logoMimeType: undefined,
+		});
+	});
+
+	it('should detect logo mime type for PNG signatures', () => {
+		expect(detectLogoMimeType(Buffer.from(tinyPngBase64, 'base64'))).toBe('image/png');
+	});
+
+	it('should detect logo mime type for JPEG signatures', () => {
+		expect(detectLogoMimeType(Buffer.from('ffd8ff', 'hex'))).toBe('image/jpeg');
+	});
+
+	it('should detect logo mime type for WEBP signatures', () => {
+		expect(detectLogoMimeType(Buffer.from('524946460000000057454250', 'hex'))).toBe('image/webp');
+	});
+
+	it('should return undefined for RIFF logos without a WEBP signature', () => {
+		expect(detectLogoMimeType(Buffer.from('52494646000000004e4f5045', 'hex'))).toBeUndefined();
+	});
+
+	it('should detect logo mime type for inline SVG content', () => {
+		expect(detectLogoMimeType(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"></svg>', 'utf8'))).toBe(
+			'image/svg+xml',
+		);
+	});
+
+	it('should detect logo mime type for XML SVG content', () => {
+		expect(
+			detectLogoMimeType(Buffer.from('<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"></svg>', 'utf8')),
+		).toBe('image/svg+xml');
+	});
+
+	it('should return undefined for XML content without SVG markup', () => {
+		expect(detectLogoMimeType(Buffer.from('<?xml version="1.0"?><foo />', 'utf8'))).toBeUndefined();
+	});
+
+	it('should map organisation ids by kennung', () => {
+		const orga1: TorgaIds = {
+			id: faker.string.uuid(),
+			kennung: '123456',
+		};
+		const orga2: TorgaIds = {
+			id: faker.string.uuid(),
+			kennung: '09099997',
+		};
+
+		expect(
+			mapOrganisationIdsByKennung([
+				createSchool(orga1.id, orga1.kennung),
+				createSchool(orga2.id, orga2.kennung),
+			]),
+		).toEqual({
+			[orga1.kennung]: orga1.id,
+			[orga2.kennung]: orga2.id,
+		});
+	});
+
+	it('should ignore schools without kennung when mapping organisation ids', () => {
+		const orga: TorgaIds = {
+			id: faker.string.uuid(),
+			kennung: '123456',
+		};
+		const schoolWithoutKennung: Organisation<true> = Organisation.construct(
+			faker.string.uuid(),
+			new Date('2026-01-01'),
+			new Date('2026-01-02'),
+			1,
+			undefined,
+			undefined,
+			undefined,
+		);
+
+		expect(
+			mapOrganisationIdsByKennung([
+				schoolWithoutKennung,
+				createSchool(orga.id, orga.kennung),
+			]),
+		).toEqual({
+			[orga.kennung]: orga.id,
+		});
 	});
 
 	it('should collect stale serviceProviderIds for Angebote that are no longer in VIDIS', async () => {
