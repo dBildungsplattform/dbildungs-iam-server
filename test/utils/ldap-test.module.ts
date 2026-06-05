@@ -2,7 +2,7 @@ import { DynamicModule, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GenericContainer, PullPolicy, StartedTestContainer, Wait } from 'testcontainers';
 import { ServerConfig } from '../../src/shared/config/index.js';
-import { LdapInstanceConfig } from '../../src/core/ldap/ldap-instance-config.js';
+import { LdapInstanceConfig } from '../../src/core/ldap/adapter/technical/ldap-instance-config.js';
 import { LdapServerConfig } from '../../src/shared/config/ldap-server.config.js';
 
 type LdapConfigTestModuleOptions = { isLdapRequired: boolean };

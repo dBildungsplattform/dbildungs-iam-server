@@ -3,12 +3,12 @@ import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { PersonID, PersonUsername } from '../../../../shared/types/index.js';
 import { Err, Ok } from '../../../../shared/util/result.js';
-import { LdapClientService, PersonData } from '../../ldap/domain/ldap-client.service.js';
-import { CreateUserAction, CreateUserResponse } from '../../ox/actions/user/create-user.action.js';
-import { GetDataForUserResponse } from '../../ox/actions/user/get-data-user.action.js';
-import { OxSendService } from '../../ox/domain/ox-send.service.js';
-import { OxService } from '../../ox/domain/ox.service.js';
-import { OxPrimaryMailAlreadyExistsError } from '../../ox/error/ox-primary-mail-already-exists.error.js';
+import { LdapClientAdapter, PersonData } from '../../ldap/adapter/domain/ldap-client.adapter.js';
+import { CreateUserAction, CreateUserResponse } from '../../ox/adapter/technical/actions/user/create-user.action.js';
+import { GetDataForUserResponse } from '../../ox/adapter/technical/actions/user/get-data-user.action.js';
+import { OxSendService } from '../../ox/adapter/technical/ox-send.service.js';
+import { OxAdapter } from '../../ox/adapter/domain/ox.adapter.js';
+import { OxPrimaryMailAlreadyExistsError } from '../../ox/adapter/domain/error/ox-primary-mail-already-exists.error.js';
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
@@ -36,9 +36,9 @@ export class SetEmailAddressForSpshPersonService {
         private readonly emailDomainRepo: EmailDomainRepo,
         private readonly logger: ClassLogger,
         private readonly emailAddressGenerator: EmailAddressGenerator,
-        private readonly oxService: OxService,
+        private readonly oxAdapter: OxAdapter,
         private readonly oxSendService: OxSendService,
-        private readonly ldapClientService: LdapClientService,
+        private readonly ldapClientAdapter: LdapClientAdapter,
         private readonly webhookService: WebhookService,
         config: EmailAppConfig,
     ) {
@@ -439,7 +439,7 @@ export class SetEmailAddressForSpshPersonService {
         alternativeEmail: EmailAddress<true> | undefined,
         kennungen: string[],
     ): Promise<Result<string>> {
-        if (!this.oxService.useOx()) {
+        if (!this.oxAdapter.useOx()) {
             this.logger.info(
                 `Ox is disabled -> faking upsertOxUser - spshUsername=${spshUsername}, firstname=${firstname}, lastname=${lastname}, ` +
                     `primaryEmail=${primaryEmail.address}, alternativeEmail=${alternativeEmail?.address ?? 'none'}, ` +
@@ -458,7 +458,7 @@ export class SetEmailAddressForSpshPersonService {
             // Check if OX User exists -> otherwise error
 
             const exists: Result<GetDataForUserResponse, DomainError> = await this.oxSendService.send(
-                this.oxService.createGetDataForUserAction(oxUserCounter),
+                this.oxAdapter.createGetDataForUserAction(oxUserCounter),
             );
 
             if (!exists.ok) {
@@ -476,7 +476,7 @@ export class SetEmailAddressForSpshPersonService {
             const aliases: string[] = [primaryEmail.address, alternativeEmail?.address].filter(Boolean);
 
             const changeResult: Result<void, DomainError> = await this.oxSendService.send(
-                this.oxService.createChangeUserAction(
+                this.oxAdapter.createChangeUserAction(
                     oxUserCounter,
                     externalId,
                     aliases,
@@ -493,12 +493,12 @@ export class SetEmailAddressForSpshPersonService {
                 return changeResult;
             }
 
-            await this.oxService.setUserOxGroups(oxUserCounter, kennungen);
+            await this.oxAdapter.setUserOxGroups(oxUserCounter, kennungen);
 
             return Ok(oxUserCounter);
         } else {
             // create ox user (returning ID!)
-            const createAction: CreateUserAction = this.oxService.createCreateUserAction({
+            const createAction: CreateUserAction = this.oxAdapter.createCreateUserAction({
                 username: externalId,
                 displayName: spshUsername,
                 firstname,
@@ -513,7 +513,7 @@ export class SetEmailAddressForSpshPersonService {
                 return createResult;
             }
 
-            await this.oxService.setUserOxGroups(createResult.value.id, kennungen);
+            await this.oxAdapter.setUserOxGroups(createResult.value.id, kennungen);
 
             return Ok(createResult.value.id);
         }
@@ -533,7 +533,7 @@ export class SetEmailAddressForSpshPersonService {
 
         domain: string,
     ): Promise<Result<void>> {
-        if (!this.ldapClientService.useLdap()) {
+        if (!this.ldapClientAdapter.useLdap()) {
             this.logger.info(
                 `LDAP is disabled -> faking upsertLdapUser - uid=${uid}, username=${username}, firstName=${firstName}, lastName=${lastName}, primaryEmail=${primaryEmail}, alternativeEmail=${alternativeEmail ?? 'none'}, domain=${domain}`,
             );
@@ -541,7 +541,7 @@ export class SetEmailAddressForSpshPersonService {
             return Ok(undefined);
         }
 
-        const exists: Result<boolean> = await this.ldapClientService.isPersonExisting(uid, domain);
+        const exists: Result<boolean> = await this.ldapClientAdapter.isPersonExisting(uid, domain);
 
         if (!exists.ok) {
             return exists;
@@ -549,7 +549,7 @@ export class SetEmailAddressForSpshPersonService {
 
         if (exists.value) {
             // Update
-            const updateResult: Result<PersonData> = await this.ldapClientService.updatePerson(
+            const updateResult: Result<PersonData> = await this.ldapClientAdapter.updatePerson(
                 {
                     uid,
                     username,
@@ -566,7 +566,7 @@ export class SetEmailAddressForSpshPersonService {
             }
         } else {
             // Create
-            const createResult: Result<PersonData> = await this.ldapClientService.createPerson(
+            const createResult: Result<PersonData> = await this.ldapClientAdapter.createPerson(
                 {
                     uid,
                     username,

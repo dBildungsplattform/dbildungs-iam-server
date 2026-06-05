@@ -12,9 +12,9 @@ import { PersonEmailIdentifier, PersonIdentifier } from '../../../core/logging/p
 import { Person } from '../../person/domain/person.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { ChangeUserAction } from '../actions/user/change-user.action.js';
-import { generateOxUserChangedEvent, OxEventService, OxUserChangedEventCreator } from './ox-event.service.js';
-import { OxService } from './ox.service.js';
+import { ChangeUserAction } from '../adapter/technical/actions/user/change-user.action.js';
+import { generateOxUserChangedEvent, OxAdapter, OxUserChangedEventCreator } from '../adapter/domain/ox.adapter.js';
+import { OxSendService } from '../adapter/technical/ox.send-service.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { OXGroupID, OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
@@ -23,17 +23,20 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { OxSyncError } from '../error/ox-sync.error.js';
+import { OxSyncError } from '../adapter/domain/error/ox-sync.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { Injectable } from '@nestjs/common';
-import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/group/add-member-to-group.action.js';
-import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
-import { OxServerConfig } from '../../../shared/config/ox-server.config.js';
+import {
+    AddMemberToGroupAction,
+    AddMemberToGroupResponse,
+} from '../adapter/technical/actions/group/add-member-to-group.action.js';
+import { OxMemberAlreadyInGroupError } from '../adapter/domain/error/ox-member-already-in-group.error.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { OxServerConfig } from '../../../shared/config/ox-server.config.js';
 
 @Injectable()
 export class OxSyncEventHandler {
@@ -41,8 +44,8 @@ export class OxSyncEventHandler {
 
     public constructor(
         protected readonly logger: ClassLogger,
-        protected readonly oxService: OxService,
-        protected readonly oxEventService: OxEventService,
+        protected readonly oxService: OxSendService,
+        protected readonly oxAdapter: OxAdapter,
         protected readonly emailRepo: EmailRepo,
         protected readonly personRepository: PersonRepository,
         protected readonly eventService: EventRoutingLegacyKafkaService,
@@ -184,7 +187,7 @@ export class OxSyncEventHandler {
         }
 
         const mostRecentRequestedOrEnabledEA: Option<EmailAddress<true>> =
-            await this.oxEventService.getMostRecentEnabledOrRequestedEmailAddress(personId);
+            await this.oxAdapter.getMostRecentEnabledOrRequestedEmailAddress(personId);
         if (!mostRecentRequestedOrEnabledEA) {
             return;
         } //logging is done in getMostRecentRequestedEmailAddress
@@ -201,7 +204,7 @@ export class OxSyncEventHandler {
             `Current aliases to be written:${JSON.stringify(aliases)}, personId:${personId}, username:${username}`,
         );
 
-        const action: ChangeUserAction = this.oxEventService.createChangeUserAction(
+        const action: ChangeUserAction = this.oxAdapter.createChangeUserAction(
             personEmailIdentifier.oxUserId,
             username,
             aliases,
@@ -229,7 +232,7 @@ export class OxSyncEventHandler {
             personIdentifier,
         );
 
-        this.oxEventService.publishOxUserChangedEvent2(
+        this.oxAdapter.publishOxUserChangedEvent2(
             eventCreator,
             personId,
             username,
@@ -245,9 +248,9 @@ export class OxSyncEventHandler {
         personIdentifier: PersonIdentifier,
     ): Promise<void> {
         // Fetch or create the relevant OX group based on orgaKennung (group identifier)
-        const oxGroupIdResult: Result<OXGroupID> = await this.oxEventService.getExistingOxGroupByNameOrCreateOxGroup(
-            OxEventService.LEHRER_OX_GROUP_NAME_PREFIX + schuleDstrNr,
-            OxEventService.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + schuleDstrNr,
+        const oxGroupIdResult: Result<OXGroupID> = await this.oxAdapter.getExistingOxGroupByNameOrCreateOxGroup(
+            OxAdapter.LEHRER_OX_GROUP_NAME_PREFIX + schuleDstrNr,
+            OxAdapter.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + schuleDstrNr,
         );
 
         if (!oxGroupIdResult.ok) {
@@ -257,7 +260,7 @@ export class OxSyncEventHandler {
             );
         }
 
-        const addMemberToGroupAction: AddMemberToGroupAction = this.oxEventService.createAddMemberToGroupAction(
+        const addMemberToGroupAction: AddMemberToGroupAction = this.oxAdapter.createAddMemberToGroupAction(
             oxGroupIdResult.value,
             oxUserId,
         );
@@ -286,7 +289,7 @@ export class OxSyncEventHandler {
 
         const oxUserId: OXUserID = personEmailIdentifier.oxUserId;
 
-        await this.oxEventService.removeOxUserFromAllItsOxGroups(oxUserId, personIdentifier);
+        await this.oxAdapter.removeOxUserFromAllItsOxGroups(oxUserId, personIdentifier);
 
         const schulenDstNrList: string[] | OxSyncError = await this.getOrganisationKennungen(personId, username);
         if (schulenDstNrList instanceof OxSyncError) {

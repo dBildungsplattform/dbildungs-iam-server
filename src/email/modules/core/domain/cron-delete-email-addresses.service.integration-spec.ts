@@ -8,9 +8,9 @@ import { EmailConfigTestModule } from '../../../../../test/utils/email-config-te
 import { LoggingTestModule } from '../../../../../test/utils/logging-test.module.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../../test/utils/timeouts.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
-import { LdapClientService } from '../../ldap/domain/ldap-client.service.js';
-import { OxSendService } from '../../ox/domain/ox-send.service.js';
-import { OxService } from '../../ox/domain/ox.service.js';
+import { LdapClientAdapter } from '../../ldap/adapter/domain/ldap-client.adapter.js';
+import { OxSendService } from '../../ox/adapter/technical/ox-send.service.js';
+import { OxAdapter } from '../../ox/adapter/domain/ox.adapter.js';
 import { EmailAddressRepo } from '../persistence/email-address.repo.js';
 import { EmailDomainRepo } from '../persistence/email-domain.repo.js';
 import { EmailAddressGenerator } from './email-address-generator.js';
@@ -33,8 +33,8 @@ describe('CronDeleteEmailsAddressesService', () => {
     let emailAddressRepo: EmailAddressRepo;
     let emailDomainRepo: EmailDomainRepo;
     let oxSendServiceMock: DeepMocked<OxSendService>;
-    let ldapClientServiceMock: DeepMocked<LdapClientService>;
-    let oxServiceMock: DeepMocked<OxService>;
+    let ldapClientAdapterMock: DeepMocked<LdapClientAdapter>;
+    let oxAdapterMock: DeepMocked<OxAdapter>;
     let webhookServiceMock: DeepMocked<WebhookService>;
 
     beforeAll(async () => {
@@ -57,16 +57,16 @@ describe('CronDeleteEmailsAddressesService', () => {
                     useValue: createMock(EmailAddressGenerator),
                 },
                 {
-                    provide: OxService,
-                    useValue: createMock(OxService),
+                    provide: OxAdapter,
+                    useValue: createMock(OxAdapter),
                 },
                 {
                     provide: OxSendService,
                     useValue: createMock(OxSendService),
                 },
                 {
-                    provide: LdapClientService,
-                    useValue: createMock(LdapClientService),
+                    provide: LdapClientAdapter,
+                    useValue: createMock(LdapClientAdapter),
                 },
                 {
                     provide: WebhookService,
@@ -81,8 +81,8 @@ describe('CronDeleteEmailsAddressesService', () => {
         emailAddressRepo = module.get(EmailAddressRepo);
         emailDomainRepo = module.get(EmailDomainRepo);
         oxSendServiceMock = module.get(OxSendService);
-        ldapClientServiceMock = module.get(LdapClientService);
-        oxServiceMock = module.get(OxService);
+        ldapClientAdapterMock = module.get(LdapClientAdapter);
+        oxAdapterMock = module.get(OxAdapter);
         deleteEmailsAddressesForSpshPersonServiceMock = module.get(DeleteEmailsAddressesForSpshPersonService);
         webhookServiceMock = module.get(WebhookService);
 
@@ -266,7 +266,7 @@ describe('CronDeleteEmailsAddressesService', () => {
             );
 
             oxSendServiceMock.send.mockResolvedValueOnce(Ok(undefined));
-            ldapClientServiceMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
+            ldapClientAdapterMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
 
             await sut.deleteEmailAddresses();
 
@@ -279,7 +279,7 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(
                 deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
             ).not.toHaveBeenCalled();
-            expect(oxServiceMock.createChangeUserAction).toHaveBeenCalledWith(
+            expect(oxAdapterMock.createChangeUserAction).toHaveBeenCalledWith(
                 oxUserCounter,
                 undefined,
                 [email0.address],
@@ -289,7 +289,7 @@ describe('CronDeleteEmailsAddressesService', () => {
                 email0.address,
                 email0.address,
             );
-            expect(ldapClientServiceMock.updatePersonEmails).toHaveBeenCalledWith(
+            expect(ldapClientAdapterMock.updatePersonEmails).toHaveBeenCalledWith(
                 email0.externalId,
                 domain.domain,
                 email0.address,
@@ -330,7 +330,7 @@ describe('CronDeleteEmailsAddressesService', () => {
             );
 
             oxSendServiceMock.send.mockResolvedValueOnce(Ok(''));
-            ldapClientServiceMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
+            ldapClientAdapterMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
 
             await sut.deleteEmailAddresses();
 
@@ -345,8 +345,8 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(
                 deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
             ).not.toHaveBeenCalled();
-            expect(oxServiceMock.createChangeUserAction).not.toHaveBeenCalled();
-            expect(ldapClientServiceMock.updatePersonEmails).toHaveBeenCalledWith(
+            expect(oxAdapterMock.createChangeUserAction).not.toHaveBeenCalled();
+            expect(ldapClientAdapterMock.updatePersonEmails).toHaveBeenCalledWith(
                 email0.externalId,
                 domain.domain,
                 email0.address,
@@ -386,7 +386,7 @@ describe('CronDeleteEmailsAddressesService', () => {
             );
 
             oxSendServiceMock.send.mockResolvedValueOnce(Ok(''));
-            ldapClientServiceMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
+            ldapClientAdapterMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
 
             await sut.deleteEmailAddresses();
 
@@ -401,8 +401,8 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(
                 deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
             ).not.toHaveBeenCalled();
-            expect(oxServiceMock.createChangeUserAction).toHaveBeenCalled();
-            expect(ldapClientServiceMock.updatePersonEmails).toHaveBeenCalledWith(
+            expect(oxAdapterMock.createChangeUserAction).toHaveBeenCalled();
+            expect(ldapClientAdapterMock.updatePersonEmails).toHaveBeenCalledWith(
                 email0.externalId,
                 domain.domain,
                 email0.address,
@@ -443,7 +443,7 @@ describe('CronDeleteEmailsAddressesService', () => {
             );
 
             oxSendServiceMock.send.mockResolvedValueOnce(Err(new Error('') as DomainError));
-            ldapClientServiceMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
+            ldapClientAdapterMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
 
             await sut.deleteEmailAddresses();
 
@@ -467,7 +467,7 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(
                 deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
             ).not.toHaveBeenCalled();
-            expect(oxServiceMock.createChangeUserAction).toHaveBeenCalledWith(
+            expect(oxAdapterMock.createChangeUserAction).toHaveBeenCalledWith(
                 oxUserCounter,
                 undefined,
                 [email0.address],
@@ -477,7 +477,7 @@ describe('CronDeleteEmailsAddressesService', () => {
                 email0.address,
                 email0.address,
             );
-            expect(ldapClientServiceMock.updatePersonEmails).toHaveBeenCalledWith(
+            expect(ldapClientAdapterMock.updatePersonEmails).toHaveBeenCalledWith(
                 email0.externalId,
                 domain.domain,
                 email0.address,
@@ -542,7 +542,7 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(
                 deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
             ).not.toHaveBeenCalled();
-            expect(oxServiceMock.createChangeUserAction).toHaveBeenCalledWith(
+            expect(oxAdapterMock.createChangeUserAction).toHaveBeenCalledWith(
                 oxUserCounter,
                 undefined,
                 [email0.address],
@@ -552,7 +552,7 @@ describe('CronDeleteEmailsAddressesService', () => {
                 email0.address,
                 email0.address,
             );
-            expect(ldapClientServiceMock.updatePersonEmails).not.toHaveBeenCalled();
+            expect(ldapClientAdapterMock.updatePersonEmails).not.toHaveBeenCalled();
             expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
                 spshPersonId: personId1,
                 newPrimaryEmail: email0.address,
@@ -588,7 +588,7 @@ describe('CronDeleteEmailsAddressesService', () => {
             );
 
             oxSendServiceMock.send.mockResolvedValueOnce(Ok(undefined));
-            ldapClientServiceMock.updatePersonEmails.mockResolvedValueOnce(Err(new Error('') as DomainError));
+            ldapClientAdapterMock.updatePersonEmails.mockResolvedValueOnce(Err(new Error('') as DomainError));
 
             await sut.deleteEmailAddresses();
 
@@ -612,7 +612,7 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(
                 deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
             ).not.toHaveBeenCalled();
-            expect(oxServiceMock.createChangeUserAction).toHaveBeenCalledWith(
+            expect(oxAdapterMock.createChangeUserAction).toHaveBeenCalledWith(
                 oxUserCounter,
                 undefined,
                 [email0.address],
@@ -622,7 +622,7 @@ describe('CronDeleteEmailsAddressesService', () => {
                 email0.address,
                 email0.address,
             );
-            expect(ldapClientServiceMock.updatePersonEmails).toHaveBeenCalledWith(
+            expect(ldapClientAdapterMock.updatePersonEmails).toHaveBeenCalledWith(
                 email0.externalId,
                 domain.domain,
                 email0.address,
@@ -661,7 +661,7 @@ describe('CronDeleteEmailsAddressesService', () => {
             await createAndPersistEmail(personId1, -50, undefined, oxUserCounter, domain);
 
             oxSendServiceMock.send.mockResolvedValueOnce(Ok(undefined));
-            ldapClientServiceMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
+            ldapClientAdapterMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
 
             await sut.deleteEmailAddresses();
 
@@ -677,8 +677,8 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(
                 deleteEmailsAddressesForSpshPersonServiceMock.deleteEmailAddressesForSpshPerson,
             ).not.toHaveBeenCalled();
-            expect(oxServiceMock.createChangeUserAction).not.toHaveBeenCalled();
-            expect(ldapClientServiceMock.updatePersonEmails).not.toHaveBeenCalled();
+            expect(oxAdapterMock.createChangeUserAction).not.toHaveBeenCalled();
+            expect(ldapClientAdapterMock.updatePersonEmails).not.toHaveBeenCalled();
             expect(webhookServiceMock.sendEmailsChanged).not.toHaveBeenCalled();
         });
 

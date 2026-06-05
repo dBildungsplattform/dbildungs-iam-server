@@ -4,11 +4,11 @@ import { EmailAddressRepo } from '../persistence/email-address.repo.js';
 import { EmailAddress } from './email-address.js';
 import { DeleteEmailsAddressesForSpshPersonService } from './delete-email-adresses-for-spsh-person.service.js';
 import { EmailAddressStatusEnum } from '../persistence/email-address-status.entity.js';
-import { OxService } from '../../ox/domain/ox.service.js';
-import { OxSendService } from '../../ox/domain/ox-send.service.js';
+import { OxAdapter } from '../../ox/adapter/domain/ox.adapter.js';
+import { OxSendService } from '../../ox/adapter/technical/ox-send.service.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { OXUserID } from '../../../../shared/types/ox-ids.types.js';
-import { LdapClientService } from '../../ldap/domain/ldap-client.service.js';
+import { LdapClientAdapter } from '../../ldap/adapter/domain/ldap-client.adapter.js';
 import { WebhookService } from '../../webhook/domain/webhook.service.js';
 
 @Injectable()
@@ -17,9 +17,9 @@ export class CronDeleteEmailsAddressesService {
         private readonly logger: ClassLogger,
         private readonly emailAddressRepo: EmailAddressRepo,
         private readonly deleteEmailsAddressesForSpshPersonService: DeleteEmailsAddressesForSpshPersonService,
-        private readonly oxService: OxService,
+        private readonly oxAdapter: OxAdapter,
         private readonly oxSendService: OxSendService,
-        private readonly ldapClientService: LdapClientService,
+        private readonly ldapClientAdapter: LdapClientAdapter,
         private readonly webhookService: WebhookService,
     ) {}
     public async deleteEmailAddresses(): Promise<void> {
@@ -94,13 +94,13 @@ export class CronDeleteEmailsAddressesService {
         let isCanDeletePrio1FromDb: boolean = true;
 
         if (oxUserCounter) {
-            if (!this.oxService.useOx()) {
+            if (!this.oxAdapter.useOx()) {
                 this.logger.info(
                     `OX is disabled -> faking OX change user action - externalId=${externalId}, oxUserCounter=${oxUserCounter}, domain=${domain}`,
                 );
             } else {
                 const changeResult: Result<void, DomainError> = await this.oxSendService.send(
-                    this.oxService.createChangeUserAction(
+                    this.oxAdapter.createChangeUserAction(
                         oxUserCounter,
                         undefined,
                         [prio0ToKeep.address],
@@ -126,12 +126,12 @@ export class CronDeleteEmailsAddressesService {
             );
         }
 
-        if (!this.ldapClientService.useLdap()) {
+        if (!this.ldapClientAdapter.useLdap()) {
             this.logger.info(
                 `LDAP is disabled -> faking LDAP email update- externalId=${externalId}, domain=${domain}`,
             );
         } else if (domain) {
-            const changeResult: Result<string> = await this.ldapClientService.updatePersonEmails(
+            const changeResult: Result<string> = await this.ldapClientAdapter.updatePersonEmails(
                 externalId,
                 domain,
                 prio0ToKeep.address,

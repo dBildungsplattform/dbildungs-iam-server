@@ -20,10 +20,10 @@ import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-its
 import { OrganisationsTyp, RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { CreateGroupParams } from '../actions/create-group.params.js';
-import { UpdateGroupParams } from '../actions/update-group.action.js';
-import { ItslearningGroupRepo } from '../repo/itslearning-group.repo.js';
-import { ItslearningGroupLengthLimits } from '../types/groups.enum.js';
+import { CreateGroupParams } from '../adapter/technical/actions/create-group.params.js';
+import { UpdateGroupParams } from '../adapter/technical/actions/update-group.action.js';
+import { ItslearningGroupAdapter } from '../adapter/domain/itslearning-group.adapter.js';
+import { ItslearningGroupLengthLimits } from '../adapter/domain/groups.enum.js';
 
 const SAFE_NAME_LIMIT: number = Math.floor(ItslearningGroupLengthLimits.SHORT_DESC * 0.75);
 
@@ -36,7 +36,7 @@ export class ItsLearningOrganisationsEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly organisationRepo: OrganisationRepository,
-        private readonly itslearningGroupRepo: ItslearningGroupRepo,
+        private readonly itslearningGroupAdapter: ItslearningGroupAdapter,
         configService: ConfigService<ServerConfig>,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
@@ -86,7 +86,7 @@ export class ItsLearningOrganisationsEventHandler {
             parentId: event.administriertVon,
         };
 
-        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroup(
+        const createError: Option<DomainError> = await this.itslearningGroupAdapter.createOrUpdateGroup(
             params,
             `${event.eventID}-KLASSE-CREATED`,
         );
@@ -138,7 +138,7 @@ export class ItsLearningOrganisationsEventHandler {
             parentId: event.administriertVon,
         };
 
-        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroup(
+        const createError: Option<DomainError> = await this.itslearningGroupAdapter.createOrUpdateGroup(
             params,
             `${event.eventID}-KLASSE-UPDATED`,
         );
@@ -200,7 +200,7 @@ export class ItsLearningOrganisationsEventHandler {
             parentId: this.ROOT_OEFFENTLICH,
         });
 
-        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroups(
+        const createError: Option<DomainError> = await this.itslearningGroupAdapter.createOrUpdateGroups(
             createParams,
             `${event.eventID}-SCHULE-SYNC`,
         );
@@ -233,7 +233,7 @@ export class ItsLearningOrganisationsEventHandler {
             return;
         }
 
-        const deleteError: Option<DomainError> = await this.itslearningGroupRepo.deleteGroup(
+        const deleteError: Option<DomainError> = await this.itslearningGroupAdapter.deleteGroup(
             event.organisationId,
             `${event.eventID}-ORGANISATION-DELETED`,
         );

@@ -35,24 +35,24 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { ListGroupsAction, ListGroupsResponse } from '../actions/group/list-groups.action.js';
-import { CreateUserAction } from '../actions/user/create-user.action.js';
-import { ExistsUserAction } from '../actions/user/exists-user.action.js';
-import { GetDataForUserResponse } from '../actions/user/get-data-user.action.js';
-import { OxGroupNotFoundError } from '../error/ox-group-not-found.error.js';
-import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
-import { OxNoSuchUserError } from '../error/ox-no-such-user.error.js';
+import { ListGroupsAction, ListGroupsResponse } from '../adapter/technical/actions/group/list-groups.action.js';
+import { CreateUserAction } from '../adapter/technical/actions/user/create-user.action.js';
+import { ExistsUserAction } from '../adapter/technical/actions/user/exists-user.action.js';
+import { GetDataForUserResponse } from '../adapter/technical/actions/user/get-data-user.action.js';
+import { OxGroupNotFoundError } from '../adapter/domain/error/ox-group-not-found.error.js';
+import { OxMemberAlreadyInGroupError } from '../adapter/domain/error/ox-member-already-in-group.error.js';
+import { OxNoSuchUserError } from '../adapter/domain/error/ox-no-such-user.error.js';
 import { OxEventHandler } from './ox-event-handler.js';
-import { OxEventService } from './ox-event.service.js';
+import { OxAdapter } from '../adapter/domain/ox.adapter.js';
 import { OxSyncEventHandler } from './ox-sync-event-handler.js';
-import { OxService } from './ox.service.js';
-import { ChangeUserParams } from '../actions/user/change-user.action.js';
+import { OxSendService } from '../adapter/technical/ox.send-service.js';
+import { ChangeUserParams } from '../adapter/technical/actions/user/change-user.action.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
 
     let sut: OxEventHandler;
-    let oxServiceMock: DeepMocked<OxService>;
+    let oxServiceMock: DeepMocked<OxSendService>;
     let oxSyncHandlerMock: DeepMocked<OxSyncEventHandler>;
     let loggerMock: DeepMocked<ClassLogger>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
@@ -65,7 +65,7 @@ describe('OxEventHandler', () => {
             imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot()],
             providers: [
                 OxEventHandler,
-                OxEventService,
+                OxAdapter,
                 {
                     provide: RolleRepo,
                     useValue: createMock(RolleRepo),
@@ -87,8 +87,8 @@ describe('OxEventHandler', () => {
                     useValue: createMock(EmailRepo),
                 },
                 {
-                    provide: OxService,
-                    useValue: createMock(OxService),
+                    provide: OxSendService,
+                    useValue: createMock(OxSendService),
                 },
                 {
                     provide: OxSyncEventHandler,
@@ -106,7 +106,7 @@ describe('OxEventHandler', () => {
         }).compile();
 
         sut = module.get(OxEventHandler);
-        oxServiceMock = module.get(OxService);
+        oxServiceMock = module.get(OxSendService);
         oxSyncHandlerMock = module.get(OxSyncEventHandler);
         loggerMock = module.get(ClassLogger);
 
