@@ -241,8 +241,8 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should keep the primary mail and remove only the alternative mail', async () => {
-            oxServiceMock.useOx.mockReturnValue(true);
-            ldapClientServiceMock.useLdap.mockReturnValue(true);
+            oxAdapterMock.useOx.mockReturnValue(true);
+            ldapClientAdapterMock.useLdap.mockReturnValue(true);
 
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -305,8 +305,8 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should still remove the alternative mail from db if ox user counter not found', async () => {
-            oxServiceMock.useOx.mockReturnValue(true);
-            ldapClientServiceMock.useLdap.mockReturnValue(true);
+            oxAdapterMock.useOx.mockReturnValue(true);
+            ldapClientAdapterMock.useLdap.mockReturnValue(true);
 
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -362,8 +362,8 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should fallback to oxUserCounter from prio 0 address if oxUserCounter from prio 1 address is missing', async () => {
-            oxServiceMock.useOx.mockReturnValue(true);
-            ldapClientServiceMock.useLdap.mockReturnValue(true);
+            oxAdapterMock.useOx.mockReturnValue(true);
+            ldapClientAdapterMock.useLdap.mockReturnValue(true);
 
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -418,8 +418,8 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should fail removing the alternative mail due to ox error and leave email in status TO_BE_DELETED', async () => {
-            oxServiceMock.useOx.mockReturnValue(true);
-            ldapClientServiceMock.useLdap.mockReturnValue(true);
+            oxAdapterMock.useOx.mockReturnValue(true);
+            ldapClientAdapterMock.useLdap.mockReturnValue(true);
 
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -493,8 +493,8 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should fail removing the alternative mail due ldap domain missing and leave email in status TO_BE_DELETED', async () => {
-            oxServiceMock.useOx.mockReturnValue(true);
-            ldapClientServiceMock.useLdap.mockReturnValue(true);
+            oxAdapterMock.useOx.mockReturnValue(true);
+            ldapClientAdapterMock.useLdap.mockReturnValue(true);
 
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -563,8 +563,8 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should fail removing the alternative mail due to ldap error and leave email in status TO_BE_DELETED', async () => {
-            oxServiceMock.useOx.mockReturnValue(true);
-            ldapClientServiceMock.useLdap.mockReturnValue(true);
+            oxAdapterMock.useOx.mockReturnValue(true);
+            ldapClientAdapterMock.useLdap.mockReturnValue(true);
 
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -683,8 +683,8 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should log "OX is disabled -> faking OX change user action" and still remove prio1 from DB', async () => {
-            oxServiceMock.useOx.mockReturnValue(false);
-            ldapClientServiceMock.useLdap.mockReturnValue(true);
+            oxAdapterMock.useOx.mockReturnValue(false);
+            ldapClientAdapterMock.useLdap.mockReturnValue(true);
 
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -709,7 +709,7 @@ describe('CronDeleteEmailsAddressesService', () => {
                 domain,
             );
 
-            ldapClientServiceMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
+            ldapClientAdapterMock.updatePersonEmails.mockResolvedValueOnce(Ok(''));
 
             await sut.deleteEmailAddresses();
 
@@ -720,9 +720,9 @@ describe('CronDeleteEmailsAddressesService', () => {
                 expect.stringContaining('OX is disabled -> faking OX change user action'),
             );
             expect(oxSendServiceMock.send).not.toHaveBeenCalled();
-            expect(oxServiceMock.createChangeUserAction).not.toHaveBeenCalled();
+            expect(oxAdapterMock.createChangeUserAction).not.toHaveBeenCalled();
 
-            expect(ldapClientServiceMock.updatePersonEmails).toHaveBeenCalledWith(
+            expect(ldapClientAdapterMock.updatePersonEmails).toHaveBeenCalledWith(
                 email0.externalId,
                 domain.domain,
                 email0.address,
@@ -739,8 +739,8 @@ describe('CronDeleteEmailsAddressesService', () => {
         });
 
         it('should log "LDAP is disabled -> faking LDAP email update" and still remove prio1 from DB', async () => {
-            oxServiceMock.useOx.mockReturnValue(true);
-            ldapClientServiceMock.useLdap.mockReturnValue(false);
+            oxAdapterMock.useOx.mockReturnValue(true);
+            ldapClientAdapterMock.useLdap.mockReturnValue(false);
 
             const oneDayInPast: Date = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -775,9 +775,9 @@ describe('CronDeleteEmailsAddressesService', () => {
             expect(loggerMock.info).toHaveBeenCalledWith(
                 expect.stringContaining('LDAP is disabled -> faking LDAP email update'),
             );
-            expect(ldapClientServiceMock.updatePersonEmails).not.toHaveBeenCalled();
+            expect(ldapClientAdapterMock.updatePersonEmails).not.toHaveBeenCalled();
 
-            expect(oxServiceMock.createChangeUserAction).toHaveBeenCalled();
+            expect(oxAdapterMock.createChangeUserAction).toHaveBeenCalled();
             expect(oxSendServiceMock.send).toHaveBeenCalled();
 
             expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
