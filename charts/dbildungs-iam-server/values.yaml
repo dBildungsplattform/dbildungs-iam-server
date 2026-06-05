@@ -37,7 +37,7 @@ ldap:
   retryWrapperDefaultRetries: 3
 
 eflkLdap:
-  enabled: true
+  enabled: false
   url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
@@ -107,7 +107,7 @@ ox:
   emailAddressDeletedEventDelay: 0
 
 eflkOx:
-  enabled: true
+  enabled: false
   username: "oxadmin"
   endpoint: "https://webmail.example.com"
   contextId: "10"
