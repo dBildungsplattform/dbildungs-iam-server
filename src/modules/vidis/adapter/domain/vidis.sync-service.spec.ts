@@ -1,29 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { vi } from 'vitest';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { Err, Ok } from '../../../shared/util/result.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
+import { createPersonPermissionsMock } from '../../../../../test/utils/auth.mock.js';
+import { ClassLogger } from '../../../../core/logging/class-logger.js';
+import { Err, Ok } from '../../../../shared/util/result.js';
+import { IPersonPermissions } from '../../../../shared/permissions/person-permissions.interface.js';
+import { Organisation } from '../../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
+import { EscalatedPersonPermissionsFactory } from '../../../permission/escalated-person-permissions.factory.js';
+import { RollenerweiterungRepo } from '../../../rolle/repo/rollenerweiterung.repo.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
     ServiceProviderSystem,
     ServiceProviderTarget,
-} from '../../service-provider/domain/service-provider.enum.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { VidisApiService } from './vidis.api-service.js';
-import { VidisDomainError } from './vidis-domain.error.js';
-import { VidisSyncService } from './vidis.sync-service.js';
+} from '../../../service-provider/domain/service-provider.enum.js';
+import { ServiceProvider } from '../../../service-provider/domain/service-provider.js';
+import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
 import type { VidisAngebotWithSchoolActivations, VidisServiceResponseAngebot } from './vidis.types.js';
-import { EscalatedPersonPermissions } from '../../permission/escalated-person-permissions.js';
+import { EscalatedPersonPermissions } from '../../../permission/escalated-person-permissions.js';
 import { faker } from '@faker-js/faker';
+import { VidisSyncService } from './vidis.sync-service.js';
+import { VidisApiAdapter } from './vidis-api.adapter.js';
+import { VidisDomainError } from './vidis-domain.error.js';
 
 type TorgaIds = {
     id: string;
@@ -33,7 +33,7 @@ type TorgaIds = {
 describe('VidisSyncService', () => {
     let module: TestingModule;
     let sut: VidisSyncService;
-    let vidisApiServiceMock: DeepMocked<VidisApiService>;
+    let vidisApiAdapterMock: DeepMocked<VidisApiAdapter>;
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let escalatedPersonPermissionsFactoryMock: DeepMocked<EscalatedPersonPermissionsFactory>;
@@ -42,7 +42,7 @@ describe('VidisSyncService', () => {
     let getOrThrowMock: ReturnType<typeof vi.fn>;
     let permissionsMock: EscalatedPersonPermissions;
 
-    type GetActivatedAngeboteByRegionResult = Awaited<ReturnType<VidisApiService['getActivatedAngeboteByRegionSH']>>;
+    type GetActivatedAngeboteByRegionResult = Awaited<ReturnType<VidisApiAdapter['getActivatedAngeboteByRegionSH']>>;
     type FindSchoolsResult = Awaited<ReturnType<OrganisationRepository['findBy']>>;
     type FindVidisAngeboteForSchoolsResult = Awaited<ReturnType<ServiceProviderRepo['findVidisAngeboteforSchools']>>;
     type CreateServiceProviderResult = Awaited<ReturnType<ServiceProviderRepo['create']>>;
@@ -50,7 +50,7 @@ describe('VidisSyncService', () => {
     type DecodedVidisLogoResult = { logo: Buffer | undefined; logoMimeType: string | undefined };
 
     const tinyPngBase64: string = 'iVBORw0KGgo=';
-    const vidisApiServiceProviderMock: Pick<VidisApiService, 'getActivatedAngeboteByRegionSH'> = {
+    const vidisApiServiceProviderMock: Pick<VidisApiAdapter, 'getActivatedAngeboteByRegionSH'> = {
         getActivatedAngeboteByRegionSH: vi.fn(),
     };
 
@@ -150,7 +150,7 @@ describe('VidisSyncService', () => {
         module = await Test.createTestingModule({
             providers: [
                 {
-                    provide: VidisApiService,
+                    provide: VidisApiAdapter,
                     useValue: vidisApiServiceProviderMock,
                 },
                 {
@@ -180,14 +180,14 @@ describe('VidisSyncService', () => {
             ],
         }).compile();
 
-        vidisApiServiceMock = module.get(VidisApiService);
+        vidisApiAdapterMock = module.get(VidisApiAdapter);
         organisationRepoMock = module.get(OrganisationRepository);
         serviceProviderRepoMock = module.get(ServiceProviderRepo);
         escalatedPersonPermissionsFactoryMock = module.get(EscalatedPersonPermissionsFactory);
         rollenerweiterungRepoMock = module.get(RollenerweiterungRepo);
         loggerMock = module.get(ClassLogger);
         sut = new VidisSyncService(
-            vidisApiServiceMock,
+            vidisApiAdapterMock,
             organisationRepoMock,
             serviceProviderRepoMock,
             escalatedPersonPermissionsFactoryMock,
@@ -217,7 +217,7 @@ describe('VidisSyncService', () => {
             new VidisDomainError('VIDIS unavailable'),
         );
 
-        vidisApiServiceMock.getActivatedAngeboteByRegionSH.mockResolvedValue(getActivatedAngeboteResult);
+        vidisApiAdapterMock.getActivatedAngeboteByRegionSH.mockResolvedValue(getActivatedAngeboteResult);
 
         await sut.sync();
 
@@ -231,7 +231,7 @@ describe('VidisSyncService', () => {
         const getActivatedAngeboteResult: GetActivatedAngeboteByRegionResult = Ok(activatedAngebote);
         const schools: FindSchoolsResult = [[], 0];
 
-        vidisApiServiceMock.getActivatedAngeboteByRegionSH.mockResolvedValue(getActivatedAngeboteResult);
+        vidisApiAdapterMock.getActivatedAngeboteByRegionSH.mockResolvedValue(getActivatedAngeboteResult);
         organisationRepoMock.findBy.mockResolvedValue(schools);
         const syncForSchoolSpy: ReturnType<typeof vi.spyOn> = vi
             .spyOn(
@@ -267,7 +267,7 @@ describe('VidisSyncService', () => {
             createExistingVidisServiceProvider(orga2.id, '1'),
         ];
 
-        vidisApiServiceMock.getActivatedAngeboteByRegionSH.mockResolvedValue(getActivatedAngeboteResult);
+        vidisApiAdapterMock.getActivatedAngeboteByRegionSH.mockResolvedValue(getActivatedAngeboteResult);
         organisationRepoMock.findBy.mockResolvedValue(schools);
         serviceProviderRepoMock.findVidisAngeboteforSchools.mockResolvedValue(existingVidisAngeboteForSchools);
         const syncForSchoolSpy: ReturnType<typeof vi.spyOn> = vi
@@ -328,7 +328,7 @@ describe('VidisSyncService', () => {
         );
         const secondPageSchools: Organisation<true>[] = [createSchool(orgaIds[100]!.id, orgaIds[100]!.kennung)];
 
-        vidisApiServiceMock.getActivatedAngeboteByRegionSH.mockResolvedValue(Ok(pagedActivatedAngebote));
+        vidisApiAdapterMock.getActivatedAngeboteByRegionSH.mockResolvedValue(Ok(pagedActivatedAngebote));
         organisationRepoMock.findBy
             .mockResolvedValueOnce([firstPageSchools, 101])
             .mockResolvedValueOnce([secondPageSchools, 101]);
