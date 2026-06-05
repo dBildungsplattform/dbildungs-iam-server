@@ -22,7 +22,7 @@ import {
     expectOkResult,
 } from '../../../../../../test/utils/index.js';
 import { LdapModifyPersonError } from './error/ldap-modify-person.error.js';
-import { LdapEmailMicroserviceInstanceConfig } from '../technical/ldap-instance-config.js';
+import { LdapEmailMicroserviceInstanceConfig } from '../technical/ldap-email-microservice-instance-config.js';
 
 class PublicExecuteWithRetry {
     public async executeWithRetry<T>(

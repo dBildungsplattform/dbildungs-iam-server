@@ -8,7 +8,7 @@ import { LdapCreatePersonError } from './error/ldap-create-person.error.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { PersonExternalID, PersonUsername } from '../../../../../shared/types/aggregate-ids.types.js';
 import { LdapModifyPersonError } from './error/ldap-modify-person.error.js';
-import { LdapEmailMicroserviceInstanceConfig } from '../technical/ldap-instance-config.js';
+import { LdapEmailMicroserviceInstanceConfig } from '../technical/ldap-email-microservice-instance-config.js';
 
 export type LdapPersonAttributes = {
     entryUUID?: string;
