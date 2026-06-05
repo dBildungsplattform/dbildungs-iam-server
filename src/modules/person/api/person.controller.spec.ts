@@ -10,7 +10,7 @@ import {
     DoFactory,
 } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
+import { LdapAdapter } from '../../../core/ldap/adapter/domain/ldap.adapter.js';
 import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
@@ -71,7 +71,7 @@ describe('PersonController', () => {
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let dBiamPersonenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
     let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
-    let ldapClientServiceMock: DeepMocked<LdapClientService>;
+    let ldapClientAdapterMock: DeepMocked<LdapAdapter>;
 
     const rootOrgaId: string = faker.string.uuid();
     const configServiceMock: DeepMocked<ConfigService> = createMock(ConfigService);
@@ -145,8 +145,8 @@ describe('PersonController', () => {
                     useValue: createMock(EmailRepo),
                 },
                 {
-                    provide: LdapClientService,
-                    useValue: createMock(LdapClientService),
+                    provide: LdapAdapter,
+                    useValue: createMock(LdapAdapter),
                 },
                 {
                     provide: LdapSyncEventHandler,
@@ -174,7 +174,7 @@ describe('PersonController', () => {
         keycloakUserService = module.get(KeycloakUserService);
         dBiamPersonenkontextServiceMock = module.get(DBiamPersonenkontextService);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
-        ldapClientServiceMock = module.get(LdapClientService);
+        ldapClientAdapterMock = module.get(LdapAdapter);
         personLandesbediensteterSearchServiceMock = module.get(PersonLandesbediensteterSearchService);
     });
 
@@ -1028,7 +1028,7 @@ describe('PersonController', () => {
                     ok: true,
                     value: person,
                 });
-                ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
+                ldapClientAdapterMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
                     ok: true,
                     value: person.id,
                 });
@@ -1036,8 +1036,8 @@ describe('PersonController', () => {
                 await expect(
                     personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
                 ).resolves.not.toThrow();
-                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
-                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
+                expect(ldapClientAdapterMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
+                expect(ldapClientAdapterMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
                     person.id,
                     person.username,
                 );
@@ -1054,7 +1054,7 @@ describe('PersonController', () => {
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
-                ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
+                ldapClientAdapterMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
                     ok: false,
                     error: new PersonDomainError('Person', 'entityId', undefined),
                 });
@@ -1066,8 +1066,8 @@ describe('PersonController', () => {
                 await expect(
                     personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
                 ).rejects.toThrow(PersonUserPasswordModificationError);
-                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
-                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
+                expect(ldapClientAdapterMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
+                expect(ldapClientAdapterMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
                     person.id,
                     person.username,
                 );
@@ -1079,7 +1079,7 @@ describe('PersonController', () => {
         describe('when person does not exist', () => {
             it('should throw a domain error', async () => {
                 personPermissionsMock = createPersonPermissionsMock({ id: '' });
-                ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
+                ldapClientAdapterMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityNotFoundError('Person not found', String(404)),
                 });
@@ -1117,14 +1117,14 @@ describe('PersonController', () => {
             );
 
             it('should reset UEM-password for person', async () => {
-                ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
+                ldapClientAdapterMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
                     ok: true,
                     value: person.id,
                 });
 
                 await expect(personController.resetUEMPassword(permissions)).resolves.not.toThrow();
-                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
-                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
+                expect(ldapClientAdapterMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
+                expect(ldapClientAdapterMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
                     person.id,
                     person.username,
                 );
@@ -1141,7 +1141,7 @@ describe('PersonController', () => {
             );
 
             it('should throw DomainError', async () => {
-                ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
+                ldapClientAdapterMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
                     ok: false,
                     error: new PersonDomainError('Person', 'entityId', undefined),
                 });
@@ -1149,8 +1149,8 @@ describe('PersonController', () => {
                 await expect(personController.resetUEMPassword(permissions)).rejects.toThrow(
                     PersonUserPasswordModificationError,
                 );
-                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
-                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
+                expect(ldapClientAdapterMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
+                expect(ldapClientAdapterMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
                     person.id,
                     person.username,
                 );
