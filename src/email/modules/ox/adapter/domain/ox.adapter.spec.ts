@@ -21,7 +21,7 @@ import { OXGroup } from '../technical/actions/group/ox-group.types.js';
 import { OxError } from '../../../../../shared/error/ox.error.js';
 import { ListGroupsForUserResponse } from '../technical/actions/group/list-groups-for-user.action.js';
 import { Mock } from 'vitest';
-import { EmailAppConfig } from '../../../../shared/config/index.js';
+import { EmailAppConfig } from '../../../../../shared/config/email-app.config.js';
 
 describe('OxAdapter', () => {
     let module: TestingModule;
@@ -531,7 +531,7 @@ describe('OxAdapter', () => {
 
     describe('useOx should return correct value based on config', () => {
         it('should return false when OX.ENABLED is false', () => {
-            const sut: OxService = new OxService(
+            const sut: OxAdapter = new OxAdapter(
                 createMock(ClassLogger),
                 createMock(OxSendService),
                 createMock(EmailAppConfig, {
@@ -550,7 +550,7 @@ describe('OxAdapter', () => {
         });
 
         it('should return true when OX.ENABLED is true', () => {
-            const sut: OxService = new OxService(
+            const sut: OxAdapter = new OxAdapter(
                 createMock(ClassLogger),
                 createMock(OxSendService),
                 createMock(EmailAppConfig, {
