@@ -16,11 +16,11 @@ import {
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
-import { PersonResponse } from '../actions/read-person.action.js';
-import { ItslearningMembershipRepo } from '../repo/itslearning-membership.repo.js';
-import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
-import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../repo/role-utils.js';
-import { IMSESInstitutionRoleType } from '../types/role.enum.js';
+import { PersonResponse } from '../adapter/technical/actions/read-person.action.js';
+import { ItslearningMembershipAdapter } from '../adapter/domain/itslearning-membership.adapter.js';
+import { ItslearningPersonAdapter } from '../adapter/domain/itslearning-person.adapter.js';
+import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../adapter/domain/role-utils.js';
+import { IMSESInstitutionRoleType } from '../adapter/domain/role.enum.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
@@ -39,8 +39,8 @@ export class ItsLearningPersonsEventHandler {
 
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly itslearningPersonRepo: ItslearningPersonRepo,
-        private readonly itslearningMembershipRepo: ItslearningMembershipRepo,
+        private readonly itslearningPersonAdapter: ItslearningPersonAdapter,
+        private readonly itslearningMembershipAdapter: ItslearningMembershipAdapter,
         configService: ConfigService<ServerConfig>,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
@@ -69,7 +69,7 @@ export class ItsLearningPersonsEventHandler {
                 );
             }
 
-            const readPersonResult: Option<PersonResponse> = await this.itslearningPersonRepo.readPerson(
+            const readPersonResult: Option<PersonResponse> = await this.itslearningPersonAdapter.readPerson(
                 event.personId,
                 `${event.eventID}-PERSON-EXISTS-CHECK`,
             );
@@ -80,16 +80,17 @@ export class ItsLearningPersonsEventHandler {
                 );
             }
 
-            const updatePersonResult: Result<void, DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
-                {
-                    id: event.personId,
-                    firstName: event.vorname,
-                    lastName: event.familienname,
-                    username: event.username,
-                    institutionRoleType: readPersonResult.institutionRole,
-                },
-                `${event.eventID}-PERSON-RENAMED-UPDATE`,
-            );
+            const updatePersonResult: Result<void, DomainError> =
+                await this.itslearningPersonAdapter.createOrUpdatePerson(
+                    {
+                        id: event.personId,
+                        firstName: event.vorname,
+                        lastName: event.familienname,
+                        username: event.username,
+                        institutionRoleType: readPersonResult.institutionRole,
+                    },
+                    `${event.eventID}-PERSON-RENAMED-UPDATE`,
+                );
 
             if (!updatePersonResult.ok) {
                 return this.logger.logUnknownAsError(
@@ -113,7 +114,7 @@ export class ItsLearningPersonsEventHandler {
         await this.personUpdateMutex.runExclusive(async () => {
             this.logger.info(`[EventID: ${event.eventID}] Received OxUserChangedEvent, ${event.personId}`);
 
-            const updateResult: Result<void, DomainError> = await this.itslearningPersonRepo.updateEmail(
+            const updateResult: Result<void, DomainError> = await this.itslearningPersonAdapter.updateEmail(
                 event.personId,
                 event.primaryEmail,
                 `${event.eventID}-EMAIL-UPDATE`,
@@ -145,7 +146,7 @@ export class ItsLearningPersonsEventHandler {
                 `[EventID: ${event.eventID}] Received EmailMicroserviceAddressChangedEvent, ${event.personId}`,
             );
 
-            const updateResult: Result<void, DomainError> = await this.itslearningPersonRepo.updateEmail(
+            const updateResult: Result<void, DomainError> = await this.itslearningPersonAdapter.updateEmail(
                 event.personId,
                 event.newPrimaryAddress,
                 `${event.eventID}-EMAIL-UPDATE`,
@@ -208,11 +209,15 @@ export class ItsLearningPersonsEventHandler {
         currentKontexte: PersonenkontextUpdatedData[],
         eventID: string,
     ): Promise<void> {
-        const setMembershipsResult: Result<unknown, DomainError> = await this.itslearningMembershipRepo.setMemberships(
-            personId,
-            currentKontexte.map((pk: PersonenkontextUpdatedData) => ({ organisationId: pk.orgaId, role: pk.rolle })),
-            eventID,
-        );
+        const setMembershipsResult: Result<unknown, DomainError> =
+            await this.itslearningMembershipAdapter.setMemberships(
+                personId,
+                currentKontexte.map((pk: PersonenkontextUpdatedData) => ({
+                    organisationId: pk.orgaId,
+                    role: pk.rolle,
+                })),
+                eventID,
+            );
 
         if (!setMembershipsResult.ok) {
             this.logger.error(
@@ -240,7 +245,7 @@ export class ItsLearningPersonsEventHandler {
             determineHighestRollenart(currentPersonenkontexte.map((pk: PersonenkontextUpdatedData) => pk.rolle)),
         );
 
-        const createResult: Result<void, DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
+        const createResult: Result<void, DomainError> = await this.itslearningPersonAdapter.createOrUpdatePerson(
             {
                 id: person.id,
                 firstName: person.vorname,
@@ -265,7 +270,7 @@ export class ItsLearningPersonsEventHandler {
      * Delete this person in itslearning
      */
     public async deletePerson(personID: PersonID, eventID: string): Promise<void> {
-        const deleteError: Option<DomainError> = await this.itslearningPersonRepo.deletePerson(personID, eventID);
+        const deleteError: Option<DomainError> = await this.itslearningPersonAdapter.deletePerson(personID, eventID);
 
         if (!deleteError) {
             this.logger.info(`[EventID: ${eventID}] Person with ID ${personID} deleted.`);

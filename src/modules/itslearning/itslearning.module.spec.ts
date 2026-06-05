@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DatabaseTestModule } from '../../../test/utils/index.js';
 import { ItsLearningModule } from './itslearning.module.js';
-import { ItsLearningIMSESService } from './itslearning.service.js';
+import { ItsLearningIMSESApiService } from './adapter/technical/itslearning.api-service.js';
 import { CommonTestModule } from '../../../test/utils/common-test.module.js';
 
 describe('ItsLearningModule', () => {
@@ -24,7 +24,7 @@ describe('ItsLearningModule', () => {
 
     describe('when module is initialized', () => {
         it('should resolve ItsLearningIMSESService', () => {
-            expect(module.get(ItsLearningIMSESService)).toBeInstanceOf(ItsLearningIMSESService);
+            expect(module.get(ItsLearningIMSESApiService)).toBeInstanceOf(ItsLearningIMSESApiService);
         });
     });
 });

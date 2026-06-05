@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { VidisApiService } from './domain/vidis.api-service.js';
+import { VidisApiAdapter } from './adapter/domain/vidis-api.adapter.js';
 import { HttpModule } from '@nestjs/axios';
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { VidisSyncService } from './domain/vidis.sync-service.js';
@@ -15,7 +15,7 @@ import { ServiceProviderModule } from '../service-provider/service-provider.modu
         RolleModule,
         ServiceProviderModule,
     ],
-    providers: [VidisApiService, VidisSyncService],
+    providers: [VidisApiAdapter, VidisSyncService],
     exports: [VidisSyncService],
     controllers: [],
 })
