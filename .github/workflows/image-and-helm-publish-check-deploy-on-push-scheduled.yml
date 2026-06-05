@@ -23,6 +23,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
       deployment_clearance: ${{ steps.determine_deployment_clearance.outputs.deployment_clearance }}
+      pr_labels: ${{ env.PR_LABELS }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
