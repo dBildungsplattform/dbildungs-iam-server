@@ -7,11 +7,11 @@ on:
 jobs:
   run_on_label:
     if: github.event.label.name == 'run-tests'
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@6
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@7
 
   create_branch_identifier:
     needs: [run_on_label]
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@6
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@7
     with:
       branch: ${{ needs.run_on_label.outputs.branch }}
 
