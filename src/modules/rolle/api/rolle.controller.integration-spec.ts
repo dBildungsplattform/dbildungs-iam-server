@@ -573,11 +573,36 @@ describe('Rolle API', () => {
         });
 
         it('should return rollen available for erweiterung if systemrecht is set', async () => {
-            const orgaIds: string[] = (
+            const [orgaA, orgaB, orgaC]: [Organisation<true>, Organisation<true>, Organisation<true>] =
                 await Promise.all([
-                    rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: false })),
-                    rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: false })),
-                    rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: false })),
+                    organisationRepo.save(DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE })),
+                    organisationRepo.save(DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE })),
+                    organisationRepo.save(DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE })),
+                ]);
+
+            (
+                await Promise.all([
+                    rolleRepo.save(
+                        DoFactory.createRolle(false, {
+                            istTechnisch: false,
+                            rollenart: RollenArt.LEHR,
+                            administeredBySchulstrukturknoten: orgaA.id,
+                        }),
+                    ),
+                    rolleRepo.save(
+                        DoFactory.createRolle(false, {
+                            istTechnisch: false,
+                            rollenart: RollenArt.LERN,
+                            administeredBySchulstrukturknoten: orgaB.id,
+                        }),
+                    ),
+                    rolleRepo.save(
+                        DoFactory.createRolle(false, {
+                            istTechnisch: false,
+                            rollenart: RollenArt.LEIT,
+                            administeredBySchulstrukturknoten: orgaC.id,
+                        }),
+                    ),
                 ])
             ).map((r: Rolle<true> | DomainError) => {
                 if (r instanceof DomainError) {
@@ -586,7 +611,7 @@ describe('Rolle API', () => {
                 return r.administeredBySchulstrukturknoten;
             });
 
-            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgaIds.slice(0, 2) });
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [orgaA.id, orgaB.id] });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/rolle?systemrecht=ROLLEN_ERWEITERN')
@@ -832,8 +857,15 @@ describe('Rolle API', () => {
     describe('/PUT rolleId/serviceProviders', () => {
         describe('when rolle and serviceProvider exist', () => {
             it('should return 201 and add serviceProvider', async () => {
-                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
-                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: orga.id,
+                });
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                    }),
+                );
                 if (rolle instanceof DomainError) {
                     throw Error();
                 }
@@ -852,9 +884,15 @@ describe('Rolle API', () => {
 
         describe('when rolle and serviceProvider exist, but serviceProvider is already attached', () => {
             it('should return 201', async () => {
-                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+                const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: orga.id,
+                });
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
-                    DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        serviceProviderIds: [serviceProvider.id],
+                    }),
                 );
                 if (rolle instanceof DomainError) {
                     throw Error();
@@ -912,7 +950,10 @@ describe('Rolle API', () => {
             it('should return 200 and delete serviceProvider', async () => {
                 const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
-                    DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+                    DoFactory.createRolle(false, {
+                        serviceProviderIds: [serviceProvider.id],
+                        administeredBySchulstrukturknoten: serviceProvider.providedOnSchulstrukturknoten,
+                    }),
                 );
                 if (rolle instanceof DomainError) {
                     throw Error();
