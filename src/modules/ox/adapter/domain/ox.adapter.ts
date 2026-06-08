@@ -4,7 +4,6 @@ import { ConfigService } from '@nestjs/config';
 import { EventRoutingLegacyKafkaService } from '../../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { PersonIdentifier } from '../../../../core/logging/person-identifier.js';
-import { OxConfig } from '../../../../shared/config/ox.config.js';
 import { ServerConfig } from '../../../../shared/config/server.config.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { DisabledOxUserChangedEvent } from '../../../../shared/events/ox/disabled-ox-user-changed.event.js';
@@ -63,6 +62,7 @@ import { UserIdParams, UserNameParams } from '../technical/actions/user/ox-user.
 import { OxGroupNameAmbiguousError } from './error/ox-group-name-ambiguous.error.js';
 import { OxGroupNotFoundError } from './error/ox-group-not-found.error.js';
 import { OxSendService } from '../technical/ox.send-service.js';
+import { OxServerConfig } from '../../../../shared/config/ox-server.config.js';
 
 export type OxUserCreatedEventCreator = (
     personId: PersonID,
@@ -236,7 +236,7 @@ export class OxAdapter {
         protected readonly eventService: EventRoutingLegacyKafkaService,
         protected configService: ConfigService<ServerConfig>,
     ) {
-        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
+        const oxConfig: OxServerConfig = configService.getOrThrow<OxServerConfig>('OX');
         this.ENABLED = oxConfig.ENABLED;
         this.authUser = oxConfig.USERNAME;
         this.authPassword = oxConfig.PASSWORD;

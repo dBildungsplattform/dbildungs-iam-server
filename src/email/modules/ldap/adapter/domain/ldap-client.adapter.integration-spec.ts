@@ -3,7 +3,6 @@ import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { EmailLdapConfigModule } from '../technical/ldap-config.module.js';
 import { EmailLdapModule } from '../../email-ldap.module.js';
 import { faker } from '@faker-js/faker';
 import { LdapClientAdapter, PersonData } from './ldap-client.adapter.js';
@@ -12,7 +11,6 @@ import { LdapClient } from '../technical/ldap-client.js';
 import { Client, SearchResult } from 'ldapts';
 import { LdapEmailDomainError } from './error/ldap-email-domain.error.js';
 import { LdapCreatePersonError } from './error/ldap-create-person.error.js';
-import { LdapInstanceConfig } from '../technical/ldap-instance-config.js';
 import assert from 'assert';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { DatabaseTestModule } from '../../../../../../test/utils/database-test.module.js';
@@ -24,6 +22,7 @@ import {
     expectOkResult,
 } from '../../../../../../test/utils/index.js';
 import { LdapModifyPersonError } from './error/ldap-modify-person.error.js';
+import { LdapEmailMicroserviceInstanceConfig } from '../technical/ldap-email-microservice-instance-config.js';
 
 class PublicExecuteWithRetry {
     public async executeWithRetry<T>(
@@ -44,9 +43,10 @@ describe('LDAP Client Adapter', () => {
     let ldapClientMock: DeepMocked<LdapClient>;
     let loggerMock: DeepMocked<ClassLogger>;
     let clientMock: DeepMocked<Client>;
-    let instanceConfig: LdapInstanceConfig;
+    let instanceConfig: LdapEmailMicroserviceInstanceConfig;
 
-    const mockLdapInstanceConfig: LdapInstanceConfig = {
+    const mockLdapInstanceConfig: LdapEmailMicroserviceInstanceConfig = {
+        ENABLED: true,
         BASE_DN: 'dc=example,dc=com',
         OEFFENTLICHE_SCHULEN_DOMAIN: 'schule-sh.de',
         ERSATZSCHULEN_DOMAIN: 'ersatzschule-sh.de',
@@ -71,19 +71,14 @@ describe('LDAP Client Adapter', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                EmailConfigTestModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                EmailLdapModule,
-                EmailLdapConfigModule,
-            ],
+            imports: [EmailConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), EmailLdapModule],
             providers: [
                 {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
                 },
                 {
-                    provide: LdapInstanceConfig,
+                    provide: LdapEmailMicroserviceInstanceConfig,
                     useValue: mockLdapInstanceConfig,
                 },
             ],
@@ -92,7 +87,7 @@ describe('LDAP Client Adapter', () => {
             .useValue(createMock(LdapClient))
             .overrideProvider(ClassLogger)
             .useValue(createMock(ClassLogger))
-            .overrideProvider(LdapInstanceConfig)
+            .overrideProvider(LdapEmailMicroserviceInstanceConfig)
             .useValue(mockLdapInstanceConfig)
             .compile();
 
@@ -102,7 +97,7 @@ describe('LDAP Client Adapter', () => {
         ldapClientMock = module.get(LdapClient);
         loggerMock = module.get(ClassLogger);
         clientMock = createMock(Client);
-        instanceConfig = module.get(LdapInstanceConfig);
+        instanceConfig = module.get(LdapEmailMicroserviceInstanceConfig);
 
         //currently only used to wait for the LDAP container, because setupDatabase() is blocking
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
@@ -822,6 +817,18 @@ describe('LDAP Client Adapter', () => {
             expect(loggerMock.error).toHaveBeenCalledWith(
                 expect.stringContaining('Could not get root-name because email-domain is invalid'),
             );
+        });
+    });
+
+    describe('useLdap should return correct value based on config', () => {
+        it('should return false when LDAP.ENABLED is false', () => {
+            instanceConfig.ENABLED = false;
+            expect(ldapClientAdapter.useLdap()).toBe(false);
+        });
+
+        it('should return true when LDAP.ENABLED is true', () => {
+            instanceConfig.ENABLED = true;
+            expect(ldapClientAdapter.useLdap()).toBe(true);
         });
     });
 });

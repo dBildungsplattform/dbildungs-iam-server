@@ -66,7 +66,7 @@ export class OrganisationDeleteService {
         }
 
         const referencedServiceProvider: Array<ServiceProvider<true>> =
-            await this.serviceProviderRepo.findBySchulstrukturknoten(organisationId);
+            await this.serviceProviderRepo.findBySchulstrukturknoten([organisationId]);
         if (referencedServiceProvider.length) {
             return Err(new OrganisationHasServiceProvidersError());
         }
