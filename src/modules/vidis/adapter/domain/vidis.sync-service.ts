@@ -108,7 +108,7 @@ export class VidisSyncService {
             await this.serviceProviderRepo.findVidisAngeboteforSchools(Object.values(organisationIdByKennung));
 
         await Promise.all(
-            Object.keys(angeboteByOrganisationId).map((organisationId: string) => {
+            Object.values(organisationIdByKennung).map((organisationId: string) => {
                 const angebote: VidisSchoolActivatedAngebot[] = angeboteByOrganisationId[organisationId] ?? [];
                 return this.syncForSchoolInternal(
                     organisationId,
@@ -129,7 +129,7 @@ export class VidisSyncService {
         return this.syncSchoolsPage(activatedAngebote, nextSchoolOffset, permissions);
     }
 
-    private syncForSchoolInternal(
+    private async syncForSchoolInternal(
         organisationId: string,
         angeboteInVidis: VidisSchoolActivatedAngebot[],
         angeboteInDb: ServiceProvider<true>[],
@@ -188,18 +188,28 @@ export class VidisSyncService {
         );
 
         if (serviceProviderIdsMissingInVidis.length > 0) {
-            syncOperations.push(
-                this.rollenerweiterungRepo.deleteByOrganisationIdAndServiceProviderIds(
-                    organisationId,
-                    serviceProviderIdsMissingInVidis,
-                    permissions,
-                ),
-            );
-            syncOperations.push(
-                ...serviceProviderIdsMissingInVidis.map((serviceProviderId: string) =>
-                    this.serviceProviderRepo.deleteByIdAuthorized(permissions, serviceProviderId),
-                ),
-            );
+            try {
+                const deleteRollenerweiterungenResult: Awaited<
+                    ReturnType<RollenerweiterungRepo['deleteByOrganisationIdAndServiceProviderIds']>
+                > =
+                    await this.rollenerweiterungRepo.deleteByOrganisationIdAndServiceProviderIds(
+                        organisationId,
+                        serviceProviderIdsMissingInVidis,
+                        permissions,
+                    );
+                if (deleteRollenerweiterungenResult.ok) {
+                    syncOperations.push(
+                        ...serviceProviderIdsMissingInVidis.map((serviceProviderId: string) =>
+                            this.serviceProviderRepo.deleteByIdAuthorized(permissions, serviceProviderId),
+                        ),
+                    );
+                } else {
+                    syncOperations.push(Promise.reject(deleteRollenerweiterungenResult.error));
+                }
+            } catch (error) {
+                const rejectionReason: Error = error instanceof Error ? error : new Error(String(error));
+                syncOperations.push(Promise.reject(rejectionReason));
+            }
         }
 
         return Promise.allSettled(syncOperations).then((results: PromiseSettledResult<unknown>[]) => {

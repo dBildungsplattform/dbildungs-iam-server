@@ -110,6 +110,8 @@ email:
 
 vidis:
   url: "http://localhost:10000"
+  region: "Schleswig-Holstein"
+  syncSchoolsPageSize: 1000
 
 backend:
   replicaCount: 1
@@ -348,7 +350,7 @@ cronjobs:
       script: "cron_trigger.sh"
 #    cron-trigger-6:
 #      schedule: 30 0 * * *
-#      endpoint: '/api/cron/vidis-angebote'
+#      endpoint: '/api/cron/vidis-sync'
 #      httpMethod: 'PUT'
 #      script: 'cron_trigger.sh'
 

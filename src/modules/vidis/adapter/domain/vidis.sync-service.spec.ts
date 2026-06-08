@@ -46,6 +46,9 @@ describe('VidisSyncService', () => {
     type FindSchoolsResult = Awaited<ReturnType<OrganisationRepository['findBy']>>;
     type FindVidisAngeboteForSchoolsResult = Awaited<ReturnType<ServiceProviderRepo['findVidisAngeboteforSchools']>>;
     type CreateServiceProviderResult = Awaited<ReturnType<ServiceProviderRepo['create']>>;
+    type DeleteRollenerweiterungenResult = Awaited<
+        ReturnType<RollenerweiterungRepo['deleteByOrganisationIdAndServiceProviderIds']>
+    >;
     type VidisSchoolActivatedAngebot = { angebot: VidisServiceResponseAngebot; date: string };
     type DecodedVidisLogoResult = { logo: Buffer | undefined; logoMimeType: string | undefined };
 
@@ -418,6 +421,54 @@ describe('VidisSyncService', () => {
         expect(syncForSchoolSpy).toHaveBeenCalledTimes(101);
     });
 
+    it('should sync schools without grouped VIDIS Angebote so stale database entries can be removed', async () => {
+        const orga1: TorgaIds = {
+            id: faker.string.uuid(),
+            kennung: '123456',
+        };
+        const orga2: TorgaIds = {
+            id: faker.string.uuid(),
+            kennung: '09099997',
+        };
+        const schools: FindSchoolsResult = [
+            [createSchool(orga1.id, orga1.kennung), createSchool(orga2.id, orga2.kennung)],
+            2,
+        ];
+        const existingVidisAngeboteForSchools: FindVidisAngeboteForSchoolsResult = [
+            createExistingVidisServiceProvider(orga2.id, '1'),
+        ];
+
+        vidisApiAdapterMock.getActivatedAngeboteByRegionSH.mockResolvedValue(Ok([
+            {
+                angebot: activatedAngebote[1]!.angebot,
+                schoolActivations: [
+                    {
+                        date: '2026-04-16',
+                        kennung: orga1.kennung,
+                    },
+                ],
+            },
+        ]));
+        organisationRepoMock.findBy.mockResolvedValue(schools);
+        serviceProviderRepoMock.findVidisAngeboteforSchools.mockResolvedValue(existingVidisAngeboteForSchools);
+        const syncForSchoolSpy: ReturnType<typeof vi.spyOn> = vi
+            .spyOn(
+                sut as unknown as { syncForSchoolInternal: (...args: unknown[]) => Promise<void> },
+                'syncForSchoolInternal',
+            )
+            .mockResolvedValue();
+
+        await sut.sync();
+
+        expect(syncForSchoolSpy).toHaveBeenCalledWith(
+            orga2.id,
+            [],
+            [existingVidisAngeboteForSchools[0]],
+            permissionsMock,
+        );
+        expect(syncForSchoolSpy).toHaveBeenCalledTimes(2);
+    });
+
     describe('syncForSchoolInternal', () => {
         it('should stop syncing for a school when there are no differences between VIDIS and the database', async () => {
             const orga: TorgaIds = {
@@ -539,6 +590,188 @@ describe('VidisSyncService', () => {
                 permissionsMock,
             );
             expect(serviceProviderRepoMock.create).not.toHaveBeenCalled();
+        });
+
+        it('should wait for stale rollenerweiterung cleanup before deleting stale service providers', async () => {
+            const orga: TorgaIds = {
+                id: faker.string.uuid(),
+                kennung: faker.string.alphanumeric(8),
+            };
+            const staleServiceProvider: ServiceProvider<true> = createExistingVidisServiceProvider(orga.id, '2');
+            let resolveDeleteRollenerweiterungen: ((value: DeleteRollenerweiterungenResult) => void) | undefined;
+            let serviceProviderDeleteTriggered: boolean = false;
+
+            rollenerweiterungRepoMock.deleteByOrganisationIdAndServiceProviderIds.mockImplementation(
+                () =>
+                    new Promise((resolve: (value: DeleteRollenerweiterungenResult) => void) => {
+                        resolveDeleteRollenerweiterungen = resolve;
+                    }),
+            );
+            serviceProviderRepoMock.deleteByIdAuthorized.mockImplementation(() => {
+                serviceProviderDeleteTriggered = true;
+                return Promise.resolve(Ok(undefined));
+            });
+
+            const syncPromise: Promise<void> = (
+                sut as unknown as {
+                    syncForSchoolInternal: (
+                        organisationId: string,
+                        angeboteInVidis: VidisSchoolActivatedAngebot[],
+                        angeboteInDb: ServiceProvider<true>[],
+                        permissions: IPersonPermissions,
+                    ) => Promise<void>;
+                }
+            ).syncForSchoolInternal(
+                orga.id,
+                [
+                    {
+                        angebot: createAngebot(1, 'Existing Angebot'),
+                        date: '2026-05-02',
+                    },
+                ],
+                [createExistingVidisServiceProvider(orga.id, '1'), staleServiceProvider],
+                permissionsMock,
+            );
+
+            await Promise.resolve();
+
+            expect(serviceProviderDeleteTriggered).toBe(false);
+
+            resolveDeleteRollenerweiterungen?.(Ok(null));
+            await syncPromise;
+
+            expect(serviceProviderRepoMock.deleteByIdAuthorized).toHaveBeenCalledWith(
+                permissionsMock,
+                staleServiceProvider.id,
+            );
+        });
+
+        it('should log stale rollenerweiterung cleanup error results and skip stale service provider deletion', async () => {
+            const orga: TorgaIds = {
+                id: faker.string.uuid(),
+                kennung: faker.string.alphanumeric(8),
+            };
+            const resultError: VidisDomainError = new VidisDomainError('rollenerweiterung cleanup failed');
+            const staleServiceProvider: ServiceProvider<true> = createExistingVidisServiceProvider(orga.id, '2');
+
+            rollenerweiterungRepoMock.deleteByOrganisationIdAndServiceProviderIds.mockResolvedValue(
+                Err(resultError) as DeleteRollenerweiterungenResult,
+            );
+
+            await (
+                sut as unknown as {
+                    syncForSchoolInternal: (
+                        organisationId: string,
+                        angeboteInVidis: VidisSchoolActivatedAngebot[],
+                        angeboteInDb: ServiceProvider<true>[],
+                        permissions: IPersonPermissions,
+                    ) => Promise<void>;
+                }
+            ).syncForSchoolInternal(
+                orga.id,
+                [
+                    {
+                        angebot: createAngebot(1, 'Existing Angebot'),
+                        date: '2026-05-02',
+                    },
+                ],
+                [createExistingVidisServiceProvider(orga.id, '1'), staleServiceProvider],
+                permissionsMock,
+            );
+
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `VIDIS sync for organisation ${orga.id} finished with 1 failed operations.`,
+            );
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                `VIDIS sync operation for organisation ${orga.id} rejected`,
+                resultError,
+            );
+            expect(serviceProviderRepoMock.deleteByIdAuthorized).not.toHaveBeenCalled();
+        });
+
+        it('should log thrown Error values from stale rollenerweiterung cleanup as rejected sync operations', async () => {
+            const orga: TorgaIds = {
+                id: faker.string.uuid(),
+                kennung: faker.string.alphanumeric(8),
+            };
+            const rejectionReason: Error = new Error('rollenerweiterung cleanup rejected');
+            const staleServiceProvider: ServiceProvider<true> = createExistingVidisServiceProvider(orga.id, '2');
+
+            rollenerweiterungRepoMock.deleteByOrganisationIdAndServiceProviderIds.mockRejectedValue(rejectionReason);
+
+            await (
+                sut as unknown as {
+                    syncForSchoolInternal: (
+                        organisationId: string,
+                        angeboteInVidis: VidisSchoolActivatedAngebot[],
+                        angeboteInDb: ServiceProvider<true>[],
+                        permissions: IPersonPermissions,
+                    ) => Promise<void>;
+                }
+            ).syncForSchoolInternal(
+                orga.id,
+                [
+                    {
+                        angebot: createAngebot(1, 'Existing Angebot'),
+                        date: '2026-05-02',
+                    },
+                ],
+                [createExistingVidisServiceProvider(orga.id, '1'), staleServiceProvider],
+                permissionsMock,
+            );
+
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `VIDIS sync for organisation ${orga.id} finished with 1 failed operations.`,
+            );
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                `VIDIS sync operation for organisation ${orga.id} rejected`,
+                rejectionReason,
+            );
+            expect(serviceProviderRepoMock.deleteByIdAuthorized).not.toHaveBeenCalled();
+        });
+
+        it('should wrap non-Error values from stale rollenerweiterung cleanup before logging rejected sync operations', async () => {
+            const orga: TorgaIds = {
+                id: faker.string.uuid(),
+                kennung: faker.string.alphanumeric(8),
+            };
+            const staleServiceProvider: ServiceProvider<true> = createExistingVidisServiceProvider(orga.id, '2');
+
+            rollenerweiterungRepoMock.deleteByOrganisationIdAndServiceProviderIds.mockRejectedValue('cleanup failed');
+
+            await (
+                sut as unknown as {
+                    syncForSchoolInternal: (
+                        organisationId: string,
+                        angeboteInVidis: VidisSchoolActivatedAngebot[],
+                        angeboteInDb: ServiceProvider<true>[],
+                        permissions: IPersonPermissions,
+                    ) => Promise<void>;
+                }
+            ).syncForSchoolInternal(
+                orga.id,
+                [
+                    {
+                        angebot: createAngebot(1, 'Existing Angebot'),
+                        date: '2026-05-02',
+                    },
+                ],
+                [createExistingVidisServiceProvider(orga.id, '1'), staleServiceProvider],
+                permissionsMock,
+            );
+
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `VIDIS sync for organisation ${orga.id} finished with 1 failed operations.`,
+            );
+            const rejectedCall: unknown[] | undefined = loggerMock.logUnknownAsError.mock.calls.find(
+                (call: unknown[]) =>
+                    call[0] === `VIDIS sync operation for organisation ${orga.id} rejected`,
+            );
+
+            expect(rejectedCall).toBeDefined();
+            expect(rejectedCall?.[1]).toBeInstanceOf(Error);
+            expect((rejectedCall?.[1] as Error).message).toBe('cleanup failed');
+            expect(serviceProviderRepoMock.deleteByIdAuthorized).not.toHaveBeenCalled();
         });
 
         it('should log rejected sync operations for a school', async () => {
