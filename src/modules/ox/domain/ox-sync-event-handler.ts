@@ -35,8 +35,8 @@ import {
     AddMemberToGroupResponse,
 } from '../adapter/technical/actions/group/add-member-to-group.action.js';
 import { OxMemberAlreadyInGroupError } from '../adapter/domain/error/ox-member-already-in-group.error.js';
-import { OxConfig } from '../../../shared/config/ox.config.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { OxServerConfig } from '../../../shared/config/ox-server.config.js';
 
 @Injectable()
 export class OxSyncEventHandler {
@@ -60,7 +60,7 @@ export class OxSyncEventHandler {
         // to create the request-bound EntityManager context. Removing it would break context creation.
         private readonly em: EntityManager,
     ) {
-        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
+        const oxConfig: OxServerConfig = configService.getOrThrow<OxServerConfig>('OX');
         this.ENABLED = oxConfig.ENABLED;
     }
 

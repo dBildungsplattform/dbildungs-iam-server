@@ -751,8 +751,9 @@ describe('ServiceProviderRepo', () => {
             const persistedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
                 providedOnSchulstrukturknoten,
             });
-            const result: Array<ServiceProvider<true>> =
-                await sut.findBySchulstrukturknoten(providedOnSchulstrukturknoten);
+            const result: Array<ServiceProvider<true>> = await sut.findBySchulstrukturknoten([
+                providedOnSchulstrukturknoten,
+            ]);
 
             expect(result).toHaveLength(1);
             expect(result).toEqual(expect.arrayContaining([persistedServiceProvider]));

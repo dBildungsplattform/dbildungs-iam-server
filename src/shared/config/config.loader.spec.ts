@@ -411,6 +411,7 @@ describe('configloader', () => {
                     EMAIL_ADDRESS_DELETED_EVENT_DELAY: 0,
                 },
                 LDAP: {
+                    ENABLED: true,
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     BASE_DN: 'dc=schule-sh,dc=de',
@@ -478,6 +479,7 @@ describe('configloader', () => {
                     PASSWORD: 'x',
                 },
                 LDAP: {
+                    ENABLED: true,
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     BASE_DN: 'dc=schule-sh,dc=de',

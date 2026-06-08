@@ -19,6 +19,8 @@ import { NameForRolleWithTrailingSpaceError } from './name-with-trailing-space.e
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Err, Ok } from '../../../shared/util/result.js';
+import { expectErrResult } from '../../../../test/utils/test-types.js';
+import { ServiceProviderProvidedOutOfTreeError } from './service-provider-provided-out-of-tree.error.js';
 
 describe('Rolle Aggregate', () => {
     let module: TestingModule;
@@ -445,7 +447,7 @@ describe('Rolle Aggregate', () => {
                     faker.date.anytime(),
                     1,
                     '',
-                    '',
+                    faker.string.uuid(),
                     RollenArt.LEHR,
                     [], // initialize with empty serviceProviderIds
                     [],
@@ -461,10 +463,23 @@ describe('Rolle Aggregate', () => {
 
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(
                     new Map([
-                        [newServiceProviderId, DoFactory.createServiceProvider(true)],
-                        [existingServiceProviderId, DoFactory.createServiceProvider(true)],
+                        [
+                            newServiceProviderId,
+                            DoFactory.createServiceProvider(true, {
+                                providedOnSchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
+                            }),
+                        ],
+                        [
+                            existingServiceProviderId,
+                            DoFactory.createServiceProvider(true, {
+                                providedOnSchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
+                            }),
+                        ],
                     ]),
                 );
+                organisationRepo.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([
+                    DoFactory.createOrganisation(true, { id: rolle.administeredBySchulstrukturknoten }),
+                ]);
 
                 // Call updateServiceProviders with a new ID to add
                 await rolle.updateServiceProviders([existingServiceProviderId, newServiceProviderId]);
@@ -481,7 +496,7 @@ describe('Rolle Aggregate', () => {
                     faker.date.anytime(),
                     1,
                     '',
-                    '',
+                    faker.string.uuid(),
                     RollenArt.LEHR,
                     [], // initialize with empty serviceProviderIds
                     [],
@@ -489,9 +504,15 @@ describe('Rolle Aggregate', () => {
                     false,
                 );
 
-                const serviceProviderToAdd: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-                const serviceProviderToRemove: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-                const existingServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+                const serviceProviderToAdd: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    providedOnSchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
+                });
+                const serviceProviderToRemove: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    providedOnSchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
+                });
+                const existingServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    providedOnSchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
+                });
 
                 // Existing state
                 rolle.serviceProviderIds = [existingServiceProvider.id, serviceProviderToRemove.id];
@@ -499,7 +520,6 @@ describe('Rolle Aggregate', () => {
                 serviceProviderRepoMock.findByIds.mockImplementation((ids: string[]) => {
                     const fullMap: Map<string, ServiceProvider<true>> = new Map([
                         [serviceProviderToAdd.id, serviceProviderToAdd],
-                        [serviceProviderToRemove.id, serviceProviderToRemove],
                         [existingServiceProvider.id, existingServiceProvider],
                     ]);
                     const resultMap: Map<string, ServiceProvider<true>> = new Map();
@@ -508,6 +528,9 @@ describe('Rolle Aggregate', () => {
                     });
                     return Promise.resolve(resultMap);
                 });
+                organisationRepo.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([
+                    DoFactory.createOrganisation(true, { id: rolle.administeredBySchulstrukturknoten }),
+                ]);
 
                 // Call updateServiceProviders with both IDs to add and remove
                 const result: Result<ServiceProvider<true>[], DomainError> = await rolle.updateServiceProviders([
@@ -557,6 +580,50 @@ describe('Rolle Aggregate', () => {
                 if (!result.ok) {
                     expect(result.error).toBeInstanceOf(EntityNotFoundError);
                 }
+            });
+
+            it("should return an error if the service-provider is not provided on the rolle's organisation or one of its parents", async () => {
+                const parentOrga: Organisation<true> = DoFactory.createOrganisation(true);
+                const orga: Organisation<true> = DoFactory.createOrganisation(true, {
+                    administriertVon: parentOrga.id,
+                });
+                const rolle: Rolle<true> = rolleFactory.construct(
+                    faker.string.uuid(),
+                    faker.date.anytime(),
+                    faker.date.anytime(),
+                    1,
+                    '',
+                    orga.id,
+                    RollenArt.LEHR,
+                    [], // initialize with empty serviceProviderIds
+                    [],
+                    [],
+                    false,
+                );
+
+                const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    providedOnSchulstrukturknoten: parentOrga.id,
+                });
+                const illegalServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    providedOnSchulstrukturknoten: faker.string.uuid(),
+                });
+
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(
+                    new Map([
+                        [serviceProvider.id, serviceProvider],
+                        [illegalServiceProvider.id, illegalServiceProvider],
+                    ]),
+                );
+                organisationRepo.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([orga, parentOrga]);
+
+                // Call updateServiceProviders with a new ID to add
+                const result: Result<ServiceProvider<true>[], DomainError> = await rolle.updateServiceProviders([
+                    serviceProvider.id,
+                    illegalServiceProvider.id,
+                ]);
+
+                expectErrResult(result);
+                expect(result.error).toBeInstanceOf(ServiceProviderProvidedOutOfTreeError);
             });
         });
     });

@@ -6,18 +6,18 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
-import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { assignSameKey, objectKeys } from '../../../shared/util/object-utils.js';
 import { Err, Ok } from '../../../shared/util/result.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
-import { ServiceProviderEntity } from './service-provider.entity.js';
-import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
-import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js';
-import { NameUniqueAtOrgaSpecification } from '../specification/name-unique-at-orga.specification.js';
 import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
+import { NameUniqueAtOrgaSpecification } from '../specification/name-unique-at-orga.specification.js';
+import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
+import { ServiceProviderEntity } from './service-provider.entity.js';
+import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -303,12 +303,14 @@ export class ServiceProviderRepo {
         return entity ? mapEntityToAggregate(entity) : entity;
     }
 
-    public async findBySchulstrukturknoten(organisationsId: string): Promise<Array<ServiceProvider<true>>> {
+    public async findBySchulstrukturknoten(
+        organisationIds: Array<OrganisationID>,
+    ): Promise<Array<ServiceProvider<true>>> {
         const exclude: readonly ['logo'] | undefined = ['logo'];
         return (
             await this.em.find(
                 ServiceProviderEntity,
-                { providedOnSchulstrukturknoten: organisationsId },
+                { providedOnSchulstrukturknoten: { $in: organisationIds } },
                 {
                     populate: ['merkmale'],
                     exclude,
