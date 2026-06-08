@@ -18,10 +18,9 @@ export class CreateServiceProviderBodyParams {
     @MaxLength(50)
     public name!: string;
 
-    @ApiProperty({ required: false })
-    @IsOptional()
+    @ApiProperty()
     @MaxLength(2000)
-    public url?: string;
+    public url!: string;
 
     @ApiProperty({
         required: false,
