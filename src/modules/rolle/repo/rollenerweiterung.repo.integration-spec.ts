@@ -416,10 +416,8 @@ describe('RollenerweiterungRepo', () => {
                 organisation.id,
                 secondServiceProviderToDelete.id,
             );
-            const keptForOrganisation: Rollenerweiterung<true>[] = await sut.findManyByOrganisationIdAndServiceProviderId(
-                organisation.id,
-                serviceProviderToKeep.id,
-            );
+            const keptForOrganisation: Rollenerweiterung<true>[] =
+                await sut.findManyByOrganisationIdAndServiceProviderId(organisation.id, serviceProviderToKeep.id);
             const keptForOtherOrganisation: Rollenerweiterung<true>[] =
                 await sut.findManyByOrganisationIdAndServiceProviderId(
                     otherOrganisation.id,
