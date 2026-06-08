@@ -347,6 +347,77 @@ describe('VidisSyncService', () => {
         expect(syncForSchoolSpy).toHaveBeenCalledTimes(101);
     });
 
+    it('should sync schools page by page and use an empty angebote fallback when a grouped school entry is undefined', async () => {
+        const orgaIds: TorgaIds[] = Array.from({ length: 101 }, (_value: unknown, index: number) => ({
+            id: `organisation-${index}`,
+            kennung: `${200000 + index}`,
+        }));
+        const pagedActivatedAngebote: VidisAngebotWithSchoolActivations[] = [
+            {
+                angebot: activatedAngebote[0]!.angebot,
+                schoolActivations: Array.from({ length: 101 }, (_value: unknown, index: number) => ({
+                    date: '2026-05-01',
+                    kennung: orgaIds[index]!.kennung,
+                })),
+            },
+        ];
+        const firstPageSchools: Organisation<true>[] = Array.from({ length: 100 }, (_value: unknown, index: number) =>
+            createSchool(orgaIds[index]!.id, orgaIds[index]!.kennung),
+        );
+        const secondPageSchools: Organisation<true>[] = [createSchool(orgaIds[100]!.id, orgaIds[100]!.kennung)];
+        const firstPageAngeboteByOrganisationId: Record<string, VidisSchoolActivatedAngebot[]> = Object.fromEntries(
+            firstPageSchools.map((school: Organisation<true>, index: number) => [
+                school.id,
+                index === 0
+                    ? undefined
+                    : [
+                          {
+                              angebot: activatedAngebote[0]!.angebot,
+                              date: '2026-05-01',
+                          },
+                      ],
+            ]),
+        ) as unknown as Record<string, VidisSchoolActivatedAngebot[]>;
+        const secondPageAngeboteByOrganisationId: Record<string, VidisSchoolActivatedAngebot[]> = {
+            [orgaIds[100]!.id]: [
+                {
+                    angebot: activatedAngebote[0]!.angebot,
+                    date: '2026-05-01',
+                },
+            ],
+        };
+
+        vidisApiAdapterMock.getActivatedAngeboteByRegionSH.mockResolvedValue(Ok(pagedActivatedAngebote));
+        organisationRepoMock.findBy
+            .mockResolvedValueOnce([firstPageSchools, 101])
+            .mockResolvedValueOnce([secondPageSchools, 101]);
+        serviceProviderRepoMock.findVidisAngeboteforSchools.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+        vi.spyOn(
+            sut as unknown as {
+                groupAngeboteByOrganisationId: (
+                    activatedAngebote: VidisAngebotWithSchoolActivations[],
+                    organisationIdByKennung: Record<string, string>,
+                ) => Record<string, VidisSchoolActivatedAngebot[]>;
+            },
+            'groupAngeboteByOrganisationId',
+        )
+            .mockReturnValueOnce(firstPageAngeboteByOrganisationId)
+            .mockReturnValueOnce(secondPageAngeboteByOrganisationId);
+        const syncForSchoolSpy: ReturnType<typeof vi.spyOn> = vi
+            .spyOn(
+                sut as unknown as { syncForSchoolInternal: (...args: unknown[]) => Promise<void> },
+                'syncForSchoolInternal',
+            )
+            .mockResolvedValue();
+
+        await sut.sync();
+
+        expect(organisationRepoMock.findBy).toHaveBeenCalledTimes(2);
+        expect(serviceProviderRepoMock.findVidisAngeboteforSchools).toHaveBeenCalledTimes(2);
+        expect(syncForSchoolSpy).toHaveBeenCalledWith(orgaIds[0]!.id, [], [], permissionsMock);
+        expect(syncForSchoolSpy).toHaveBeenCalledTimes(101);
+    });
+
     describe('syncForSchoolInternal', () => {
         it('should stop syncing for a school when there are no differences between VIDIS and the database', async () => {
             const orga: TorgaIds = {
