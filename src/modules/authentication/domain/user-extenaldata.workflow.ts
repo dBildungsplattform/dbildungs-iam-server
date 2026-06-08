@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { uniqBy } from 'lodash-es';
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
-import { OxConfig } from '../../../shared/config/ox.config.js';
+import { OxServerConfig } from '../../../shared/config/ox-server.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -41,7 +41,7 @@ export class UserExternaldataWorkflowAggregate {
         private readonly emailRepo: EmailRepo,
         private readonly emailResolverService: EmailResolverService,
     ) {
-        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
+        const oxConfig: OxServerConfig = configService.getOrThrow<OxServerConfig>('OX');
         this.contextID = oxConfig.CONTEXT_ID;
     }
 

@@ -11,15 +11,16 @@ data:
   NODE_ENV: 'prod'
   DEPLOY_STAGE: {{ .Values.environment | quote }}
   DB_NAME: {{ .Values.database.name | quote }}
+  LDAP_ENABLED: "{{ .Values.eflkLdap.enabled }}"
   LDAP_URL: '{{ .Values.eflkLdap.url | replace "spsh-xxx" .Release.Namespace }}'
   LDAP_BASE_DN: "{{ .Values.eflkLdap.base_dn }}"
   LDAP_OEFFENTLICHE_SCHULEN_DOMAIN: "{{ .Values.eflkLdap.oeffentlicheSchulenDomain }}"
   LDAP_ERSATZSCHULEN_DOMAIN: "{{ .Values.eflkLdap.ersatzschulenDomain }}"
-  OX_ENABLED: "{{ .Values.ox.enabled }}"
-  OX_USERNAME: "{{ .Values.ox.username }}"
-  OX_ENDPOINT: "{{ .Values.ox.endpoint }}"
-  OX_CONTEXT_ID: "{{ .Values.ox.contextId }}"
-  OX_CONTEXT_NAME: "{{ .Values.ox.contextName }}"
-  OX_NUMBER_OF_RETRIES: "{{ .Values.ox.numberOfRetries }}"
-  OX_USER_PASSWORD_DEFAULT: "{{ .Values.ox.userPasswordDefault }}"
-  OX_EMAIL_ADDRESS_DELETED_EVENT_DELAY: "{{ .Values.ox.emailAddressDeletedEventDelay }}"
+  OX_ENABLED: "{{ .Values.eflkOx.enabled }}"
+  OX_USERNAME: "{{ .Values.eflkOx.username }}"
+  OX_ENDPOINT: "{{ .Values.eflkOx.endpoint }}"
+  OX_CONTEXT_ID: "{{ .Values.eflkOx.contextId }}"
+  OX_CONTEXT_NAME: "{{ .Values.eflkOx.contextName }}"
+  OX_NUMBER_OF_RETRIES: "{{ .Values.eflkOx.numberOfRetries }}"
+  OX_USER_PASSWORD_DEFAULT: "{{ .Values.eflkOx.userPasswordDefault }}"
+  OX_EMAIL_ADDRESS_DELETED_EVENT_DELAY: "{{ .Values.eflkOx.emailAddressDeletedEventDelay }}"

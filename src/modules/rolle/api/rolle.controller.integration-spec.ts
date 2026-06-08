@@ -857,8 +857,15 @@ describe('Rolle API', () => {
     describe('/PUT rolleId/serviceProviders', () => {
         describe('when rolle and serviceProvider exist', () => {
             it('should return 201 and add serviceProvider', async () => {
-                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
-                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: orga.id,
+                });
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                    }),
+                );
                 if (rolle instanceof DomainError) {
                     throw Error();
                 }
@@ -877,9 +884,15 @@ describe('Rolle API', () => {
 
         describe('when rolle and serviceProvider exist, but serviceProvider is already attached', () => {
             it('should return 201', async () => {
-                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+                const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: orga.id,
+                });
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
-                    DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        serviceProviderIds: [serviceProvider.id],
+                    }),
                 );
                 if (rolle instanceof DomainError) {
                     throw Error();
@@ -937,7 +950,10 @@ describe('Rolle API', () => {
             it('should return 200 and delete serviceProvider', async () => {
                 const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(
-                    DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+                    DoFactory.createRolle(false, {
+                        serviceProviderIds: [serviceProvider.id],
+                        administeredBySchulstrukturknoten: serviceProvider.providedOnSchulstrukturknoten,
+                    }),
                 );
                 if (rolle instanceof DomainError) {
                     throw Error();

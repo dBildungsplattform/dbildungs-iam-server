@@ -11,6 +11,7 @@
         "USE_SSL": true
     },
     "LDAP": {
+        "ENABLED": true,
         "URL": "ldap://localhost",
         "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
         "PASSWORD": "admin"

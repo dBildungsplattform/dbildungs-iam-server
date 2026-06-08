@@ -31,7 +31,7 @@ import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.j
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
@@ -39,9 +39,13 @@ import { ServiceProvider } from '../domain/service-provider.js';
 import { mapEntityToAggregate } from '../repo/service-provider-entity-mapper.js';
 import { ServiceProviderEntity } from '../repo/service-provider.entity.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
+import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
+import { CreateServiceProviderResponse } from './create-service-provider.response.js';
+import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
+import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 
 describe('ServiceProvider API', () => {
@@ -111,21 +115,57 @@ describe('ServiceProvider API', () => {
         permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
     });
 
-    describe('/GET all service provider', () => {
-        it('should return all service provider', async () => {
-            await Promise.all([
-                createAndPersistServiceProvider(em),
-                createAndPersistServiceProvider(em),
+    describe('/GET provider/assignable-for-rolle', () => {
+        const url: string = '/provider/assignable-for-rolle';
+
+        it('should return all service providers for a specific organisation', async () => {
+            const parent: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const orga: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { administriertVon: parent.id }),
+            );
+            const child: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { administriertVon: orga.id }),
+            );
+            const serviceProviders: ServiceProvider<true>[] = await Promise.all([
+                createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: parent.id }),
+                createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: orga.id }),
+                createAndPersistServiceProvider(em, { providedOnSchulstrukturknoten: child.id }),
                 createAndPersistServiceProvider(em),
             ]);
+            const query: FindServiceProviderForRolleQueryParams = {
+                schulstrukturknotenOfRolle: orga.id,
+            };
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/provider/all')
+                .get(url)
+                .query(query)
                 .send();
 
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Array);
-            expect(response.body).toHaveLength(3);
+            expect(response.body).toHaveLength(2);
+            expect(response.body).toContainEqual(new ServiceProviderResponse(serviceProviders[0]!));
+            expect(response.body).toContainEqual(new ServiceProviderResponse(serviceProviders[1]!));
+        });
+
+        it('should return 404 if permissions are missing', async () => {
+            const schulstrukturknotenOfRolle: string = faker.string.uuid();
+            const query: FindServiceProviderForRolleQueryParams = {
+                schulstrukturknotenOfRolle,
+            };
+            permissionsMock.hasSystemrechteAtOrganisation.mockClear();
+            permissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(url)
+                .query(query)
+                .send();
+
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'MISSING_PERMISSIONS' }));
+            expect(permissionsMock.hasSystemrechteAtOrganisation).toHaveBeenCalledWith(schulstrukturknotenOfRolle, [
+                RollenSystemRecht.ROLLEN_VERWALTEN,
+            ]);
         });
     });
 
@@ -538,6 +578,56 @@ describe('ServiceProvider API', () => {
                     }),
                 );
             });
+        });
+    });
+
+    describe('/POST create service provider', () => {
+        it('should return created service provider in expected response shape', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const body: CreateServiceProviderBodyParams = {
+                organisationId: organisation.id,
+                name: faker.company.name(),
+                url: faker.internet.url(),
+                kategorie: faker.helpers.enumValue(ServiceProviderKategorie),
+                requires2fa: faker.datatype.boolean(),
+                merkmale: [],
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/provider')
+                .send(body);
+            const responseBody: CreateServiceProviderResponse = response.body as CreateServiceProviderResponse;
+
+            expect(response.status).toBe(201);
+            expect(responseBody).toEqual({
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                id: expect.any(String),
+                name: body.name,
+                target: 'URL',
+                url: body.url,
+                kategorie: body.kategorie,
+                hasLogo: false,
+                requires2fa: body.requires2fa,
+                merkmale: body.merkmale,
+            });
+
+            const persistedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
+                ServiceProviderEntity,
+                { id: responseBody.id },
+                { refresh: true },
+            );
+            expect(persistedServiceProvider).toEqual(
+                expect.objectContaining({
+                    id: responseBody.id,
+                    name: body.name,
+                    target: 'URL',
+                    url: body.url,
+                    kategorie: body.kategorie,
+                    providedOnSchulstrukturknoten: organisation.id,
+                    requires2fa: body.requires2fa,
+                }),
+            );
+            expect(persistedServiceProvider.merkmale).toHaveLength(0);
         });
     });
 

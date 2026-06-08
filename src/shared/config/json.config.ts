@@ -15,9 +15,9 @@ import { ImportConfig } from './import.config.js';
 import { ItsLearningConfig } from './itslearning.config.js';
 import { KafkaConfig } from './kafka.config.js';
 import { KeycloakConfig } from './keycloak.config.js';
-import { LdapConfig } from './ldap.config.js';
+import { LdapServerConfig } from './ldap-server.config.js';
 import { LoggingConfig } from './logging.config.js';
-import { OxConfig } from './ox.config.js';
+import { OxServerConfig } from './ox-server.config.js';
 import { PortalConfig } from './portal.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { RedisConfig } from './redis.config.js';
@@ -53,8 +53,8 @@ export class JsonConfig {
     public readonly REDIS!: RedisConfig;
 
     @ValidateNested()
-    @Type(() => LdapConfig)
-    public readonly LDAP!: LdapConfig;
+    @Type(() => LdapServerConfig)
+    public readonly LDAP!: LdapServerConfig;
 
     @ValidateNested()
     @Type(() => FeatureFlagConfig)
@@ -73,8 +73,8 @@ export class JsonConfig {
     public readonly PRIVACYIDEA!: PrivacyIdeaConfig;
 
     @ValidateNested()
-    @Type(() => OxConfig)
-    public readonly OX!: OxConfig;
+    @Type(() => OxServerConfig)
+    public readonly OX!: OxServerConfig;
 
     @ValidateNested()
     @Type(() => EmailConfig)

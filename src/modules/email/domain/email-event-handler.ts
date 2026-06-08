@@ -6,7 +6,7 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { OxConfig } from '../../../shared/config/ox.config.js';
+import { OxServerConfig } from '../../../shared/config/ox-server.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
@@ -157,7 +157,7 @@ export class EmailEventHandler {
         private readonly em: EntityManager,
         configService: ConfigService<ServerConfig>,
     ) {
-        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
+        const oxConfig: OxServerConfig = configService.getOrThrow<OxServerConfig>('OX');
         this.OX_ENABLED = oxConfig.ENABLED;
     }
 
