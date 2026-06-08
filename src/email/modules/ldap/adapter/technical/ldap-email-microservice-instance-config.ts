@@ -1,10 +1,11 @@
 import { Injectable, Provider } from '@nestjs/common';
-import { EmailAppConfig } from '../../../../../shared/config/email-app.config.js';
-import { LdapConfig } from '../../../../../shared/config/ldap.config.js';
+import { LdapEmailMicroserviceConfig } from '../../../../../shared/config/ldap-email-microservice.config.js';
+import { EmailAppConfig } from '../../../../../shared/config/index.js';
 
 @Injectable()
-export class LdapInstanceConfig implements LdapConfig {
+export class LdapEmailMicroserviceInstanceConfig implements LdapEmailMicroserviceConfig {
     public constructor(
+        public ENABLED: boolean,
         public URL: string,
         public BIND_DN: string,
         public ADMIN_PASSWORD: string,
@@ -16,11 +17,12 @@ export class LdapInstanceConfig implements LdapConfig {
 
     public static fromConfigService(): Provider {
         return {
-            provide: LdapInstanceConfig,
-            useFactory: (config: EmailAppConfig): LdapInstanceConfig => {
-                const ldapConfig: LdapConfig = config.LDAP;
+            provide: LdapEmailMicroserviceInstanceConfig,
+            useFactory: (config: EmailAppConfig): LdapEmailMicroserviceInstanceConfig => {
+                const ldapConfig: LdapEmailMicroserviceConfig = config.LDAP;
 
-                return new LdapInstanceConfig(
+                return new LdapEmailMicroserviceInstanceConfig(
+                    ldapConfig.ENABLED,
                     ldapConfig.URL,
                     ldapConfig.BIND_DN,
                     ldapConfig.ADMIN_PASSWORD,

@@ -13,6 +13,7 @@
         "USE_SSL": false
     },
     "LDAP": {
+        "ENABLED": true,
         "URL": "ldap://localhost",
         "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
         "ADMIN_PASSWORD": "admin",
@@ -22,7 +23,7 @@
         "ERSATZSCHULEN_DOMAIN": "qs.ersatzschule-sh.de"
     },
     "OX": {
-        "ENABLED": false,
+        "ENABLED": true,
         "ENDPOINT": "http://ox.dev.spsh.dbildungsplattform.de/webservices/",
         "CONTEXT_ID": "1337",
         "CONTEXT_NAME": "contextname",

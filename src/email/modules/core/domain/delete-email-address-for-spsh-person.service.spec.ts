@@ -95,6 +95,9 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
     });
 
     it('should set status and markedForCron, save all, and delete from OX and LDAP, then delete from DB', async () => {
+        oxAdapterMock.useOx.mockReturnValue(true);
+        ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
         const spshPersonId: string = faker.string.uuid();
         const oxUserCounter: string = faker.string.uuid();
         const externalId: string = faker.string.uuid();
@@ -194,6 +197,9 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
     });
 
     it('should not delete from DB if OX deletion fails', async () => {
+        oxAdapterMock.useOx.mockReturnValue(true);
+        ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
         const spshPersonId: string = faker.string.uuid();
         const oxUserCounter: string = faker.string.uuid();
         const externalId: string = faker.string.uuid();
@@ -224,6 +230,9 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
     });
 
     it('should not delete from DB if LDAP deletion fails', async () => {
+        oxAdapterMock.useOx.mockReturnValue(true);
+        ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
         const spshPersonId: string = faker.string.uuid();
         const oxUserCounter: string = faker.string.uuid();
         const externalId: string = faker.string.uuid();
@@ -254,6 +263,9 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
     });
 
     it('should log info if OX user does not exist (OxNoSuchUserError)', async () => {
+        oxAdapterMock.useOx.mockReturnValue(true);
+        ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
         const spshPersonId: string = faker.string.uuid();
         const oxUserCounter: string = faker.string.uuid();
         const externalId: string = faker.string.uuid();
@@ -274,6 +286,60 @@ describe('DeleteEmailsAddressesForSpshPersonService', () => {
         expect(loggerMock.info).toHaveBeenCalledWith(
             expect.stringContaining('does not exist in Ox anymore. Continuing deletion process.'),
         );
+        expect(emailAddressRepoMock.delete).toHaveBeenCalledWith(email);
+        expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+            spshPersonId,
+            newPrimaryEmail: undefined,
+            newAlternativeEmail: undefined,
+            previousPrimaryEmail: email.address,
+            previousAlternativeEmail: undefined,
+        });
+    });
+
+    it('should return early and log if ox is disabled', async () => {
+        oxAdapterMock.useOx.mockReturnValue(false);
+        ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
+        const spshPersonId: string = faker.string.uuid();
+        const email: EmailAddress<true> = makeEmail();
+
+        emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([email]);
+        emailAddressRepoMock.save.mockResolvedValue(Ok(email));
+        ldapClientAdapterMock.deletePerson.mockResolvedValue(Ok(undefined));
+        emailAddressRepoMock.delete.mockResolvedValue();
+
+        await sut.deleteEmailAddressesForSpshPerson({ spshPersonId });
+
+        expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('OX disabled -> faking deleteUser'));
+        expect(oxAdapterMock.deleteUser).not.toHaveBeenCalled();
+        expect(ldapClientAdapterMock.deletePerson).toHaveBeenCalled();
+        expect(emailAddressRepoMock.delete).toHaveBeenCalledWith(email);
+        expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
+            spshPersonId,
+            newPrimaryEmail: undefined,
+            newAlternativeEmail: undefined,
+            previousPrimaryEmail: email.address,
+            previousAlternativeEmail: undefined,
+        });
+    });
+
+    it('should return early and log if ldap is disabled', async () => {
+        oxAdapterMock.useOx.mockReturnValue(true);
+        ldapClientAdapterMock.useLdap.mockReturnValue(false);
+
+        const spshPersonId: string = faker.string.uuid();
+        const email: EmailAddress<true> = makeEmail();
+        email.oxUserCounter = faker.string.uuid();
+
+        emailAddressRepoMock.findBySpshPersonIdSortedByPriorityAsc.mockResolvedValue([email]);
+        emailAddressRepoMock.save.mockResolvedValue(Ok(email));
+        oxAdapterMock.deleteUser.mockResolvedValue(Ok(undefined));
+        emailAddressRepoMock.delete.mockResolvedValue();
+
+        await sut.deleteEmailAddressesForSpshPerson({ spshPersonId });
+
+        expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('LDAP disabled -> faking deletePerson'));
+        expect(ldapClientAdapterMock.deletePerson).not.toHaveBeenCalled();
         expect(emailAddressRepoMock.delete).toHaveBeenCalledWith(email);
         expect(webhookServiceMock.sendEmailsChanged).toHaveBeenCalledWith({
             spshPersonId,

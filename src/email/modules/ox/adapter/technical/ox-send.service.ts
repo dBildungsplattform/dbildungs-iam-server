@@ -6,12 +6,12 @@ import { XMLBuilder, XMLParser } from 'fast-xml-parser';
 import { lastValueFrom } from 'rxjs';
 import { OxError } from '../../../../../shared/error/ox.error.js';
 import { EmailAppConfig } from '../../../../../shared/config/email-app.config.js';
-import { OxConfig } from '../../../../../shared/config/ox.config.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { isOxErrorResponse, OxBaseAction } from './actions/ox-base-action.js';
 import { DomainError } from '../../../../../shared/error/index.js';
 import { OxErrorMapper } from './ox-error.mapper.js';
 import { OxNonRetryableError } from '../domain/error/ox-non-retryable.error.js';
+import { OxServerConfig } from '../../../../../shared/config/ox-server.config.js';
 
 export type OxErrorType = {
     message: string;
@@ -105,7 +105,7 @@ export class OxSendService {
         private readonly logger: ClassLogger,
         config: EmailAppConfig,
     ) {
-        const oxConfig: OxConfig = config.OX;
+        const oxConfig: OxServerConfig = config.OX;
 
         this.endpoint = oxConfig.ENDPOINT;
         this.username = oxConfig.USERNAME;
