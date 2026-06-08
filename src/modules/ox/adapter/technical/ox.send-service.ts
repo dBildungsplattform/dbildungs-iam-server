@@ -5,8 +5,6 @@ import { AxiosResponse } from 'axios';
 import { createHash, Hash } from 'crypto';
 import { XMLBuilder, XMLParser } from 'fast-xml-parser';
 import { lastValueFrom } from 'rxjs';
-
-import { OxConfig } from '../../../../shared/config/ox.config.js';
 import { isOxErrorResponse, OxBaseAction } from './actions/ox-base-action.js';
 import { OxError } from '../../../../shared/error/ox.error.js';
 import { ServerConfig } from '../../../../shared/config/server.config.js';
@@ -14,6 +12,7 @@ import { DomainError } from '../../../../shared/error/domain.error.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { OxNonRetryableError } from '../domain/error/ox-non-retryable.error.js';
 import { OxErrorMapper } from './ox-error.mapper.js';
+import { OxServerConfig } from '../../../../shared/config/ox-server.config.js';
 
 export type OxErrorType = {
     message: string;
@@ -107,7 +106,7 @@ export class OxSendService {
         private readonly logger: ClassLogger,
         configService: ConfigService<ServerConfig>,
     ) {
-        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
+        const oxConfig: OxServerConfig = configService.getOrThrow<OxServerConfig>('OX');
 
         this.endpoint = oxConfig.ENDPOINT;
         this.username = oxConfig.USERNAME;

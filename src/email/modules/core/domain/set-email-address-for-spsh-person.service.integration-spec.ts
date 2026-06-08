@@ -148,6 +148,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
 
     describe('setEmailAddressForSpshPerson', () => {
         it('should create new email if no other mail exists', async () => {
+            oxAdapterMock.useOx.mockReturnValue(true);
+            ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
             const domain: EmailDomain<true> = await setupDomain();
             const [pathParams, bodyParams]: [
                 SetEmailAddressForSpshPersonPathParams,
@@ -191,6 +194,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
         });
 
         it('should reactivate old email', async () => {
+            oxAdapterMock.useOx.mockReturnValue(true);
+            ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
             const domain: EmailDomain<true> = await setupDomain();
             const [pathParams, bodyParams]: [
                 SetEmailAddressForSpshPersonPathParams,
@@ -647,6 +653,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
             });
 
             it('should error when exists check fails', async () => {
+                oxAdapterMock.useOx.mockReturnValue(true);
+                ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
                 // E-Mails with ox id needs to exist
                 await setupEmail(
                     EmailAddress.createNew({
@@ -675,6 +684,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
             });
 
             it('should error when user does not exist', async () => {
+                oxAdapterMock.useOx.mockReturnValue(true);
+                ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
                 // E-Mails with ox id needs to exist
                 await setupEmail(
                     EmailAddress.createNew({
@@ -705,6 +717,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
             });
 
             it('should error when modify fails', async () => {
+                oxAdapterMock.useOx.mockReturnValue(true);
+                ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
                 // E-Mails with ox id needs to exist
                 await setupEmail(
                     EmailAddress.createNew({
@@ -734,6 +749,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
             });
 
             it('should error when create fails', async () => {
+                oxAdapterMock.useOx.mockReturnValue(true);
+                ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
                 const error: OxError = new OxError('test error');
                 oxSendServiceMock.send.mockResolvedValueOnce(Err(error)); // modify
 
@@ -751,6 +769,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
             });
 
             it('should set status to ALREADY_IN_OX if that error was returned', async () => {
+                oxAdapterMock.useOx.mockReturnValue(true);
+                ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
                 const error: OxPrimaryMailAlreadyExistsError = new OxPrimaryMailAlreadyExistsError('test error');
                 oxSendServiceMock.send.mockResolvedValueOnce(Err(error)); // modify
 
@@ -765,6 +786,16 @@ describe('SetEmailAddressForSpshPersonService', () => {
                 expect(emailResult).toHaveLength(1);
                 expect(emailResult[0]?.getStatus()).toEqual(EmailAddressStatusEnum.EXISTS_ONLY_IN_OX);
                 expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(`Error while updating ox user`, error);
+            });
+
+            it('should return fake data when ox is disabled', async () => {
+                oxAdapterMock.useOx.mockReturnValue(false);
+
+                await sut.setEmailAddressForSpshPerson({ ...params[0], ...params[1] });
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect.stringContaining('Ox is disabled -> faking upsertOxUser'),
+                );
+                expect(oxSendServiceMock.send).not.toHaveBeenCalled();
             });
         });
 
@@ -784,6 +815,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
             });
 
             it('should error when exists-check fails', async () => {
+                oxAdapterMock.useOx.mockReturnValue(true);
+                ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
                 const error: Error = new Error('Test Error');
                 ldapClientAdapterMock.isPersonExisting.mockResolvedValueOnce(Err(error));
 
@@ -804,6 +838,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
             });
 
             it('should error when ldap upsert create fails', async () => {
+                oxAdapterMock.useOx.mockReturnValue(true);
+                ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
                 ldapClientAdapterMock.isPersonExisting.mockResolvedValueOnce(Ok(false));
                 const error: Error = new Error('Test Error');
                 ldapClientAdapterMock.createPerson.mockResolvedValueOnce(Err(error));
@@ -825,6 +862,9 @@ describe('SetEmailAddressForSpshPersonService', () => {
             });
 
             it('should error when ldap upsert update fails', async () => {
+                oxAdapterMock.useOx.mockReturnValue(true);
+                ldapClientAdapterMock.useLdap.mockReturnValue(true);
+
                 ldapClientAdapterMock.isPersonExisting.mockResolvedValueOnce(Ok(true));
                 const error: Error = new Error('Test Error');
                 ldapClientAdapterMock.updatePerson.mockResolvedValueOnce(Err(error));
@@ -843,6 +883,18 @@ describe('SetEmailAddressForSpshPersonService', () => {
                     `Error while updating/creating LDAP user`,
                     error,
                 );
+            });
+
+            it('should return fake data when ldap is disabled', async () => {
+                ldapClientAdapterMock.useLdap.mockReturnValue(false);
+
+                await sut.setEmailAddressForSpshPerson({ ...params[0], ...params[1] });
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect.stringContaining('LDAP is disabled -> faking upsertLdapUser'),
+                );
+                expect(ldapClientAdapterMock.isPersonExisting).not.toHaveBeenCalled();
+                expect(ldapClientAdapterMock.createPerson).not.toHaveBeenCalled();
+                expect(ldapClientAdapterMock.updatePerson).not.toHaveBeenCalled();
             });
         });
 

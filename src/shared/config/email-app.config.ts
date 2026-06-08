@@ -6,11 +6,11 @@ import { ValidateNested } from 'class-validator';
 import { DbConfig } from './db.config.js';
 import { EmailConfig } from './email.config.js';
 import { HostConfig } from './host.config.js';
-import { LdapConfig } from './ldap.config.js';
 import { LoggingConfig } from './logging.config.js';
-import { OxConfig } from './ox.config.js';
 import { HeaderApiKeyConfig } from './headerapikey.config.js';
 import { EmailWebhookConfig } from './email-webhook.config.js';
+import { OxEmailMicroserviceConfig } from './ox-email-microservice.config.js';
+import { LdapEmailMicroserviceConfig } from './ldap-email-microservice.config.js';
 
 @Injectable()
 export class EmailAppConfig {
@@ -27,12 +27,12 @@ export class EmailAppConfig {
     public readonly DB!: DbConfig;
 
     @ValidateNested()
-    @Type(() => LdapConfig)
-    public readonly LDAP!: LdapConfig;
+    @Type(() => LdapEmailMicroserviceConfig)
+    public readonly LDAP!: LdapEmailMicroserviceConfig;
 
     @ValidateNested()
-    @Type(() => OxConfig)
-    public readonly OX!: OxConfig;
+    @Type(() => OxEmailMicroserviceConfig)
+    public readonly OX!: OxEmailMicroserviceConfig;
 
     @ValidateNested()
     @Type(() => EmailConfig)

@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { Attribute, Change, Client, SearchResult } from 'ldapts';
 import { LdapPersonEntry } from './ldap.types.js';
 import { LdapClient } from '../technical/ldap-client.js';
-import { LdapInstanceConfig } from '../technical/ldap-instance-config.js';
 import { Mutex } from 'async-mutex';
 import { LdapEmailDomainError } from './error/ldap-email-domain.error.js';
 import { LdapCreatePersonError } from './error/ldap-create-person.error.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { PersonExternalID, PersonUsername } from '../../../../../shared/types/aggregate-ids.types.js';
 import { LdapModifyPersonError } from './error/ldap-modify-person.error.js';
+import { LdapEmailMicroserviceInstanceConfig } from '../technical/ldap-email-microservice-instance-config.js';
 
 export type LdapPersonAttributes = {
     entryUUID?: string;
@@ -73,7 +73,7 @@ export class LdapClientAdapter {
 
     public constructor(
         private readonly ldapClient: LdapClient,
-        private readonly ldapInstanceConfig: LdapInstanceConfig,
+        private readonly ldapInstanceConfig: LdapEmailMicroserviceInstanceConfig,
         private readonly logger: ClassLogger,
     ) {
         this.mutex = new Mutex();
@@ -188,6 +188,10 @@ export class LdapClientAdapter {
 
     public async deletePerson(externalId: string, domain: string): Promise<Result<void>> {
         return this.executeWithRetry(() => this.deletePersonInternal(externalId, domain), this.getNrOfRetries());
+    }
+
+    public useLdap(): boolean {
+        return this.ldapInstanceConfig.ENABLED;
     }
 
     private async deletePersonInternal(externalId: string, domain: string): Promise<Result<void>> {

@@ -20,7 +20,6 @@ import { DeleteUserAction } from '../technical/actions/user/delete-user.action.j
 import { ExistsUserAction } from '../technical/actions/user/exists-user.action.js';
 import { GetDataForUserAction } from '../technical/actions/user/get-data-user.action.js';
 import { OxGroupNotFoundError } from './error/ox-group-not-found.error.js';
-import { OxConfig } from '../../../../../shared/config/ox.config.js';
 import {
     CreateGroupAction,
     CreateGroupParams,
@@ -51,12 +50,15 @@ import {
     RemoveMemberFromGroupAction,
     RemoveMemberFromGroupResponse,
 } from '../technical/actions/group/remove-member-from-group.action.js';
+import { OxEmailMicroserviceConfig } from '../../../../../shared/config/ox-email-microservice.config.js';
 
 @Injectable()
 export class OxAdapter {
     public static readonly LEHRER_OX_GROUP_NAME_PREFIX: string = 'lehrer-';
 
     public static readonly LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX: string = 'lehrer-';
+
+    public readonly enabled: boolean;
 
     public readonly authUser: string;
 
@@ -75,7 +77,8 @@ export class OxAdapter {
         protected readonly oxSendService: OxSendService,
         protected config: EmailAppConfig,
     ) {
-        const oxConfig: OxConfig = config.OX;
+        const oxConfig: OxEmailMicroserviceConfig = config.OX;
+        this.enabled = oxConfig.ENABLED;
         this.authUser = oxConfig.USERNAME;
         this.authPassword = oxConfig.PASSWORD;
         this.contextID = oxConfig.CONTEXT_ID;
@@ -451,5 +454,9 @@ export class OxAdapter {
             changeByModuleAccessParams,
         );
         return changeByModuleAccessAction;
+    }
+
+    public useOx(): boolean {
+        return this.enabled;
     }
 }

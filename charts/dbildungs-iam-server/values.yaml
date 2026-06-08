@@ -37,7 +37,8 @@ ldap:
   retryWrapperDefaultRetries: 3
 
 eflkLdap:
-  url: ldap://dbildungs-iam-ldap-internal.spsh-xxx.svc.cluster.local:389
+  enabled: false
+  url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
   base_dn: dc=schule-sh,dc=de
@@ -96,6 +97,16 @@ emailMicroserviceAuth:
   ox_password: ""
 
 ox:
+  enabled: false
+  username: "oxadmin"
+  endpoint: "https://webmail.example.com"
+  contextId: "10"
+  contextName: "10"
+  numberOfRetries: 3
+  userPasswordDefault: "placeholder"
+  emailAddressDeletedEventDelay: 0
+
+eflkOx:
   enabled: false
   username: "oxadmin"
   endpoint: "https://webmail.example.com"
