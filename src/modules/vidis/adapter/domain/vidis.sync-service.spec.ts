@@ -438,17 +438,19 @@ describe('VidisSyncService', () => {
             createExistingVidisServiceProvider(orga2.id, '1'),
         ];
 
-        vidisApiAdapterMock.getActivatedAngeboteByRegionSH.mockResolvedValue(Ok([
-            {
-                angebot: activatedAngebote[1]!.angebot,
-                schoolActivations: [
-                    {
-                        date: '2026-04-16',
-                        kennung: orga1.kennung,
-                    },
-                ],
-            },
-        ]));
+        vidisApiAdapterMock.getActivatedAngeboteByRegionSH.mockResolvedValue(
+            Ok([
+                {
+                    angebot: activatedAngebote[1]!.angebot,
+                    schoolActivations: [
+                        {
+                            date: '2026-04-16',
+                            kennung: orga1.kennung,
+                        },
+                    ],
+                },
+            ]),
+        );
         organisationRepoMock.findBy.mockResolvedValue(schools);
         serviceProviderRepoMock.findVidisAngeboteforSchools.mockResolvedValue(existingVidisAngeboteForSchools);
         const syncForSchoolSpy: ReturnType<typeof vi.spyOn> = vi
@@ -654,9 +656,7 @@ describe('VidisSyncService', () => {
             const resultError: VidisDomainError = new VidisDomainError('rollenerweiterung cleanup failed');
             const staleServiceProvider: ServiceProvider<true> = createExistingVidisServiceProvider(orga.id, '2');
 
-            rollenerweiterungRepoMock.deleteByOrganisationIdAndServiceProviderIds.mockResolvedValue(
-                Err(resultError) as DeleteRollenerweiterungenResult,
-            );
+            rollenerweiterungRepoMock.deleteByOrganisationIdAndServiceProviderIds.mockResolvedValue(Err(resultError));
 
             await (
                 sut as unknown as {
@@ -764,8 +764,7 @@ describe('VidisSyncService', () => {
                 `VIDIS sync for organisation ${orga.id} finished with 1 failed operations.`,
             );
             const rejectedCall: unknown[] | undefined = loggerMock.logUnknownAsError.mock.calls.find(
-                (call: unknown[]) =>
-                    call[0] === `VIDIS sync operation for organisation ${orga.id} rejected`,
+                (call: unknown[]) => call[0] === `VIDIS sync operation for organisation ${orga.id} rejected`,
             );
 
             expect(rejectedCall).toBeDefined();

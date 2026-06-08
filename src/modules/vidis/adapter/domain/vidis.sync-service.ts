@@ -191,12 +191,11 @@ export class VidisSyncService {
             try {
                 const deleteRollenerweiterungenResult: Awaited<
                     ReturnType<RollenerweiterungRepo['deleteByOrganisationIdAndServiceProviderIds']>
-                > =
-                    await this.rollenerweiterungRepo.deleteByOrganisationIdAndServiceProviderIds(
-                        organisationId,
-                        serviceProviderIdsMissingInVidis,
-                        permissions,
-                    );
+                > = await this.rollenerweiterungRepo.deleteByOrganisationIdAndServiceProviderIds(
+                    organisationId,
+                    serviceProviderIdsMissingInVidis,
+                    permissions,
+                );
                 if (deleteRollenerweiterungenResult.ok) {
                     syncOperations.push(
                         ...serviceProviderIdsMissingInVidis.map((serviceProviderId: string) =>
