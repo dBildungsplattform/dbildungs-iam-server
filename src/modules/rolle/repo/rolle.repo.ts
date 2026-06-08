@@ -251,10 +251,10 @@ export class RolleRepo {
         if (params.includeTechnische === undefined || params.includeTechnische === false) {
             queries.push({ istTechnisch: false });
         }
-        if (params.rollenArten && params.rollenArten.length > 0) {
+        if (params.rollenArten) {
             queries.push({ rollenart: params.rollenArten });
         }
-        if (params.allowedOrganisationIds && params.allowedOrganisationIds.length > 0) {
+        if (params.allowedOrganisationIds) {
             queries.push({ administeredBySchulstrukturknoten: params.allowedOrganisationIds });
         }
         if (params.searchStr) {
