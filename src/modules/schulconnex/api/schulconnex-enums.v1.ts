@@ -43,5 +43,11 @@ export function convertSPSHRollenartToSchulconnexRolle(rollenart: RollenArt): Sc
             return SchulconnexRolle.ORGADMIN;
         case RollenArt.EXTERN:
             return SchulconnexRolle.EXTERN;
+        case RollenArt.SORGBER:
+            return SchulconnexRolle.EXTERN;
+        case RollenArt.SCHB:
+            return SchulconnexRolle.LEHR;
+        case RollenArt.NLEHR:
+            return SchulconnexRolle.LEHR;
     }
 }
