@@ -13,6 +13,7 @@ import { FindRollenWithPermissionsParams, RolleFindService } from './rolle-find.
 import { RollenArt } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
+import { RollenSystemRecht } from './systemrecht.js';
 
 describe('RolleService', () => {
     let module: TestingModule;
@@ -247,6 +248,64 @@ describe('RolleService', () => {
                 expect.objectContaining<RolleFindByParameters>({
                     searchStr: params.searchStr,
                 }),
+            );
+        });
+    });
+
+    describe('findRollenAvailableForImportPersonenkontext', () => {
+        let permissionsMock: DeepMocked<PersonPermissions>;
+        beforeEach(() => {
+            permissionsMock = createMock(PersonPermissions);
+        });
+
+        it('should return empty array if no permitted orgas', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForImportPersonenkontext({
+                permissions: permissionsMock,
+            });
+
+            expect(result).toEqual([[], 0]);
+            expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
+                [RollenSystemRecht.IMPORT_DURCHFUEHREN, RollenSystemRecht.ROLLEN_VERWALTEN],
+                true,
+                false,
+            );
+        });
+
+        it('should filter out rollen that cannot be assigned to requested organisation', async () => {
+            const organisationId: OrganisationID = 'orga-1';
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                id: organisationId,
+                typ: OrganisationsTyp.SCHULE,
+            });
+
+            const allowedRolle: Rolle<true> = DoFactory.createRolle(true, {
+                administeredBySchulstrukturknoten: organisationId,
+                rollenart: RollenArt.LEHR,
+            });
+            const disallowedRolle: Rolle<true> = DoFactory.createRolle(true, {
+                administeredBySchulstrukturknoten: organisationId,
+                rollenart: RollenArt.SYSADMIN,
+            });
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [organisationId] });
+            organisationRepoMock.findParentOrgasForIds.mockResolvedValue([]);
+            organisationRepoMock.findByIds.mockResolvedValue(new Map([[organisationId, organisation]]));
+            rolleRepoMock.findBy.mockResolvedValue([[allowedRolle, disallowedRolle], 2]);
+
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForImportPersonenkontext({
+                permissions: permissionsMock,
+                organisationIds: [organisationId],
+            });
+
+            expect(result[0]).toHaveLength(1);
+            expect(result[0]).toEqual([allowedRolle]);
+            expect(result[1]).toBe(1);
+            expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
+                [RollenSystemRecht.IMPORT_DURCHFUEHREN, RollenSystemRecht.ROLLEN_VERWALTEN],
+                true,
+                false,
             );
         });
     });
