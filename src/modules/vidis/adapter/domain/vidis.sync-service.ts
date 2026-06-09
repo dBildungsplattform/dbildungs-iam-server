@@ -68,7 +68,7 @@ export class VidisSyncService {
             await this.vidisApiAdapter.getActivatedAngeboteByRegionSH();
 
         if (!activatedAngebote.ok) {
-            this.logger.debug('Skipping VIDIS sync because loading activated Angebote failed');
+            this.logger.error('Skipping VIDIS sync because loading activated Angebote failed');
             return;
         }
 
@@ -82,6 +82,8 @@ export class VidisSyncService {
         await this.syncSchoolsPage(activatedAngebote.value, 0, permissions);
     }
 
+    // Process schools in configurable pages to keep query results and in-memory sync payloads bounded.
+    // This lets us tune sync performance for larger data sets without shipping a new release.
     private async syncSchoolsPage(
         activatedAngebote: VidisAngebotWithSchoolActivations[],
         schoolOffset: number,

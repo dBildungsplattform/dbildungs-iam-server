@@ -224,7 +224,7 @@ describe('VidisSyncService', () => {
 
         await sut.sync();
 
-        expect(loggerMock.debug).toHaveBeenCalledWith('Skipping VIDIS sync because loading activated Angebote failed');
+        expect(loggerMock.error).toHaveBeenCalledWith('Skipping VIDIS sync because loading activated Angebote failed');
         expect(escalatedPersonPermissionsFactoryMock.createNew).not.toHaveBeenCalled();
         expect(organisationRepoMock.findBy).not.toHaveBeenCalled();
         expect(serviceProviderRepoMock.findVidisAngeboteforSchools).not.toHaveBeenCalled();
