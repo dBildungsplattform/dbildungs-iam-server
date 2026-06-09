@@ -11,10 +11,12 @@ import { ItsLearningOrganisationsEventHandler } from './event-handlers/itslearni
 import { ItsLearningPersonsEventHandler } from './event-handlers/itslearning-persons.event-handler.js';
 import { ItsLearningRolleEventHandler } from './event-handlers/itslearning-rolle.event-handler.js';
 import { ItsLearningSyncEventHandler } from './event-handlers/itslearning-sync.event-handler.js';
-import { ItsLearningIMSESService } from './itslearning.service.js';
-import { ItslearningGroupRepo } from './repo/itslearning-group.repo.js';
-import { ItslearningMembershipRepo } from './repo/itslearning-membership.repo.js';
-import { ItslearningPersonRepo } from './repo/itslearning-person.repo.js';
+import { ItsLearningIMSESApiService } from './adapter/technical/itslearning.api-service.js';
+import { ItslearningGroupAdapter } from './adapter/domain/itslearning-group.adapter.js';
+import { ItslearningMembershipAdapter } from './adapter/domain/itslearning-membership.adapter.js';
+import { ItslearningPersonAdapter } from './adapter/domain/itslearning-person.adapter.js';
+import { EmailPersistenceModule } from '../email/email-persistence.module.js';
+import { EmailMicroserviceModule } from '../email-microservice/email-microservice.module.js';
 
 @Module({
     imports: [
@@ -25,17 +27,19 @@ import { ItslearningPersonRepo } from './repo/itslearning-person.repo.js';
         OrganisationModule,
         PersonenKontextModule,
         ServiceProviderModule,
+        EmailPersistenceModule,
+        EmailMicroserviceModule,
     ],
     providers: [
-        ItsLearningIMSESService,
-        ItslearningPersonRepo,
-        ItslearningGroupRepo,
-        ItslearningMembershipRepo,
+        ItsLearningIMSESApiService,
+        ItslearningPersonAdapter,
+        ItslearningGroupAdapter,
+        ItslearningMembershipAdapter,
         ItsLearningOrganisationsEventHandler,
         ItsLearningPersonsEventHandler,
         ItsLearningSyncEventHandler,
         ItsLearningRolleEventHandler,
     ],
-    exports: [ItsLearningIMSESService],
+    exports: [ItsLearningIMSESApiService],
 })
 export class ItsLearningModule {}

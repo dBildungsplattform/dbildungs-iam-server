@@ -23,6 +23,8 @@ export interface RequestMockOptions {
     passportUser?: any;
     headers?: Record<string, string>;
     session?: Session | MockedObject<Session>;
+    method?: string;
+    path?: string;
 }
 
 export function createRequestMock(options?: RequestMockOptions): MockedObject<Request> {
@@ -37,6 +39,8 @@ export function createRequestMock(options?: RequestMockOptions): MockedObject<Re
         query: {},
         session: options?.session ?? ({ destroy: vi.fn() } as unknown as MockedObject<Session>),
         headers: options?.headers ?? {},
+        method: options?.method ?? 'GET',
+        path: options?.path ?? '/',
         // Add other methods and properties of Response as needed
     } as unknown as MockedObject<Request>;
 }
@@ -58,5 +62,5 @@ export function createExecutionContextMock(options?: ArgumentsHostMockOptions): 
 }
 
 export function createArgumentsHostMock(options?: ArgumentsHostMockOptions): MockedObject<ArgumentsHost> {
-    return createExecutionContextMock(options) as MockedObject<ArgumentsHost>;
+    return createExecutionContextMock(options);
 }

@@ -9,8 +9,8 @@ import { ImportConfig } from './import.config.js';
 import { ItsLearningConfig } from './itslearning.config.js';
 import { KafkaConfig } from './kafka.config.js';
 import { KeycloakConfig } from './keycloak.config.js';
-import { LdapConfig } from './ldap.config.js';
-import { OxConfig } from './ox.config.js';
+import { LdapServerConfig } from './ldap-server.config.js';
+import { OxServerConfig } from './ox-server.config.js';
 import { PortalConfig } from './portal.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { RedisConfig } from './redis.config.js';
@@ -23,13 +23,13 @@ export type Config = {
     DB: Partial<DbConfig>;
     KEYCLOAK: Partial<KeycloakConfig>;
     REDIS: Partial<RedisConfig>;
-    LDAP: Partial<LdapConfig>;
+    LDAP: Partial<LdapServerConfig>;
     FRONTEND: Partial<FrontendConfig>;
     FEATUREFLAG: Partial<FeatureFlagConfig>;
     HOST: Partial<HostConfig>;
     ITSLEARNING: Partial<ItsLearningConfig>;
     PRIVACYIDEA: Partial<PrivacyIdeaConfig>;
-    OX: Partial<OxConfig>;
+    OX: Partial<OxServerConfig>;
     SYSTEM: Partial<SystemConfig>;
     VIDIS: Partial<VidisConfig>;
     IMPORT: Partial<ImportConfig>;
@@ -121,12 +121,9 @@ export default (): Config => ({
         STEP_UP_TIMEOUT_ENABLED: process.env['SYSTEM_STEP_UP_TIMEOUT_ENABLED']?.toLowerCase() as 'true' | 'false',
     },
     VIDIS: {
-        BASE_URL: process.env['VIDIS_BASE_URL'],
-        USERNAME: process.env['VIDIS_USERNAME'],
-        PASSWORD: process.env['VIDIS_PASSWORD'],
-        REGION_NAME: process.env['VIDIS_REGION_NAME'],
-        KEYCLOAK_GROUP: process.env['VIDIS_KEYCLOAK_GROUP'],
-        KEYCLOAK_ROLE: process.env['VIDIS_KEYCLOAK_ROLE'],
+        BASE_URL: process.env['VIDIS_API_BASE_URL'],
+        CLIENT_ID: process.env['VIDIS_API_CLIENT_ID'],
+        CLIENT_SECRET: process.env['VIDIS_API_CLIENT_SECRET'],
     },
     IMPORT: {
         PASSPHRASE_SECRET: process.env['IMPORT_PASSPHRASE_SECRET'],

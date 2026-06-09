@@ -20,17 +20,18 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import {
-    ItslearningMembershipRepo,
+    ItslearningMembershipAdapter,
     SetMembershipParams,
     SetMembershipsResult,
-} from '../repo/itslearning-membership.repo.js';
-import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
-import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../repo/role-utils.js';
+} from '../adapter/domain/itslearning-membership.adapter.js';
+import { ItslearningPersonAdapter } from '../adapter/domain/itslearning-person.adapter.js';
+import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../adapter/domain/role-utils.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
-
+import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EntityManager } from '@mikro-orm/core';
 @Injectable()
 export class ItsLearningSyncEventHandler {
     public ENABLED: boolean;
@@ -38,13 +39,14 @@ export class ItsLearningSyncEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
 
-        private readonly itslearningPersonRepo: ItslearningPersonRepo,
-        private readonly itslearningMembershipRepo: ItslearningMembershipRepo,
+        private readonly itslearningPersonAdapter: ItslearningPersonAdapter,
+        private readonly itslearningMembershipAdapter: ItslearningMembershipAdapter,
 
         private readonly personRepo: PersonRepository,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepository,
+        private readonly emailResolverService: EmailResolverService,
         configService: ConfigService<ServerConfig>,
 
         // @ts-expect-error used by EnsureRequestContext decorator
@@ -134,15 +136,18 @@ export class ItsLearningSyncEventHandler {
                 Array.from(rollen.values()).map((rolle: Rolle<true>) => rolle.rollenart),
             );
 
+            const emailAddress: string | undefined =
+                await this.emailResolverService.getPrimaryActiveEmailForPerson(person);
+
             // Create or update the person in itslearning
-            const creationResult: Result<void, DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
+            const creationResult: Result<void, DomainError> = await this.itslearningPersonAdapter.createOrUpdatePerson(
                 {
                     id: person.id,
                     firstName: person.vorname,
                     lastName: person.familienname,
                     username: person.username,
                     institutionRoleType: rollenartToIMSESInstitutionRole(targetRole),
-                    email: person.email,
+                    email: emailAddress,
                 },
                 `${event.eventID}-SYNC-PERSON`,
             );
@@ -165,7 +170,7 @@ export class ItsLearningSyncEventHandler {
             }));
 
             const setMembershipsResult: Result<SetMembershipsResult, DomainError> =
-                await this.itslearningMembershipRepo.setMemberships(
+                await this.itslearningMembershipAdapter.setMemberships(
                     person.id,
                     memberships,
                     `${event.eventID}-SYNC-PERSON-MEMBERSHIPS`,
@@ -186,7 +191,7 @@ export class ItsLearningSyncEventHandler {
             );
 
             // We don't have any relevant personenkontexte for this person, so we delete it
-            const deleteError: Option<DomainError> = await this.itslearningPersonRepo.deletePerson(
+            const deleteError: Option<DomainError> = await this.itslearningPersonAdapter.deletePerson(
                 person.id,
                 `${event.eventID}-DELETE`,
             );

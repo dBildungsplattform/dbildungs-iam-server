@@ -1,4 +1,4 @@
-import { Cursor, FilterQuery, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
+import { Cursor, FilterQuery, Loaded, QueryOrder, raw, sql } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -45,6 +45,7 @@ type ErweiterterServiceProviderForPKEntity = {
 
 export type ExternalPkData = {
     pkId: string;
+    rolleId: RolleID;
     rollenart?: RollenArt;
     kennung?: string;
     serviceProvider?: ServiceProvider<true>[];
@@ -136,6 +137,39 @@ export class DBiamPersonenkontextRepo {
         }
 
         return { ok: true, value: mapEntityToAggregate(personenkontext, this.personenkontextFactory) };
+    }
+
+    public async hasPersonAnyReadableKontext(
+        personId: PersonID,
+        permissions: IPersonPermissions,
+    ): Promise<Result<boolean, DomainError>> {
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
+            personId,
+        });
+
+        if (personenKontexte.length === 0) {
+            return { ok: true, value: false };
+        }
+
+        const organisationIds: OrganisationID[] = [
+            ...new Set(personenKontexte.map((pk: PersonenkontextEntity) => pk.organisationId.id)),
+        ];
+        const hasReadAccessAtAnyKontext: boolean = (
+            await Promise.all(
+                organisationIds.map((organisationId: OrganisationID) =>
+                    permissions.hasSystemrechtAtOrganisation(organisationId, RollenSystemRecht.PERSONEN_LESEN),
+                ),
+            )
+        ).some((hasReadAccess: boolean) => hasReadAccess);
+
+        if (!hasReadAccessAtAnyKontext) {
+            return {
+                ok: false,
+                error: new MissingPermissionsError('Access denied'),
+            };
+        }
+
+        return { ok: true, value: true };
     }
 
     public async findByPerson(personId: PersonID): Promise<Personenkontext<true>[]> {
@@ -327,9 +361,8 @@ export class DBiamPersonenkontextRepo {
         count: number,
         cursor?: string,
     ): Promise<[pks: Personenkontext<true>[], cursor: string | undefined]> {
-        const personenkontextCursor: Cursor<PersonenkontextEntity> = await this.em.findByCursor(
-            PersonenkontextEntity,
-            {
+        const personenkontextCursor: Cursor<PersonenkontextEntity> = await this.em.findByCursor(PersonenkontextEntity, {
+            where: {
                 rolleId,
                 organisationId: {
                     itslearningEnabled: true,
@@ -354,12 +387,11 @@ export class DBiamPersonenkontextRepo {
                             .getFormattedQuery()})`,
                 )]: [],
             },
-            {
-                after: cursor,
-                first: count,
-                orderBy: { id: QueryOrder.ASC },
-            },
-        );
+
+            after: cursor,
+            first: count,
+            orderBy: { id: QueryOrder.ASC },
+        });
 
         return [
             personenkontextCursor.items.map((pk: PersonenkontextEntity) =>
@@ -414,6 +446,7 @@ export class DBiamPersonenkontextRepo {
 
             return {
                 pkId: pk.id,
+                rolleId: pk.rolleId.unwrap().id,
                 rollenart: pk.rolleId.unwrap().rollenart,
                 kennung: pk.organisationId.unwrap().kennung,
                 serviceProvider: serviceProviders.map((sp: ServiceProviderEntity) => mapSPEntityToAggregate(sp)),
@@ -511,7 +544,7 @@ export class DBiamPersonenkontextRepo {
     }
 
     public async getPersonenKontexteWithExpiredBefristung(): Promise<Map<PersonID, Personenkontext<true>[]>> {
-        const filters: QBFilterQuery<PersonenkontextEntity> = {
+        const filters: FilterQuery<PersonenkontextEntity> = {
             personId: {
                 personenKontexte: {
                     $some: {

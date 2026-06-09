@@ -2,8 +2,8 @@ import { DynamicModule, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GenericContainer, PullPolicy, StartedTestContainer, Wait } from 'testcontainers';
 import { ServerConfig } from '../../src/shared/config/index.js';
-import { LdapInstanceConfig } from '../../src/core/ldap/ldap-instance-config.js';
-import { LdapConfig } from '../../src/shared/config/ldap.config.js';
+import { LdapInstanceConfig } from '../../src/core/ldap/adapter/technical/ldap-instance-config.js';
+import { LdapServerConfig } from '../../src/shared/config/ldap-server.config.js';
 
 type LdapConfigTestModuleOptions = { isLdapRequired: boolean };
 
@@ -17,7 +17,7 @@ export class LdapTestModule implements OnModuleDestroy {
                 {
                     provide: LdapInstanceConfig,
                     useFactory: async (configService: ConfigService<ServerConfig>): Promise<LdapInstanceConfig> => {
-                        const ldapConfig: LdapConfig = configService.getOrThrow<LdapConfig>('LDAP');
+                        const ldapConfig: LdapServerConfig = configService.getOrThrow<LdapServerConfig>('LDAP');
 
                         if (options?.isLdapRequired) {
                             this.ldap = await new GenericContainer('docker.io/osixia/openldap:1.5.0')

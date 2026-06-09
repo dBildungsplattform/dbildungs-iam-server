@@ -14,6 +14,7 @@ declare module 'express-session' {
         redirectUrl?: string;
         requiredStepupLevel?: StepUpLevel;
         lastRouteChangeTime?: number;
+        csrfToken?: string;
         passport?: {
             user: {
                 redirect_uri?: string;

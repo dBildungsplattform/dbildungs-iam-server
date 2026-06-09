@@ -1,4 +1,5 @@
-import { BaseEntity, DateTimeType, Entity, Enum, Opt, PrimaryKey, Property } from '@mikro-orm/core';
+import { BaseEntity, DateTimeType, Opt } from '@mikro-orm/core';
+import { Entity, Enum, PrimaryKey, Property } from '@mikro-orm/decorators/legacy';
 
 export enum DbSeedStatus {
     STARTED = 'STARTED',

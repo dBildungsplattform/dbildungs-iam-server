@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { TransformToBoolean } from './boolean-transform.validator';
+import { TransformToBoolean } from './boolean-transform.validator.js';
 
 class TestClass {
     @TransformToBoolean()

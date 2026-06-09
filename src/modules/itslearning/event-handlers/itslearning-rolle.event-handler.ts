@@ -1,4 +1,5 @@
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
+import { EnsureRequestContext } from '@mikro-orm/decorators/legacy';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -10,7 +11,7 @@ import { ItsLearningConfig, ServerConfig } from '../../../shared/config/index.js
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
-import { RolleID, ServiceProviderID } from '../../../shared/types/index.js';
+import { PersonID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
@@ -18,14 +19,18 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { FailureStatusInfo, MassResult } from '../actions/base-mass-action.js';
-import { CreateMembershipParams } from '../actions/create-memberships.action.js';
-import { CreatePersonParams } from '../actions/create-person.action.js';
-import { ItslearningMembershipRepo } from '../repo/itslearning-membership.repo.js';
-import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
-import { rollenartToIMSESInstitutionRole, rollenartToIMSESRole } from '../repo/role-utils.js';
-import { IMSESInstitutionRoleType, IMSESRoleType } from '../types/role.enum.js';
-import { StatusInfoHelpers } from '../utils/status-info.utils.js';
+import { FailureStatusInfo, MassResult } from '../adapter/technical/actions/base-mass-action.js';
+import { CreateMembershipParams } from '../adapter/technical/actions/create-memberships.action.js';
+import { CreatePersonParams } from '../adapter/technical/actions/create-person.action.js';
+import { ItslearningMembershipAdapter } from '../adapter/domain/itslearning-membership.adapter.js';
+import { ItslearningPersonAdapter } from '../adapter/domain/itslearning-person.adapter.js';
+import { rollenartToIMSESInstitutionRole, rollenartToIMSESRole } from '../adapter/domain/role-utils.js';
+import { IMSESInstitutionRoleType, IMSESRoleType } from '../adapter/domain/role.enum.js';
+import { StatusInfoHelpers } from '../adapter/technical/utils/status-info.utils.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { PersonEmailResponse } from '../../person/api/person-email-response.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 type FailedRequests<T> = (readonly [failureDescription: string, T])[];
 
@@ -38,12 +43,14 @@ export class ItsLearningRolleEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
 
-        private readonly itslearningPersonRepo: ItslearningPersonRepo,
-        private readonly itslearningMembershipRepo: ItslearningMembershipRepo,
+        private readonly itslearningPersonAdapter: ItslearningPersonAdapter,
+        private readonly itslearningMembershipAdapter: ItslearningMembershipAdapter,
 
         private readonly personRepo: PersonRepository,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly serviceproviderRepo: ServiceProviderRepo,
+        private readonly emailRepo: EmailRepo,
+        private readonly emailResolverService: EmailResolverService,
         configService: ConfigService<ServerConfig>,
 
         // @ts-expect-error used by EnsureRequestContext decorator
@@ -185,18 +192,32 @@ export class ItsLearningRolleEventHandler {
 
             this.logger.info(`[EventID: ${syncId}] Sending ${personen.length} Personen to itslearning.`);
 
-            const createParams: CreatePersonParams[] = personen.map((p: Person<true>) => ({
-                id: p.id,
-                firstName: p.vorname,
-                lastName: p.familienname,
-                username: p.username!,
-                email: p.email,
-                institutionRoleType: institutionRole,
-            }));
+            const emailsForPersons: Result<
+                Map<PersonID, PersonEmailResponse | undefined>,
+                DomainError
+            > = this.emailResolverService.shouldUseEmailMicroservice()
+                ? // eslint-disable-next-line no-await-in-loop
+                  await this.emailResolverService.findEmailsBySpshPersons(personen.map((p: Person<true>) => p.id))
+                : // eslint-disable-next-line no-await-in-loop
+                  await this.emailRepo.getEmailAddressAndStatusForPersonIds(personen.map((p: Person<true>) => p.id));
+
+            const createParams: CreatePersonParams[] = personen.map((p: Person<true>) => {
+                const emailResp: PersonEmailResponse | undefined = emailsForPersons.ok
+                    ? emailsForPersons.value.get(p.id)
+                    : undefined;
+                return {
+                    id: p.id,
+                    firstName: p.vorname,
+                    lastName: p.familienname,
+                    username: p.username!,
+                    institutionRoleType: institutionRole,
+                    email: emailResp?.status === EmailAddressStatus.ENABLED ? emailResp.address : undefined,
+                };
+            });
 
             const createResult: Result<MassResult<void>, DomainError> =
                 // eslint-disable-next-line no-await-in-loop
-                await this.itslearningPersonRepo.createOrUpdatePersons(createParams, syncId);
+                await this.itslearningPersonAdapter.createOrUpdatePersons(createParams, syncId);
 
             if (!createResult.ok) {
                 // The network request failed (with retries), nothing we can do. Mark all these persons as failed.
@@ -244,7 +265,7 @@ export class ItsLearningRolleEventHandler {
 
             const deleteResult: Result<MassResult<void>, DomainError> =
                 // eslint-disable-next-line no-await-in-loop
-                await this.itslearningPersonRepo.deletePersons(
+                await this.itslearningPersonAdapter.deletePersons(
                     personen.map((p: Person<true>) => p.id),
                     syncId,
                 );
@@ -306,7 +327,7 @@ export class ItsLearningRolleEventHandler {
 
             const createResult: Result<MassResult<void>, DomainError> =
                 // eslint-disable-next-line no-await-in-loop
-                await this.itslearningMembershipRepo.createMembershipsMass(createParams, syncId);
+                await this.itslearningMembershipAdapter.createMembershipsMass(createParams, syncId);
 
             if (!createResult.ok) {
                 // The network request failed (with retries), nothing we can do. Mark all these memberships as failed.
@@ -359,7 +380,7 @@ export class ItsLearningRolleEventHandler {
 
             const removeResult: Result<MassResult<void>, DomainError> =
                 // eslint-disable-next-line no-await-in-loop
-                await this.itslearningMembershipRepo.removeMembershipsMass(
+                await this.itslearningMembershipAdapter.removeMembershipsMass(
                     personenkontexte.map(
                         (pk: Personenkontext<true>) => `membership-${pk.personId}-${pk.organisationId}`,
                     ),

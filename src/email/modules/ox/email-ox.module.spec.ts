@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DatabaseTestModule, EmailConfigTestModule } from '../../../../test/utils';
-import { EmailOxModule } from './email-ox.module';
-import { OxSendService } from './domain/ox-send.service';
+import { DatabaseTestModule, EmailConfigTestModule } from '../../../../test/utils/index.js';
+import { EmailOxModule } from './email-ox.module.js';
+import { OxSendService } from './adapter/technical/ox-send.service.js';
 
 describe('OxModule', () => {
     let module: TestingModule;

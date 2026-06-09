@@ -1,4 +1,4 @@
-import { EntityManager, Loaded, QueryOrder, ref, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, Loaded, QueryOrder, ref } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EmailAddressID, PersonID } from '../../../shared/types/index.js';
 import { EmailAddressEntity } from './email-address.entity.js';
@@ -48,7 +48,9 @@ export function compareEmailAddressesByUpdatedAtDesc(ea1: EmailAddressEntity, ea
     return compareEmailAddressesByUpdatedAt(ea1, ea2, SortOrder.DESC);
 }
 
-export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddressEntity> {
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function mapAggregateToData(emailAddress: EmailAddress<boolean>) {
     const oxUserIdStr: string | undefined = emailAddress.oxUserID ? emailAddress.oxUserID + '' : undefined;
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
@@ -232,7 +234,7 @@ export class EmailRepo {
         }
 
         emailAddressEntity.status = EmailAddressStatus.DISABLED;
-        await this.em.persistAndFlush(emailAddressEntity);
+        await this.em.persist(emailAddressEntity).flush();
 
         return emailAddressEntity;
     }
@@ -306,7 +308,7 @@ export class EmailRepo {
             EmailAddressEntity,
             mapAggregateToData(emailAddress),
         );
-        await this.em.persistAndFlush(emailAddressEntity);
+        await this.em.persist(emailAddressEntity).flush();
 
         return mapEntityToAggregate(emailAddressEntity);
     }
@@ -318,7 +320,7 @@ export class EmailRepo {
 
         if (emailAddressEntity) {
             emailAddressEntity.assign(mapAggregateToData(emailAddress), {});
-            await this.em.persistAndFlush(emailAddressEntity);
+            await this.em.persist(emailAddressEntity).flush();
         } else {
             this.logger.error(`Email-address:${emailAddress.currentAddress} could not be found`);
             return new EmailAddressNotFoundError(emailAddress.address);
@@ -337,7 +339,7 @@ export class EmailRepo {
                 id,
             });
             const emailAddress: EmailAddress<true> = mapEntityToAggregate(emailAddressEntity);
-            await this.em.removeAndFlush(emailAddressEntity);
+            await this.em.remove(emailAddressEntity).flush();
 
             if (!emailAddress.oxUserID) {
                 return new EmailAddressMissingOxUserIdError(emailAddress.id, emailAddress.address);
@@ -365,6 +367,14 @@ export class EmailRepo {
 
             return new EmailAddressDeletionError(id);
         }
+    }
+
+    /**
+     * @deprecated bandaid-solution for SPSH-3722, DO NOT USE!
+     */
+    public async setUpdatedAtToFixedPointInTime(id: EmailAddressID): Promise<void> {
+        // 2027-08-01 00:00:00.000+00
+        await this.em.nativeUpdate(EmailAddressEntity, { id }, { updatedAt: new Date(2027, 7) });
     }
 
     private getDeadlineInDaysForNonEnabledEmailAddresses(): number {

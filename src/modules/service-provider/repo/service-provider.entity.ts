@@ -1,5 +1,5 @@
-import { BlobType, Collection, Entity, Enum, OneToMany, Property } from '@mikro-orm/core';
-
+import { BlobType, Collection, quote } from '@mikro-orm/core';
+import { Check, Entity, Enum, OneToMany, Property } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import {
     ServiceProviderKategorie,
@@ -9,6 +9,11 @@ import {
 import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 
 @Entity({ tableName: 'service_provider' })
+@Check({
+    name: 'logo_or_logo_id_consistency',
+    expression: ({ logo, logoId }: Record<keyof ServiceProviderEntity, string>) =>
+        quote`(${logoId} IS NULL AND ${logo} IS NULL) OR (${logoId} IS NULL AND ${logo} IS NOT NULL) OR (${logoId} IS NOT NULL AND ${logo} IS NULL)`,
+})
 export class ServiceProviderEntity extends TimestampedEntity {
     @Property()
     public name!: string;
@@ -16,7 +21,7 @@ export class ServiceProviderEntity extends TimestampedEntity {
     @Enum({ items: () => ServiceProviderTarget, nativeEnumName: 'service_provider_target_enum' })
     public target!: ServiceProviderTarget;
 
-    @Property({ nullable: true })
+    @Property({ nullable: true, type: 'text' })
     public url?: string;
 
     @Property({ columnType: 'uuid' })
@@ -34,6 +39,9 @@ export class ServiceProviderEntity extends TimestampedEntity {
         ],
     })
     public kategorie!: ServiceProviderKategorie;
+
+    @Property({ nullable: true, unsigned: true, columnType: 'int' })
+    public logoId?: number;
 
     @Property({ type: BlobType, nullable: true })
     public logo?: Buffer;

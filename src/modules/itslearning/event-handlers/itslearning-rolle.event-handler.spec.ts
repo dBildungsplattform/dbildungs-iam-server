@@ -15,10 +15,14 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { FailureStatusInfo } from '../actions/base-mass-action.js';
-import { ItslearningMembershipRepo } from '../repo/itslearning-membership.repo.js';
-import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
+import { FailureStatusInfo } from '../adapter/technical/actions/base-mass-action.js';
+import { ItslearningMembershipAdapter } from '../adapter/domain/itslearning-membership.adapter.js';
+import { ItslearningPersonAdapter } from '../adapter/domain/itslearning-person.adapter.js';
 import { ItsLearningRolleEventHandler } from './itslearning-rolle.event-handler.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { DomainErrorMock } from '../../../../test/utils/error.mock.js';
 
 function createStatusFailure(message: string): FailureStatusInfo {
     return {
@@ -43,12 +47,14 @@ describe('ItsLearning Rolle Event Handler', () => {
     let module: TestingModule;
 
     let sut: ItsLearningRolleEventHandler;
-    let itslearningPersonRepoMock: DeepMocked<ItslearningPersonRepo>;
-    let itslearningMembershipRepoMock: DeepMocked<ItslearningMembershipRepo>;
+    let itslearningPersonAdapterMock: DeepMocked<ItslearningPersonAdapter>;
+    let itslearningMembershipAdapterMock: DeepMocked<ItslearningMembershipAdapter>;
     let personRepoMock: DeepMocked<PersonRepository>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let loggerMock: DeepMocked<ClassLogger>;
+    let emailRepoMock: DeepMocked<EmailRepo>;
+    let emailResolverServiceMock: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -56,12 +62,20 @@ describe('ItsLearning Rolle Event Handler', () => {
             providers: [
                 ItsLearningRolleEventHandler,
                 {
-                    provide: ItslearningPersonRepo,
-                    useValue: createMock(ItslearningPersonRepo),
+                    provide: EmailRepo,
+                    useValue: createMock(EmailRepo),
                 },
                 {
-                    provide: ItslearningMembershipRepo,
-                    useValue: createMock(ItslearningMembershipRepo),
+                    provide: EmailResolverService,
+                    useValue: createMock(EmailResolverService),
+                },
+                {
+                    provide: ItslearningPersonAdapter,
+                    useValue: createMock(ItslearningPersonAdapter),
+                },
+                {
+                    provide: ItslearningMembershipAdapter,
+                    useValue: createMock(ItslearningMembershipAdapter),
                 },
                 {
                     provide: PersonRepository,
@@ -79,8 +93,10 @@ describe('ItsLearning Rolle Event Handler', () => {
         }).compile();
 
         sut = module.get(ItsLearningRolleEventHandler);
-        itslearningPersonRepoMock = module.get(ItslearningPersonRepo);
-        itslearningMembershipRepoMock = module.get(ItslearningMembershipRepo);
+        emailRepoMock = module.get(EmailRepo);
+        emailResolverServiceMock = module.get(EmailResolverService);
+        itslearningPersonAdapterMock = module.get(ItslearningPersonAdapter);
+        itslearningMembershipAdapterMock = module.get(ItslearningMembershipAdapter);
         personRepoMock = module.get(PersonRepository);
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         serviceProviderRepoMock = module.get(ServiceProviderRepo);
@@ -165,7 +181,8 @@ describe('ItsLearning Rolle Event Handler', () => {
         });
 
         describe('when itslearning was added', () => {
-            it('should get persons and kontexte from db and send them to itslearning', async () => {
+            it('should get persons and kontexte from db and send them to itslearning using email repo', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
                 const spA: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
                     externalSystem: ServiceProviderSystem.ITSLEARNING,
                 });
@@ -175,7 +192,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     [person],
                     undefined,
                 ]);
-                itslearningPersonRepoMock.createOrUpdatePersons.mockResolvedValueOnce(
+                itslearningPersonAdapterMock.createOrUpdatePersons.mockResolvedValueOnce(
                     Ok({ status: [], value: undefined }),
                 );
                 const personenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true);
@@ -183,20 +200,36 @@ describe('ItsLearning Rolle Event Handler', () => {
                     [personenkontext],
                     undefined,
                 ]);
-                itslearningMembershipRepoMock.createMembershipsMass.mockResolvedValueOnce(
+                itslearningMembershipAdapterMock.createMembershipsMass.mockResolvedValueOnce(
                     Ok({ status: [], value: undefined }),
                 );
 
                 const event: RolleUpdatedEvent = createEvent([spA.id], []);
 
+                emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
+                    ok: true,
+                    value: new Map([
+                        [
+                            person.id,
+                            {
+                                address: faker.internet.email(),
+                                status: EmailAddressStatus.ENABLED,
+                            },
+                        ],
+                    ]),
+                });
+
                 await sut.rolleUpdatedEventHandler(event, () => {});
+
+                expect(emailResolverServiceMock.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith([person.id]);
 
                 expect(personRepoMock.findWithRolleAndNoOtherItslearningKontexteByCursor).toHaveBeenCalledWith(
                     event.id,
                     expect.any(Number),
                     undefined,
                 );
-                expect(itslearningPersonRepoMock.createOrUpdatePersons).toHaveBeenCalledWith(
+                expect(itslearningPersonAdapterMock.createOrUpdatePersons).toHaveBeenCalledWith(
                     [expect.objectContaining({ id: person.id })],
                     event.eventID,
                 );
@@ -205,7 +238,256 @@ describe('ItsLearning Rolle Event Handler', () => {
                     expect.any(Number),
                     undefined,
                 );
-                expect(itslearningMembershipRepoMock.createMembershipsMass).toHaveBeenCalledWith(
+                expect(itslearningMembershipAdapterMock.createMembershipsMass).toHaveBeenCalledWith(
+                    [
+                        expect.objectContaining({
+                            groupId: personenkontext.organisationId,
+                            personId: personenkontext.personId,
+                        }),
+                    ],
+                    event.eventID,
+                );
+            });
+
+            it('should send undefined email when repo returns email with DISABLED status', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+
+                const spA: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    externalSystem: ServiceProviderSystem.ITSLEARNING,
+                });
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map([[spA.id, spA]]));
+
+                const person: Person<true> = DoFactory.createPerson(true);
+                personRepoMock.findWithRolleAndNoOtherItslearningKontexteByCursor.mockResolvedValueOnce([
+                    [person],
+                    undefined,
+                ]);
+
+                itslearningPersonAdapterMock.createOrUpdatePersons.mockResolvedValueOnce(
+                    Ok({ status: [], value: undefined }),
+                );
+
+                const personenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true);
+                personenkontextRepoMock.findWithRolleAtItslearningOrgaByCursor.mockResolvedValueOnce([
+                    [personenkontext],
+                    undefined,
+                ]);
+
+                itslearningMembershipAdapterMock.createMembershipsMass.mockResolvedValueOnce(
+                    Ok({ status: [], value: undefined }),
+                );
+
+                const event: RolleUpdatedEvent = createEvent([spA.id], []);
+
+                emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
+                    ok: true,
+                    value: new Map([
+                        [
+                            person.id,
+                            {
+                                address: faker.internet.email(),
+                                status: EmailAddressStatus.DISABLED,
+                            },
+                        ],
+                    ]),
+                });
+
+                await sut.rolleUpdatedEventHandler(event, () => {});
+
+                expect(emailResolverServiceMock.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith([person.id]);
+
+                expect(itslearningPersonAdapterMock.createOrUpdatePersons).toHaveBeenCalledWith(
+                    [
+                        expect.objectContaining({
+                            id: person.id,
+                            email: undefined,
+                        }),
+                    ],
+                    event.eventID,
+                );
+
+                expect(itslearningMembershipAdapterMock.createMembershipsMass).toHaveBeenCalled();
+            });
+
+            it('should get persons and kontexte from db and send them to itslearning using email repo with email map no entry', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+                const spA: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    externalSystem: ServiceProviderSystem.ITSLEARNING,
+                });
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map([[spA.id, spA]]));
+                const person: Person<true> = DoFactory.createPerson(true);
+                personRepoMock.findWithRolleAndNoOtherItslearningKontexteByCursor.mockResolvedValueOnce([
+                    [person],
+                    undefined,
+                ]);
+                itslearningPersonAdapterMock.createOrUpdatePersons.mockResolvedValueOnce(
+                    Ok({ status: [], value: undefined }),
+                );
+                const personenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true);
+                personenkontextRepoMock.findWithRolleAtItslearningOrgaByCursor.mockResolvedValueOnce([
+                    [personenkontext],
+                    undefined,
+                ]);
+                itslearningMembershipAdapterMock.createMembershipsMass.mockResolvedValueOnce(
+                    Ok({ status: [], value: undefined }),
+                );
+
+                const event: RolleUpdatedEvent = createEvent([spA.id], []);
+
+                emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
+                    ok: true,
+                    value: new Map(),
+                });
+
+                await sut.rolleUpdatedEventHandler(event, () => {});
+
+                expect(emailResolverServiceMock.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith([person.id]);
+
+                expect(personRepoMock.findWithRolleAndNoOtherItslearningKontexteByCursor).toHaveBeenCalledWith(
+                    event.id,
+                    expect.any(Number),
+                    undefined,
+                );
+                expect(itslearningPersonAdapterMock.createOrUpdatePersons).toHaveBeenCalledWith(
+                    [expect.objectContaining({ id: person.id, email: undefined })],
+                    event.eventID,
+                );
+                expect(personenkontextRepoMock.findWithRolleAtItslearningOrgaByCursor).toHaveBeenCalledWith(
+                    event.id,
+                    expect.any(Number),
+                    undefined,
+                );
+                expect(itslearningMembershipAdapterMock.createMembershipsMass).toHaveBeenCalledWith(
+                    [
+                        expect.objectContaining({
+                            groupId: personenkontext.organisationId,
+                            personId: personenkontext.personId,
+                        }),
+                    ],
+                    event.eventID,
+                );
+            });
+
+            it('should get persons and kontexte from db and send them to itslearning using email repo and email fetch fails', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+                const spA: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    externalSystem: ServiceProviderSystem.ITSLEARNING,
+                });
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map([[spA.id, spA]]));
+                const person: Person<true> = DoFactory.createPerson(true);
+                personRepoMock.findWithRolleAndNoOtherItslearningKontexteByCursor.mockResolvedValueOnce([
+                    [person],
+                    undefined,
+                ]);
+                itslearningPersonAdapterMock.createOrUpdatePersons.mockResolvedValueOnce(
+                    Ok({ status: [], value: undefined }),
+                );
+                const personenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true);
+                personenkontextRepoMock.findWithRolleAtItslearningOrgaByCursor.mockResolvedValueOnce([
+                    [personenkontext],
+                    undefined,
+                ]);
+                itslearningMembershipAdapterMock.createMembershipsMass.mockResolvedValueOnce(
+                    Ok({ status: [], value: undefined }),
+                );
+
+                const event: RolleUpdatedEvent = createEvent([spA.id], []);
+
+                emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
+                    ok: false,
+                    error: new DomainErrorMock('Email fetch failed'),
+                });
+
+                await sut.rolleUpdatedEventHandler(event, () => {});
+
+                expect(emailResolverServiceMock.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith([person.id]);
+
+                expect(personRepoMock.findWithRolleAndNoOtherItslearningKontexteByCursor).toHaveBeenCalledWith(
+                    event.id,
+                    expect.any(Number),
+                    undefined,
+                );
+                expect(itslearningPersonAdapterMock.createOrUpdatePersons).toHaveBeenCalledWith(
+                    [expect.objectContaining({ id: person.id })],
+                    event.eventID,
+                );
+                expect(personenkontextRepoMock.findWithRolleAtItslearningOrgaByCursor).toHaveBeenCalledWith(
+                    event.id,
+                    expect.any(Number),
+                    undefined,
+                );
+                expect(itslearningMembershipAdapterMock.createMembershipsMass).toHaveBeenCalledWith(
+                    [
+                        expect.objectContaining({
+                            groupId: personenkontext.organisationId,
+                            personId: personenkontext.personId,
+                        }),
+                    ],
+                    event.eventID,
+                );
+            });
+
+            it('should get persons and kontexte from db and send them to itslearning using email microservice', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+                const spA: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    externalSystem: ServiceProviderSystem.ITSLEARNING,
+                });
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map([[spA.id, spA]]));
+                const person: Person<true> = DoFactory.createPerson(true);
+                personRepoMock.findWithRolleAndNoOtherItslearningKontexteByCursor.mockResolvedValueOnce([
+                    [person],
+                    undefined,
+                ]);
+                itslearningPersonAdapterMock.createOrUpdatePersons.mockResolvedValueOnce(
+                    Ok({ status: [], value: undefined }),
+                );
+                const personenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true);
+                personenkontextRepoMock.findWithRolleAtItslearningOrgaByCursor.mockResolvedValueOnce([
+                    [personenkontext],
+                    undefined,
+                ]);
+                itslearningMembershipAdapterMock.createMembershipsMass.mockResolvedValueOnce(
+                    Ok({ status: [], value: undefined }),
+                );
+
+                const event: RolleUpdatedEvent = createEvent([spA.id], []);
+
+                emailResolverServiceMock.findEmailsBySpshPersons.mockResolvedValue({
+                    ok: true,
+                    value: new Map([
+                        [
+                            person.id,
+                            {
+                                address: faker.internet.email(),
+                                status: EmailAddressStatus.ENABLED,
+                            },
+                        ],
+                    ]),
+                });
+
+                await sut.rolleUpdatedEventHandler(event, () => {});
+
+                expect(emailResolverServiceMock.shouldUseEmailMicroservice).toHaveBeenCalled();
+                expect(emailResolverServiceMock.findEmailsBySpshPersons).toHaveBeenCalledWith([person.id]);
+
+                expect(personRepoMock.findWithRolleAndNoOtherItslearningKontexteByCursor).toHaveBeenCalledWith(
+                    event.id,
+                    expect.any(Number),
+                    undefined,
+                );
+                expect(itslearningPersonAdapterMock.createOrUpdatePersons).toHaveBeenCalledWith(
+                    [expect.objectContaining({ id: person.id })],
+                    event.eventID,
+                );
+                expect(personenkontextRepoMock.findWithRolleAtItslearningOrgaByCursor).toHaveBeenCalledWith(
+                    event.id,
+                    expect.any(Number),
+                    undefined,
+                );
+                expect(itslearningMembershipAdapterMock.createMembershipsMass).toHaveBeenCalledWith(
                     [
                         expect.objectContaining({
                             groupId: personenkontext.organisationId,
@@ -217,6 +499,7 @@ describe('ItsLearning Rolle Event Handler', () => {
             });
 
             it('should log specific errors', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
                 const spA: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
                     externalSystem: ServiceProviderSystem.ITSLEARNING,
                 });
@@ -226,7 +509,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     [person],
                     undefined,
                 ]);
-                itslearningPersonRepoMock.createOrUpdatePersons.mockResolvedValueOnce(
+                itslearningPersonAdapterMock.createOrUpdatePersons.mockResolvedValueOnce(
                     Ok({
                         status: [createStatusFailure('Input Error')],
                         value: undefined,
@@ -237,7 +520,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     [personenkontext],
                     undefined,
                 ]);
-                itslearningMembershipRepoMock.createMembershipsMass.mockResolvedValueOnce(
+                itslearningMembershipAdapterMock.createMembershipsMass.mockResolvedValueOnce(
                     Ok({
                         status: [createStatusFailure('Input Error')],
                         value: undefined,
@@ -245,6 +528,19 @@ describe('ItsLearning Rolle Event Handler', () => {
                 );
 
                 const event: RolleUpdatedEvent = createEvent([spA.id], []);
+
+                emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
+                    ok: true,
+                    value: new Map([
+                        [
+                            person.id,
+                            {
+                                address: faker.internet.email(),
+                                status: EmailAddressStatus.ENABLED,
+                            },
+                        ],
+                    ]),
+                });
 
                 await sut.rolleUpdatedEventHandler(event, () => {});
 
@@ -257,6 +553,7 @@ describe('ItsLearning Rolle Event Handler', () => {
             });
 
             it('should log unexpected errors', async () => {
+                emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
                 const spA: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
                     externalSystem: ServiceProviderSystem.ITSLEARNING,
                 });
@@ -266,7 +563,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     [person],
                     undefined,
                 ]);
-                itslearningPersonRepoMock.createOrUpdatePersons.mockResolvedValueOnce(
+                itslearningPersonAdapterMock.createOrUpdatePersons.mockResolvedValueOnce(
                     Err(new ItsLearningError('Unknown Error')),
                 );
                 const personenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true);
@@ -274,11 +571,24 @@ describe('ItsLearning Rolle Event Handler', () => {
                     [personenkontext],
                     undefined,
                 ]);
-                itslearningMembershipRepoMock.createMembershipsMass.mockResolvedValueOnce(
+                itslearningMembershipAdapterMock.createMembershipsMass.mockResolvedValueOnce(
                     Err(new ItsLearningError('Unknown Error')),
                 );
 
                 const event: RolleUpdatedEvent = createEvent([spA.id], []);
+
+                emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
+                    ok: true,
+                    value: new Map([
+                        [
+                            person.id,
+                            {
+                                address: faker.internet.email(),
+                                status: EmailAddressStatus.ENABLED,
+                            },
+                        ],
+                    ]),
+                });
 
                 await sut.rolleUpdatedEventHandler(event, () => {});
 
@@ -302,7 +612,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     [personenkontext],
                     undefined,
                 ]);
-                itslearningMembershipRepoMock.removeMembershipsMass.mockResolvedValueOnce(
+                itslearningMembershipAdapterMock.removeMembershipsMass.mockResolvedValueOnce(
                     Ok({ status: [], value: undefined }),
                 );
                 const person: Person<true> = DoFactory.createPerson(true);
@@ -310,7 +620,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     [person],
                     undefined,
                 ]);
-                itslearningPersonRepoMock.deletePersons.mockResolvedValueOnce(Ok({ status: [], value: undefined }));
+                itslearningPersonAdapterMock.deletePersons.mockResolvedValueOnce(Ok({ status: [], value: undefined }));
 
                 const event: RolleUpdatedEvent = createEvent([], [spA.id]);
 
@@ -321,13 +631,13 @@ describe('ItsLearning Rolle Event Handler', () => {
                     expect.any(Number),
                     undefined,
                 );
-                expect(itslearningPersonRepoMock.deletePersons).toHaveBeenCalledWith([person.id], event.eventID);
+                expect(itslearningPersonAdapterMock.deletePersons).toHaveBeenCalledWith([person.id], event.eventID);
                 expect(personenkontextRepoMock.findWithRolleAtItslearningOrgaByCursor).toHaveBeenCalledWith(
                     event.id,
                     expect.any(Number),
                     undefined,
                 );
-                expect(itslearningMembershipRepoMock.removeMembershipsMass).toHaveBeenCalledWith(
+                expect(itslearningMembershipAdapterMock.removeMembershipsMass).toHaveBeenCalledWith(
                     [`membership-${personenkontext.personId}-${personenkontext.organisationId}`],
                     event.eventID,
                 );
@@ -343,7 +653,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     [personenkontext],
                     undefined,
                 ]);
-                itslearningMembershipRepoMock.removeMembershipsMass.mockResolvedValueOnce(
+                itslearningMembershipAdapterMock.removeMembershipsMass.mockResolvedValueOnce(
                     Ok({
                         status: [createStatusFailure('Input Error')],
                         value: undefined,
@@ -354,7 +664,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     [person],
                     undefined,
                 ]);
-                itslearningPersonRepoMock.deletePersons.mockResolvedValueOnce(
+                itslearningPersonAdapterMock.deletePersons.mockResolvedValueOnce(
                     Ok({
                         status: [createStatusFailure('Input Error')],
                         value: undefined,
@@ -383,7 +693,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     [personenkontext],
                     undefined,
                 ]);
-                itslearningMembershipRepoMock.removeMembershipsMass.mockResolvedValueOnce(
+                itslearningMembershipAdapterMock.removeMembershipsMass.mockResolvedValueOnce(
                     Err(new ItsLearningError('Unknown Error')),
                 );
                 const person: Person<true> = DoFactory.createPerson(true);
@@ -391,7 +701,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     [person],
                     undefined,
                 ]);
-                itslearningPersonRepoMock.deletePersons.mockResolvedValueOnce(
+                itslearningPersonAdapterMock.deletePersons.mockResolvedValueOnce(
                     Err(new ItsLearningError('Unknown Error')),
                 );
 

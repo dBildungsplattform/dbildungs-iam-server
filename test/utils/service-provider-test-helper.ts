@@ -17,7 +17,7 @@ export async function createAndPersistServiceProvider(
         ServiceProviderEntity,
         mapAggregateToData(serviceProvider),
     );
-    await em.persistAndFlush(serviceProviderEntity);
+    await em.persist(serviceProviderEntity).flush();
 
     return mapEntityToAggregate(serviceProviderEntity);
 }

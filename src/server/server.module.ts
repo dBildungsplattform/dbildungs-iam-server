@@ -50,6 +50,7 @@ import { LandesbediensteterModule } from '../modules/landesbediensteter/landesbe
 import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js';
 import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis, { RedisClientOptions, RedisClusterOptions } from '@keyv/redis';
+import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
 import { PermissionModule } from '../modules/permission/permission.module.js';
 
 @Module({
@@ -67,19 +68,18 @@ import { PermissionModule } from '../modules/permission/permission.module.js';
                     user: dbConfig.USERNAME,
                     password: dbConfig.SECRET,
                     dbName: dbConfig.DB_NAME,
+                    forceUndefined: true,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
+                    metadataProvider: ReflectMetadataProvider,
                     // Needed for HealthCheck
                     driverOptions: {
-                        connection: {
-                            ssl: dbConfig.USE_SSL,
-                        },
+                        ssl: dbConfig.USE_SSL,
                     },
-                    driver: PostgreSqlDriver,
-                    connect: false,
                 });
             },
             inject: [JsonConfig],
+            driver: PostgreSqlDriver,
         }),
         PassportModule.register({
             session: true,
@@ -255,6 +255,8 @@ export class ServerModule implements NestModule {
                     cookie: {
                         maxAge: this.configService.getOrThrow<FrontendConfig>('FRONTEND').SESSION_TTL_MS,
                         secure: this.configService.getOrThrow<FrontendConfig>('FRONTEND').SECURE_COOKIE,
+                        sameSite: 'lax',
+                        httpOnly: true,
                     },
                     secret: this.configService.getOrThrow<FrontendConfig>('FRONTEND').SESSION_SECRET,
                 }),

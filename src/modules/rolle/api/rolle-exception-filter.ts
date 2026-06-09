@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { AddSystemrechtError } from './add-systemrecht.error.js';
 import { DbiamRolleError, RolleErrorI18nTypes } from './dbiam-rolle.error.js';
@@ -12,6 +11,7 @@ import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
 import { NoRedundantRollenerweiterungError } from '../specification/error/no-redundant-rollenerweiterung.error.js';
+import { ServiceProviderProvidedOutOfTreeError } from '../domain/service-provider-provided-out-of-tree.error.js';
 
 @Catch(RolleDomainError)
 export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
@@ -79,10 +79,17 @@ export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
                 i18nKey: RolleErrorI18nTypes.SERVICE_PROVIDER_NICHT_VERFUEGBAR_FUER_ROLLENERWEITERUNG,
             }),
         ],
+        [
+            ServiceProviderProvidedOutOfTreeError.name,
+            new DbiamRolleError({
+                code: 400,
+                i18nKey: RolleErrorI18nTypes.SERVICE_PROVIDER_PROVIDED_OUT_OF_TREE,
+            }),
+        ],
     ]);
 
     public catch(exception: RolleDomainError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
         const dbiamRolleError: DbiamRolleError = this.mapDomainErrorToDbiamError(exception);

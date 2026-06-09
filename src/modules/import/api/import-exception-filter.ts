@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { ImportDomainError } from '../domain/import-domain.error.js';
 import { DbiamImportError, ImportErrorI18nTypes } from './dbiam-import.error.js';
@@ -74,7 +73,7 @@ export class ImportExceptionFilter implements ExceptionFilter<ImportDomainError>
     ]);
 
     public catch(exception: ImportDomainError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
         const dbiamImportError: DbiamImportError = this.mapDomainErrorToDbiamError(exception);

@@ -1,4 +1,4 @@
-import { EntityData, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { Loaded } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -6,29 +6,30 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
-import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { assignSameKey, objectKeys } from '../../../shared/util/object-utils.js';
 import { Err, Ok } from '../../../shared/util/result.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
-import { ServiceProviderEntity } from './service-provider.entity.js';
-import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
-import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js';
-import { NameUniqueAtOrgaSpecification } from '../specification/name-unique-at-orga.specification.js';
 import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
+import { NameUniqueAtOrgaSpecification } from '../specification/name-unique-at-orga.specification.js';
+import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
+import { ServiceProviderEntity } from './service-provider.entity.js';
+import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
  */
-function mapAggregateToData(serviceProvider: ServiceProvider<boolean>): RequiredEntityData<ServiceProviderEntity> {
-    const merkmale: EntityData<ServiceProviderMerkmalEntity>[] = serviceProvider.merkmale.map(
-        (merkmal: ServiceProviderMerkmal) => ({
-            serviceProvider: serviceProvider.id,
-            merkmal,
-        }),
-    );
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function mapAggregateToData(serviceProvider: ServiceProvider<boolean>) {
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const merkmale = serviceProvider.merkmale.map((merkmal: ServiceProviderMerkmal) => ({
+        serviceProvider: serviceProvider.id,
+        merkmal,
+    }));
 
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
@@ -38,6 +39,7 @@ function mapAggregateToData(serviceProvider: ServiceProvider<boolean>): Required
         url: serviceProvider.url,
         kategorie: serviceProvider.kategorie,
         providedOnSchulstrukturknoten: serviceProvider.providedOnSchulstrukturknoten,
+        logoId: serviceProvider.logoId,
         logo: serviceProvider.logo,
         logoMimeType: serviceProvider.logoMimeType,
         keycloakGroup: serviceProvider.keycloakGroup,
@@ -63,6 +65,7 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
         entity.url,
         entity.kategorie,
         entity.providedOnSchulstrukturknoten,
+        entity.logoId,
         entity.logo,
         entity.logoMimeType,
         entity.keycloakGroup,
@@ -109,11 +112,11 @@ export class ServiceProviderRepo {
     public async findById(id: string, options?: ServiceProviderFindOptions): Promise<Option<ServiceProvider<true>>> {
         const exclude: readonly ['logo'] | undefined = options?.withLogo ? undefined : ['logo'];
 
-        const serviceProvider: Option<ServiceProviderEntity> = (await this.em.findOne(
+        const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(
             ServiceProviderEntity,
             { id },
             { exclude, populate: ['merkmale'] },
-        )) as Option<ServiceProviderEntity>;
+        );
 
         return serviceProvider && mapEntityToAggregate(serviceProvider);
     }
@@ -162,10 +165,10 @@ export class ServiceProviderRepo {
     public async find(options?: ServiceProviderFindOptions): Promise<ServiceProvider<true>[]> {
         const exclude: readonly ['logo'] | undefined = options?.withLogo ? undefined : ['logo'];
 
-        const serviceProviders: ServiceProviderEntity[] = (await this.em.findAll(ServiceProviderEntity, {
+        const serviceProviders: ServiceProviderEntity[] = await this.em.findAll(ServiceProviderEntity, {
             exclude,
             populate: ['merkmale'],
-        })) as ServiceProviderEntity[];
+        });
 
         return serviceProviders.map(mapEntityToAggregate);
     }
@@ -279,12 +282,14 @@ export class ServiceProviderRepo {
         return entity ? mapEntityToAggregate(entity) : entity;
     }
 
-    public async findBySchulstrukturknoten(organisationsId: string): Promise<Array<ServiceProvider<true>>> {
+    public async findBySchulstrukturknoten(
+        organisationIds: Array<OrganisationID>,
+    ): Promise<Array<ServiceProvider<true>>> {
         const exclude: readonly ['logo'] | undefined = ['logo'];
         return (
             await this.em.find(
                 ServiceProviderEntity,
-                { providedOnSchulstrukturknoten: organisationsId },
+                { providedOnSchulstrukturknoten: { $in: organisationIds } },
                 {
                     populate: ['merkmale'],
                     exclude,
@@ -300,7 +305,7 @@ export class ServiceProviderRepo {
             mapAggregateToData(serviceProvider),
         );
 
-        await this.em.persistAndFlush(serviceProviderEntity);
+        await this.em.persist(serviceProviderEntity).flush();
 
         return mapEntityToAggregate(serviceProviderEntity);
     }
@@ -339,7 +344,7 @@ export class ServiceProviderRepo {
             mapAggregateToData(serviceProvider),
         );
 
-        await this.em.persistAndFlush(serviceProviderEntity);
+        await this.em.persist(serviceProviderEntity).flush();
 
         return Ok(mapEntityToAggregate(serviceProviderEntity));
     }
@@ -382,7 +387,7 @@ export class ServiceProviderRepo {
 
         serviceProviderEntity.assign(mapAggregateToData(serviceProvider));
 
-        await this.em.persistAndFlush(serviceProviderEntity);
+        await this.em.persist(serviceProviderEntity).flush();
 
         return Ok(mapEntityToAggregate(serviceProviderEntity));
     }
@@ -428,7 +433,7 @@ export class ServiceProviderRepo {
             return Err(new MissingPermissionsError('Not authorized to delete Service Provider!'));
         }
 
-        await this.em.removeAndFlush(entity);
+        await this.em.remove(entity).flush();
         return Ok();
     }
 

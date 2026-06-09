@@ -30,13 +30,14 @@ database:
   username: "dbildungs_iam_server"
 
 ldap:
-  url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
+  url: ldap://dbildungs-iam-ldap-internal.spsh-xxx.svc.cluster.local:389
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
   base_dn: dc=schule-sh,dc=de
   retryWrapperDefaultRetries: 3
 
 eflkLdap:
+  enabled: false
   url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
@@ -79,6 +80,8 @@ auth:
   redis_password: ""
   vidis_username: ""
   vidis_password: ""
+  vidis_api_client_id: ""
+  vidis_api_client_secret: ""
   import_passphrase_secret: ""
   import_passphrase_salt: ""
   ox_password: ""
@@ -103,14 +106,21 @@ ox:
   userPasswordDefault: "placeholder"
   emailAddressDeletedEventDelay: 0
 
+eflkOx:
+  enabled: false
+  username: "oxadmin"
+  endpoint: "https://webmail.example.com"
+  contextId: "10"
+  contextName: "10"
+  numberOfRetries: 3
+  userPasswordDefault: "placeholder"
+  emailAddressDeletedEventDelay: 0
+
 email:
   nonEnabledEmailAddressesDeadlineInDays: 180
 
 vidis:
-  url: "https://service-stage.vidis.schule"
-  regionName: "test-region"
-  keycloakGroup: "VIDIS-service"
-  keycloakRole: "VIDIS-user"
+  url: "http://localhost:10000"
 
 backend:
   replicaCount: 1
@@ -312,8 +322,8 @@ status:
 cronjobs:
   enabled: true
   image:
-    tag: "1.2.1"
-    repository: docker.io/schulcloud/cron-tools
+    tag: "1.2.2"
+    repository: ghcr.io/dbildungsplattform/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
   keycloakTokenUrl: "/realms/SPSH/protocol/openid-connect/token"
@@ -343,7 +353,7 @@ cronjobs:
       httpMethod: "PUT"
       script: "cron_trigger.sh"
     cron-trigger-5:
-      schedule: "0 0 30 9 *" #Should never run automatically status: 15.10.2025. --> Setting to 30.09 so we have 1 Year to manually enable it fo the first time and define running interval
+      schedule: "5-59/15 0-3,22-23 * * *"
       endpoint: "/api/cron/email-addresses-delete"
       httpMethod: "DELETE"
       script: "cron_trigger.sh"
@@ -356,8 +366,8 @@ cronjobs:
 cronjobsEmail:
   enabled: true
   image:
-    tag: "1.2.1"
-    repository: docker.io/schulcloud/cron-tools
+    tag: "1.2.2"
+    repository: ghcr.io/dbildungsplattform/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
   scriptDir: scripts
@@ -365,7 +375,7 @@ cronjobsEmail:
     cron-trigger-email:
       schedule: "0 4 * * *"
       endpoint: "api/cron/delete"
-      httpMethod: 'DELETE'
+      httpMethod: "DELETE"
       script: "cron_trigger_email.sh"
       suspended: true
 

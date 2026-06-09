@@ -32,6 +32,7 @@ import { UpdateLernNotAtSchuleAndKlasseError } from './error/update-lern-not-at-
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { CheckDuplicateKlassenkontextSpecification } from '../specification/check-duplicate-klassenkontext.js';
 import { DuplicateKlassenkontextError } from './error/update-invalid-duplicate-klassenkontext-for-same-rolle.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -48,6 +49,7 @@ export class PersonenkontexteUpdate {
         private readonly count: number,
         private readonly dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
         private readonly permissions: IPersonPermissions,
+        private readonly emailResolverService: EmailResolverService,
         private readonly personalnummer?: string,
     ) {}
 
@@ -65,6 +67,7 @@ export class PersonenkontexteUpdate {
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
         permissions: IPersonPermissions,
+        emailResolverService: EmailResolverService,
         personalnummer?: string,
     ): PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
@@ -81,6 +84,7 @@ export class PersonenkontexteUpdate {
             count,
             dBiamPersonenkontextBodyParams,
             permissions,
+            emailResolverService,
             personalnummer,
         );
     }
@@ -472,9 +476,11 @@ export class PersonenkontexteUpdate {
             (pk: Personenkontext<true>) => [pk, orgas.get(pk.organisationId)!, rollen.get(pk.rolleId)!],
         );
 
+        const email: string | undefined = await this.emailResolverService.getPrimaryActiveEmailForPerson(person);
+
         this.eventRoutingLegacyKafkaService.publish(
-            PersonenkontextUpdatedEvent.fromPersonenkontexte(person, created, deleted, existing),
-            KafkaPersonenkontextUpdatedEvent.fromPersonenkontexte(person, created, deleted, existing),
+            PersonenkontextUpdatedEvent.fromPersonenkontexte(person, created, deleted, existing, email),
+            KafkaPersonenkontextUpdatedEvent.fromPersonenkontexte(person, created, deleted, existing, email),
         );
     }
 }

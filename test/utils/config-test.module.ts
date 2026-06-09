@@ -1,9 +1,9 @@
 import { readFileSync } from 'fs';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { DbConfig, JsonConfig } from '../../src/shared/config';
+import { DbConfig, JsonConfig } from '../../src/shared/config/index.js';
 import { plainToInstance } from 'class-transformer';
-import { LoggingConfig } from '../../src/shared/config/logging.config';
+import { LoggingConfig } from '../../src/shared/config/logging.config.js';
 
 @Global()
 @Module({

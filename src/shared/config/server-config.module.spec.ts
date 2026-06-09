@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { DbConfig } from './db.config';
-import { JsonConfig } from './json.config';
-import { LoggingConfig } from './logging.config';
-import { ServerConfigModule } from './server-config.module';
+import { DbConfig } from './db.config.js';
+import { JsonConfig } from './json.config.js';
+import { LoggingConfig } from './logging.config.js';
+import { ServerConfigModule } from './server-config.module.js';
 
 describe('ServerConfigModule', () => {
     let module: TestingModule;

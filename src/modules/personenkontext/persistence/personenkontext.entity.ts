@@ -1,9 +1,10 @@
-import { DateTimeType, Entity, Enum, Index, ManyToOne, Opt, Property, Ref, Unique } from '@mikro-orm/core';
+import { DateTimeType, Opt, Ref } from '@mikro-orm/core';
+import { Entity, Enum, Index, ManyToOne, Property, Unique } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
-import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
+import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 
 @Entity({ tableName: 'personenkontext' })
 @Unique({ properties: ['personId', 'organisationId', 'rolleId'] })
@@ -12,6 +13,7 @@ export class PersonenkontextEntity extends TimestampedEntity {
         fieldName: 'person_id',
         columnType: 'uuid',
         deleteRule: 'cascade',
+        updateRule: 'cascade',
         ref: true,
         nullable: false,
         entity: () => PersonEntity,
@@ -23,6 +25,8 @@ export class PersonenkontextEntity extends TimestampedEntity {
     @ManyToOne({
         fieldName: 'organisation_id',
         columnType: 'uuid',
+        deleteRule: 'no action',
+        updateRule: 'cascade',
         ref: true,
         nullable: false,
         entity: () => OrganisationEntity,
@@ -33,6 +37,8 @@ export class PersonenkontextEntity extends TimestampedEntity {
     @ManyToOne({
         fieldName: 'rolle_id',
         columnType: 'uuid',
+        deleteRule: 'no action',
+        updateRule: 'cascade',
         ref: true,
         nullable: false,
         entity: () => RolleEntity,

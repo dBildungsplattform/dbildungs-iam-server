@@ -1,18 +1,16 @@
-import { EntityData, RequiredEntityData } from '@mikro-orm/core';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
 import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 
-export function mapAggregateToData(
-    serviceProvider: ServiceProvider<boolean>,
-): RequiredEntityData<ServiceProviderEntity> {
-    const merkmale: EntityData<ServiceProviderMerkmalEntity>[] = serviceProvider.merkmale.map(
-        (merkmal: ServiceProviderMerkmal) => ({
-            serviceProvider: serviceProvider.id,
-            merkmal,
-        }),
-    );
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function mapAggregateToData(serviceProvider: ServiceProvider<boolean>) {
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const merkmale = serviceProvider.merkmale.map((merkmal: ServiceProviderMerkmal) => ({
+        serviceProvider: serviceProvider.id,
+        merkmal,
+    }));
 
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
@@ -22,6 +20,7 @@ export function mapAggregateToData(
         url: serviceProvider.url,
         kategorie: serviceProvider.kategorie,
         providedOnSchulstrukturknoten: serviceProvider.providedOnSchulstrukturknoten,
+        logoId: serviceProvider.logoId,
         logo: serviceProvider.logo,
         logoMimeType: serviceProvider.logoMimeType,
         keycloakGroup: serviceProvider.keycloakGroup,
@@ -47,6 +46,7 @@ export function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProv
         entity.url,
         entity.kategorie,
         entity.providedOnSchulstrukturknoten,
+        entity.logoId,
         entity.logo,
         entity.logoMimeType,
         entity.keycloakGroup,

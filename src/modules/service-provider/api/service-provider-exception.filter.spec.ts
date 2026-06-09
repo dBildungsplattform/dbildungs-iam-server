@@ -1,10 +1,10 @@
 import { ArgumentsHost } from '@nestjs/common';
 import { Response } from 'express';
 import { MockedObject } from 'vitest';
-import { createArgumentsHostMock, createResponseMock } from '../../../../test/utils/http.mocks';
-import { ServiceProviderError } from '../specification/error/service-provider.error';
-import { ServiceProviderErrorFilter } from './service-provider-exception.filter';
-import { DbiamServiceProviderError, ServiceProviderErrorI18nTypes } from './dbiam-service-provider.error';
+import { createArgumentsHostMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
+import { ServiceProviderError } from '../specification/error/service-provider.error.js';
+import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
+import { DbiamServiceProviderError, ServiceProviderErrorI18nTypes } from './dbiam-service-provider.error.js';
 
 describe('ServiceProviderErrorFilter', () => {
     const sut: ServiceProviderErrorFilter = new ServiceProviderErrorFilter();

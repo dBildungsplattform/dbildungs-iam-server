@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { OxService } from './ox.service.js';
+import { OxSendService } from '../adapter/technical/ox.send-service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
@@ -26,12 +26,13 @@ import { MikroORM } from '@mikro-orm/core';
 import { OxError } from '../../../shared/error/ox.error.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import assert from 'assert';
-import { OxEventService } from './ox-event.service.js';
+import { OxAdapter } from '../adapter/domain/ox.adapter.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 
 describe('OxSyncEventHandler', () => {
     let app: INestApplication;
     let module: TestingModule;
+    let orm: MikroORM;
 
     let sut: OxSyncEventHandler;
     let loggerMock: DeepMocked<ClassLogger>;
@@ -41,7 +42,7 @@ describe('OxSyncEventHandler', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
-    let oxServiceMock: DeepMocked<OxService>;
+    let oxServiceMock: DeepMocked<OxSendService>;
     let emailResolverServiceMock: DeepMocked<EmailResolverService>;
 
     beforeAll(async () => {
@@ -49,7 +50,7 @@ describe('OxSyncEventHandler', () => {
             imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 OxSyncEventHandler,
-                OxEventService,
+                OxAdapter,
                 {
                     provide: RolleRepo,
                     useValue: createMock(RolleRepo),
@@ -75,8 +76,8 @@ describe('OxSyncEventHandler', () => {
                     useValue: createMock(EventRoutingLegacyKafkaService),
                 },
                 {
-                    provide: OxService,
-                    useValue: createMock(OxService),
+                    provide: OxSendService,
+                    useValue: createMock(OxSendService),
                 },
                 {
                     provide: EmailResolverService,
@@ -98,8 +99,9 @@ describe('OxSyncEventHandler', () => {
 
         emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
 
-        oxServiceMock = module.get(OxService);
-        await DatabaseTestModule.setupDatabase(module.get(MikroORM));
+        oxServiceMock = module.get(OxSendService);
+        orm = module.get(MikroORM);
+        await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
         await app.init();
     });
@@ -248,6 +250,7 @@ describe('OxSyncEventHandler', () => {
     }
 
     afterAll(async () => {
+        await orm.close();
         await app.close();
     });
 

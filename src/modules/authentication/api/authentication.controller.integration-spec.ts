@@ -38,7 +38,11 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleModule } from '../../rolle/rolle.module.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
 import { createRequestMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
+import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
+import { CsrfTokenService } from '../services/csrf-token.service.js';
+import { CsrfTokenResponse } from './csrf-token.response.js';
+import { InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -48,6 +52,7 @@ describe('AuthenticationController', () => {
     const keycloakUserServiceMock: DeepMocked<KeycloakUserService> = createMock(KeycloakUserService);
     let keyCloakConfig: KeycloakConfig;
     const personTimeLimitServiceMock: DeepMocked<PersonTimeLimitService> = createMock(PersonTimeLimitService);
+    const csrfTokenServiceMock: DeepMocked<CsrfTokenService> = createMock(CsrfTokenService);
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
@@ -57,6 +62,7 @@ describe('AuthenticationController', () => {
                 PersonModule,
                 PersonenKontextModule,
                 RolleModule,
+                EmailPersistenceModule,
                 EmailMicroserviceModule,
             ],
             providers: [
@@ -86,6 +92,10 @@ describe('AuthenticationController', () => {
                     provide: PersonTimeLimitService,
                     useValue: personTimeLimitServiceMock,
                 },
+                {
+                    provide: CsrfTokenService,
+                    useValue: csrfTokenServiceMock,
+                },
             ],
         })
             .overrideProvider(PersonRepository)
@@ -107,7 +117,9 @@ describe('AuthenticationController', () => {
     });
 
     afterAll(async () => {
-        await module.get(MikroORM).close();
+        const orm: MikroORM = module.get(MikroORM);
+
+        await orm.close(true);
         await module.close();
     });
 
@@ -287,6 +299,63 @@ describe('AuthenticationController', () => {
             const keyCloakRealm: string = keyCloakConfig.REALM_NAME.toLowerCase();
             const expectedUrl: string = `${oidcClient.issuer.metadata.authorization_endpoint}?client_id=${keyCloakRealm}&login_hint=${loginHint}&response_type=code&scope=openid&kc_action=UPDATE_PASSWORD&redirect_uri=${redirectUrl}`;
             expect(responseMock.redirect).toHaveBeenCalledWith(expectedUrl);
+        });
+    });
+
+    describe('getCsrfToken', () => {
+        function setupRequest(isAuthenticated: boolean, csrfToken?: string): Request {
+            const requestMock: DeepMocked<Request> = createRequestMock();
+            (requestMock.isAuthenticated as unknown as Mock).mockReturnValue(isAuthenticated);
+            if (csrfToken) {
+                requestMock.session.csrfToken = csrfToken;
+            }
+            return requestMock;
+        }
+
+        describe('when user is not authenticated', () => {
+            it('should throw UnauthorizedException', () => {
+                const requestMock: Request = setupRequest(false);
+
+                expect(() => authController.getCsrfToken(requestMock)).toThrow(UnauthorizedException);
+            });
+        });
+
+        describe('when user is authenticated and session has existing token', () => {
+            it('should return existing token from session', () => {
+                const existingToken: string = faker.string.alphanumeric(32);
+                const requestMock: Request = setupRequest(true, existingToken);
+
+                const result: CsrfTokenResponse = authController.getCsrfToken(requestMock);
+
+                expect(result).toBeInstanceOf(CsrfTokenResponse);
+                expect(result.csrfToken).toBe(existingToken);
+            });
+        });
+
+        describe('when user is authenticated and session has no token', () => {
+            it('should generate and return a new token', () => {
+                const newToken: string = faker.string.alphanumeric(32);
+                const requestMock: Request = setupRequest(true);
+                const csrfTokenService: DeepMocked<CsrfTokenService> = module.get(CsrfTokenService);
+                csrfTokenService.generateToken.mockReturnValueOnce(newToken);
+
+                const result: CsrfTokenResponse = authController.getCsrfToken(requestMock);
+
+                expect(result).toBeInstanceOf(CsrfTokenResponse);
+                expect(result.csrfToken).toBe(newToken);
+            });
+        });
+
+        describe('when token generation throws', () => {
+            it('should throw InternalServerErrorException', () => {
+                const requestMock: Request = setupRequest(true);
+                const csrfTokenService: DeepMocked<CsrfTokenService> = module.get(CsrfTokenService);
+                csrfTokenService.generateToken.mockImplementationOnce(() => {
+                    throw new Error('Generation failed');
+                });
+
+                expect(() => authController.getCsrfToken(requestMock)).toThrow(InternalServerErrorException);
+            });
         });
     });
 });

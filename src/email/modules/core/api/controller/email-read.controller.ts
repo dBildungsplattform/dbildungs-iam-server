@@ -13,7 +13,7 @@ import { EmailAddressResponse } from '../dtos/response/email-address.response.js
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
 import { Public } from '../../decorator/public.decorator.js';
 import { EmailAddressRepo } from '../../persistence/email-address.repo.js';
-import { OxService } from '../../../ox/domain/ox.service.js';
+import { OxAdapter } from '../../../ox/adapter/domain/ox.adapter.js';
 import { FindEmailAddressPathParams } from '../dtos/params/find-email-address.pathparams.js';
 import { EmailAddressNotFoundError } from '../../error/email-address-not-found.error.js';
 import { EmailExceptionFilter } from '../../error/email-exception-filter.js';
@@ -33,7 +33,7 @@ export class EmailReadController {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly emailAddressRepo: EmailAddressRepo,
-        private readonly oxService: OxService,
+        private readonly oxAdapter: OxAdapter,
     ) {}
 
     @Get('spshperson/:spshPersonId')
@@ -61,7 +61,7 @@ export class EmailReadController {
             .map((address: EmailAddress<true>) => {
                 const status: EmailAddressStatusEnum | undefined = address.getStatus();
                 if (status) {
-                    return new EmailAddressResponse(address, status, this.oxService.contextID);
+                    return new EmailAddressResponse(address, status, this.oxAdapter.contextID);
                 }
                 return undefined;
             })
@@ -96,7 +96,7 @@ export class EmailReadController {
             throw new EmailAddressMissingStatusError(emailAddress.address);
         }
 
-        return new EmailAddressResponse(emailAddress, latestStatus, this.oxService.contextID);
+        return new EmailAddressResponse(emailAddress, latestStatus, this.oxAdapter.contextID);
     }
 
     @Post('spshpersons')
@@ -130,7 +130,7 @@ export class EmailReadController {
         return primaryEmails
             .map((addr: EmailAddress<true>) => {
                 const status: EmailAddressStatusEnum | undefined = addr.getStatus();
-                return status ? new EmailAddressResponse(addr, status, this.oxService.contextID) : null;
+                return status ? new EmailAddressResponse(addr, status, this.oxAdapter.contextID) : null;
             })
             .filter((e: EmailAddressResponse | null): e is EmailAddressResponse => e !== null);
     }

@@ -1,4 +1,4 @@
-import { MikroORM, UmzugMigration } from '@mikro-orm/core';
+import { IMigrator, MigrationInfo, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -10,7 +10,6 @@ import fs from 'fs';
 import { DbInitMigrationConsole } from './db-init-migration.console.js';
 import { DbApplyMigrationConsole, MigrationType } from './db-apply-migration.console.js';
 import { DbCreateMigrationConsole } from './db-create-migration.console.js';
-import { Migrator } from '@mikro-orm/migrations';
 
 describe('DbMigrateConsole', () => {
     let module: TestingModule;
@@ -18,7 +17,7 @@ describe('DbMigrateConsole', () => {
     let dbMigrationCreate: DbCreateMigrationConsole;
     let dbMigrationApply: DbApplyMigrationConsole;
     let orm: MikroORM;
-    let migrator: Migrator;
+    let migrator: IMigrator;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -29,7 +28,7 @@ describe('DbMigrateConsole', () => {
         dbMigrationCreate = module.get(DbCreateMigrationConsole);
         dbMigrationApply = module.get(DbApplyMigrationConsole);
         orm = module.get(MikroORM);
-        migrator = orm.getMigrator();
+        migrator = orm.migrator;
 
         fs.rmSync('test-migrations', { recursive: true, force: true });
     }, 2 * DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -60,7 +59,7 @@ describe('DbMigrateConsole', () => {
 
         describe('when migration-apply is executed', () => {
             it('should not throw an error', async () => {
-                vi.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve([]));
+                vi.spyOn(migrator, 'getPending').mockResolvedValueOnce([]);
                 await expect(dbMigrationApply.run([])).resolves.not.toThrow();
             });
         });
@@ -68,33 +67,33 @@ describe('DbMigrateConsole', () => {
 
     describe('DbApplyMigrationConsole', () => {
         beforeEach(() => {
-            vi.spyOn(migrator, 'up').mockResolvedValueOnce(Promise.resolve([]));
+            vi.spyOn(migrator, 'up').mockResolvedValueOnce([]);
         });
 
         it('should apply all pending migrations', async () => {
-            const migrations: UmzugMigration[] = [{ name: '20210101_initialS' }, { name: '20210202_dataD' }];
-            vi.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve(migrations));
+            const migrations: MigrationInfo[] = [{ name: '20210101_initialS' }, { name: '20210202_dataD' }];
+            vi.spyOn(migrator, 'getPending').mockResolvedValueOnce(migrations);
             await dbMigrationApply.run([]);
-            expect(migrator.up).toHaveBeenCalledWith(migrations.map((m: UmzugMigration) => m.name));
+            expect(migrator.up).toHaveBeenCalledWith(migrations.map((m: MigrationInfo) => m.name));
         });
 
         it('should filter and apply only structural migrations', async () => {
-            const migrations: UmzugMigration[] = [{ name: '20210101_initialS' }, { name: '20210202_dataD' }];
-            vi.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve(migrations));
+            const migrations: MigrationInfo[] = [{ name: '20210101_initialS' }, { name: '20210202_dataD' }];
+            vi.spyOn(migrator, 'getPending').mockResolvedValueOnce(migrations);
             await dbMigrationApply.run([], { migration: 'structural' });
             expect(migrator.up).toHaveBeenCalledWith(['20210101_initialS']);
         });
 
         it('should filter and apply only data migrations', async () => {
-            const migrations: UmzugMigration[] = [{ name: '20210101_initialS' }, { name: '20210202_dataD' }];
-            vi.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve(migrations));
+            const migrations: MigrationInfo[] = [{ name: '20210101_initialS' }, { name: '20210202_dataD' }];
+            vi.spyOn(migrator, 'getPending').mockResolvedValueOnce(migrations);
             await dbMigrationApply.run([], { migration: 'data' });
             expect(migrator.up).toHaveBeenCalledWith(['20210202_dataD']);
         });
 
         it('should throw an error if any migration does not end with S or D', async () => {
-            const migrations: UmzugMigration[] = [{ name: '20210101_initial' }];
-            vi.spyOn(migrator, 'getPendingMigrations').mockReturnValueOnce(Promise.resolve(migrations));
+            const migrations: MigrationInfo[] = [{ name: '20210101_initial' }];
+            vi.spyOn(migrator, 'getPending').mockResolvedValueOnce(migrations);
             await expect(dbMigrationApply.run([])).rejects.toThrow('Not all migrations end with a S or D');
         });
     });

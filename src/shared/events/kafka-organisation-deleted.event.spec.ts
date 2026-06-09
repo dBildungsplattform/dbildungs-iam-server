@@ -1,6 +1,6 @@
-import { DoFactory } from '../../../test/utils';
-import { Organisation } from '../../modules/organisation/domain/organisation';
-import { KafkaOrganisationDeletedEvent } from './kafka-organisation-deleted.event';
+import { DoFactory } from '../../../test/utils/index.js';
+import { Organisation } from '../../modules/organisation/domain/organisation.js';
+import { KafkaOrganisationDeletedEvent } from './kafka-organisation-deleted.event.js';
 
 describe('KafkaOrganisationDeletedEvent', () => {
     let orga: Organisation<true>;

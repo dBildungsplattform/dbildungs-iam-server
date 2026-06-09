@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { LdapClientService } from './domain/ldap-client.service.js';
-import { LdapClient } from './domain/ldap-client.js';
+import { LdapClientAdapter } from './adapter/domain/ldap-client.adapter.js';
+import { LdapClient } from './adapter/technical/ldap-client.js';
 import { LoggerModule } from '../../../core/logging/logger.module.js';
-import { EmailLdapConfigModule } from './ldap-config.module.js';
+import { EmailLdapConfigModule } from './adapter/technical/email-ldap-config.module.js';
 
 @Module({
     imports: [LoggerModule.register(EmailLdapModule.name), EmailLdapConfigModule],
-    providers: [LdapClientService, LdapClient],
-    exports: [LdapClientService, LdapClient],
+    providers: [LdapClientAdapter, LdapClient],
+    exports: [LdapClientAdapter, LdapClient],
 })
 export class EmailLdapModule {}

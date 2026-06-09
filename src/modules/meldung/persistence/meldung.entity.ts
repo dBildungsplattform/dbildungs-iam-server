@@ -1,4 +1,5 @@
-import { Entity, Enum, Opt, Property } from '@mikro-orm/core';
+import { Opt } from '@mikro-orm/core';
+import { Entity, Enum, Property } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 
 export enum MeldungStatus {

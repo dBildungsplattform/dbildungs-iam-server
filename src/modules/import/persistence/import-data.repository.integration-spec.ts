@@ -150,11 +150,11 @@ describe('ImportDataRepository', () => {
             entity1 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem1));
             entity2 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem2));
             entity3 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem3));
-            await em.persistAndFlush([entity1, entity2, entity3]);
+            await em.persist([entity1, entity2, entity3]).flush();
         });
 
         afterEach(async () => {
-            await em.removeAndFlush([entity1, entity2, entity3]);
+            await em.remove([entity1, entity2, entity3]).flush();
         });
 
         it('should return importDataItems for the importvorgangId', async () => {
@@ -165,6 +165,9 @@ describe('ImportDataRepository', () => {
             );
 
             expect(result?.length).toBe(2);
+            expect(result).toEqual(
+                [entity1, entity2].map((entity: ImportDataItemEntity) => mapEntityToAggregate(entity)),
+            );
             expect(total).toBe(2);
         });
     });
@@ -266,7 +269,7 @@ describe('ImportDataRepository', () => {
             );
             entity1 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem1));
             entity2 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem2));
-            await em.persistAndFlush([entity1, entity2]);
+            await em.persist([entity1, entity2]).flush();
         });
 
         it('should delete all the import data items for the importVorgnagsId', async () => {
@@ -364,18 +367,18 @@ describe('ImportDataRepository', () => {
             entity1 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem1));
             entity2 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem2));
             entity3 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem3));
-            await em.persistAndFlush([entity1, entity2, entity3]);
+            await em.persist([entity1, entity2, entity3]).flush();
 
             // Update the status of some items
             entity1.status = ImportDataItemStatus.SUCCESS;
             entity2.status = ImportDataItemStatus.FAILED;
             entity3.status = ImportDataItemStatus.PENDING; // This will be ignored
 
-            await em.persistAndFlush([entity1, entity2, entity3]);
+            await em.persist([entity1, entity2, entity3]).flush();
         });
 
         afterEach(async () => {
-            await em.removeAndFlush([entity1, entity2, entity3]);
+            await em.remove([entity1, entity2, entity3]).flush();
         });
 
         it('should count processed items for the given importvorgangId', async () => {
@@ -392,7 +395,7 @@ describe('ImportDataRepository', () => {
             entity2.status = ImportDataItemStatus.PENDING;
             entity3.status = ImportDataItemStatus.PENDING;
 
-            await em.persistAndFlush([entity1, entity2, entity3]);
+            await em.persist([entity1, entity2, entity3]).flush();
 
             const count: number = await sut.countProcessedItems(importvorgangId);
 

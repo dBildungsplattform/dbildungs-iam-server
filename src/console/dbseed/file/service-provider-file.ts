@@ -20,6 +20,8 @@ export class ServiceProviderFile {
 
     public kategorie!: ServiceProviderKategorie;
 
+    public logoId?: number;
+
     public logoBase64?: string;
 
     public logoMimeType?: string;

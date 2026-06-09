@@ -1,11 +1,14 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityManager, Loaded } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ImportDataItemEntity } from './import-data-item.entity.js';
 import { ImportDataItemScope } from './import-data-item.scope.js';
 import { ImportDataItem } from '../domain/import-data-item.js';
 import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
+import { ScopeOrder } from '../../../shared/persistence/index.js';
 
-export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): RequiredEntityData<ImportDataItemEntity> {
+// Disable explicit types here because it's virtually impossible to do this correctly
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function mapAggregateToData(importDataItem: ImportDataItem<boolean>) {
     return {
         importvorgangId: importDataItem.importvorgangId,
         nachname: importDataItem.nachname,
@@ -54,7 +57,11 @@ export class ImportDataRepository {
     ): Promise<Counted<ImportDataItem<true>>> {
         const scope: ImportDataItemScope = new ImportDataItemScope()
             .findByImportvorgangId(importvorgangId)
-            .paged(offset, limit);
+            .paged(offset, limit)
+            .sortBy('klasse', ScopeOrder.ASC)
+            .sortBy('nachname', ScopeOrder.ASC)
+            .sortBy('vorname', ScopeOrder.ASC)
+            .sortBy('id', ScopeOrder.ASC);
 
         const [entities, total]: Counted<ImportDataItemEntity> = await scope.executeQuery(this.em);
         const importDataItems: ImportDataItem<true>[] = entities.map((entity: ImportDataItemEntity) =>
@@ -73,7 +80,7 @@ export class ImportDataRepository {
             return this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem));
         });
 
-        await this.em.persistAndFlush(entities);
+        await this.em.persist(entities).flush();
 
         return entities.map((entity: ImportDataItemEntity) => entity.id);
     }
@@ -81,7 +88,7 @@ export class ImportDataRepository {
     private async create(importDataItem: ImportDataItem<false>): Promise<ImportDataItem<true>> {
         const entity: ImportDataItemEntity = this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem));
 
-        await this.em.persistAndFlush(entity);
+        await this.em.persist(entity).flush();
 
         return mapEntityToAggregate(entity);
     }
@@ -92,7 +99,7 @@ export class ImportDataRepository {
             importDataItem.id,
         );
         this.em.assign(entity, mapAggregateToData(importDataItem));
-        await this.em.persistAndFlush(entity);
+        await this.em.persist(entity).flush();
         return mapEntityToAggregate(entity);
     }
 

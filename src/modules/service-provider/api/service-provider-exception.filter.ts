@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { Response } from 'express';
 
 import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
@@ -7,6 +6,7 @@ import { ServiceProviderError } from '../specification/error/service-provider.er
 import { DbiamServiceProviderError, ServiceProviderErrorI18nTypes } from './dbiam-service-provider.error.js';
 import { AttachedRollenError } from '../domain/errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from '../domain/errors/attached-rollenerweiterungen.error.js';
+import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
 
 @Catch(ServiceProviderError)
 export class ServiceProviderErrorFilter implements ExceptionFilter<ServiceProviderError> {
@@ -16,6 +16,13 @@ export class ServiceProviderErrorFilter implements ExceptionFilter<ServiceProvid
             new DbiamServiceProviderError({
                 code: 400,
                 i18nKey: ServiceProviderErrorI18nTypes.DUPLICATE_NAME,
+            }),
+        ],
+        [
+            InvalidLogoCombinationError.name,
+            new DbiamServiceProviderError({
+                code: 400,
+                i18nKey: ServiceProviderErrorI18nTypes.INVALID_LOGO_COMBINATION,
             }),
         ],
         [
@@ -35,7 +42,7 @@ export class ServiceProviderErrorFilter implements ExceptionFilter<ServiceProvid
     ]);
 
     public catch(exception: ServiceProviderError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
 
         const dbiamServiceProviderError: DbiamServiceProviderError = this.mapDomainErrorToDbiamError(exception);

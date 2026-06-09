@@ -28,6 +28,7 @@ import { DbApplyMigrationConsole } from './dbmigrate/db-apply-migration.console.
 import { LdapModule } from '../core/ldap/ldap.module.js';
 import { DbSeedDataGeneratorConsole } from './dbseed/db-seed-data-generator.console.js';
 import { KeycloakConsoleModule } from './keycloak/keycloak-console.module.js';
+import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
 
 @Module({
     imports: [
@@ -58,6 +59,7 @@ import { KeycloakConsoleModule } from './keycloak/keycloak-console.module.js';
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
                     extensions: [Migrator],
+                    metadataProvider: ReflectMetadataProvider,
                     migrations: {
                         tableName: 'mikro_orm_migrations', // name of database table with log of executed transactions
                         path: './dist/migrations', // path to the folder with migrations
@@ -73,16 +75,13 @@ import { KeycloakConsoleModule } from './keycloak/keycloak-console.module.js';
                         generator: TSMigrationGenerator, // migration generator, e.g. to allow custom formatting
                     },
                     driverOptions: {
-                        connection: {
-                            ssl: config.getOrThrow<DbConfig>('DB').USE_SSL,
-                        },
+                        ssl: config.getOrThrow<DbConfig>('DB').USE_SSL,
                     },
-                    driver: PostgreSqlDriver,
                     allowGlobalContext: true,
-                    connect: false,
                 });
             },
             inject: [ConfigService],
+            driver: PostgreSqlDriver,
         }),
     ],
     providers: [

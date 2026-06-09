@@ -33,6 +33,7 @@ import { DbSeedReference } from './db-seed-reference.js';
 import { RollenerweiterungRepo } from '../../../modules/rolle/repo/rollenerweiterung.repo.js';
 import { RollenerweiterungFactory } from '../../../modules/rolle/domain/rollenerweiterung.factory.js';
 import { ReferencedEntityType } from '../repo/db-seed-reference.entity.js';
+import { InvalidLogoCombinationError } from '../../../modules/service-provider/domain/errors/invalid-logo-combination.error.js';
 
 function createDbSeedReference(): DbSeedReference {
     return DbSeedReference.createNew(ReferencedEntityType.ORGANISATION, faker.number.int(), faker.string.uuid());
@@ -495,6 +496,21 @@ describe('DbSeedService', () => {
                 );
             });
         });
+
+        describe('seedServiceProvider with both logo and logoId', () => {
+            it('should throw an error', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/serviceProvider/05_service-provider-with-logo-and-logo-id.json`,
+                    'utf-8',
+                );
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID providedOnSchulstrukturknoten
+                organisationRepositoryMock.findById.mockResolvedValue(DoFactory.createOrganisation(true)); // mock get-SSK
+
+                await expect(dbSeedService.seedServiceProvider(fileContentAsStr)).rejects.toThrow(
+                    InvalidLogoCombinationError,
+                );
+            });
+        });
     });
 
     describe('seedEmailDomain', () => {
@@ -541,7 +557,6 @@ describe('DbSeedService', () => {
                 const personPersisted: Person<true> = DoFactory.createPerson(true, {
                     vorname: personNotPersisted.vorname,
                     familienname: personNotPersisted.familienname,
-                    email: personNotPersisted.email,
                 });
                 const existingUser: User<true> = User.construct<true>(
                     faker.string.uuid(),

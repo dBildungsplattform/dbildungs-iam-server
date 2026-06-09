@@ -1,5 +1,4 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
 import { OrganisationIstBereitsZugewiesenError } from '../domain/organisation-ist-bereits-zugewiesen.error.js';
@@ -210,7 +209,7 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
     ]);
 
     public catch(exception: OrganisationSpecificationError, host: ArgumentsHost): void {
-        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const ctx: ReturnType<ArgumentsHost['switchToHttp']> = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
         const status: number = 400; //all errors regarding organisation specifications are BadRequests
 

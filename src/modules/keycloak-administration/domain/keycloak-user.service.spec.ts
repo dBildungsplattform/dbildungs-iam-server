@@ -14,7 +14,7 @@ import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../
 import { PersonService } from '../../person/domain/person.service.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
-import { type FindUserFilter, KeycloakUserService } from './keycloak-user.service.js';
+import { KeycloakUserService } from './keycloak-user.service.js';
 import { User } from './user.js';
 import { UserLock } from './user-lock.js';
 import { UserLockRepository } from '../repository/user-lock.repository.js';
@@ -166,7 +166,7 @@ describe('KeycloakUserService', () => {
                         createdTimestamp: user.createdDate.getTime(),
                         enabled: user.enabled,
                     },
-                ] as unknown as UserRepresentation[]);
+                ]);
 
                 const res: Result<string> = await service.create({
                     id: undefined,
@@ -345,7 +345,7 @@ describe('KeycloakUserService', () => {
                         createdTimestamp: user.createdDate.getTime(),
                         enabled: user.enabled,
                     },
-                ] as unknown as UserRepresentation[]);
+                ]);
 
                 const res: Result<string> = await service.createWithHashedPassword(
                     {
@@ -467,7 +467,7 @@ describe('KeycloakUserService', () => {
                     id: user.id,
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: user.enabled,
-                } as unknown as UserRepresentation);
+                });
 
                 const res: Result<User<true>> = await service.findById(user.id);
 
@@ -551,12 +551,12 @@ describe('KeycloakUserService', () => {
                         createdTimestamp: user.createdDate.getTime(),
                         enabled: user.enabled,
                     },
-                ] as unknown as UserRepresentation[]);
+                ]);
 
                 const res: Result<User<true>> = await service.findOne({
                     username: user.username,
                     email: user.email,
-                } as unknown as FindUserFilter);
+                });
 
                 expect(res).toStrictEqual<Result<User<true>>>({
                     ok: true,
@@ -573,7 +573,7 @@ describe('KeycloakUserService', () => {
                 const res: Result<User<true>> = await service.findOne({
                     username: user.username,
                     email: user.email,
-                } as unknown as FindUserFilter);
+                });
 
                 expect(res).toStrictEqual<Result<User<true>>>({
                     ok: false,
@@ -595,7 +595,7 @@ describe('KeycloakUserService', () => {
                 const res: Result<User<true>> = await service.findOne({
                     username: user.username,
                     email: user.email,
-                } as unknown as FindUserFilter);
+                });
 
                 expect(res).toBe(error);
             });
@@ -608,7 +608,7 @@ describe('KeycloakUserService', () => {
                 const result: Result<User<true>> = await service.findOne({
                     username: user.username,
                     email: user.email,
-                } as unknown as FindUserFilter);
+                });
 
                 expect(result.ok).toBeFalsy();
                 if (!result.ok) {
@@ -744,7 +744,7 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
-                } as UserRepresentation);
+                });
 
                 const mockGroups: GroupRepresentation[] = [
                     {
@@ -780,7 +780,7 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
-                } as UserRepresentation);
+                });
 
                 kcGroupsMock.find.mockResolvedValueOnce([]);
 
@@ -803,7 +803,7 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
-                } as UserRepresentation);
+                });
 
                 const mockGroups: GroupRepresentation[] = [
                     { id: 'group-id-1', name: 'group1' },
@@ -829,7 +829,7 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
-                } as UserRepresentation);
+                });
                 const mockGroups: GroupRepresentation[] = [
                     { id: 'group-id-1', name: 'group1' },
                     { id: 'group-id-2', name: 'group2' },
@@ -854,7 +854,7 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
-                } as UserRepresentation);
+                });
 
                 const mockGroups: GroupRepresentation[] = [{ id: 'group-id-1', name: 'group1' }];
 
@@ -890,7 +890,7 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
-                } as UserRepresentation);
+                });
 
                 const mockGroups: GroupRepresentation[] = [
                     { id: 'group-id-1', name: 'group1' },
@@ -964,7 +964,7 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
-                } as UserRepresentation);
+                });
 
                 const mockGroups: GroupRepresentation[] = [
                     {
@@ -1001,7 +1001,7 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
-                } as UserRepresentation);
+                });
 
                 kcGroupsMock.find.mockResolvedValueOnce([]);
 
@@ -1025,7 +1025,7 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
-                } as UserRepresentation);
+                });
 
                 const mockGroups: GroupRepresentation[] = [
                     { id: 'group-id-1', name: 'group1' },
@@ -1052,7 +1052,7 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
-                } as UserRepresentation);
+                });
                 const mockGroups: GroupRepresentation[] = [
                     { id: 'group-id-1', name: 'group1' },
                     { id: 'group-id-2', name: 'group2' },
@@ -1077,7 +1077,7 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
-                } as UserRepresentation);
+                });
 
                 const mockGroups: GroupRepresentation[] = [{ id: 'group-id-1', name: 'group1' }];
 
@@ -1110,7 +1110,7 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
                     enabled: true,
-                } as UserRepresentation);
+                });
 
                 const mockGroups: GroupRepresentation[] = [{ id: 'group-id-1', name: 'group1' }];
 
