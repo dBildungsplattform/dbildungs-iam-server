@@ -19,6 +19,7 @@ import { IPersonPermissions } from '../../../../shared/permissions/person-permis
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 import { DomainError } from '../../../../shared/error/index.js';
 import { Ok } from '../../../../shared/util/result.js';
+import { PersonInfoResponseV2 } from '../../api/personinfo/v2/person-info.response.v2.js';
 
 @Injectable()
 export class PersonenInfoService {
@@ -187,13 +188,13 @@ export class PersonenInfoService {
         }
 
         const emailMap: Map<PersonID, PersonEmailResponse | undefined> = emailsForPersons.value;
-        const responses: PersonInfoResponseV1[] = persons.map((person: Person<true>) => {
+        const responses: PersonInfoResponseV2[] = persons.map((person: Person<true>) => {
             const personId: PersonID = person.id;
             const email: PersonEmailResponse | undefined = emailMap.get(personId);
             const kontexteWithOrgaAndRolle: KontextWithOrgaAndRolle[] = kontexteForPersons.get(personId) ?? [];
             const userLocks: UserLock[] = userLocksForPersons.get(personId) ?? [];
 
-            return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle, email, userLocks);
+            return PersonInfoResponseV2.createNew(person, kontexteWithOrgaAndRolle, email, userLocks);
         });
 
         return Ok(responses);
