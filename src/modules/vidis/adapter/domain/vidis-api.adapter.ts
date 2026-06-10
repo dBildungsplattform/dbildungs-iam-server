@@ -15,7 +15,7 @@ import {
 import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces.js';
 import { firstValueFrom } from 'rxjs';
 import { Err, Ok } from '../../../../shared/util/result.js';
-import { VidisDomainError } from '../domain/vidis-domain.error.js';
+import { VidisDomainError } from '../../error/vidis-domain.error.js';
 
 @Injectable()
 export class VidisApiAdapter {

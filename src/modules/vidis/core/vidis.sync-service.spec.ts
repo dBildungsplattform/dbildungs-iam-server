@@ -1,29 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { vi } from 'vitest';
-import { createMock, DeepMocked } from '../../../../../test/utils/createMock.js';
-import { createPersonPermissionsMock } from '../../../../../test/utils/auth.mock.js';
-import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { Err, Ok } from '../../../../shared/util/result.js';
-import { IPersonPermissions } from '../../../../shared/permissions/person-permissions.interface.js';
-import { Organisation } from '../../../organisation/domain/organisation.js';
-import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
-import { EscalatedPersonPermissionsFactory } from '../../../permission/escalated-person-permissions.factory.js';
-import { RollenerweiterungRepo } from '../../../rolle/repo/rollenerweiterung.repo.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
     ServiceProviderSystem,
     ServiceProviderTarget,
-} from '../../../service-provider/domain/service-provider.enum.js';
-import { ServiceProvider } from '../../../service-provider/domain/service-provider.js';
-import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
-import type { VidisAngebotWithSchoolActivations, VidisServiceResponseAngebot } from './vidis.types.js';
-import { EscalatedPersonPermissions } from '../../../permission/escalated-person-permissions.js';
+} from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import type { VidisAngebotWithSchoolActivations, VidisServiceResponseAngebot } from '../adapter/domain/vidis.types.js';
+import { EscalatedPersonPermissions } from '../../permission/escalated-person-permissions.js';
 import { faker } from '@faker-js/faker';
 import { VidisSyncService } from './vidis.sync-service.js';
-import { VidisApiAdapter } from './vidis-api.adapter.js';
-import { VidisDomainError } from './vidis-domain.error.js';
+import { VidisApiAdapter } from '../adapter/domain/vidis-api.adapter.js';
+import { VidisDomainError } from '../error/vidis-domain.error.js';
 
 type TorgaIds = {
     id: string;

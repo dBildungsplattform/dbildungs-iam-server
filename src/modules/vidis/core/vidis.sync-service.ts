@@ -1,30 +1,30 @@
 import { Injectable } from '@nestjs/common';
 
-import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import type { VidisDomainError } from './vidis-domain.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import type { VidisDomainError } from '../error/vidis-domain.error.js';
 import type {
     VidisAngebotWithSchoolActivations,
     VidisServiceResponseSchoolActivation,
     VidisServiceResponseAngebot,
-} from './vidis.types.js';
-import { Organisation } from '../../../organisation/domain/organisation.js';
-import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
-import { OrganisationScope } from '../../../organisation/persistence/organisation.scope.js';
-import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
-import { ServiceProvider } from '../../../service-provider/domain/service-provider.js';
+} from '../adapter/domain/vidis.types.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { OrganisationScope } from '../../organisation/persistence/organisation.scope.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
     ServiceProviderSystem,
     ServiceProviderTarget,
-} from '../../../service-provider/domain/service-provider.enum.js';
-import { IPersonPermissions } from '../../../../shared/permissions/person-permissions.interface.js';
-import { EscalatedPersonPermissionsFactory } from '../../../permission/escalated-person-permissions.factory.js';
-import { RollenSystemRechtEnum } from '../../../rolle/domain/systemrecht.js';
-import { RollenerweiterungRepo } from '../../../rolle/repo/rollenerweiterung.repo.js';
-import { ServerConfig, VidisConfig } from '../../../../shared/config/index.js';
+} from '../../service-provider/domain/service-provider.enum.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
+import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { ServerConfig, VidisConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
-import { VidisApiAdapter } from './vidis-api.adapter.js';
+import { VidisApiAdapter } from '../adapter/domain/vidis-api.adapter.js';
 
 type VidisSchoolActivatedAngebot = {
     angebot: VidisServiceResponseAngebot;

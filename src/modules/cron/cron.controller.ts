@@ -34,7 +34,7 @@ import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenSystemRecht } from '../rolle/domain/systemrecht.js';
 import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
-import { VidisSyncService } from '../vidis/adapter/domain/vidis.sync-service.js';
+import { VidisSyncService } from '../vidis/core/vidis.sync-service.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()

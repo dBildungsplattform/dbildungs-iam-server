@@ -5,7 +5,7 @@ import { LoggerModule } from '../../core/logging/logger.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { RolleModule } from '../rolle/rolle.module.js';
 import { ServiceProviderModule } from '../service-provider/service-provider.module.js';
-import { VidisSyncService } from './adapter/domain/vidis.sync-service.js';
+import { VidisSyncService } from './core/vidis.sync-service.js';
 
 @Module({
     imports: [

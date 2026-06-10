@@ -33,7 +33,7 @@ import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
 import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
 import { EscalatedPersonPermissionsFactory } from '../permission/escalated-person-permissions.factory.js';
 import { RollenSystemRecht } from '../rolle/domain/systemrecht.js';
-import { VidisSyncService } from '../vidis/adapter/domain/vidis.sync-service.js';
+import { VidisSyncService } from '../vidis/core/vidis.sync-service.js';
 
 class UnknownError extends DomainError {
     public constructor(message: string) {
