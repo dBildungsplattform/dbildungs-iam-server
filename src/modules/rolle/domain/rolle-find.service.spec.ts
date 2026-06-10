@@ -211,6 +211,31 @@ describe('RolleService', () => {
             expect(rolleRepoMock.findBy).not.toHaveBeenCalled();
         });
 
+        it('should return empty array if allowed organisationIds and rollenarten do not match', async () => {
+            const schule: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [schule.id],
+            });
+            organisationRepoMock.findParentOrgasForIds.mockResolvedValue([]);
+            organisationRepoMock.findDistinctOrganisationsTypen.mockResolvedValueOnce([OrganisationsTyp.SCHULE]);
+
+            const params: FindRollenWithPermissionsParams = {
+                permissions: permissionsMock,
+                rollenArten: [RollenArt.SYSADMIN],
+                organisationIds: [schule.id],
+            };
+
+            await rolleFindService.findRollenAvailableForErweiterung(params);
+
+            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                expect.objectContaining<RolleFindByParameters>({
+                    allowedOrganisationIds: [schule.id],
+                    rollenArten: [],
+                }),
+            );
+        });
+
         it('should filter by searchStr if provided', async () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
             const params: FindRollenWithPermissionsParams = {
