@@ -4439,7 +4439,7 @@
             "password": "SPSHtest1!",
             "vorname": "Batista",
             "familienname": "Schulz",
-            "personalnummer": "7000132"
+            "personalnummer": "7000156"
         },
         {
             "id": 265,
@@ -4447,7 +4447,7 @@
             "password": "SPSHtest1!",
             "vorname": "David",
             "familienname": "Othman",
-            "personalnummer": "7000133"
+            "personalnummer": "7000157"
         }
     ]
 }
