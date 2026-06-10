@@ -27,6 +27,7 @@ import { IPersonPermissions } from '../../../../shared/permissions/person-permis
 import { SchulConnexSharedErrorFilter } from '../../error/schulconnex-shared-error-filter.js';
 import { SchulConnexAuthenticationDomainErrorFilter } from '../../error/schulconnex-authentication-domain-error-filter.js';
 import { SchulConnexValidationErrorFilter } from '../../error/schulconnex-validation-error.filter.js';
+import { PersonInfoResponseV2 } from './v2/person-info.response.v2.js';
 
 @UseFilters(
     new SchulConnexSharedErrorFilter(),
@@ -105,5 +106,35 @@ export class PersonInfoController {
         ]);
 
         return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle, personEmailResponse, userLocks);
+    }
+
+    @Version('2')
+    @Get()
+    @ApiOperation({ summary: 'Info about logged in person.', operationId: 'personInfoControllerInfoV1' })
+    @ApiUnauthorizedResponse({ description: 'person is not logged in.' })
+    @ApiOkResponse({ description: 'Returns info about the person.', type: PersonInfoResponseV1 })
+    public async infoV2(@Permissions() permissions: IPersonPermissions): Promise<PersonInfoResponseV1> {
+        const personId: string = permissions.personFields.id;
+        const person: Option<Person<true>> = await this.personRepo.findById(personId);
+
+        if (!person) {
+            throw new EntityNotFoundError(Person.name, personId);
+        }
+
+        let personEmailResponse: Option<PersonEmailResponse>;
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            this.logger.info(`Getting PersonEmailResponse for PersonId ${personId} using new Microservice`);
+            personEmailResponse = await this.emailResolverService.findEmailBySpshPerson(personId);
+        } else {
+            this.logger.info(`Getting PersonEmailResponse for PersonId ${personId} using old emailRepo`);
+            personEmailResponse = await this.emailRepo.getEmailAddressAndStatusForPerson(person);
+        }
+
+        const [kontexteWithOrgaAndRolle, userLocks]: [Array<KontextWithOrgaAndRolle>, UserLock[]] = await Promise.all([
+            this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
+            this.userLockRepo.findByPersonId(personId),
+        ]);
+
+        return PersonInfoResponseV2.createNew(person, kontexteWithOrgaAndRolle, personEmailResponse, userLocks);
     }
 }

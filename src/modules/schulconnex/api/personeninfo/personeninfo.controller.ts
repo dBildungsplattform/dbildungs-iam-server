@@ -20,6 +20,7 @@ import { SchulConnexAuthenticationDomainErrorFilter } from '../../error/schulcon
 import { SchulConnexSharedErrorFilter } from '../../error/schulconnex-shared-error-filter.js';
 import { SchulConnexValidationErrorFilter } from '../../error/schulconnex-validation-error.filter.js';
 import { DomainError } from '../../../../shared/error/domain.error.js';
+import { PersonInfoResponseV2 } from '../personinfo/v2/person-info.response.v2.js';
 
 @UseFilters(
     new SchulConnexSharedErrorFilter(),
@@ -74,7 +75,46 @@ export class PersonenInfoController {
         }
 
         const result: Result<PersonInfoResponseV1[], DomainError> =
-            await this.personInfoService.findPersonsForPersonenInfo(permissions, parsedOffset, parsedLimit);
+            await this.personInfoService.findPersonsForPersonenInfoV1(permissions, parsedOffset, parsedLimit);
+        if (!result.ok) {
+            throw result.error;
+        }
+        return result.value;
+    }
+
+    @Get()
+    @ApiOperation({
+        summary: `liefert Personeninformationen basierend auf den Berechtigungen auf Service Provider des aufrufenden Nutzers.`,
+        description: `liefert Personeninformationen basierend auf den Berechtigungen auf Service Provider des aufrufenden Nutzers mit internen Rollentypen.`,
+    })
+    @ApiQuery({
+        name: 'x-limit',
+        required: false,
+        description: `Maximale Anzahl der Ergebnisse`,
+        schema: { type: 'integer' },
+    })
+    @ApiQuery({
+        name: 'x-offset',
+        required: false,
+        description: `Offset für die Ergebnisse`,
+        schema: { type: 'integer' },
+    })
+    @ApiUnauthorizedResponse({ description: 'person is not logged in.' })
+    @ApiOkResponse({ description: 'Liste von Personeninformationen', type: PersonInfoResponseV1 })
+    public async infoV2(
+        @Permissions() permissions: IPersonPermissions,
+        @Headers('x-offset') offset: string,
+        @Headers('x-limit') limit: string,
+    ): Promise<PersonInfoResponseV2[]> {
+        const parsedOffset: number = Number.isNaN(parseInt(offset, 10)) ? 0 : parseInt(offset, 10);
+        const parsedLimit: number = Number.isNaN(parseInt(limit, 10)) ? this.maxPersonenInfoLimit : parseInt(limit, 10);
+
+        if (parsedLimit > this.maxPersonenInfoLimit) {
+            throw new ExceedsLimitError(`Limit darf maximal ${this.maxPersonenInfoLimit} sein.`);
+        }
+
+        const result: Result<PersonInfoResponseV2[], DomainError> =
+            await this.personInfoService.findPersonsForPersonenInfoV2(permissions, parsedOffset, parsedLimit);
         if (!result.ok) {
             throw result.error;
         }

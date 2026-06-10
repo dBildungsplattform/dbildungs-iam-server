@@ -44,18 +44,18 @@ describe('PersonenInfoController', () => {
 
     it('should parse offset and limit as integers', async () => {
         const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-        service.findPersonsForPersonenInfo.mockResolvedValue(Ok([]));
+        service.findPersonsForPersonenInfoV1.mockResolvedValue(Ok([]));
 
         await controller.infoV1(permissions, '5', '15');
-        expect(service.findPersonsForPersonenInfo).toHaveBeenCalledWith(permissions, 5, 15);
+        expect(service.findPersonsForPersonenInfoV1).toHaveBeenCalledWith(permissions, 5, 15);
     });
 
     it('should handle invalid offset and limit with fallback of page 1', async () => {
         const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-        service.findPersonsForPersonenInfo.mockResolvedValue(Ok([]));
+        service.findPersonsForPersonenInfoV1.mockResolvedValue(Ok([]));
 
         await controller.infoV1(permissions, 'invalid', 'invalid');
-        expect(service.findPersonsForPersonenInfo).toHaveBeenCalledWith(permissions, 0, 2500);
+        expect(service.findPersonsForPersonenInfoV1).toHaveBeenCalledWith(permissions, 0, 2500);
     });
 
     it('should handle limit that exceeds maximum limit', async () => {
@@ -66,7 +66,7 @@ describe('PersonenInfoController', () => {
     it('should throw when service returns error', async () => {
         const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
-        service.findPersonsForPersonenInfo.mockResolvedValue({
+        service.findPersonsForPersonenInfoV1.mockResolvedValue({
             ok: false,
             error: new EntityNotFoundError('PersonenInfo', '123'),
         });
@@ -76,20 +76,20 @@ describe('PersonenInfoController', () => {
 
     it('should fallback offset to 0 when offset is invalid', async () => {
         const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-        service.findPersonsForPersonenInfo.mockResolvedValue(Ok([]));
+        service.findPersonsForPersonenInfoV1.mockResolvedValue(Ok([]));
 
         await controller.infoV1(permissions, 'invalid', '10');
 
-        expect(service.findPersonsForPersonenInfo).toHaveBeenCalledWith(permissions, 0, 10);
+        expect(service.findPersonsForPersonenInfoV1).toHaveBeenCalledWith(permissions, 0, 10);
     });
 
     it('should fallback limit to max when limit is invalid', async () => {
         const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-        service.findPersonsForPersonenInfo.mockResolvedValue(Ok([]));
+        service.findPersonsForPersonenInfoV1.mockResolvedValue(Ok([]));
 
         await controller.infoV1(permissions, '5', 'invalid');
 
-        expect(service.findPersonsForPersonenInfo).toHaveBeenCalledWith(
+        expect(service.findPersonsForPersonenInfoV1).toHaveBeenCalledWith(
             permissions,
             5,
             controller['maxPersonenInfoLimit'],

@@ -108,7 +108,7 @@ describe('PersonInfoService', () => {
                 orgaIds: [],
             });
             dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([]);
-            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
+            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfoV1(
                 createPersonPermissionsMock(),
                 0,
                 10,
@@ -154,7 +154,7 @@ describe('PersonInfoService', () => {
                 } satisfies KontextWithOrgaAndRolle,
             ]);
 
-            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
+            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfoV1(
                 permissions,
                 0,
                 10,
@@ -244,7 +244,7 @@ describe('PersonInfoService', () => {
                 ]),
             );
 
-            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
+            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfoV1(
                 permissions,
                 0,
                 10,
@@ -350,7 +350,7 @@ describe('PersonInfoService', () => {
                 ]),
             );
 
-            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
+            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfoV1(
                 permissions,
                 0,
                 10,
@@ -456,7 +456,7 @@ describe('PersonInfoService', () => {
                 ]),
             );
 
-            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
+            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfoV1(
                 permissions,
                 0,
                 10,
@@ -561,7 +561,7 @@ describe('PersonInfoService', () => {
                 ]),
             );
 
-            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
+            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfoV1(
                 permissions,
                 0,
                 10,
@@ -639,7 +639,7 @@ describe('PersonInfoService', () => {
                 error: undefined as unknown as DomainError,
             });
 
-            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
+            const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfoV1(
                 permissions,
                 0,
                 10,
@@ -694,7 +694,7 @@ describe('PersonInfoService', () => {
             error: undefined as unknown as DomainError,
         });
 
-        const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfo(
+        const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfoV1(
             permissions,
             0,
             10,

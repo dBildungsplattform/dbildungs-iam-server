@@ -22,7 +22,7 @@ import {
 } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
-import { SchulconnexOrganisationTyp, SchulconnexPersonenstatus, SchulconnexRolle } from '../schulconnex-enums.v1.js';
+import { SchulconnexOrganisationTyp, SchulconnexPersonenstatus, SchulconnexRolle } from '../schulconnex-enums.js';
 import { PersonInfoController } from './person-info.controller.js';
 import { PersonInfoResponse, PersonNestedInPersonInfoResponse } from './v0/person-info.response.js';
 import { PersonInfoPersonResponseV1 } from './v1/person-info-person.response.v1.js';
