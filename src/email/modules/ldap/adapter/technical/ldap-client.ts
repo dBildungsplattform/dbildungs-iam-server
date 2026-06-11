@@ -1,12 +1,12 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Client } from 'ldapts';
-import { LdapInstanceConfig } from './ldap-instance-config.js';
+import { LdapEmailMicroserviceInstanceConfig } from './ldap-email-microservice-instance-config.js';
 
 @Injectable()
 export class LdapClient implements OnModuleDestroy {
     private client: Client | undefined;
 
-    public constructor(private readonly ldapInstanceConfig: LdapInstanceConfig) {}
+    public constructor(private readonly ldapInstanceConfig: LdapEmailMicroserviceInstanceConfig) {}
 
     public getClient(): Client {
         if (!this.client) {

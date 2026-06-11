@@ -8,6 +8,7 @@ import { LdapClientAdapter } from '../../ldap/adapter/domain/ldap-client.adapter
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { OxNoSuchUserError } from '../../ox/adapter/domain/error/ox-no-such-user.error.js';
 import { WebhookService } from '../../webhook/domain/webhook.service.js';
+import { Ok } from '../../../../shared/util/result.js';
 
 @Injectable()
 export class DeleteEmailsAddressesForSpshPersonService {
@@ -44,7 +45,23 @@ export class DeleteEmailsAddressesForSpshPersonService {
         const domain: string | undefined = addresses.find((a: EmailAddress<true>) => a.getDomain())?.getDomain();
         if (oxUserCounter) {
             //Deleting the Group Relations extra is not necessary as Ox deletes them automatically when deleting the user
-            const deleteUserResult: Result<void, Error> = await this.oxAdapter.deleteUser(oxUserCounter);
+            let deleteUserResult: Result<void, Error>;
+
+            if (!this.oxAdapter.useOx()) {
+                const oxUserAddresses: object = addresses.map((a: EmailAddress<true>) => ({
+                    address: a.address,
+                    priority: a.priority,
+                    externalId: a.externalId,
+                }));
+                this.logger.info(
+                    `OX disabled -> faking deleteUser. Data: oxUserCounter=${oxUserCounter}, addresses=${JSON.stringify(oxUserAddresses)}`,
+                );
+
+                deleteUserResult = Ok(undefined);
+            } else {
+                deleteUserResult = await this.oxAdapter.deleteUser(oxUserCounter);
+            }
+
             if (deleteUserResult.ok) {
                 this.logger.info(
                     `Successfully deleted for spshPerson ${params.spshPersonId} the corresponding Ox user ${oxUserCounter}.`,
@@ -62,10 +79,24 @@ export class DeleteEmailsAddressesForSpshPersonService {
             );
         }
         if (externalId && domain) {
-            const deleteLdapPersonResult: Result<void, Error> = await this.ldapClientAdapter.deletePerson(
-                externalId,
-                domain,
-            );
+            let deleteLdapPersonResult: Result<void, Error>;
+
+            if (!this.ldapClientAdapter.useLdap()) {
+                const ldapUserAddresses: object = addresses.map((a: EmailAddress<true>) => ({
+                    address: a.address,
+                    priority: a.priority,
+                    externalId: a.externalId,
+                }));
+                this.logger.info(
+                    `LDAP disabled -> faking deletePerson. Data: externalId=${externalId}, domain=${domain}, addresses=${JSON.stringify(
+                        ldapUserAddresses,
+                    )}`,
+                );
+                deleteLdapPersonResult = Ok(undefined);
+            } else {
+                deleteLdapPersonResult = await this.ldapClientAdapter.deletePerson(externalId, domain);
+            }
+
             if (!deleteLdapPersonResult.ok) {
                 canDbDeleteAllAdresses = false;
             } else {
