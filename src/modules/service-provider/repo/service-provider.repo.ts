@@ -156,7 +156,6 @@ export class ServiceProviderRepo {
             return [];
         }
 
-        const exclude: readonly ['logo'] | undefined = ['logo'];
         const serviceProviders: ServiceProviderEntity[] = await this.em.find(
             ServiceProviderEntity,
             {
@@ -164,7 +163,7 @@ export class ServiceProviderRepo {
                 vidisAngebotId: { $ne: null },
             },
             {
-                exclude,
+                exclude: ['logo'] as const,
                 populate: ['merkmale'],
             },
         );

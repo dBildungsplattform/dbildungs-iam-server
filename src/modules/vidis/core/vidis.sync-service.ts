@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { ScopeOrder } from '../../../shared/persistence/index.js';
 import type { VidisDomainError } from '../error/vidis-domain.error.js';
 import type {
     VidisAngebotWithSchoolActivations,
@@ -94,6 +95,7 @@ export class VidisSyncService {
                 .findBy({
                     typ: 'SCHULE',
                 })
+                .sortBy('id', ScopeOrder.ASC)
                 .paged(schoolOffset, this.vidisConfig.SYNC_SCHOOLS_PAGE_SIZE),
         );
 
@@ -162,7 +164,7 @@ export class VidisSyncService {
             this.logger.info(
                 `No differences between VIDIS API and database for school with organisationId: ${organisationId}`,
             );
-            return Promise.resolve();
+            return;
         }
         this.logger.info(
             `Differences found between VIDIS API and database for school with organisationId: ${organisationId}. ` +
@@ -213,46 +215,45 @@ export class VidisSyncService {
             }
         }
 
-        return Promise.allSettled(syncOperations).then((results: PromiseSettledResult<unknown>[]) => {
-            const failedOperations: PromiseSettledResult<unknown>[] = results.filter(
-                (result: PromiseSettledResult<unknown>) =>
-                    result.status === 'rejected' ||
-                    (result.status === 'fulfilled' &&
-                        typeof result.value === 'object' &&
-                        result.value !== null &&
-                        'ok' in result.value &&
-                        result.value.ok === false),
-            );
+        const results: PromiseSettledResult<unknown>[] = await Promise.allSettled(syncOperations);
+        const failedOperations: PromiseSettledResult<unknown>[] = results.filter(
+            (result: PromiseSettledResult<unknown>) =>
+                result.status === 'rejected' ||
+                (result.status === 'fulfilled' &&
+                    typeof result.value === 'object' &&
+                    result.value !== null &&
+                    'ok' in result.value &&
+                    result.value.ok === false),
+        );
 
-            if (failedOperations.length === 0) {
+        if (failedOperations.length === 0) {
+            return;
+        }
+
+        this.logger.error(
+            `VIDIS sync for organisation ${organisationId} finished with ${failedOperations.length} failed operations.`,
+        );
+
+        failedOperations.forEach((result: PromiseSettledResult<unknown>) => {
+            if (result.status === 'rejected') {
+                this.logger.logUnknownAsError(
+                    `VIDIS sync operation for organisation ${organisationId} rejected`,
+                    result.reason,
+                );
                 return;
             }
 
-            this.logger.error(
-                `VIDIS sync for organisation ${organisationId} finished with ${failedOperations.length} failed operations.`,
+            const failedResult: unknown = result.value;
+            const error: unknown =
+                typeof failedResult === 'object' && failedResult !== null && 'error' in failedResult
+                    ? failedResult.error
+                    : failedResult;
+
+            this.logger.logUnknownAsError(
+                `VIDIS sync operation for organisation ${organisationId} returned an error result`,
+                error,
+                false,
             );
-
-            failedOperations.forEach((result: PromiseSettledResult<unknown>) => {
-                if (result.status === 'rejected') {
-                    this.logger.logUnknownAsError(
-                        `VIDIS sync operation for organisation ${organisationId} rejected`,
-                        result.reason,
-                    );
-                    return;
-                }
-
-                const failedResult: unknown = result.value;
-                const error: unknown =
-                    typeof failedResult === 'object' && failedResult !== null && 'error' in failedResult
-                        ? failedResult.error
-                        : failedResult;
-
-                this.logger.logUnknownAsError(
-                    `VIDIS sync operation for organisation ${organisationId} returned an error result`,
-                    error,
-                    false,
-                );
-            });
         });
     }
 
