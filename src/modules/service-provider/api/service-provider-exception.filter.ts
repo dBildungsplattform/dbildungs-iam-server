@@ -7,6 +7,7 @@ import { DbiamServiceProviderError, ServiceProviderErrorI18nTypes } from './dbia
 import { AttachedRollenError } from '../domain/errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from '../domain/errors/attached-rollenerweiterungen.error.js';
 import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
+import { VidisServiceProviderImmutableError } from '../domain/errors/vidis-service-provider-immutable.error.js';
 
 @Catch(ServiceProviderError)
 export class ServiceProviderErrorFilter implements ExceptionFilter<ServiceProviderError> {
@@ -23,6 +24,13 @@ export class ServiceProviderErrorFilter implements ExceptionFilter<ServiceProvid
             new DbiamServiceProviderError({
                 code: 400,
                 i18nKey: ServiceProviderErrorI18nTypes.INVALID_LOGO_COMBINATION,
+            }),
+        ],
+        [
+            VidisServiceProviderImmutableError.name,
+            new DbiamServiceProviderError({
+                code: 400,
+                i18nKey: ServiceProviderErrorI18nTypes.VIDIS_SERVICE_PROVIDER_IMMUTABLE,
             }),
         ],
         [
