@@ -17,6 +17,16 @@
             "rolleId": 1
         },
         {
+            "personId": 667,
+            "organisationId": 5,
+            "rolleId": 1
+        },
+        {
+            "personId": 667,
+            "organisationId": 501,
+            "rolleId": 1
+        },
+        {
             "personId": 21,
             "organisationId": 15,
             "rolleId": 4
@@ -2929,12 +2939,12 @@
         {
             "personId": 607,
             "organisationId": 32,
-            "rolleId": 1
+            "rolleId": 5
         },
         {
             "personId": 607,
             "organisationId": 3206,
-            "rolleId": 1
+            "rolleId": 5
         },
         {
             "personId": 438,
