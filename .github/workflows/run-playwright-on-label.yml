@@ -1,0 +1,44 @@
+name: 'Run Playwright on Label'
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+jobs:
+  run_on_label:
+    if: github.event.label.name == 'run-tests'
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@7
+
+  create_branch_identifier:
+    needs: [run_on_label]
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@7
+    with:
+      branch: ${{ needs.run_on_label.outputs.branch }}
+
+  determine_playwright_branch:
+    needs: [create_branch_identifier]
+    runs-on: ubuntu-latest
+    outputs:
+      playwright_branch: ${{ steps.check_branch.outputs.playwright_branch }}
+    steps:
+      - name: Check if Playwright branch exists
+        id: check_branch
+        env:
+          PLAYWRIGHT_BRANCH: ${{ github.head_ref }}
+        run: |
+          if git ls-remote --heads --exit-code https://github.com/dBildungsplattform/schulportal-testautomatisierung "$PLAYWRIGHT_BRANCH" &> /dev/null; then
+            echo "playwright_branch=$PLAYWRIGHT_BRANCH" >> $GITHUB_OUTPUT
+          else
+            echo "playwright_branch=main" >> $GITHUB_OUTPUT
+          fi
+
+  run_playwright_tests:
+    needs: [create_branch_identifier, determine_playwright_branch]
+    uses: dBildungsplattform/schulportal-testautomatisierung/.github/workflows/run-playwright.yml@main
+    secrets: inherit
+    with:
+      frontendHostname: '${{ needs.create_branch_identifier.outputs.namespace_from_branch }}.dev.spsh.dbildungsplattform.de'
+      playwright_branch: ${{ needs.determine_playwright_branch.outputs.playwright_branch }}
+      namespace_to_use: '${{ needs.create_branch_identifier.outputs.namespace_from_branch }}'
+      tag: 'dev'
+      browser: 'chromium'
