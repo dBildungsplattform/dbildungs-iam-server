@@ -86,6 +86,13 @@ export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
                 i18nKey: RolleErrorI18nTypes.SERVICE_PROVIDER_PROVIDED_OUT_OF_TREE,
             }),
         ],
+        [
+            NameForRolleWithTrailingSpaceError.name,
+            new DbiamRolleError({
+                code: 400,
+                i18nKey: RolleErrorI18nTypes.ROLLENART_NUR_FUER_SCHULE,
+            }),
+        ],
     ]);
 
     public catch(exception: RolleDomainError, host: ArgumentsHost): void {

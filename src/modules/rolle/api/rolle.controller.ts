@@ -58,7 +58,7 @@ import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { AddSystemrechtError } from './add-systemrecht.error.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
-import { DbiamRolleError } from './dbiam-rolle.error.js';
+import { DbiamRolleError, RolleErrorI18nTypes } from './dbiam-rolle.error.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { FindRolleQueryParams } from './find-rolle-query.param.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
@@ -69,6 +69,7 @@ import { RolleResponse } from './rolle.response.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -225,6 +226,16 @@ export class RolleController {
                 `Admin: ${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${orgResult.error.message}`,
             );
             throw orgResult.error;
+        }
+        if (
+            orgResult.value.typ !== OrganisationsTyp.SCHULE &&
+            params.rollenart &&
+            ['SORGBER', 'SCHB', 'NLEHR'].includes(params.rollenart)
+        ) {
+            this.logger.error(
+                `Rollen mit der Rollenart ${params.rollenart} können nur für Organisationen des Typs SCHULE angelegt werden.`,
+            );
+            throw new RolleDomainError(RolleErrorI18nTypes.ROLLENART_NUR_FUER_SCHULE, params.rollenart);
         }
         const rolle: DomainError | Rolle<false> = this.rolleFactory.createNew(
             params.name,
