@@ -1,4 +1,4 @@
-import { Controller, Headers, Get, UseFilters } from '@nestjs/common';
+import { Controller, Headers, Get, UseFilters, Version } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiOAuth2,
@@ -47,6 +47,7 @@ export class PersonenInfoController {
     @ApiOperation({
         summary: `liefert Personeninformationen basierend auf den Berechtigungen auf Service Provider des aufrufenden Nutzers.`,
         description: `liefert Personeninformationen basierend auf den Berechtigungen auf Service Provider des aufrufenden Nutzers.`,
+        operationId: 'personenInfoControllerInfoV1',
     })
     @ApiQuery({
         name: 'x-limit',
@@ -82,10 +83,12 @@ export class PersonenInfoController {
         return result.value;
     }
 
+    @Version('2')
     @Get()
     @ApiOperation({
-        summary: `liefert Personeninformationen basierend auf den Berechtigungen auf Service Provider des aufrufenden Nutzers.`,
+        summary: `liefert Personeninformationen basierend auf den Berechtigungen auf Service Provider des aufrufenden Nutzers mit internen Rollentypen.`,
         description: `liefert Personeninformationen basierend auf den Berechtigungen auf Service Provider des aufrufenden Nutzers mit internen Rollentypen.`,
+        operationId: 'personenInfoControllerInfoV2',
     })
     @ApiQuery({
         name: 'x-limit',

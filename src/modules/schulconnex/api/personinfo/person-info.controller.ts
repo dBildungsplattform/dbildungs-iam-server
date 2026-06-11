@@ -110,7 +110,10 @@ export class PersonInfoController {
 
     @Version('2')
     @Get()
-    @ApiOperation({ summary: 'Info about logged in person.', operationId: 'personInfoControllerInfoV1' })
+    @ApiOperation({
+        summary: 'Info about logged in person with intern role types.',
+        operationId: 'personInfoControllerInfoV2',
+    })
     @ApiUnauthorizedResponse({ description: 'person is not logged in.' })
     @ApiOkResponse({ description: 'Returns info about the person.', type: PersonInfoResponseV1 })
     public async infoV2(@Permissions() permissions: IPersonPermissions): Promise<PersonInfoResponseV1> {
