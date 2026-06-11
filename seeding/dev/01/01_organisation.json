@@ -16,7 +16,7 @@
             "typ": "LAND",
             "administriertVon": 0,
             "zugehoerigZu": 0,
-            "emailDomain": "qs.schule-sh.de"
+            "emailDomain": "schule-sh.de"
         },
         {
             "id": 2,
@@ -25,7 +25,7 @@
             "typ": "LAND",
             "administriertVon": 0,
             "zugehoerigZu": 0,
-            "emailDomain": "qs.ersatzschule-sh.de"
+            "emailDomain": "ersatzschule-sh.de"
         },
         {
             "id": 3,
@@ -48,7 +48,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "amalie-sieveking@qs.schule-sh.de"
+            "emailAdress": "amalie-sieveking@schule-sh.de"
         },
         {
             "id": 6,
@@ -57,7 +57,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "carl-orff@qs.schule-sh.de"
+            "emailAdress": "carl-orff@schule-sh.de"
         },
         {
             "id": 7,
@@ -66,7 +66,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "eric-kandel@qs.schule-sh.de"
+            "emailAdress": "eric-kandel@schule-sh.de"
         },
         {
             "id": 8,
@@ -75,7 +75,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "emil-von-behring@qs.schule-sh.de"
+            "emailAdress": "emil-von-behring@schule-sh.de"
         },
         {
             "id": 9,
@@ -84,7 +84,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "friedrich-junge-schule@qs.schule-sh.de"
+            "emailAdress": "friedrich-junge-schule@schule-sh.de"
         },
         {
             "id": 10,
@@ -93,7 +93,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "grundschule-hoisdorf@qs.schule-sh.de"
+            "emailAdress": "grundschule-hoisdorf@schule-sh.de"
         },
         {
             "id": 11,
@@ -102,7 +102,7 @@
             "typ": "SCHULE",
             "administriertVon": 2,
             "zugehoerigZu": 2,
-            "emailAdress": "duborg-skolen@qs.ersatzschule-sh.de"
+            "emailAdress": "duborg-skolen@ersatzschule-sh.de"
         },
         {
             "id": 12,
@@ -119,7 +119,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "hallenschule@qs.schule-sh.de"
+            "emailAdress": "hallenschule@schule-sh.de"
         },
         {
             "id": 14,
@@ -128,7 +128,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "internationale-grundschule@qs.schule-sh.de"
+            "emailAdress": "internationale-grundschule@schule-sh.de"
         },
         {
             "id": 15,
@@ -137,7 +137,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "joko-schule-ohne-klasse@qs.schule-sh.de"
+            "emailAdress": "joko-schule-ohne-klasse@schule-sh.de"
         },
         {
             "id": 16,
@@ -146,7 +146,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "kaufland-schule@qs.schule-sh.de"
+            "emailAdress": "kaufland-schule@schule-sh.de"
         },
         {
             "id": 17,
@@ -155,7 +155,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "luett-deern-scool@qs.schule-sh.de"
+            "emailAdress": "luett-deern-scool@schule-sh.de"
         },
         {
             "id": 18,
@@ -164,7 +164,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "moorwegschule@qs.schule-sh.de"
+            "emailAdress": "moorwegschule@schule-sh.de"
         },
         {
             "id": 19,
@@ -173,7 +173,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "nordlicht-ganztagsschule@qs.schule-sh.de"
+            "emailAdress": "nordlicht-ganztagsschule@schule-sh.de"
         },
         {
             "id": 20,
@@ -182,7 +182,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "ostsee-grundschule@qs.schule-sh.de"
+            "emailAdress": "ostsee-grundschule@schule-sh.de"
         },
         {
             "id": 21,
@@ -191,7 +191,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "pi-mathematiker-schule@qs.schule-sh.de"
+            "emailAdress": "pi-mathematiker-schule@schule-sh.de"
         },
         {
             "id": 22,
@@ -200,7 +200,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "quarklernschule@qs.schule-sh.de"
+            "emailAdress": "quarklernschule@schule-sh.de"
         },
         {
             "id": 23,
@@ -209,7 +209,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "richtiges-gymnasium@qs.schule-sh.de"
+            "emailAdress": "richtiges-gymnasium@schule-sh.de"
         },
         {
             "id": 24,
@@ -218,7 +218,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "supercoole-stadteilschule@qs.schule-sh.de"
+            "emailAdress": "supercoole-stadteilschule@schule-sh.de"
         },
         {
             "id": 25,
@@ -227,7 +227,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "theodor-schule@qs.schule-sh.de"
+            "emailAdress": "theodor-schule@schule-sh.de"
         },
         {
             "id": 26,
@@ -236,7 +236,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "urea-schule@qs.schule-sh.de"
+            "emailAdress": "urea-schule@schule-sh.de"
         },
         {
             "id": 27,
@@ -245,7 +245,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "veilchenweg-schule@qs.schule-sh.de"
+            "emailAdress": "veilchenweg-schule@schule-sh.de"
         },
         {
             "id": 28,
@@ -254,7 +254,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "werbefreie-grundschule@qs.schule-sh.de"
+            "emailAdress": "werbefreie-grundschule@schule-sh.de"
         },
         {
             "id": 29,
@@ -263,7 +263,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "xaviers-spezial-schule@qs.schule-sh.de"
+            "emailAdress": "xaviers-spezial-schule@schule-sh.de"
         },
         {
             "id": 30,
@@ -272,7 +272,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "yolanda-school@qs.schule-sh.de"
+            "emailAdress": "yolanda-school@schule-sh.de"
         },
         {
             "id": 31,
@@ -281,7 +281,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "zeugen-des-lernens-gemeinschaftsschule@qs.schule-sh.de"
+            "emailAdress": "zeugen-des-lernens-gemeinschaftsschule@schule-sh.de"
         },
         {
             "id": 32,
@@ -290,7 +290,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "harleyquin-schule@qs.schule-sh.de"
+            "emailAdress": "harleyquin-schule@schule-sh.de"
         },
         {
             "id": 33,
@@ -299,7 +299,7 @@
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1,
-            "emailAdress": "grundschule-ohne-klassen@qs.schule-sh.de"
+            "emailAdress": "grundschule-ohne-klassen@schule-sh.de"
         },
               {
             "id": 34,
