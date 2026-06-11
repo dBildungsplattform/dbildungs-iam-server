@@ -34,7 +34,7 @@ jobs:
 
   run_playwright_tests:
     needs: [create_branch_identifier, determine_playwright_branch]
-    uses: dBildungsplattform/schulportal-testautomatisierung/.github/workflows/run-playwright.yml@SPSH-3755
+    uses: dBildungsplattform/schulportal-testautomatisierung/.github/workflows/run-playwright.yml@7
     secrets: inherit
     with:
       frontendHostname: '${{ needs.create_branch_identifier.outputs.namespace_from_branch }}.dev.spsh.dbildungsplattform.de'
