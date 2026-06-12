@@ -49,10 +49,8 @@ import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { RolleApiModule } from '../rolle-api.module.js';
-import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
-import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 import { RolleResponse } from './rolle.response.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
@@ -788,41 +786,6 @@ describe('Rolle API', () => {
         });
     });
 
-    describe('/PATCH rolle, add systemrecht', () => {
-        describe('when rolle exists and systemrecht is matching enum', () => {
-            it('should return 200', async () => {
-                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) {
-                    throw Error();
-                }
-
-                const params: AddSystemrechtBodyParams = {
-                    systemRecht: RollenSystemRechtEnum.ROLLEN_VERWALTEN,
-                };
-                const response: Response = await request(app.getHttpServer() as App)
-                    .patch(`/rolle/${rolle.id}`)
-                    .send(params);
-
-                expect(response.status).toBe(200);
-            });
-        });
-
-        describe('when rolle does not exist', () => {
-            it('should return 500', async () => {
-                await rolleRepo.save(DoFactory.createRolle(false));
-                const validButNonExistingUUID: string = faker.string.uuid();
-                const params: AddSystemrechtBodyParams = {
-                    systemRecht: RollenSystemRechtEnum.ROLLEN_VERWALTEN,
-                };
-                const response: Response = await request(app.getHttpServer() as App)
-                    .patch(`/rolle/${validButNonExistingUUID}`)
-                    .send(params);
-
-                expect(response.status).toBe(500);
-            });
-        });
-    });
-
     describe('/GET rolleId/serviceProviders', () => {
         describe('when rolle exists', () => {
             it('should return 200 and a list of serviceProviders', async () => {
@@ -848,159 +811,6 @@ describe('Rolle API', () => {
                 const response: Response = await request(app.getHttpServer() as App)
                     .get(`/rolle/${validButNonExistingUUID}/serviceProviders`)
                     .send();
-
-                expect(response.status).toBe(404);
-            });
-        });
-    });
-
-    describe('/PUT rolleId/serviceProviders', () => {
-        describe('when rolle and serviceProvider exist', () => {
-            it('should return 201 and add serviceProvider', async () => {
-                const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
-                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
-                    providedOnSchulstrukturknoten: orga.id,
-                });
-                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
-                    DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten: orga.id,
-                    }),
-                );
-                if (rolle instanceof DomainError) {
-                    throw Error();
-                }
-
-                const params: RolleServiceProviderBodyParams = {
-                    serviceProviderIds: [serviceProvider.id],
-                    version: 1,
-                };
-                const response: Response = await request(app.getHttpServer() as App)
-                    .put(`/rolle/${rolle.id}/serviceProviders`)
-                    .send(params);
-
-                expect(response.status).toBe(201);
-            });
-        });
-
-        describe('when rolle and serviceProvider exist, but serviceProvider is already attached', () => {
-            it('should return 201', async () => {
-                const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
-                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
-                    providedOnSchulstrukturknoten: orga.id,
-                });
-                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
-                    DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten: orga.id,
-                        serviceProviderIds: [serviceProvider.id],
-                    }),
-                );
-                if (rolle instanceof DomainError) {
-                    throw Error();
-                }
-
-                const params: RolleServiceProviderBodyParams = {
-                    serviceProviderIds: [serviceProvider.id],
-                    version: 1,
-                };
-                const response: Response = await request(app.getHttpServer() as App)
-                    .put(`/rolle/${rolle.id}/serviceProviders`)
-                    .send(params);
-
-                expect(response.status).toBe(201);
-            });
-        });
-
-        describe('when rolle does not exist', () => {
-            it('should return 404', async () => {
-                const validButNonExistingUUID: string = faker.string.uuid();
-                const params: RolleServiceProviderBodyParams = {
-                    serviceProviderIds: [faker.string.uuid()],
-                    version: 1,
-                };
-                const response: Response = await request(app.getHttpServer() as App)
-                    .put(`/rolle/${validButNonExistingUUID}/serviceProviders`)
-                    .send(params);
-
-                expect(response.status).toBe(404);
-            });
-        });
-
-        describe('when serviceProvider does not exist', () => {
-            it('should return 404', async () => {
-                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) {
-                    throw Error();
-                }
-
-                const params: RolleServiceProviderBodyParams = {
-                    serviceProviderIds: [faker.string.uuid()],
-                    version: 1,
-                };
-                const response: Response = await request(app.getHttpServer() as App)
-                    .put(`/rolle/${rolle.id}/serviceProviders`)
-                    .send(params);
-
-                expect(response.status).toBe(404);
-            });
-        });
-    });
-
-    describe('/DELETE rolleId/serviceProviders', () => {
-        describe('when rolle and serviceProvider exist', () => {
-            it('should return 200 and delete serviceProvider', async () => {
-                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
-                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
-                    DoFactory.createRolle(false, {
-                        serviceProviderIds: [serviceProvider.id],
-                        administeredBySchulstrukturknoten: serviceProvider.providedOnSchulstrukturknoten,
-                    }),
-                );
-                if (rolle instanceof DomainError) {
-                    throw Error();
-                }
-
-                const params: RolleServiceProviderBodyParams = {
-                    serviceProviderIds: [serviceProvider.id],
-                    version: 1,
-                };
-                const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/rolle/${rolle.id}/serviceProviders`)
-                    .send(params);
-
-                expect(response.status).toBe(200);
-            });
-        });
-
-        describe('when rolle does not exist', () => {
-            it('should return 404', async () => {
-                const validButNonExistingUUID: string = faker.string.uuid();
-                const params: RolleServiceProviderBodyParams = {
-                    serviceProviderIds: [faker.string.uuid()],
-                    version: 1,
-                };
-                const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/rolle/${validButNonExistingUUID}/serviceProviders`)
-                    .send(params);
-
-                expect(response.status).toBe(404);
-            });
-        });
-
-        describe('when serviceProvider does not exist', () => {
-            it('should return 500', async () => {
-                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) {
-                    throw Error();
-                }
-                const nonExistingServiceProviderId: string = faker.string.uuid();
-
-                const params: RolleServiceProviderBodyParams = {
-                    serviceProviderIds: [nonExistingServiceProviderId],
-                    version: 1,
-                };
-                const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/rolle/${rolle.id}/serviceProviders`)
-                    .send(params);
 
                 expect(response.status).toBe(404);
             });

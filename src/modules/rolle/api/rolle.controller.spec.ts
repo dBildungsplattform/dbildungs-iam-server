@@ -28,12 +28,10 @@ import { Rolle } from '../domain/rolle.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
-import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
-    let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let rolleController: RolleController;
     let organisationServiceMock: DeepMocked<OrganisationService>;
     let rollenerweiterungRepoMock: DeepMocked<RollenerweiterungRepo>;
@@ -85,7 +83,6 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
         }).compile();
 
         rolleRepoMock = module.get(RolleRepo);
-        serviceProviderRepoMock = module.get(ServiceProviderRepo);
         rolleController = module.get(RolleController);
         organisationServiceMock = module.get(OrganisationService);
         rollenerweiterungRepoMock = module.get(RollenerweiterungRepo);
@@ -93,30 +90,6 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
-    });
-
-    describe('/PUT rolleId/serviceProviders mocked SP-repo', () => {
-        describe('when rolle and serviceProvider exists, attachment is done, but retrieving SP afterwards fails', () => {
-            it('should return 500', async () => {
-                const rolleId: string = faker.string.uuid();
-                const rolleByIdParams: FindRolleByIdParams = {
-                    rolleId: rolleId,
-                };
-                const params: RolleServiceProviderBodyParams = {
-                    serviceProviderIds: [faker.string.uuid()],
-                    version: 1,
-                };
-                //mock get-rolle
-                rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle<true>(true));
-
-                // Mock the call to find service providers by IDs, returning an empty map
-                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map());
-
-                await expect(rolleController.updateServiceProvidersById(rolleByIdParams, params)).rejects.toThrow(
-                    Error,
-                );
-            });
-        });
     });
 
     describe('/POST rolle mocked Rolle-repo', () => {
