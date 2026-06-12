@@ -494,7 +494,9 @@ export class RolleRepo {
         await this.em.persist(rolleEntity).flush();
 
         // Populate the service providers so the data can be mapped even on newly created rollen
-        await rolleEntity.populate(['serviceProvider.*'] as const);
+        await this.em.populate(rolleEntity, ['serviceProvider.serviceProvider'] as const, {
+            exclude: ['serviceProvider.serviceProvider.logo'] as const,
+        });
 
         return mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
     }
