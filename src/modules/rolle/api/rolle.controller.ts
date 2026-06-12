@@ -58,7 +58,7 @@ import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { AddSystemrechtError } from './add-systemrecht.error.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
-import { DbiamRolleError, RolleErrorI18nTypes } from './dbiam-rolle.error.js';
+import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { FindRolleQueryParams } from './find-rolle-query.param.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
@@ -70,6 +70,7 @@ import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { RollenartNurFuerSchuleError } from '../specification/error/rollenart-nur-fuer-schule.error.js';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -235,7 +236,7 @@ export class RolleController {
             this.logger.error(
                 `Rollen mit der Rollenart ${params.rollenart} können nur für Organisationen des Typs SCHULE angelegt werden.`,
             );
-            throw new RolleDomainError(RolleErrorI18nTypes.ROLLENART_NUR_FUER_SCHULE, params.rollenart);
+            throw new RollenartNurFuerSchuleError();
         }
         const rolle: DomainError | Rolle<false> = this.rolleFactory.createNew(
             params.name,
