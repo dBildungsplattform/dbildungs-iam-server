@@ -773,6 +773,60 @@ describe('ServiceProviderRepo', () => {
         });
     });
 
+    describe('deleteByIdAuthorized', () => {
+        let organisation: Organisation<true>;
+        let serviceProvider: ServiceProvider<true>;
+
+        beforeEach(async () => {
+            organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
+            serviceProvider = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: organisation.id,
+            });
+        });
+
+        it('should delete the service provider if the user has permissions for the organisation', async () => {
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const result: Result<void, EntityNotFoundError | MissingPermissionsError> = await sut.deleteByIdAuthorized(
+                permissionsMock,
+                serviceProvider.id,
+            );
+
+            expectOkResult(result);
+            await expect(em.findOneOrFail(ServiceProviderEntity, { id: serviceProvider.id })).rejects.toThrow();
+        });
+
+        it('should throw error if the service provider does not exist', async () => {
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const result: Result<void, EntityNotFoundError | MissingPermissionsError> = await sut.deleteByIdAuthorized(
+                permissionsMock,
+                faker.string.uuid(),
+            );
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(EntityNotFoundError);
+            await expect(em.findOneOrFail(ServiceProviderEntity, { id: serviceProvider.id })).resolves.toBeDefined();
+        });
+
+        it('should not delete the service provider if the user does not have permissions for the organisation', async () => {
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+            const result: Result<void, EntityNotFoundError | MissingPermissionsError> = await sut.deleteByIdAuthorized(
+                permissionsMock,
+                serviceProvider.id,
+            );
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(MissingPermissionsError);
+            await expect(em.findOneOrFail(ServiceProviderEntity, { id: serviceProvider.id })).resolves.toBeDefined();
+        });
+    });
+
     describe('deleteById', () => {
         it('should delete an existing ServiceProvider by its id', async () => {
             const persistedPersistedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
