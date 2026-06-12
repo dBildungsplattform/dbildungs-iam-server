@@ -185,6 +185,7 @@ describe('Rolle API', () => {
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 systemrechte: [],
+                serviceProviderIds: [],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -192,7 +193,16 @@ describe('Rolle API', () => {
                 .send(params);
 
             expect(response.status).toBe(201);
-            expect(response.body).toEqual(expect.objectContaining(params));
+            expect(response.body as RolleWithServiceProvidersResponse).toEqual(
+                expect.objectContaining({
+                    name: params.name,
+                    administeredBySchulstrukturknoten: params.administeredBySchulstrukturknoten,
+                    rollenart: params.rollenart,
+                    merkmale: params.merkmale,
+                    systemrechte: [],
+                    serviceProviders: [],
+                } satisfies Partial<RolleWithServiceProvidersResponse>),
+            );
         });
 
         it('should save rolle to db', async () => {
@@ -217,6 +227,7 @@ describe('Rolle API', () => {
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
+                serviceProviderIds: [],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -246,6 +257,7 @@ describe('Rolle API', () => {
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
+                serviceProviderIds: [],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -277,6 +289,7 @@ describe('Rolle API', () => {
                 rollenart: 'INVALID' as RollenArt,
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
+                serviceProviderIds: [],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -308,6 +321,7 @@ describe('Rolle API', () => {
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: ['INVALID' as RollenMerkmal],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
+                serviceProviderIds: [],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -339,6 +353,7 @@ describe('Rolle API', () => {
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT, RollenMerkmal.BEFRISTUNG_PFLICHT],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
+                serviceProviderIds: [],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -369,6 +384,7 @@ describe('Rolle API', () => {
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [],
                 systemrechte: [],
+                serviceProviderIds: [],
             };
 
             const response: Response = await request(app.getHttpServer() as App)

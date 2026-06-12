@@ -60,7 +60,6 @@ import { FindRolleQueryParams } from './find-rolle-query.param.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
-import { RolleResponse } from './rolle.response.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
@@ -203,7 +202,7 @@ export class RolleController {
     @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ description: 'Create a new rolle.' })
-    @ApiCreatedResponse({ description: 'The rolle was successfully created.', type: RolleResponse })
+    @ApiCreatedResponse({ description: 'The rolle was successfully created.', type: RolleWithServiceProvidersResponse })
     @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamRolleError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the rolle.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })
@@ -211,7 +210,7 @@ export class RolleController {
     public async createRolle(
         @Body() params: CreateRolleBodyParams,
         @Permissions() permissions: IPersonPermissions,
-    ): Promise<RolleResponse> {
+    ): Promise<RolleWithServiceProvidersResponse> {
         const orgResult: Result<Organisation<true>, DomainError> = await this.orgService.findOrganisationById(
             params.administeredBySchulstrukturknoten,
         );
@@ -247,7 +246,7 @@ export class RolleController {
         }
         this.logger.info(`Admin: ${permissions.personFields.id}) hat eine neue Rolle angelegt: ${result.name}.`);
 
-        return new RolleResponse(result);
+        return new RolleWithServiceProvidersResponse(result, result.serviceProviderData);
     }
 
     @Get(':rolleId/serviceProviders')
