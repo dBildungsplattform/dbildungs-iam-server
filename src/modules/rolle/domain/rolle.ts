@@ -256,8 +256,4 @@ export class Rolle<WasPersisted extends boolean> {
         this.serviceProviderIds = serviceProviderIds;
         return Ok(Array.from(serviceProviderMap.values()));
     }
-
-    public setVersionForUpdate(version: number): void {
-        this.version = version;
-    }
 }
