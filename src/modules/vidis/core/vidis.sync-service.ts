@@ -83,7 +83,7 @@ export class VidisSyncService {
         await this.syncSchoolsPage(activatedAngebote.value, 0, permissions);
     }
 
-    // Process schools in configurable pages to keep query results and in-memory sync payloads bounded.
+    // Process schools in configurable-pages to keep query results and in-memory sync payloads bounded.
     // This lets us tune sync performance for larger data sets without shipping a new release.
     private async syncSchoolsPage(
         activatedAngebote: VidisAngebotWithSchoolActivations[],
