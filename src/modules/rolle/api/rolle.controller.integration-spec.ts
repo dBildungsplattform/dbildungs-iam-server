@@ -184,7 +184,7 @@ describe('Rolle API', () => {
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 administeredBySchulstrukturknoten: organisation.id,
-                rollenart: faker.helpers.enumValue(RollenArt),
+                rollenart: RollenArt.LEHR,
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 systemrechte: [],
             };
@@ -216,7 +216,7 @@ describe('Rolle API', () => {
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 administeredBySchulstrukturknoten: organisation.id,
-                rollenart: faker.helpers.enumValue(RollenArt),
+                rollenart: RollenArt.LEHR,
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
             };
@@ -245,7 +245,7 @@ describe('Rolle API', () => {
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 administeredBySchulstrukturknoten: faker.string.uuid(),
-                rollenart: faker.helpers.enumValue(RollenArt),
+                rollenart: RollenArt.LEHR,
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
             };
@@ -307,7 +307,7 @@ describe('Rolle API', () => {
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 administeredBySchulstrukturknoten: organisation.id,
-                rollenart: faker.helpers.enumValue(RollenArt),
+                rollenart: RollenArt.LEHR,
                 merkmale: ['INVALID' as RollenMerkmal],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
             };
@@ -368,7 +368,7 @@ describe('Rolle API', () => {
             const params: CreateRolleBodyParams = {
                 name: rolleName,
                 administeredBySchulstrukturknoten: organisation.id,
-                rollenart: faker.helpers.enumValue(RollenArt),
+                rollenart: RollenArt.LEHR,
                 merkmale: [],
                 systemrechte: [],
             };
@@ -381,6 +381,39 @@ describe('Rolle API', () => {
             expect(response.status).toBe(400);
             expect(responseBody.i18nKey).toStrictEqual('ROLLE_NAME_UNIQUE_ON_SSK');
             expect(responseBody.code).toStrictEqual(400);
+        });
+
+        it('should fail if rollenart that is only allowed for SCHULE is provided for a non-SCHULE organisation', async () => {
+            const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
+            const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
+            const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
+                {
+                    organisation: savedUserOrganisation,
+                    rolle: { systemrechte: [], serviceProviderIds: [] },
+                },
+            ];
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
+
+            const organisation: OrganisationEntity = new OrganisationEntity();
+            organisation.typ = OrganisationsTyp.TRAEGER;
+            await em.persist(organisation).flush();
+
+            const params: CreateRolleBodyParams = {
+                name: faker.person.jobTitle(),
+                administeredBySchulstrukturknoten: organisation.id,
+                rollenart: RollenArt.SORGBER,
+                merkmale: [],
+                systemrechte: [],
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/rolle')
+                .send(params);
+
+            expect(response.status).toBe(400);
+            expect(response.body).toBeInstanceOf(Object);
         });
     });
 
