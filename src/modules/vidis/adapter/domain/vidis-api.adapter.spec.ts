@@ -16,7 +16,7 @@ import {
     VidisServiceResponseAngebot,
 } from '../domain/vidis.types.js';
 import { VidisApiAdapter } from './vidis-api.adapter.js';
-import { VidisDomainError } from '../domain/vidis-domain.error.js';
+import { VidisDomainError } from '../../error/vidis-domain.error.js';
 
 const demoVidisApiResponseAngebotByRegion: VidisApiResponse<VidisApiResponseAngebotByRegion> = {
     actions: {},

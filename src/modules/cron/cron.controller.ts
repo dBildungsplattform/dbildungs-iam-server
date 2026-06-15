@@ -34,6 +34,7 @@ import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenSystemRecht } from '../rolle/domain/systemrecht.js';
 import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
+import { VidisSyncService } from '../vidis/core/vidis.sync-service.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -50,10 +51,33 @@ export class CronController {
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly userLockRepository: UserLockRepository,
         private readonly emailAddressDeletionService: EmailAddressDeletionService,
+        private readonly vidisSyncService: VidisSyncService,
         private readonly logger: ClassLogger,
         configService: ConfigService,
     ) {
         this.config = configService.getOrThrow<CronConfig>('CRON');
+    }
+
+    @Put('vidis-sync')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({ description: 'VIDIS sync was successfully triggered.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to trigger VIDIS sync.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to trigger VIDIS sync.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to trigger VIDIS sync.' })
+    public async triggerVidisSync(@Permissions() permissions: IPersonPermissions): Promise<void> {
+        try {
+            const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+                RollenSystemRecht.CRON_DURCHFUEHREN,
+            ]);
+            if (!hasCronJobPermission) {
+                throw new MissingPermissionsError('Cronrecht Required For This Endpoint');
+            }
+
+            await this.vidisSyncService.sync();
+        } catch (error) {
+            this.logger.logUnknownAsError('Could not trigger VIDIS sync', error);
+            throw new Error('Failed to trigger VIDIS sync due to an internal server error.');
+        }
     }
 
     @Put('kopers-lock')

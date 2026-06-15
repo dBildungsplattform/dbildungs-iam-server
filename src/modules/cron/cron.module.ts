@@ -7,6 +7,7 @@ import { PersonenKontextModule } from '../personenkontext/personenkontext.module
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { ServiceProviderModule } from '../service-provider/service-provider.module.js';
 import { EmailAddressDeletionModule } from '../email/email-address-deletion/email-address-deletion.module.js';
+import { VidisModule } from '../vidis/vidis.module.js';
 
 @Module({
     imports: [
@@ -17,6 +18,7 @@ import { EmailAddressDeletionModule } from '../email/email-address-deletion/emai
         LoggerModule.register(CronModule.name),
         ServiceProviderModule,
         EmailAddressDeletionModule,
+        VidisModule,
     ],
     controllers: [CronController],
 })

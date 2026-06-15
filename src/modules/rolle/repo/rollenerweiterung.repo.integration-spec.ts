@@ -318,6 +318,119 @@ describe('RollenerweiterungRepo', () => {
         });
     });
 
+    describe('deleteByOrganisationIdAndServiceProviderIds', () => {
+        let organisation: Organisation<true>;
+        let otherOrganisation: Organisation<true>;
+        let rolle: Rolle<true>;
+        let serviceProviderToDelete: ServiceProvider<true>;
+        let secondServiceProviderToDelete: ServiceProvider<true>;
+        let serviceProviderToKeep: ServiceProvider<true>;
+        let permissions: DeepMocked<PersonPermissions>;
+
+        beforeEach(async () => {
+            organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
+            otherOrganisation = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const rolleOrError: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleOrError instanceof DomainError) {
+                throw new Error('Failed to create Rolle');
+            }
+            rolle = rolleOrError;
+            [serviceProviderToDelete, secondServiceProviderToDelete, serviceProviderToKeep] = await Promise.all([
+                createAndPersistServiceProvider(em, {
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+                createAndPersistServiceProvider(em, {
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+                createAndPersistServiceProvider(em, {
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+            ]);
+            permissions = createPersonPermissionsMock();
+
+            await Promise.all([
+                sut.create(factory.createNew(organisation.id, rolle.id, serviceProviderToDelete.id)),
+                sut.create(factory.createNew(organisation.id, rolle.id, secondServiceProviderToDelete.id)),
+                sut.create(factory.createNew(organisation.id, rolle.id, serviceProviderToKeep.id)),
+                sut.create(factory.createNew(otherOrganisation.id, rolle.id, serviceProviderToDelete.id)),
+            ]);
+        });
+
+        it('should return MissingPermissionsError if permissions are missing', async () => {
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+            const result: Result<null, DomainError> = await sut.deleteByOrganisationIdAndServiceProviderIds(
+                organisation.id,
+                [serviceProviderToDelete.id],
+                permissions,
+            );
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(MissingPermissionsError);
+
+            const remaining: Rollenerweiterung<true>[] = await sut.findManyByOrganisationIdAndServiceProviderId(
+                organisation.id,
+                serviceProviderToDelete.id,
+            );
+            expect(remaining).toHaveLength(1);
+        });
+
+        it('should return Ok(null) without deleting rollenerweiterungen if serviceProviderIds is empty', async () => {
+            const result: Result<null, DomainError> = await sut.deleteByOrganisationIdAndServiceProviderIds(
+                organisation.id,
+                [],
+                permissions,
+            );
+
+            expect(result.ok).toBe(true);
+            if (!result.ok) {
+                return;
+            }
+            expect(result.value).toBeNull();
+
+            const remaining: Rollenerweiterung<true>[] = await sut.findManyByOrganisationIdAndServiceProviderId(
+                organisation.id,
+                serviceProviderToDelete.id,
+            );
+            expect(remaining).toHaveLength(1);
+        });
+
+        it('should delete only rollenerweiterungen matching the organisation and serviceProviderIds', async () => {
+            const result: Result<null, DomainError> = await sut.deleteByOrganisationIdAndServiceProviderIds(
+                organisation.id,
+                [serviceProviderToDelete.id, secondServiceProviderToDelete.id],
+                permissions,
+            );
+
+            expect(result.ok).toBe(true);
+            if (!result.ok) {
+                return;
+            }
+            expect(result.value).toBeNull();
+
+            const deletedFirst: Rollenerweiterung<true>[] = await sut.findManyByOrganisationIdAndServiceProviderId(
+                organisation.id,
+                serviceProviderToDelete.id,
+            );
+            const deletedSecond: Rollenerweiterung<true>[] = await sut.findManyByOrganisationIdAndServiceProviderId(
+                organisation.id,
+                secondServiceProviderToDelete.id,
+            );
+            const keptForOrganisation: Rollenerweiterung<true>[] =
+                await sut.findManyByOrganisationIdAndServiceProviderId(organisation.id, serviceProviderToKeep.id);
+            const keptForOtherOrganisation: Rollenerweiterung<true>[] =
+                await sut.findManyByOrganisationIdAndServiceProviderId(
+                    otherOrganisation.id,
+                    serviceProviderToDelete.id,
+                );
+
+            expect(deletedFirst).toHaveLength(0);
+            expect(deletedSecond).toHaveLength(0);
+            expect(keptForOrganisation).toHaveLength(1);
+            expect(keptForOtherOrganisation).toHaveLength(1);
+        });
+    });
+
     describe('exists', () => {
         let organisation: Organisation<true>;
         let rolle: Rolle<true>;
