@@ -9,6 +9,13 @@
             "familienname": "Superadmin"
         },
         {
+            "id": 2,
+            "username": "playwrighttestadmin",
+            "password": "SPSHtest1!",
+            "vorname": "Paul",
+            "familienname": "Lay-Wright-Test-Admin"
+        },
+        {
             "id": 666,
             "username": "smueller",
             "password": "SPSHtest1!",
