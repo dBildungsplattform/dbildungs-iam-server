@@ -1,4 +1,4 @@
-name: 'Run Playwright on Label'
+name: 'Run Playwright tests on Label'
 
 on:
   pull_request:
