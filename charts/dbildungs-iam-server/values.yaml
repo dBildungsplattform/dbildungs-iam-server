@@ -77,7 +77,7 @@ auth:
   itslearning_password: ""
   pi_admin_user: ""
   pi_admin_password: ""
-  redis_password: ""
+  valkey_password: ""
   vidis_username: ""
   vidis_password: ""
   vidis_api_client_id: ""

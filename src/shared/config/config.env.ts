@@ -82,8 +82,8 @@ export default (): Config => ({
         HOSTNAME: process.env['BACKEND_HOSTNAME'],
     },
     REDIS: {
-        PASSWORD: process.env['REDIS_PASSWORD'],
-        HOST: process.env['REDIS_HOST'],
+        PASSWORD: process.env['VALKEY_PASSWORD'],
+        HOST: process.env['VALKEY_HOST'],
     },
     ITSLEARNING: {
         ENABLED: envToOptionalBoolean('ITSLEARNING_ENABLED'),
