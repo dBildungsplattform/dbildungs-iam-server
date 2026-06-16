@@ -82,7 +82,9 @@
     "VIDIS": {
         "BASE_URL": "http://localhost:10000",
         "CLIENT_ID": "clientid",
-        "CLIENT_SECRET": "clientsecret"
+        "CLIENT_SECRET": "clientsecret",
+        "SYNC_SCHOOLS_PAGE_SIZE":1000,
+        "REGION": "Schleswig-Holstein"
     },
     "HEADER_API_KEY": {
         "INTERNAL_COMMUNICATION_API_KEY": "api-key"
