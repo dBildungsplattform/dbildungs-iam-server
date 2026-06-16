@@ -103,18 +103,14 @@ export class RolleFindService {
         if (permittedOrgas.all === true) {
             organisationIdsWithParents = await this.getOrganisationIdsWithParents(params.organisationIds);
         } else {
-            const targetOrganisationIds: OrganisationID[] = intersectPermittedAndRequestedOrgas(
+            const intersectedOrganisationIds: OrganisationID[] = intersectPermittedAndRequestedOrgas(
                 permittedOrgas,
                 params.organisationIds,
             );
-            if (targetOrganisationIds.length === 0) {
+            if (intersectedOrganisationIds.length === 0) {
                 return [[], 0];
             }
-            organisationIdsWithParents = await this.getOrganisationIdsWithParents(targetOrganisationIds);
-        }
-
-        if (organisationIdsWithParents === undefined || organisationIdsWithParents.length === 0) {
-            return [[], 0];
+            organisationIdsWithParents = await this.getOrganisationIdsWithParents(intersectedOrganisationIds);
         }
 
         const [candidateRollen]: Counted<Rolle<true>> = await this.rolleRepo.findBy({
