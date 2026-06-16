@@ -5,6 +5,6 @@ export class VidisDomainError extends DomainError {
         public override readonly message: string,
         details?: unknown[] | Record<string, undefined>,
     ) {
-        super(message, 'VIDIS_API_ERROR', details);
+        super(message, 'VIDIS_ERROR', details);
     }
 }

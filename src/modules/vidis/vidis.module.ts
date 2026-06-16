@@ -5,6 +5,7 @@ import { LoggerModule } from '../../core/logging/logger.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { RolleModule } from '../rolle/rolle.module.js';
 import { ServiceProviderModule } from '../service-provider/service-provider.module.js';
+import { VidisController } from './api/vidis.controller.js';
 import { VidisSyncService } from './core/vidis.sync-service.js';
 
 @Module({
@@ -17,6 +18,6 @@ import { VidisSyncService } from './core/vidis.sync-service.js';
     ],
     providers: [VidisApiAdapter, VidisSyncService],
     exports: [VidisSyncService],
-    controllers: [],
+    controllers: [VidisController],
 })
 export class VidisModule {}

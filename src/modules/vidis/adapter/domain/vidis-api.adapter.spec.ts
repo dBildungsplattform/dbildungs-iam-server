@@ -16,7 +16,7 @@ import {
     VidisServiceResponseAngebot,
 } from '../domain/vidis.types.js';
 import { VidisApiAdapter } from './vidis-api.adapter.js';
-import { VidisDomainError } from '../../error/vidis-domain.error.js';
+import { VidisApiError } from '../../error/vidis-api.error.js';
 
 const demoVidisApiResponseAngebotByRegion: VidisApiResponse<VidisApiResponseAngebotByRegion> = {
     actions: {},
@@ -252,7 +252,7 @@ describe('VidisApiAdapter', () => {
 
             expect(result).toEqual(
                 Err(
-                    new VidisDomainError(
+                    new VidisApiError(
                         'Failed to fetch activated Angebote for region Schleswig-Holstein from Vidis API',
                     ),
                 ),
@@ -272,7 +272,7 @@ describe('VidisApiAdapter', () => {
 
             expect(result).toEqual(
                 Err(
-                    new VidisDomainError(
+                    new VidisApiError(
                         'Error while fetching activated Angebote for region Schleswig-Holstein from Vidis API',
                     ),
                 ),
@@ -294,7 +294,7 @@ describe('VidisApiAdapter', () => {
 
             expect(result).toEqual(
                 Err(
-                    new VidisDomainError(
+                    new VidisApiError(
                         'Error while fetching activated Angebote for region Schleswig-Holstein from Vidis API',
                     ),
                 ),
@@ -366,7 +366,7 @@ describe('VidisApiAdapter', () => {
 
             expect(result).toEqual(
                 Err(
-                    new VidisDomainError(
+                    new VidisApiError(
                         'Failed to fetch activated Angebote for school with kennung 123456 from Vidis API',
                     ),
                 ),
@@ -386,7 +386,7 @@ describe('VidisApiAdapter', () => {
 
             expect(result).toEqual(
                 Err(
-                    new VidisDomainError(
+                    new VidisApiError(
                         'Error while fetching activated Angebote for school with kennung 123456 from Vidis API',
                     ),
                 ),
@@ -408,7 +408,7 @@ describe('VidisApiAdapter', () => {
 
             expect(result).toEqual(
                 Err(
-                    new VidisDomainError(
+                    new VidisApiError(
                         'Error while fetching activated Angebote for school with kennung 123456 from Vidis API',
                     ),
                 ),

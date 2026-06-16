@@ -15,7 +15,7 @@ import {
 import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces.js';
 import { firstValueFrom } from 'rxjs';
 import { Err, Ok } from '../../../../shared/util/result.js';
-import { VidisDomainError } from '../../error/vidis-domain.error.js';
+import { VidisApiError } from '../../error/vidis-api.error.js';
 
 @Injectable()
 export class VidisApiAdapter {
@@ -37,7 +37,7 @@ export class VidisApiAdapter {
     }
 
     public async getActivatedAngeboteByRegionSH(): Promise<
-        Result<VidisAngebotWithSchoolActivations[], VidisDomainError>
+        Result<VidisAngebotWithSchoolActivations[], VidisApiError>
     > {
         try {
             const token: string = await this.getAuthToken();
@@ -51,7 +51,7 @@ export class VidisApiAdapter {
                     `Failed to fetch activated Angebote for region Schleswig-Holstein from Vidis API. Status code: ${response.status}, Response data: ${JSON.stringify(response.data)}`,
                 );
                 return Err(
-                    new VidisDomainError(
+                    new VidisApiError(
                         'Failed to fetch activated Angebote for region Schleswig-Holstein from Vidis API',
                     ),
                 );
@@ -86,7 +86,7 @@ export class VidisApiAdapter {
                 `Error while fetching activated Angebote for region Schleswig-Holstein from Vidis API: ${JSON.stringify(error)}`,
             );
             return Err(
-                new VidisDomainError(
+                new VidisApiError(
                     `Error while fetching activated Angebote for region Schleswig-Holstein from Vidis API`,
                 ),
             );
@@ -95,7 +95,7 @@ export class VidisApiAdapter {
 
     public async getActivatedAngeboteBySchool(
         kennung: string,
-    ): Promise<Result<VidisServiceResponseAngebot[], VidisDomainError>> {
+    ): Promise<Result<VidisServiceResponseAngebot[], VidisApiError>> {
         try {
             const token: string = await this.getAuthToken();
             const response: AxiosResponse<VidisApiResponse<VidisApiResponseAngebotBySchool>> = await firstValueFrom(
@@ -116,7 +116,7 @@ export class VidisApiAdapter {
                     `Failed to fetch activated Angebote for school with kennung ${kennung} from Vidis API. Status code: ${response.status}, Response data: ${JSON.stringify(response.data)}`,
                 );
                 return Err(
-                    new VidisDomainError(
+                    new VidisApiError(
                         `Failed to fetch activated Angebote for school with kennung ${kennung} from Vidis API`,
                     ),
                 );
@@ -137,7 +137,7 @@ export class VidisApiAdapter {
                 `Error while fetching activated Angebote for school with kennung ${kennung} from Vidis API: ${JSON.stringify(error)}`,
             );
             return Err(
-                new VidisDomainError(
+                new VidisApiError(
                     `Error while fetching activated Angebote for school with kennung ${kennung} from Vidis API`,
                 ),
             );
