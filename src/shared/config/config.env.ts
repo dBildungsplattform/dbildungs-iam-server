@@ -124,6 +124,8 @@ export default (): Config => ({
         BASE_URL: process.env['VIDIS_API_BASE_URL'],
         CLIENT_ID: process.env['VIDIS_API_CLIENT_ID'],
         CLIENT_SECRET: process.env['VIDIS_API_CLIENT_SECRET'],
+        REGION: process.env['VIDIS_API_REGION'],
+        SYNC_SCHOOLS_PAGE_SIZE: envToOptionalInteger('VIDIS_SYNC_SCHOOLS_PAGE_SIZE'),
     },
     IMPORT: {
         PASSPHRASE_SECRET: process.env['IMPORT_PASSPHRASE_SECRET'],

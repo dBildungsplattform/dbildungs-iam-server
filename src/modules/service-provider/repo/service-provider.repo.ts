@@ -151,6 +151,26 @@ export class ServiceProviderRepo {
         return null;
     }
 
+    public async findVidisAngeboteforSchools(organisationIds: OrganisationID[]): Promise<ServiceProvider<true>[]> {
+        if (organisationIds.length === 0) {
+            return [];
+        }
+
+        const serviceProviders: ServiceProviderEntity[] = await this.em.find(
+            ServiceProviderEntity,
+            {
+                providedOnSchulstrukturknoten: { $in: organisationIds },
+                vidisAngebotId: { $ne: null },
+            },
+            {
+                exclude: ['logo'] as const,
+                populate: ['merkmale'],
+            },
+        );
+
+        return serviceProviders.map(mapEntityToAggregate);
+    }
+
     public async findByKeycloakGroup(groupname: string): Promise<ServiceProvider<true>[]> {
         const serviceProviders: ServiceProviderEntity[] = await this.em.find(
             ServiceProviderEntity,
