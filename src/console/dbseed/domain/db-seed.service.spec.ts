@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { DbSeedService } from './db-seed.service.js';
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import fs from 'fs';
@@ -34,6 +35,7 @@ import { RollenerweiterungRepo } from '../../../modules/rolle/repo/rollenerweite
 import { RollenerweiterungFactory } from '../../../modules/rolle/domain/rollenerweiterung.factory.js';
 import { ReferencedEntityType } from '../repo/db-seed-reference.entity.js';
 import { InvalidLogoCombinationError } from '../../../modules/service-provider/domain/errors/invalid-logo-combination.error.js';
+import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 
 function createDbSeedReference(): DbSeedReference {
     return DbSeedReference.createNew(ReferencedEntityType.ORGANISATION, faker.number.int(), faker.string.uuid());
@@ -52,6 +54,7 @@ describe('DbSeedService', () => {
     let dbSeedReferenceRepoMock: DeepMocked<DbSeedReferenceRepo>;
     let kcUserService: DeepMocked<KeycloakUserService>;
     let personFactory: DeepMocked<PersonFactory>;
+    let configService: ConfigService<ServerConfig>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -130,6 +133,7 @@ describe('DbSeedService', () => {
         kcUserService = module.get(KeycloakUserService);
         personFactory = module.get(PersonFactory);
         emailDomainRepoMock = module.get(EmailDomainRepo);
+        configService = module.get(ConfigService);
     });
 
     afterAll(async () => {
@@ -272,10 +276,10 @@ describe('DbSeedService', () => {
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
-        describe('kuerzel = root', () => {
-            it('should create root orga', async () => {
+        describe('typ = ROOT', () => {
+            it('should assign ROOT_ORGANISATION_ID when typ is ROOT even if kuerzel is not Root', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./seeding/seeding-integration-test/organisation/06_kuerzel-is-root.json`,
+                    `./seeding/seeding-integration-test/organisation/06_typ-is-root.json`,
                     'utf-8',
                 );
                 const persistedOrganisation: Organisation<true> = DoFactory.createOrganisationAggregate(true);
@@ -284,6 +288,12 @@ describe('DbSeedService', () => {
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
                     EntityNotFoundError,
                 );
+
+                expect(organisationRepositoryMock.saveSeedData).toHaveBeenCalledTimes(1);
+                const savedOrganisation: Organisation<false> =
+                    organisationRepositoryMock.saveSeedData.mock.calls[0]![0];
+                const rootOrganisationId: string = configService.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+                expect(savedOrganisation.id).toBe(rootOrganisationId);
             });
         });
         describe('Should throw error', () => {
