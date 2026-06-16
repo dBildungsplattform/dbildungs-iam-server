@@ -196,6 +196,33 @@ export class RollenerweiterungRepo {
         return Ok(null);
     }
 
+    public async deleteByOrganisationIdAndServiceProviderIds(
+        organisationId: OrganisationID,
+        serviceProviderIds: ServiceProviderID[],
+        permissions: IPersonPermissions,
+    ): Promise<Result<null, DomainError>> {
+        const isCanDelete: boolean = await permissions.hasSystemrechtAtOrganisation(
+            organisationId,
+            RollenSystemRecht.ROLLEN_ERWEITERN,
+        );
+        if (!isCanDelete) {
+            return Err(new MissingPermissionsError(`Missing systemrecht ${RollenSystemRecht.ROLLEN_ERWEITERN.name}.`));
+        }
+
+        if (serviceProviderIds.length === 0) {
+            return Ok(null);
+        }
+
+        await this.em.nativeDelete(RollenerweiterungEntity, {
+            organisationId,
+            serviceProviderId: {
+                $in: serviceProviderIds,
+            },
+        });
+
+        return Ok(null);
+    }
+
     // This method returns exactly 5 rollenerweiterungen per service provider, sorted by createdAt descending, to avoid performance issues with loading too many rollenerweiterungen at once.
     public async findByServiceProviderIds(
         serviceProviderIds: ServiceProviderID[],
