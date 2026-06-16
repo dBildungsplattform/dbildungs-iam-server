@@ -94,60 +94,56 @@ export class RolleFindService {
         if (permittedOrgas.all === false && permittedOrgas.orgaIds.length === 0) {
             return [[], 0];
         }
-
-        let targetOrganisationIds: OrganisationID[] | undefined;
-        if (params.organisationIds && params.organisationIds.length > 0) {
-            targetOrganisationIds = intersectPermittedAndRequestedOrgas(permittedOrgas, params.organisationIds);
-        } else if (permittedOrgas.all === false) {
-            targetOrganisationIds = permittedOrgas.orgaIds;
-        }
-
-        if (targetOrganisationIds !== undefined && targetOrganisationIds.length === 0) {
+        if (params.organisationIds === undefined || params.organisationIds.length === 0) {
             return [[], 0];
         }
 
-        const allowedOrganisationIds: OrganisationID[] | undefined =
-            targetOrganisationIds !== undefined
-                ? await this.getOrganisationIdsWithParents(targetOrganisationIds)
-                : undefined;
+        let organisationIdsWithParents: OrganisationID[] | undefined;
 
-        if (allowedOrganisationIds !== undefined && allowedOrganisationIds.length === 0) {
+        if (permittedOrgas.all === true) {
+            organisationIdsWithParents = await this.getOrganisationIdsWithParents(params.organisationIds);
+        } else {
+            const targetOrganisationIds: OrganisationID[] = intersectPermittedAndRequestedOrgas(
+                permittedOrgas,
+                params.organisationIds,
+            );
+            if (targetOrganisationIds.length === 0) {
+                return [[], 0];
+            }
+            organisationIdsWithParents = await this.getOrganisationIdsWithParents(targetOrganisationIds);
+        }
+
+        if (organisationIdsWithParents === undefined || organisationIdsWithParents.length === 0) {
             return [[], 0];
         }
 
         const [candidateRollen]: Counted<Rolle<true>> = await this.rolleRepo.findBy({
             searchStr: params.searchStr,
-            allowedOrganisationIds,
+            allowedOrganisationIds: organisationIdsWithParents,
             rollenArten: params.rollenArten,
         });
 
-        let allowedRollen: Rolle<true>[] = candidateRollen;
-        if (targetOrganisationIds !== undefined && targetOrganisationIds.length > 0) {
-            const organisationIdsWithParents: OrganisationID[] =
-                await this.getOrganisationIdsWithParents(targetOrganisationIds);
-            const organisationsById: Map<string, Organisation<true>> = await this.organisationRepository.findByIds(
-                organisationIdsWithParents,
-            );
-            const targetOrganisationsWithParents: Organisation<true>[] = Array.from(organisationsById.values());
+        const paramOrgas: Organisation<true>[] = Array.from(
+            (await this.organisationRepository.findByIds(params.organisationIds ?? [])).values(),
+        );
 
-            allowedRollen = (
-                await Promise.all(
-                    candidateRollen.map(async (rolle: Rolle<true>) => {
-                        const canBeAssignedToAnyTargetOrga: boolean = (
-                            await Promise.all(
-                                targetOrganisationsWithParents.map(async (organisation: Organisation<true>) => {
-                                    const canAssignResult: Result<void, Error> =
-                                        await rolle.canBeAssignedToOrga(organisation);
-                                    return canAssignResult.ok;
-                                }),
-                            )
-                        ).some(Boolean);
+        let allowedRollen: Rolle<true>[] = (
+            await Promise.all(
+                candidateRollen.map(async (rolle: Rolle<true>) => {
+                    const canBeAssignedToAnyTargetOrga: boolean = (
+                        await Promise.all(
+                            paramOrgas.map(async (organisation: Organisation<true>) => {
+                                const canAssignResult: Result<void, Error> =
+                                    await rolle.canBeAssignedToOrga(organisation);
+                                return canAssignResult.ok;
+                            }),
+                        )
+                    ).some(Boolean);
 
-                        return canBeAssignedToAnyTargetOrga ? rolle : null;
-                    }),
-                )
-            ).filter((rolle: Rolle<true> | null): rolle is Rolle<true> => rolle !== null);
-        }
+                    return canBeAssignedToAnyTargetOrga ? rolle : null;
+                }),
+            )
+        ).filter((rolle: Rolle<true> | null): rolle is Rolle<true> => rolle !== null);
 
         const total: number = allowedRollen.length;
         const offset: number = params.offset ?? 0;

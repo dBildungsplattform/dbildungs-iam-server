@@ -15,6 +15,7 @@ import { RollenArt } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
 import { RollenSystemRecht } from './systemrecht.js';
+import { Ok } from '../../../shared/util/result.js';
 
 type RolleFindServiceTestAccess = {
     getOrganisationIdsWithParents(organisationIds: OrganisationID[]): Promise<OrganisationID[]>;
@@ -212,7 +213,9 @@ describe('RolleService', () => {
                 permissions: permissionsMock,
                 organisationIds: ['orga-2'],
             };
+
             const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForErweiterung(params);
+
             expect(result).toEqual([[], 0]);
             expect(rolleRepoMock.findBy).not.toHaveBeenCalled();
         });
@@ -278,7 +281,7 @@ describe('RolleService', () => {
             );
         });
 
-        it('should use permitted organisationIds when none are requested', async () => {
+        it('should return empty array when no orgas are requested', async () => {
             const organisationId: OrganisationID = 'orga-1';
             const candidateRolle: Rolle<true> = DoFactory.createRolle(true);
 
@@ -287,15 +290,11 @@ describe('RolleService', () => {
             organisationRepoMock.findByIds.mockResolvedValue(new Map());
             rolleRepoMock.findBy.mockResolvedValue([[candidateRolle], 1]);
 
-            await rolleFindService.findRollenAvailableForImportPersonenkontext({
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForImportPersonenkontext({
                 permissions: permissionsMock,
             });
 
-            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
-                expect.objectContaining<RolleFindByParameters>({
-                    allowedOrganisationIds: [organisationId],
-                }),
-            );
+            expect(result).toEqual([[], 0]);
         });
 
         it('should return empty array if requested organisationIds are not permitted', async () => {
@@ -331,11 +330,21 @@ describe('RolleService', () => {
                 DoFactory.createRolle(true, { name: 'B' }),
                 DoFactory.createRolle(true, { name: 'C' }),
             ];
+            vi.spyOn(rollen[0] as unknown as Rolle<true>, 'canBeAssignedToOrga').mockResolvedValue(Ok());
+            vi.spyOn(rollen[1] as unknown as Rolle<true>, 'canBeAssignedToOrga').mockResolvedValue(Ok());
+            vi.spyOn(rollen[2] as unknown as Rolle<true>, 'canBeAssignedToOrga').mockResolvedValue(Ok());
+
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
             rolleRepoMock.findBy.mockResolvedValue([rollen, rollen.length]);
+            organisationRepoMock.findParentOrgasForIds.mockResolvedValue([]);
+            const orgaMap: Map<OrganisationID, Organisation<true>> = new Map<OrganisationID, Organisation<true>>([
+                ['orga-1', DoFactory.createOrganisation(true, { id: 'orga-1', typ: OrganisationsTyp.SCHULE })],
+            ]);
+            organisationRepoMock.findByIds.mockResolvedValue(orgaMap);
 
             const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForImportPersonenkontext({
                 permissions: permissionsMock,
+                organisationIds: ['orga-1'],
                 offset: 1,
                 limit: 1,
             });
@@ -349,11 +358,21 @@ describe('RolleService', () => {
                 DoFactory.createRolle(true, { name: 'B' }),
                 DoFactory.createRolle(true, { name: 'C' }),
             ];
+            vi.spyOn(rollen[0] as unknown as Rolle<true>, 'canBeAssignedToOrga').mockResolvedValue(Ok());
+            vi.spyOn(rollen[1] as unknown as Rolle<true>, 'canBeAssignedToOrga').mockResolvedValue(Ok());
+            vi.spyOn(rollen[2] as unknown as Rolle<true>, 'canBeAssignedToOrga').mockResolvedValue(Ok());
+
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
             rolleRepoMock.findBy.mockResolvedValue([rollen, rollen.length]);
+            organisationRepoMock.findParentOrgasForIds.mockResolvedValue([]);
+            const orgaMap: Map<OrganisationID, Organisation<true>> = new Map<OrganisationID, Organisation<true>>([
+                ['orga-1', DoFactory.createOrganisation(true, { id: 'orga-1', typ: OrganisationsTyp.SCHULE })],
+            ]);
+            organisationRepoMock.findByIds.mockResolvedValue(orgaMap);
 
             const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForImportPersonenkontext({
                 permissions: permissionsMock,
+                organisationIds: ['orga-1'],
                 offset: 1,
             });
 
