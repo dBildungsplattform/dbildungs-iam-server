@@ -20,7 +20,7 @@ import { LoggingConfig } from './logging.config.js';
 import { OxServerConfig } from './ox-server.config.js';
 import { PortalConfig } from './portal.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
-import { RedisConfig } from './redis.config.js';
+import { ValkeyConfig } from './redis.config.js';
 import { SystemConfig } from './system.config.js';
 import { VidisConfig } from './vidis.config.js';
 import { EmailMicroserviceConfig } from './email-microservice.config.js';
@@ -49,8 +49,8 @@ export class JsonConfig {
     public readonly LOGGING!: LoggingConfig;
 
     @ValidateNested()
-    @Type(() => RedisConfig)
-    public readonly REDIS!: RedisConfig;
+    @Type(() => ValkeyConfig)
+    public readonly VALKEY!: ValkeyConfig;
 
     @ValidateNested()
     @Type(() => LdapServerConfig)

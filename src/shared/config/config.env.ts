@@ -13,7 +13,7 @@ import { LdapServerConfig } from './ldap-server.config.js';
 import { OxServerConfig } from './ox-server.config.js';
 import { PortalConfig } from './portal.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
-import { RedisConfig } from './redis.config.js';
+import { ValkeyConfig } from './redis.config.js';
 import { SchulconnexConfig } from './schulconnex.config.js';
 import { SystemConfig } from './system.config.js';
 import { envToOptionalBoolean, envToOptionalInteger, envToStringArray } from './utils.js';
@@ -22,7 +22,7 @@ import { VidisConfig } from './vidis.config.js';
 export type Config = {
     DB: Partial<DbConfig>;
     KEYCLOAK: Partial<KeycloakConfig>;
-    REDIS: Partial<RedisConfig>;
+    VALKEY: Partial<ValkeyConfig>;
     LDAP: Partial<LdapServerConfig>;
     FRONTEND: Partial<FrontendConfig>;
     FEATUREFLAG: Partial<FeatureFlagConfig>;

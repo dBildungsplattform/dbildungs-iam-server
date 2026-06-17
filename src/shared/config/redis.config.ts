@@ -1,6 +1,6 @@
 import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator';
 
-export class RedisConfig {
+export class ValkeyConfig {
     @IsString()
     @IsNotEmpty()
     public readonly HOST!: string;

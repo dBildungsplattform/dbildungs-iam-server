@@ -1,33 +1,33 @@
 import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
 import { Injectable } from '@nestjs/common';
-import { RedisConfig, ServerConfig } from '../../shared/config/index.js';
+import { ValkeyConfig, ServerConfig } from '../../shared/config/index.js';
 import { createClient, RedisClientType } from 'redis';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class RedisHealthIndicator extends HealthIndicator {
-    private redisConfig: RedisConfig;
+export class ValkeyHealthIndicator extends HealthIndicator {
+    private valkeyConfig: ValkeyConfig;
 
     public constructor(configService: ConfigService<ServerConfig>) {
         super();
-        this.redisConfig = configService.getOrThrow<RedisConfig>('REDIS');
+        this.valkeyConfig = configService.getOrThrow<ValkeyConfig>('VALKEY');
     }
 
     public async check(): Promise<HealthIndicatorResult> {
-        const HealthCheckKey: string = 'Redis';
+        const HealthCheckKey: string = 'Valkey';
 
         type RedisState = { available: boolean; message: string };
         let currentState: RedisState = { available: false, message: 'Check has not yet run' };
 
         const redisClient: RedisClientType = createClient({
-            username: this.redisConfig.USERNAME,
-            password: this.redisConfig.PASSWORD,
+            username: this.valkeyConfig.USERNAME,
+            password: this.valkeyConfig.PASSWORD,
             socket: {
-                host: this.redisConfig.HOST,
-                port: this.redisConfig.PORT,
-                tls: this.redisConfig.USE_TLS || undefined,
-                key: this.redisConfig.PRIVATE_KEY,
-                cert: this.redisConfig.CERTIFICATE_AUTHORITIES,
+                host: this.valkeyConfig.HOST,
+                port: this.valkeyConfig.PORT,
+                tls: this.valkeyConfig.USE_TLS || undefined,
+                key: this.valkeyConfig.PRIVATE_KEY,
+                cert: this.valkeyConfig.CERTIFICATE_AUTHORITIES,
                 connectTimeout: 1000,
                 reconnectStrategy: false,
             },
@@ -35,7 +35,7 @@ export class RedisHealthIndicator extends HealthIndicator {
         try {
             await redisClient
                 .on('error', (error: Error) => {
-                    currentState = { available: false, message: `Redis does not seem to be up: ${error.message}` };
+                    currentState = { available: false, message: `Valkey does not seem to be up: ${error.message}` };
                 })
                 .on('ready', () => {
                     currentState = { available: true, message: '' };

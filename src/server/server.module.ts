@@ -7,7 +7,7 @@ import {
     FrontendConfig,
     JsonConfig,
     loadConfigFiles,
-    RedisConfig,
+    ValkeyConfig,
     ServerConfigModule,
 } from '../shared/config/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
@@ -91,47 +91,47 @@ import { PermissionModule } from '../modules/permission/permission.module.js';
             isGlobal: true,
             inject: [JsonConfig],
             useFactory: (config: JsonConfig) => {
-                const redisConfig: RedisConfig = config.REDIS;
+                const valkeyConfig: ValkeyConfig = config.VALKEY;
                 const defaultTtlMs: number = 10_000;
 
                 let clientOptions: RedisClientOptions | RedisClusterOptions;
 
                 /* istanbul ignore next */
-                if (redisConfig.CLUSTERED) {
+                if (valkeyConfig.CLUSTERED) {
                     clientOptions = {
                         defaults: {
-                            username: redisConfig.USERNAME,
-                            password: redisConfig.PASSWORD,
+                            username: valkeyConfig.USERNAME,
+                            password: valkeyConfig.PASSWORD,
                         },
                         rootNodes: [
                             {
                                 socket: {
-                                    host: redisConfig.HOST,
-                                    port: redisConfig.PORT,
-                                    tls: redisConfig.USE_TLS,
-                                    key: redisConfig.PRIVATE_KEY,
-                                    cert: redisConfig.CERTIFICATE_AUTHORITIES,
+                                    host: valkeyConfig.HOST,
+                                    port: valkeyConfig.PORT,
+                                    tls: valkeyConfig.USE_TLS,
+                                    key: valkeyConfig.PRIVATE_KEY,
+                                    cert: valkeyConfig.CERTIFICATE_AUTHORITIES,
                                 },
                             },
                         ],
                     } satisfies RedisClusterOptions;
                 } else {
                     clientOptions = {
-                        username: redisConfig.USERNAME,
-                        password: redisConfig.PASSWORD,
+                        username: valkeyConfig.USERNAME,
+                        password: valkeyConfig.PASSWORD,
                         socket: {
-                            host: redisConfig.HOST,
-                            port: redisConfig.PORT,
+                            host: valkeyConfig.HOST,
+                            port: valkeyConfig.PORT,
                         },
                     } satisfies RedisClientOptions;
 
-                    if (redisConfig.USE_TLS) {
+                    if (valkeyConfig.USE_TLS) {
                         clientOptions.socket = {
-                            host: redisConfig.HOST,
-                            port: redisConfig.PORT,
-                            tls: redisConfig.USE_TLS,
-                            key: redisConfig.PRIVATE_KEY,
-                            cert: redisConfig.CERTIFICATE_AUTHORITIES,
+                            host: valkeyConfig.HOST,
+                            port: valkeyConfig.PORT,
+                            tls: valkeyConfig.USE_TLS,
+                            key: valkeyConfig.PRIVATE_KEY,
+                            cert: valkeyConfig.CERTIFICATE_AUTHORITIES,
                         };
                     }
                 }
@@ -193,37 +193,37 @@ export class ServerModule implements NestModule {
     ) {}
 
     public async configure(consumer: MiddlewareConsumer): Promise<void> {
-        const redisConfig: RedisConfig = this.configService.getOrThrow<RedisConfig>('REDIS');
+        const valkeyConfig: ValkeyConfig = this.configService.getOrThrow<ValkeyConfig>('VALKEY');
         let redisClient: RedisClientType | RedisClusterType;
         /* istanbul ignore next */
-        if (redisConfig.CLUSTERED) {
+        if (valkeyConfig.CLUSTERED) {
             redisClient = createCluster({
                 defaults: {
-                    username: redisConfig.USERNAME,
-                    password: redisConfig.PASSWORD,
+                    username: valkeyConfig.USERNAME,
+                    password: valkeyConfig.PASSWORD,
                 },
                 rootNodes: [
                     {
                         socket: {
-                            host: redisConfig.HOST,
-                            port: redisConfig.PORT,
-                            tls: redisConfig.USE_TLS,
-                            key: redisConfig.PRIVATE_KEY,
-                            cert: redisConfig.CERTIFICATE_AUTHORITIES,
+                            host: valkeyConfig.HOST,
+                            port: valkeyConfig.PORT,
+                            tls: valkeyConfig.USE_TLS,
+                            key: valkeyConfig.PRIVATE_KEY,
+                            cert: valkeyConfig.CERTIFICATE_AUTHORITIES,
                         },
                     },
                 ],
             });
         } else {
             redisClient = createClient({
-                username: redisConfig.USERNAME,
-                password: redisConfig.PASSWORD,
+                username: valkeyConfig.USERNAME,
+                password: valkeyConfig.PASSWORD,
                 socket: {
-                    host: redisConfig.HOST,
-                    port: redisConfig.PORT,
-                    tls: redisConfig.USE_TLS || undefined,
-                    key: redisConfig.PRIVATE_KEY,
-                    cert: redisConfig.CERTIFICATE_AUTHORITIES,
+                    host: valkeyConfig.HOST,
+                    port: valkeyConfig.PORT,
+                    tls: valkeyConfig.USE_TLS || undefined,
+                    key: valkeyConfig.PRIVATE_KEY,
+                    cert: valkeyConfig.CERTIFICATE_AUTHORITIES,
                 },
             });
         }
@@ -237,9 +237,9 @@ export class ServerModule implements NestModule {
 
         /* istanbul ignore next */
         await redisClient
-            .on('error', (error: Error) => this.logger.error(`Redis connection failed: ${error.message}`))
+            .on('error', (error: Error) => this.logger.error(`Valkey connection failed: ${error.message}`))
             .connect();
-        this.logger.info('Redis-connection made');
+        this.logger.info('Valkey-connection made');
 
         const redisStore: RedisStore = new RedisStore({
             client: redisClient,

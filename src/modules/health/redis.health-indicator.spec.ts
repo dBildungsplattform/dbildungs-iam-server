@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DeepMocked } from '../../../test/utils/createMock.js';
 import { HealthIndicatorResult, HealthIndicatorStatus } from '@nestjs/terminus';
 import { ConfigTestModule } from '../../../test/utils/index.js';
-import { RedisHealthIndicator } from './redis.health-indicator.js';
+import { ValkeyHealthIndicator } from './redis.health-indicator.js';
 import { RedisClientOptions, RedisClientType } from 'redis';
 import EventEmitter from 'node:events';
 
@@ -32,12 +32,12 @@ describe('Redis health indicator', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule],
-            providers: [RedisHealthIndicator],
+            providers: [ValkeyHealthIndicator],
         }).compile();
     });
 
     it('should report a successful connection to redis as the service being up', async () => {
-        const redisHI: RedisHealthIndicator = module.get<RedisHealthIndicator>(RedisHealthIndicator);
+        const redisHI: ValkeyHealthIndicator = module.get<ValkeyHealthIndicator>(ValkeyHealthIndicator);
 
         redisClient.connect.mockImplementation(() => {
             const result: Promise<RedisClientType> = new Promise<RedisClientType>(
@@ -50,13 +50,13 @@ describe('Redis health indicator', () => {
         });
 
         const checkResult: HealthIndicatorResult = await redisHI.check();
-        expect(checkResult['Redis']).toBeDefined();
-        expect(checkResult['Redis']?.status).toBe('up');
+        expect(checkResult['Valkey']).toBeDefined();
+        expect(checkResult['Valkey']?.status).toBe('up');
     });
 
     it('should report a failed connection to redis as the service being down and showing the error message in the status', async () => {
         const error: Error = new Error('Because reasons');
-        const redisHI: RedisHealthIndicator = module.get<RedisHealthIndicator>(RedisHealthIndicator);
+        const redisHI: ValkeyHealthIndicator = module.get<ValkeyHealthIndicator>(ValkeyHealthIndicator);
 
         redisClient.connect.mockImplementation(() => {
             const result: Promise<RedisClientType> = new Promise<RedisClientType>(
@@ -73,11 +73,11 @@ describe('Redis health indicator', () => {
             .then((r: HealthIndicatorResult) => r['Redis']);
         expect(checkResult).toBeDefined();
         expect(checkResult?.status).toBe('down');
-        expect(checkResult?.['message']).toBe('Redis does not seem to be up: Because reasons');
+        expect(checkResult?.['message']).toBe('Valkey does not seem to be up: Because reasons');
     });
 
     it('should report an exception as the service being down and showing the error message in the status', async () => {
-        const redisHI: RedisHealthIndicator = module.get<RedisHealthIndicator>(RedisHealthIndicator);
+        const redisHI: ValkeyHealthIndicator = module.get<ValkeyHealthIndicator>(ValkeyHealthIndicator);
 
         redisClient.connect.mockImplementation(() => {
             throw new Error('Connection failed');
