@@ -15,7 +15,7 @@ import {
 import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces.js';
 import { firstValueFrom } from 'rxjs';
 import { Err, Ok } from '../../../../shared/util/result.js';
-import { VidisDomainError } from '../domain/vidis-domain.error.js';
+import { VidisDomainError } from '../../error/vidis-domain.error.js';
 
 @Injectable()
 export class VidisApiAdapter {
@@ -24,9 +24,6 @@ export class VidisApiAdapter {
     private static readonly PREFIX_VIDIS_SCHOOOL_ID: string = 'DE-SH-';
 
     private static readonly PATH_GET_AUTH_TOKEN: string = '/o/oauth2/token';
-
-    private static readonly PATH_GET_ACTIVATED_ANGEBOTE_BY_REGION: string =
-        '/o/vidis-rest/v1.0/offers/activated/by-region/Schleswig-Holstein';
 
     private static readonly PATH_GET_ACTIVATED_ANGEBOTE_BY_SCHOOL = (vidisSchoolId: string): string =>
         `/o/vidis-rest/v1.0/offers/activated/by-school/${vidisSchoolId}`;
@@ -45,7 +42,7 @@ export class VidisApiAdapter {
         try {
             const token: string = await this.getAuthToken();
             const response: AxiosResponse<VidisApiResponse<VidisApiResponseAngebotByRegion>> = await firstValueFrom(
-                this.httpService.get(this.constructUrl(VidisApiAdapter.PATH_GET_ACTIVATED_ANGEBOTE_BY_REGION, true), {
+                this.httpService.get(this.constructUrl(this.getActivatedAngeboteByRegionPath(), true), {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
             );
@@ -170,6 +167,10 @@ export class VidisApiAdapter {
 
     private constructUrl(path: string, withMaxPageSize: boolean): string {
         return `${this.vidisConfig.BASE_URL}${path}${withMaxPageSize ? '?pageSize=100000' : ''}`; //Since we will never have 100000 Angebote, we can set pageSize to a very high number to avoid pagination and multiple requests to the Vidis API. This simplifies the implementation and testing of our service.
+    }
+
+    private getActivatedAngeboteByRegionPath(): string {
+        return `/o/vidis-rest/v1.0/offers/activated/by-region/${encodeURIComponent(this.vidisConfig.REGION)}`;
     }
 
     private convertKennungToVidisSchoolId(kennung: string): string {

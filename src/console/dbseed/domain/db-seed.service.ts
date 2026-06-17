@@ -6,6 +6,7 @@ import { validate as isUUID } from 'uuid';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { FindUserFilter, KeycloakUserService, User } from '../../../modules/keycloak-administration/index.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonFactory } from '../../../modules/person/domain/person.factory.js';
 import { Person, PersonCreationParams } from '../../../modules/person/domain/person.js';
@@ -116,7 +117,7 @@ export class DbSeedService {
             throw organisation;
         }
 
-        if (!administriertVon && !zugehoerigZu && data.kuerzel === 'Root') {
+        if (!administriertVon && !zugehoerigZu && data.typ === OrganisationsTyp.ROOT) {
             organisation.id = this.ROOT_ORGANISATION_ID;
         }
 
