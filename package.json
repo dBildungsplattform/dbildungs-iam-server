@@ -39,7 +39,7 @@
         "debug:kc-db-microservice": "nest start kc-db-microservice --debug --watch"
     },
     "dependencies": {
-        "@confluentinc/kafka-javascript": "^1.8.2",
+        "@confluentinc/kafka-javascript": "^1.9.1",
         "@faker-js/faker": "^10.3.0",
         "@golevelup/nestjs-discovery": "^6.1.2",
         "@keycloak/keycloak-admin-client": "^26.6.2",
