@@ -595,7 +595,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "unique": false,
           "length": null,
           "precision": null,
@@ -2939,7 +2939,8 @@
             "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "ROLLEN_ERWEITERN",
             "ANGEBOTE_VERWALTEN",
-            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN",
+            "SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN"
           ],
           "mappedType": "unknown",
           "nativeEnumName": "rollen_system_recht_enum"
@@ -3551,12 +3552,12 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "unique": false,
           "length": null,
           "precision": null,
           "scale": null,
-          "default": "false",
+          "default": null,
           "comment": null,
           "enumItems": [],
           "mappedType": "boolean"
@@ -4061,7 +4062,8 @@
         "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
         "ROLLEN_ERWEITERN",
         "ANGEBOTE_VERWALTEN",
-        "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
+        "ANGEBOTE_EINGESCHRAENKT_VERWALTEN",
+        "SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN"
       ]
     },
     "service_provider_kategorie_enum": {

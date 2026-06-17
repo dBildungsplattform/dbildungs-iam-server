@@ -76,6 +76,8 @@ export class VidisSyncService {
         const activatedAngebote: Result<VidisAngebotWithSchoolActivations[], VidisApiError> =
             await this.vidisApiAdapter.getActivatedAngeboteByRegionSH();
 
+        const nonSchoolProvidedVidisAngebote: ServiceProvider<true>[] = await this.serviceProviderRepo.findNonSchoolProvidedVidisAngebote();
+
         if (!activatedAngebote.ok) {
             this.logger.error('Skipping VIDIS sync because loading activated Angebote failed');
             return;
@@ -88,7 +90,7 @@ export class VidisSyncService {
             },
         ]);
 
-        await this.syncSchoolsPage(activatedAngebote.value, 0, permissions);
+        await this.syncSchoolsPage(activatedAngebote.value, 0, nonSchoolProvidedVidisAngebote, permissions);
     }
 
     public async syncAngeboteForSchool(
@@ -125,6 +127,8 @@ export class VidisSyncService {
             return Err(activatedAngebote.error);
         }
 
+        const nonSchoolProvidedVidisAngebote: ServiceProvider<true>[] = await this.serviceProviderRepo.findNonSchoolProvidedVidisAngebote();
+
         const vidisAngeboteForSchool: ServiceProvider<true>[] = await this.serviceProviderRepo.findVidisAngeboteforSchools([
             organisationId,
         ]);
@@ -133,6 +137,7 @@ export class VidisSyncService {
             organisationId,
             activatedAngebote.value,
             vidisAngeboteForSchool,
+            nonSchoolProvidedVidisAngebote,
             permissions,
         );
 
@@ -144,6 +149,7 @@ export class VidisSyncService {
     private async syncSchoolsPage(
         activatedAngebote: VidisAngebotWithSchoolActivations[],
         schoolOffset: number,
+        nonSchoolProvidedVidisAngebote: ServiceProvider<true>[],
         permissions: IPersonPermissions,
     ): Promise<void> {
         const [schools, total]: Counted<Organisation<true>> = await this.organisationRepo.findBy(
@@ -176,6 +182,7 @@ export class VidisSyncService {
                     vidisAngeboteForSchools.filter(
                         (sp: ServiceProvider<true>) => sp.providedOnSchulstrukturknoten === organisationId,
                     ),
+                    nonSchoolProvidedVidisAngebote,
                     permissions,
                 );
             }),
@@ -186,16 +193,20 @@ export class VidisSyncService {
             return;
         }
 
-        return this.syncSchoolsPage(activatedAngebote, nextSchoolOffset, permissions);
+        return this.syncSchoolsPage(activatedAngebote, nextSchoolOffset, nonSchoolProvidedVidisAngebote, permissions);
     }
 
     private async syncForSchoolInternal(
         organisationId: string,
         angeboteInVidis: VidisApiResponseAngebotBySchool [],
         angeboteInDb: ServiceProvider<true>[],
+        nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[], //e.g. for offers provided by Land SH
         permissions: IPersonPermissions,
     ): Promise<void> {
         this.logger.info(`Syncing VIDIS Angebote for school with organisationId: ${organisationId}`);
+        const nonSchoolProvidedVidisAngeboteIdsInDB: Set<string> = new Set(
+            nonSchoolProvidedVidisAngeboteInDB.map((sp: ServiceProvider<true>) => sp.vidisAngebotId).filter((id: string | undefined): id is string => id !== undefined)
+        );
         const vidisAngebotIds: Set<string> = new Set(
             angeboteInVidis.map(( angebot : VidisApiResponseAngebotBySchool) => angebot.offerId.toString()),
         );
@@ -207,7 +218,7 @@ export class VidisSyncService {
         );
 
         const missingAngeboteInDb: VidisApiResponseAngebotBySchool[] = angeboteInVidis.filter(
-            ( angebot : VidisApiResponseAngebotBySchool) => !existingVidisAngebotIdsInDb.has(angebot.offerId.toString()),
+            ( angebot : VidisApiResponseAngebotBySchool) => !nonSchoolProvidedVidisAngeboteIdsInDB.has(angebot.offerId.toString()) && !existingVidisAngebotIdsInDb.has(angebot.offerId.toString()),
         );
         const serviceProviderIdsMissingInVidis: string[] = angeboteInDb
             .filter(
