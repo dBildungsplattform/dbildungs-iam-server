@@ -110,7 +110,7 @@ describe('PersonInfoService', () => {
             });
             dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([]);
             const res: Result<PersonInfoResponseV1[], DomainError> = await sut.findPersonsForPersonenInfoV1(
-                createPersonPermissionsMock(),
+                permissions,
                 0,
                 10,
             );
@@ -714,7 +714,7 @@ describe('PersonInfoService', () => {
             dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([]);
 
             const res: Result<PersonInfoResponseV2[], DomainError> = await sut.findPersonsForPersonenInfoV2(
-                createPersonPermissionsMock(),
+                permissions,
                 0,
                 10,
             );
@@ -885,406 +885,426 @@ describe('PersonInfoService', () => {
 
             expect(res.ok).toBe(false);
         });
-    });
 
-    it('should ignore kontext roles without PERSONEN_LESEN systemrecht', async () => {
-        const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-        permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
-            all: false,
-            orgaIds: ['orga1'],
-        });
+        it('should ignore kontext roles without PERSONEN_LESEN systemrecht', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: ['orga1'],
+            });
 
-        const rolleWithoutPermission: Rolle<true> = DoFactory.createRolle(true, {
-            rollenart: RollenArt.SYSADMIN,
-            systemrechte: [],
-            serviceProviderIds: ['serviceProvider1'],
-        });
+            const rolleWithoutPermission: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.SYSADMIN,
+                systemrechte: [],
+                serviceProviderIds: ['serviceProvider1'],
+            });
 
-        const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-            loeschungZeitpunkt: new Date(),
-            getRolle: () => Promise.resolve(rolleWithoutPermission),
-            getOrganisation: () =>
-                Promise.resolve(
-                    DoFactory.createOrganisation(true, {
+            const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: new Date(),
+                getRolle: () => Promise.resolve(rolleWithoutPermission),
+                getOrganisation: () =>
+                    Promise.resolve(
+                        DoFactory.createOrganisation(true, {
+                            typ: OrganisationsTyp.SCHULE,
+                        }),
+                    ),
+            });
+
+            dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([
+                {
+                    personenkontext: kontext,
+                    organisation: DoFactory.createOrganisation(true, {
                         typ: OrganisationsTyp.SCHULE,
                     }),
-                ),
+                    rolle: rolleWithoutPermission,
+                } satisfies KontextWithOrgaAndRolle,
+            ]);
+
+            const res: Result<PersonInfoResponseV2[], DomainError> = await sut.findPersonsForPersonenInfoV2(
+                permissions,
+                0,
+                10,
+            );
+
+            expectOkResult(res);
+            expect(res.value).toEqual([]);
+
+            expect(
+                schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
+            ).not.toHaveBeenCalled();
         });
 
-        dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([
-            {
-                personenkontext: kontext,
-                organisation: DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.SCHULE,
-                }),
-                rolle: rolleWithoutPermission,
-            } satisfies KontextWithOrgaAndRolle,
-        ]);
+        it('should return persons with all permissions using new microservice', async () => {
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            const orga1: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
+            const orga2: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
+            const rolle: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.SYSADMIN,
+                systemrechte: [RollenSystemRecht.PERSONEN_LESEN],
+                serviceProviderIds: ['serviceProvider1', 'serviceProvider2'],
+            });
+            const kontext1: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: new Date(),
+                getRolle: () => Promise.resolve(rolle),
+                getOrganisation() {
+                    return Promise.resolve(orga1);
+                },
+            });
+            const kontext2: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: new Date(),
+                getRolle: () => Promise.resolve(rolle),
+                getOrganisation() {
+                    return Promise.resolve(orga2);
+                },
+            });
 
-        const res: Result<PersonInfoResponseV2[], DomainError> = await sut.findPersonsForPersonenInfoV2(
-            permissions,
-            0,
-            10,
-        );
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+            dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([
+                {
+                    personenkontext: kontext1,
+                    organisation: orga1,
+                    rolle: rolle,
+                } satisfies KontextWithOrgaAndRolle,
+                {
+                    personenkontext: kontext2,
+                    organisation: orga2,
+                    rolle: rolle,
+                } satisfies KontextWithOrgaAndRolle,
+            ]);
 
-        expectOkResult(res);
-        expect(res.value).toEqual([]);
+            const personId1: string = faker.string.uuid();
+            const personId2: string = faker.string.uuid();
+            schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValueOnce([
+                personId1,
+                personId2,
+            ]);
+            schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations.mockResolvedValueOnce(
+                [],
+            );
 
-        expect(
-            schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
-        ).not.toHaveBeenCalled();
-    });
+            personRepositoryMock.findByPersonIds.mockResolvedValue([
+                DoFactory.createPerson(true, { id: personId1 }),
+                DoFactory.createPerson(true, { id: personId1 }),
+            ]);
+            emailResolverServiceMock.findEmailsBySpshPersons.mockResolvedValue({
+                ok: true,
+                value: new Map([
+                    [personId1, createMock(PersonEmailResponse)],
+                    [personId2, createMock(PersonEmailResponse)],
+                ]),
+            });
+            dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
+                new Map([
+                    [personId1, []],
+                    [personId2, []],
+                ]),
+            );
+            userLockRepoMock.findByPersonIds.mockResolvedValue(
+                new Map([
+                    [personId1, []],
+                    [personId2, []],
+                ]),
+            );
 
-    it('should return persons with all permissions using new microservice', async () => {
-        emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
-        const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-        const orga1: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
-        const orga2: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
-        const rolle: Rolle<true> = DoFactory.createRolle(true, {
-            rollenart: RollenArt.SYSADMIN,
-            systemrechte: [RollenSystemRecht.PERSONEN_LESEN],
-            serviceProviderIds: ['serviceProvider1', 'serviceProvider2'],
-        });
-        const kontext1: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-            loeschungZeitpunkt: new Date(),
-            getRolle: () => Promise.resolve(rolle),
-            getOrganisation() {
-                return Promise.resolve(orga1);
-            },
-        });
-        const kontext2: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-            loeschungZeitpunkt: new Date(),
-            getRolle: () => Promise.resolve(rolle),
-            getOrganisation() {
-                return Promise.resolve(orga2);
-            },
-        });
-
-        permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
-            all: true,
-        });
-        dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([
-            {
-                personenkontext: kontext1,
-                organisation: orga1,
-                rolle: rolle,
-            } satisfies KontextWithOrgaAndRolle,
-            {
-                personenkontext: kontext2,
-                organisation: orga2,
-                rolle: rolle,
-            } satisfies KontextWithOrgaAndRolle,
-        ]);
-
-        const personId1: string = faker.string.uuid();
-        const personId2: string = faker.string.uuid();
-        schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValueOnce([
-            personId1,
-            personId2,
-        ]);
-        schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations.mockResolvedValueOnce(
-            [],
-        );
-
-        personRepositoryMock.findByPersonIds.mockResolvedValue([
-            DoFactory.createPerson(true, { id: personId1 }),
-            DoFactory.createPerson(true, { id: personId1 }),
-        ]);
-        emailResolverServiceMock.findEmailsBySpshPersons.mockResolvedValue({
-            ok: true,
-            value: new Map([
-                [personId1, createMock(PersonEmailResponse)],
-                [personId2, createMock(PersonEmailResponse)],
-            ]),
-        });
-        dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
-            new Map([
-                [personId1, []],
-                [personId2, []],
-            ]),
-        );
-        userLockRepoMock.findByPersonIds.mockResolvedValue(
-            new Map([
-                [personId1, []],
-                [personId2, []],
-            ]),
-        );
-
-        const res: Result<PersonInfoResponseV2[], DomainError> = await sut.findPersonsForPersonenInfoV2(
-            permissions,
-            0,
-            10,
-        );
-        expect(res).toBeDefined();
-        expect(schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations).toHaveBeenCalled();
-        expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith(
-            expect.arrayContaining([personId1, personId2]),
-        );
-        expect(emailResolverServiceMock.findEmailsBySpshPersons).toHaveBeenCalledWith(
-            expect.arrayContaining([personId1, personId2]),
-        );
-        expect(dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle).toHaveBeenCalledWith(
-            expect.arrayContaining([personId1, personId2]),
-            expect.arrayContaining(rolle.serviceProviderIds),
-            { all: true },
-        );
-        expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(expect.arrayContaining([personId1, personId2]));
-        expectOkResult(res);
-        expect(res.value.length).toEqual(2);
-        expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV2);
-        expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV2);
-    });
-
-    it('should return persons with all permissions using old repo', async () => {
-        emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
-        const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-        const orga1: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
-        const orga2: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
-        const rolle: Rolle<true> = DoFactory.createRolle(true, {
-            rollenart: RollenArt.SYSADMIN,
-            systemrechte: [RollenSystemRecht.PERSONEN_LESEN],
-            serviceProviderIds: ['serviceProvider1', 'serviceProvider2'],
-        });
-        const kontext1: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-            loeschungZeitpunkt: new Date(),
-            getRolle: () => Promise.resolve(rolle),
-            getOrganisation() {
-                return Promise.resolve(orga1);
-            },
-        });
-        const kontext2: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-            loeschungZeitpunkt: new Date(),
-            getRolle: () => Promise.resolve(rolle),
-            getOrganisation() {
-                return Promise.resolve(orga2);
-            },
+            const res: Result<PersonInfoResponseV2[], DomainError> = await sut.findPersonsForPersonenInfoV2(
+                permissions,
+                0,
+                10,
+            );
+            expect(res).toBeDefined();
+            expect(
+                schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
+            ).toHaveBeenCalled();
+            expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(emailResolverServiceMock.findEmailsBySpshPersons).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(
+                dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle,
+            ).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+                expect.arrayContaining(rolle.serviceProviderIds),
+                { all: true },
+            );
+            expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expectOkResult(res);
+            expect(res.value.length).toEqual(2);
+            expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV2);
+            expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV2);
         });
 
-        permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
-            all: true,
-        });
-        dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([
-            {
-                personenkontext: kontext1,
-                organisation: orga1,
-                rolle: rolle,
-            } satisfies KontextWithOrgaAndRolle,
-            {
-                personenkontext: kontext2,
-                organisation: orga2,
-                rolle: rolle,
-            } satisfies KontextWithOrgaAndRolle,
-        ]);
+        it('should return persons with all permissions using old repo', async () => {
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            const orga1: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
+            const orga2: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
+            const rolle: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.SYSADMIN,
+                systemrechte: [RollenSystemRecht.PERSONEN_LESEN],
+                serviceProviderIds: ['serviceProvider1', 'serviceProvider2'],
+            });
+            const kontext1: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: new Date(),
+                getRolle: () => Promise.resolve(rolle),
+                getOrganisation() {
+                    return Promise.resolve(orga1);
+                },
+            });
+            const kontext2: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: new Date(),
+                getRolle: () => Promise.resolve(rolle),
+                getOrganisation() {
+                    return Promise.resolve(orga2);
+                },
+            });
 
-        const personId1: string = faker.string.uuid();
-        const personId2: string = faker.string.uuid();
-        schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValueOnce([
-            personId1,
-            personId2,
-        ]);
-        schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations.mockResolvedValueOnce(
-            [],
-        );
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+            dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([
+                {
+                    personenkontext: kontext1,
+                    organisation: orga1,
+                    rolle: rolle,
+                } satisfies KontextWithOrgaAndRolle,
+                {
+                    personenkontext: kontext2,
+                    organisation: orga2,
+                    rolle: rolle,
+                } satisfies KontextWithOrgaAndRolle,
+            ]);
 
-        personRepositoryMock.findByPersonIds.mockResolvedValue([
-            DoFactory.createPerson(true, { id: personId1 }),
-            DoFactory.createPerson(true, { id: personId1 }),
-        ]);
-        emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
-            ok: true,
-            value: new Map([
-                [personId1, createMock(PersonEmailResponse)],
-                [personId2, createMock(PersonEmailResponse)],
-            ]),
-        });
-        dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
-            new Map([
-                [personId1, []],
-                [personId2, []],
-            ]),
-        );
-        userLockRepoMock.findByPersonIds.mockResolvedValue(
-            new Map([
-                [personId1, []],
-                [personId2, []],
-            ]),
-        );
+            const personId1: string = faker.string.uuid();
+            const personId2: string = faker.string.uuid();
+            schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValueOnce([
+                personId1,
+                personId2,
+            ]);
+            schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations.mockResolvedValueOnce(
+                [],
+            );
 
-        const res: Result<PersonInfoResponseV2[], DomainError> = await sut.findPersonsForPersonenInfoV2(
-            permissions,
-            0,
-            10,
-        );
-        expect(res).toBeDefined();
-        expect(schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations).toHaveBeenCalled();
-        expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith(
-            expect.arrayContaining([personId1, personId2]),
-        );
-        expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith(
-            expect.arrayContaining([personId1, personId2]),
-        );
-        expect(dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle).toHaveBeenCalledWith(
-            expect.arrayContaining([personId1, personId2]),
-            expect.arrayContaining(rolle.serviceProviderIds),
-            { all: true },
-        );
-        expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(expect.arrayContaining([personId1, personId2]));
-        expectOkResult(res);
-        expect(res.value.length).toEqual(2);
-        expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV2);
-        expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV2);
-    });
+            personRepositoryMock.findByPersonIds.mockResolvedValue([
+                DoFactory.createPerson(true, { id: personId1 }),
+                DoFactory.createPerson(true, { id: personId1 }),
+            ]);
+            emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
+                ok: true,
+                value: new Map([
+                    [personId1, createMock(PersonEmailResponse)],
+                    [personId2, createMock(PersonEmailResponse)],
+                ]),
+            });
+            dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
+                new Map([
+                    [personId1, []],
+                    [personId2, []],
+                ]),
+            );
+            userLockRepoMock.findByPersonIds.mockResolvedValue(
+                new Map([
+                    [personId1, []],
+                    [personId2, []],
+                ]),
+            );
 
-    it('should return persons and default to empty kontext and userlock array', async () => {
-        const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-        const orga1: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
-        const orga2: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
-        const rolle: Rolle<true> = DoFactory.createRolle(true, {
-            rollenart: RollenArt.SYSADMIN,
-            systemrechte: [RollenSystemRecht.PERSONEN_LESEN],
-            serviceProviderIds: ['serviceProvider1', 'serviceProvider2'],
-        });
-        const kontext1: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-            loeschungZeitpunkt: new Date(),
-            getRolle: () => Promise.resolve(rolle),
-            getOrganisation() {
-                return Promise.resolve(orga1);
-            },
-        });
-        const kontext2: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-            loeschungZeitpunkt: new Date(),
-            getRolle: () => Promise.resolve(rolle),
-            getOrganisation() {
-                return Promise.resolve(orga2);
-            },
-        });
-
-        permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
-            all: true,
-        });
-        dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([
-            {
-                personenkontext: kontext1,
-                organisation: orga1,
-                rolle: rolle,
-            } satisfies KontextWithOrgaAndRolle,
-            {
-                personenkontext: kontext2,
-                organisation: orga2,
-                rolle: rolle,
-            } satisfies KontextWithOrgaAndRolle,
-        ]);
-
-        const personId1: string = faker.string.uuid();
-        const personId2: string = faker.string.uuid();
-        schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValueOnce([
-            personId1,
-            personId2,
-        ]);
-        schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations.mockResolvedValueOnce(
-            [],
-        );
-
-        personRepositoryMock.findByPersonIds.mockResolvedValue([
-            DoFactory.createPerson(true, { id: personId1 }),
-            DoFactory.createPerson(true, { id: personId1 }),
-        ]);
-        emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
-            ok: true,
-            value: new Map([
-                [personId1, createMock(PersonEmailResponse)],
-                [personId2, createMock(PersonEmailResponse)],
-            ]),
-        });
-        dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
-            new Map([
-                ['', []],
-                ['', []],
-            ]),
-        );
-        userLockRepoMock.findByPersonIds.mockResolvedValue(
-            new Map([
-                ['', []],
-                ['', []],
-            ]),
-        );
-
-        const res: Result<PersonInfoResponseV2[], DomainError> = await sut.findPersonsForPersonenInfoV2(
-            permissions,
-            0,
-            10,
-        );
-        expect(res).toBeDefined();
-        expect(schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations).toHaveBeenCalled();
-        expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith(
-            expect.arrayContaining([personId1, personId2]),
-        );
-        expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith(
-            expect.arrayContaining([personId1, personId2]),
-        );
-        expect(dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle).toHaveBeenCalledWith(
-            expect.arrayContaining([personId1, personId2]),
-            expect.arrayContaining(rolle.serviceProviderIds),
-            { all: true },
-        );
-        expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(expect.arrayContaining([personId1, personId2]));
-        expectOkResult(res);
-        expect(res.value.length).toEqual(2);
-        expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV2);
-        expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV2);
-    });
-
-    it('should return error when email repo returns error', async () => {
-        const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-
-        permissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
-        dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([
-            {
-                personenkontext: DoFactory.createPersonenkontext(true, {
-                    loeschungZeitpunkt: new Date(),
-                    getRolle: () =>
-                        Promise.resolve(
-                            DoFactory.createRolle(true, {
-                                rollenart: RollenArt.SYSADMIN,
-                                systemrechte: [RollenSystemRecht.PERSONEN_LESEN],
-                                serviceProviderIds: ['serviceProvider1', 'serviceProvider2'],
-                            }),
-                        ),
-                    getOrganisation() {
-                        return Promise.resolve(DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }));
-                    },
-                }),
-                organisation: DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
-                rolle: DoFactory.createRolle(true, {
-                    rollenart: RollenArt.SYSADMIN,
-                    systemrechte: [RollenSystemRecht.PERSONEN_LESEN],
-                    serviceProviderIds: ['serviceProvider1', 'serviceProvider2'],
-                }),
-            } satisfies KontextWithOrgaAndRolle,
-        ]);
-
-        const personId: string = faker.string.uuid();
-
-        schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValue([
-            personId,
-        ]);
-        schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations.mockResolvedValue(
-            [],
-        );
-
-        personRepositoryMock.findByPersonIds.mockResolvedValue([DoFactory.createPerson(true, { id: personId })]);
-
-        emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
-            ok: false,
-            error: undefined as unknown as DomainError,
+            const res: Result<PersonInfoResponseV2[], DomainError> = await sut.findPersonsForPersonenInfoV2(
+                permissions,
+                0,
+                10,
+            );
+            expect(res).toBeDefined();
+            expect(
+                schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
+            ).toHaveBeenCalled();
+            expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(
+                dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle,
+            ).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+                expect.arrayContaining(rolle.serviceProviderIds),
+                { all: true },
+            );
+            expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expectOkResult(res);
+            expect(res.value.length).toEqual(2);
+            expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV2);
+            expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV2);
         });
 
-        const res: Result<PersonInfoResponseV2[], DomainError> = await sut.findPersonsForPersonenInfoV2(
-            permissions,
-            0,
-            10,
-        );
+        it('should return persons and default to empty kontext and userlock array', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            const orga1: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
+            const orga2: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
+            const rolle: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.SYSADMIN,
+                systemrechte: [RollenSystemRecht.PERSONEN_LESEN],
+                serviceProviderIds: ['serviceProvider1', 'serviceProvider2'],
+            });
+            const kontext1: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: new Date(),
+                getRolle: () => Promise.resolve(rolle),
+                getOrganisation() {
+                    return Promise.resolve(orga1);
+                },
+            });
+            const kontext2: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: new Date(),
+                getRolle: () => Promise.resolve(rolle),
+                getOrganisation() {
+                    return Promise.resolve(orga2);
+                },
+            });
 
-        expect(res.ok).toBe(false);
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+            dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([
+                {
+                    personenkontext: kontext1,
+                    organisation: orga1,
+                    rolle: rolle,
+                } satisfies KontextWithOrgaAndRolle,
+                {
+                    personenkontext: kontext2,
+                    organisation: orga2,
+                    rolle: rolle,
+                } satisfies KontextWithOrgaAndRolle,
+            ]);
+
+            const personId1: string = faker.string.uuid();
+            const personId2: string = faker.string.uuid();
+            schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValueOnce([
+                personId1,
+                personId2,
+            ]);
+            schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations.mockResolvedValueOnce(
+                [],
+            );
+
+            personRepositoryMock.findByPersonIds.mockResolvedValue([
+                DoFactory.createPerson(true, { id: personId1 }),
+                DoFactory.createPerson(true, { id: personId1 }),
+            ]);
+            emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
+                ok: true,
+                value: new Map([
+                    [personId1, createMock(PersonEmailResponse)],
+                    [personId2, createMock(PersonEmailResponse)],
+                ]),
+            });
+            dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle.mockResolvedValue(
+                new Map([
+                    ['', []],
+                    ['', []],
+                ]),
+            );
+            userLockRepoMock.findByPersonIds.mockResolvedValue(
+                new Map([
+                    ['', []],
+                    ['', []],
+                ]),
+            );
+
+            const res: Result<PersonInfoResponseV2[], DomainError> = await sut.findPersonsForPersonenInfoV2(
+                permissions,
+                0,
+                10,
+            );
+            expect(res).toBeDefined();
+            expect(
+                schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
+            ).toHaveBeenCalled();
+            expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(
+                dBiamPersonenkontextRepoMock.findByPersonIdsAndServiceprovidersWithOrgaAndRolle,
+            ).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+                expect.arrayContaining(rolle.serviceProviderIds),
+                { all: true },
+            );
+            expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expectOkResult(res);
+            expect(res.value.length).toEqual(2);
+            expect(res.value[0]).toBeInstanceOf(PersonInfoResponseV2);
+            expect(res.value[1]).toBeInstanceOf(PersonInfoResponseV2);
+        });
+
+        it('should return error when email repo returns error', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            dBiamPersonenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValue([
+                {
+                    personenkontext: DoFactory.createPersonenkontext(true, {
+                        loeschungZeitpunkt: new Date(),
+                        getRolle: () =>
+                            Promise.resolve(
+                                DoFactory.createRolle(true, {
+                                    rollenart: RollenArt.SYSADMIN,
+                                    systemrechte: [RollenSystemRecht.PERSONEN_LESEN],
+                                    serviceProviderIds: ['serviceProvider1', 'serviceProvider2'],
+                                }),
+                            ),
+                        getOrganisation() {
+                            return Promise.resolve(
+                                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
+                            );
+                        },
+                    }),
+                    organisation: DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
+                    rolle: DoFactory.createRolle(true, {
+                        rollenart: RollenArt.SYSADMIN,
+                        systemrechte: [RollenSystemRecht.PERSONEN_LESEN],
+                        serviceProviderIds: ['serviceProvider1', 'serviceProvider2'],
+                    }),
+                } satisfies KontextWithOrgaAndRolle,
+            ]);
+
+            const personId: string = faker.string.uuid();
+
+            schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValue([
+                personId,
+            ]);
+            schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations.mockResolvedValue(
+                [],
+            );
+
+            personRepositoryMock.findByPersonIds.mockResolvedValue([DoFactory.createPerson(true, { id: personId })]);
+
+            emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValue({
+                ok: false,
+                error: undefined as unknown as DomainError,
+            });
+
+            const res: Result<PersonInfoResponseV2[], DomainError> = await sut.findPersonsForPersonenInfoV2(
+                permissions,
+                0,
+                10,
+            );
+
+            expect(res.ok).toBe(false);
+        });
     });
 });
