@@ -288,7 +288,7 @@ emailBackend:
   env:
     maxOldSpaceSize: 3584
 
-redis:
+valkey:
   host: dbildungs-iam-valkey-master.spsh.svc.cluster.local
 
 kafka:
