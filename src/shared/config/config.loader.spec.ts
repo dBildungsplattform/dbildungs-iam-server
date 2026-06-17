@@ -51,7 +51,7 @@ describe('configloader', () => {
                     TEST_CLIENT_ID: 'schulportal-test',
                     SERVICE_CLIENT_ID: 'spsh-service',
                 },
-                REDIS: {
+                VALKEY: {
                     HOST: 'localhost',
                     PORT: 6379,
                     USERNAME: 'default',
@@ -156,7 +156,7 @@ describe('configloader', () => {
                 LDAP: { ADMIN_PASSWORD: 'password' },
                 FRONTEND: { SESSION_SECRET: 'SessionSecret' },
                 FEATUREFLAG: {},
-                REDIS: { PASSWORD: 'password' },
+                VALKEY: { PASSWORD: 'password' },
                 ITSLEARNING: {
                     PASSWORD: 'password',
                 },
@@ -233,7 +233,7 @@ describe('configloader', () => {
                     SERVICE_CLIENT_ID: 'spsh-service',
                     SERVICE_CLIENT_PRIVATE_JWKS: '{"keys":[]}',
                 },
-                REDIS: {
+                VALKEY: {
                     HOST: 'localhost',
                     PORT: 6379,
                     USERNAME: 'default',
