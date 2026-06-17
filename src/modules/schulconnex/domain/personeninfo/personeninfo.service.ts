@@ -120,7 +120,7 @@ export class PersonenInfoService {
         permissions: IPersonPermissions,
         offset: number,
         limit: number,
-    ): Promise<Result<PersonInfoResponseV1[], DomainError>> {
+    ): Promise<Result<PersonInfoResponseV2[], DomainError>> {
         // 1. Ermittle alle Knoten mit PERSONEN_LESEN-Recht
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_LESEN],
