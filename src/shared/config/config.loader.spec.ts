@@ -131,7 +131,7 @@ describe('configloader', () => {
                     SSL_KEY_PATH: '/tls/client-key.pem',
                 },
                 PORTAL: {
-                    LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
+                    LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN', 'SORGBER', 'SCHB', 'NLEHR'],
                 },
                 CRON: {
                     PERSON_WITHOUT_ORG_LIMIT: 30,

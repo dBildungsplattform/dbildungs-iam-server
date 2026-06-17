@@ -230,7 +230,13 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
 
                 it('should limit rollenarten when requestedWithSystemrecht is set', async () => {
                     configMock.getOrThrow.mockReturnValueOnce({
-                        LIMITED_ROLLENART_ALLOWLIST: [RollenArt.LERN, RollenArt.EXTERN],
+                        LIMITED_ROLLENART_ALLOWLIST: [
+                            RollenArt.LERN,
+                            RollenArt.EXTERN,
+                            RollenArt.SORGBER,
+                            RollenArt.SCHB,
+                            RollenArt.NLEHR,
+                        ],
                     });
                     const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
                         name: faker.company.name(),
@@ -262,7 +268,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                         undefined,
                         undefined,
                         undefined,
-                        [RollenArt.LERN, RollenArt.EXTERN],
+                        [RollenArt.LERN, RollenArt.EXTERN, RollenArt.SORGBER, RollenArt.SCHB, RollenArt.NLEHR],
                     );
                 });
 
