@@ -81,7 +81,7 @@ export default (): Config => ({
     HOST: {
         HOSTNAME: process.env['BACKEND_HOSTNAME'],
     },
-    REDIS: {
+    VALKEY: {
         PASSWORD: process.env['VALKEY_PASSWORD'],
         HOST: process.env['VALKEY_HOST'],
     },
