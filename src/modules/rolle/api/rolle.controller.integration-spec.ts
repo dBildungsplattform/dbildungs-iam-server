@@ -238,18 +238,9 @@ describe('Rolle API', () => {
             await em.findOneOrFail(RolleEntity, { id: rolle.id });
         });
 
-        it('should fail if the organisation does not exist', async () => {
-            const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
-            const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-            const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
-                {
-                    organisation: savedUserOrganisation,
-                    rolle: { systemrechte: [], serviceProviderIds: [] },
-                },
-            ];
+        it('should fail if user is missing permissions for the organisation', async () => {
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
-            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
 
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
@@ -856,6 +847,7 @@ describe('Rolle API', () => {
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
             permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persist(organisation).flush();
@@ -873,7 +865,9 @@ describe('Rolle API', () => {
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [organisation.id] });
 
-            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: organisation.id,
+            });
 
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),

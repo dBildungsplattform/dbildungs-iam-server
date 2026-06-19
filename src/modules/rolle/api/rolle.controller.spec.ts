@@ -102,6 +102,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     rollenart: RollenArt.LEHR,
                     merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
                     systemrechte: [RollenSystemRechtEnum.KLASSEN_VERWALTEN],
+                    serviceProviderIds: [],
                 };
 
                 const organisation: Organisation<true> = DoFactory.createOrganisation(true);

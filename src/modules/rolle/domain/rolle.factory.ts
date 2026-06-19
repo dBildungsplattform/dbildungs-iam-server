@@ -69,35 +69,4 @@ export class RolleFactory {
             istTechnisch,
         );
     }
-
-    public async update(
-        id: string,
-        createdAt: Date,
-        updatedAt: Date,
-        version: number,
-        name: string,
-        administeredBySchulstrukturknoten: string,
-        rollenart: RollenArt,
-        merkmale: RollenMerkmal[],
-        systemrechte: RollenSystemRecht[],
-        serviceProviderIds: string[],
-        istTechnisch: boolean,
-    ): Promise<Rolle<true> | DomainError> {
-        return Rolle.update(
-            this.organisationRepo,
-            this.serviceProviderRepo,
-            id,
-            createdAt,
-            updatedAt,
-            version,
-            name,
-            administeredBySchulstrukturknoten,
-            rollenart,
-            merkmale,
-            systemrechte,
-            serviceProviderIds,
-            istTechnisch,
-            undefined,
-        );
-    }
 }

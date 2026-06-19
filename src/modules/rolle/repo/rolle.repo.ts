@@ -29,6 +29,7 @@ import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-service-providers.specification.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
+import { Err, UnionToResult } from '../../../shared/util/result.js';
 
 // Disable explicit types here because it's virtually impossible to do this correctly
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -402,6 +403,26 @@ export class RolleRepo {
         }
     }
 
+    public async createRolleAuthorized(
+        rolle: Rolle<false>,
+        permissions: IPersonPermissions,
+    ): Promise<Result<Rolle<true>, DomainError>> {
+        const hasPermission: boolean = await permissions.hasSystemrechtAtOrganisation(
+            rolle.administeredBySchulstrukturknoten,
+            RollenSystemRecht.ROLLEN_VERWALTEN,
+        );
+        if (!hasPermission) {
+            return Err(new MissingPermissionsError('Not authorized to create Rollen at this organisation'));
+        }
+
+        const validationResult: Result<void, DomainError> = await rolle.validate();
+        if (!validationResult.ok) {
+            return validationResult;
+        }
+
+        return UnionToResult(await this.save(rolle));
+    }
+
     public async updateRolleAuthorized(
         id: string,
         name: string,
@@ -411,25 +432,25 @@ export class RolleRepo {
         version: number,
         isAlreadyAssigned: boolean,
         permissions: IPersonPermissions,
-    ): Promise<Rolle<true> | DomainError> {
+    ): Promise<Result<Rolle<true>, DomainError>> {
         //Reference & Permissions
         const authorizedRoleResult: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
         if (!authorizedRoleResult.ok) {
-            return authorizedRoleResult.error;
-        }
-        //Specifications
-
-        if (isAlreadyAssigned) {
-            const willMerkmaleChange: boolean = xor(merkmale, authorizedRoleResult.value.merkmale).length !== 0;
-            if (willMerkmaleChange) {
-                return new UpdateMerkmaleError();
-            }
+            return authorizedRoleResult;
         }
 
         const authorizedRole: Rolle<true> = authorizedRoleResult.value;
 
-        const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
-            id,
+        //Specifications
+        if (isAlreadyAssigned) {
+            const willMerkmaleChange: boolean = xor(merkmale, authorizedRole.merkmale).length !== 0;
+            if (willMerkmaleChange) {
+                return Err(new UpdateMerkmaleError());
+            }
+        }
+
+        const updatedRolle: Rolle<true> = this.rolleFactory.construct(
+            authorizedRole.id,
             authorizedRole.createdAt,
             authorizedRole.updatedAt,
             version,
@@ -440,10 +461,12 @@ export class RolleRepo {
             systemrechte,
             serviceProviderIds,
             authorizedRole.istTechnisch,
+            [],
         );
 
-        if (updatedRolle instanceof DomainError) {
-            return updatedRolle;
+        const validationResult: Result<void, DomainError> = await updatedRolle.validate();
+        if (!validationResult.ok) {
+            return validationResult;
         }
 
         if (isAlreadyAssigned) {
@@ -452,16 +475,11 @@ export class RolleRepo {
                 authorizedRole,
             );
             if (!(await spec.isSatisfiedBy(updatedRolle))) {
-                return new ServiceProviderNichtNachtraeglichZuweisbarError();
+                return Err(new ServiceProviderNichtNachtraeglichZuweisbarError());
             }
         }
 
-        const result: Rolle<true> | DomainError = await this.save(updatedRolle);
-        if (result instanceof DomainError) {
-            return result;
-        }
-
-        return result;
+        return UnionToResult(await this.save(updatedRolle));
     }
 
     public async deleteAuthorized(

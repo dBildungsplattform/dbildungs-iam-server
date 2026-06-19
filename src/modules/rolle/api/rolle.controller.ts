@@ -37,12 +37,10 @@ import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { Public } from '../../authentication/api/public.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { RolleDomainError } from '../domain/rolle-domain.error.js';
 import { RolleFindService } from '../domain/rolle-find.service.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
@@ -74,7 +72,6 @@ export class RolleController {
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
         private readonly rolleFindService: RolleFindService,
-        private readonly orgService: OrganisationService,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly organisationRepository: OrganisationRepository,
@@ -211,15 +208,6 @@ export class RolleController {
         @Body() params: CreateRolleBodyParams,
         @Permissions() permissions: IPersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
-        const orgResult: Result<Organisation<true>, DomainError> = await this.orgService.findOrganisationById(
-            params.administeredBySchulstrukturknoten,
-        );
-        if (!orgResult.ok) {
-            this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${orgResult.error.message}`,
-            );
-            throw orgResult.error;
-        }
         const rolle: DomainError | Rolle<false> = this.rolleFactory.createNew(
             params.name,
             params.administeredBySchulstrukturknoten,
@@ -237,16 +225,18 @@ export class RolleController {
             );
             throw rolle;
         }
-        const result: Rolle<true> | DomainError = await this.rolleRepo.save(rolle);
-        if (result instanceof DomainError) {
-            this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${result.message}.`,
-            );
-            throw result;
-        }
-        this.logger.info(`Admin: ${permissions.personFields.id}) hat eine neue Rolle angelegt: ${result.name}.`);
 
-        return new RolleWithServiceProvidersResponse(result, result.serviceProviderData);
+        const result: Result<Rolle<true>, DomainError> = await this.rolleRepo.createRolleAuthorized(rolle, permissions);
+        if (!result.ok) {
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${result.error.message}.`,
+            );
+            throw result.error;
+        }
+
+        this.logger.info(`Admin: ${permissions.personFields.id}) hat eine neue Rolle angelegt: ${result.value.name}.`);
+
+        return new RolleWithServiceProvidersResponse(result.value, result.value.serviceProviderData);
     }
 
     @Get(':rolleId/serviceProviders')
@@ -290,7 +280,7 @@ export class RolleController {
         const isAlreadyAssigned: boolean = await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(
             findRolleByIdParams.rolleId,
         );
-        const result: Rolle<true> | DomainError = await this.rolleRepo.updateRolleAuthorized(
+        const result: Result<Rolle<true>, DomainError> = await this.rolleRepo.updateRolleAuthorized(
             findRolleByIdParams.rolleId,
             params.name,
             params.merkmale,
@@ -301,22 +291,17 @@ export class RolleController {
             permissions,
         );
 
-        if (result instanceof DomainError) {
-            if (result instanceof RolleDomainError) {
-                this.logger.error(
-                    `Admin: ${permissions.personFields.id}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
-                );
-                throw result;
-            }
+        if (!result.ok) {
             this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.error.message}`,
             );
-            throw result;
+
+            throw result.error;
         }
 
         this.logger.info(`Admin: ${permissions.personFields.id}) hat eine Rolle bearbeitet: ${rolleName}.`);
 
-        return this.returnRolleWithServiceProvidersResponse(result);
+        return this.returnRolleWithServiceProvidersResponse(result.value);
     }
 
     @Delete(':rolleId')
