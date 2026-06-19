@@ -670,6 +670,59 @@ describe('VidisSyncService', () => {
             ]);
         });
 
+        it('should skip VIDIS Angebote that already exist as non-school-provided Angebote in the database', async () => {
+            const orga: TorgaIds = {
+                id: faker.string.uuid(),
+                kennung: faker.string.alphanumeric(8),
+            };
+            const angeboteInVidis: VidisApiResponseAngebotBySchool[] = [
+                createAngebot(1, 'Landesweites Angebot'),
+                createAngebot(2, 'School Angebot'),
+            ];
+            const nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[] = [
+                ServiceProvider.construct<true>(
+                    faker.string.uuid(),
+                    new Date('2026-01-01'),
+                    new Date('2026-01-02'),
+                    'Landesweites Angebot',
+                    ServiceProviderTarget.URL,
+                    'https://example.org/1',
+                    ServiceProviderKategorie.SCHULISCH,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    ServiceProviderSystem.NONE,
+                    false,
+                    '1',
+                    [],
+                ),
+            ];
+            serviceProviderRepoMock.create.mockResolvedValue(Ok(createExistingVidisServiceProvider(orga.id, '2')));
+
+            await (
+                sut as unknown as {
+                    syncForSchoolInternal: (
+                        organisationId: string,
+                        angeboteInVidis: VidisApiResponseAngebotBySchool[],
+                        angeboteInDb: ServiceProvider<true>[],
+                        nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[],
+                        permissions: IPersonPermissions,
+                    ) => Promise<void>;
+                }
+            ).syncForSchoolInternal(orga.id, angeboteInVidis, [], nonSchoolProvidedVidisAngeboteInDB, permissionsMock);
+
+            expect(serviceProviderRepoMock.create).toHaveBeenCalledTimes(1);
+            expect(serviceProviderRepoMock.create).toHaveBeenCalledWith(permissionsMock, expect.any(ServiceProvider));
+            const createdServiceProvider: ServiceProvider<false> = serviceProviderRepoMock.create.mock
+                .calls[0]?.[1] as ServiceProvider<false>;
+
+            expect(createdServiceProvider.name).toBe('School Angebot');
+            expect(createdServiceProvider.vidisAngebotId).toBe('2');
+        });
+
         it('should collect stale serviceProviderIds for Angebote that are no longer in VIDIS', async () => {
             const orga: TorgaIds = {
                 id: faker.string.uuid(),
