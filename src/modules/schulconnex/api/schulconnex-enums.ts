@@ -29,30 +29,30 @@ export enum SchulconnexRolle {
     NLEHR = 'NLehr',
 }
 
-export function convertSPSHRollenartToSchulconnexRolleV1(rollenart: RollenArt): SchulconnexRolle {
+export function convertSPSHRollenartForBackwardsCampatibility(rollenart: RollenArt): RollenArt {
     switch (rollenart) {
         case RollenArt.LERN:
-            return SchulconnexRolle.LERN;
+            return RollenArt.LERN;
         case RollenArt.LEHR:
-            return SchulconnexRolle.LEHR;
+            return RollenArt.LEHR;
         case RollenArt.LEIT:
-            return SchulconnexRolle.LEIT;
+            return RollenArt.LEIT;
         case RollenArt.SYSADMIN:
-            return SchulconnexRolle.SYSADMIN;
+            return RollenArt.SYSADMIN;
         case RollenArt.ORGADMIN:
-            return SchulconnexRolle.ORGADMIN;
+            return RollenArt.ORGADMIN;
         case RollenArt.EXTERN:
-            return SchulconnexRolle.EXTERN;
+            return RollenArt.EXTERN;
         case RollenArt.SORGBER:
-            return SchulconnexRolle.EXTERN;
+            return RollenArt.EXTERN;
         case RollenArt.SCHB:
-            return SchulconnexRolle.LEHR;
+            return RollenArt.LEHR;
         case RollenArt.NLEHR:
-            return SchulconnexRolle.LEHR;
+            return RollenArt.LEHR;
     }
 }
 
-export function convertSPSHRollenartToSchulconnexRolleV2(rollenart: RollenArt): SchulconnexRolle {
+export function convertSPSHRollenartToSchulconnexRolle(rollenart: RollenArt): SchulconnexRolle {
     switch (rollenart) {
         case RollenArt.LERN:
             return SchulconnexRolle.LERN;

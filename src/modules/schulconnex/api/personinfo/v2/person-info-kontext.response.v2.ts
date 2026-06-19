@@ -9,7 +9,7 @@ import {
     SchulconnexGruppeTyp,
     SchulconnexOrganisationTyp,
     SchulconnexRolle,
-    convertSPSHRollenartToSchulconnexRolleV2,
+    convertSPSHRollenartToSchulconnexRolle,
 } from '../../schulconnex-enums.js';
 import { UserLock } from '../../../../keycloak-administration/domain/user-lock.js';
 import { PersonenInfoKontextOrganisationResponseV1 } from '../v1/person-info-kontext-organisation.response.v1.js';
@@ -82,7 +82,7 @@ export class PersonInfoKontextResponseV2 {
         return new PersonInfoKontextResponseV2({
             id: primaryNonKlassenKontext.personenkontext.id,
             organisation: personenInfoKontextOrganisationResponseV2,
-            rolle: convertSPSHRollenartToSchulconnexRolleV2(primaryNonKlassenKontext.rolle.rollenart),
+            rolle: convertSPSHRollenartToSchulconnexRolle(primaryNonKlassenKontext.rolle.rollenart),
             erreichbarkeiten: personInfoKontextErreichbarkeitResponseV2
                 ? [personInfoKontextErreichbarkeitResponseV2]
                 : [],

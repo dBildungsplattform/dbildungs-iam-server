@@ -7,6 +7,7 @@ import { PersonenInfoKontextResponse } from './person-info-kontext.response.js';
 import { KontextWithOrgaAndRolle } from '../../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenInfoKontextOrganisationResponse } from './person-info-kontext-organisation.response.js';
 import { LoeschungResponse } from '../../../../person/api/loeschung.response.js';
+import { convertSPSHRollenartForBackwardsCampatibility } from '../../schulconnex-enums.js';
 
 export class PersonNestedInPersonInfoResponse {
     @ApiProperty()
@@ -128,7 +129,7 @@ export class PersonInfoResponse {
                     typ: k.organisation.typ,
                     kennung: k.organisation.kennung,
                 }),
-                rollenart: k.rolle.rollenart,
+                rollenart: convertSPSHRollenartForBackwardsCampatibility(k.rolle.rollenart),
                 rollenname: k.rolle.name,
                 personenstatus: k.personenkontext.personenstatus,
                 jahrgangsstufe: k.personenkontext.jahrgangsstufe,

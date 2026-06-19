@@ -1,82 +1,82 @@
 import {
-    convertSPSHRollenartToSchulconnexRolleV1,
-    convertSPSHRollenartToSchulconnexRolleV2,
+    convertSPSHRollenartForBackwardsCampatibility,
+    convertSPSHRollenartToSchulconnexRolle,
     SchulconnexRolle,
 } from './schulconnex-enums.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
-describe('convertRollenartToSchulconnexRolleV1', () => {
-    it('should convert RollenArt.LERN to SchulconnexRolle.LERN', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV1(RollenArt.LERN)).toBe(SchulconnexRolle.LERN);
+describe('convertRollenartForBackwardsCampatibility', () => {
+    it('should convert RollenArt.LERN to RollenArt.LERN', () => {
+        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.LERN)).toBe(RollenArt.LERN);
     });
 
-    it('should convert RollenArt.LEHR to SchulconnexRolle.LEHR', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV1(RollenArt.LEHR)).toBe(SchulconnexRolle.LEHR);
+    it('should convert RollenArt.LEHR to RollenArt.LEHR', () => {
+        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.LEHR)).toBe(RollenArt.LEHR);
     });
 
-    it('should convert RollenArt.LEIT to SchulconnexRolle.LEIT', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV1(RollenArt.LEIT)).toBe(SchulconnexRolle.LEIT);
+    it('should convert RollenArt.LEIT to RollenArt.LEIT', () => {
+        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.LEIT)).toBe(RollenArt.LEIT);
     });
 
-    it('should convert RollenArt.SYSADMIN to SchulconnexRolle.SYSADMIN', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV1(RollenArt.SYSADMIN)).toBe(SchulconnexRolle.SYSADMIN);
+    it('should convert RollenArt.SYSADMIN to RollenArt.SYSADMIN', () => {
+        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.SYSADMIN)).toBe(RollenArt.SYSADMIN);
     });
 
-    it('should convert RollenArt.ORGADMIN to SchulconnexRolle.ORGADMIN', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV1(RollenArt.ORGADMIN)).toBe(SchulconnexRolle.ORGADMIN);
+    it('should convert RollenArt.ORGADMIN to RollenArt.ORGADMIN', () => {
+        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.ORGADMIN)).toBe(RollenArt.ORGADMIN);
     });
 
-    it('should convert RollenArt.EXTERN to SchulconnexRolle.EXTERN', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV1(RollenArt.EXTERN)).toBe(SchulconnexRolle.EXTERN);
+    it('should convert RollenArt.EXTERN to RollenArt.EXTERN', () => {
+        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.EXTERN)).toBe(RollenArt.EXTERN);
     });
 
-    it('should convert RollenArt.SORGBER to SchulconnexRolle.EXTERN', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV1(RollenArt.SORGBER)).toBe(SchulconnexRolle.EXTERN);
+    it('should convert RollenArt.SORGBER to RollenArt.EXTERN', () => {
+        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.SORGBER)).toBe(RollenArt.EXTERN);
     });
 
-    it('should convert RollenArt.SCHB to SchulconnexRolle.LEHR', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV1(RollenArt.SCHB)).toBe(SchulconnexRolle.LEHR);
+    it('should convert RollenArt.SCHB to RollenArt.LEHR', () => {
+        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.SCHB)).toBe(RollenArt.LEHR);
     });
 
-    it('should convert RollenArt.NLEHR to SchulconnexRolle.LEHR', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV1(RollenArt.NLEHR)).toBe(SchulconnexRolle.LEHR);
+    it('should convert RollenArt.NLEHR to RollenArt.LEHR', () => {
+        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.NLEHR)).toBe(RollenArt.LEHR);
     });
 });
 
-describe('convertSPSHRollenartToSchulconnexRolleV2', () => {
+describe('convertSPSHRollenartToSchulconnexRolle', () => {
     it('should convert RollenArt.LERN to SchulconnexRolle.LERN', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV2(RollenArt.LERN)).toBe(SchulconnexRolle.LERN);
+        expect(convertSPSHRollenartToSchulconnexRolle(RollenArt.LERN)).toBe(SchulconnexRolle.LERN);
     });
 
     it('should convert RollenArt.LEHR to SchulconnexRolle.LEHR', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV2(RollenArt.LEHR)).toBe(SchulconnexRolle.LEHR);
+        expect(convertSPSHRollenartToSchulconnexRolle(RollenArt.LEHR)).toBe(SchulconnexRolle.LEHR);
     });
 
     it('should convert RollenArt.LEIT to SchulconnexRolle.LEIT', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV2(RollenArt.LEIT)).toBe(SchulconnexRolle.LEIT);
+        expect(convertSPSHRollenartToSchulconnexRolle(RollenArt.LEIT)).toBe(SchulconnexRolle.LEIT);
     });
 
     it('should convert RollenArt.SYSADMIN to SchulconnexRolle.SYSADMIN', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV2(RollenArt.SYSADMIN)).toBe(SchulconnexRolle.SYSADMIN);
+        expect(convertSPSHRollenartToSchulconnexRolle(RollenArt.SYSADMIN)).toBe(SchulconnexRolle.SYSADMIN);
     });
 
     it('should convert RollenArt.ORGADMIN to SchulconnexRolle.ORGADMIN', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV2(RollenArt.ORGADMIN)).toBe(SchulconnexRolle.ORGADMIN);
+        expect(convertSPSHRollenartToSchulconnexRolle(RollenArt.ORGADMIN)).toBe(SchulconnexRolle.ORGADMIN);
     });
 
     it('should convert RollenArt.EXTERN to SchulconnexRolle.EXTERN', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV2(RollenArt.EXTERN)).toBe(SchulconnexRolle.EXTERN);
+        expect(convertSPSHRollenartToSchulconnexRolle(RollenArt.EXTERN)).toBe(SchulconnexRolle.EXTERN);
     });
 
     it('should convert RollenArt.SORGBER to SchulconnexRolle.SORGBER', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV2(RollenArt.SORGBER)).toBe(SchulconnexRolle.SORGBER);
+        expect(convertSPSHRollenartToSchulconnexRolle(RollenArt.SORGBER)).toBe(SchulconnexRolle.SORGBER);
     });
 
     it('should convert RollenArt.SCHB to SchulconnexRolle.SCHB', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV2(RollenArt.SCHB)).toBe(SchulconnexRolle.SCHB);
+        expect(convertSPSHRollenartToSchulconnexRolle(RollenArt.SCHB)).toBe(SchulconnexRolle.SCHB);
     });
 
     it('should convert RollenArt.NLEHR to SchulconnexRolle.NLEHR', () => {
-        expect(convertSPSHRollenartToSchulconnexRolleV2(RollenArt.NLEHR)).toBe(SchulconnexRolle.NLEHR);
+        expect(convertSPSHRollenartToSchulconnexRolle(RollenArt.NLEHR)).toBe(SchulconnexRolle.NLEHR);
     });
 });

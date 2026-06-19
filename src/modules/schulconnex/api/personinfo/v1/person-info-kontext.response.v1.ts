@@ -12,7 +12,8 @@ import {
     SchulconnexGruppeTyp,
     SchulconnexOrganisationTyp,
     SchulconnexRolle,
-    convertSPSHRollenartToSchulconnexRolleV1,
+    convertSPSHRollenartForBackwardsCampatibility,
+    convertSPSHRollenartToSchulconnexRolle,
 } from '../../schulconnex-enums.js';
 import { UserLock } from '../../../../keycloak-administration/domain/user-lock.js';
 
@@ -79,7 +80,9 @@ export class PersonInfoKontextResponseV1 {
         return new PersonInfoKontextResponseV1({
             id: primaryNonKlassenKontext.personenkontext.id,
             organisation: personenInfoKontextOrganisationResponseV1,
-            rolle: convertSPSHRollenartToSchulconnexRolleV1(primaryNonKlassenKontext.rolle.rollenart),
+            rolle: convertSPSHRollenartToSchulconnexRolle(
+                convertSPSHRollenartForBackwardsCampatibility(primaryNonKlassenKontext.rolle.rollenart),
+            ),
             erreichbarkeiten: personInfoKontextErreichbarkeitResponseV1
                 ? [personInfoKontextErreichbarkeitResponseV1]
                 : [],
