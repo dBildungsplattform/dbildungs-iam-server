@@ -76,7 +76,8 @@ export class VidisSyncService {
         const activatedAngebote: Result<VidisAngebotWithSchoolActivations[], VidisApiError> =
             await this.vidisApiAdapter.getActivatedAngeboteByRegionSH();
 
-        const nonSchoolProvidedVidisAngebote: ServiceProvider<true>[] = await this.serviceProviderRepo.findNonSchoolProvidedVidisAngebote();
+        const nonSchoolProvidedVidisAngebote: ServiceProvider<true>[] =
+            await this.serviceProviderRepo.findNonSchoolProvidedVidisAngebote();
 
         if (!activatedAngebote.ok) {
             this.logger.error('Skipping VIDIS sync because loading activated Angebote failed');
@@ -97,15 +98,12 @@ export class VidisSyncService {
         organisationId: string,
         permissions: IPersonPermissions,
     ): Promise<Result<void, SharedDomainError>> {
-        const hasRequiredPermissions: boolean = await permissions.hasSystemrechteAtOrganisation(
-            organisationId,
-            [RollenSystemRecht.SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN],
-        );
+        const hasRequiredPermissions: boolean = await permissions.hasSystemrechteAtOrganisation(organisationId, [
+            RollenSystemRecht.SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN,
+        ]);
         if (!hasRequiredPermissions) {
             return Err(
-                new MissingPermissionsError(
-                    'Systemrechte are missing for caller that are required for this endpoint.',
-                ),
+                new MissingPermissionsError('Systemrechte are missing for caller that are required for this endpoint.'),
             );
         }
 
@@ -127,11 +125,11 @@ export class VidisSyncService {
             return Err(activatedAngebote.error);
         }
 
-        const nonSchoolProvidedVidisAngebote: ServiceProvider<true>[] = await this.serviceProviderRepo.findNonSchoolProvidedVidisAngebote();
+        const nonSchoolProvidedVidisAngebote: ServiceProvider<true>[] =
+            await this.serviceProviderRepo.findNonSchoolProvidedVidisAngebote();
 
-        const vidisAngeboteForSchool: ServiceProvider<true>[] = await this.serviceProviderRepo.findVidisAngeboteforSchools([
-            organisationId,
-        ]);
+        const vidisAngeboteForSchool: ServiceProvider<true>[] =
+            await this.serviceProviderRepo.findVidisAngeboteforSchools([organisationId]);
 
         await this.syncForSchoolInternal(
             organisationId,
@@ -175,7 +173,9 @@ export class VidisSyncService {
 
         await Promise.all(
             Object.values(organisationIdByKennung).map((organisationId: string) => {
-                const angebote: VidisApiResponseAngebotBySchool[] = (angeboteByOrganisationId[organisationId] ?? []).map((a: VidisSchoolActivatedAngebot) => a.angebot);
+                const angebote: VidisApiResponseAngebotBySchool[] = (
+                    angeboteByOrganisationId[organisationId] ?? []
+                ).map((a: VidisSchoolActivatedAngebot) => a.angebot);
                 return this.syncForSchoolInternal(
                     organisationId,
                     angebote,
@@ -198,17 +198,19 @@ export class VidisSyncService {
 
     private async syncForSchoolInternal(
         organisationId: string,
-        angeboteInVidis: VidisApiResponseAngebotBySchool [],
+        angeboteInVidis: VidisApiResponseAngebotBySchool[],
         angeboteInDb: ServiceProvider<true>[],
         nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[], //e.g. for offers provided by Land SH
         permissions: IPersonPermissions,
     ): Promise<void> {
         this.logger.info(`Syncing VIDIS Angebote for school with organisationId: ${organisationId}`);
         const nonSchoolProvidedVidisAngeboteIdsInDB: Set<string> = new Set(
-            nonSchoolProvidedVidisAngeboteInDB.map((sp: ServiceProvider<true>) => sp.vidisAngebotId).filter((id: string | undefined): id is string => id !== undefined)
+            nonSchoolProvidedVidisAngeboteInDB
+                .map((sp: ServiceProvider<true>) => sp.vidisAngebotId)
+                .filter((id: string | undefined): id is string => id !== undefined),
         );
         const vidisAngebotIds: Set<string> = new Set(
-            angeboteInVidis.map(( angebot : VidisApiResponseAngebotBySchool) => angebot.offerId.toString()),
+            angeboteInVidis.map((angebot: VidisApiResponseAngebotBySchool) => angebot.offerId.toString()),
         );
 
         const existingVidisAngebotIdsInDb: Set<string> = new Set(
@@ -218,7 +220,9 @@ export class VidisSyncService {
         );
 
         const missingAngeboteInDb: VidisApiResponseAngebotBySchool[] = angeboteInVidis.filter(
-            ( angebot : VidisApiResponseAngebotBySchool) => !nonSchoolProvidedVidisAngeboteIdsInDB.has(angebot.offerId.toString()) && !existingVidisAngebotIdsInDb.has(angebot.offerId.toString()),
+            (angebot: VidisApiResponseAngebotBySchool) =>
+                !nonSchoolProvidedVidisAngeboteIdsInDB.has(angebot.offerId.toString()) &&
+                !existingVidisAngebotIdsInDb.has(angebot.offerId.toString()),
         );
         const serviceProviderIdsMissingInVidis: string[] = angeboteInDb
             .filter(
@@ -237,7 +241,7 @@ export class VidisSyncService {
             `Differences found between VIDIS API and database for school with organisationId: ${organisationId}. ` +
                 `VIDIS Angebote to add to DB: [${missingAngeboteInDb
                     .map(
-                        ( angebot : VidisApiResponseAngebotBySchool) =>
+                        (angebot: VidisApiResponseAngebotBySchool) =>
                             `${angebot.offerId} (${angebot.offerTitle.toString().substring(0, 50)})`,
                     )
                     .join(', ')}]. ` +

@@ -35,7 +35,9 @@ export class VidisController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to trigger the VIDIS Angebote sync.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to trigger the VIDIS Angebote sync.' })
     @ApiNotFoundResponse({ description: 'The organisation does not exist or lacks required permissions.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to trigger the VIDIS Angebote sync.' })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while trying to trigger the VIDIS Angebote sync.',
+    })
     public async syncAngeboteForSchool(
         @Permissions() permissions: IPersonPermissions,
         @Param() params: OrganisationByIdParams,

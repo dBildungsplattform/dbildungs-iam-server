@@ -36,9 +36,7 @@ export class VidisApiAdapter {
         this.vidisConfig = configService.getOrThrow<VidisConfig>('VIDIS');
     }
 
-    public async getActivatedAngeboteByRegionSH(): Promise<
-        Result<VidisAngebotWithSchoolActivations[], VidisApiError>
-    > {
+    public async getActivatedAngeboteByRegionSH(): Promise<Result<VidisAngebotWithSchoolActivations[], VidisApiError>> {
         try {
             const token: string = await this.getAuthToken();
             const response: AxiosResponse<VidisApiResponse<VidisApiResponseAngebotByRegion>> = await firstValueFrom(

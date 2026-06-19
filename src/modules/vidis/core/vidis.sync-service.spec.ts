@@ -4,7 +4,12 @@ import { vi } from 'vitest';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { EntityNotFoundError, MissingAttributeError, MissingPermissionsError, SharedDomainError } from '../../../shared/error/index.js';
+import {
+    EntityNotFoundError,
+    MissingAttributeError,
+    MissingPermissionsError,
+    SharedDomainError,
+} from '../../../shared/error/index.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -55,7 +60,10 @@ describe('VidisSyncService', () => {
     type DecodedVidisLogoResult = { logo: Buffer | undefined; logoMimeType: string | undefined };
 
     const tinyPngBase64: string = 'iVBORw0KGgo=';
-    const vidisApiServiceProviderMock: Pick<VidisApiAdapter, 'getActivatedAngeboteByRegionSH' | 'getActivatedAngeboteBySchool'> = {
+    const vidisApiServiceProviderMock: Pick<
+        VidisApiAdapter,
+        'getActivatedAngeboteByRegionSH' | 'getActivatedAngeboteBySchool'
+    > = {
         getActivatedAngeboteByRegionSH: vi.fn(),
         getActivatedAngeboteBySchool: vi.fn(),
     };
@@ -239,7 +247,10 @@ describe('VidisSyncService', () => {
 
             vi.mocked(permissionsMock.hasSystemrechteAtOrganisation).mockResolvedValue(false);
 
-            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(organisationId, permissionsMock);
+            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(
+                organisationId,
+                permissionsMock,
+            );
 
             expect(result).toEqual(
                 Err(
@@ -258,7 +269,10 @@ describe('VidisSyncService', () => {
             vi.mocked(permissionsMock.hasSystemrechteAtOrganisation).mockResolvedValue(true);
             organisationRepoMock.findById.mockResolvedValue(null);
 
-            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(organisationId, permissionsMock);
+            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(
+                organisationId,
+                permissionsMock,
+            );
 
             expect(result).toEqual(Err(new EntityNotFoundError('Organisation', organisationId)));
             expect(vidisApiAdapterMock.getActivatedAngeboteBySchool).not.toHaveBeenCalled();
@@ -272,7 +286,10 @@ describe('VidisSyncService', () => {
                 Organisation.construct(organisationId, new Date('2026-01-01'), new Date('2026-01-02'), 1),
             );
 
-            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(organisationId, permissionsMock);
+            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(
+                organisationId,
+                permissionsMock,
+            );
 
             expect(result).toEqual(
                 Err(new MissingAttributeError('Organisation is missing Kennung required for VIDIS sync.')),
@@ -291,7 +308,10 @@ describe('VidisSyncService', () => {
             organisationRepoMock.findById.mockResolvedValue(createSchool(organisationId, kennung));
             vidisApiAdapterMock.getActivatedAngeboteBySchool.mockResolvedValue(getActivatedAngeboteResult);
 
-            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(organisationId, permissionsMock);
+            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(
+                organisationId,
+                permissionsMock,
+            );
 
             expect(result).toEqual(
                 Err(new SharedDomainError('Failed to load activated VIDIS Angebote for the requested school.')),
@@ -322,7 +342,10 @@ describe('VidisSyncService', () => {
             );
             serviceProviderRepoMock.findVidisAngeboteforSchools.mockResolvedValue(existingVidisAngeboteForSchool);
 
-            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(organisationId, permissionsMock);
+            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(
+                organisationId,
+                permissionsMock,
+            );
 
             expect(result).toEqual(Ok(undefined));
             expect(vidisApiAdapterMock.getActivatedAngeboteBySchool).toHaveBeenCalledWith(kennung);
