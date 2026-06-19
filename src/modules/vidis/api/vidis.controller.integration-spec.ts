@@ -69,8 +69,16 @@ describe('VidisController', () => {
 
     describe('syncAngeboteForSchool', () => {
         it('should remove stale school Angebote, add two new ones and skip one that already exists on a non school organisation', async () => {
-            const school: OrganisationEntity = await createAndPersistOrganisation(em, undefined, OrganisationsTyp.SCHULE);
-            const nonSchool: OrganisationEntity = await createAndPersistOrganisation(em, undefined, OrganisationsTyp.LAND);
+            const school: OrganisationEntity = await createAndPersistOrganisation(
+                em,
+                undefined,
+                OrganisationsTyp.SCHULE,
+            );
+            const nonSchool: OrganisationEntity = await createAndPersistOrganisation(
+                em,
+                undefined,
+                OrganisationsTyp.LAND,
+            );
 
             const staleSchoolAngebot: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
                 name: 'Stale school Angebot',
@@ -97,30 +105,37 @@ describe('VidisController', () => {
                 organisationId: school.id,
             });
 
-            const schoolAngeboteAfterSync: ServiceProvider<true>[] = await serviceProviderRepo.findVidisAngeboteforSchools([
-                school.id,
-            ]);
+            const schoolAngeboteAfterSync: ServiceProvider<true>[] =
+                await serviceProviderRepo.findVidisAngeboteforSchools([school.id]);
             const nonSchoolAngeboteAfterSync: ServiceProvider<true>[] =
                 await serviceProviderRepo.findNonSchoolProvidedVidisAngebote();
-            const removedSchoolAngebot: Option<ServiceProvider<true>> = await serviceProviderRepo.findByVidisAngebotId(staleSchoolAngebot.vidisAngebotId!);
-            const skippedDuplicateSchoolAngebot: ServiceProvider<true>[] = await serviceProviderRepo.findVidisAngeboteforSchools([school.id]);
+            const removedSchoolAngebot: Option<ServiceProvider<true>> = await serviceProviderRepo.findByVidisAngebotId(
+                staleSchoolAngebot.vidisAngebotId!,
+            );
+            const skippedDuplicateSchoolAngebot: ServiceProvider<true>[] =
+                await serviceProviderRepo.findVidisAngeboteforSchools([school.id]);
 
             expect(vidisApiAdapterMock.getActivatedAngeboteBySchool).toHaveBeenCalledWith(school.kennung);
             expect(schoolAngeboteAfterSync).toHaveLength(2);
-            expect(schoolAngeboteAfterSync.map((angebot: ServiceProvider<true>) => angebot.vidisAngebotId).sort()).toEqual([
-                '2001',
-                '2002',
-            ]);
+            expect(
+                schoolAngeboteAfterSync.map((angebot: ServiceProvider<true>) => angebot.vidisAngebotId).sort(),
+            ).toEqual(['2001', '2002']);
             expect(removedSchoolAngebot).toBeNull();
             expect(nonSchoolAngeboteAfterSync).toHaveLength(1);
             expect(nonSchoolAngeboteAfterSync[0]?.id).toEqual(existingNonSchoolAngebot.id);
-            expect(skippedDuplicateSchoolAngebot.some((angebot: ServiceProvider<true>) => angebot.vidisAngebotId === '3003')).toBe(
-                false,
-            );
+            expect(
+                skippedDuplicateSchoolAngebot.some(
+                    (angebot: ServiceProvider<true>) => angebot.vidisAngebotId === '3003',
+                ),
+            ).toBe(false);
         });
 
         it('should throw a VIDIS api error when loading school Angebote fails', async () => {
-            const school: OrganisationEntity = await createAndPersistOrganisation(em, undefined, OrganisationsTyp.SCHULE);
+            const school: OrganisationEntity = await createAndPersistOrganisation(
+                em,
+                undefined,
+                OrganisationsTyp.SCHULE,
+            );
             const vidisApiError: VidisApiError = new VidisApiError(faker.lorem.sentence());
 
             vidisApiAdapterMock.getActivatedAngeboteBySchool.mockResolvedValueOnce(Err(vidisApiError));
@@ -131,9 +146,8 @@ describe('VidisController', () => {
                 }),
             ).rejects.toBe(vidisApiError);
 
-            const schoolAngeboteAfterSync: ServiceProvider<true>[] = await serviceProviderRepo.findVidisAngeboteforSchools([
-                school.id,
-            ]);
+            const schoolAngeboteAfterSync: ServiceProvider<true>[] =
+                await serviceProviderRepo.findVidisAngeboteforSchools([school.id]);
 
             expect(vidisApiAdapterMock.getActivatedAngeboteBySchool).toHaveBeenCalledWith(school.kennung);
             expect(schoolAngeboteAfterSync).toEqual([]);

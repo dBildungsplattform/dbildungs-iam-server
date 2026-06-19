@@ -258,7 +258,7 @@ describe('VidisSyncService', () => {
             );
 
             expect(result.ok).toBeFalsy();
-            if(result.ok){
+            if (result.ok) {
                 return;
             }
             expect(result.error).toBeInstanceOf(MissingPermissionsError);
@@ -316,9 +316,7 @@ describe('VidisSyncService', () => {
                 permissionsMock,
             );
 
-            expect(result).toEqual(
-                Err(new VidisApiError('VIDIS unavailable')),
-            );
+            expect(result).toEqual(Err(new VidisApiError('VIDIS unavailable')));
             expect(serviceProviderRepoMock.findVidisAngeboteforSchools).not.toHaveBeenCalled();
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `Skipping VIDIS sync for school with organisationId ${organisationId} because loading activated Angebote failed`,
