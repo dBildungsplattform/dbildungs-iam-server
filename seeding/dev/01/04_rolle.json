@@ -91,7 +91,7 @@
         {
             "id": 7,
             "administeredBySchulstrukturknoten": 1,
-            "name": "Schulträgeradministrator öffentlich",
+            "name": "Schulträgeradministrator",
             "rollenart": "ORGADMIN",
             "merkmale": [],
             "systemrechte": ["PERSONEN_VERWALTEN", "KLASSEN_VERWALTEN"],
