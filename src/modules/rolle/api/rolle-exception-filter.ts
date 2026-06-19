@@ -12,7 +12,6 @@ import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specificatio
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
 import { NoRedundantRollenerweiterungError } from '../specification/error/no-redundant-rollenerweiterung.error.js';
 import { ServiceProviderProvidedOutOfTreeError } from '../domain/service-provider-provided-out-of-tree.error.js';
-import { RollenartNurFuerSchuleError } from '../specification/error/rollenart-nur-fuer-schule.error.js';
 
 @Catch(RolleDomainError)
 export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
@@ -85,13 +84,6 @@ export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
             new DbiamRolleError({
                 code: 400,
                 i18nKey: RolleErrorI18nTypes.SERVICE_PROVIDER_PROVIDED_OUT_OF_TREE,
-            }),
-        ],
-        [
-            RollenartNurFuerSchuleError.name,
-            new DbiamRolleError({
-                code: 400,
-                i18nKey: RolleErrorI18nTypes.ROLLENART_NUR_FUER_SCHULE,
             }),
         ],
     ]);

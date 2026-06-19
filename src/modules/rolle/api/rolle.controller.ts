@@ -69,8 +69,6 @@ import { RolleResponse } from './rolle.response.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { RollenartNurFuerSchuleError } from '../specification/error/rollenart-nur-fuer-schule.error.js';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -227,16 +225,6 @@ export class RolleController {
                 `Admin: ${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${orgResult.error.message}`,
             );
             throw orgResult.error;
-        }
-        if (
-            orgResult.value.typ !== OrganisationsTyp.SCHULE &&
-            params.rollenart &&
-            ['SORGBER', 'SCHB', 'NLEHR'].includes(params.rollenart)
-        ) {
-            this.logger.error(
-                `Rollen mit der Rollenart ${params.rollenart} können nur für Organisationen des Typs SCHULE angelegt werden.`,
-            );
-            throw new RollenartNurFuerSchuleError();
         }
         const rolle: DomainError | Rolle<false> = this.rolleFactory.createNew(
             params.name,
