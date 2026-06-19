@@ -688,7 +688,7 @@ describe('VidisSyncService', () => {
                     ServiceProviderTarget.URL,
                     'https://example.org/1',
                     ServiceProviderKategorie.SCHULISCH,
-                    undefined,
+                    faker.string.uuid(),
                     undefined,
                     undefined,
                     undefined,
