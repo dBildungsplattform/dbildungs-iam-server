@@ -103,13 +103,20 @@ export class VidisSyncService {
         ]);
         if (!hasRequiredPermissions) {
             return Err(
-                new MissingPermissionsError('Systemrecht SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN required for this endpoint.'),
+                new MissingPermissionsError(
+                    'Systemrecht SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN required for this endpoint.',
+                ),
             );
         }
-        const escalatedPermissions: IPersonPermissions = await this.escalatedPersonPermissionsFactory.fromPermissions(permissions, [{
-            orgaId: organisationId,
-            systemrechte: [RollenSystemRechtEnum.ANGEBOTE_VERWALTEN, RollenSystemRechtEnum.ROLLEN_ERWEITERN],
-        }])
+        const escalatedPermissions: IPersonPermissions = await this.escalatedPersonPermissionsFactory.fromPermissions(
+            permissions,
+            [
+                {
+                    orgaId: organisationId,
+                    systemrechte: [RollenSystemRechtEnum.ANGEBOTE_VERWALTEN, RollenSystemRechtEnum.ROLLEN_ERWEITERN],
+                },
+            ],
+        );
 
         const school: Option<Organisation<true>> = await this.organisationRepo.findById(organisationId);
         if (!school) {
