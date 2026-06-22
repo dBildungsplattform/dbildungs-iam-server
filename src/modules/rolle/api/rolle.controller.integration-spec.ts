@@ -789,14 +789,14 @@ describe('Rolle API', () => {
         permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
         const response: Response = await request(app.getHttpServer() as App)
-            .get(`/rolle?systemrecht=IMPORT_DURCHFUEHREN&rollenarten=${RollenArt.LEHR}`)
+            .get(`/rolle?systemrecht=IMPORT_DURCHFUEHREN&rollenarten=${RollenArt.LEHR}&organisationId=${schule.id}`)
             .send();
 
         expect(response.status).toBe(200);
         const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
             response.body as PagedResponse<RolleWithServiceProvidersResponse>;
 
-        expect(pagedResponse.items).toHaveLength(2);
+        expect(pagedResponse.items).toHaveLength(1);
         expect(pagedResponse.items).toEqual(
             expect.arrayContaining([expect.objectContaining({ id: role1.id, name: role1.name })]),
         );
