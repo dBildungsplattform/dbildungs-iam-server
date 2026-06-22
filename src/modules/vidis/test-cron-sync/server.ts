@@ -1,8 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/typedef */
+
 import express, { type Request, type Response } from 'express';
 import fs from 'fs';
 
 const app = express();
-const port = 10000;
+const port: number = 10000;
 
 // Für x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
@@ -41,5 +45,6 @@ app.get('/o/vidis-rest/v1.0/offers/activated/by-region/:region', (req, res) => {
 });
 
 app.listen(port, () => {
+    // eslint-disable-next-line no-console
     console.log(`Mock läuft auf http://localhost:${port}`);
 });

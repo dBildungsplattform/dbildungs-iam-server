@@ -42,26 +42,32 @@ type VidisApiResponseAngebotByRegion = {
     schoolActivations: VidisApiResponseSchoolActivation[];
 };
 
-const REGION = 'SH';
-const OFFER_COUNT = 30;
-const SCHOOL_ACTIVATIONS_PER_OFFER = 800;
+const REGION: string = 'SH';
+const OFFER_COUNT: number = 30;
+const SCHOOL_ACTIVATIONS_PER_OFFER: number = 800;
 
 function buildResponse(): VidisApiResponse<VidisApiResponseAngebotByRegion> {
-    const items: VidisApiResponseAngebotByRegion[] = Array.from({ length: OFFER_COUNT }, (_, offerIndex) => ({
-        clientId: `client-${offerIndex + 1}`,
-        educationProviderOrganizationName: `Provider ${offerIndex + 1}`,
-        offerDescription: `Beschreibung Angebot ${offerIndex + 1}`,
-        offerId: offerIndex + 1,
-        offerLink: `https://example.org/offers/${offerIndex + 1}`,
-        offerLogo: `https://example.org/logos/${offerIndex + 1}.png`,
-        offerLongTitle: `Langer Titel Angebot ${offerIndex + 1}`,
-        offerTitle: `Angebot ${offerIndex + 1}`,
-        offerVersion: 1,
-        schoolActivations: Array.from({ length: SCHOOL_ACTIVATIONS_PER_OFFER }, (_, schoolIndex) => ({
-            date: '2026-06-22',
-            regionName: `SCHULE-${String(schoolIndex + 1).padStart(4, '0')}`,
-        })),
-    }));
+    const items: VidisApiResponseAngebotByRegion[] = Array.from(
+        { length: OFFER_COUNT },
+        (_: unknown, offerIndex: number) => ({
+            clientId: `client-${offerIndex + 1}`,
+            educationProviderOrganizationName: `Provider ${offerIndex + 1}`,
+            offerDescription: `Beschreibung Angebot ${offerIndex + 1}`,
+            offerId: offerIndex + 1,
+            offerLink: `https://example.org/offers/${offerIndex + 1}`,
+            offerLogo: `https://example.org/logos/${offerIndex + 1}.png`,
+            offerLongTitle: `Langer Titel Angebot ${offerIndex + 1}`,
+            offerTitle: `Angebot ${offerIndex + 1}`,
+            offerVersion: 1,
+            schoolActivations: Array.from(
+                { length: SCHOOL_ACTIVATIONS_PER_OFFER },
+                (_: unknown, schoolIndex: number) => ({
+                    date: '2026-06-22',
+                    regionName: `SCHULE-${String(schoolIndex + 1).padStart(4, '0')}`,
+                }),
+            ),
+        }),
+    );
 
     return {
         facets: [],
@@ -74,9 +80,10 @@ function buildResponse(): VidisApiResponse<VidisApiResponseAngebotByRegion> {
     };
 }
 
-const db = {
+const db: unknown = {
     [`offersActivatedByRegion${REGION}`]: buildResponse(),
 };
 
 writeFileSync('src/modules/vidis/test-cron-sync/db.json', JSON.stringify(db, null, 2), 'utf-8');
+// eslint-disable-next-line no-console
 console.log('db.json erstellt');
