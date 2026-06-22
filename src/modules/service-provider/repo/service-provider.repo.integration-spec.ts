@@ -695,6 +695,40 @@ describe('ServiceProviderRepo', () => {
         });
     });
 
+    describe('findVidisAngeboteforSchools', () => {
+        it('should return service providers for the given schools that have a VIDIS Angebot ID', async () => {
+            const schoolAId: OrganisationID = faker.string.uuid();
+            const schoolBId: OrganisationID = faker.string.uuid();
+
+            const matchingServiceProviderA: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: schoolAId,
+                vidisAngebotId: 'vidis-angebot-1',
+            });
+            const matchingServiceProviderB: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: schoolBId,
+                vidisAngebotId: 'vidis-angebot-2',
+            });
+            await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: schoolAId,
+            });
+            await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: faker.string.uuid(),
+                vidisAngebotId: 'vidis-angebot-3',
+            });
+
+            const result: ServiceProvider<true>[] = await sut.findVidisAngeboteforSchools([schoolAId, schoolBId]);
+
+            expect(result).toHaveLength(2);
+            expect(result).toEqual(expect.arrayContaining([matchingServiceProviderA, matchingServiceProviderB]));
+        });
+
+        it('should return an empty array for an empty school list', async () => {
+            const result: ServiceProvider<true>[] = await sut.findVidisAngeboteforSchools([]);
+
+            expect(result).toEqual([]);
+        });
+    });
+
     describe('findByKeycloakGroup', () => {
         it('should find a ServiceProvider by its Keycloak groupname', async () => {
             const expectedPersistedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {

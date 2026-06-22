@@ -141,7 +141,7 @@
             "keycloakGroup": "Schulrecht A-Z-service",
             "keycloakRole": "Schulrecht A-Z-user",
             "requires2fa": false,
-            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR", "VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 10,
@@ -234,8 +234,8 @@
             "target": "URL",
             "url": "https://app-staging.ais-chat.schule/login?vidis_idp_hint=spsh-o",
             "kategorie": "UNTERRICHT",
-            "logoMimeType": "image/svg+xml",
-            "logoBase64": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTG9nbyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCAyNjkuOCAyMzAuMSI+CiAgPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDMwLjMuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDIuMS4zIEJ1aWxkIDE4MikgIC0tPgogIDxkZWZzPgogICAgPHN0eWxlPgogICAgICAuc3QwIHsKICAgICAgICBmaWxsOiAjNDYyMTdlOwogICAgICB9CiAgICA8L3N0eWxlPgogIDwvZGVmcz4KICA8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMjAyLjIsMi42SDYyQzI4LjgsMi42LDIsMjkuNSwyLDYyLjZoMGMwLDMzLjEsMjYuOSw2MCw2MCw2MGgxNDAuMmMzMy4xLDAsNjAtMjYuOSw2MC02MGgwYzAtMzMuMS0yNi45LTYwLTYwLTYwaDBaTTIwMi4yLDQzLjFjMTAuOCwwLDE5LjUsOC44LDE5LjUsMTkuNXMtOC44LDE5LjUtMTkuNSwxOS41SDYyYy0xMC44LDAtMTkuNS04LjgtMTkuNS0xOS41czguOC0xOS41LDE5LjUtMTkuNWgxNDAuMiIvPgogIDxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0yMzYuNywxMzguNmgtNTUuMmMtMTEuMywwLTIwLjQsOS4xLTIwLjQsMjAuNHM5LjEsMjAuNCwyMC40LDIwLjRoNTUuMmMxMS4zLDAsMjAuNC05LjEsMjAuNC0yMC40cy05LjEtMjAuNC0yMC40LTIwLjRoMFoiLz4KICA8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMjM3LjIsMjIwLjRjLTMuMy0zLjMtNC45LTcuNC00LjktMTIuNXMxLjYtOS4yLDQuOS0xMi41YzMuMy0zLjMsNy40LTQuOSwxMi41LTQuOXM5LjIsMS42LDEyLjUsNC45YzMuMywzLjMsNC45LDcuNCw0LjksMTIuNXMtMS42LDkuMi00LjksMTIuNWMtMy4zLDMuMy03LjQsNC45LTEyLjUsNC45cy05LjItMS42LTEyLjUtNC45aDBaIi8+Cjwvc3ZnPg==",
+            "logoMimeType": "image/png",
+            "logoBase64": "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",
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "VIDIS-Dienste-service",
             "keycloakRole": "VIDIS-Dienste-user",
@@ -270,7 +270,239 @@
             "keycloakRole": "Hubbs-user",
             "requires2fa": false,
             "vidis_angebot_id": "hubbs-placeholder",
-            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR", "VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
+        },
+        {
+            "id": 19,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 12,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 20,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 13,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 21,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 14,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 22,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 15,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 23,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 16,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 24,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 17,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 25,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 18,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 26,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 19,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 27,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 20,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 28,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 21,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 29,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 22,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 30,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 23,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 31,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 24,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 32,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 25,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 33,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 26,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 34,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 27,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 35,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 28,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 36,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 29,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 37,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 30,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 38,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 31,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 39,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 32,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 40,
+            "name": "GeoGebra",
+            "target": "URL",
+            "url": "https://www.geogebra.org/classic",
+            "kategorie": "SCHULISCH",
+            "providedOnSchulstrukturknoten": 33,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
+        },
+        {
+            "id": 41,
+            "name": "Alles wird Besser",
+            "target": "URL",
+            "url": "https://make-everything-ok.com/",
+            "kategorie": "SCHULISCH",
+            "logoMimeType": "image/png",
+            "logoBase64": "iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAAM6SURBVHhe7ZjtstsgDAXz/i/dTqZ1S1WwDYgv7dkZ//EFI+msczP5/BBoPvaGYCEB4EgAOBIAjgSAIwHgSAA4EgCOBIAjAeBIADgSAI4EgCMB4EgAOBIAjgSAIwHgSAA4EgCOBIAjAeBIADgSAI4EgCMB4EgAOK4CfD6ujxMTcE1MApyHa2IS4DxcE5MA5+GamAQ4D/fEJMFZuKclAc7CPS0JcBbuaUmAs3BPSwKchXtaswX4njf7zEi4T25FGCslWHWuF0Oq9xrKFWzNVYvdX/MMu+/u2pUhlXk1XPOca+2bgd8FU7pvebPm4u681QyryKPZ1mc8DfvubzlK60v3S9Sun8Gwijya7XnGnQSl+xfpG9vznBwte0YytJreZkftL4X6JvSUN2ssLXtGMrQaj2Z7nnG314adrr3bl2L3vaF2/WiGV9MypJTWvT3n1u7LSZTy9PeVTKmodwC1e2vXW3r32mtnplfXMxQ72NLVi8czTmFZp56BebNjTaPYotOSDLl7o1lx5kq269R+nPeE0bK/dv3phO5WAjyD6Lbm0+TNmkiwun2QIXcvOryOE1IZiOF/YXYt/iAB4EgAOBIAjgSAIwHgSAA4EgCOBIAzVQDqr207MzUR+9Mr+SfYXdhi+lYIiTGPradshZAY/hw5TSuExGgn1NSsELtfO7BHFVCsECukmH+iKCIB4EgAMCvC/7LmVPEPq8L/su5kseyLX8ra04Gs/MafY48qgrNb6Cn7VRSEnUNP2bu6g0gD3z30lHMq3YxTA7ecW/lkogRuidPJACIGbonbWSOE0FMYXd4Q9aP9LaiObdjEwC1hJmCDzV3if46cig1W4bZzzORs4Areh2MmWArbClFaJ/KEnJYVQlKUwUzGCiEpfoGeghWCKAar25eQhIjdnQPRJYjbWSf6BIBCCD2F02kB0v/7HLyOf0MN3IKaAPlNL4GZhELPE3oqeuOfCT0ZBf9M6Anp7X8m/HQkwT2Yyej7QB7kNCTCX9BTkAhwAS7IIjC7ziABBFICXscP0CRgdfsSkgScTiuhSMDosgEJAEcCCAQSAI4EgCMB4EgAOBIAjgSAIwHgSAA4EgCOBIDzEzuOohjDzzFTAAAAAElFTkSuQmCC",
+            "providedOnSchulstrukturknoten": 32,
+            "requires2fa": false,
+            "merkmale": ["VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
         }
     ]
 }

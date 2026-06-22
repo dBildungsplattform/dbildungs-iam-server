@@ -32,6 +32,8 @@ import { ConfigService } from '@nestjs/config';
 import { createPersonPermissionsMock } from '../../../test/utils/auth.mock.js';
 import { IPersonPermissions } from '../../shared/permissions/person-permissions.interface.js';
 import { EscalatedPersonPermissionsFactory } from '../permission/escalated-person-permissions.factory.js';
+import { RollenSystemRecht } from '../rolle/domain/systemrecht.js';
+import { VidisSyncService } from '../vidis/core/vidis.sync-service.js';
 
 class UnknownError extends DomainError {
     public constructor(message: string) {
@@ -52,6 +54,7 @@ describe('CronController', () => {
     let personenkontextWorkflowMock: DeepMocked<PersonenkontextWorkflowAggregate>;
     let userLockRepositoryMock: DeepMocked<UserLockRepository>;
     let emailAddressDeletionServiceMock: DeepMocked<EmailAddressDeletionService>;
+    let vidisSyncServiceMock: DeepMocked<VidisSyncService>;
     const escalatedPersonPermissionsFactoryMock: DeepMocked<EscalatedPersonPermissionsFactory> = createMock(
         EscalatedPersonPermissionsFactory,
     );
@@ -109,6 +112,10 @@ describe('CronController', () => {
                     provide: EscalatedPersonPermissionsFactory,
                     useValue: escalatedPersonPermissionsFactoryMock,
                 },
+                {
+                    provide: VidisSyncService,
+                    useValue: createMock(VidisSyncService),
+                },
             ],
             controllers: [CronController],
         })
@@ -126,10 +133,44 @@ describe('CronController', () => {
         userLockRepositoryMock = module.get(UserLockRepository);
         permissionsMock = createPersonPermissionsMock();
         emailAddressDeletionServiceMock = module.get(EmailAddressDeletionService);
+        vidisSyncServiceMock = module.get(VidisSyncService);
     });
 
     beforeEach(() => {
         vi.resetAllMocks();
+    });
+
+    describe('/PUT cron/vidis-sync', () => {
+        it('should trigger VIDIS sync for authorized users', async () => {
+            permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+            vidisSyncServiceMock.sync.mockResolvedValueOnce();
+
+            await expect(cronController.triggerVidisSync(permissionsMock)).resolves.toBeUndefined();
+
+            expect(permissionsMock.hasSystemrechteAtRootOrganisation).toHaveBeenCalledWith([
+                RollenSystemRecht.CRON_DURCHFUEHREN,
+            ]);
+            expect(vidisSyncServiceMock.sync).toHaveBeenCalledTimes(1);
+        });
+
+        it('should throw when the user has no cron permission', async () => {
+            permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
+
+            await expect(cronController.triggerVidisSync(permissionsMock)).rejects.toThrow(
+                'Failed to trigger VIDIS sync due to an internal server error.',
+            );
+            expect(vidisSyncServiceMock.sync).not.toHaveBeenCalled();
+        });
+
+        it('should throw when VIDIS sync fails', async () => {
+            permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+            vidisSyncServiceMock.sync.mockRejectedValueOnce(new Error('sync failed'));
+
+            await expect(cronController.triggerVidisSync(permissionsMock)).rejects.toThrow(
+                'Failed to trigger VIDIS sync due to an internal server error.',
+            );
+            expect(vidisSyncServiceMock.sync).toHaveBeenCalledTimes(1);
+        });
     });
 
     describe('/PUT cron/kopers-lock', () => {
