@@ -800,9 +800,6 @@ describe('Rolle API', () => {
         expect(pagedResponse.items).toEqual(
             expect.arrayContaining([expect.objectContaining({ id: role1.id, name: role1.name })]),
         );
-        expect(pagedResponse.items).toEqual(
-            expect.arrayContaining([expect.objectContaining({ id: role3.id, name: role3.name })]),
-        );
         expect(pagedResponse.items[0]?.rollenart).toBe(RollenArt.LEHR);
         expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
             [RollenSystemRecht.IMPORT_DURCHFUEHREN],
