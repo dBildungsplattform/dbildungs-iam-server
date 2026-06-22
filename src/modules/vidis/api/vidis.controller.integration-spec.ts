@@ -18,6 +18,8 @@ import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { createAndPersistOrganisation } from '../../../../test/utils/organisation-test-helper.js';
 import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { EscalatedPersonPermissions } from '../../permission/escalated-person-permissions.js';
+import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
 
 function createVidisAngebotBySchool(offerId: number, offerTitle: string): VidisApiResponseAngebotBySchool {
     return {
@@ -39,6 +41,8 @@ describe('VidisController', () => {
     let serviceProviderRepo: ServiceProviderRepo;
     let orm: MikroORM;
     let em: EntityManager;
+    let escalatedPersonPermissionsFactoryMock: DeepMocked<EscalatedPersonPermissionsFactory>;
+    let permissionsMock: EscalatedPersonPermissions;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -46,6 +50,8 @@ describe('VidisController', () => {
         })
             .overrideProvider(VidisApiAdapter)
             .useValue(createMock(VidisApiAdapter))
+            .overrideProvider(EscalatedPersonPermissionsFactory)
+            .useValue(createMock(EscalatedPersonPermissionsFactory))
             .compile();
 
         orm = module.get(MikroORM);
@@ -55,6 +61,7 @@ describe('VidisController', () => {
         vidisController = module.get(VidisController);
         vidisApiAdapterMock = module.get(VidisApiAdapter);
         serviceProviderRepo = module.get(ServiceProviderRepo);
+        escalatedPersonPermissionsFactoryMock = module.get(EscalatedPersonPermissionsFactory);
     });
 
     afterEach(async () => {
@@ -65,6 +72,11 @@ describe('VidisController', () => {
     afterAll(async () => {
         await orm.close();
         await module.close();
+    });
+
+    beforeEach(() => {
+        permissionsMock = createPersonPermissionsMock() as unknown as EscalatedPersonPermissions;
+        escalatedPersonPermissionsFactoryMock.fromPermissions.mockResolvedValue(permissionsMock);
     });
 
     describe('syncAngeboteForSchool', () => {

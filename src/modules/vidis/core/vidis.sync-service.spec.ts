@@ -228,6 +228,7 @@ describe('VidisSyncService', () => {
             SYNC_SCHOOLS_PAGE_SIZE: 100,
         });
         escalatedPersonPermissionsFactoryMock.createNew.mockReturnValue(permissionsMock);
+        escalatedPersonPermissionsFactoryMock.fromPermissions.mockResolvedValue(permissionsMock);
         serviceProviderRepoMock.findNonSchoolProvidedVidisAngebote.mockResolvedValue([]);
     });
 
