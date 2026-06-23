@@ -45,6 +45,7 @@ type VidisApiResponseAngebotByRegion = {
 const REGION: string = 'SH';
 const OFFER_COUNT: number = 30;
 const SCHOOL_ACTIVATIONS_PER_OFFER: number = 800;
+const SCHOOL_NUMBER_START: number = 1000001;
 
 function buildResponse(): VidisApiResponse<VidisApiResponseAngebotByRegion> {
     const items: VidisApiResponseAngebotByRegion[] = Array.from(
@@ -63,7 +64,7 @@ function buildResponse(): VidisApiResponse<VidisApiResponseAngebotByRegion> {
                 { length: SCHOOL_ACTIVATIONS_PER_OFFER },
                 (_: unknown, schoolIndex: number) => ({
                     date: '2026-06-22',
-                    regionName: `SCHULE-${String(schoolIndex + 1).padStart(4, '0')}`,
+                    regionName: String(SCHOOL_NUMBER_START + schoolIndex),
                 }),
             ),
         }),
