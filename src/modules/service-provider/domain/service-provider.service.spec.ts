@@ -36,6 +36,7 @@ import {
 } from './types.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
+import { VidisServiceProviderImmutableError } from './errors/vidis-service-provider-immutable.error.js';
 
 // helper to mock output of some repos
 function getIdMap<T>(arr: Array<T & { id: string }>): Map<string, T> {
@@ -786,6 +787,23 @@ describe('ServiceProviderService', () => {
 
             expect(serviceProviderRepo.update).not.toHaveBeenCalled();
         });
+
+        it('should reject updates for VIDIS-linked service providers', async () => {
+            const vidisLinkedServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                vidisAngebotId: faker.string.uuid(),
+            });
+            serviceProviderRepo.findById.mockResolvedValue(vidisLinkedServiceProvider);
+
+            const result: Result<ServiceProvider<true>, DomainError> = await service.updateServiceProvider(
+                permissions,
+                vidisLinkedServiceProvider.id,
+                { name: 'New Name' },
+            );
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(VidisServiceProviderImmutableError);
+            expect(serviceProviderRepo.update).not.toHaveBeenCalled();
+        });
     });
 
     describe('deleteByIdAuthorized', () => {
@@ -796,6 +814,7 @@ describe('ServiceProviderService', () => {
         beforeEach(() => {
             permissions = createPersonPermissionsMock();
             vi.resetAllMocks();
+            serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
         });
 
         it('returns AttachedRollenError if attached Rollen exist', async () => {
@@ -822,6 +841,24 @@ describe('ServiceProviderService', () => {
             );
             expectErrResult(result);
             expect(result.error).toBeInstanceOf(AttachedRollenerweiterungenError);
+        });
+
+        it('returns error for VIDIS-linked service providers before deleting', async () => {
+            const vidisLinkedServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                vidisAngebotId: faker.string.uuid(),
+            });
+            serviceProviderRepo.findById.mockResolvedValue(vidisLinkedServiceProvider);
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
+
+            const result: Result<void, ServiceProviderError> = await service.deleteByIdAuthorized(
+                permissions,
+                vidisLinkedServiceProvider.id,
+            );
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(VidisServiceProviderImmutableError);
+            expect(serviceProviderRepo.deleteByIdAuthorized).not.toHaveBeenCalled();
         });
 
         it('calls deleteById and returns Ok() on success', async () => {

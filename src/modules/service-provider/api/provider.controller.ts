@@ -53,6 +53,7 @@ import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.j
 import { AttachedRollenError } from '../domain/errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from '../domain/errors/attached-rollenerweiterungen.error.js';
 import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
+import { VidisServiceProviderImmutableError } from '../domain/errors/vidis-service-provider-immutable.error.js';
 import { ServiceProviderFindService } from '../domain/service-provider-find.service.js';
 import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
@@ -371,7 +372,7 @@ export class ProviderController {
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions.' })
-    @ApiBadRequestResponse({ description: 'Invalid request body.' })
+    @ApiBadRequestResponse({ description: 'Invalid request body or VIDIS-linked service-provider.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     public async createServiceProvider(
         @Permissions() permissions: IPersonPermissions,
@@ -448,6 +449,7 @@ export class ProviderController {
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete a service-provider (Angebot) by id.' })
     @ApiNoContentResponse({ description: 'The service-provider was successfully deleted.' })
+    @ApiBadRequestResponse({ description: 'The service-provider is linked to VIDIS and cannot be deleted.' })
     @ApiConflictResponse({
         description: 'The service-provider has attached rollenerweiterungen or rollen and cannot be deleted.',
     })
@@ -461,7 +463,11 @@ export class ProviderController {
     ): Promise<void> {
         const result: Result<
             void,
-            EntityNotFoundError | MissingPermissionsError | AttachedRollenError | AttachedRollenerweiterungenError
+            | EntityNotFoundError
+            | MissingPermissionsError
+            | AttachedRollenError
+            | AttachedRollenerweiterungenError
+            | VidisServiceProviderImmutableError
         > = await this.serviceProviderService.deleteByIdAuthorized(permissions, params.angebotId);
 
         if (!result.ok) {

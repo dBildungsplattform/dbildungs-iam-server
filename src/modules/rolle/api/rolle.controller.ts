@@ -103,24 +103,37 @@ export class RolleController {
         @Query() queryParams: FindRolleQueryParams,
         @Permissions() permissions: IPersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
-        const [rollen, total]: [Rolle<true>[], number] =
-            queryParams.systemrecht === RollenSystemRechtEnum.ROLLEN_ERWEITERN
-                ? await this.rolleFindService.findRollenAvailableForErweiterung({
-                      permissions,
-                      searchStr: queryParams.searchStr,
-                      organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
-                      rollenArten: queryParams.rollenarten,
-                      limit: queryParams.limit,
-                      offset: queryParams.offset,
-                  })
-                : await this.rolleRepo.findRollenAuthorized(
-                      permissions,
-                      false,
-                      queryParams.searchStr,
-                      queryParams.limit,
-                      queryParams.offset,
-                      queryParams.organisationId ? [queryParams.organisationId] : undefined,
-                  );
+        let rollenAndTotal: [Rolle<true>[], number];
+        if (queryParams.systemrecht === RollenSystemRechtEnum.ROLLEN_ERWEITERN) {
+            rollenAndTotal = await this.rolleFindService.findRollenAvailableForErweiterung({
+                permissions,
+                searchStr: queryParams.searchStr,
+                organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                rollenArten: queryParams.rollenarten,
+                limit: queryParams.limit,
+                offset: queryParams.offset,
+            });
+        } else if (queryParams.systemrecht === RollenSystemRechtEnum.IMPORT_DURCHFUEHREN) {
+            rollenAndTotal = await this.rolleFindService.findRollenAvailableForImportPersonenkontext({
+                permissions,
+                searchStr: queryParams.searchStr,
+                organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                rollenArten: queryParams.rollenarten,
+                limit: queryParams.limit,
+                offset: queryParams.offset,
+            });
+        } else {
+            rollenAndTotal = await this.rolleRepo.findRollenAuthorized(
+                permissions,
+                false,
+                queryParams.searchStr,
+                queryParams.limit,
+                queryParams.offset,
+                queryParams.organisationId ? [queryParams.organisationId] : undefined,
+            );
+        }
+
+        const [rollen, total]: [Rolle<true>[], number] = rollenAndTotal;
         if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
                 total: 0,
