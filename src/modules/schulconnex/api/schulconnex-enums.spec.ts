@@ -1,5 +1,5 @@
 import {
-    convertSPSHRollenartForBackwardsCampatibility,
+    convertSPSHRollenartForBackwardsCampatibilityV1,
     convertSPSHRollenartToSchulconnexRolle,
     SchulconnexRolle,
 } from './schulconnex-enums.js';
@@ -7,39 +7,39 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 describe('convertRollenartForBackwardsCampatibility', () => {
     it('should convert RollenArt.LERN to RollenArt.LERN', () => {
-        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.LERN)).toBe(RollenArt.LERN);
+        expect(convertSPSHRollenartForBackwardsCampatibilityV1(RollenArt.LERN)).toBe(RollenArt.LERN);
     });
 
     it('should convert RollenArt.LEHR to RollenArt.LEHR', () => {
-        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.LEHR)).toBe(RollenArt.LEHR);
+        expect(convertSPSHRollenartForBackwardsCampatibilityV1(RollenArt.LEHR)).toBe(RollenArt.LEHR);
     });
 
     it('should convert RollenArt.LEIT to RollenArt.LEIT', () => {
-        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.LEIT)).toBe(RollenArt.LEIT);
+        expect(convertSPSHRollenartForBackwardsCampatibilityV1(RollenArt.LEIT)).toBe(RollenArt.LEIT);
     });
 
     it('should convert RollenArt.SYSADMIN to RollenArt.SYSADMIN', () => {
-        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.SYSADMIN)).toBe(RollenArt.SYSADMIN);
+        expect(convertSPSHRollenartForBackwardsCampatibilityV1(RollenArt.SYSADMIN)).toBe(RollenArt.SYSADMIN);
     });
 
     it('should convert RollenArt.ORGADMIN to RollenArt.ORGADMIN', () => {
-        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.ORGADMIN)).toBe(RollenArt.ORGADMIN);
+        expect(convertSPSHRollenartForBackwardsCampatibilityV1(RollenArt.ORGADMIN)).toBe(RollenArt.ORGADMIN);
     });
 
     it('should convert RollenArt.EXTERN to RollenArt.EXTERN', () => {
-        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.EXTERN)).toBe(RollenArt.EXTERN);
+        expect(convertSPSHRollenartForBackwardsCampatibilityV1(RollenArt.EXTERN)).toBe(RollenArt.EXTERN);
     });
 
     it('should convert RollenArt.SORGBER to RollenArt.EXTERN', () => {
-        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.SORGBER)).toBe(RollenArt.EXTERN);
+        expect(convertSPSHRollenartForBackwardsCampatibilityV1(RollenArt.SORGBER)).toBe(RollenArt.EXTERN);
     });
 
     it('should convert RollenArt.SCHB to RollenArt.LEHR', () => {
-        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.SCHB)).toBe(RollenArt.LEHR);
+        expect(convertSPSHRollenartForBackwardsCampatibilityV1(RollenArt.SCHB)).toBe(RollenArt.LEHR);
     });
 
     it('should convert RollenArt.NLEHR to RollenArt.LEHR', () => {
-        expect(convertSPSHRollenartForBackwardsCampatibility(RollenArt.NLEHR)).toBe(RollenArt.LEHR);
+        expect(convertSPSHRollenartForBackwardsCampatibilityV1(RollenArt.NLEHR)).toBe(RollenArt.LEHR);
     });
 });
 

@@ -6,13 +6,13 @@ import { IMSESInstitutionRoleType, IMSESRoleType } from './role.enum.js';
 const ROLLENART_VALUES: Record<RollenArt, number> = {
     [RollenArt.EXTERN]: 0,
     [RollenArt.LERN]: 1,
-    [RollenArt.LEHR]: 2,
-    [RollenArt.LEIT]: 3,
-    [RollenArt.ORGADMIN]: 4,
-    [RollenArt.SYSADMIN]: 5,
-    [RollenArt.SORGBER]: 6,
-    [RollenArt.SCHB]: 7,
-    [RollenArt.NLEHR]: 8,
+    [RollenArt.SORGBER]: 2,
+    [RollenArt.SCHB]: 3,
+    [RollenArt.NLEHR]: 4,
+    [RollenArt.LEHR]: 5,
+    [RollenArt.LEIT]: 6,
+    [RollenArt.ORGADMIN]: 7,
+    [RollenArt.SYSADMIN]: 8,
 };
 
 // Maps our roles to itsLearning roles

@@ -29,7 +29,7 @@ export enum SchulconnexRolle {
     NLEHR = 'NLehr',
 }
 
-export function convertSPSHRollenartForBackwardsCampatibility(rollenart: RollenArt): RollenArt {
+export function convertSPSHRollenartForBackwardsCampatibilityV1(rollenart: RollenArt): RollenArt {
     switch (rollenart) {
         case RollenArt.LERN:
             return RollenArt.LERN;
