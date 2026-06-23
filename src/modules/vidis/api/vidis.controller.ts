@@ -1,4 +1,4 @@
-import { Controller, HttpCode, HttpStatus, Param, Put, UseFilters } from '@nestjs/common';
+import { Controller, HttpCode, HttpStatus, Param, Put, UseFilters, UseGuards } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -17,6 +17,7 @@ import { OrganisationByIdParams } from '../../organisation/api/organisation-by-i
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { VidisSyncService } from '../core/vidis.sync-service.js';
 import { VidisExceptionFilter } from './vidis-exception-filter.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 
 @ApiTags('vidis')
 @ApiOAuth2(['openid'])
@@ -27,7 +28,7 @@ export class VidisController {
     public constructor(private readonly vidisSyncService: VidisSyncService) {}
 
     @Put(':organisationId/angebote-sync')
-    //@UseGuards(StepUpGuard)
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ description: 'Sync VIDIS Angebote for a school organisation.' })
     @ApiOkResponse({ description: 'The VIDIS Angebote sync was successfully triggered.' })
