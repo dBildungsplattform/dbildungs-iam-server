@@ -3,6 +3,7 @@ import { Response } from 'express';
 import { MockedObject } from 'vitest';
 import { createArgumentsHostMock, createResponseMock } from '../../../../test/utils/http.mocks.js';
 import { ServiceProviderError } from '../specification/error/service-provider.error.js';
+import { VidisServiceProviderImmutableError } from '../domain/errors/vidis-service-provider-immutable.error.js';
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
 import { DbiamServiceProviderError, ServiceProviderErrorI18nTypes } from './dbiam-service-provider.error.js';
 
@@ -13,6 +14,10 @@ describe('ServiceProviderErrorFilter', () => {
     const generalBadRequestError: DbiamServiceProviderError = new DbiamServiceProviderError({
         code: 500,
         i18nKey: ServiceProviderErrorI18nTypes.SERVICE_PROVIDER_ERROR,
+    });
+    const vidisImmutableError: DbiamServiceProviderError = new DbiamServiceProviderError({
+        code: 400,
+        i18nKey: ServiceProviderErrorI18nTypes.VIDIS_SERVICE_PROVIDER_IMMUTABLE,
     });
 
     describe('catch', () => {
@@ -30,6 +35,18 @@ describe('ServiceProviderErrorFilter', () => {
             expect(responseMock.json).toHaveBeenCalled();
             expect(responseMock.status).toHaveBeenCalledWith(statusCode);
             expect(responseMock.json).toHaveBeenCalledWith(generalBadRequestError);
+        });
+
+        it('should map VIDIS-linked service-provider errors to bad request', () => {
+            const error: ServiceProviderError = new VidisServiceProviderImmutableError('error');
+
+            const responseMock: MockedObject<Response> = createResponseMock();
+            const argumentsHost: MockedObject<ArgumentsHost> = createArgumentsHostMock({ response: responseMock });
+
+            sut.catch(error, argumentsHost);
+
+            expect(responseMock.status).toHaveBeenCalledWith(400);
+            expect(responseMock.json).toHaveBeenCalledWith(vidisImmutableError);
         });
     });
 });
