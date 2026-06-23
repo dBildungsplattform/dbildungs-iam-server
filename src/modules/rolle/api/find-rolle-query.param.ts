@@ -31,7 +31,7 @@ export class FindRolleQueryParams extends PagedQueryParams {
         enumName: RollenSystemRechtEnumName,
         required: false,
         description:
-            'The system right for which the roles should be available. Can only be ROLLEN_VERWALTEN or ROLLEN_ERWEITERN.',
+            'The system right for which the roles should be available. Can only be ROLLEN_VERWALTEN, ROLLEN_ERWEITERN or IMPORT_DURCHFUEHREN.',
     })
     @IsSystemrechtForRollenAdministration()
     public readonly systemrecht?: RollenSystemRechtEnum;
