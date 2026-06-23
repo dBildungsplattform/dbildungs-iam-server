@@ -509,6 +509,31 @@ describe('ServiceProvider API', () => {
                 expect(updatedServiceProvider.logoMimeType).toBe(serviceProvider.logoMimeType);
             });
 
+            it('should reject updates for VIDIS-linked service providers', async () => {
+                const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: organisation.id,
+                    vidisAngebotId: faker.string.uuid(),
+                });
+                const body: UpdateServiceProviderBodyParams = {
+                    name: 'Updated Service Provider Name',
+                };
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .patch(`/provider/${serviceProvider.id}`)
+                    .send(body);
+
+                expect(response.status).toBe(400);
+                expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'VIDIS_SERVICE_PROVIDER_IMMUTABLE' }));
+
+                const storedServiceProvider: ServiceProviderEntity = await em.findOneOrFail(
+                    ServiceProviderEntity,
+                    { id: serviceProvider.id },
+                    { refresh: true },
+                );
+                expect(storedServiceProvider.name).toBe(serviceProvider.name);
+                expect(storedServiceProvider.vidisAngebotId).toBe(serviceProvider.vidisAngebotId);
+            });
+
             it('should reject updates to logoId', async () => {
                 const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
                     providedOnSchulstrukturknoten: organisation.id,
@@ -699,6 +724,23 @@ describe('ServiceProvider API', () => {
 
             expect(response.status).toBe(409);
             expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'ATTACHED_ROLLENERWEITERUNGEN' }));
+        });
+
+        it('should return 400 if service provider is linked to VIDIS', async () => {
+            const vidisLinkedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: organisation.id,
+                vidisAngebotId: faker.string.uuid(),
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .delete(`/provider/${vidisLinkedServiceProvider.id}`)
+                .send();
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'VIDIS_SERVICE_PROVIDER_IMMUTABLE' }));
+            expect(
+                await em.findOne(ServiceProviderEntity, { id: vidisLinkedServiceProvider.id }, { refresh: true }),
+            ).not.toBeNull();
         });
 
         it('should return 404 if permissions are missing', async () => {
