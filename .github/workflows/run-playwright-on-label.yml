@@ -6,7 +6,7 @@ on:
 
 jobs:
   run_on_label:
-    if: contains(github.event.pull_request.labels.*.name, 'run-tests')
+    if: github.event.label.name == 'run-tests'
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@7
 
   create_branch_identifier:
