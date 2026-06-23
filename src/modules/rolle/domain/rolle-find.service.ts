@@ -83,6 +83,77 @@ export class RolleFindService {
         return this.rolleRepo.findBy(queryParams);
     }
 
+    public async findRollenAvailableForImportPersonenkontext(
+        params: FindRollenWithPermissionsParams,
+    ): Promise<Counted<Rolle<true>>> {
+        const permittedOrgas: PermittedOrgas = await params.permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.IMPORT_DURCHFUEHREN],
+            true,
+            false,
+        );
+        if (permittedOrgas.all === false && permittedOrgas.orgaIds.length === 0) {
+            return [[], 0];
+        }
+        if (params.organisationIds === undefined || params.organisationIds.length === 0) {
+            return [[], 0];
+        }
+
+        let organisationIdsWithParents: OrganisationID[] | undefined;
+
+        if (permittedOrgas.all === true) {
+            organisationIdsWithParents = await this.getOrganisationIdsWithParents(params.organisationIds);
+        } else {
+            const intersectedOrganisationIds: OrganisationID[] = intersectPermittedAndRequestedOrgas(
+                permittedOrgas,
+                params.organisationIds,
+            );
+            if (intersectedOrganisationIds.length === 0) {
+                return [[], 0];
+            }
+            organisationIdsWithParents = await this.getOrganisationIdsWithParents(intersectedOrganisationIds);
+        }
+
+        const [candidateRollen]: Counted<Rolle<true>> = await this.rolleRepo.findBy({
+            searchStr: params.searchStr,
+            allowedOrganisationIds: organisationIdsWithParents,
+            rollenArten: params.rollenArten,
+        });
+
+        const paramOrgas: Organisation<true>[] = Array.from(
+            (await this.organisationRepository.findByIds(params.organisationIds ?? [])).values(),
+        );
+
+        let allowedRollen: Rolle<true>[] = (
+            await Promise.all(
+                candidateRollen.map(async (rolle: Rolle<true>) => {
+                    const canBeAssignedToAnyTargetOrga: boolean = (
+                        await Promise.all(
+                            paramOrgas.map(async (organisation: Organisation<true>) => {
+                                const canAssignResult: Result<void, Error> =
+                                    await rolle.canBeAssignedToOrga(organisation);
+                                return canAssignResult.ok;
+                            }),
+                        )
+                    ).some(Boolean);
+
+                    return canBeAssignedToAnyTargetOrga ? rolle : null;
+                }),
+            )
+        ).filter((rolle: Rolle<true> | null): rolle is Rolle<true> => rolle !== null);
+
+        const total: number = allowedRollen.length;
+        const offset: number = params.offset ?? 0;
+        const limit: number | undefined = params.limit;
+
+        if (limit !== undefined) {
+            allowedRollen = allowedRollen.slice(offset, offset + limit);
+        } else if (offset > 0) {
+            allowedRollen = allowedRollen.slice(offset);
+        }
+
+        return [allowedRollen, total];
+    }
+
     private async getOrganisationIdsWithParents(organisationIds: OrganisationID[]): Promise<OrganisationID[]> {
         const organisationIdsWithParents: Set<OrganisationID> = new Set(organisationIds);
         const parents: Organisation<true>[] = await this.organisationRepository.findParentOrgasForIds(organisationIds);
