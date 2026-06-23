@@ -223,6 +223,7 @@ export class ProviderController {
             await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrgaKennung(
                 pathParams.angebotId,
                 filteredOrgaIds,
+                queryParams.rolleId,
                 queryParams.offset,
                 queryParams.limit,
             );
