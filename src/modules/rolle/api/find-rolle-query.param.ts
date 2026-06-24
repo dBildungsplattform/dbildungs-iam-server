@@ -6,6 +6,7 @@ import { TransformToArray } from '../../../shared/util/array-transform.validator
 import { RollenArt, RollenArtTypName } from '../domain/rolle.enums.js';
 import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/systemrecht.js';
 import { IsSystemrechtForRollenAdministration } from './is-systemrecht-for-rollen-admin-validator.js';
+import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 
 export class FindRolleQueryParams extends PagedQueryParams {
     @IsOptional()
@@ -22,7 +23,19 @@ export class FindRolleQueryParams extends PagedQueryParams {
         description: 'The id of the organisation where the role should be available.',
         required: false,
     })
-    public readonly organisationId?: string;
+    public readonly organisationId?: OrganisationID;
+
+    @IsOptional()
+    @IsUUID(undefined, { each: true })
+    @TransformToArray()
+    @ArrayUnique()
+    @ApiProperty({
+        description: 'The ids of the selected Rollen',
+        required: false,
+        nullable: true,
+        isArray: true,
+    })
+    public readonly rolleIds?: RolleID[];
 
     @IsOptional()
     @TransformToArray()

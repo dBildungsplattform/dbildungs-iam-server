@@ -103,6 +103,7 @@ export type RolleFindByParameters = {
     searchStr?: string;
     allowedOrganisationIds?: OrganisationID[];
     rollenArten?: RollenArt[];
+    rolleIds?: RolleID[];
     limit?: number;
     offset?: number;
 };
@@ -261,21 +262,23 @@ export class RolleRepo {
             queries.push({ name: { $ilike: '%' + params.searchStr + '%' } });
         }
 
-        const [rollen, total]: Counted<RolleEntity> = await this.em.findAndCount(
-            RolleEntity,
-            { $and: queries },
-            {
-                populate: [
-                    'merkmale',
-                    'systemrechte',
-                    'serviceProvider.serviceProvider',
-                    'serviceProvider.serviceProvider.merkmale',
-                ] as const,
-                exclude: ['serviceProvider.serviceProvider.logo'] as const,
-                limit: params.limit,
-                offset: params.offset,
-            },
-        );
+        const baseQuery: FilterQuery<NoInfer<RolleEntity>> = { $and: queries };
+
+        const finalQuery: FilterQuery<NoInfer<RolleEntity>> = params.rolleIds?.length
+            ? { $or: [baseQuery, { id: { $in: params.rolleIds } }] }
+            : baseQuery;
+
+        const [rollen, total]: Counted<RolleEntity> = await this.em.findAndCount(RolleEntity, finalQuery, {
+            populate: [
+                'merkmale',
+                'systemrechte',
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+            ] as const,
+            exclude: ['serviceProvider.serviceProvider.logo'] as const,
+            limit: params.limit,
+            offset: params.offset,
+        });
 
         return [rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory)), total];
     }
@@ -288,6 +291,7 @@ export class RolleRepo {
         limit?: number,
         offset?: number,
         organisationIds?: OrganisationID[],
+        rolleIds?: RolleID[],
     ): Promise<[Rolle<true>[], number]> {
         // Fallback to ROLLEN_VERWALTEN if no systemrechte are provided (this is the default behavior expected from the frontend)
         const orgIdsWithRecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
@@ -311,6 +315,7 @@ export class RolleRepo {
             limit,
             offset,
             allowedOrganisationIds,
+            rolleIds,
         });
     }
 

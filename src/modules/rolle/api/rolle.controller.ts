@@ -124,6 +124,7 @@ export class RolleController {
                       queryParams.limit,
                       queryParams.offset,
                       queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                      queryParams.rolleIds,
                   );
         if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
