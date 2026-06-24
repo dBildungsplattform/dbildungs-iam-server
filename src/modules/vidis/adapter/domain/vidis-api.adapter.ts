@@ -47,7 +47,9 @@ export class VidisApiAdapter {
             const response: AxiosResponse<VidisApiResponse<VidisApiResponseAngebotByRegion>> = await firstValueFrom(
                 this.httpService.get(url),
             );
-            this.logger.info(`Fetched activated Angebote for region Schleswig-Holstein from Vidis API. Status code: ${response.status}`);
+            this.logger.info(
+                `Fetched activated Angebote for region Schleswig-Holstein from Vidis API. Status code: ${response.status}, response data: ${JSON.stringify(response.data)}`,
+            );
             if (response.status < 200 || response.status >= 300) {
                 this.logger.error(
                     `Failed to fetch activated Angebote for region Schleswig-Holstein from Vidis API. Status code: ${response.status}, Response data: ${JSON.stringify(response.data)}`,
