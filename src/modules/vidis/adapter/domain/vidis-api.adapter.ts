@@ -42,7 +42,7 @@ export class VidisApiAdapter {
         try {
             const token: string = await this.getAuthToken();
             const response: AxiosResponse<VidisApiResponse<VidisApiResponseAngebotByRegion>> = await firstValueFrom(
-                this.httpService.get(this.constructUrl(this.getActivatedAngeboteByRegionPath(), true), {
+                this.httpService.get(this.constructUrl(this.getActivatedAngeboteByRegionPath(), false), {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
             );
@@ -170,7 +170,7 @@ export class VidisApiAdapter {
     }
 
     private getActivatedAngeboteByRegionPath(): string {
-        return `/o/vidis-rest/v1.0/offers/activated/by-region/${encodeURIComponent(this.vidisConfig.REGION)}`;
+        return `/db.json`;
     }
 
     private convertKennungToVidisSchoolId(kennung: string): string {
