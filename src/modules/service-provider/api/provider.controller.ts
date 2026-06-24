@@ -207,23 +207,23 @@ export class ProviderController {
         }
 
         if (
-            queryParams.organisationId &&
+            queryParams.organisationIds &&
             !permittedOrgas.all &&
-            !permittedOrgas.orgaIds.includes(queryParams.organisationId)
+            !queryParams.organisationIds.every((id: string) => permittedOrgas.orgaIds.includes(id))
         ) {
             throw new MissingPermissionsError('Insufficient permissions for the requested organisationId');
         }
 
         let filteredOrgaIds: string[] | undefined = permittedOrgas.all ? undefined : permittedOrgas.orgaIds;
-        if (queryParams.organisationId) {
-            filteredOrgaIds = [queryParams.organisationId];
+        if (queryParams.organisationIds?.length) {
+            filteredOrgaIds = queryParams.organisationIds;
         }
 
         const [rollenerweiterungen, total]: Counted<Rollenerweiterung<true>> =
             await this.rollenerweiterungRepo.findByServiceProviderIdPagedAndSortedByOrgaKennung(
                 pathParams.angebotId,
                 filteredOrgaIds,
-                queryParams.rolleId,
+                queryParams.rolleIds,
                 queryParams.offset,
                 queryParams.limit,
             );

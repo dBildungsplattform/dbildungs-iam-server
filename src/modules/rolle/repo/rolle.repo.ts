@@ -282,15 +282,17 @@ export class RolleRepo {
 
     public async findRollenAuthorized(
         permissions: IPersonPermissions,
+        systemrechte: RollenSystemRecht[] | undefined,
         includeTechnische: boolean,
         searchStr?: string,
         limit?: number,
         offset?: number,
         organisationIds?: OrganisationID[],
     ): Promise<[Rolle<true>[], number]> {
+        // Fallback to ROLLEN_VERWALTEN if no systemrechte are provided (this is the default behavior expected from the frontend)
         const orgIdsWithRecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.ROLLEN_VERWALTEN],
-            true,
+            systemrechte ?? [RollenSystemRecht.ROLLEN_VERWALTEN],
+            false,
         );
         if (!orgIdsWithRecht.all && orgIdsWithRecht.orgaIds.length === 0) {
             return [[], 0];

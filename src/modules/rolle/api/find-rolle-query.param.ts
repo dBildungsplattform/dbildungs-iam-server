@@ -25,16 +25,20 @@ export class FindRolleQueryParams extends PagedQueryParams {
     public readonly organisationId?: string;
 
     @IsOptional()
-    @IsEnum(RollenSystemRechtEnum)
+    @TransformToArray()
+    @IsEnum(RollenSystemRechtEnum, { each: true })
+    @ArrayUnique()
     @ApiProperty({
         enum: RollenSystemRechtEnum,
+        nullable: true,
         enumName: RollenSystemRechtEnumName,
         required: false,
+        isArray: true,
         description:
-            'The system right for which the roles should be available. Can only be ROLLEN_VERWALTEN or ROLLEN_ERWEITERN.',
+            'The system rights for which the roles should be available. Can only be ROLLEN_VERWALTEN or ROLLEN_ERWEITERN or both.',
     })
     @IsSystemrechtForRollenAdministration()
-    public readonly systemrecht?: RollenSystemRechtEnum;
+    public readonly systemrechte?: RollenSystemRechtEnum[];
 
     @IsOptional()
     @IsEnum(RollenArt, { each: true })

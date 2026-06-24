@@ -317,6 +317,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -336,6 +337,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -355,6 +357,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -374,6 +377,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -401,6 +405,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 'Test',
                 10,
@@ -420,6 +425,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -441,6 +447,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -462,6 +469,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 true,
                 undefined,
                 10,

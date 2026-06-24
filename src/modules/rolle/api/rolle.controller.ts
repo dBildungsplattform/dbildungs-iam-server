@@ -104,7 +104,8 @@ export class RolleController {
         @Permissions() permissions: IPersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
         const [rollen, total]: [Rolle<true>[], number] =
-            queryParams.systemrecht === RollenSystemRechtEnum.ROLLEN_ERWEITERN
+            queryParams.systemrechte?.length === 1 &&
+            queryParams.systemrechte[0] === RollenSystemRechtEnum.ROLLEN_ERWEITERN
                 ? await this.rolleFindService.findRollenAvailableForErweiterung({
                       permissions,
                       searchStr: queryParams.searchStr,
@@ -115,6 +116,9 @@ export class RolleController {
                   })
                 : await this.rolleRepo.findRollenAuthorized(
                       permissions,
+                      queryParams.systemrechte?.map((value: RollenSystemRechtEnum) =>
+                          RollenSystemRecht.getByName(value),
+                      ),
                       false,
                       queryParams.searchStr,
                       queryParams.limit,
