@@ -22,7 +22,12 @@ import {
 } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
-import { SchulconnexOrganisationTyp, SchulconnexPersonenstatus, SchulconnexRolle } from '../schulconnex-enums.js';
+import {
+    convertSPSHRollenartForBackwardsCampatibilityV1,
+    SchulconnexOrganisationTyp,
+    SchulconnexPersonenstatus,
+    SchulconnexRolle,
+} from '../schulconnex-enums.js';
 import { PersonInfoController } from './person-info.controller.js';
 import { PersonInfoResponse, PersonNestedInPersonInfoResponse } from './v0/person-info.response.js';
 import { PersonInfoPersonResponseV1 } from './v1/person-info-person.response.v1.js';
@@ -171,7 +176,9 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
                 expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(orga?.typ);
-                expect(result.personenkontexte.at(0)?.rollenart).toEqual(rolle.rollenart);
+                expect(result.personenkontexte.at(0)?.rollenart).toEqual(
+                    convertSPSHRollenartForBackwardsCampatibilityV1(rolle.rollenart),
+                );
                 expect(result.personenkontexte.at(0)?.rollenname).toEqual(rolle.name);
                 expect(result.gruppen).toEqual([]);
                 expect(result.email).toEqual(undefined);
@@ -223,7 +230,9 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
                 expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(orga?.typ);
-                expect(result.personenkontexte.at(0)?.rollenart).toEqual(rolle.rollenart);
+                expect(result.personenkontexte.at(0)?.rollenart).toEqual(
+                    convertSPSHRollenartForBackwardsCampatibilityV1(rolle.rollenart),
+                );
                 expect(result.personenkontexte.at(0)?.rollenname).toEqual(rolle.name);
                 expect(result.gruppen).toEqual([]);
                 expect(result.email).toEqual({
@@ -277,7 +286,9 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
                 expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(orga?.typ);
-                expect(result.personenkontexte.at(0)?.rollenart).toEqual(rolle.rollenart);
+                expect(result.personenkontexte.at(0)?.rollenart).toEqual(
+                    convertSPSHRollenartForBackwardsCampatibilityV1(rolle.rollenart),
+                );
                 expect(result.personenkontexte.at(0)?.rollenname).toEqual(rolle.name);
                 expect(result.gruppen).toEqual([]);
                 expect(result.email).toEqual({
