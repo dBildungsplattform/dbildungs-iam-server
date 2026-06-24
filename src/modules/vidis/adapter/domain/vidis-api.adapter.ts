@@ -40,10 +40,10 @@ export class VidisApiAdapter {
         Result<VidisAngebotWithSchoolActivations[], VidisDomainError>
     > {
         try {
-            const token: string = await this.getAuthToken();
+            //const token: string = await this.getAuthToken();
             const response: AxiosResponse<VidisApiResponse<VidisApiResponseAngebotByRegion>> = await firstValueFrom(
                 this.httpService.get(this.constructUrl(this.getActivatedAngeboteByRegionPath(), false), {
-                    headers: { Authorization: `Bearer ${token}` },
+                    //headers: { Authorization: `Bearer ${token}` },
                 }),
             );
             if (response.status < 200 || response.status >= 300) {
