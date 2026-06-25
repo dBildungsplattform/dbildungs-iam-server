@@ -278,7 +278,7 @@ describe('Provider Controller Test', () => {
             expect(result.items[0]?.organisationKennung).toBe('FixedOrgaKennung2');
         });
 
-        it.only('should throw MissingPermissionsError when user lacks permission when filtering for orga', async () => {
+        it('should throw MissingPermissionsError when user lacks permission when filtering for orga', async () => {
             const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                 all: false,

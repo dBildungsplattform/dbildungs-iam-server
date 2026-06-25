@@ -30,7 +30,8 @@ export class FindRolleQueryParams extends PagedQueryParams {
     @TransformToArray()
     @ArrayUnique()
     @ApiProperty({
-        description: 'The ids of the selected Rollen',
+        description:
+            'The ids of the selected Rollen. If provided, these Rollen will be returned regardless of the other filters since they are required by the frontend',
         required: false,
         nullable: true,
         isArray: true,
