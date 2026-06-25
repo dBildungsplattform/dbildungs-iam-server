@@ -610,12 +610,10 @@ describe('RollenerweiterungRepo', () => {
             const { organisation, rolle, serviceProvider, permissionMock }: Setup = await setup();
 
             permissionMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
-            const updatedRolle: Option<Rolle<true>> = await rolleRepo.findById(rolle.id);
-            if (!updatedRolle) {
-                throw new Error('Rolle not found');
-            }
-            await updatedRolle.attachServiceProvider(serviceProvider.id);
-            await rolleRepo.save(updatedRolle);
+
+            rolle.serviceProviderIds.push(serviceProvider.id);
+            await rolleRepo.save(rolle);
+
             const rollenerweiterung: Rollenerweiterung<false> = factory.createNew(
                 organisation.id,
                 rolle.id,
