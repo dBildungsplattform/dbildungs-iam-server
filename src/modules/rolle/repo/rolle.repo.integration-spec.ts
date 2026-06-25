@@ -613,7 +613,9 @@ describe('RolleRepo', () => {
             const [result, count]: Counted<Rolle<true>> = await sut.findBy(scope);
 
             expect(count).toBe(2);
-            expect(result.map((r) => r.id)).toEqual(expect.arrayContaining([rolleInScope.id, rolleOutOfFilter.id]));
+            expect(result.map((r: Rolle<true>) => r.id)).toEqual(
+                expect.arrayContaining([rolleInScope.id, rolleOutOfFilter.id]),
+            );
         });
     });
 
