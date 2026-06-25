@@ -709,24 +709,48 @@ describe('Rolle API', () => {
         });
 
         it('should return rollen filtered by multiple systemrechte', async () => {
-            const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-            if (rolle instanceof DomainError) {
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            const rolleB: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleA instanceof DomainError || rolleB instanceof DomainError) {
                 throw Error();
             }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
-                orgaIds: [rolle.administeredBySchulstrukturknoten],
+                orgaIds: [rolleA.administeredBySchulstrukturknoten],
             });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/rolle?systemrechte=ROLLEN_ERWEITERN&systemrechte=ROLLEN_VERWALTEN')
+                .get(`/rolle?rolleIds=${rolleA.id}&systemrechte=ROLLEN_ERWEITERN&systemrechte=ROLLEN_VERWALTEN`)
                 .send();
 
             expect(response.status).toBe(200);
             const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
                 response.body as PagedResponse<RolleWithServiceProvidersResponse>;
             expect(pagedResponse.items).toHaveLength(1);
+        });
+
+        it('should filter by rolleIds with default systemrecht fallback (ROLLEN_VERWALTEN)', async () => {
+            const rolleA: DomainError | Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+            const rolleB: DomainError | Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
+            if (rolleA instanceof DomainError || rolleB instanceof DomainError) {
+                throw new Error();
+            }
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [rolleA.administeredBySchulstrukturknoten, rolleB.administeredBySchulstrukturknoten],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle?rolleIds=${rolleB.id}`)
+                .send();
+
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+
+            expect(pagedResponse.items).toHaveLength(2);
         });
     });
 
