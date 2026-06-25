@@ -227,6 +227,12 @@ export class ServiceProviderService {
         return { ok: true, value: [enrichedServiceProviders, total] };
     }
 
+    // private async getOrganisationRollenForServiceProviders(
+    //     serviceProviders: ServiceProvider<true>[],
+    // ): Promise<unknown> {
+    //     return 'TODO';
+    // }
+
     private async getOrganisationRollenAndRollenerweiterungenForServiceProviders(
         serviceProviders: ServiceProvider<true>[],
         limitRoles?: number,

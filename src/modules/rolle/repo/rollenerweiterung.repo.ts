@@ -1,4 +1,4 @@
-import { FilterQuery, Loaded, PopulatePath, RequiredEntityData } from '@mikro-orm/core';
+import { Dictionary, FilterQuery, Loaded, PopulatePath, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EntityManager, QueryBuilder } from '@mikro-orm/postgresql';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -221,6 +221,36 @@ export class RollenerweiterungRepo {
         });
 
         return Ok(null);
+    }
+
+    /**
+     * Returns the amount of Rollenerweiterungen per ServiceProvider (optionally filtered by Organisation)
+     */
+    public async countByServiceProviderIds(
+        serviceProviderIds: ServiceProviderID[],
+        organisationId?: OrganisationID,
+    ): Promise<Record<ServiceProviderID, number>> {
+        const where: FilterQuery<RollenerweiterungEntity> = {
+            serviceProviderId: {
+                $in: serviceProviderIds,
+            },
+        };
+
+        if (organisationId) {
+            where.organisationId = organisationId;
+        }
+
+        const result: Dictionary<number> = await this.em.countBy(
+            RollenerweiterungEntity,
+            ['serviceProviderId'] as const,
+            { where },
+        );
+
+        for (const id of serviceProviderIds) {
+            result[id] ??= 0; // Assign 0 if a serviceprovider was not included in the result
+        }
+
+        return result;
     }
 
     // This method returns exactly 5 rollenerweiterungen per service provider, sorted by createdAt descending, to avoid performance issues with loading too many rollenerweiterungen at once.
