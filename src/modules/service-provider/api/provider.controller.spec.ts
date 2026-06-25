@@ -187,7 +187,7 @@ describe('Provider Controller Test', () => {
                 await providerController.findRollenerweiterungenByServiceProviderId(
                     permissionsMock,
                     { angebotId: faker.string.uuid() },
-                    { offset: offset, limit: limit },
+                    { offset: offset, limit: limit, rolleIds: [rollenerweiterung.rolleId] },
                 );
 
             expect(rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrgaKennung).toHaveBeenCalledWith(
@@ -346,6 +346,7 @@ describe('Provider Controller Test', () => {
 
             expect(rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrgaKennung).toHaveBeenCalledWith(
                 expect.any(String),
+                undefined,
                 undefined,
                 offset,
                 limit,
