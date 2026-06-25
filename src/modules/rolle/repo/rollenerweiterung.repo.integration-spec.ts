@@ -969,5 +969,29 @@ describe('RollenerweiterungRepo', () => {
             expect(result).toHaveLength(3);
             expect(count).toBe(3);
         });
+
+        it('should return only rollenerweiterungen for the given rolleIds', async () => {
+            const rolleOrError2: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleOrError2 instanceof DomainError) {
+                throw new Error('Failed to create Rolle');
+            }
+            const rolle2: Rolle<true> = rolleOrError2;
+
+            const erweiterungen: Rollenerweiterung<false>[] = [
+                factory.createNew(organisation1.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation1.id, rolle2.id, serviceProvider.id),
+                factory.createNew(organisation2.id, rolle2.id, serviceProvider.id),
+            ];
+            await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
+
+            const [result, count]: Counted<Rollenerweiterung<true>> =
+                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id, undefined, [rolle.id]);
+
+            expect(result).toHaveLength(1);
+            expect(count).toBe(1);
+            for (const erweiterung of result) {
+                expect(erweiterung.rolleId).toBe(rolle.id);
+            }
+        });
     });
 });

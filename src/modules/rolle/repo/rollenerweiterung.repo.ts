@@ -317,6 +317,10 @@ export class RollenerweiterungRepo {
             countQb.andWhere({ organisationId: { $in: organisationIds } });
         }
 
+        if (rolleIds && rolleIds.length > 0) {
+            countQb.andWhere({ rolleId: { $in: rolleIds } });
+        }
+
         const countResult: { count: string | number } = await countQb.execute('get', true);
         const totalUniqueOrgs: number = Number(countResult.count);
 
