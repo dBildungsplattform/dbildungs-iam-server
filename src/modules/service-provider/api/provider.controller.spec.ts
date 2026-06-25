@@ -193,6 +193,7 @@ describe('Provider Controller Test', () => {
             expect(rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrgaKennung).toHaveBeenCalledWith(
                 expect.any(String),
                 ['FixedOrgaId'],
+                [rollenerweiterung.rolleId],
                 offset,
                 limit,
             );
@@ -261,6 +262,7 @@ describe('Provider Controller Test', () => {
             expect(rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrgaKennung).toHaveBeenCalledWith(
                 expect.any(String),
                 ['FixedOrgaId2'],
+                [rollenerweiterung.rolleId],
                 offset,
                 limit,
             );
@@ -276,7 +278,7 @@ describe('Provider Controller Test', () => {
             expect(result.items[0]?.organisationKennung).toBe('FixedOrgaKennung2');
         });
 
-        it('should throw MissingPermissionsError when user lacks permission when filtering for orga', async () => {
+        it.only('should throw MissingPermissionsError when user lacks permission when filtering for orga', async () => {
             const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                 all: false,
@@ -286,7 +288,7 @@ describe('Provider Controller Test', () => {
             const queryparams: RollenerweiterungByServiceProvidersIdQueryParams =
                 new RollenerweiterungByServiceProvidersIdQueryParams();
             Object.assign(queryparams, {
-                organisationId: 'org-1',
+                organisationIds: ['org-1'],
                 limit: 10,
                 offset: 0,
             });

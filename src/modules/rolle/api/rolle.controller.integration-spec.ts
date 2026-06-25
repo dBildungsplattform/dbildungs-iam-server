@@ -614,7 +614,7 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [orgaA.id, orgaB.id] });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/rolle?systemrecht=ROLLEN_ERWEITERN')
+                .get('/rolle?systemrechte=ROLLEN_ERWEITERN')
                 .send();
 
             expect(response.status).toBe(200);
@@ -660,7 +660,7 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [schule.id] });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?systemrecht=ROLLEN_ERWEITERN&organisationId=${schule.id}`)
+                .get(`/rolle?systemrechte=ROLLEN_ERWEITERN&organisationId=${schule.id}`)
                 .send();
 
             expect(response.status).toBe(200);
@@ -697,7 +697,7 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get(
-                    `/rolle?systemrecht=ROLLEN_ERWEITERN&rollenarten=${rollenart}&organisationId=${administeredBySchulstrukturknoten}`,
+                    `/rolle?systemrechte=ROLLEN_ERWEITERN&rollenarten=${rollenart}&organisationId=${administeredBySchulstrukturknoten}`,
                 )
                 .send();
 
