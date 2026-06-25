@@ -712,6 +712,105 @@ describe('Rolle API', () => {
                 response.body as PagedResponse<RolleWithServiceProvidersResponse>;
             expect(pagedResponse.items).toHaveLength(2);
         });
+
+        it('should return rollen available for import personenkontext if systemrecht is IMPORT_DURCHFUEHREN with given orga ID', async () => {
+            const schule: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+
+            await Promise.all([
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        administeredBySchulstrukturknoten: schule.id,
+                        rollenart: RollenArt.LEHR,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        administeredBySchulstrukturknoten: schule.id,
+                        rollenart: RollenArt.SYSADMIN,
+                    }),
+                ),
+            ]);
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [schule.id] });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle?systemrecht=IMPORT_DURCHFUEHREN&organisationId=${schule.id}`)
+                .send();
+
+            expect(response.status).toBe(200);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+
+            expect(pagedResponse.items).toHaveLength(1);
+            expect(pagedResponse.items[0]?.rollenart).toBe(RollenArt.LEHR);
+            expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
+                [RollenSystemRecht.IMPORT_DURCHFUEHREN],
+                true,
+                false,
+            );
+        });
+    });
+
+    it('should return rollen available for import personenkontext if systemrecht is IMPORT_DURCHFUEHREN without orga ID parameter', async () => {
+        const schule: Organisation<true> = await organisationRepo.save(
+            DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+        );
+        const schule2: Organisation<true> = await organisationRepo.save(
+            DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+        );
+
+        const [role1, , role3]: [Rolle<true> | DomainError, Rolle<true> | DomainError, Rolle<true> | DomainError] =
+            await Promise.all([
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        administeredBySchulstrukturknoten: schule.id,
+                        rollenart: RollenArt.LEHR,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        administeredBySchulstrukturknoten: schule.id,
+                        rollenart: RollenArt.SYSADMIN,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        administeredBySchulstrukturknoten: schule2.id,
+                        rollenart: RollenArt.LEHR,
+                    }),
+                ),
+            ]);
+        if (role1 instanceof DomainError || role3 instanceof DomainError) {
+            expect.fail('error during test setup. role was not persisted');
+        }
+
+        permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+        const response: Response = await request(app.getHttpServer() as App)
+            .get(`/rolle?systemrecht=IMPORT_DURCHFUEHREN&rollenarten=${RollenArt.LEHR}&organisationId=${schule.id}`)
+            .send();
+
+        expect(response.status).toBe(200);
+        const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+            response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+
+        expect(pagedResponse.items).toHaveLength(1);
+        expect(pagedResponse.items).toEqual(
+            expect.arrayContaining([expect.objectContaining({ id: role1.id, name: role1.name })]),
+        );
+        expect(pagedResponse.items[0]?.rollenart).toBe(RollenArt.LEHR);
+        expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
+            [RollenSystemRecht.IMPORT_DURCHFUEHREN],
+            true,
+            false,
+        );
     });
 
     describe('/GET rolle by id', () => {

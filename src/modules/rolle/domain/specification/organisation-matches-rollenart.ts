@@ -23,7 +23,14 @@ export class OrganisationMatchesRollenart {
             case OrganisationsTyp.LAND:
                 return new Set<RollenArt>([RollenArt.SYSADMIN]);
             case OrganisationsTyp.SCHULE:
-                return new Set<RollenArt>([RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN]);
+                return new Set<RollenArt>([
+                    RollenArt.LEIT,
+                    RollenArt.LEHR,
+                    RollenArt.LERN,
+                    RollenArt.SORGBER,
+                    RollenArt.SCHB,
+                    RollenArt.NLEHR,
+                ]);
             case OrganisationsTyp.KLASSE:
                 return new Set<RollenArt>([RollenArt.LERN]);
             default:
