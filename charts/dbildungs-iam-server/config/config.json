@@ -110,7 +110,7 @@
         "SSL_KEY_PATH": "/tls/client-key.pem"
     },
     "PORTAL": {
-        "LIMITED_ROLLENART_ALLOWLIST": ["LERN", "EXTERN", "SORGBER", "SCHB", "NLEHR"]
+        "LIMITED_ROLLENART_ALLOWLIST": ["LERN", "EXTERN"]
     },
     "EMAIL_MICROSERVICE": {
         "USE_EMAIL_MICROSERVICE": false,
