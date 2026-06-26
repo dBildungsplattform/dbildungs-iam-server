@@ -4,6 +4,12 @@ import { vi } from 'vitest';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import {
+    EntityNotFoundError,
+    MissingAttributeError,
+    MissingPermissionsError,
+    SharedDomainError,
+} from '../../../shared/error/index.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -18,12 +24,16 @@ import {
 } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import type { VidisAngebotWithSchoolActivations, VidisServiceResponseAngebot } from '../adapter/domain/vidis.types.js';
+import type {
+    VidisAngebotWithSchoolActivations,
+    VidisApiResponseAngebotBySchool,
+    VidisServiceResponseAngebot,
+} from '../adapter/domain/vidis.types.js';
 import { EscalatedPersonPermissions } from '../../permission/escalated-person-permissions.js';
 import { faker } from '@faker-js/faker';
 import { VidisSyncService } from './vidis.sync-service.js';
 import { VidisApiAdapter } from '../adapter/domain/vidis-api.adapter.js';
-import { VidisDomainError } from '../error/vidis-domain.error.js';
+import { VidisApiError } from '../error/vidis-api.error.js';
 
 type TorgaIds = {
     id: string;
@@ -43,6 +53,7 @@ describe('VidisSyncService', () => {
     let permissionsMock: EscalatedPersonPermissions;
 
     type GetActivatedAngeboteByRegionResult = Awaited<ReturnType<VidisApiAdapter['getActivatedAngeboteByRegionSH']>>;
+    type GetActivatedAngeboteBySchoolResult = Awaited<ReturnType<VidisApiAdapter['getActivatedAngeboteBySchool']>>;
     type FindSchoolsResult = Awaited<ReturnType<OrganisationRepository['findBy']>>;
     type FindVidisAngeboteForSchoolsResult = Awaited<ReturnType<ServiceProviderRepo['findVidisAngeboteforSchools']>>;
     type CreateServiceProviderResult = Awaited<ReturnType<ServiceProviderRepo['create']>>;
@@ -53,8 +64,12 @@ describe('VidisSyncService', () => {
     type DecodedVidisLogoResult = { logo: Buffer | undefined; logoMimeType: string | undefined };
 
     const tinyPngBase64: string = 'iVBORw0KGgo=';
-    const vidisApiServiceProviderMock: Pick<VidisApiAdapter, 'getActivatedAngeboteByRegionSH'> = {
+    const vidisApiServiceProviderMock: Pick<
+        VidisApiAdapter,
+        'getActivatedAngeboteByRegionSH' | 'getActivatedAngeboteBySchool'
+    > = {
         getActivatedAngeboteByRegionSH: vi.fn(),
+        getActivatedAngeboteBySchool: vi.fn(),
     };
 
     const createAngebot = (offerId: number, offerTitle: string): VidisServiceResponseAngebot => ({
@@ -213,11 +228,13 @@ describe('VidisSyncService', () => {
             SYNC_SCHOOLS_PAGE_SIZE: 100,
         });
         escalatedPersonPermissionsFactoryMock.createNew.mockReturnValue(permissionsMock);
+        escalatedPersonPermissionsFactoryMock.fromPermissions.mockResolvedValue(permissionsMock);
+        serviceProviderRepoMock.findNonSchoolProvidedVidisAngebote.mockResolvedValue([]);
     });
 
     it('should skip VIDIS sync when loading activated Angebote fails', async () => {
         const getActivatedAngeboteResult: GetActivatedAngeboteByRegionResult = Err(
-            new VidisDomainError('VIDIS unavailable'),
+            new VidisApiError('VIDIS unavailable'),
         );
 
         vidisApiAdapterMock.getActivatedAngeboteByRegionSH.mockResolvedValue(getActivatedAngeboteResult);
@@ -228,6 +245,121 @@ describe('VidisSyncService', () => {
         expect(escalatedPersonPermissionsFactoryMock.createNew).not.toHaveBeenCalled();
         expect(organisationRepoMock.findBy).not.toHaveBeenCalled();
         expect(serviceProviderRepoMock.findVidisAngeboteforSchools).not.toHaveBeenCalled();
+    });
+
+    describe('syncAngeboteForSchool', () => {
+        it('should reject when the caller lacks required permissions', async () => {
+            const organisationId: string = faker.string.uuid();
+
+            vi.mocked(permissionsMock.hasSystemrechteAtOrganisation).mockResolvedValue(false);
+
+            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(
+                organisationId,
+                permissionsMock,
+            );
+
+            expect(result.ok).toBeFalsy();
+            if (result.ok) {
+                return;
+            }
+            expect(result.error).toBeInstanceOf(MissingPermissionsError);
+            expect(organisationRepoMock.findById).not.toHaveBeenCalled();
+            expect(vidisApiAdapterMock.getActivatedAngeboteBySchool).not.toHaveBeenCalled();
+        });
+
+        it('should return not found when the organisation does not exist', async () => {
+            const organisationId: string = faker.string.uuid();
+
+            vi.mocked(permissionsMock.hasSystemrechteAtOrganisation).mockResolvedValue(true);
+            organisationRepoMock.findById.mockResolvedValue(null);
+
+            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(
+                organisationId,
+                permissionsMock,
+            );
+
+            expect(result).toEqual(Err(new EntityNotFoundError('Organisation', organisationId)));
+            expect(vidisApiAdapterMock.getActivatedAngeboteBySchool).not.toHaveBeenCalled();
+        });
+
+        it('should return a bad request when the organisation has no kennung', async () => {
+            const organisationId: string = faker.string.uuid();
+
+            vi.mocked(permissionsMock.hasSystemrechteAtOrganisation).mockResolvedValue(true);
+            organisationRepoMock.findById.mockResolvedValue(
+                Organisation.construct(organisationId, new Date('2026-01-01'), new Date('2026-01-02'), 1),
+            );
+
+            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(
+                organisationId,
+                permissionsMock,
+            );
+
+            expect(result).toEqual(
+                Err(new MissingAttributeError('Organisation is missing Kennung required for VIDIS sync.')),
+            );
+            expect(vidisApiAdapterMock.getActivatedAngeboteBySchool).not.toHaveBeenCalled();
+        });
+
+        it('should return a generic shared error when loading activated Angebote for the school fails', async () => {
+            const organisationId: string = faker.string.uuid();
+            const kennung: string = '123456';
+            const getActivatedAngeboteResult: GetActivatedAngeboteBySchoolResult = Err(
+                new VidisApiError('VIDIS unavailable'),
+            );
+
+            vi.mocked(permissionsMock.hasSystemrechteAtOrganisation).mockResolvedValue(true);
+            organisationRepoMock.findById.mockResolvedValue(createSchool(organisationId, kennung));
+            vidisApiAdapterMock.getActivatedAngeboteBySchool.mockResolvedValue(getActivatedAngeboteResult);
+
+            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(
+                organisationId,
+                permissionsMock,
+            );
+
+            expect(result).toEqual(Err(new VidisApiError('VIDIS unavailable')));
+            expect(serviceProviderRepoMock.findVidisAngeboteforSchools).not.toHaveBeenCalled();
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `Skipping VIDIS sync for school with organisationId ${organisationId} because loading activated Angebote failed`,
+            );
+        });
+
+        it('should sync the requested school with school-specific Angebote from VIDIS', async () => {
+            const organisationId: string = faker.string.uuid();
+            const kennung: string = '123456';
+            const existingVidisAngeboteForSchool: FindVidisAngeboteForSchoolsResult = [
+                createExistingVidisServiceProvider(organisationId, '1'),
+            ];
+            const syncForSchoolSpy: ReturnType<typeof vi.spyOn> = vi
+                .spyOn(
+                    sut as unknown as { syncForSchoolInternal: (...args: unknown[]) => Promise<void> },
+                    'syncForSchoolInternal',
+                )
+                .mockResolvedValue();
+
+            vi.mocked(permissionsMock.hasSystemrechteAtOrganisation).mockResolvedValue(true);
+            organisationRepoMock.findById.mockResolvedValue(createSchool(organisationId, kennung));
+            vidisApiAdapterMock.getActivatedAngeboteBySchool.mockResolvedValue(
+                Ok([activatedAngebote[0]!.angebot, activatedAngebote[1]!.angebot]),
+            );
+            serviceProviderRepoMock.findVidisAngeboteforSchools.mockResolvedValue(existingVidisAngeboteForSchool);
+
+            const result: Result<void, SharedDomainError> = await sut.syncAngeboteForSchool(
+                organisationId,
+                permissionsMock,
+            );
+
+            expect(result).toEqual(Ok(undefined));
+            expect(vidisApiAdapterMock.getActivatedAngeboteBySchool).toHaveBeenCalledWith(kennung);
+            expect(serviceProviderRepoMock.findVidisAngeboteforSchools).toHaveBeenCalledWith([organisationId]);
+            expect(syncForSchoolSpy).toHaveBeenCalledWith(
+                organisationId,
+                [activatedAngebote[0]!.angebot, activatedAngebote[1]!.angebot],
+                existingVidisAngeboteForSchool,
+                [],
+                permissionsMock,
+            );
+        });
     });
 
     it('should stop syncing when no schools are returned for the current page', async () => {
@@ -286,28 +418,16 @@ describe('VidisSyncService', () => {
         expect(syncForSchoolSpy).toHaveBeenCalledTimes(2);
         expect(syncForSchoolSpy).toHaveBeenCalledWith(
             orga1.id,
-            [
-                {
-                    angebot: activatedAngebote[0]?.angebot,
-                    date: '2026-04-16',
-                },
-                {
-                    angebot: activatedAngebote[1]?.angebot,
-                    date: '2026-04-16',
-                },
-            ],
+            [activatedAngebote[0]?.angebot, activatedAngebote[1]?.angebot],
             [existingVidisAngeboteForSchools[0]],
+            [],
             permissionsMock,
         );
         expect(syncForSchoolSpy).toHaveBeenCalledWith(
             orga2.id,
-            [
-                {
-                    angebot: activatedAngebote[0]?.angebot,
-                    date: '2026-04-22',
-                },
-            ],
+            [activatedAngebote[0]?.angebot],
             [existingVidisAngeboteForSchools[1]],
+            [],
             permissionsMock,
         );
     });
@@ -417,7 +537,7 @@ describe('VidisSyncService', () => {
 
         expect(organisationRepoMock.findBy).toHaveBeenCalledTimes(2);
         expect(serviceProviderRepoMock.findVidisAngeboteforSchools).toHaveBeenCalledTimes(2);
-        expect(syncForSchoolSpy).toHaveBeenCalledWith(orgaIds[0]!.id, [], [], permissionsMock);
+        expect(syncForSchoolSpy).toHaveBeenCalledWith(orgaIds[0]!.id, [], [], [], permissionsMock);
         expect(syncForSchoolSpy).toHaveBeenCalledTimes(101);
     });
 
@@ -466,6 +586,7 @@ describe('VidisSyncService', () => {
             orga2.id,
             [],
             [existingVidisAngeboteForSchools[0]],
+            [],
             permissionsMock,
         );
         expect(syncForSchoolSpy).toHaveBeenCalledTimes(2);
@@ -477,24 +598,20 @@ describe('VidisSyncService', () => {
                 id: faker.string.uuid(),
                 kennung: faker.string.alphanumeric(8),
             };
-            const angeboteInVidis: VidisSchoolActivatedAngebot[] = [
-                {
-                    angebot: createAngebot(1, 'Existing Angebot'),
-                    date: '2026-05-02',
-                },
-            ];
+            const angeboteInVidis: VidisApiResponseAngebotBySchool[] = [createAngebot(1, 'Existing Angebot')];
             const angeboteInDb: ServiceProvider<true>[] = [createExistingVidisServiceProvider(orga.id, '1')];
 
             await (
                 sut as unknown as {
                     syncForSchoolInternal: (
                         organisationId: string,
-                        angeboteInVidis: VidisSchoolActivatedAngebot[],
+                        angeboteInVidis: VidisApiResponseAngebotBySchool[],
                         angeboteInDb: ServiceProvider<true>[],
+                        nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[],
                         permissions: IPersonPermissions,
                     ) => Promise<void>;
                 }
-            ).syncForSchoolInternal(orga.id, angeboteInVidis, angeboteInDb, permissionsMock);
+            ).syncForSchoolInternal(orga.id, angeboteInVidis, angeboteInDb, [], permissionsMock);
 
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `No differences between VIDIS API and database for school with organisationId: ${orga.id}`,
@@ -509,15 +626,9 @@ describe('VidisSyncService', () => {
                 id: faker.string.uuid(),
                 kennung: faker.string.alphanumeric(8),
             };
-            const angeboteInVidis: VidisSchoolActivatedAngebot[] = [
-                {
-                    angebot: createAngebot(1, 'Existing Angebot'),
-                    date: '2026-05-02',
-                },
-                {
-                    angebot: createAngebot(2, 'Missing Angebot'),
-                    date: '2026-05-03',
-                },
+            const angeboteInVidis: VidisApiResponseAngebotBySchool[] = [
+                createAngebot(1, 'Existing Angebot'),
+                createAngebot(2, 'Missing Angebot'),
             ];
             const angeboteInDb: ServiceProvider<true>[] = [createExistingVidisServiceProvider(orga.id, '1')];
             serviceProviderRepoMock.create.mockResolvedValue(Ok(createExistingVidisServiceProvider(orga.id, '2')));
@@ -526,12 +637,13 @@ describe('VidisSyncService', () => {
                 sut as unknown as {
                     syncForSchoolInternal: (
                         organisationId: string,
-                        angeboteInVidis: VidisSchoolActivatedAngebot[],
+                        angeboteInVidis: VidisApiResponseAngebotBySchool[],
                         angeboteInDb: ServiceProvider<true>[],
+                        nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[],
                         permissions: IPersonPermissions,
                     ) => Promise<void>;
                 }
-            ).syncForSchoolInternal(orga.id, angeboteInVidis, angeboteInDb, permissionsMock);
+            ).syncForSchoolInternal(orga.id, angeboteInVidis, angeboteInDb, [], permissionsMock);
 
             expect(serviceProviderRepoMock.create).toHaveBeenCalledTimes(1);
             expect(serviceProviderRepoMock.create).toHaveBeenCalledWith(permissionsMock, expect.any(ServiceProvider));
@@ -557,18 +669,66 @@ describe('VidisSyncService', () => {
             ]);
         });
 
+        it('should skip VIDIS Angebote that already exist as non-school-provided Angebote in the database', async () => {
+            const orga: TorgaIds = {
+                id: faker.string.uuid(),
+                kennung: faker.string.alphanumeric(8),
+            };
+            const angeboteInVidis: VidisApiResponseAngebotBySchool[] = [
+                createAngebot(1, 'Landesweites Angebot'),
+                createAngebot(2, 'School Angebot'),
+            ];
+            const nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[] = [
+                ServiceProvider.construct<true>(
+                    faker.string.uuid(),
+                    new Date('2026-01-01'),
+                    new Date('2026-01-02'),
+                    'Landesweites Angebot',
+                    ServiceProviderTarget.URL,
+                    'https://example.org/1',
+                    ServiceProviderKategorie.SCHULISCH,
+                    faker.string.uuid(),
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    ServiceProviderSystem.NONE,
+                    false,
+                    '1',
+                    [],
+                ),
+            ];
+            serviceProviderRepoMock.create.mockResolvedValue(Ok(createExistingVidisServiceProvider(orga.id, '2')));
+
+            await (
+                sut as unknown as {
+                    syncForSchoolInternal: (
+                        organisationId: string,
+                        angeboteInVidis: VidisApiResponseAngebotBySchool[],
+                        angeboteInDb: ServiceProvider<true>[],
+                        nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[],
+                        permissions: IPersonPermissions,
+                    ) => Promise<void>;
+                }
+            ).syncForSchoolInternal(orga.id, angeboteInVidis, [], nonSchoolProvidedVidisAngeboteInDB, permissionsMock);
+
+            expect(serviceProviderRepoMock.create).toHaveBeenCalledTimes(1);
+            expect(serviceProviderRepoMock.create).toHaveBeenCalledWith(permissionsMock, expect.any(ServiceProvider));
+            const createdServiceProvider: ServiceProvider<false> = serviceProviderRepoMock.create.mock
+                .calls[0]?.[1] as ServiceProvider<false>;
+
+            expect(createdServiceProvider.name).toBe('School Angebot');
+            expect(createdServiceProvider.vidisAngebotId).toBe('2');
+        });
+
         it('should collect stale serviceProviderIds for Angebote that are no longer in VIDIS', async () => {
             const orga: TorgaIds = {
                 id: faker.string.uuid(),
                 kennung: faker.string.alphanumeric(8),
             };
             const staleServiceProvider: ServiceProvider<true> = createExistingVidisServiceProvider(orga.id, '2');
-            const angeboteInVidis: VidisSchoolActivatedAngebot[] = [
-                {
-                    angebot: createAngebot(1, 'Existing Angebot'),
-                    date: '2026-05-02',
-                },
-            ];
+            const angeboteInVidis: VidisApiResponseAngebotBySchool[] = [createAngebot(1, 'Existing Angebot')];
             const angeboteInDb: ServiceProvider<true>[] = [
                 createExistingVidisServiceProvider(orga.id, '1'),
                 staleServiceProvider,
@@ -579,12 +739,13 @@ describe('VidisSyncService', () => {
                 sut as unknown as {
                     syncForSchoolInternal: (
                         organisationId: string,
-                        angeboteInVidis: VidisSchoolActivatedAngebot[],
+                        angeboteInVidis: VidisApiResponseAngebotBySchool[],
                         angeboteInDb: ServiceProvider<true>[],
+                        nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[],
                         permissions: IPersonPermissions,
                     ) => Promise<void>;
                 }
-            ).syncForSchoolInternal(orga.id, angeboteInVidis, angeboteInDb, permissionsMock);
+            ).syncForSchoolInternal(orga.id, angeboteInVidis, angeboteInDb, [], permissionsMock);
 
             expect(rollenerweiterungRepoMock.deleteByOrganisationIdAndServiceProviderIds).toHaveBeenCalledWith(
                 orga.id,
@@ -618,20 +779,17 @@ describe('VidisSyncService', () => {
                 sut as unknown as {
                     syncForSchoolInternal: (
                         organisationId: string,
-                        angeboteInVidis: VidisSchoolActivatedAngebot[],
+                        angeboteInVidis: VidisApiResponseAngebotBySchool[],
                         angeboteInDb: ServiceProvider<true>[],
+                        nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[],
                         permissions: IPersonPermissions,
                     ) => Promise<void>;
                 }
             ).syncForSchoolInternal(
                 orga.id,
-                [
-                    {
-                        angebot: createAngebot(1, 'Existing Angebot'),
-                        date: '2026-05-02',
-                    },
-                ],
+                [createAngebot(1, 'Existing Angebot')],
                 [createExistingVidisServiceProvider(orga.id, '1'), staleServiceProvider],
+                [],
                 permissionsMock,
             );
 
@@ -653,7 +811,7 @@ describe('VidisSyncService', () => {
                 id: faker.string.uuid(),
                 kennung: faker.string.alphanumeric(8),
             };
-            const resultError: VidisDomainError = new VidisDomainError('rollenerweiterung cleanup failed');
+            const resultError: VidisApiError = new VidisApiError('rollenerweiterung cleanup failed');
             const staleServiceProvider: ServiceProvider<true> = createExistingVidisServiceProvider(orga.id, '2');
 
             rollenerweiterungRepoMock.deleteByOrganisationIdAndServiceProviderIds.mockResolvedValue(Err(resultError));
@@ -662,20 +820,17 @@ describe('VidisSyncService', () => {
                 sut as unknown as {
                     syncForSchoolInternal: (
                         organisationId: string,
-                        angeboteInVidis: VidisSchoolActivatedAngebot[],
+                        angeboteInVidis: VidisApiResponseAngebotBySchool[],
                         angeboteInDb: ServiceProvider<true>[],
+                        nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[],
                         permissions: IPersonPermissions,
                     ) => Promise<void>;
                 }
             ).syncForSchoolInternal(
                 orga.id,
-                [
-                    {
-                        angebot: createAngebot(1, 'Existing Angebot'),
-                        date: '2026-05-02',
-                    },
-                ],
+                [createAngebot(1, 'Existing Angebot')],
                 [createExistingVidisServiceProvider(orga.id, '1'), staleServiceProvider],
+                [],
                 permissionsMock,
             );
 
@@ -703,20 +858,17 @@ describe('VidisSyncService', () => {
                 sut as unknown as {
                     syncForSchoolInternal: (
                         organisationId: string,
-                        angeboteInVidis: VidisSchoolActivatedAngebot[],
+                        angeboteInVidis: VidisApiResponseAngebotBySchool[],
                         angeboteInDb: ServiceProvider<true>[],
+                        nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[],
                         permissions: IPersonPermissions,
                     ) => Promise<void>;
                 }
             ).syncForSchoolInternal(
                 orga.id,
-                [
-                    {
-                        angebot: createAngebot(1, 'Existing Angebot'),
-                        date: '2026-05-02',
-                    },
-                ],
+                [createAngebot(1, 'Existing Angebot')],
                 [createExistingVidisServiceProvider(orga.id, '1'), staleServiceProvider],
+                [],
                 permissionsMock,
             );
 
@@ -743,20 +895,17 @@ describe('VidisSyncService', () => {
                 sut as unknown as {
                     syncForSchoolInternal: (
                         organisationId: string,
-                        angeboteInVidis: VidisSchoolActivatedAngebot[],
+                        angeboteInVidis: VidisApiResponseAngebotBySchool[],
                         angeboteInDb: ServiceProvider<true>[],
+                        nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[],
                         permissions: IPersonPermissions,
                     ) => Promise<void>;
                 }
             ).syncForSchoolInternal(
                 orga.id,
-                [
-                    {
-                        angebot: createAngebot(1, 'Existing Angebot'),
-                        date: '2026-05-02',
-                    },
-                ],
+                [createAngebot(1, 'Existing Angebot')],
                 [createExistingVidisServiceProvider(orga.id, '1'), staleServiceProvider],
+                [],
                 permissionsMock,
             );
 
@@ -779,24 +928,20 @@ describe('VidisSyncService', () => {
                 kennung: faker.string.alphanumeric(8),
             };
             const rejectionReason: Error = new Error('VIDIS create rejected');
-            const angeboteInVidis: VidisSchoolActivatedAngebot[] = [
-                {
-                    angebot: createAngebot(1, 'Rejected Angebot'),
-                    date: '2026-05-02',
-                },
-            ];
+            const angeboteInVidis: VidisApiResponseAngebotBySchool[] = [createAngebot(1, 'Rejected Angebot')];
             serviceProviderRepoMock.create.mockRejectedValue(rejectionReason);
 
             await (
                 sut as unknown as {
                     syncForSchoolInternal: (
                         organisationId: string,
-                        angeboteInVidis: VidisSchoolActivatedAngebot[],
+                        angeboteInVidis: VidisApiResponseAngebotBySchool[],
                         angeboteInDb: ServiceProvider<true>[],
+                        nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[],
                         permissions: IPersonPermissions,
                     ) => Promise<void>;
                 }
-            ).syncForSchoolInternal(orga.id, angeboteInVidis, [], permissionsMock);
+            ).syncForSchoolInternal(orga.id, angeboteInVidis, [], [], permissionsMock);
 
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `VIDIS sync for organisation ${orga.id} finished with 1 failed operations.`,
@@ -814,15 +959,9 @@ describe('VidisSyncService', () => {
             };
             const resultError: Error = new Error('VIDIS create failed');
             const failedResultWithoutError: { ok: false } = { ok: false };
-            const angeboteInVidis: VidisSchoolActivatedAngebot[] = [
-                {
-                    angebot: createAngebot(1, 'Error Angebot'),
-                    date: '2026-05-02',
-                },
-                {
-                    angebot: createAngebot(2, 'Missing Error Payload Angebot'),
-                    date: '2026-05-03',
-                },
+            const angeboteInVidis: VidisApiResponseAngebotBySchool[] = [
+                createAngebot(1, 'Error Angebot'),
+                createAngebot(2, 'Missing Error Payload Angebot'),
             ];
             serviceProviderRepoMock.create
                 .mockResolvedValueOnce(Err(resultError) as CreateServiceProviderResult)
@@ -832,12 +971,13 @@ describe('VidisSyncService', () => {
                 sut as unknown as {
                     syncForSchoolInternal: (
                         organisationId: string,
-                        angeboteInVidis: VidisSchoolActivatedAngebot[],
+                        angeboteInVidis: VidisApiResponseAngebotBySchool[],
                         angeboteInDb: ServiceProvider<true>[],
+                        nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[],
                         permissions: IPersonPermissions,
                     ) => Promise<void>;
                 }
-            ).syncForSchoolInternal(orga.id, angeboteInVidis, [], permissionsMock);
+            ).syncForSchoolInternal(orga.id, angeboteInVidis, [], [], permissionsMock);
 
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `VIDIS sync for organisation ${orga.id} finished with 2 failed operations.`,

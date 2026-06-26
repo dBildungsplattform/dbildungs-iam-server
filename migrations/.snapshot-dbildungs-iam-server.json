@@ -2944,7 +2944,8 @@
             "HINWEISE_BEARBEITEN",
             "ROLLEN_ERWEITERN",
             "ANGEBOTE_VERWALTEN",
-            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
+            "ANGEBOTE_EINGESCHRAENKT_VERWALTEN",
+            "SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN"
           ],
           "mappedType": "enum",
           "nativeEnumName": "rollen_system_recht_enum"
@@ -4067,7 +4068,8 @@
         "HINWEISE_BEARBEITEN",
         "ROLLEN_ERWEITERN",
         "ANGEBOTE_VERWALTEN",
-        "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
+        "ANGEBOTE_EINGESCHRAENKT_VERWALTEN",
+        "SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN"
       ]
     },
     "service_provider_kategorie_enum": {
