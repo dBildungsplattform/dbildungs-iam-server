@@ -282,6 +282,29 @@ describe('ServiceProviderRepo', () => {
 
             expect(createdSp.id).toBeDefined();
         });
+
+        it('should reject duplicate VIDIS angebot ids for the same school', async () => {
+            const providedOnSchulstrukturknoten: string = faker.string.uuid();
+            const vidisAngebotId: string = 'vidis-angebot-1';
+
+            await sut.createUnsafe(
+                DoFactory.createServiceProvider(false, {
+                    name: 'VIDIS Angebot A',
+                    providedOnSchulstrukturknoten,
+                    vidisAngebotId,
+                }),
+            );
+
+            await expect(
+                sut.createUnsafe(
+                    DoFactory.createServiceProvider(false, {
+                        name: 'VIDIS Angebot B',
+                        providedOnSchulstrukturknoten,
+                        vidisAngebotId,
+                    }),
+                ),
+            ).rejects.toThrow();
+        });
     });
 
     describe('find', () => {
