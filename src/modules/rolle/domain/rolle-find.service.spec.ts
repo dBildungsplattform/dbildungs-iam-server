@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { uniq } from 'lodash-es';
 
@@ -13,6 +14,12 @@ import { FindRollenWithPermissionsParams, RolleFindService } from './rolle-find.
 import { RollenArt } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
+import { RollenSystemRecht } from './systemrecht.js';
+import { Ok } from '../../../shared/util/result.js';
+
+type RolleFindServiceTestAccess = {
+    getOrganisationIdsWithParents(organisationIds: OrganisationID[]): Promise<OrganisationID[]>;
+};
 
 describe('RolleService', () => {
     let module: TestingModule;
@@ -206,7 +213,9 @@ describe('RolleService', () => {
                 permissions: permissionsMock,
                 organisationIds: ['orga-2'],
             };
+
             const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForErweiterung(params);
+
             expect(result).toEqual([[], 0]);
             expect(rolleRepoMock.findBy).not.toHaveBeenCalled();
         });
@@ -247,6 +256,162 @@ describe('RolleService', () => {
                 expect.objectContaining<RolleFindByParameters>({
                     searchStr: params.searchStr,
                 }),
+            );
+        });
+    });
+
+    describe('findRollenAvailableForImportPersonenkontext', () => {
+        let permissionsMock: DeepMocked<PersonPermissions>;
+        beforeEach(() => {
+            permissionsMock = createMock(PersonPermissions);
+        });
+
+        it('should return empty array if no permitted orgas', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForImportPersonenkontext({
+                permissions: permissionsMock,
+            });
+
+            expect(result).toEqual([[], 0]);
+            expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
+                [RollenSystemRecht.IMPORT_DURCHFUEHREN],
+                true,
+                false,
+            );
+        });
+
+        it('should return empty array when no orgas are requested', async () => {
+            const organisationId: OrganisationID = 'orga-1';
+            const candidateRolle: Rolle<true> = DoFactory.createRolle(true);
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [organisationId] });
+            organisationRepoMock.findParentOrgasForIds.mockResolvedValue([]);
+            organisationRepoMock.findByIds.mockResolvedValue(new Map());
+            rolleRepoMock.findBy.mockResolvedValue([[candidateRolle], 1]);
+
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForImportPersonenkontext({
+                permissions: permissionsMock,
+            });
+
+            expect(result).toEqual([[], 0]);
+        });
+
+        it('should return empty array if requested organisationIds are not permitted', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: ['orga-1'] });
+
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForImportPersonenkontext({
+                permissions: permissionsMock,
+                organisationIds: ['orga-2'],
+            });
+
+            expect(result).toEqual([[], 0]);
+            expect(rolleRepoMock.findBy).not.toHaveBeenCalled();
+        });
+
+        it('should return empty array if allowed organisationIds resolve to empty', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: ['orga-1'] });
+            vi.spyOn(
+                rolleFindService as unknown as RolleFindServiceTestAccess,
+                'getOrganisationIdsWithParents',
+            ).mockResolvedValueOnce([]);
+
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForImportPersonenkontext({
+                permissions: permissionsMock,
+            });
+
+            expect(result).toEqual([[], 0]);
+            expect(rolleRepoMock.findBy).not.toHaveBeenCalled();
+        });
+
+        it('should apply offset and limit after filtering candidates', async () => {
+            const rollen: Rolle<true>[] = [
+                DoFactory.createRolle(true, { name: 'A' }),
+                DoFactory.createRolle(true, { name: 'B' }),
+                DoFactory.createRolle(true, { name: 'C' }),
+            ];
+            vi.spyOn(rollen[0] as unknown as Rolle<true>, 'canBeAssignedToOrga').mockResolvedValue(Ok());
+            vi.spyOn(rollen[1] as unknown as Rolle<true>, 'canBeAssignedToOrga').mockResolvedValue(Ok());
+            vi.spyOn(rollen[2] as unknown as Rolle<true>, 'canBeAssignedToOrga').mockResolvedValue(Ok());
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            rolleRepoMock.findBy.mockResolvedValue([rollen, rollen.length]);
+            organisationRepoMock.findParentOrgasForIds.mockResolvedValue([]);
+            const orgaMap: Map<OrganisationID, Organisation<true>> = new Map<OrganisationID, Organisation<true>>([
+                ['orga-1', DoFactory.createOrganisation(true, { id: 'orga-1', typ: OrganisationsTyp.SCHULE })],
+            ]);
+            organisationRepoMock.findByIds.mockResolvedValue(orgaMap);
+
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForImportPersonenkontext({
+                permissions: permissionsMock,
+                organisationIds: ['orga-1'],
+                offset: 1,
+                limit: 1,
+            });
+
+            expect(result).toEqual([[rollen[1]], rollen.length]);
+        });
+
+        it('should apply offset when no limit is provided', async () => {
+            const rollen: Rolle<true>[] = [
+                DoFactory.createRolle(true, { name: 'A' }),
+                DoFactory.createRolle(true, { name: 'B' }),
+                DoFactory.createRolle(true, { name: 'C' }),
+            ];
+            vi.spyOn(rollen[0] as unknown as Rolle<true>, 'canBeAssignedToOrga').mockResolvedValue(Ok());
+            vi.spyOn(rollen[1] as unknown as Rolle<true>, 'canBeAssignedToOrga').mockResolvedValue(Ok());
+            vi.spyOn(rollen[2] as unknown as Rolle<true>, 'canBeAssignedToOrga').mockResolvedValue(Ok());
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            rolleRepoMock.findBy.mockResolvedValue([rollen, rollen.length]);
+            organisationRepoMock.findParentOrgasForIds.mockResolvedValue([]);
+            const orgaMap: Map<OrganisationID, Organisation<true>> = new Map<OrganisationID, Organisation<true>>([
+                ['orga-1', DoFactory.createOrganisation(true, { id: 'orga-1', typ: OrganisationsTyp.SCHULE })],
+            ]);
+            organisationRepoMock.findByIds.mockResolvedValue(orgaMap);
+
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForImportPersonenkontext({
+                permissions: permissionsMock,
+                organisationIds: ['orga-1'],
+                offset: 1,
+            });
+
+            expect(result).toEqual([rollen.slice(1), rollen.length]);
+        });
+
+        it('should filter out rollen that cannot be assigned to requested organisation', async () => {
+            const organisationId: OrganisationID = 'orga-1';
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                id: organisationId,
+                typ: OrganisationsTyp.SCHULE,
+            });
+
+            const allowedRolle: Rolle<true> = DoFactory.createRolle(true, {
+                administeredBySchulstrukturknoten: organisationId,
+                rollenart: RollenArt.LEHR,
+            });
+            const disallowedRolle: Rolle<true> = DoFactory.createRolle(true, {
+                administeredBySchulstrukturknoten: organisationId,
+                rollenart: RollenArt.SYSADMIN,
+            });
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [organisationId] });
+            organisationRepoMock.findParentOrgasForIds.mockResolvedValue([]);
+            organisationRepoMock.findByIds.mockResolvedValue(new Map([[organisationId, organisation]]));
+            rolleRepoMock.findBy.mockResolvedValue([[allowedRolle, disallowedRolle], 2]);
+
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForImportPersonenkontext({
+                permissions: permissionsMock,
+                organisationIds: [organisationId],
+            });
+
+            expect(result[0]).toHaveLength(1);
+            expect(result[0]).toEqual([allowedRolle]);
+            expect(result[1]).toBe(1);
+            expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
+                [RollenSystemRecht.IMPORT_DURCHFUEHREN],
+                true,
+                false,
             );
         });
     });

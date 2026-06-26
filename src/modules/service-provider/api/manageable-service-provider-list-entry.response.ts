@@ -32,6 +32,9 @@ export class ManageableServiceProviderListEntryResponse {
     @ApiProperty()
     public requires2fa: boolean;
 
+    @ApiProperty({ required: false })
+    public vidisAngebotId?: string;
+
     @ApiProperty({ enum: ServiceProviderMerkmal, enumName: ServiceProviderMerkmalTypName, isArray: true })
     public merkmale: ServiceProviderMerkmal[];
 
@@ -60,6 +63,7 @@ export class ManageableServiceProviderListEntryResponse {
         };
         this.kategorie = serviceProvider.kategorie;
         this.requires2fa = serviceProvider.requires2fa;
+        this.vidisAngebotId = serviceProvider.vidisAngebotId;
         this.merkmale = serviceProvider.merkmale;
         this.rollenerweiterungen = rollenerweiterungen.map((re: RollenerweiterungForManageableServiceProvider) =>
             RollenerweiterungForManageableServiceProviderResponse.fromRollenerweiterungForManageableServiceProvider(re),

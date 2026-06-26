@@ -22,7 +22,12 @@ import {
 } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
-import { SchulconnexOrganisationTyp, SchulconnexPersonenstatus, SchulconnexRolle } from '../schulconnex-enums.v1.js';
+import {
+    convertSPSHRollenartForBackwardsCampatibilityV1,
+    SchulconnexOrganisationTyp,
+    SchulconnexPersonenstatus,
+    SchulconnexRolle,
+} from '../schulconnex-enums.js';
 import { PersonInfoController } from './person-info.controller.js';
 import { PersonInfoResponse, PersonNestedInPersonInfoResponse } from './v0/person-info.response.js';
 import { PersonInfoPersonResponseV1 } from './v1/person-info-person.response.v1.js';
@@ -31,6 +36,8 @@ import { ConfigTestModule, DatabaseTestModule } from '../../../../../test/utils/
 import { EmailResolverService } from '../../../email-microservice/domain/email-resolver.service.js';
 import { IPersonPermissions } from '../../../../shared/permissions/person-permissions.interface.js';
 import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
+import { PersonInfoResponseV2 } from './v2/person-info.response.v2.js';
+import { PersonInfoPersonResponseV2 } from './v2/person-info-person.response.v2.js';
 
 describe('PersonInfoController', () => {
     let module: TestingModule;
@@ -169,7 +176,9 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
                 expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(orga?.typ);
-                expect(result.personenkontexte.at(0)?.rollenart).toEqual(rolle.rollenart);
+                expect(result.personenkontexte.at(0)?.rollenart).toEqual(
+                    convertSPSHRollenartForBackwardsCampatibilityV1(rolle.rollenart),
+                );
                 expect(result.personenkontexte.at(0)?.rollenname).toEqual(rolle.name);
                 expect(result.gruppen).toEqual([]);
                 expect(result.email).toEqual(undefined);
@@ -221,7 +230,9 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
                 expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(orga?.typ);
-                expect(result.personenkontexte.at(0)?.rollenart).toEqual(rolle.rollenart);
+                expect(result.personenkontexte.at(0)?.rollenart).toEqual(
+                    convertSPSHRollenartForBackwardsCampatibilityV1(rolle.rollenart),
+                );
                 expect(result.personenkontexte.at(0)?.rollenname).toEqual(rolle.name);
                 expect(result.gruppen).toEqual([]);
                 expect(result.email).toEqual({
@@ -275,7 +286,9 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
                 expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(orga?.typ);
-                expect(result.personenkontexte.at(0)?.rollenart).toEqual(rolle.rollenart);
+                expect(result.personenkontexte.at(0)?.rollenart).toEqual(
+                    convertSPSHRollenartForBackwardsCampatibilityV1(rolle.rollenart),
+                );
                 expect(result.personenkontexte.at(0)?.rollenname).toEqual(rolle.name);
                 expect(result.gruppen).toEqual([]);
                 expect(result.email).toEqual({
@@ -651,6 +664,320 @@ describe('PersonInfoController', () => {
                 personRepoMock.findById.mockResolvedValue(null);
 
                 await expect(() => sut.infoV1(permissions)).rejects.toBeInstanceOf(EntityNotFoundError);
+            });
+        });
+    });
+
+    describe('infoV2', () => {
+        let person: null | Person<true> = null;
+        let orga: null | Organisation<true> = null;
+        beforeEach(() => {
+            person = DoFactory.createPerson(true);
+            orga = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
+            emailResolverService.shouldUseEmailMicroservice.mockReturnValue(false);
+        });
+        describe('when person exists', () => {
+            it('should return person info for locked person with kontext at land old Repo', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(false);
+
+                const orgaLand: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND });
+                const permissions: IPersonPermissions = {
+                    personFields: {
+                        id: faker.string.uuid(),
+                    },
+                } as PersonPermissions;
+                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN });
+                const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(orgaLand);
+                    },
+                });
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
+
+                userLockRepoMock.findByPersonId.mockResolvedValue([createMock(UserLock)]);
+                personRepoMock.findById.mockResolvedValue(person);
+                personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                    {
+                        personenkontext: kontext,
+                        organisation: orgaLand,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                ]);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(undefined);
+
+                const result: PersonInfoResponseV2 = await sut.infoV2(permissions);
+                expect(result).toBeInstanceOf(PersonInfoResponseV2);
+                expect(result.person).toBeInstanceOf(PersonInfoPersonResponseV2);
+
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using old emailRepo`));
+                expect(result.pid).toEqual(person?.id);
+                expect(result.person.name.vorname).toEqual(person?.vorname);
+                expect(result.person.name.familiennamen).toEqual(person?.familienname);
+                expect(result.personenkontexte.length).toEqual(1);
+                expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
+                expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orgaLand?.id);
+                expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orgaLand?.kennung);
+                expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orgaLand?.name);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(SchulconnexOrganisationTyp.SONSTIGE);
+                expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
+                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(undefined);
+                expect(result.personenkontexte.at(0)?.rolle).toEqual(SchulconnexRolle.SYSADMIN);
+            });
+            it('should return person info for locked person with kontext at land new Microservice', async () => {
+                emailResolverService.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+
+                const orgaLand: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND });
+                const permissions: IPersonPermissions = {
+                    personFields: {
+                        id: faker.string.uuid(),
+                    },
+                } as PersonPermissions;
+                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN });
+                const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(orgaLand);
+                    },
+                });
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
+
+                userLockRepoMock.findByPersonId.mockResolvedValue([createMock(UserLock)]);
+                personRepoMock.findById.mockResolvedValue(person);
+                personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                    {
+                        personenkontext: kontext,
+                        organisation: orgaLand,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                ]);
+                emailResolverService.findEmailBySpshPerson.mockResolvedValueOnce(undefined);
+
+                const result: PersonInfoResponseV2 = await sut.infoV2(permissions);
+                expect(result).toBeInstanceOf(PersonInfoResponseV2);
+                expect(result.person).toBeInstanceOf(PersonInfoPersonResponseV2);
+
+                expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`using new Microservice`));
+                expect(result.pid).toEqual(person?.id);
+                expect(result.person.name.vorname).toEqual(person?.vorname);
+                expect(result.person.name.familiennamen).toEqual(person?.familienname);
+                expect(result.personenkontexte.length).toEqual(1);
+                expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
+                expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orgaLand?.id);
+                expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orgaLand?.kennung);
+                expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orgaLand?.name);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(SchulconnexOrganisationTyp.SONSTIGE);
+                expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
+                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(undefined);
+                expect(result.personenkontexte.at(0)?.rolle).toEqual(SchulconnexRolle.SYSADMIN);
+            });
+            it('should return person info for Lehrer with Email with Schul-kontext and no gruppen', async () => {
+                const permissions: IPersonPermissions = {
+                    personFields: {
+                        id: faker.string.uuid(),
+                    },
+                } as PersonPermissions;
+                const email: PersonEmailResponse = {
+                    address: faker.internet.email(),
+                    status: EmailAddressStatus.ENABLED,
+                };
+                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEHR });
+                const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(orga);
+                    },
+                });
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
+
+                userLockRepoMock.findByPersonId.mockResolvedValue([]);
+                personRepoMock.findById.mockResolvedValue(person);
+                personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                    {
+                        personenkontext: kontext,
+                        organisation: orga!,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                ]);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
+
+                const result: PersonInfoResponseV2 = await sut.infoV2(permissions);
+                expect(result).toBeInstanceOf(PersonInfoResponseV2);
+                expect(result.person).toBeInstanceOf(PersonInfoPersonResponseV2);
+
+                expect(result.pid).toEqual(person?.id);
+                expect(result.person.name.vorname).toEqual(person?.vorname);
+                expect(result.person.name.familiennamen).toEqual(person?.familienname);
+                expect(result.personenkontexte.length).toEqual(1);
+                expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
+                expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
+                expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
+                expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(SchulconnexOrganisationTyp.SCHULE);
+                expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
+                expect(result.personenkontexte.at(0)?.rolle).toEqual(SchulconnexRolle.LEHR);
+                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(SchulconnexPersonenstatus.AKTIV);
+                expect(result.personenkontexte.at(0)?.erreichbarkeiten.at(0)?.kennung).toEqual(email.address);
+            });
+            it('should return person info without Email with Schul-kontext and no gruppen', async () => {
+                const permissions: IPersonPermissions = {
+                    personFields: {
+                        id: faker.string.uuid(),
+                    },
+                } as PersonPermissions;
+                const email: PersonEmailResponse = {
+                    address: faker.internet.email(),
+                    status: EmailAddressStatus.DISABLED,
+                };
+                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.ORGADMIN });
+                const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(orga);
+                    },
+                });
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
+
+                userLockRepoMock.findByPersonId.mockResolvedValue([]);
+                personRepoMock.findById.mockResolvedValue(person);
+                personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                    {
+                        personenkontext: kontext,
+                        organisation: orga!,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                ]);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
+
+                const result: PersonInfoResponseV2 = await sut.infoV2(permissions);
+                expect(result).toBeInstanceOf(PersonInfoResponseV2);
+                expect(result.person).toBeInstanceOf(PersonInfoPersonResponseV2);
+
+                expect(result.pid).toEqual(person?.id);
+                expect(result.person.name.vorname).toEqual(person?.vorname);
+                expect(result.person.name.familiennamen).toEqual(person?.familienname);
+                expect(result.personenkontexte.length).toEqual(1);
+                expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
+                expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
+                expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
+                expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(SchulconnexOrganisationTyp.SCHULE);
+                expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
+                expect(result.personenkontexte.at(0)?.rolle).toEqual(SchulconnexRolle.ORGADMIN);
+                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(SchulconnexPersonenstatus.AKTIV);
+                expect(result.personenkontexte.at(0)?.erreichbarkeiten.length).toEqual(0);
+            });
+            it('should return person info for Schueler with gruppen', async () => {
+                const klasse1: Organisation<true> = DoFactory.createOrganisation(true, {
+                    administriertVon: orga?.id,
+                    zugehoerigZu: orga?.id,
+                    typ: OrganisationsTyp.KLASSE,
+                });
+                const klasse2: Organisation<true> = DoFactory.createOrganisation(true, {
+                    administriertVon: orga?.id,
+                    zugehoerigZu: orga?.id,
+                    typ: OrganisationsTyp.KLASSE,
+                    name: undefined,
+                });
+                const permissions: IPersonPermissions = {
+                    personFields: {
+                        id: faker.string.uuid(),
+                    },
+                } as PersonPermissions;
+
+                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LERN });
+                const kontextSchule: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(orga);
+                    },
+                });
+                const kontextKlasse1: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(klasse1);
+                    },
+                });
+                const kontextKlasse2: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(klasse2);
+                    },
+                });
+                const personenkontextResponseMock: PersonenkontextResponse = createMock(PersonenkontextResponse);
+
+                userLockRepoMock.findByPersonId.mockResolvedValue([]);
+                personRepoMock.findById.mockResolvedValue(person);
+                personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
+                    kontextSchule,
+                    kontextKlasse1,
+                    kontextKlasse2,
+                ]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                    {
+                        personenkontext: kontextSchule,
+                        organisation: orga!,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                    {
+                        personenkontext: kontextKlasse1,
+                        organisation: klasse1,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                    {
+                        personenkontext: kontextKlasse2,
+                        organisation: klasse2,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                ]);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(undefined);
+
+                const result: PersonInfoResponseV2 = await sut.infoV2(permissions);
+                expect(result).toBeInstanceOf(PersonInfoResponseV2);
+                expect(result.person).toBeInstanceOf(PersonInfoPersonResponseV2);
+
+                expect(result.pid).toEqual(person?.id);
+                expect(result.person.name.vorname).toEqual(person?.vorname);
+                expect(result.person.name.familiennamen).toEqual(person?.familienname);
+                expect(result.personenkontexte.length).toEqual(1);
+                expect(result.personenkontexte.at(0)?.id).toEqual(kontextSchule.id);
+                expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
+                expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
+                expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(SchulconnexOrganisationTyp.SCHULE);
+                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(SchulconnexPersonenstatus.AKTIV);
+                expect(result.personenkontexte.at(0)?.rolle).toEqual(SchulconnexRolle.LERN);
+                expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(2);
+            });
+        });
+
+        describe('when person does not exist', () => {
+            it('should return null', async () => {
+                const permissions: IPersonPermissions = {
+                    personFields: {
+                        id: faker.string.uuid(),
+                    },
+                } as PersonPermissions;
+
+                personRepoMock.findById.mockResolvedValue(null);
+
+                await expect(() => sut.infoV2(permissions)).rejects.toBeInstanceOf(EntityNotFoundError);
             });
         });
     });

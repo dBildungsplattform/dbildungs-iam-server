@@ -6,7 +6,6 @@ import {
     HttpCode,
     HttpStatus,
     Param,
-    Patch,
     Post,
     Put,
     Query,
@@ -38,13 +37,10 @@ import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { Public } from '../../authentication/api/public.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { RolleDomainError } from '../domain/rolle-domain.error.js';
 import { RolleFindService } from '../domain/rolle-find.service.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
@@ -54,18 +50,14 @@ import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
-import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
-import { AddSystemrechtError } from './add-systemrecht.error.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { FindRolleQueryParams } from './find-rolle-query.param.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
-import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
-import { RolleResponse } from './rolle.response.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
@@ -80,7 +72,6 @@ export class RolleController {
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
         private readonly rolleFindService: RolleFindService,
-        private readonly orgService: OrganisationService,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly organisationRepository: OrganisationRepository,
@@ -103,24 +94,37 @@ export class RolleController {
         @Query() queryParams: FindRolleQueryParams,
         @Permissions() permissions: IPersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
-        const [rollen, total]: [Rolle<true>[], number] =
-            queryParams.systemrecht === RollenSystemRechtEnum.ROLLEN_ERWEITERN
-                ? await this.rolleFindService.findRollenAvailableForErweiterung({
-                      permissions,
-                      searchStr: queryParams.searchStr,
-                      organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
-                      rollenArten: queryParams.rollenarten,
-                      limit: queryParams.limit,
-                      offset: queryParams.offset,
-                  })
-                : await this.rolleRepo.findRollenAuthorized(
-                      permissions,
-                      false,
-                      queryParams.searchStr,
-                      queryParams.limit,
-                      queryParams.offset,
-                      queryParams.organisationId ? [queryParams.organisationId] : undefined,
-                  );
+        let rollenAndTotal: [Rolle<true>[], number];
+        if (queryParams.systemrecht === RollenSystemRechtEnum.ROLLEN_ERWEITERN) {
+            rollenAndTotal = await this.rolleFindService.findRollenAvailableForErweiterung({
+                permissions,
+                searchStr: queryParams.searchStr,
+                organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                rollenArten: queryParams.rollenarten,
+                limit: queryParams.limit,
+                offset: queryParams.offset,
+            });
+        } else if (queryParams.systemrecht === RollenSystemRechtEnum.IMPORT_DURCHFUEHREN) {
+            rollenAndTotal = await this.rolleFindService.findRollenAvailableForImportPersonenkontext({
+                permissions,
+                searchStr: queryParams.searchStr,
+                organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                rollenArten: queryParams.rollenarten,
+                limit: queryParams.limit,
+                offset: queryParams.offset,
+            });
+        } else {
+            rollenAndTotal = await this.rolleRepo.findRollenAuthorized(
+                permissions,
+                false,
+                queryParams.searchStr,
+                queryParams.limit,
+                queryParams.offset,
+                queryParams.organisationId ? [queryParams.organisationId] : undefined,
+            );
+        }
+
+        const [rollen, total]: [Rolle<true>[], number] = rollenAndTotal;
         if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
                 total: 0,
@@ -208,7 +212,7 @@ export class RolleController {
     @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ description: 'Create a new rolle.' })
-    @ApiCreatedResponse({ description: 'The rolle was successfully created.', type: RolleResponse })
+    @ApiCreatedResponse({ description: 'The rolle was successfully created.', type: RolleWithServiceProvidersResponse })
     @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamRolleError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the rolle.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })
@@ -216,23 +220,14 @@ export class RolleController {
     public async createRolle(
         @Body() params: CreateRolleBodyParams,
         @Permissions() permissions: IPersonPermissions,
-    ): Promise<RolleResponse> {
-        const orgResult: Result<Organisation<true>, DomainError> = await this.orgService.findOrganisationById(
-            params.administeredBySchulstrukturknoten,
-        );
-        if (!orgResult.ok) {
-            this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${orgResult.error.message}`,
-            );
-            throw orgResult.error;
-        }
+    ): Promise<RolleWithServiceProvidersResponse> {
         const rolle: DomainError | Rolle<false> = this.rolleFactory.createNew(
             params.name,
             params.administeredBySchulstrukturknoten,
             params.rollenart,
             params.merkmale,
             params.systemrechte.map((s: RollenSystemRechtEnum) => RollenSystemRecht.getByName(s)),
-            [],
+            params.serviceProviderIds,
             [],
             false,
         );
@@ -243,40 +238,18 @@ export class RolleController {
             );
             throw rolle;
         }
-        const result: Rolle<true> | DomainError = await this.rolleRepo.save(rolle);
-        if (result instanceof DomainError) {
+
+        const result: Result<Rolle<true>, DomainError> = await this.rolleRepo.createRolleAuthorized(rolle, permissions);
+        if (!result.ok) {
             this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${result.message}.`,
+                `Admin: ${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${result.error.message}.`,
             );
-            throw result;
+            throw result.error;
         }
-        this.logger.info(`Admin: ${permissions.personFields.id}) hat eine neue Rolle angelegt: ${result.name}.`);
 
-        return new RolleResponse(result);
-    }
+        this.logger.info(`Admin: ${permissions.personFields.id}) hat eine neue Rolle angelegt: ${result.value.name}.`);
 
-    @Patch(':rolleId')
-    @UseGuards(StepUpGuard)
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({ description: 'Add systemrecht to a rolle.' })
-    @ApiOkResponse({ description: 'The systemrecht was successfully added to rolle.' })
-    @ApiBadRequestResponse({ description: 'The input was not valid.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to create the rolle.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })
-    @ApiInternalServerErrorResponse({
-        description: 'Internal server error while adding systemrecht to rolle.',
-    })
-    public async addSystemRecht(
-        @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Body() addSystemrechtBodyParams: AddSystemrechtBodyParams,
-    ): Promise<void> {
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
-        if (rolle) {
-            rolle.addSystemRecht(RollenSystemRecht.getByName(addSystemrechtBodyParams.systemRecht));
-            await this.rolleRepo.save(rolle);
-        } else {
-            throw new AddSystemrechtError(); //hide that rolle is not found
-        }
+        return new RolleWithServiceProvidersResponse(result.value, result.value.serviceProviderData);
     }
 
     @Get(':rolleId/serviceProviders')
@@ -293,69 +266,6 @@ export class RolleController {
             throw new EntityNotFoundError();
         }
         return new RolleServiceProviderResponse(rolle.serviceProviderIds);
-    }
-
-    @Put(':rolleId/serviceProviders')
-    @UseGuards(StepUpGuard)
-    @HttpCode(HttpStatus.CREATED)
-    @ApiOperation({ description: 'Add a service-provider to a rolle by id.' })
-    @ApiOkResponse({ description: 'Adding service-provider finished successfully.', type: [ServiceProviderResponse] })
-    @ApiNotFoundResponse({ description: 'The rolle or the service-provider to add does not exist.' })
-    @ApiBadRequestResponse({ description: 'The service-provider is already attached to rolle.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
-    @ApiInternalServerErrorResponse({
-        description: 'Internal server error, the service-provider may could not be found after attaching to rolle.',
-    })
-    public async updateServiceProvidersById(
-        @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Body() spBodyParams: RolleServiceProviderBodyParams,
-    ): Promise<ServiceProviderResponse[]> {
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
-        if (!rolle) {
-            throw new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId);
-        }
-
-        const result: Result<ServiceProvider<true>[], DomainError> = await rolle.updateServiceProviders(
-            spBodyParams.serviceProviderIds,
-        );
-        if (!result.ok) {
-            throw result.error;
-        }
-        rolle.setVersionForUpdate(spBodyParams.version);
-        await this.rolleRepo.save(rolle);
-
-        // Convert the Map of service providers to an array of ServiceProviderResponse objects
-        const serviceProviderResponses: ServiceProviderResponse[] = result.value.map(
-            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
-        );
-
-        // Return the array of ServiceProviderResponse objects
-        return serviceProviderResponses;
-    }
-
-    @Delete(':rolleId/serviceProviders')
-    @UseGuards(StepUpGuard)
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({ description: 'Remove a service-provider from a rolle by id.' })
-    @ApiOkResponse({ description: 'Removing service-provider finished successfully.' })
-    @ApiNotFoundResponse({ description: 'The rolle or the service-provider that should be removed does not exist.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
-    public async removeServiceProviderById(
-        @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Body() spBodyParams: RolleServiceProviderBodyParams,
-    ): Promise<void> {
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
-
-        if (!rolle) {
-            throw new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId);
-        }
-
-        const result: void | DomainError = rolle.detatchServiceProvider(spBodyParams.serviceProviderIds);
-        if (result instanceof DomainError) {
-            throw result;
-        }
-        rolle.setVersionForUpdate(spBodyParams.version);
-        await this.rolleRepo.save(rolle);
     }
 
     @Put(':rolleId')
@@ -383,7 +293,7 @@ export class RolleController {
         const isAlreadyAssigned: boolean = await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(
             findRolleByIdParams.rolleId,
         );
-        const result: Rolle<true> | DomainError = await this.rolleRepo.updateRolleAuthorized(
+        const result: Result<Rolle<true>, DomainError> = await this.rolleRepo.updateRolleAuthorized(
             findRolleByIdParams.rolleId,
             params.name,
             params.merkmale,
@@ -394,22 +304,17 @@ export class RolleController {
             permissions,
         );
 
-        if (result instanceof DomainError) {
-            if (result instanceof RolleDomainError) {
-                this.logger.error(
-                    `Admin: ${permissions.personFields.id}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
-                );
-                throw result;
-            }
+        if (!result.ok) {
             this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.error.message}`,
             );
-            throw result;
+
+            throw result.error;
         }
 
         this.logger.info(`Admin: ${permissions.personFields.id}) hat eine Rolle bearbeitet: ${rolleName}.`);
 
-        return this.returnRolleWithServiceProvidersResponse(result);
+        return this.returnRolleWithServiceProvidersResponse(result.value);
     }
 
     @Delete(':rolleId')
