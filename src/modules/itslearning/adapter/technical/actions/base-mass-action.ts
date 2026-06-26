@@ -1,4 +1,4 @@
-import { XMLBuilder, XMLParser } from 'fast-xml-parser';
+import { MatcherView, XMLBuilder, XMLParser } from 'fast-xml-parser';
 
 import { DomainError } from '../../../../../shared/error/index.js';
 import { Ok } from '../../../../../shared/util/result.js';
@@ -61,10 +61,10 @@ export abstract class IMSESMassAction<ResponseBodyType, ResultType> implements I
     protected readonly xmlParser: XMLParser = new XMLParser({
         ignoreAttributes: false,
         removeNSPrefix: true,
-        isArray: (tagName: string, jPath: string, isLeafNode: boolean, isAttribute: boolean) =>
+        isArray: (tagName: string, jPathOrMatcher: string | MatcherView, isLeafNode: boolean, isAttribute: boolean) =>
             tagName === 'statusInfo' ||
             tagName === 'codeMinorField' ||
-            this.isArrayOverride(tagName, jPath, isLeafNode, isAttribute),
+            this.isArrayOverride(tagName, jPathOrMatcher, isLeafNode, isAttribute),
     });
 
     public abstract action: string;
@@ -72,7 +72,12 @@ export abstract class IMSESMassAction<ResponseBodyType, ResultType> implements I
     public abstract buildRequest(): object;
 
     // Customize parsing behaviour, see X2jOptions.isArray
-    public isArrayOverride(_tagName: string, _jPath: string, _isLeafNode: boolean, _isAttribute: boolean): boolean {
+    public isArrayOverride(
+        _tagName: string,
+        _jPathOrMatcher: string | MatcherView,
+        _isLeafNode: boolean,
+        _isAttribute: boolean,
+    ): boolean {
         return false;
     }
 
