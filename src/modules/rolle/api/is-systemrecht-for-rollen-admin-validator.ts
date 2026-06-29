@@ -8,6 +8,9 @@ export function IsSystemrechtForRollenAdministration(validationOptions?: Validat
             RollenSystemRechtEnum.ROLLEN_ERWEITERN,
             RollenSystemRechtEnum.IMPORT_DURCHFUEHREN,
         ],
-        validationOptions,
+        {
+            each: true,
+            ...validationOptions,
+        },
     );
 }

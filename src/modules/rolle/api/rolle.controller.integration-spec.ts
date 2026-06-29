@@ -619,7 +619,7 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [orgaA.id, orgaB.id] });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/rolle?systemrecht=ROLLEN_ERWEITERN')
+                .get('/rolle?systemrechte=ROLLEN_ERWEITERN')
                 .send();
 
             expect(response.status).toBe(200);
@@ -665,7 +665,7 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [schule.id] });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?systemrecht=ROLLEN_ERWEITERN&organisationId=${schule.id}`)
+                .get(`/rolle?systemrechte=ROLLEN_ERWEITERN&organisationId=${schule.id}`)
                 .send();
 
             expect(response.status).toBe(200);
@@ -702,7 +702,7 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get(
-                    `/rolle?systemrecht=ROLLEN_ERWEITERN&rollenarten=${rollenart}&organisationId=${administeredBySchulstrukturknoten}`,
+                    `/rolle?systemrechte=ROLLEN_ERWEITERN&rollenarten=${rollenart}&organisationId=${administeredBySchulstrukturknoten}`,
                 )
                 .send();
 
@@ -738,7 +738,7 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [schule.id] });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?systemrecht=IMPORT_DURCHFUEHREN&organisationId=${schule.id}`)
+                .get(`/rolle?systemrechte=IMPORT_DURCHFUEHREN&organisationId=${schule.id}`)
                 .send();
 
             expect(response.status).toBe(200);
@@ -752,6 +752,28 @@ describe('Rolle API', () => {
                 true,
                 false,
             );
+        });
+
+        it('should return rollen filtered by multiple systemrechte', async () => {
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            const rolleB: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleA instanceof DomainError || rolleB instanceof DomainError) {
+                throw Error();
+            }
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [rolleA.administeredBySchulstrukturknoten],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle?rolleIds=${rolleA.id}&systemrechte=ROLLEN_ERWEITERN&systemrechte=ROLLEN_VERWALTEN`)
+                .send();
+
+            expect(response.status).toBe(200);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(1);
         });
     });
 
@@ -794,7 +816,7 @@ describe('Rolle API', () => {
         permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
         const response: Response = await request(app.getHttpServer() as App)
-            .get(`/rolle?systemrecht=IMPORT_DURCHFUEHREN&rollenarten=${RollenArt.LEHR}&organisationId=${schule.id}`)
+            .get(`/rolle?systemrechte=IMPORT_DURCHFUEHREN&rollenarten=${RollenArt.LEHR}&organisationId=${schule.id}`)
             .send();
 
         expect(response.status).toBe(200);
