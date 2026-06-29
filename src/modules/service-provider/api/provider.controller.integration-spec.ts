@@ -279,12 +279,17 @@ describe('ServiceProvider API', () => {
     describe('/GET manageable service providers for organisation', () => {
         let organisation: Organisation<true>;
         let serviceProvider: ServiceProvider<true>;
+        let serviceProvider2: ServiceProvider<true>;
         let rolle: Rolle<true>;
         let rolleWithErweiterung: Rolle<true>;
 
         beforeEach(async () => {
             organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
             serviceProvider = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: organisation.id,
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+            serviceProvider2 = await createAndPersistServiceProvider(em, {
                 providedOnSchulstrukturknoten: organisation.id,
                 merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
             });
@@ -318,7 +323,7 @@ describe('ServiceProvider API', () => {
                 DoFactory.createRollenerweiterung(false, {
                     organisationId: organisation.id,
                     rolleId: rolleWithErweiterung.id,
-                    serviceProviderId: serviceProvider.id,
+                    serviceProviderId: serviceProvider2.id,
                 }),
             );
         });
@@ -371,10 +376,37 @@ describe('ServiceProvider API', () => {
                         ],
                         hasSomeVerwaltenPermission: true,
                     },
+                    {
+                        id: serviceProvider2.id,
+                        name: serviceProvider2.name,
+                        administrationsebene: {
+                            id: organisation.id,
+                            name: organisation.name!,
+                            kennung: organisation.kennung!,
+                        },
+                        kategorie: serviceProvider2.kategorie,
+                        requires2fa: serviceProvider2.requires2fa,
+                        merkmale: serviceProvider2.merkmale,
+                        rollenerweiterungen: [
+                            {
+                                organisation: {
+                                    id: organisation.id,
+                                    name: organisation.name!,
+                                    kennung: organisation.kennung!,
+                                },
+                                rolle: {
+                                    id: rolleWithErweiterung.id,
+                                    name: rolleWithErweiterung.name,
+                                },
+                            },
+                        ],
+                        rollen: [],
+                        hasSomeVerwaltenPermission: true,
+                    },
                 ],
-                limit: 1,
+                limit: 2,
                 offset: 0,
-                total: 1,
+                total: 2,
             });
         });
 
