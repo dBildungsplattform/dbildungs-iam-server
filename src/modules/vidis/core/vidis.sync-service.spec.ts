@@ -150,7 +150,7 @@ describe('VidisSyncService', () => {
 
     beforeAll(async () => {
         getOrThrowMock = vi.fn().mockReturnValue({
-            SYNC_SCHOOLS_PAGE_SIZE: 100,
+            SYNC_SCHOOLS_PAGE_SIZE: 5,
         });
         module = await Test.createTestingModule({
             providers: [
@@ -218,7 +218,7 @@ describe('VidisSyncService', () => {
 
         permissionsMock = createPersonPermissionsMock() as unknown as EscalatedPersonPermissions;
         getOrThrowMock.mockReturnValue({
-            SYNC_SCHOOLS_PAGE_SIZE: 100,
+            SYNC_SCHOOLS_PAGE_SIZE: 5,
         });
         escalatedPersonPermissionsFactoryMock.createNew.mockReturnValue(permissionsMock);
     });
