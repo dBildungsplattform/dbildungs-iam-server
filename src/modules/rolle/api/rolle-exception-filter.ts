@@ -1,6 +1,5 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { Response } from 'express';
-import { AddSystemrechtError } from './add-systemrecht.error.js';
 import { DbiamRolleError, RolleErrorI18nTypes } from './dbiam-rolle.error.js';
 import { RolleDomainError } from '../domain/rolle-domain.error.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
@@ -16,13 +15,6 @@ import { ServiceProviderProvidedOutOfTreeError } from '../domain/service-provide
 @Catch(RolleDomainError)
 export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
     private ERROR_MAPPINGS: Map<string, DbiamRolleError> = new Map([
-        [
-            AddSystemrechtError.name,
-            new DbiamRolleError({
-                code: 500,
-                i18nKey: RolleErrorI18nTypes.ADD_SYSTEMRECHT_ERROR,
-            }),
-        ],
         [
             RolleHatPersonenkontexteError.name,
             new DbiamRolleError({

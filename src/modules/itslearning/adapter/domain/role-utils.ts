@@ -6,10 +6,13 @@ import { IMSESInstitutionRoleType, IMSESRoleType } from './role.enum.js';
 const ROLLENART_VALUES: Record<RollenArt, number> = {
     [RollenArt.EXTERN]: 0,
     [RollenArt.LERN]: 1,
-    [RollenArt.LEHR]: 2,
-    [RollenArt.LEIT]: 3,
-    [RollenArt.ORGADMIN]: 4,
-    [RollenArt.SYSADMIN]: 5,
+    [RollenArt.SORGBER]: 2,
+    [RollenArt.SCHB]: 3,
+    [RollenArt.NLEHR]: 4,
+    [RollenArt.LEHR]: 5,
+    [RollenArt.LEIT]: 6,
+    [RollenArt.ORGADMIN]: 7,
+    [RollenArt.SYSADMIN]: 8,
 };
 
 // Maps our roles to itsLearning roles
@@ -20,6 +23,9 @@ const ROLLENART_TO_ITSLEARNING_ROLE: Record<RollenArt, IMSESInstitutionRoleType>
     [RollenArt.LEIT]: IMSESInstitutionRoleType.ADMINISTRATOR,
     [RollenArt.ORGADMIN]: IMSESInstitutionRoleType.ADMINISTRATOR,
     [RollenArt.SYSADMIN]: IMSESInstitutionRoleType.SYSTEM_ADMINISTRATOR,
+    [RollenArt.SORGBER]: IMSESInstitutionRoleType.STUDENT,
+    [RollenArt.SCHB]: IMSESInstitutionRoleType.GUEST,
+    [RollenArt.NLEHR]: IMSESInstitutionRoleType.GUEST,
 };
 
 // Maps our roles to IMS ES roles (Different from InstitutionRoleType)
@@ -30,6 +36,9 @@ const ROLLENART_TO_IMSES_ROLE: Record<RollenArt, IMSESRoleType> = {
     [RollenArt.LEIT]: IMSESRoleType.ADMINISTRATOR,
     [RollenArt.ORGADMIN]: IMSESRoleType.ADMINISTRATOR,
     [RollenArt.SYSADMIN]: IMSESRoleType.ADMINISTRATOR,
+    [RollenArt.SORGBER]: IMSESRoleType.LEARNER,
+    [RollenArt.SCHB]: IMSESRoleType.TEACHING_ASSISTANT,
+    [RollenArt.NLEHR]: IMSESRoleType.TEACHING_ASSISTANT,
 };
 
 export function higherRollenart(a: RollenArt, b: RollenArt): RollenArt {

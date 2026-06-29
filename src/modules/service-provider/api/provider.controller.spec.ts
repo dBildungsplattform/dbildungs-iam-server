@@ -187,12 +187,13 @@ describe('Provider Controller Test', () => {
                 await providerController.findRollenerweiterungenByServiceProviderId(
                     permissionsMock,
                     { angebotId: faker.string.uuid() },
-                    { offset: offset, limit: limit },
+                    { offset: offset, limit: limit, rolleIds: [rollenerweiterung.rolleId] },
                 );
 
             expect(rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrgaKennung).toHaveBeenCalledWith(
                 expect.any(String),
                 ['FixedOrgaId'],
+                [rollenerweiterung.rolleId],
                 offset,
                 limit,
             );
@@ -250,12 +251,18 @@ describe('Provider Controller Test', () => {
                 await providerController.findRollenerweiterungenByServiceProviderId(
                     permissionsMock,
                     { angebotId: faker.string.uuid() },
-                    { offset: offset, limit: limit, organisationId: 'FixedOrgaId2' },
+                    {
+                        offset: offset,
+                        limit: limit,
+                        organisationIds: ['FixedOrgaId2'],
+                        rolleIds: [rollenerweiterung.rolleId],
+                    },
                 );
 
             expect(rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrgaKennung).toHaveBeenCalledWith(
                 expect.any(String),
                 ['FixedOrgaId2'],
+                [rollenerweiterung.rolleId],
                 offset,
                 limit,
             );
@@ -281,7 +288,7 @@ describe('Provider Controller Test', () => {
             const queryparams: RollenerweiterungByServiceProvidersIdQueryParams =
                 new RollenerweiterungByServiceProvidersIdQueryParams();
             Object.assign(queryparams, {
-                organisationId: 'org-1',
+                organisationIds: ['org-1'],
                 limit: 10,
                 offset: 0,
             });
@@ -339,6 +346,7 @@ describe('Provider Controller Test', () => {
 
             expect(rollenerweiterungRepoMock.findByServiceProviderIdPagedAndSortedByOrgaKennung).toHaveBeenCalledWith(
                 expect.any(String),
+                undefined,
                 undefined,
                 offset,
                 limit,

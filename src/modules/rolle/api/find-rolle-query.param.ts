@@ -6,6 +6,7 @@ import { TransformToArray } from '../../../shared/util/array-transform.validator
 import { RollenArt, RollenArtTypName } from '../domain/rolle.enums.js';
 import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/systemrecht.js';
 import { IsSystemrechtForRollenAdministration } from './is-systemrecht-for-rollen-admin-validator.js';
+import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 
 export class FindRolleQueryParams extends PagedQueryParams {
     @IsOptional()
@@ -22,19 +23,36 @@ export class FindRolleQueryParams extends PagedQueryParams {
         description: 'The id of the organisation where the role should be available.',
         required: false,
     })
-    public readonly organisationId?: string;
+    public readonly organisationId?: OrganisationID;
 
     @IsOptional()
-    @IsEnum(RollenSystemRechtEnum)
+    @IsUUID(undefined, { each: true })
+    @TransformToArray()
+    @ArrayUnique()
+    @ApiProperty({
+        description:
+            'The ids of the selected Rollen. If provided, these Rollen will be returned regardless of the other filters since they are required by the frontend',
+        required: false,
+        nullable: true,
+        isArray: true,
+    })
+    public readonly rolleIds?: RolleID[];
+
+    @IsOptional()
+    @TransformToArray()
+    @IsEnum(RollenSystemRechtEnum, { each: true })
+    @ArrayUnique()
     @ApiProperty({
         enum: RollenSystemRechtEnum,
+        nullable: true,
         enumName: RollenSystemRechtEnumName,
         required: false,
+        isArray: true,
         description:
-            'The system right for which the roles should be available. Can only be ROLLEN_VERWALTEN or ROLLEN_ERWEITERN.',
+            'The system right for which the roles should be available. Can only be ROLLEN_VERWALTEN, ROLLEN_ERWEITERN or both or IMPORT_DURCHFUEHREN.',
     })
     @IsSystemrechtForRollenAdministration()
-    public readonly systemrecht?: RollenSystemRechtEnum;
+    public readonly systemrechte?: RollenSystemRechtEnum[];
 
     @IsOptional()
     @IsEnum(RollenArt, { each: true })
