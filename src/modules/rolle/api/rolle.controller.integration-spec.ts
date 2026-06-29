@@ -738,7 +738,7 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [schule.id] });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?systemrecht=IMPORT_DURCHFUEHREN&organisationId=${schule.id}`)
+                .get(`/rolle?systemrechte=IMPORT_DURCHFUEHREN&organisationId=${schule.id}`)
                 .send();
 
             expect(response.status).toBe(200);
@@ -816,7 +816,7 @@ describe('Rolle API', () => {
         permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
         const response: Response = await request(app.getHttpServer() as App)
-            .get(`/rolle?systemrecht=IMPORT_DURCHFUEHREN&rollenarten=${RollenArt.LEHR}&organisationId=${schule.id}`)
+            .get(`/rolle?systemrechte=IMPORT_DURCHFUEHREN&rollenarten=${RollenArt.LEHR}&organisationId=${schule.id}`)
             .send();
 
         expect(response.status).toBe(200);
