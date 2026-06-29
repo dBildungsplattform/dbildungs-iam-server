@@ -29,4 +29,9 @@ export class CreateRolleBodyParams {
     @ArrayUnique()
     @ApiProperty({ enum: RollenSystemRechtEnum, enumName: RollenSystemRechtEnumName, isArray: true, uniqueItems: true })
     public systemrechte!: RollenSystemRechtEnum[];
+
+    @IsUUID('all', { each: true })
+    @ArrayUnique()
+    @ApiProperty({ type: [String], uniqueItems: true })
+    public serviceProviderIds!: string[];
 }

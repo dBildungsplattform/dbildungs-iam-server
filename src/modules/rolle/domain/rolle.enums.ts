@@ -7,6 +7,9 @@ export enum RollenArt {
     ORGADMIN = 'ORGADMIN',
     LEIT = 'LEIT',
     SYSADMIN = 'SYSADMIN',
+    SORGBER = 'SORGBER',
+    SCHB = 'SCHB',
+    NLEHR = 'NLEHR',
 }
 
 export enum RollenMerkmal {
