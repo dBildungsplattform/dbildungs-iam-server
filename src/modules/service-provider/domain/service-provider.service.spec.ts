@@ -397,6 +397,29 @@ describe('ServiceProviderService', () => {
             expect(result?.serviceProvider).toEqual(serviceProvider);
         });
 
+        it('returns service provider even if it has no rollen or rollenerweiterungen', async () => {
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            organisationRepo.findByIds.mockResolvedValue(
+                new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
+            );
+            serviceProviderRepo.findById.mockResolvedValue(serviceProvider);
+            rolleRepo.findByIds.mockResolvedValue(new Map());
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map());
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(new Map());
+
+            const result: Option<ManageableServiceProviderDetailsWithReferencedObjects> =
+                await service.findManageableById(permissions, serviceProvider.id);
+
+            expect(serviceProviderRepo.findById).toHaveBeenCalledWith(serviceProvider.id);
+            expect(result?.serviceProvider).toEqual(serviceProvider);
+            expect(result?.rollen).toHaveLength(0);
+            expect(result?.rollenerweiterungen).toHaveLength(0);
+            expect(result?.rollenerweiterungenWithName).toHaveLength(0);
+        });
+
         it('returns service provider via authorized query when user has limited permissions', async () => {
             permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
