@@ -47,6 +47,7 @@ import { ManageableServiceProviderResponse } from './manageable-service-provider
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
+import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -239,8 +240,8 @@ describe('ServiceProvider API', () => {
                 .query(params)
                 .send();
 
-            const body: RawPagedResponse<ManageableServiceProviderListEntryResponse> =
-                response.body as RawPagedResponse<ManageableServiceProviderListEntryResponse>;
+            const body: RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse> =
+                response.body as RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse>;
             expect(response.status).toBe(200);
             expect(body.items).toBeInstanceOf(Array);
             expect(body.items.length).toBeGreaterThanOrEqual(2);
@@ -249,8 +250,8 @@ describe('ServiceProvider API', () => {
             expect(body.total).toBe(2);
 
             [serviceProvider1, serviceProvider2].forEach((sp: ServiceProvider<true>) => {
-                const entry: ManageableServiceProviderListEntryResponse | undefined = body.items.find(
-                    (e: ManageableServiceProviderListEntryResponse) => e.id === sp.id,
+                const entry: ManageableServiceProviderSimpleListEntryResponse | undefined = body.items.find(
+                    (e: ManageableServiceProviderSimpleListEntryResponse) => e.id === sp.id,
                 );
 
                 expect(entry).toBeDefined();
@@ -262,7 +263,7 @@ describe('ServiceProvider API', () => {
                 expect(entry?.kategorie).toBe(sp.kategorie);
                 expect(entry?.requires2fa).toBe(sp.requires2fa);
                 expect(entry?.merkmale).toEqual(expect.arrayContaining(serviceProvider1.merkmale));
-                expect(entry?.rollenerweiterungen.length).toBe(0);
+                expect(entry?.hasRollenerweiterungen).toBe(false);
                 expect(entry?.rollen).toBeInstanceOf(Array);
                 if (rolle.serviceProviderIds.includes(sp.id)) {
                     expect(entry?.rollen.length).toBe(1);

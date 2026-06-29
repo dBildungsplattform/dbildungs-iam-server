@@ -224,11 +224,11 @@ export class RollenerweiterungRepo {
     }
 
     /**
-     * Returns the amount of Rollenerweiterungen per ServiceProvider (optionally filtered by Organisation)
+     * Returns the amount of Rollenerweiterungen per ServiceProvider (optionally filtered by Organisations)
      */
     public async countByServiceProviderIds(
         serviceProviderIds: ServiceProviderID[],
-        organisationId?: OrganisationID,
+        organisationIds?: OrganisationID[],
     ): Promise<Record<ServiceProviderID, number>> {
         const where: FilterQuery<RollenerweiterungEntity> = {
             serviceProviderId: {
@@ -236,8 +236,8 @@ export class RollenerweiterungRepo {
             },
         };
 
-        if (organisationId) {
-            where.organisationId = organisationId;
+        if (organisationIds) {
+            where.organisationId = organisationIds;
         }
 
         const result: Dictionary<number> = await this.em.countBy(

@@ -62,6 +62,7 @@ import { ServiceProviderService } from '../domain/service-provider.service.js';
 import {
     ManageableServiceProviderDetailsWithReferencedObjects,
     ManageableServiceProviderWithReferencedObjects,
+    ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount,
 } from '../domain/types.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
@@ -77,6 +78,7 @@ import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweit
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
+import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -259,7 +261,7 @@ export class ProviderController {
     @Get('manageable')
     @UseGuards(StepUpGuard)
     @ApiOperation({ description: 'Get service-providers the logged-in user is allowed to manage.' })
-    @ApiOkResponsePaginated(ManageableServiceProviderListEntryResponse, {
+    @ApiOkResponsePaginated(ManageableServiceProviderSimpleListEntryResponse, {
         description:
             'The service providers were successfully returned. WARNING: This endpoint returns all service providers as default when no paging parameters were set.',
     })
@@ -269,8 +271,11 @@ export class ProviderController {
     public async getManageableServiceProviders(
         @Permissions() permissions: IPersonPermissions,
         @Query() params: ManageableServiceProvidersParams,
-    ): Promise<RawPagedResponse<ManageableServiceProviderListEntryResponse>> {
-        const [enrichedServiceProviders, total]: Counted<ManageableServiceProviderWithReferencedObjects> =
+    ): Promise<RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse>> {
+        const [
+            enrichedServiceProviders,
+            total,
+        ]: Counted<ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount> =
             await this.serviceProviderService.findAuthorized(permissions, params.limit, params.offset);
 
         return new RawPagedResponse({
@@ -278,8 +283,10 @@ export class ProviderController {
             limit: params.limit ?? total,
             total,
             items: enrichedServiceProviders.map(
-                (manageableServiceProviderWithReferencedObjects: ManageableServiceProviderWithReferencedObjects) =>
-                    ManageableServiceProviderListEntryResponse.fromManageableServiceProviderWithReferencedObjects(
+                (
+                    manageableServiceProviderWithReferencedObjects: ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount,
+                ) =>
+                    ManageableServiceProviderSimpleListEntryResponse.fromManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount(
                         manageableServiceProviderWithReferencedObjects,
                     ),
             ),
