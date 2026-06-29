@@ -49,7 +49,7 @@ export class FindRolleQueryParams extends PagedQueryParams {
         required: false,
         isArray: true,
         description:
-            'The system rights for which the roles should be available. Can only be ROLLEN_VERWALTEN or ROLLEN_ERWEITERN or both.',
+            'The system right for which the roles should be available. Can only be ROLLEN_VERWALTEN, ROLLEN_ERWEITERN or both or IMPORT_DURCHFUEHREN.',
     })
     @IsSystemrechtForRollenAdministration()
     public readonly systemrechte?: RollenSystemRechtEnum[];

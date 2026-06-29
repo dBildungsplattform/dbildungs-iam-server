@@ -21,6 +21,7 @@ import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AttachedRollenError } from './errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
+import { VidisServiceProviderImmutableError } from './errors/vidis-service-provider-immutable.error.js';
 import { ServiceProviderMerkmal } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import {
@@ -330,6 +331,15 @@ export class ServiceProviderService {
             return Err(new EntityNotFoundError());
         }
 
+        if (existingServiceProvider.vidisAngebotId) {
+            return Err(
+                new VidisServiceProviderImmutableError(
+                    'ServiceProvider linked to VIDIS cannot be updated or deleted',
+                    existingServiceProvider.id,
+                ),
+            );
+        }
+
         const updateError: Option<InvalidLogoCombinationError> = existingServiceProvider.updateWithSafeFields(
             updateServiceProviderBodyParams,
         );
@@ -348,9 +358,27 @@ export class ServiceProviderService {
     ): Promise<
         Result<
             void,
-            EntityNotFoundError | MissingPermissionsError | AttachedRollenError | AttachedRollenerweiterungenError
+            | EntityNotFoundError
+            | MissingPermissionsError
+            | AttachedRollenError
+            | AttachedRollenerweiterungenError
+            | VidisServiceProviderImmutableError
         >
     > {
+        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(id);
+        if (!serviceProvider) {
+            return Err(new EntityNotFoundError('ServiceProvider', id));
+        }
+
+        if (serviceProvider.vidisAngebotId) {
+            return Err(
+                new VidisServiceProviderImmutableError(
+                    'ServiceProvider linked to VIDIS cannot be updated or deleted',
+                    id,
+                ),
+            );
+        }
+
         const rollen: Map<ServiceProviderID, Rolle<true>[]> = await this.rolleRepo.findByServiceProviderIds([id], 1);
         const hasAttachedRollen: boolean = (rollen.get(id)?.length ?? 0) > 0;
         if (hasAttachedRollen) {
