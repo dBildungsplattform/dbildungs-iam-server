@@ -48,6 +48,7 @@ import { ManageableServiceProvidersParams } from './manageable-service-providers
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
+import { RollenerweiterungForManageableServiceProviderResponse } from './RollenerweiterungForManageableServiceProviderResponse.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -279,17 +280,13 @@ describe('ServiceProvider API', () => {
     describe('/GET manageable service providers for organisation', () => {
         let organisation: Organisation<true>;
         let serviceProvider: ServiceProvider<true>;
-        let serviceProvider2: ServiceProvider<true>;
         let rolle: Rolle<true>;
+        let rolle2: Rolle<true>;
         let rolleWithErweiterung: Rolle<true>;
 
         beforeEach(async () => {
             organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
             serviceProvider = await createAndPersistServiceProvider(em, {
-                providedOnSchulstrukturknoten: organisation.id,
-                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
-            });
-            serviceProvider2 = await createAndPersistServiceProvider(em, {
                 providedOnSchulstrukturknoten: organisation.id,
                 merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
             });
@@ -303,6 +300,16 @@ describe('ServiceProvider API', () => {
                 throw rolleError;
             }
             rolle = rolleError;
+            const rolle2Error: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    serviceProviderIds: [],
+                }),
+            );
+            if (rolle2Error instanceof DomainError) {
+                throw rolle2Error;
+            }
+            rolle2 = rolle2Error;
             const rolleWithErweiterungError: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: organisation.id,
@@ -322,8 +329,8 @@ describe('ServiceProvider API', () => {
             await rollenerweiterungRepo.create(
                 DoFactory.createRollenerweiterung(false, {
                     organisationId: organisation.id,
-                    rolleId: rolleWithErweiterung.id,
-                    serviceProviderId: serviceProvider2.id,
+                    rolleId: rolle2.id,
+                    serviceProviderId: serviceProvider.id,
                 }),
             );
         });
@@ -355,19 +362,31 @@ describe('ServiceProvider API', () => {
                         kategorie: serviceProvider.kategorie,
                         requires2fa: serviceProvider.requires2fa,
                         merkmale: serviceProvider.merkmale,
-                        rollenerweiterungen: [
-                            {
-                                organisation: {
-                                    id: organisation.id,
-                                    name: organisation.name!,
-                                    kennung: organisation.kennung!,
+                        rollenerweiterungen:
+                            expect.arrayContaining<RollenerweiterungForManageableServiceProviderResponse>([
+                                {
+                                    organisation: {
+                                        id: organisation.id,
+                                        name: organisation.name!,
+                                        kennung: organisation.kennung!,
+                                    },
+                                    rolle: {
+                                        id: rolleWithErweiterung.id,
+                                        name: rolleWithErweiterung.name,
+                                    },
                                 },
-                                rolle: {
-                                    id: rolleWithErweiterung.id,
-                                    name: rolleWithErweiterung.name,
+                                {
+                                    organisation: {
+                                        id: organisation.id,
+                                        name: organisation.name!,
+                                        kennung: organisation.kennung!,
+                                    },
+                                    rolle: {
+                                        id: rolle2.id,
+                                        name: rolle2.name,
+                                    },
                                 },
-                            },
-                        ],
+                            ]) as RollenerweiterungForManageableServiceProviderResponse[],
                         rollen: [
                             {
                                 id: rolle.id,
@@ -376,37 +395,10 @@ describe('ServiceProvider API', () => {
                         ],
                         hasSomeVerwaltenPermission: true,
                     },
-                    {
-                        id: serviceProvider2.id,
-                        name: serviceProvider2.name,
-                        administrationsebene: {
-                            id: organisation.id,
-                            name: organisation.name!,
-                            kennung: organisation.kennung!,
-                        },
-                        kategorie: serviceProvider2.kategorie,
-                        requires2fa: serviceProvider2.requires2fa,
-                        merkmale: serviceProvider2.merkmale,
-                        rollenerweiterungen: [
-                            {
-                                organisation: {
-                                    id: organisation.id,
-                                    name: organisation.name!,
-                                    kennung: organisation.kennung!,
-                                },
-                                rolle: {
-                                    id: rolleWithErweiterung.id,
-                                    name: rolleWithErweiterung.name,
-                                },
-                            },
-                        ],
-                        rollen: [],
-                        hasSomeVerwaltenPermission: true,
-                    },
                 ],
-                limit: 2,
+                limit: 1,
                 offset: 0,
-                total: 2,
+                total: 1,
             });
         });
 
