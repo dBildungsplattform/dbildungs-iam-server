@@ -314,6 +314,13 @@ describe('ServiceProvider API', () => {
                     serviceProviderId: serviceProvider.id,
                 }),
             );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    organisationId: organisation.id,
+                    rolleId: rolleWithErweiterung.id,
+                    serviceProviderId: serviceProvider.id,
+                }),
+            );
         });
 
         afterEach(() => {

@@ -197,6 +197,7 @@ describe('ServiceProviderService', () => {
         let organisation: Organisation<true>;
         let serviceProvider: ServiceProvider<true>;
         let rollenerweiterung: Rollenerweiterung<true>;
+        let rollenerweiterung2: Rollenerweiterung<true>;
         let rolle: Rolle<true>;
 
         beforeEach(() => {
@@ -205,11 +206,17 @@ describe('ServiceProviderService', () => {
                 providedOnSchulstrukturknoten: organisation.id,
                 merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
             });
+            rolle = DoFactory.createRolle(true, { serviceProviderIds: [serviceProvider.id] });
             rollenerweiterung = DoFactory.createRollenerweiterung(true, {
                 organisationId: organisation.id,
                 serviceProviderId: serviceProvider.id,
+                rolleId: rolle.id,
             });
-            rolle = DoFactory.createRolle(true, { serviceProviderIds: [serviceProvider.id] });
+            rollenerweiterung2 = DoFactory.createRollenerweiterung(true, {
+                organisationId: organisation.id,
+                serviceProviderId: serviceProvider.id,
+                rolleId: rolle.id,
+            });
         });
 
         afterEach(() => {
@@ -228,6 +235,45 @@ describe('ServiceProviderService', () => {
             expectErrResult(result);
             expect(organisationRepo.findParentOrgasForIds).not.toHaveBeenCalled();
             expect(serviceProviderRepo.findByOrgasWithMerkmal).not.toHaveBeenCalled();
+        });
+
+        it('returns authorized serviceProviders and correctly sets hasSomeVerwaltenPermission', async () => {
+            const parentOrga: Organisation<true> = DoFactory.createOrganisation(true);
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            permissions.hasSystemrechtAtOrganisation = vi.fn().mockResolvedValue(true);
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [parentOrga.id, serviceProvider.providedOnSchulstrukturknoten],
+            });
+
+            organisationRepo.findParentOrgasForIds.mockResolvedValue([parentOrga]);
+            organisationRepo.findByIds.mockResolvedValue(
+                new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
+            );
+            serviceProviderRepo.findByOrgasWithMerkmal.mockResolvedValue([[serviceProvider], 1]);
+            rolleRepo.findByIds.mockResolvedValue(new Map([[rolle.id, rolle]]));
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProvider.id, [rolle]]]));
+            rollenerweiterungRepo.findByServiceProviderIds.mockResolvedValue(
+                new Map([[serviceProvider.id, [rollenerweiterung, rollenerweiterung2]]]),
+            );
+
+            const result: Result<
+                Counted<ManageableServiceProviderWithReferencedObjects>,
+                MissingPermissionsError
+            > = await service.getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(organisation.id, permissions);
+
+            expect(serviceProviderRepo.findByOrgasWithMerkmal).toHaveBeenCalledWith(
+                [organisation.id, parentOrga.id],
+                ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+                undefined,
+                undefined,
+            );
+            expectOkResult(result);
+            expect(
+                result.value[0].map((s: ManageableServiceProviderWithReferencedObjects) => s.serviceProvider),
+            ).toContain(serviceProvider);
+            expect(result.value[0][0]?.hasSomeVerwaltenPermission).toBe(true);
+            expect(result.value[1]).toBe(1);
         });
 
         it('returns authorized serviceProviders when person has rights and includes parent organisation ids', async () => {
