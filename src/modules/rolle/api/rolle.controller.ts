@@ -95,7 +95,11 @@ export class RolleController {
         @Permissions() permissions: IPersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
         let rollenAndTotal: [Rolle<true>[], number];
-        if (queryParams.systemrecht === RollenSystemRechtEnum.ROLLEN_ERWEITERN) {
+        if (
+            queryParams.systemrechte &&
+            queryParams.systemrechte.length === 1 &&
+            queryParams.systemrechte[0] === RollenSystemRechtEnum.ROLLEN_ERWEITERN
+        ) {
             rollenAndTotal = await this.rolleFindService.findRollenAvailableForErweiterung({
                 permissions,
                 searchStr: queryParams.searchStr,
@@ -104,7 +108,11 @@ export class RolleController {
                 limit: queryParams.limit,
                 offset: queryParams.offset,
             });
-        } else if (queryParams.systemrecht === RollenSystemRechtEnum.IMPORT_DURCHFUEHREN) {
+        } else if (
+            queryParams.systemrechte &&
+            queryParams.systemrechte.length === 1 &&
+            queryParams.systemrechte[0] === RollenSystemRechtEnum.IMPORT_DURCHFUEHREN
+        ) {
             rollenAndTotal = await this.rolleFindService.findRollenAvailableForImportPersonenkontext({
                 permissions,
                 searchStr: queryParams.searchStr,
@@ -116,11 +124,13 @@ export class RolleController {
         } else {
             rollenAndTotal = await this.rolleRepo.findRollenAuthorized(
                 permissions,
+                queryParams.systemrechte?.map((value: RollenSystemRechtEnum) => RollenSystemRecht.getByName(value)),
                 false,
                 queryParams.searchStr,
                 queryParams.limit,
                 queryParams.offset,
                 queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                queryParams.rolleIds,
             );
         }
 
