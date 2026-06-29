@@ -322,6 +322,19 @@ describe('VidisSyncService', () => {
     });
 
     it('should sync schools page by page with a page size of 100', async () => {
+        getOrThrowMock.mockReturnValueOnce({
+            SYNC_SCHOOLS_PAGE_SIZE: 100,
+        });
+        const sutWithPageSize100: VidisSyncService = new VidisSyncService(
+            vidisApiAdapterMock,
+            organisationRepoMock,
+            serviceProviderRepoMock,
+            escalatedPersonPermissionsFactoryMock,
+            rollenerweiterungRepoMock,
+            entityManagerMock,
+            loggerMock,
+            module.get(ConfigService),
+        );
         const orgaIds: TorgaIds[] = Array.from({ length: 101 }, (_value: unknown, index: number) => ({
             id: `organisation-${index}`,
             kennung: `${200000 + index}`,
@@ -347,12 +360,12 @@ describe('VidisSyncService', () => {
         serviceProviderRepoMock.findVidisAngeboteforSchools.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
         const syncForSchoolSpy: ReturnType<typeof vi.spyOn> = vi
             .spyOn(
-                sut as unknown as { syncForSchoolInternal: (...args: unknown[]) => Promise<void> },
+                sutWithPageSize100 as unknown as { syncForSchoolInternal: (...args: unknown[]) => Promise<void> },
                 'syncForSchoolInternal',
             )
             .mockResolvedValue();
 
-        await sut.sync();
+        await sutWithPageSize100.sync();
 
         expect(organisationRepoMock.findBy).toHaveBeenCalledTimes(2);
         expect(serviceProviderRepoMock.findVidisAngeboteforSchools).toHaveBeenCalledTimes(2);
@@ -361,6 +374,19 @@ describe('VidisSyncService', () => {
     });
 
     it('should sync schools page by page and use an empty angebote fallback when a grouped school entry is undefined', async () => {
+        getOrThrowMock.mockReturnValueOnce({
+            SYNC_SCHOOLS_PAGE_SIZE: 100,
+        });
+        const sutWithPageSize100: VidisSyncService = new VidisSyncService(
+            vidisApiAdapterMock,
+            organisationRepoMock,
+            serviceProviderRepoMock,
+            escalatedPersonPermissionsFactoryMock,
+            rollenerweiterungRepoMock,
+            entityManagerMock,
+            loggerMock,
+            module.get(ConfigService),
+        );
         const orgaIds: TorgaIds[] = Array.from({ length: 101 }, (_value: unknown, index: number) => ({
             id: `organisation-${index}`,
             kennung: `${200000 + index}`,
@@ -406,7 +432,7 @@ describe('VidisSyncService', () => {
             .mockResolvedValueOnce([secondPageSchools, 101]);
         serviceProviderRepoMock.findVidisAngeboteforSchools.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
         vi.spyOn(
-            sut as unknown as {
+            sutWithPageSize100 as unknown as {
                 groupAngeboteByOrganisationId: (
                     activatedAngebote: VidisAngebotWithSchoolActivations[],
                     organisationIdByKennung: Record<string, string>,
@@ -418,12 +444,12 @@ describe('VidisSyncService', () => {
             .mockReturnValueOnce(secondPageAngeboteByOrganisationId);
         const syncForSchoolSpy: ReturnType<typeof vi.spyOn> = vi
             .spyOn(
-                sut as unknown as { syncForSchoolInternal: (...args: unknown[]) => Promise<void> },
+                sutWithPageSize100 as unknown as { syncForSchoolInternal: (...args: unknown[]) => Promise<void> },
                 'syncForSchoolInternal',
             )
             .mockResolvedValue();
 
-        await sut.sync();
+        await sutWithPageSize100.sync();
 
         expect(organisationRepoMock.findBy).toHaveBeenCalledTimes(2);
         expect(serviceProviderRepoMock.findVidisAngeboteforSchools).toHaveBeenCalledTimes(2);
