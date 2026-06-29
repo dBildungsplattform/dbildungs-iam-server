@@ -486,7 +486,7 @@ export class RolleController {
     }
 
     private async returnRolleWithServiceProvidersResponse(
-        rolle: Rolle<true>,
+        rolle: Rolle<true>,rovid
     ): Promise<RolleWithServiceProvidersResponse> {
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
