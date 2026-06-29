@@ -40,15 +40,11 @@ export class VidisApiAdapter {
         Result<VidisAngebotWithSchoolActivations[], VidisDomainError>
     > {
         try {
-            //const token: string = await this.getAuthToken();
-            this.logger.info(`Fetching activated Angebote for region Schleswig-Holstein from Vidis API...`);
-            const url: string = this.constructUrl(this.getActivatedAngeboteByRegionPath(), false);
-            this.logger.info(`Constructed URL for fetching activated Angebote for region Schleswig-Holstein: ${url}`);
+            const token: string = await this.getAuthToken();
             const response: AxiosResponse<VidisApiResponse<VidisApiResponseAngebotByRegion>> = await firstValueFrom(
-                this.httpService.get(url),
-            );
-            this.logger.info(
-                `Fetched activated Angebote for region Schleswig-Holstein from Vidis API. Status code: ${response.status}, response data: ${JSON.stringify(response.data)}`,
+                this.httpService.get(this.constructUrl(this.getActivatedAngeboteByRegionPath(), true), {
+                    headers: { Authorization: `Bearer ${token}` },
+                }),
             );
             if (response.status < 200 || response.status >= 300) {
                 this.logger.error(
@@ -86,7 +82,6 @@ export class VidisApiAdapter {
             );
             return Ok(result);
         } catch (error) {
-            this.logger.logUnknownAsError('Unexpected Error', error);
             this.logger.error(
                 `Error while fetching activated Angebote for region Schleswig-Holstein from Vidis API: ${JSON.stringify(error)}`,
             );
@@ -175,7 +170,7 @@ export class VidisApiAdapter {
     }
 
     private getActivatedAngeboteByRegionPath(): string {
-        return `/db.json`;
+        return `/o/vidis-rest/v1.0/offers/activated/by-region/${encodeURIComponent(this.vidisConfig.REGION)}`;
     }
 
     private convertKennungToVidisSchoolId(kennung: string): string {
