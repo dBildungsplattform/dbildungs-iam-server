@@ -289,7 +289,7 @@ emailBackend:
     maxOldSpaceSize: 3584
 
 redis:
-  host: dbildungs-iam-redis-master.spsh.svc.cluster.local
+  host: dbildungs-iam-valkey-master.spsh.svc.cluster.local
 
 kafka:
   enabled: true
