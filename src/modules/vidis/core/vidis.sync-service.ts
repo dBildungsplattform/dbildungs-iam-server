@@ -1,3 +1,4 @@
+import { EntityManager } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
 import { ClassLogger } from '../../../core/logging/class-logger.js';
@@ -66,6 +67,7 @@ export class VidisSyncService {
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly escalatedPersonPermissionsFactory: EscalatedPersonPermissionsFactory,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
+        private readonly em: EntityManager,
         private readonly logger: ClassLogger,
         configService: ConfigService<ServerConfig>,
     ) {
@@ -92,6 +94,7 @@ export class VidisSyncService {
         ]);
 
         await this.syncSchoolsPage(activatedAngebote.value, 0, nonSchoolProvidedVidisAngebote, permissions);
+        this.logger.info('VIDIS sync completed successfully');
     }
 
     public async syncAngeboteForSchool(
@@ -174,32 +177,36 @@ export class VidisSyncService {
             return;
         }
 
-        const organisationIdByKennung: VidisOrganisationIdByKennung = this.mapOrganisationIdsByKennung(schools);
-        const angeboteByOrganisationId: VidisAngeboteByOrganisationId = this.groupAngeboteByOrganisationId(
-            activatedAngebote,
-            organisationIdByKennung,
-        );
-        const vidisAngeboteForSchools: ServiceProvider<true>[] =
-            await this.serviceProviderRepo.findVidisAngeboteforSchools(Object.values(organisationIdByKennung));
-
-        await Promise.all(
-            Object.values(organisationIdByKennung).map((organisationId: string) => {
-                const angebote: VidisApiResponseAngebotBySchool[] = (
-                    angeboteByOrganisationId[organisationId] ?? []
-                ).map((a: VidisSchoolActivatedAngebot) => a.angebot);
-                return this.syncForSchoolInternal(
-                    organisationId,
-                    angebote,
-                    vidisAngeboteForSchools.filter(
-                        (sp: ServiceProvider<true>) => sp.providedOnSchulstrukturknoten === organisationId,
-                    ),
-                    nonSchoolProvidedVidisAngebote,
-                    permissions,
-                );
-            }),
-        );
-
         const nextSchoolOffset: number = schoolOffset + this.vidisConfig.SYNC_SCHOOLS_PAGE_SIZE;
+        try {
+            const organisationIdByKennung: VidisOrganisationIdByKennung = this.mapOrganisationIdsByKennung(schools);
+            const angeboteByOrganisationId: VidisAngeboteByOrganisationId = this.groupAngeboteByOrganisationId(
+                activatedAngebote,
+                organisationIdByKennung,
+            );
+            const vidisAngeboteForSchools: ServiceProvider<true>[] =
+                await this.serviceProviderRepo.findVidisAngeboteforSchools(Object.values(organisationIdByKennung));
+
+            await Promise.all(
+                Object.values(organisationIdByKennung).map((organisationId: string) => {
+                    const angebote: VidisApiResponseAngebotBySchool[] = (
+                        angeboteByOrganisationId[organisationId] ?? []
+                    ).map((a: VidisSchoolActivatedAngebot) => a.angebot);
+                    return this.syncForSchoolInternal(
+                        organisationId,
+                        angebote,
+                        vidisAngeboteForSchools.filter(
+                            (sp: ServiceProvider<true>) => sp.providedOnSchulstrukturknoten === organisationId,
+                        ),
+                        nonSchoolProvidedVidisAngebote,
+                        permissions,
+                    );
+                }),
+            );
+        } finally {
+            this.em.clear();
+        }
+
         if (nextSchoolOffset >= total) {
             return;
         }

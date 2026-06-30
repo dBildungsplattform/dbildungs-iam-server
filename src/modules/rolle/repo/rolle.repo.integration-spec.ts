@@ -338,6 +338,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -358,6 +359,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -378,6 +380,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -398,6 +401,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -426,6 +430,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 'Test',
                 10,
@@ -446,6 +451,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -468,6 +474,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -490,6 +497,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 true,
                 undefined,
                 10,
@@ -611,6 +619,31 @@ describe('RolleRepo', () => {
                 expect.arrayContaining(rollen.slice(2).map((r: Rolle<true>) => r.id)),
             );
             expect(count).toEqual(1);
+        });
+
+        it('should return rollen by rolleIds even if they do not match other filters', async () => {
+            const rolleInScope: Rolle<true> = await createRolle({
+                rollenart: RollenArt.LEIT,
+                administeredBySchulstrukturknoten: faker.string.uuid(),
+            });
+            const rolleOutOfFilter: Rolle<true> = await createRolle({
+                rollenart: RollenArt.LERN, // nicht in rollenArten-Filter
+                administeredBySchulstrukturknoten: faker.string.uuid(), // nicht in allowedOrganisationIds
+            });
+
+            const scope: RolleFindByParameters = {
+                rollenArten: [RollenArt.LEIT],
+                allowedOrganisationIds: [rolleInScope.administeredBySchulstrukturknoten],
+                rolleIds: [rolleOutOfFilter.id],
+                limit: 10,
+            };
+
+            const [result, count]: Counted<Rolle<true>> = await sut.findBy(scope);
+
+            expect(count).toBe(2);
+            expect(result.map((r: Rolle<true>) => r.id)).toEqual(
+                expect.arrayContaining([rolleInScope.id, rolleOutOfFilter.id]),
+            );
         });
     });
 

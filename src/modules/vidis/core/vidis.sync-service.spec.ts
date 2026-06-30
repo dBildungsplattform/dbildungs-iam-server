@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EntityManager } from '@mikro-orm/core';
 import { ConfigService } from '@nestjs/config';
 import { vi } from 'vitest';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
@@ -48,6 +49,7 @@ describe('VidisSyncService', () => {
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let escalatedPersonPermissionsFactoryMock: DeepMocked<EscalatedPersonPermissionsFactory>;
     let rollenerweiterungRepoMock: DeepMocked<RollenerweiterungRepo>;
+    let entityManagerMock: DeepMocked<EntityManager>;
     let loggerMock: DeepMocked<ClassLogger>;
     let getOrThrowMock: ReturnType<typeof vi.fn>;
     let permissionsMock: EscalatedPersonPermissions;
@@ -163,7 +165,7 @@ describe('VidisSyncService', () => {
 
     beforeAll(async () => {
         getOrThrowMock = vi.fn().mockReturnValue({
-            SYNC_SCHOOLS_PAGE_SIZE: 100,
+            SYNC_SCHOOLS_PAGE_SIZE: 5,
         });
         module = await Test.createTestingModule({
             providers: [
@@ -188,6 +190,10 @@ describe('VidisSyncService', () => {
                     useValue: createMock(RollenerweiterungRepo),
                 },
                 {
+                    provide: EntityManager,
+                    useValue: createMock(EntityManager),
+                },
+                {
                     provide: ClassLogger,
                     useValue: createMock(ClassLogger),
                 },
@@ -203,6 +209,7 @@ describe('VidisSyncService', () => {
         serviceProviderRepoMock = module.get(ServiceProviderRepo);
         escalatedPersonPermissionsFactoryMock = module.get(EscalatedPersonPermissionsFactory);
         rollenerweiterungRepoMock = module.get(RollenerweiterungRepo);
+        entityManagerMock = module.get(EntityManager);
         loggerMock = module.get(ClassLogger);
         sut = new VidisSyncService(
             vidisApiAdapterMock,
@@ -210,6 +217,7 @@ describe('VidisSyncService', () => {
             serviceProviderRepoMock,
             escalatedPersonPermissionsFactoryMock,
             rollenerweiterungRepoMock,
+            entityManagerMock,
             loggerMock,
             module.get(ConfigService),
         );
@@ -225,7 +233,7 @@ describe('VidisSyncService', () => {
 
         permissionsMock = createPersonPermissionsMock() as unknown as EscalatedPersonPermissions;
         getOrThrowMock.mockReturnValue({
-            SYNC_SCHOOLS_PAGE_SIZE: 100,
+            SYNC_SCHOOLS_PAGE_SIZE: 5,
         });
         escalatedPersonPermissionsFactoryMock.createNew.mockReturnValue(permissionsMock);
         escalatedPersonPermissionsFactoryMock.fromPermissions.mockResolvedValue(permissionsMock);
@@ -380,6 +388,7 @@ describe('VidisSyncService', () => {
         expect(organisationRepoMock.findBy).toHaveBeenCalledTimes(1);
         expect(serviceProviderRepoMock.findVidisAngeboteforSchools).not.toHaveBeenCalled();
         expect(syncForSchoolSpy).not.toHaveBeenCalled();
+        expect(entityManagerMock.clear).not.toHaveBeenCalled();
     });
 
     it('should group activated Angebote by organisationId and pass existing service providers per school', async () => {
@@ -433,6 +442,19 @@ describe('VidisSyncService', () => {
     });
 
     it('should sync schools page by page with a page size of 100', async () => {
+        getOrThrowMock.mockReturnValueOnce({
+            SYNC_SCHOOLS_PAGE_SIZE: 100,
+        });
+        const sutWithPageSize100: VidisSyncService = new VidisSyncService(
+            vidisApiAdapterMock,
+            organisationRepoMock,
+            serviceProviderRepoMock,
+            escalatedPersonPermissionsFactoryMock,
+            rollenerweiterungRepoMock,
+            entityManagerMock,
+            loggerMock,
+            module.get(ConfigService),
+        );
         const orgaIds: TorgaIds[] = Array.from({ length: 101 }, (_value: unknown, index: number) => ({
             id: `organisation-${index}`,
             kennung: `${200000 + index}`,
@@ -458,19 +480,33 @@ describe('VidisSyncService', () => {
         serviceProviderRepoMock.findVidisAngeboteforSchools.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
         const syncForSchoolSpy: ReturnType<typeof vi.spyOn> = vi
             .spyOn(
-                sut as unknown as { syncForSchoolInternal: (...args: unknown[]) => Promise<void> },
+                sutWithPageSize100 as unknown as { syncForSchoolInternal: (...args: unknown[]) => Promise<void> },
                 'syncForSchoolInternal',
             )
             .mockResolvedValue();
 
-        await sut.sync();
+        await sutWithPageSize100.sync();
 
         expect(organisationRepoMock.findBy).toHaveBeenCalledTimes(2);
         expect(serviceProviderRepoMock.findVidisAngeboteforSchools).toHaveBeenCalledTimes(2);
         expect(syncForSchoolSpy).toHaveBeenCalledTimes(101);
+        expect(entityManagerMock.clear).toHaveBeenCalledTimes(2);
     });
 
     it('should sync schools page by page and use an empty angebote fallback when a grouped school entry is undefined', async () => {
+        getOrThrowMock.mockReturnValueOnce({
+            SYNC_SCHOOLS_PAGE_SIZE: 100,
+        });
+        const sutWithPageSize100: VidisSyncService = new VidisSyncService(
+            vidisApiAdapterMock,
+            organisationRepoMock,
+            serviceProviderRepoMock,
+            escalatedPersonPermissionsFactoryMock,
+            rollenerweiterungRepoMock,
+            entityManagerMock,
+            loggerMock,
+            module.get(ConfigService),
+        );
         const orgaIds: TorgaIds[] = Array.from({ length: 101 }, (_value: unknown, index: number) => ({
             id: `organisation-${index}`,
             kennung: `${200000 + index}`,
@@ -516,7 +552,7 @@ describe('VidisSyncService', () => {
             .mockResolvedValueOnce([secondPageSchools, 101]);
         serviceProviderRepoMock.findVidisAngeboteforSchools.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
         vi.spyOn(
-            sut as unknown as {
+            sutWithPageSize100 as unknown as {
                 groupAngeboteByOrganisationId: (
                     activatedAngebote: VidisAngebotWithSchoolActivations[],
                     organisationIdByKennung: Record<string, string>,
@@ -528,12 +564,12 @@ describe('VidisSyncService', () => {
             .mockReturnValueOnce(secondPageAngeboteByOrganisationId);
         const syncForSchoolSpy: ReturnType<typeof vi.spyOn> = vi
             .spyOn(
-                sut as unknown as { syncForSchoolInternal: (...args: unknown[]) => Promise<void> },
+                sutWithPageSize100 as unknown as { syncForSchoolInternal: (...args: unknown[]) => Promise<void> },
                 'syncForSchoolInternal',
             )
             .mockResolvedValue();
 
-        await sut.sync();
+        await sutWithPageSize100.sync();
 
         expect(organisationRepoMock.findBy).toHaveBeenCalledTimes(2);
         expect(serviceProviderRepoMock.findVidisAngeboteforSchools).toHaveBeenCalledTimes(2);

@@ -297,6 +297,17 @@
       "indexes": [
         {
           "columnNames": [
+            "provided_on_schulstrukturknoten",
+            "vidis_angebot_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "service_provider_schulstrukturknoten_vidis_angebot_id_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
             "id"
           ],
           "composite": false,

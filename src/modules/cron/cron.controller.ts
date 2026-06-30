@@ -73,7 +73,9 @@ export class CronController {
                 throw new MissingPermissionsError('Cronrecht Required For This Endpoint');
             }
 
-            await this.vidisSyncService.sync();
+            void this.vidisSyncService.sync().catch((error: unknown) => {
+                this.logger.logUnknownAsError('Could not complete VIDIS sync', error);
+            });
         } catch (error) {
             this.logger.logUnknownAsError('Could not trigger VIDIS sync', error);
             throw new Error('Failed to trigger VIDIS sync due to an internal server error.');

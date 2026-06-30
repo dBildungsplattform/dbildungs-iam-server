@@ -274,6 +274,7 @@ export class RollenerweiterungRepo {
     public async findByServiceProviderIdPagedAndSortedByOrgaKennung(
         serviceProviderId: ServiceProviderID,
         organisationIds?: string[],
+        rolleIds?: string[],
         offset?: number,
         limit?: number,
     ): Promise<Counted<Rollenerweiterung<true>>> {
@@ -296,6 +297,10 @@ export class RollenerweiterungRepo {
             qb = qb.andWhere({ organisationId: { $in: organisationIds } });
         }
 
+        if (rolleIds && rolleIds.length > 0) {
+            qb = qb.andWhere({ rolleId: { $in: rolleIds } });
+        }
+
         const pagedOrgIdsResult: Array<{ id: string; kennung: string }> = await qb.execute();
         const pagedOrgIds: string[] = pagedOrgIdsResult.map((row: { id: string }) => row.id);
 
@@ -310,6 +315,10 @@ export class RollenerweiterungRepo {
 
         if (organisationIds && organisationIds.length > 0) {
             countQb.andWhere({ organisationId: { $in: organisationIds } });
+        }
+
+        if (rolleIds && rolleIds.length > 0) {
+            countQb.andWhere({ rolleId: { $in: rolleIds } });
         }
 
         const countResult: { count: string | number } = await countQb.execute('get', true);
@@ -328,6 +337,7 @@ export class RollenerweiterungRepo {
                 organisationId: {
                     $in: pagedOrgIds,
                 },
+                ...(rolleIds && rolleIds.length > 0 ? { rolleId: { $in: rolleIds } } : {}),
             },
             {
                 orderBy: {
