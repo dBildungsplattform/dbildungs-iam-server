@@ -241,7 +241,7 @@ export class ServiceProviderService {
             Map<OrganisationID, Organisation<true>>,
         ] = await Promise.all([
             this.rolleRepo.findByServiceProviderIds(serviceProvidersIds, limitRoles),
-            this.rollenerweiterungRepo.countByServiceProviderIds(serviceProvidersIds, [...permittedOrgaSet.values()]),
+            this.rollenerweiterungRepo.countByServiceProviderIds(serviceProvidersIds),
             this.organisationRepo.findByIds(
                 serviceProviders.map((sp: ServiceProvider<true>) => sp.providedOnSchulstrukturknoten),
             ),
