@@ -36,6 +36,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
@@ -281,6 +282,29 @@ describe('ServiceProviderRepo', () => {
             const createdSp: ServiceProvider<true> = await sut.createUnsafe(serviceProvider);
 
             expect(createdSp.id).toBeDefined();
+        });
+
+        it('should reject duplicate VIDIS angebot ids for the same school', async () => {
+            const providedOnSchulstrukturknoten: string = faker.string.uuid();
+            const vidisAngebotId: string = 'vidis-angebot-1';
+
+            await sut.createUnsafe(
+                DoFactory.createServiceProvider(false, {
+                    name: 'VIDIS Angebot A',
+                    providedOnSchulstrukturknoten,
+                    vidisAngebotId,
+                }),
+            );
+
+            await expect(
+                sut.createUnsafe(
+                    DoFactory.createServiceProvider(false, {
+                        name: 'VIDIS Angebot B',
+                        providedOnSchulstrukturknoten,
+                        vidisAngebotId,
+                    }),
+                ),
+            ).rejects.toThrow();
         });
     });
 
@@ -726,6 +750,33 @@ describe('ServiceProviderRepo', () => {
             const result: ServiceProvider<true>[] = await sut.findVidisAngeboteforSchools([]);
 
             expect(result).toEqual([]);
+        });
+    });
+
+    describe('findNonSchoolProvidedVidisAngebote', () => {
+        it('should return only VIDIS offers that are not provided on school organisations', async () => {
+            const school: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const nonSchool: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.LAND }),
+            );
+
+            const expectedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: nonSchool.id,
+                vidisAngebotId: 'vidis-angebot-non-school',
+            });
+            await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: school.id,
+                vidisAngebotId: 'vidis-angebot-school',
+            });
+            await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: nonSchool.id,
+            });
+
+            const result: ServiceProvider<true>[] = await sut.findNonSchoolProvidedVidisAngebote();
+
+            expect(result).toEqual([expectedServiceProvider]);
         });
     });
 

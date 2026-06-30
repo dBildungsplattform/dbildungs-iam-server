@@ -1,5 +1,5 @@
 import { BlobType, Collection, quote } from '@mikro-orm/core';
-import { Check, Entity, Enum, OneToMany, Property } from '@mikro-orm/decorators/legacy';
+import { Check, Entity, Enum, OneToMany, Property, Unique } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import {
     ServiceProviderKategorie,
@@ -13,6 +13,10 @@ import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.
     name: 'logo_or_logo_id_consistency',
     expression: ({ logo, logoId }: Record<keyof ServiceProviderEntity, string>) =>
         quote`(${logoId} IS NULL AND ${logo} IS NULL) OR (${logoId} IS NULL AND ${logo} IS NOT NULL) OR (${logoId} IS NOT NULL AND ${logo} IS NULL)`,
+})
+@Unique({
+    name: 'service_provider_schulstrukturknoten_vidis_angebot_id_unique',
+    properties: ['providedOnSchulstrukturknoten', 'vidisAngebotId'],
 })
 export class ServiceProviderEntity extends TimestampedEntity {
     @Property()
