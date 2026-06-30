@@ -610,12 +610,10 @@ describe('RollenerweiterungRepo', () => {
             const { organisation, rolle, serviceProvider, permissionMock }: Setup = await setup();
 
             permissionMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
-            const updatedRolle: Option<Rolle<true>> = await rolleRepo.findById(rolle.id);
-            if (!updatedRolle) {
-                throw new Error('Rolle not found');
-            }
-            await updatedRolle.attachServiceProvider(serviceProvider.id);
-            await rolleRepo.save(updatedRolle);
+
+            rolle.serviceProviderIds.push(serviceProvider.id);
+            await rolleRepo.save(rolle);
+
             const rollenerweiterung: Rollenerweiterung<false> = factory.createNew(
                 organisation.id,
                 rolle.id,
@@ -919,7 +917,13 @@ describe('RollenerweiterungRepo', () => {
             await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
 
             const [result, count]: Counted<Rollenerweiterung<true>> =
-                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id, undefined, 1, 2);
+                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(
+                    serviceProvider.id,
+                    undefined,
+                    undefined,
+                    1,
+                    2,
+                );
             expect(result).toBeInstanceOf(Array);
             expect(result).toHaveLength(2);
             expect(count).toBe(3);
@@ -962,6 +966,30 @@ describe('RollenerweiterungRepo', () => {
             expect(result).toBeInstanceOf(Array);
             expect(result).toHaveLength(3);
             expect(count).toBe(3);
+        });
+
+        it('should return only rollenerweiterungen for the given rolleIds', async () => {
+            const rolleOrError2: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleOrError2 instanceof DomainError) {
+                throw new Error('Failed to create Rolle');
+            }
+            const rolle2: Rolle<true> = rolleOrError2;
+
+            const erweiterungen: Rollenerweiterung<false>[] = [
+                factory.createNew(organisation1.id, rolle.id, serviceProvider.id),
+                factory.createNew(organisation1.id, rolle2.id, serviceProvider.id),
+                factory.createNew(organisation2.id, rolle2.id, serviceProvider.id),
+            ];
+            await Promise.all(erweiterungen.map((re: Rollenerweiterung<false>) => sut.create(re)));
+
+            const [result, count]: Counted<Rollenerweiterung<true>> =
+                await sut.findByServiceProviderIdPagedAndSortedByOrgaKennung(serviceProvider.id, undefined, [rolle.id]);
+
+            expect(result).toHaveLength(1);
+            expect(count).toBe(1);
+            for (const erweiterung of result) {
+                expect(erweiterung.rolleId).toBe(rolle.id);
+            }
         });
     });
 });

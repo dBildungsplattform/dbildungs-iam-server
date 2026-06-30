@@ -29,12 +29,27 @@ import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 import { RolleFindByParameters, RolleRepo } from './rolle.repo.js';
+import { expectErrResult, expectOkResult } from '../../../../test/utils/test-types.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
     let sut: RolleRepo;
     let orm: MikroORM;
     let em: EntityManager;
+
+    let organisationRepo: OrganisationRepository;
+    let serviceProviderRepo: ServiceProviderRepo;
+
+    function constructRolle(props?: Partial<Rolle<boolean>>): Rolle<false> {
+        return DoFactory.createRolle(false, {
+            serviceProviderRepo,
+            organisationRepo,
+            ...props,
+        });
+    }
 
     async function createRolle(props?: Partial<Rolle<boolean>>): Promise<Rolle<true>> {
         const rolle: Rolle<true> | DomainError = await sut.save(DoFactory.createRolle(false, props));
@@ -62,6 +77,9 @@ describe('RolleRepo', () => {
         sut = module.get(RolleRepo);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
+
+        organisationRepo = module.get(OrganisationRepository);
+        serviceProviderRepo = module.get(ServiceProviderRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -255,7 +273,8 @@ describe('RolleRepo', () => {
 
     describe('findByIdAuthorized', () => {
         it('should return the rolle if authorized on root level', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             const rolle: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
             );
@@ -273,7 +292,8 @@ describe('RolleRepo', () => {
         });
 
         it('should return the rolle if authorized on organisation', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             const rolle: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
             );
@@ -310,13 +330,15 @@ describe('RolleRepo', () => {
 
     describe('findRollenAuthorized', () => {
         it('should return no rollen because there are none', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -328,7 +350,8 @@ describe('RolleRepo', () => {
         });
 
         it('should return the rollen when authorized on organisation', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             await sut.save(DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }));
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -336,6 +359,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -347,7 +371,8 @@ describe('RolleRepo', () => {
         });
 
         it('should return the rollen when authorized on root organisation', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             await sut.save(DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }));
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -355,6 +380,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -366,7 +392,8 @@ describe('RolleRepo', () => {
         });
 
         it('should return empty array when permissions are insufficient', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             await sut.save(DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }));
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -374,6 +401,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -385,7 +413,8 @@ describe('RolleRepo', () => {
         });
 
         it('should filter rollen based on search string and permissions', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             await sut.save(
                 DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId, name: 'Test' }),
             );
@@ -401,6 +430,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 'Test',
                 10,
@@ -412,7 +442,8 @@ describe('RolleRepo', () => {
         });
 
         it('should return all rollen when no search string is provided and permissions are sufficient', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             await sut.save(DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }));
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
@@ -420,6 +451,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -431,7 +463,8 @@ describe('RolleRepo', () => {
         });
 
         it('should not return technische rollen if includeTechnische = false', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             await sut.save(
                 DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId, istTechnisch: true }),
             );
@@ -441,6 +474,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 false,
                 undefined,
                 10,
@@ -452,7 +486,8 @@ describe('RolleRepo', () => {
         });
 
         it('should return technische rollen if includeTechnische = true', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             await sut.save(
                 DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId, istTechnisch: true }),
             );
@@ -462,6 +497,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                [],
                 true,
                 undefined,
                 10,
@@ -584,11 +620,37 @@ describe('RolleRepo', () => {
             );
             expect(count).toEqual(1);
         });
+
+        it('should return rollen by rolleIds even if they do not match other filters', async () => {
+            const rolleInScope: Rolle<true> = await createRolle({
+                rollenart: RollenArt.LEIT,
+                administeredBySchulstrukturknoten: faker.string.uuid(),
+            });
+            const rolleOutOfFilter: Rolle<true> = await createRolle({
+                rollenart: RollenArt.LERN, // nicht in rollenArten-Filter
+                administeredBySchulstrukturknoten: faker.string.uuid(), // nicht in allowedOrganisationIds
+            });
+
+            const scope: RolleFindByParameters = {
+                rollenArten: [RollenArt.LEIT],
+                allowedOrganisationIds: [rolleInScope.administeredBySchulstrukturknoten],
+                rolleIds: [rolleOutOfFilter.id],
+                limit: 10,
+            };
+
+            const [result, count]: Counted<Rolle<true>> = await sut.findBy(scope);
+
+            expect(count).toBe(2);
+            expect(result.map((r: Rolle<true>) => r.id)).toEqual(
+                expect.arrayContaining([rolleInScope.id, rolleOutOfFilter.id]),
+            );
+        });
     });
 
     describe('findBySchulstrukturknoten', () => {
         it('should return rolle', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             const rolle: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
             );
@@ -659,9 +721,58 @@ describe('RolleRepo', () => {
         });
     });
 
+    describe('createRolleAuthorized', () => {
+        it('should return the created rolle', async () => {
+            const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const rolle: Rolle<false> = constructRolle({
+                administeredBySchulstrukturknoten: orga.id,
+            });
+
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const result: Result<Rolle<true>, DomainError> = await sut.createRolleAuthorized(rolle, permissions);
+
+            expectOkResult(result);
+            expect(result.value).toBeInstanceOf(Rolle);
+        });
+
+        it('should return error if the user is missing permissions', async () => {
+            const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const rolle: Rolle<false> = constructRolle({
+                administeredBySchulstrukturknoten: orga.id,
+            });
+
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+            const result: Result<Rolle<true>, DomainError> = await sut.createRolleAuthorized(rolle, permissions);
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(MissingPermissionsError);
+        });
+
+        it('should return error if the rolle fails validation', async () => {
+            const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const rolle: Rolle<false> = constructRolle({
+                name: ' Invalid Name ',
+                administeredBySchulstrukturknoten: orga.id,
+            });
+
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const result: Result<Rolle<true>, DomainError> = await sut.createRolleAuthorized(rolle, permissions);
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(NameForRolleWithTrailingSpaceError);
+        });
+    });
+
     describe('updateRolle', () => {
         it('should return the updated rolle', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             const rolle: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
             );
@@ -675,7 +786,7 @@ describe('RolleRepo', () => {
             const newSystemrechte: RollenSystemRecht[] = [RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN];
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
 
-            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+            const rolleResult: Result<Rolle<true>, DomainError> = await sut.updateRolleAuthorized(
                 rolle.id,
                 newName,
                 newMermale,
@@ -685,14 +796,13 @@ describe('RolleRepo', () => {
                 false,
                 permissions,
             );
-            if (rolleResult instanceof DomainError) {
-                return;
-            }
-            expect(rolleResult.id).toBe(rolle.id);
-            expect(rolleResult.name).toBe(newName);
-            expect(rolleResult.merkmale).toMatchObject(newMermale);
-            expect(rolleResult.systemrechte).toMatchObject(newSystemrechte);
-            expect(rolleResult.serviceProviderIds).toMatchObject([]);
+
+            expectOkResult(rolleResult);
+            expect(rolleResult.value.id).toBe(rolle.id);
+            expect(rolleResult.value.name).toBe(newName);
+            expect(rolleResult.value.merkmale).toMatchObject(newMermale);
+            expect(rolleResult.value.systemrechte).toMatchObject(newSystemrechte);
+            expect(rolleResult.value.serviceProviderIds).toMatchObject([]);
         });
 
         it('should return error when permissions are insufficient', async () => {
@@ -706,7 +816,7 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
 
-            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+            const rolleResult: Result<Rolle<true>, DomainError> = await sut.updateRolleAuthorized(
                 rolle.id,
                 faker.company.name(),
                 [],
@@ -717,11 +827,13 @@ describe('RolleRepo', () => {
                 permissions,
             );
 
-            expect(rolleResult).toBeInstanceOf(DomainError);
+            expectErrResult(rolleResult);
+            expect(rolleResult.error).toBeInstanceOf(DomainError);
         });
 
         it('should return error when service providers does not exist', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             const rolle: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
             );
@@ -732,7 +844,7 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
 
-            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+            const rolleResult: Result<Rolle<true>, DomainError> = await sut.updateRolleAuthorized(
                 rolle.id,
                 faker.company.name(),
                 [],
@@ -743,7 +855,8 @@ describe('RolleRepo', () => {
                 permissions,
             );
 
-            expect(rolleResult).toBeInstanceOf(DomainError);
+            expectErrResult(rolleResult);
+            expect(rolleResult.error).toBeInstanceOf(DomainError);
         });
 
         it.each([
@@ -762,7 +875,10 @@ describe('RolleRepo', () => {
         ])(
             'should return error when organisation has a personenkontext and merkmale change from $old to $new',
             async ({ oldMerkmale, newMerkmale }: { oldMerkmale: RollenMerkmal[]; newMerkmale: RollenMerkmal[] }) => {
-                const organisationId: OrganisationID = faker.string.uuid();
+                const organisation: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false),
+                );
+                const organisationId: OrganisationID = organisation.id;
                 const rolle: Rolle<true> | DomainError = await sut.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisationId,
@@ -776,7 +892,7 @@ describe('RolleRepo', () => {
                 const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                 permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
 
-                const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+                const rolleResult: Result<Rolle<true>, DomainError> = await sut.updateRolleAuthorized(
                     rolle.id,
                     faker.company.name(),
                     newMerkmale,
@@ -787,12 +903,14 @@ describe('RolleRepo', () => {
                     permissions,
                 );
 
-                expect(rolleResult).toBeInstanceOf(UpdateMerkmaleError);
+                expectErrResult(rolleResult);
+                expect(rolleResult.error).toBeInstanceOf(UpdateMerkmaleError);
             },
         );
 
         it('should succeed when organisation has a personenkontext and merkmale are not changed', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             const rolle: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: organisationId,
@@ -807,7 +925,7 @@ describe('RolleRepo', () => {
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
             const newName: string = faker.company.name();
 
-            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+            const rolleResult: Result<Rolle<true>, DomainError> = await sut.updateRolleAuthorized(
                 rolle.id,
                 newName,
                 [RollenMerkmal.BEFRISTUNG_PFLICHT],
@@ -818,11 +936,13 @@ describe('RolleRepo', () => {
                 permissions,
             );
 
-            expect(rolleResult.name).toBe(newName);
+            expectOkResult(rolleResult);
+            expect(rolleResult.value.name).toBe(newName);
         });
 
         it('should return error when organisation has a personenkontext and merkmale needs to be deleted', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             const rolle: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: organisationId,
@@ -836,7 +956,7 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
 
-            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+            const rolleResult: Result<Rolle<true>, DomainError> = await sut.updateRolleAuthorized(
                 rolle.id,
                 faker.company.name(),
                 [],
@@ -847,11 +967,13 @@ describe('RolleRepo', () => {
                 permissions,
             );
 
-            expect(rolleResult).toBeInstanceOf(UpdateMerkmaleError);
+            expectErrResult(rolleResult);
+            expect(rolleResult.error).toBeInstanceOf(UpdateMerkmaleError);
         });
 
         it('should return error when rolle is technisch', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             const rolle: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: organisationId,
@@ -864,7 +986,7 @@ describe('RolleRepo', () => {
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
-            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+            const rolleResult: Result<Rolle<true>, DomainError> = await sut.updateRolleAuthorized(
                 rolle.id,
                 faker.company.name(),
                 [],
@@ -874,12 +996,15 @@ describe('RolleRepo', () => {
                 false,
                 permissions,
             );
-            expect(rolleResult).toBeInstanceOf(EntityNotFoundError);
+
+            expectErrResult(rolleResult);
+            expect(rolleResult.error).toBeInstanceOf(EntityNotFoundError);
         });
 
         it('should return error when rolle with same name on same SSK already exists', async () => {
             const fakeRolleName: string = faker.company.name();
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
             const rolleWithSameName: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, {
                     name: fakeRolleName,
@@ -905,7 +1030,7 @@ describe('RolleRepo', () => {
             const newSystemrechte: RollenSystemRecht[] = [RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN];
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
 
-            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+            const rolleResult: Result<Rolle<true>, DomainError> = await sut.updateRolleAuthorized(
                 rolle.id,
                 fakeRolleName,
                 newMermale,
@@ -916,13 +1041,17 @@ describe('RolleRepo', () => {
                 permissions,
             );
 
-            expect(rolleResult).toBeInstanceOf(RolleNameNotUniqueOnSskError);
+            expectErrResult(rolleResult);
+            expect(rolleResult.error).toBeInstanceOf(RolleNameNotUniqueOnSskError);
         });
 
         it('should return error when a service provider has changed and it is not nachtraeglich zuweisbar', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
+
             const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
                 merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+                providedOnSchulstrukturknoten: organisationId,
             });
             const rolle: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, {
@@ -940,9 +1069,10 @@ describe('RolleRepo', () => {
 
             const newServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
                 merkmale: [],
+                providedOnSchulstrukturknoten: organisationId,
             });
 
-            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+            const rolleResult: Result<Rolle<true>, DomainError> = await sut.updateRolleAuthorized(
                 rolle.id,
                 rolle.name,
                 rolle.merkmale,
@@ -953,7 +1083,8 @@ describe('RolleRepo', () => {
                 permissions,
             );
 
-            expect(rolleResult).toBeInstanceOf(ServiceProviderNichtNachtraeglichZuweisbarError);
+            expectErrResult(rolleResult);
+            expect(rolleResult.error).toBeInstanceOf(ServiceProviderNichtNachtraeglichZuweisbarError);
         });
     });
 

@@ -9,7 +9,6 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RolleFactory } from './rolle.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -19,7 +18,9 @@ import { NameForRolleWithTrailingSpaceError } from './name-with-trailing-space.e
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Err, Ok } from '../../../shared/util/result.js';
-import { expectErrResult } from '../../../../test/utils/test-types.js';
+import { expectErrResult, expectOkResult } from '../../../../test/utils/test-types.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { EntityAlreadyExistsError } from '../../../shared/error/entity-already-exists.error.js';
 import { ServiceProviderProvidedOutOfTreeError } from './service-provider-provided-out-of-tree.error.js';
 
 describe('Rolle Aggregate', () => {
@@ -296,338 +297,6 @@ describe('Rolle Aggregate', () => {
         });
     });
 
-    describe('attachServiceProvider', () => {
-        describe('when successfull', () => {
-            it('should add serviceProviderId to rolle field', async () => {
-                const serviceProviderIdToAttach: string = faker.string.uuid();
-                const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-                const rolle: Rolle<true> = rolleFactory.construct(
-                    faker.string.uuid(),
-                    faker.date.anytime(),
-                    faker.date.anytime(),
-                    1,
-                    '',
-                    '',
-                    RollenArt.LEHR,
-                    [],
-                    [],
-                    [],
-                    false,
-                    [serviceProvider],
-                );
-
-                serviceProvider.id = serviceProviderIdToAttach;
-                serviceProviderRepoMock.findById.mockResolvedValue(serviceProvider);
-
-                const result: void | DomainError = await rolle.attachServiceProvider(serviceProviderIdToAttach);
-
-                expect(result).not.toBeInstanceOf(DomainError);
-                expect(rolle.serviceProviderIds.includes(serviceProviderIdToAttach)).toBeTruthy();
-                expect(rolle.serviceProviderData.includes(serviceProvider)).toBeTruthy();
-                expect(
-                    rolle.serviceProviderIds.filter((id: string) => id === serviceProviderIdToAttach).length,
-                ).toEqual(1);
-            });
-        });
-
-        describe('when serviceProvider does not exist', () => {
-            it('should return error', async () => {
-                const serviceProviderIdToAttach: string = faker.string.uuid();
-                const rolle: Rolle<true> = rolleFactory.construct(
-                    faker.string.uuid(),
-                    faker.date.anytime(),
-                    faker.date.anytime(),
-                    1,
-                    '',
-                    '',
-                    RollenArt.LEHR,
-                    [],
-                    [],
-                    [],
-                    false,
-                );
-                serviceProviderRepoMock.findById.mockResolvedValue(undefined);
-
-                const result: void | DomainError = await rolle.attachServiceProvider(serviceProviderIdToAttach);
-
-                expect(result).toBeInstanceOf(DomainError);
-                expect(rolle.serviceProviderIds.includes(serviceProviderIdToAttach)).toBeFalsy();
-            });
-        });
-
-        describe('when serviceProvider is already attached', () => {
-            it('should return error', async () => {
-                const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-                const serviceProviderIdToAttach: string = faker.string.uuid();
-                const rolle: Rolle<true> = rolleFactory.construct(
-                    faker.string.uuid(),
-                    faker.date.anytime(),
-                    faker.date.anytime(),
-                    1,
-                    '',
-                    '',
-                    RollenArt.LEHR,
-                    [],
-                    [],
-                    [serviceProviderIdToAttach],
-                    false,
-                    [serviceProvider],
-                );
-
-                serviceProvider.id = serviceProviderIdToAttach;
-                serviceProviderRepoMock.findById.mockResolvedValue(serviceProvider);
-
-                const result: void | DomainError = await rolle.attachServiceProvider(serviceProviderIdToAttach);
-
-                expect(result).toBeInstanceOf(DomainError);
-                expect(rolle.serviceProviderIds.includes(serviceProviderIdToAttach)).toBeTruthy();
-                expect(rolle.serviceProviderData.includes(serviceProvider)).toBeTruthy();
-                expect(
-                    rolle.serviceProviderIds.filter((id: string) => id === serviceProviderIdToAttach).length,
-                ).toEqual(1);
-            });
-        });
-    });
-
-    describe('detachServiceProvider', () => {
-        describe('when successful', () => {
-            it('should remove serviceProviderId to rolle field', () => {
-                const serviceProviderIdToDetach: string = faker.string.uuid();
-                const rolle: Rolle<true> = rolleFactory.construct(
-                    faker.string.uuid(),
-                    faker.date.anytime(),
-                    faker.date.anytime(),
-                    1,
-                    '',
-                    '',
-                    RollenArt.LEHR,
-                    [],
-                    [],
-                    [serviceProviderIdToDetach],
-                    false,
-                );
-
-                const result: void | DomainError = rolle.detatchServiceProvider([serviceProviderIdToDetach]);
-
-                expect(result).not.toBeInstanceOf(DomainError);
-                expect(rolle.serviceProviderIds.includes(serviceProviderIdToDetach)).toBeFalsy();
-            });
-        });
-
-        describe('when serviceProvider is not attached', () => {
-            it('should return error', () => {
-                const serviceProviderIdToDetach: string = faker.string.uuid();
-                const rolle: Rolle<true> = rolleFactory.construct(
-                    faker.string.uuid(),
-                    faker.date.anytime(),
-                    faker.date.anytime(),
-                    1,
-                    '',
-                    '',
-                    RollenArt.LEHR,
-                    [],
-                    [],
-                    [],
-                    false,
-                );
-
-                const result: void | DomainError = rolle.detatchServiceProvider([serviceProviderIdToDetach]);
-
-                expect(result).toBeInstanceOf(DomainError);
-            });
-        });
-    });
-
-    describe('updateServiceProviders', () => {
-        describe('when only adding service providers', () => {
-            it('should successfully add new service providers', async () => {
-                const rolle: Rolle<true> = rolleFactory.construct(
-                    faker.string.uuid(),
-                    faker.date.anytime(),
-                    faker.date.anytime(),
-                    1,
-                    '',
-                    faker.string.uuid(),
-                    RollenArt.LEHR,
-                    [], // initialize with empty serviceProviderIds
-                    [],
-                    [],
-                    false,
-                );
-
-                const newServiceProviderId: string = faker.string.uuid();
-                const existingServiceProviderId: string = faker.string.uuid();
-
-                // Existing state
-                rolle.serviceProviderIds = [existingServiceProviderId];
-
-                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(
-                    new Map([
-                        [
-                            newServiceProviderId,
-                            DoFactory.createServiceProvider(true, {
-                                providedOnSchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
-                            }),
-                        ],
-                        [
-                            existingServiceProviderId,
-                            DoFactory.createServiceProvider(true, {
-                                providedOnSchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
-                            }),
-                        ],
-                    ]),
-                );
-                organisationRepo.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([
-                    DoFactory.createOrganisation(true, { id: rolle.administeredBySchulstrukturknoten }),
-                ]);
-
-                // Call updateServiceProviders with a new ID to add
-                await rolle.updateServiceProviders([existingServiceProviderId, newServiceProviderId]);
-
-                expect(rolle.serviceProviderIds).toContain(newServiceProviderId);
-            });
-        });
-
-        describe('when both adding and removing service providers', () => {
-            it('should successfully add and remove service providers', async () => {
-                const rolle: Rolle<true> = rolleFactory.construct(
-                    faker.string.uuid(),
-                    faker.date.anytime(),
-                    faker.date.anytime(),
-                    1,
-                    '',
-                    faker.string.uuid(),
-                    RollenArt.LEHR,
-                    [], // initialize with empty serviceProviderIds
-                    [],
-                    [],
-                    false,
-                );
-
-                const serviceProviderToAdd: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
-                    providedOnSchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
-                });
-                const serviceProviderToRemove: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
-                    providedOnSchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
-                });
-                const existingServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
-                    providedOnSchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
-                });
-
-                // Existing state
-                rolle.serviceProviderIds = [existingServiceProvider.id, serviceProviderToRemove.id];
-
-                serviceProviderRepoMock.findByIds.mockImplementation((ids: string[]) => {
-                    const fullMap: Map<string, ServiceProvider<true>> = new Map([
-                        [serviceProviderToAdd.id, serviceProviderToAdd],
-                        [existingServiceProvider.id, existingServiceProvider],
-                    ]);
-                    const resultMap: Map<string, ServiceProvider<true>> = new Map();
-                    ids.forEach((id: string) => {
-                        resultMap.set(id, fullMap.get(id) as ServiceProvider<true>);
-                    });
-                    return Promise.resolve(resultMap);
-                });
-                organisationRepo.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([
-                    DoFactory.createOrganisation(true, { id: rolle.administeredBySchulstrukturknoten }),
-                ]);
-
-                // Call updateServiceProviders with both IDs to add and remove
-                const result: Result<ServiceProvider<true>[], DomainError> = await rolle.updateServiceProviders([
-                    existingServiceProvider.id,
-                    serviceProviderToAdd.id,
-                ]);
-
-                expect(rolle.serviceProviderIds).toContain(serviceProviderToAdd.id);
-                expect(rolle.serviceProviderIds).not.toContain(serviceProviderToRemove.id);
-                expect(result.ok).toBeTruthy();
-                if (result.ok) {
-                    expect(result.value).toEqual(
-                        expect.arrayContaining([serviceProviderToAdd, existingServiceProvider]),
-                    );
-                }
-            });
-        });
-
-        describe('when attaching fails', () => {
-            it('should throw an error if any service provider does not exist', async () => {
-                const serviceProvider1: string = faker.string.uuid();
-                const nonExistentProvider: string = faker.string.uuid();
-
-                const rolle: Rolle<true> = rolleFactory.construct(
-                    faker.string.uuid(),
-                    faker.date.anytime(),
-                    faker.date.anytime(),
-                    1,
-                    '',
-                    '',
-                    RollenArt.LEHR,
-                    [],
-                    [],
-                    [],
-                    false,
-                );
-
-                // Simulate the repository failing to find the non-existent provider
-                serviceProviderRepoMock.findByIds.mockResolvedValue(new Map());
-
-                const result: Result<ServiceProvider<true>[], DomainError> = await rolle.updateServiceProviders([
-                    serviceProvider1,
-                    nonExistentProvider,
-                ]);
-
-                expect(result.ok).toBeFalsy();
-                if (!result.ok) {
-                    expect(result.error).toBeInstanceOf(EntityNotFoundError);
-                }
-            });
-
-            it("should return an error if the service-provider is not provided on the rolle's organisation or one of its parents", async () => {
-                const parentOrga: Organisation<true> = DoFactory.createOrganisation(true);
-                const orga: Organisation<true> = DoFactory.createOrganisation(true, {
-                    administriertVon: parentOrga.id,
-                });
-                const rolle: Rolle<true> = rolleFactory.construct(
-                    faker.string.uuid(),
-                    faker.date.anytime(),
-                    faker.date.anytime(),
-                    1,
-                    '',
-                    orga.id,
-                    RollenArt.LEHR,
-                    [], // initialize with empty serviceProviderIds
-                    [],
-                    [],
-                    false,
-                );
-
-                const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
-                    providedOnSchulstrukturknoten: parentOrga.id,
-                });
-                const illegalServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
-                    providedOnSchulstrukturknoten: faker.string.uuid(),
-                });
-
-                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(
-                    new Map([
-                        [serviceProvider.id, serviceProvider],
-                        [illegalServiceProvider.id, illegalServiceProvider],
-                    ]),
-                );
-                organisationRepo.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([orga, parentOrga]);
-
-                // Call updateServiceProviders with a new ID to add
-                const result: Result<ServiceProvider<true>[], DomainError> = await rolle.updateServiceProviders([
-                    serviceProvider.id,
-                    illegalServiceProvider.id,
-                ]);
-
-                expectErrResult(result);
-                expect(result.error).toBeInstanceOf(ServiceProviderProvidedOutOfTreeError);
-            });
-        });
-    });
-
     describe('Rolle Construct with Default Values', () => {
         it('should set serviceProviderData to an empty array if not provided', () => {
             const rolle: Rolle<true> = rolleFactory.construct(
@@ -681,40 +350,141 @@ describe('Rolle Aggregate', () => {
         });
     });
 
-    describe('update', () => {
-        it('should return domain error if service provider is does not exist', async () => {
-            serviceProviderRepoMock.findById.mockResolvedValue(undefined);
-            const result: Rolle<true> | DomainError = await rolleFactory.update(
-                faker.string.uuid(),
-                faker.date.past(),
-                faker.date.recent(),
-                1,
-                'newName',
-                faker.string.uuid(),
-                faker.helpers.enumValue(RollenArt),
-                [faker.helpers.enumValue(RollenMerkmal)],
-                [RollenSystemRecht.ROLLEN_VERWALTEN],
-                [faker.string.uuid()],
+    describe('validate', () => {
+        it('should return Ok if the rolle is valid', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
+                'Valid Name',
+                orga.id,
+                RollenArt.LERN,
+                [],
+                [],
+                [],
+                [],
                 false,
             );
-            expect(result).toBeInstanceOf(DomainError);
+
+            if (rolle instanceof DomainError) {
+                throw rolle;
+            }
+
+            serviceProviderRepoMock.findByIds.mockResolvedValue(new Map());
+            organisationRepo.findParentOrgasForIdSortedByDepthAsc.mockResolvedValue([orga]);
+
+            const validateResult: Result<void, DomainError> = await rolle.validate();
+
+            expectOkResult(validateResult);
         });
-        it('should return domain error if name contains trailing space', async () => {
-            serviceProviderRepoMock.findById.mockResolvedValue(undefined);
-            const result: Rolle<true> | DomainError = await rolleFactory.update(
+
+        it('should return Error if the name is invalid', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            const rolle: Rolle<true> = rolleFactory.construct(
                 faker.string.uuid(),
-                faker.date.past(),
+                faker.date.recent(),
                 faker.date.recent(),
                 1,
-                ' newName',
-                faker.string.uuid(),
-                faker.helpers.enumValue(RollenArt),
-                [faker.helpers.enumValue(RollenMerkmal)],
-                [RollenSystemRecht.ROLLEN_VERWALTEN],
-                [faker.string.uuid()],
+                ' Invalid Name ',
+                orga.id,
+                RollenArt.LERN,
+                [],
+                [],
+                [],
                 false,
             );
-            expect(result).toBeInstanceOf(NameForRolleWithTrailingSpaceError);
+
+            if (rolle instanceof DomainError) {
+                throw rolle;
+            }
+
+            serviceProviderRepoMock.findByIds.mockResolvedValue(new Map());
+            organisationRepo.findParentOrgasForIdSortedByDepthAsc.mockResolvedValue([orga]);
+
+            const validateResult: Result<void, DomainError> = await rolle.validate();
+
+            expectErrResult(validateResult);
+            expect(validateResult.error).toBeInstanceOf(NameForRolleWithTrailingSpaceError);
+        });
+
+        it('should return Error if one or more serviceproviders dont exist', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
+                'Valid Name',
+                orga.id,
+                RollenArt.LERN,
+                [],
+                [],
+                [faker.string.uuid()],
+                [],
+                false,
+            );
+
+            if (rolle instanceof DomainError) {
+                throw rolle;
+            }
+
+            serviceProviderRepoMock.findByIds.mockResolvedValue(new Map());
+            organisationRepo.findParentOrgasForIdSortedByDepthAsc.mockResolvedValue([orga]);
+
+            const validateResult: Result<void, DomainError> = await rolle.validate();
+
+            expectErrResult(validateResult);
+            expect(validateResult.error).toBeInstanceOf(EntityNotFoundError);
+        });
+
+        it('should return Error serviceproviders are not unique', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                providedOnSchulstrukturknoten: orga.id,
+            });
+            const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
+                'Valid Name',
+                orga.id,
+                RollenArt.LERN,
+                [],
+                [],
+                [serviceProvider.id, serviceProvider.id],
+                [],
+                false,
+            );
+
+            if (rolle instanceof DomainError) {
+                throw rolle;
+            }
+
+            serviceProviderRepoMock.findByIds.mockResolvedValue(new Map([[serviceProvider.id, serviceProvider]]));
+            organisationRepo.findParentOrgasForIdSortedByDepthAsc.mockResolvedValue([orga]);
+
+            const validateResult: Result<void, DomainError> = await rolle.validate();
+
+            expectErrResult(validateResult);
+            expect(validateResult.error).toBeInstanceOf(EntityAlreadyExistsError);
+        });
+
+        it('should return Error serviceproviders can not be assigned to the rolle', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+            const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
+                'Valid Name',
+                orga.id,
+                RollenArt.LERN,
+                [],
+                [],
+                [serviceProvider.id],
+                [],
+                false,
+            );
+
+            if (rolle instanceof DomainError) {
+                throw rolle;
+            }
+
+            serviceProviderRepoMock.findByIds.mockResolvedValue(new Map([[serviceProvider.id, serviceProvider]]));
+            organisationRepo.findParentOrgasForIdSortedByDepthAsc.mockResolvedValue([orga]);
+
+            const validateResult: Result<void, DomainError> = await rolle.validate();
+
+            expectErrResult(validateResult);
+            expect(validateResult.error).toBeInstanceOf(ServiceProviderProvidedOutOfTreeError);
         });
     });
 });
