@@ -420,9 +420,9 @@ export class ServiceProviderService {
             return Err(new AttachedRollenError('ServiceProvider has attached Rollen and cannot be deleted', id));
         }
 
-        const rollenerweiterungen: Map<ServiceProviderID, Rollenerweiterung<true>[]> =
-            await this.rollenerweiterungRepo.findByServiceProviderIds([id]);
-        const hasAttachedRollenerweiterungen: boolean = (rollenerweiterungen.get(id)?.length ?? 0) > 0;
+        const rollenerweiterungen: Record<ServiceProviderID, number> =
+            await this.rollenerweiterungRepo.countByServiceProviderIds([id]);
+        const hasAttachedRollenerweiterungen: boolean = (rollenerweiterungen[id] ?? 0) > 0;
         if (hasAttachedRollenerweiterungen) {
             return Err(
                 new AttachedRollenerweiterungenError(
