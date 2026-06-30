@@ -83,7 +83,7 @@ export class VidisSyncService {
         ]);
 
         await this.syncSchoolsPage(activatedAngebote.value, 0, permissions);
-        console.log('VIDIS sync completed successfully');
+        this.logger.info('VIDIS sync completed successfully');
     }
 
     // Process schools in configurable-pages to keep query results and in-memory sync payloads bounded.
