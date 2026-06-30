@@ -122,7 +122,7 @@ email:
 vidis:
   url: "http://localhost:10000"
   region: "Schleswig-Holstein"
-  syncSchoolsPageSize: 1000
+  syncSchoolsPageSize: 5
 
 backend:
   replicaCount: 1
