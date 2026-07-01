@@ -1,4 +1,4 @@
-import { Loaded } from '@mikro-orm/core';
+import { Loaded, Subquery } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -9,6 +9,8 @@ import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/type
 import { assignSameKey, objectKeys } from '../../../shared/util/object-utils.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
@@ -160,6 +162,27 @@ export class ServiceProviderRepo {
             ServiceProviderEntity,
             {
                 providedOnSchulstrukturknoten: { $in: organisationIds },
+                vidisAngebotId: { $ne: null },
+            },
+            {
+                exclude: ['logo'] as const,
+                populate: ['merkmale'],
+            },
+        );
+
+        return serviceProviders.map(mapEntityToAggregate);
+    }
+
+    public async findNonSchoolProvidedVidisAngebote(): Promise<ServiceProvider<true>[]> {
+        const schoolOrganisationIds: Subquery = this.em
+            .createQueryBuilder(OrganisationEntity, 'organisation')
+            .select('id')
+            .where({ typ: OrganisationsTyp.SCHULE });
+
+        const serviceProviders: ServiceProviderEntity[] = await this.em.find(
+            ServiceProviderEntity,
+            {
+                providedOnSchulstrukturknoten: { $nin: schoolOrganisationIds },
                 vidisAngebotId: { $ne: null },
             },
             {

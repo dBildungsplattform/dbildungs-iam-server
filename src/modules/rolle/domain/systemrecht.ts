@@ -18,6 +18,7 @@ export enum RollenSystemRechtEnum {
     ROLLEN_ERWEITERN = 'ROLLEN_ERWEITERN',
     ANGEBOTE_VERWALTEN = 'ANGEBOTE_VERWALTEN',
     ANGEBOTE_EINGESCHRAENKT_VERWALTEN = 'ANGEBOTE_EINGESCHRAENKT_VERWALTEN',
+    SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN = 'SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN',
 }
 
 export class RollenSystemRecht {
@@ -132,6 +133,11 @@ export class RollenSystemRecht {
         RollenSystemRechtEnum.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
     );
 
+    public static readonly SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN: RollenSystemRecht = new RollenSystemRecht(
+        false,
+        RollenSystemRechtEnum.SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN,
+    );
+
     public static readonly ALL: RollenSystemRecht[] = [
         RollenSystemRecht.ROLLEN_VERWALTEN,
         RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN,
@@ -152,6 +158,7 @@ export class RollenSystemRecht {
         RollenSystemRecht.ROLLEN_ERWEITERN,
         RollenSystemRecht.ANGEBOTE_VERWALTEN,
         RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN,
+        RollenSystemRecht.SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN,
     ];
 
     public static getByName(name: RollenSystemRechtEnum): RollenSystemRecht {
@@ -194,6 +201,8 @@ export class RollenSystemRecht {
                 return RollenSystemRecht.ANGEBOTE_VERWALTEN;
             case RollenSystemRechtEnum.ANGEBOTE_EINGESCHRAENKT_VERWALTEN:
                 return RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN;
+            case RollenSystemRechtEnum.SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN:
+                return RollenSystemRecht.SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN;
         }
     }
 }
