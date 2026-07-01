@@ -1,4 +1,4 @@
-import { XMLBuilder, XMLParser } from 'fast-xml-parser';
+import { MatcherView, XMLBuilder, XMLParser } from 'fast-xml-parser';
 
 import { DomainError } from '../../../../../shared/error/index.js';
 import { OxError } from '../../../../../shared/error/ox.error.js';
@@ -61,8 +61,8 @@ export abstract class OxBaseAction<ResponseBodyType, ResultType> {
     protected readonly xmlParser: XMLParser = new XMLParser({
         ignoreAttributes: false,
         removeNSPrefix: true,
-        isArray: (tagName: string, jPath: string, isLeafNode: boolean, isAttribute: boolean) =>
-            this.isArrayOverride(tagName, jPath, isLeafNode, isAttribute),
+        isArray: (tagName: string, jPathOrMatcher: string | MatcherView, isLeafNode: boolean, isAttribute: boolean) =>
+            this.isArrayOverride(tagName, jPathOrMatcher, isLeafNode, isAttribute),
     });
 
     public abstract action: string;
@@ -72,7 +72,12 @@ export abstract class OxBaseAction<ResponseBodyType, ResultType> {
     public abstract buildRequest(): object;
 
     // Customize parsing behaviour, see X2jOptions.isArray
-    public isArrayOverride(_tagName: string, _jPath: string, _isLeafNode: boolean, _isAttribute: boolean): boolean {
+    public isArrayOverride(
+        _tagName: string,
+        _jPathOrMatcher: string | MatcherView,
+        _isLeafNode: boolean,
+        _isAttribute: boolean,
+    ): boolean {
         return false;
     }
 

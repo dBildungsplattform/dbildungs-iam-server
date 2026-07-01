@@ -4,7 +4,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { DynamicModule, OnModuleDestroy } from '@nestjs/common';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { randomUUID } from 'crypto';
+import { randomInt, randomUUID } from 'crypto';
 import { PullPolicy } from 'testcontainers';
 import { DbConfig } from '../../src/shared/config/index.js';
 import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
@@ -30,6 +30,7 @@ export class DatabaseTestModule implements OnModuleDestroy {
                                 .withDatabase(dbName)
                                 .withPullPolicy(PullPolicy.defaultPolicy())
                                 .withReuse()
+                                .withName(`testcontainer-db-${randomInt(0, 10000)}`)
                                 .start();
                         }
 
