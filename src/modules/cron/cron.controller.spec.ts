@@ -162,13 +162,11 @@ describe('CronController', () => {
             expect(vidisSyncServiceMock.sync).not.toHaveBeenCalled();
         });
 
-        it('should throw when VIDIS sync fails', async () => {
+        it('should return immediately when VIDIS sync fails in the background', async () => {
             permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
             vidisSyncServiceMock.sync.mockRejectedValueOnce(new Error('sync failed'));
 
-            await expect(cronController.triggerVidisSync(permissionsMock)).rejects.toThrow(
-                'Failed to trigger VIDIS sync due to an internal server error.',
-            );
+            await expect(cronController.triggerVidisSync(permissionsMock)).resolves.toBeUndefined();
             expect(vidisSyncServiceMock.sync).toHaveBeenCalledTimes(1);
         });
     });
