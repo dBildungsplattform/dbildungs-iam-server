@@ -7,6 +7,14 @@ import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { ServiceProvider } from './service-provider.js';
 
+export type ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount = {
+    serviceProvider: ServiceProvider<true>;
+    organisation: Organisation<true>;
+    rollen: Rolle<true>[];
+    hasRollenerweiterungen: boolean;
+    hasSomeVerwaltenPermission: boolean;
+};
+
 export type ManageableServiceProviderWithReferencedObjects = {
     serviceProvider: ServiceProvider<true>;
     organisation: Organisation<true>;

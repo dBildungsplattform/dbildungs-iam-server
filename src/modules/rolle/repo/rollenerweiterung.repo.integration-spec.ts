@@ -198,6 +198,112 @@ describe('RollenerweiterungRepo', () => {
         });
     });
 
+    describe('countByServiceProviderIds', () => {
+        it('should return empty result if no ids are given', async () => {
+            const result: Record<string, number> = await sut.countByServiceProviderIds([]);
+
+            expect(result).toStrictEqual({});
+        });
+
+        it('should return count of rollenerweiterungen', async () => {
+            const parentOrga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const orgaA: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { administriertVon: parentOrga.id }),
+            );
+            const orgaB: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { administriertVon: parentOrga.id }),
+            );
+
+            const rolleResult: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: parentOrga.id,
+                }),
+            );
+
+            if (rolleResult instanceof DomainError) {
+                throw rolleResult;
+            }
+
+            const providerA: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+            const providerB: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+
+            const factory: RollenerweiterungFactory = module.get(RollenerweiterungFactory);
+
+            await Promise.all([
+                sut.create(factory.createNew(orgaA.id, rolleResult.id, providerA.id)),
+                sut.create(factory.createNew(orgaB.id, rolleResult.id, providerA.id)),
+                sut.create(factory.createNew(orgaA.id, rolleResult.id, providerB.id)),
+            ]);
+
+            const nonExistantProviderId: string = faker.string.uuid();
+
+            const result: Record<string, number> = await sut.countByServiceProviderIds([
+                providerA.id,
+                providerB.id,
+                nonExistantProviderId,
+            ]);
+
+            expect(result[providerA.id]).toBe(2);
+            expect(result[providerB.id]).toBe(1);
+            expect(result[nonExistantProviderId]).toBe(0);
+        });
+
+        it('should return count of rollenerweiterungen filtered by organisations', async () => {
+            const parentOrga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const orgaA: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { administriertVon: parentOrga.id }),
+            );
+            const orgaB: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { administriertVon: parentOrga.id }),
+            );
+            const orgaC: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { administriertVon: parentOrga.id }),
+            );
+
+            const rolleResult: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: parentOrga.id,
+                }),
+            );
+
+            if (rolleResult instanceof DomainError) {
+                throw rolleResult;
+            }
+
+            const providerA: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+            const providerB: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+
+            const factory: RollenerweiterungFactory = module.get(RollenerweiterungFactory);
+
+            await Promise.all([
+                sut.create(factory.createNew(orgaA.id, rolleResult.id, providerA.id)),
+                sut.create(factory.createNew(orgaB.id, rolleResult.id, providerA.id)),
+                sut.create(factory.createNew(orgaA.id, rolleResult.id, providerB.id)),
+                sut.create(factory.createNew(orgaC.id, rolleResult.id, providerA.id)),
+                sut.create(factory.createNew(orgaC.id, rolleResult.id, providerB.id)),
+            ]);
+
+            const nonExistantProviderId: string = faker.string.uuid();
+
+            const result: Record<string, number> = await sut.countByServiceProviderIds(
+                [providerA.id, providerB.id, nonExistantProviderId],
+                [orgaA.id],
+            );
+
+            expect(result[providerA.id]).toBe(1);
+            expect(result[providerB.id]).toBe(1);
+            expect(result[nonExistantProviderId]).toBe(0);
+        });
+    });
+
     describe('findManyByOrganisationIdAndServiceProviderId', () => {
         let organisation: Organisation<true>;
         let otherOrganisation: Organisation<true>;

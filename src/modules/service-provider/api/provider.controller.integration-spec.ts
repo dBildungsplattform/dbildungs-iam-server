@@ -47,6 +47,8 @@ import { ManageableServiceProviderResponse } from './manageable-service-provider
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
+import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
+import { RollenerweiterungForManageableServiceProviderResponse } from './RollenerweiterungForManageableServiceProviderResponse.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -239,8 +241,8 @@ describe('ServiceProvider API', () => {
                 .query(params)
                 .send();
 
-            const body: RawPagedResponse<ManageableServiceProviderListEntryResponse> =
-                response.body as RawPagedResponse<ManageableServiceProviderListEntryResponse>;
+            const body: RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse> =
+                response.body as RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse>;
             expect(response.status).toBe(200);
             expect(body.items).toBeInstanceOf(Array);
             expect(body.items.length).toBeGreaterThanOrEqual(2);
@@ -249,8 +251,8 @@ describe('ServiceProvider API', () => {
             expect(body.total).toBe(2);
 
             [serviceProvider1, serviceProvider2].forEach((sp: ServiceProvider<true>) => {
-                const entry: ManageableServiceProviderListEntryResponse | undefined = body.items.find(
-                    (e: ManageableServiceProviderListEntryResponse) => e.id === sp.id,
+                const entry: ManageableServiceProviderSimpleListEntryResponse | undefined = body.items.find(
+                    (e: ManageableServiceProviderSimpleListEntryResponse) => e.id === sp.id,
                 );
 
                 expect(entry).toBeDefined();
@@ -262,7 +264,7 @@ describe('ServiceProvider API', () => {
                 expect(entry?.kategorie).toBe(sp.kategorie);
                 expect(entry?.requires2fa).toBe(sp.requires2fa);
                 expect(entry?.merkmale).toEqual(expect.arrayContaining(serviceProvider1.merkmale));
-                expect(entry?.rollenerweiterungen.length).toBe(0);
+                expect(entry?.hasRollenerweiterungen).toBe(false);
                 expect(entry?.rollen).toBeInstanceOf(Array);
                 if (rolle.serviceProviderIds.includes(sp.id)) {
                     expect(entry?.rollen.length).toBe(1);
@@ -279,6 +281,7 @@ describe('ServiceProvider API', () => {
         let organisation: Organisation<true>;
         let serviceProvider: ServiceProvider<true>;
         let rolle: Rolle<true>;
+        let rolle2: Rolle<true>;
         let rolleWithErweiterung: Rolle<true>;
 
         beforeEach(async () => {
@@ -297,6 +300,16 @@ describe('ServiceProvider API', () => {
                 throw rolleError;
             }
             rolle = rolleError;
+            const rolle2Error: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    serviceProviderIds: [],
+                }),
+            );
+            if (rolle2Error instanceof DomainError) {
+                throw rolle2Error;
+            }
+            rolle2 = rolle2Error;
             const rolleWithErweiterungError: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: organisation.id,
@@ -310,6 +323,13 @@ describe('ServiceProvider API', () => {
                 DoFactory.createRollenerweiterung(false, {
                     organisationId: organisation.id,
                     rolleId: rolleWithErweiterung.id,
+                    serviceProviderId: serviceProvider.id,
+                }),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    organisationId: organisation.id,
+                    rolleId: rolle2.id,
                     serviceProviderId: serviceProvider.id,
                 }),
             );
@@ -342,19 +362,31 @@ describe('ServiceProvider API', () => {
                         kategorie: serviceProvider.kategorie,
                         requires2fa: serviceProvider.requires2fa,
                         merkmale: serviceProvider.merkmale,
-                        rollenerweiterungen: [
-                            {
-                                organisation: {
-                                    id: organisation.id,
-                                    name: organisation.name!,
-                                    kennung: organisation.kennung!,
+                        rollenerweiterungen:
+                            expect.arrayContaining<RollenerweiterungForManageableServiceProviderResponse>([
+                                {
+                                    organisation: {
+                                        id: organisation.id,
+                                        name: organisation.name!,
+                                        kennung: organisation.kennung!,
+                                    },
+                                    rolle: {
+                                        id: rolleWithErweiterung.id,
+                                        name: rolleWithErweiterung.name,
+                                    },
                                 },
-                                rolle: {
-                                    id: rolleWithErweiterung.id,
-                                    name: rolleWithErweiterung.name,
+                                {
+                                    organisation: {
+                                        id: organisation.id,
+                                        name: organisation.name!,
+                                        kennung: organisation.kennung!,
+                                    },
+                                    rolle: {
+                                        id: rolle2.id,
+                                        name: rolle2.name,
+                                    },
                                 },
-                            },
-                        ],
+                            ]) as RollenerweiterungForManageableServiceProviderResponse[],
                         rollen: [
                             {
                                 id: rolle.id,

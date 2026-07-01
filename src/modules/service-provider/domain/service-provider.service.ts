@@ -27,6 +27,7 @@ import { ServiceProvider } from './service-provider.js';
 import {
     ManageableServiceProviderDetailsWithReferencedObjects,
     ManageableServiceProviderWithReferencedObjects,
+    ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
 import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
@@ -156,7 +157,7 @@ export class ServiceProviderService {
         permissions: IPersonPermissions,
         limit?: number,
         offset?: number,
-    ): Promise<Counted<ManageableServiceProviderWithReferencedObjects>> {
+    ): Promise<Counted<ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ANGEBOTE_VERWALTEN],
             true,
@@ -169,13 +170,8 @@ export class ServiceProviderService {
                 offset,
             );
 
-        const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjects[] =
-            await this.getOrganisationRollenAndRollenerweiterungenForServiceProviders(
-                serviceProviders,
-                20,
-                undefined,
-                permittedOrgas,
-            );
+        const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount[] =
+            await this.getRollenAndRollenerweiterungCountForServiceProviders(serviceProviders, 20, permittedOrgas);
 
         return [enrichedServiceProviders, count];
     }
@@ -225,6 +221,45 @@ export class ServiceProviderService {
             );
 
         return { ok: true, value: [enrichedServiceProviders, total] };
+    }
+
+    private async getRollenAndRollenerweiterungCountForServiceProviders(
+        serviceProviders: ServiceProvider<true>[],
+        limitRoles?: number,
+        permittedOrgas?: PermittedOrgas,
+    ): Promise<ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount[]> {
+        const serviceProvidersIds: ServiceProviderID[] = serviceProviders.map((sp: ServiceProvider<true>) => sp.id);
+
+        let permittedOrgaSet: Set<string> = new Set();
+        if (permittedOrgas && !permittedOrgas.all) {
+            permittedOrgaSet = new Set(permittedOrgas.orgaIds);
+        }
+
+        const [rollen, rollenerweiterungenCount, organisationen]: [
+            Map<ServiceProviderID, Rolle<true>[]>,
+            Record<ServiceProviderID, number>,
+            Map<OrganisationID, Organisation<true>>,
+        ] = await Promise.all([
+            this.rolleRepo.findByServiceProviderIds(serviceProvidersIds, limitRoles),
+            this.rollenerweiterungRepo.countByServiceProviderIds(serviceProvidersIds),
+            this.organisationRepo.findByIds(
+                serviceProviders.map((sp: ServiceProvider<true>) => sp.providedOnSchulstrukturknoten),
+            ),
+        ]);
+
+        const serviceProvidersWithData: ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount[] =
+            serviceProviders.map((serviceProvider: ServiceProvider<true>) => {
+                return {
+                    serviceProvider,
+                    organisation: organisationen.get(serviceProvider.providedOnSchulstrukturknoten)!,
+                    rollen: rollen.get(serviceProvider.id) ?? [],
+                    hasRollenerweiterungen: (rollenerweiterungenCount[serviceProvider.id] ?? 0) > 0,
+                    hasSomeVerwaltenPermission:
+                        permittedOrgas?.all || permittedOrgaSet.has(serviceProvider.providedOnSchulstrukturknoten),
+                };
+            });
+
+        return serviceProvidersWithData;
     }
 
     private async getOrganisationRollenAndRollenerweiterungenForServiceProviders(
@@ -385,9 +420,9 @@ export class ServiceProviderService {
             return Err(new AttachedRollenError('ServiceProvider has attached Rollen and cannot be deleted', id));
         }
 
-        const rollenerweiterungen: Map<ServiceProviderID, Rollenerweiterung<true>[]> =
-            await this.rollenerweiterungRepo.findByServiceProviderIds([id]);
-        const hasAttachedRollenerweiterungen: boolean = (rollenerweiterungen.get(id)?.length ?? 0) > 0;
+        const rollenerweiterungen: Record<ServiceProviderID, number> =
+            await this.rollenerweiterungRepo.countByServiceProviderIds([id]);
+        const hasAttachedRollenerweiterungen: boolean = (rollenerweiterungen[id] ?? 0) > 0;
         if (hasAttachedRollenerweiterungen) {
             return Err(
                 new AttachedRollenerweiterungenError(
