@@ -6,9 +6,6 @@ FROM $BASE_IMAGE_BUILDER AS build
 # CVE-2026-45447
 RUN apk upgrade -U libcrypto3>=3.5.7-r0 libssl3>=3.5.7-r0
 
-# CVE-2026-48758
-RUN apk upgrade -U @sigstore/core>=3.2.1
-
 WORKDIR /app
 COPY tsconfig*.json ./
 COPY package*.json ./
