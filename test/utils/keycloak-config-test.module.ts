@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { GenericContainer, StartedTestContainer } from 'testcontainers';
 import { KeycloakInstanceConfig } from '../../src/modules/keycloak-administration/keycloak-instance-config.js';
 import { KeycloakConfig, ServerConfig } from '../../src/shared/config/index.js';
+import { randomInt } from 'crypto';
 
 type KeycloakConfigTestModuleOptions = { isKeycloakRequired: boolean };
 
@@ -31,6 +32,7 @@ export class KeycloakConfigTestModule implements OnModuleDestroy {
                                 .withEnvironment({ KEYCLOAK_ADMIN: 'admin', KEYCLOAK_ADMIN_PASSWORD: 'admin' })
                                 .withCommand(['start-dev', '--import-realm'])
                                 .withStartupTimeout(240000)
+                                .withName(`testcontainer-kc-${randomInt(0, 10000)}`)
                                 .start();
                         }
 
