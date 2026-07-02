@@ -7,6 +7,7 @@ import {
     ServiceProviderTarget,
 } from '../domain/service-provider.enum.js';
 import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
+import { ServiceProviderRollenartWhitelistEntity } from './service-provider-rollenart-whitelist.entity.js';
 
 @Entity({ tableName: 'service_provider' })
 @Check({
@@ -75,4 +76,13 @@ export class ServiceProviderEntity extends TimestampedEntity {
         eager: true,
     })
     public merkmale: Collection<ServiceProviderMerkmalEntity> = new Collection<ServiceProviderMerkmalEntity>(this);
+
+    @OneToMany({
+        entity: () => ServiceProviderRollenartWhitelistEntity,
+        mappedBy: 'serviceProvider',
+        orphanRemoval: true,
+        eager: true,
+    })
+    public rollenartenWhitelist: Collection<ServiceProviderRollenartWhitelistEntity> =
+        new Collection<ServiceProviderRollenartWhitelistEntity>(this);
 }
