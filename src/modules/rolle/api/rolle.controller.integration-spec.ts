@@ -775,6 +775,77 @@ describe('Rolle API', () => {
                 response.body as PagedResponse<RolleWithServiceProvidersResponse>;
             expect(pagedResponse.items).toHaveLength(1);
         });
+
+        it('should return only MPT rollen for single MPT_ROLLEN_VERWALTEN systemrecht', async () => {
+            const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const mptRolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: orga.id,
+                    rollenart: RollenArt.SCHB,
+                }),
+            );
+            const nonMptRolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: orga.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (mptRolle instanceof DomainError || nonMptRolle instanceof DomainError) {
+                throw Error();
+            }
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle?systemrechte=MPT_ROLLEN_VERWALTEN')
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(1);
+            expect(pagedResponse.items).toEqual(
+                expect.arrayContaining([expect.objectContaining({ id: mptRolle.id, rollenart: RollenArt.SCHB })]),
+            );
+        });
+
+        it('should keep standard path for multiple systemrechte including MPT_ROLLEN_VERWALTEN', async () => {
+            const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const mptRolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: orga.id,
+                    rollenart: RollenArt.SCHB,
+                }),
+            );
+            const nonMptRolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: orga.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (mptRolle instanceof DomainError || nonMptRolle instanceof DomainError) {
+                throw Error();
+            }
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle?systemrechte=MPT_ROLLEN_VERWALTEN&systemrechte=ROLLEN_VERWALTEN')
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(2);
+            expect(pagedResponse.items).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({ id: mptRolle.id }),
+                    expect.objectContaining({ id: nonMptRolle.id }),
+                ]),
+            );
+        });
     });
 
     it('should return rollen available for import personenkontext if systemrecht is IMPORT_DURCHFUEHREN without orga ID parameter', async () => {

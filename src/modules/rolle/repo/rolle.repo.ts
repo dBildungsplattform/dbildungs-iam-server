@@ -320,6 +320,41 @@ export class RolleRepo {
         });
     }
 
+    public async findMptRollenAuthorized(
+        permissions: IPersonPermissions,
+        includeTechnische: boolean,
+        searchStr?: string,
+        limit?: number,
+        offset?: number,
+        organisationIds?: OrganisationID[],
+        rolleIds?: RolleID[],
+    ): Promise<[Rolle<true>[], number]> {
+        const orgIdsWithRecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.MPT_ROLLEN_VERWALTEN],
+            true,
+        );
+        if (!orgIdsWithRecht.all && orgIdsWithRecht.orgaIds.length === 0) {
+            return [[], 0];
+        }
+
+        let allowedOrganisationIds: OrganisationID[] | undefined;
+        if (organisationIds && organisationIds.length > 0) {
+            allowedOrganisationIds = intersectPermittedAndRequestedOrgas(orgIdsWithRecht, organisationIds);
+        } else if (!orgIdsWithRecht.all) {
+            allowedOrganisationIds = orgIdsWithRecht.orgaIds;
+        }
+
+        return this.findBy({
+            includeTechnische,
+            searchStr,
+            limit,
+            offset,
+            allowedOrganisationIds,
+            rolleIds,
+            rollenArten: [RollenArt.SORGBER, RollenArt.SCHB, RollenArt.NLEHR],
+        });
+    }
+
     public async findBySchulstrukturknoten(administeredBySchulstrukturknoten: OrganisationID): Promise<Rolle<true>[]> {
         return (
             await this.em.find(
