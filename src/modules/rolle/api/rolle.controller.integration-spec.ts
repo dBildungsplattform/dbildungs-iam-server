@@ -810,6 +810,47 @@ describe('Rolle API', () => {
             );
         });
 
+        it('should return only MPT rollen for single MPT_ROLLEN_VERWALTEN systemrecht and orgaId', async () => {
+            const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const otherOrga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const mptRolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: orga.id,
+                    rollenart: RollenArt.SCHB,
+                }),
+            );
+            const otherOrgaMptRolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: otherOrga.id,
+                    rollenart: RollenArt.SORGBER,
+                }),
+            );
+            if (mptRolle instanceof DomainError || otherOrgaMptRolle instanceof DomainError) {
+                throw Error();
+            }
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle?systemrechte=MPT_ROLLEN_VERWALTEN&organisationId=${orga.id}`)
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(1);
+            expect(pagedResponse.items).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining<Partial<RolleWithServiceProvidersResponse>>({
+                        id: mptRolle.id,
+                        administeredBySchulstrukturknoten: orga.id,
+                        rollenart: RollenArt.SCHB,
+                    }),
+                ]),
+            );
+        });
+
         it('should keep standard path for multiple systemrechte including MPT_ROLLEN_VERWALTEN', async () => {
             const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
             const mptRolle: Rolle<true> | DomainError = await rolleRepo.save(

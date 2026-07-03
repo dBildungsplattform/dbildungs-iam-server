@@ -547,6 +547,49 @@ describe('RolleRepo', () => {
             expect(rolleResult?.[0]?.id).toBe(mptRolle.id);
         });
 
+        it('should return MPT rollen at the correct organisation', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const otherOrganisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false),
+            );
+
+            const mptRolle: Rolle<true> | DomainError = await sut.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.NLEHR,
+                }),
+            );
+            const otherOrgaRolle: Rolle<true> | DomainError = await sut.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: otherOrganisation.id,
+                    rollenart: RollenArt.NLEHR,
+                }),
+            );
+
+            if (mptRolle instanceof DomainError || otherOrgaRolle instanceof DomainError) {
+                throw Error();
+            }
+
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [organisation.id, faker.string.uuid()],
+            });
+
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findMptRollenAuthorized(
+                permissions,
+                false,
+                undefined,
+                10,
+                0,
+                [organisation.id],
+            );
+
+            expect(rolleResult).toHaveLength(1);
+            expect(total).toBe(1);
+            expect(rolleResult?.[0]?.id).toBe(mptRolle.id);
+        });
+
         it('should return empty array when permissions are insufficient', async () => {
             const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
             const organisationId: OrganisationID = organisation.id;
