@@ -21,7 +21,7 @@ export class KeycloakConfigTestModule implements OnModuleDestroy {
                         const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
 
                         if (options?.isKeycloakRequired) {
-                            this.keycloak = await new GenericContainer('quay.io/keycloak/keycloak:23.0.4')
+                            this.keycloak = await new GenericContainer('quay.io/keycloak/keycloak:26.6.4-1')
                                 .withCopyFilesToContainer([
                                     {
                                         source: './config/dev-realm-spsh.json',

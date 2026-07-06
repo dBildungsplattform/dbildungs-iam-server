@@ -81,7 +81,7 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
         super({
             client,
             usePKCE: true,
-            params: { redirect_uri: frontendConfig.OIDC_CALLBACK_URL },
+            params: { redirect_uri: frontendConfig.OIDC_CALLBACK_URL, audience: client.metadata.client_id },
             passReqToCallback: true,
         } satisfies StrategyOptions);
     }
