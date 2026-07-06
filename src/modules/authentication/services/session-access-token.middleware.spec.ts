@@ -89,16 +89,19 @@ describe('sessionAccessTokenMiddleware', () => {
 
     describe('when the request contains both a refresh and an access token', () => {
         let originalAccessToken: string;
+        let originalIdToken: string;
         let originalRefreshToken: string;
         let client: DeepMocked<Client>;
 
         beforeEach(() => {
             client = createOidcClientMock();
             originalAccessToken = 'originalAccess';
+            originalIdToken = 'originalId';
             originalRefreshToken = 'originalRefresh';
 
             request.passportUser = {
                 access_token: originalAccessToken,
+                id_token: originalIdToken,
                 refresh_token: originalRefreshToken,
                 userinfo: createUserinfoResponseMock(),
                 personPermissions(): Promise<PersonPermissions> {
@@ -118,7 +121,7 @@ describe('sessionAccessTokenMiddleware', () => {
                     createResponseMock(),
                     vi.fn(),
                 );
-                expect(client.introspect).toHaveBeenCalledWith(originalAccessToken);
+                expect(client.introspect).toHaveBeenCalledWith(originalIdToken);
 
                 expect(request.passportUser?.access_token).toStrictEqual(originalAccessToken);
             });
@@ -153,7 +156,7 @@ describe('sessionAccessTokenMiddleware', () => {
                         vi.fn(),
                     );
                     expect(client.introspect).toHaveBeenCalledTimes(2);
-                    expect(client.introspect).toHaveBeenNthCalledWith(1, originalAccessToken);
+                    expect(client.introspect).toHaveBeenNthCalledWith(1, originalIdToken);
                     expect(client.introspect).toHaveBeenNthCalledWith(2, originalRefreshToken);
                     expect(client.refresh).toHaveBeenCalledWith(originalRefreshToken);
 
@@ -182,7 +185,7 @@ describe('sessionAccessTokenMiddleware', () => {
                     vi.fn(),
                 );
                 expect(client.introspect).toHaveBeenCalledTimes(2);
-                expect(client.introspect).toHaveBeenNthCalledWith(1, originalAccessToken);
+                expect(client.introspect).toHaveBeenNthCalledWith(1, originalIdToken);
                 expect(client.introspect).toHaveBeenNthCalledWith(2, originalRefreshToken);
                 expect(client.refresh).not.toHaveBeenCalled();
 

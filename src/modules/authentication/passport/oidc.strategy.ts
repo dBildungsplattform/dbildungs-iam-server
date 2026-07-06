@@ -81,15 +81,14 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
         super({
             client,
             usePKCE: true,
-            params: { redirect_uri: frontendConfig.OIDC_CALLBACK_URL, audience: client.metadata.client_id },
+            params: { redirect_uri: frontendConfig.OIDC_CALLBACK_URL },
             passReqToCallback: true,
         } satisfies StrategyOptions);
     }
 
     public override authenticate(req: Request): void {
-        const options: { acr_values: string; audience: string } = {
+        const options: { acr_values: string } = {
             acr_values: req.session.requiredStepupLevel ?? StepUpLevel.SILVER,
-            audience: this.client.metadata.client_id,
         };
 
         super.authenticate(req, options);

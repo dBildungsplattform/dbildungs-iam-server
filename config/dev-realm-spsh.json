@@ -832,6 +832,19 @@
                         "claim.name": "clientHost",
                         "jsonType.label": "String"
                     }
+                },
+                {
+                    "name": "Audience",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-audience-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "included.client.audience": "spsh-service",
+                        "id.token.claim": "true",
+                        "lightweight.claim": "true",
+                        "access.token.claim": "true",
+                        "introspection.token.claim": "true"
+                    }
                 }
             ],
             "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
@@ -922,6 +935,19 @@
                         "claim.name": "clientHost",
                         "jsonType.label": "String",
                         "userinfo.token.claim": "true"
+                    }
+                },
+                {
+                    "name": "Audience",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-audience-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "included.client.audience": "spsh-no2fa",
+                        "id.token.claim": "true",
+                        "lightweight.claim": "true",
+                        "access.token.claim": "true",
+                        "introspection.token.claim": "true"
                     }
                 }
             ],
@@ -1018,6 +1044,19 @@
                         "claim.name": "clientHost",
                         "jsonType.label": "String"
                     }
+                },
+                {
+                    "name": "Audience",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-audience-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "included.client.audience": "spsh",
+                        "id.token.claim": "true",
+                        "lightweight.claim": "true",
+                        "access.token.claim": "true",
+                        "introspection.token.claim": "true"
+                    }
                 }
             ],
             "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
@@ -1099,6 +1138,19 @@
                         "access.token.claim": "true",
                         "claim.name": "clientAddress",
                         "jsonType.label": "String"
+                    }
+                },
+                {
+                    "name": "Audience",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-audience-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "included.client.audience": "spsh-admin",
+                        "id.token.claim": "true",
+                        "lightweight.claim": "true",
+                        "access.token.claim": "true",
+                        "introspection.token.claim": "true"
                     }
                 }
             ],
@@ -1191,6 +1243,19 @@
                         "claim.name": "client_id",
                         "jsonType.label": "String"
                     }
+                },
+                {
+                    "name": "Audience",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-audience-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "included.client.audience": "spsh-test",
+                        "id.token.claim": "true",
+                        "lightweight.claim": "true",
+                        "access.token.claim": "true",
+                        "introspection.token.claim": "true"
+                    }
                 }
             ],
             "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
@@ -1209,12 +1274,8 @@
             "alwaysDisplayInConsole": false,
             "clientAuthenticatorType": "client-secret",
             "secret": "${VIDIS_CLIENT_SECRET}",
-            "redirectUris": [
-              "/*"
-            ],
-            "webOrigins": [
-              "/*"
-            ],
+            "redirectUris": ["/*"],
+            "webOrigins": ["/*"],
             "notBefore": 0,
             "bearerOnly": false,
             "consentRequired": false,
@@ -1226,30 +1287,19 @@
             "frontchannelLogout": false,
             "protocol": "openid-connect",
             "attributes": {
-              "oidc.ciba.grant.enabled": "false",
-              "client.secret.creation.time": "1724413577",
-              "backchannel.logout.session.required": "false",
-              "backchannel.logout.url": "https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/logout/backchannel-logout",
-              "oauth2.device.authorization.grant.enabled": "false",
-              "display.on.consent.screen": "false",
-              "backchannel.logout.revoke.offline.tokens": "true"
+                "oidc.ciba.grant.enabled": "false",
+                "client.secret.creation.time": "1724413577",
+                "backchannel.logout.session.required": "false",
+                "backchannel.logout.url": "https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/logout/backchannel-logout",
+                "oauth2.device.authorization.grant.enabled": "false",
+                "display.on.consent.screen": "false",
+                "backchannel.logout.revoke.offline.tokens": "true"
             },
             "authenticationFlowBindingOverrides": {},
             "fullScopeAllowed": true,
             "nodeReRegistrationTimeout": -1,
-            "defaultClientScopes": [
-              "web-origins",
-              "acr",
-              "roles",
-              "profile",
-              "email"
-            ],
-            "optionalClientScopes": [
-              "address",
-              "phone",
-              "offline_access",
-              "microprofile-jwt"
-            ]
+            "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
+            "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
         }
     ],
     "clientScopes": [
@@ -2573,21 +2623,22 @@
                 "loa-condition-level": "20",
                 "loa-max-age": "0"
             }
-        }, {
-            "id" : "a289ca13-92ef-4ac8-9544-bbff68c93147",
-            "alias" : "pi",
-            "config" : {
-                "pienrolltokentype" : "TOTP",
-                "pipollinbrowser" : "false",
-                "piservicerealm" : "${PI_REALM}",
-                "piservicepass" : "${PI_ADMIN_PASSWORD}",
-                "piserver" : "${PI_BASE_URL}",
-                "piserviceaccount" : "${PI_ADMIN_USER}",
-                "pidefaultmessage" : "Diese Aktion setzt eine Zwei-Faktor-Authentifizierung voraus. Bitte geben Sie das Einmalpasswort von Ihrem 2FA-Token ein.",
-                "preftokentype" : "OTP",
-                "pirealm" : "${PI_REALM}",
-                "pidolog" : "true",
-                "pienrolltoken" : "false"
+        },
+        {
+            "id": "a289ca13-92ef-4ac8-9544-bbff68c93147",
+            "alias": "pi",
+            "config": {
+                "pienrolltokentype": "TOTP",
+                "pipollinbrowser": "false",
+                "piservicerealm": "${PI_REALM}",
+                "piservicepass": "${PI_ADMIN_PASSWORD}",
+                "piserver": "${PI_BASE_URL}",
+                "piserviceaccount": "${PI_ADMIN_USER}",
+                "pidefaultmessage": "Diese Aktion setzt eine Zwei-Faktor-Authentifizierung voraus. Bitte geben Sie das Einmalpasswort von Ihrem 2FA-Token ein.",
+                "preftokentype": "OTP",
+                "pirealm": "${PI_REALM}",
+                "pidolog": "true",
+                "pienrolltoken": "false"
             }
         },
         {
