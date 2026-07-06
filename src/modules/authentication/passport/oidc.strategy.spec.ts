@@ -155,7 +155,7 @@ describe('OpenIdConnectStrategy', () => {
             const request: Request = createRequestMock();
             sut.authenticate(request);
 
-            expect(superPassportSpy).toHaveBeenCalledWith(request, { acr_values: 'silver' });
+            expect(superPassportSpy).toHaveBeenCalledWith(request, { acr_values: 'silver', aud: 'DummyId' });
         });
 
         it('should call super.authenticate with options', () => {
@@ -163,7 +163,7 @@ describe('OpenIdConnectStrategy', () => {
             request.session.requiredStepupLevel = StepUpLevel.GOLD;
             sut.authenticate(request);
 
-            expect(superPassportSpy).toHaveBeenCalledWith(request, { acr_values: 'gold' });
+            expect(superPassportSpy).toHaveBeenCalledWith(request, { acr_values: 'gold', aud: 'DummyId' });
         });
     });
 

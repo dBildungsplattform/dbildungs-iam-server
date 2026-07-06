@@ -6,6 +6,8 @@ import { Mock } from 'vitest';
 import { ConfigTestModule, KeycloakConfigTestModule } from '../../../test/utils/index.js';
 import { KC_SERVICE_CLIENT, KeycloakServiceApiClient } from './keycloak-client-providers.js';
 
+const tokenSetExpiredSpy: Mock<() => boolean> = vi.spyOn(TokenSet.prototype, 'expired');
+
 describe('Keycloak API Clients', () => {
     let module: TestingModule;
 
@@ -27,8 +29,6 @@ describe('Keycloak API Clients', () => {
     });
 
     it('should get another access token after the first has expired', async () => {
-        const tokenSetExpiredSpy: Mock<() => boolean> = vi.spyOn(TokenSet.prototype, 'expired');
-
         const firstAccessToken: string | undefined = await serviceClient.getAccessToken();
 
         tokenSetExpiredSpy.mockReturnValueOnce(true);
