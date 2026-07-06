@@ -87,9 +87,9 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
     }
 
     public override authenticate(req: Request): void {
-        const options: { acr_values: string; aud: string } = {
+        const options: { acr_values: string; audience: string } = {
             acr_values: req.session.requiredStepupLevel ?? StepUpLevel.SILVER,
-            aud: this.client.metadata.client_id,
+            audience: this.client.metadata.client_id,
         };
 
         super.authenticate(req, options);
