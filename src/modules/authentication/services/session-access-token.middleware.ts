@@ -37,12 +37,22 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
             updateAndGetStepUpLevel(req, this.STEP_UP_TIMEOUT_IN_SECONDS);
         }
 
+        this.logger.info(`[MARVIN DEBUG] SessionAccessMiddleware: idToken: ${idToken}, refreshToken: ${refreshToken}`);
+
         if (idToken) {
             const isIdTokenActive: boolean = (await this.client.introspect(idToken)).active;
+
+            this.logger.info(`[MARVIN DEBUG] SessionAccessMiddleware: idTokenActive: ${isIdTokenActive}`);
+
             if (!isIdTokenActive) {
                 // Do we have a refresh token and somewhere to store the result of the refresh?
                 const isRefreshTokenActive: boolean =
-                    refreshToken !== undefined && (await this.client.introspect(refreshToken)).active;
+                    refreshToken !== undefined && (await this.client.introspect(refreshToken, 'refresh_token')).active;
+
+                this.logger.info(
+                    `[MARVIN DEBUG] SessionAccessMiddleware: isRefreshTokenActive: ${isRefreshTokenActive}`,
+                );
+
                 if (refreshToken && isRefreshTokenActive && req.passportUser) {
                     try {
                         const tokens: TokenSet = await this.client.refresh(refreshToken);
