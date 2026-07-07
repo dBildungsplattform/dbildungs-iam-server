@@ -42,7 +42,7 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
             if (!isIdTokenActive) {
                 // Do we have a refresh token and somewhere to store the result of the refresh?
                 const isRefreshTokenActive: boolean =
-                    refreshToken !== undefined && (await this.client.introspect(refreshToken, 'refresh_token')).active;
+                    refreshToken !== undefined && (await this.client.introspect(refreshToken)).active;
 
                 if (refreshToken && isRefreshTokenActive && req.passportUser) {
                     try {
