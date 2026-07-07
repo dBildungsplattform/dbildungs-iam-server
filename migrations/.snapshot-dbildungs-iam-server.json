@@ -2867,7 +2867,8 @@
           "collation": null,
           "enumItems": [
             "BEFRISTUNG_PFLICHT",
-            "KOPERS_PFLICHT"
+            "KOPERS_PFLICHT",
+            "MPT_ROLLE"
           ],
           "mappedType": "enum",
           "nativeEnumName": "rollen_merkmal_enum"
@@ -4243,7 +4244,8 @@
       "schema": "public",
       "items": [
         "BEFRISTUNG_PFLICHT",
-        "KOPERS_PFLICHT"
+        "KOPERS_PFLICHT",
+        "MPT_ROLLE"
       ]
     },
     "rollen_system_recht_enum": {
