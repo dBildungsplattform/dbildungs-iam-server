@@ -834,7 +834,7 @@
                     }
                 }
             ],
-            "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
+            "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email", "spsh-audience"],
             "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
         },
         {
@@ -1194,7 +1194,7 @@
                     }
                 }
             ],
-            "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
+            "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email", "spsh-audience"],
             "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
         },
         {
@@ -1756,6 +1756,32 @@
                     "config": {
                         "id.token.claim": "true",
                         "access.token.claim": "true"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "4613d8da-9279-4d3c-8f8a-43ad76598bca",
+            "name": "spsh-audience",
+            "description": "OpenID Connect scope for add 'spsh' aud to the token. Meant for tokens that should be used to authenticate to the backend.",
+            "protocol": "openid-connect",
+            "attributes": {
+                "include.in.token.scope": "false",
+                "display.on.consent.screen": "false"
+            },
+            "protocolMappers": [
+                {
+                    "id": "43098a08-69ef-44a8-8080-1baa2c735d4f",
+                    "name": "spsh aud",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-audience-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "included.client.audience": "spsh",
+                        "id.token.claim": "true",
+                        "lightweight.claim": "true",
+                        "access.token.claim": "true",
+                        "introspection.token.claim": "true"
                     }
                 }
             ]

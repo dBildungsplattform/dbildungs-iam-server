@@ -26,9 +26,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     public async validate(_request: Request, _jwtPayload: string): Promise<{ access_token: string }> {
         const accessToken: string | null = ExtractJwt.fromAuthHeaderAsBearerToken()(_request);
 
+        console.log('[JWT Strategy] access token: ' + accessToken);
+
         if (accessToken) {
             const decoded: string | JwtPayload | null = decode(accessToken);
             const subjectId: string | undefined = decoded?.sub as string | undefined;
+
+            console.log('[JWT Strategy] SubjectID: ' + subjectId);
 
             if (subjectId) {
                 const person: Option<Person<true>> = await this.personRepo.findByKeycloakUserId(subjectId);
