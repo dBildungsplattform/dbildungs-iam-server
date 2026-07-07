@@ -1771,7 +1771,7 @@
             },
             "protocolMappers": [
                 {
-                    "id": "43098a08-69ef-44a8-8080-1baa2c735d4f",
+                    "id": "ebbff6a0-26d6-48ae-b72a-a70fc3a0cc87",
                     "name": "spsh aud",
                     "protocol": "openid-connect",
                     "protocolMapper": "oidc-audience-mapper",
