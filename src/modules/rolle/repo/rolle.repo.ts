@@ -1,5 +1,5 @@
 import { EntityName, FilterQuery, ForeignKeyConstraintViolationException, Loaded, PopulatePath } from '@mikro-orm/core';
-import { EntityManager } from '@mikro-orm/postgresql';
+import { EntityManager, RawQueryFragment, sql } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { xor } from 'lodash-es';
 
@@ -9,6 +9,7 @@ import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updat
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
+import { Err, UnionToResult } from '../../../shared/util/result.js';
 import { intersectPermittedAndRequestedOrgas, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { mapEntityToAggregate as mapServiceProviderEntityToAggregate } from '../../service-provider/repo/service-provider-entity-mapper.js';
@@ -29,7 +30,6 @@ import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-service-providers.specification.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
-import { Err, UnionToResult } from '../../../shared/util/result.js';
 
 // Disable explicit types here because it's virtually impossible to do this correctly
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -111,6 +111,19 @@ export type RolleFindByParameters = {
     offset?: number;
     orderByRollenArtAndName?: boolean;
 };
+
+const rollenartOrderClause: RawQueryFragment = sql`CASE
+    WHEN rollenart = 'SYSADMIN' THEN 1
+    WHEN rollenart = 'ORGADMIN' THEN 2
+    WHEN rollenart = 'LEIT' THEN 3
+    WHEN rollenart = 'LEHR' THEN 4
+    WHEN rollenart = 'LERN' THEN 5
+    WHEN rollenart = 'NLEHR' THEN 6
+    WHEN rollenart = 'SCHB' THEN 7
+    WHEN rollenart = 'SORGBER' THEN 8
+    WHEN rollenart = 'EXTERN' THEN 9
+    ELSE 10
+END`;
 
 @Injectable()
 export class RolleRepo {
@@ -292,7 +305,9 @@ export class RolleRepo {
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
             limit: params.limit,
             offset: params.offset,
-            orderBy: params.orderByRollenArtAndName ? { rollenart: 'ASC', name: 'ASC' } : undefined,
+            orderBy: params.orderByRollenArtAndName
+                ? [{ [rollenartOrderClause as unknown as string]: 'ASC' }, { name: 'ASC' }]
+                : undefined,
         });
 
         return [rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory)), total];
@@ -339,6 +354,7 @@ export class RolleRepo {
             allowedOrganisationIds,
             excludeMerkmale,
             rolleIds,
+            orderByRollenArtAndName: true,
         });
     }
 
