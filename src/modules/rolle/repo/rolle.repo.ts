@@ -104,9 +104,12 @@ export type RolleFindByParameters = {
     searchStr?: string;
     allowedOrganisationIds?: OrganisationID[];
     rollenArten?: RollenArt[];
+    excludeMerkmale?: RollenMerkmal[];
+    requireMerkmale?: RollenMerkmal[];
     rolleIds?: RolleID[];
     limit?: number;
     offset?: number;
+    orderByRollenArtAndName?: boolean;
 };
 
 @Injectable()
@@ -262,6 +265,16 @@ export class RolleRepo {
         if (params.searchStr) {
             queries.push({ name: { $ilike: '%' + params.searchStr + '%' } });
         }
+        if (params.excludeMerkmale) {
+            for (const merkmal of params.excludeMerkmale) {
+                queries.push({ merkmale: { $none: { merkmal } } });
+            }
+        }
+        if (params.requireMerkmale) {
+            for (const merkmal of params.requireMerkmale) {
+                queries.push({ merkmale: { $some: { merkmal } } });
+            }
+        }
 
         const baseQuery: FilterQuery<NoInfer<RolleEntity>> = { $and: queries };
 
@@ -279,6 +292,7 @@ export class RolleRepo {
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
             limit: params.limit,
             offset: params.offset,
+            orderBy: params.orderByRollenArtAndName ? { rollenart: 'ASC', name: 'ASC' } : undefined,
         });
 
         return [rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory)), total];
@@ -310,12 +324,20 @@ export class RolleRepo {
             allowedOrganisationIds = orgIdsWithRecht.orgaIds;
         }
 
+        // we can assume that MPT_ROLLEN_VERWALTEN is not exclusive to a single orga here, since matchAll on permissions.getOrgIdsWithSystemrecht is true by default
+        const hasMptRollenVerwaltenPermission: boolean =
+            systemrechte?.includes(RollenSystemRecht.MPT_ROLLEN_VERWALTEN) ?? false;
+        const excludeMerkmale: RollenMerkmal[] | undefined = hasMptRollenVerwaltenPermission
+            ? undefined
+            : [RollenMerkmal.MPT_ROLLE];
+
         return this.findBy({
             includeTechnische,
             searchStr,
             limit,
             offset,
             allowedOrganisationIds,
+            excludeMerkmale,
             rolleIds,
         });
     }
@@ -351,7 +373,8 @@ export class RolleRepo {
             offset,
             allowedOrganisationIds,
             rolleIds,
-            rollenArten: [RollenArt.SORGBER, RollenArt.SCHB, RollenArt.NLEHR],
+            requireMerkmale: [RollenMerkmal.MPT_ROLLE],
+            orderByRollenArtAndName: true,
         });
     }
 

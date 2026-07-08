@@ -6,7 +6,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RolleFindByParameters, RolleRepo } from '../repo/rolle.repo.js';
-import { RollenArt } from './rolle.enums.js';
+import { RollenArt, RollenMerkmal } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { RollenSystemRecht } from './systemrecht.js';
 import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
@@ -64,6 +64,7 @@ export class RolleFindService {
             allowedOrganisationIds: permittedAndRequestedOrganisationenIdsWithParents,
             limit: params.limit,
             offset: params.offset,
+            excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
         };
 
         if (permittedAndRequestedOrganisationenIds !== undefined && permittedAndRequestedOrganisationenIds.length > 0) {
@@ -117,6 +118,7 @@ export class RolleFindService {
             searchStr: params.searchStr,
             allowedOrganisationIds: organisationIdsWithParents,
             rollenArten: params.rollenArten,
+            excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
         });
 
         const paramOrgas: Organisation<true>[] = Array.from(
