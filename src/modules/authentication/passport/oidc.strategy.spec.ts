@@ -137,7 +137,7 @@ describe('OpenIdConnectStrategy', () => {
             vi.spyOn(openIdClient, 'revoke').mockResolvedValueOnce(undefined);
             personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
             const request: Request = createRequestMock();
-            await expect(sut.validate(request, new TokenSet({ access_token: faker.string.alpha(32) }))).rejects.toThrow(
+            await expect(sut.validate(request, new TokenSet({ id_token: faker.string.alpha(32) }))).rejects.toThrow(
                 KeycloakUserNotFoundError,
             );
             expect(openIdClient.revoke).toHaveBeenCalled();

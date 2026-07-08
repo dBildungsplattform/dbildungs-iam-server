@@ -57,10 +57,10 @@ describe('sessionAccessTokenMiddleware', () => {
         expect(nextMock).toHaveBeenCalledTimes(1);
     });
 
-    describe('when the request does not contain a session with access token', () => {
+    describe('when the request does not contain a session with id token', () => {
         it('should not set authorization header', async () => {
             passportUser = createPassportUserMock();
-            delete passportUser.access_token;
+            delete passportUser.id_token;
             request = { passportUser, headers: {}, session: { lastRouteChangeTime: Date.now() } } as Request;
 
             await new SessionAccessTokenMiddleware(createOidcClientMock(), createMock(ClassLogger), configService).use(
@@ -123,6 +123,7 @@ describe('sessionAccessTokenMiddleware', () => {
                 );
                 expect(client.introspect).toHaveBeenCalledWith(originalIdToken);
 
+                expect(request.passportUser?.id_token).toStrictEqual(originalIdToken);
                 expect(request.passportUser?.access_token).toStrictEqual(originalAccessToken);
             });
         });
@@ -190,6 +191,7 @@ describe('sessionAccessTokenMiddleware', () => {
                 expect(client.refresh).not.toHaveBeenCalled();
 
                 expect(request.passportUser?.access_token).toStrictEqual(originalAccessToken);
+                expect(request.passportUser?.id_token).toStrictEqual(originalIdToken);
                 expect(request.passportUser?.refresh_token).toStrictEqual(originalRefreshToken);
             });
 

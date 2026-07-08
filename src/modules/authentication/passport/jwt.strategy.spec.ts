@@ -31,9 +31,9 @@ describe('JWT Strategy', () => {
         const request: Request = createRequestMock({
             headers: { authorization: 'Bearer 12345' },
         }) as unknown as Request;
-        const sessionContent: { access_token: string } = await sut.validate(request, '');
+        const sessionContent: { id_token: string } = await sut.validate(request, '');
 
-        expect(sessionContent.access_token).toEqual('12345');
+        expect(sessionContent.id_token).toEqual('12345');
     });
 
     it('should return empty string if no accessToken can be extracted', async () => {
@@ -47,9 +47,9 @@ describe('JWT Strategy', () => {
         const request: Request = createRequestMock({
             headers: { authorization: '' },
         }) as unknown as Request;
-        const sessionContent: { access_token: string } = await sut.validate(request, '');
+        const sessionContent: { id_token: string } = await sut.validate(request, '');
 
-        expect(sessionContent.access_token).toEqual('');
+        expect(sessionContent.id_token).toEqual('');
     });
 
     it('should check if user exists by keycloak id', async () => {
@@ -69,9 +69,9 @@ describe('JWT Strategy', () => {
             headers: { authorization: 'Bearer 12345' },
         }) as unknown as Request;
 
-        const sessionContent: { access_token: string } = await sut.validate(request, '');
+        const sessionContent: { id_token: string } = await sut.validate(request, '');
 
-        expect(sessionContent.access_token).toEqual('12345');
+        expect(sessionContent.id_token).toEqual('12345');
         expect(personRepositoryMock.findByKeycloakUserId).toHaveBeenCalled();
     });
 
