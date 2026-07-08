@@ -1,0 +1,41 @@
+{
+    "entityName": "Rolle",
+    "entities": [
+        {
+            "id": 1000,
+            "administeredBySchulstrukturknoten": 6,
+            "name": "Sekretariat",
+            "rollenart": "NLEHR",
+            "merkmale": ["MPT_ROLLE"],
+            "systemrechte": [],
+            "serviceProviderIds": []
+        },
+        {
+            "id": 1001,
+            "administeredBySchulstrukturknoten": 6,
+            "name": "Hausmeister",
+            "rollenart": "NLEHR",
+            "merkmale": ["MPT_ROLLE"],
+            "systemrechte": [],
+            "serviceProviderIds": []
+        },
+        {
+            "id": 1002,
+            "administeredBySchulstrukturknoten": 6,
+            "name": "Schulsozialarbeiter",
+            "rollenart": "NLEHR",
+            "merkmale": ["MPT_ROLLE"],
+            "systemrechte": [],
+            "serviceProviderIds": []
+        },
+        {
+            "id": 1003,
+            "administeredBySchulstrukturknoten": 6,
+            "name": "Ganztagsbetreuung",
+            "rollenart": "NLEHR",
+            "merkmale": ["MPT_ROLLE"],
+            "systemrechte": [],
+            "serviceProviderIds": []
+        }
+    ]
+}
