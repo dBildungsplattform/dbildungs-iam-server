@@ -5100,6 +5100,11 @@
             "personId": 652,
             "organisationId": 3205,
             "rolleId": 1
+        },
+        {
+            "personId": 7777777,
+            "organisationId": 0,
+            "rolleId": 100
         }
     ]
 }
