@@ -23,11 +23,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         } satisfies StrategyOptionsWithRequest);
     }
 
-    public async validate(_request: Request, _jwtPayload: string): Promise<{ id_token: string }> {
-        const idToken: string | null = ExtractJwt.fromAuthHeaderAsBearerToken()(_request);
+    public async validate(_request: Request, _jwtPayload: string): Promise<{ access_token: string }> {
+        const accessToken: string | null = ExtractJwt.fromAuthHeaderAsBearerToken()(_request);
 
-        if (idToken) {
-            const decoded: string | JwtPayload | null = decode(idToken);
+        if (accessToken) {
+            const decoded: string | JwtPayload | null = decode(accessToken);
             const subjectId: string | undefined = decoded?.sub as string | undefined;
 
             if (subjectId) {
@@ -38,6 +38,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
             }
         }
 
-        return { id_token: idToken || '' };
+        return { access_token: accessToken || '' };
     }
 }

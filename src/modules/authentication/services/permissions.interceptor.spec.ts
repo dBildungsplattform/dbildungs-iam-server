@@ -47,7 +47,7 @@ describe('Permission Interceptor', () => {
             const subjectId: string = faker.string.uuid();
             const request: DeepMocked<Request> = createRequestMock({
                 passportUser: {
-                    id_token: sign({ sub: subjectId }, 'secret'),
+                    access_token: sign({ sub: subjectId }, 'secret'),
                 },
             });
             const context: DeepMocked<ExecutionContext> = createExecutionContextMock({ request });
@@ -62,10 +62,10 @@ describe('Permission Interceptor', () => {
     });
 
     describe('when request is missing data', () => {
-        it('should not fail when missing id-token', () => {
+        it('should not fail when missing access-token', () => {
             const request: DeepMocked<Request> = createRequestMock({
                 passportUser: {
-                    id_token: undefined,
+                    access_token: undefined,
                 },
             });
             const context: DeepMocked<ExecutionContext> = createExecutionContextMock({ request });
@@ -84,9 +84,9 @@ describe('Permission Interceptor', () => {
             expect(request.passportUser?.personPermissions).toBeUndefined();
         });
 
-        it('should not fail when id-token is missing subject', () => {
+        it('should not fail when access-token is missing subject', () => {
             const request: DeepMocked<Request> = createRequestMock({
-                passportUser: { id_token: sign({}, 'secret') },
+                passportUser: { access_token: sign({}, 'secret') },
             });
             const context: DeepMocked<ExecutionContext> = createExecutionContextMock({ request });
 
@@ -94,9 +94,9 @@ describe('Permission Interceptor', () => {
             expect(request.passportUser?.personPermissions).toBeUndefined();
         });
 
-        it('should not fail when id-token is malformed', () => {
+        it('should not fail when access-token is malformed', () => {
             const request: DeepMocked<Request> = createRequestMock({
-                passportUser: { id_token: 'malformed' },
+                passportUser: { access_token: 'malformed' },
             });
             const context: DeepMocked<ExecutionContext> = createExecutionContextMock({ request });
 

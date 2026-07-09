@@ -57,10 +57,10 @@ describe('sessionAccessTokenMiddleware', () => {
         expect(nextMock).toHaveBeenCalledTimes(1);
     });
 
-    describe('when the request does not contain a session with id token', () => {
+    describe('when the request does not contain a session with access token', () => {
         it('should not set authorization header', async () => {
             passportUser = createPassportUserMock();
-            delete passportUser.id_token;
+            delete passportUser.access_token;
             request = { passportUser, headers: {}, session: { lastRouteChangeTime: Date.now() } } as Request;
 
             await new SessionAccessTokenMiddleware(createOidcClientMock(), createMock(ClassLogger), configService).use(
@@ -89,19 +89,16 @@ describe('sessionAccessTokenMiddleware', () => {
 
     describe('when the request contains both a refresh and an access token', () => {
         let originalAccessToken: string;
-        let originalIdToken: string;
         let originalRefreshToken: string;
         let client: DeepMocked<Client>;
 
         beforeEach(() => {
             client = createOidcClientMock();
             originalAccessToken = 'originalAccess';
-            originalIdToken = 'originalId';
             originalRefreshToken = 'originalRefresh';
 
             request.passportUser = {
                 access_token: originalAccessToken,
-                id_token: originalIdToken,
                 refresh_token: originalRefreshToken,
                 userinfo: createUserinfoResponseMock(),
                 personPermissions(): Promise<PersonPermissions> {
@@ -121,9 +118,8 @@ describe('sessionAccessTokenMiddleware', () => {
                     createResponseMock(),
                     vi.fn(),
                 );
-                expect(client.introspect).toHaveBeenCalledWith(originalIdToken);
+                expect(client.introspect).toHaveBeenCalledWith(originalAccessToken);
 
-                expect(request.passportUser?.id_token).toStrictEqual(originalIdToken);
                 expect(request.passportUser?.access_token).toStrictEqual(originalAccessToken);
             });
         });
@@ -157,7 +153,7 @@ describe('sessionAccessTokenMiddleware', () => {
                         vi.fn(),
                     );
                     expect(client.introspect).toHaveBeenCalledTimes(2);
-                    expect(client.introspect).toHaveBeenNthCalledWith(1, originalIdToken);
+                    expect(client.introspect).toHaveBeenNthCalledWith(1, originalAccessToken);
                     expect(client.introspect).toHaveBeenNthCalledWith(2, originalRefreshToken);
                     expect(client.refresh).toHaveBeenCalledWith(originalRefreshToken);
 
@@ -186,12 +182,11 @@ describe('sessionAccessTokenMiddleware', () => {
                     vi.fn(),
                 );
                 expect(client.introspect).toHaveBeenCalledTimes(2);
-                expect(client.introspect).toHaveBeenNthCalledWith(1, originalIdToken);
+                expect(client.introspect).toHaveBeenNthCalledWith(1, originalAccessToken);
                 expect(client.introspect).toHaveBeenNthCalledWith(2, originalRefreshToken);
                 expect(client.refresh).not.toHaveBeenCalled();
 
                 expect(request.passportUser?.access_token).toStrictEqual(originalAccessToken);
-                expect(request.passportUser?.id_token).toStrictEqual(originalIdToken);
                 expect(request.passportUser?.refresh_token).toStrictEqual(originalRefreshToken);
             });
 

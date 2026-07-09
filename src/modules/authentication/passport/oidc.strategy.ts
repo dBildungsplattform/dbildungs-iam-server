@@ -107,8 +107,8 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
         }
 
         if (!person) {
-            if (tokenset.id_token) {
-                await this.client.revoke(tokenset.id_token, 'id_token');
+            if (tokenset.access_token) {
+                await this.client.revoke(tokenset.access_token, 'access_token');
             }
 
             throw new KeycloakUserNotFoundError();

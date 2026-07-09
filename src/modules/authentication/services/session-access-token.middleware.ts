@@ -30,20 +30,19 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
     }
 
     public async use(req: Request, _res: Response, next: (error?: unknown) => void): Promise<void> {
-        const idToken: string | undefined = req.passportUser?.id_token;
+        const accessToken: string | undefined = req.passportUser?.access_token;
         const refreshToken: string | undefined = req.passportUser?.refresh_token;
 
         if (this.STEP_UP_TIMEOUT_ENABLED) {
             updateAndGetStepUpLevel(req, this.STEP_UP_TIMEOUT_IN_SECONDS);
         }
 
-        if (idToken) {
-            const isIdTokenActive: boolean = (await this.client.introspect(idToken)).active;
-            if (!isIdTokenActive) {
+        if (accessToken) {
+            const isAccessTokenActive: boolean = (await this.client.introspect(accessToken)).active;
+            if (!isAccessTokenActive) {
                 // Do we have a refresh token and somewhere to store the result of the refresh?
                 const isRefreshTokenActive: boolean =
                     refreshToken !== undefined && (await this.client.introspect(refreshToken)).active;
-
                 if (refreshToken && isRefreshTokenActive && req.passportUser) {
                     try {
                         const tokens: TokenSet = await this.client.refresh(refreshToken);

@@ -12,8 +12,8 @@ export class PermissionsInterceptor implements NestInterceptor {
     public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
         const req: Request = context.switchToHttp().getRequest();
 
-        if (req.passportUser?.id_token) {
-            const decoded: string | JwtPayload | null = decode(req.passportUser.id_token);
+        if (req.passportUser?.access_token) {
+            const decoded: string | JwtPayload | null = decode(req.passportUser.access_token);
             const subjectId: string | undefined = decoded?.sub as string | undefined;
 
             if (subjectId) {
