@@ -48,13 +48,15 @@ export class PersonLandesbediensteterSearchService {
             throw new LandesbediensteterSearchNoPersonFoundError();
         }
 
+        const shouldUseEmailMicroservice: boolean = this.emailResolverService.shouldUseEmailMicroservice();
+
         let persons: Person<true>[] = [];
         let personEmailResponse: Option<PersonEmailResponse> = undefined;
 
         if (personalnummer) {
             persons = await this.personRepository.findByPersonalnummer(personalnummer.trim());
         } else if (primaryEmailAddress) {
-            if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            if (shouldUseEmailMicroservice) {
                 const response: Option<PersonIdWithEmailResponse> =
                     await this.emailResolverService.findByPrimaryAddress(primaryEmailAddress.trim());
                 if (response) {
@@ -87,14 +89,17 @@ export class PersonLandesbediensteterSearchService {
 
         const [email, kontexteWithOrgaAndRolle]: [Option<PersonEmailResponse>, Array<KontextWithOrgaAndRolle>] =
             await Promise.all([
-                personEmailResponse ?? this.emailRepo.getEmailAddressAndStatusForPerson(person),
+                personEmailResponse ??
+                    (shouldUseEmailMicroservice
+                        ? this.emailResolverService.findEmailBySpshPerson(person.id)
+                        : this.emailRepo.getEmailAddressAndStatusForPerson(person)),
                 this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(person.id),
             ]);
 
         const result: PersonLandesbediensteterSearchResponse = PersonLandesbediensteterSearchResponse.createNew(
             person,
             kontexteWithOrgaAndRolle,
-            email,
+            email ?? undefined,
         );
         return [result];
     }
