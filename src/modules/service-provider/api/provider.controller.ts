@@ -79,6 +79,7 @@ import { ServiceProviderErrorFilter } from './service-provider-exception.filter.
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
+import { ServiceProviderModificationService } from '../domain/service-provider-modification.service.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -95,6 +96,7 @@ export class ProviderController {
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepository,
+        private readonly serviceProviderModificationService: ServiceProviderModificationService,
         private readonly logger: ClassLogger,
     ) {}
 
@@ -413,7 +415,7 @@ export class ProviderController {
             throw serviceProvider.error;
         }
 
-        const result: Result<ServiceProvider<true>, DomainError> = await this.serviceProviderRepo.create(
+        const result: Result<ServiceProvider<true>, DomainError> = await this.serviceProviderModificationService.create(
             permissions,
             serviceProvider.value,
         );

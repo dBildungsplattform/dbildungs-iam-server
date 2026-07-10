@@ -35,6 +35,7 @@ import { ServerConfig, VidisConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
 import { VidisApiAdapter } from '../adapter/domain/vidis-api.adapter.js';
 import { VidisApiError } from '../error/vidis-api.error.js';
+import { ServiceProviderModificationService } from '../../service-provider/domain/service-provider-modification.service.js';
 
 type VidisSchoolActivatedAngebot = {
     angebot: VidisServiceResponseAngebot;
@@ -65,6 +66,7 @@ export class VidisSyncService {
         private readonly vidisApiAdapter: VidisApiAdapter,
         private readonly organisationRepo: OrganisationRepository,
         private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly serviceProviderModificationService: ServiceProviderModificationService,
         private readonly escalatedPersonPermissionsFactory: EscalatedPersonPermissionsFactory,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly em: EntityManager,
@@ -277,7 +279,7 @@ export class VidisSyncService {
         );
 
         const syncOperations: Promise<unknown>[] = missingAngeboteInDb.map((angebot: VidisApiResponseAngebotBySchool) =>
-            this.serviceProviderRepo.create(permissions, this.createVidisServiceProvider(organisationId, angebot)),
+            this.serviceProviderModificationService.create(permissions, this.createVidisServiceProvider(organisationId, angebot)),
         );
 
         if (serviceProviderIdsMissingInVidis.length > 0) {

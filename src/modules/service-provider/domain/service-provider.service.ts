@@ -31,6 +31,7 @@ import {
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
 import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
+import { ServiceProviderModificationService } from './service-provider-modification.service.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -39,6 +40,7 @@ export class ServiceProviderService {
     public constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
+        private readonly serviceProviderModificationService: ServiceProviderModificationService,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly organisationRepo: OrganisationRepository,
         configService: ConfigService<ServerConfig>,
@@ -383,7 +385,7 @@ export class ServiceProviderService {
         }
 
         const updatedServiceProvider: Promise<Result<ServiceProvider<true>, DomainError>> =
-            this.serviceProviderRepo.update(permissions, existingServiceProvider);
+            this.serviceProviderModificationService.update(permissions, existingServiceProvider);
         return updatedServiceProvider;
     }
 
