@@ -367,6 +367,7 @@ export class VidisSyncService {
             false,
             angebot.offerId.toString(),
             VidisSyncService.DEFAULT_VIDIS_SERVICE_PROVIDER_MERKMALE,
+            []
         );
     }
 
