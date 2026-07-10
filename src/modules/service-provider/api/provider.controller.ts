@@ -407,6 +407,7 @@ export class ProviderController {
             body.requires2fa,
             undefined, // vidisAngebotId
             body.merkmale,
+            [],
         );
         if (!serviceProvider.ok) {
             throw serviceProvider.error;

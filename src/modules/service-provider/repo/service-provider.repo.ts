@@ -11,6 +11,7 @@ import { Err, Ok } from '../../../shared/util/result.js';
 import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { ServiceProviderKategorie, ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
@@ -18,6 +19,7 @@ import { ServiceProvider } from '../domain/service-provider.js';
 import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
 import { NameUniqueAtOrgaSpecification } from '../specification/name-unique-at-orga.specification.js';
 import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
+import { ServiceProviderRollenartWhitelistEntity } from './service-provider-rollenart-whitelist.entity.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
 import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js';
 
@@ -31,6 +33,12 @@ function mapAggregateToData(serviceProvider: ServiceProvider<boolean>) {
     const merkmale = serviceProvider.merkmale.map((merkmal: ServiceProviderMerkmal) => ({
         serviceProvider: serviceProvider.id,
         merkmal,
+    }));
+
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const rollenartenWhitelist = serviceProvider.rollenartenWhitelist.map((rollenart: RollenArt) => ({
+        serviceProvider: serviceProvider.id,
+        rollenart,
     }));
 
     return {
@@ -50,12 +58,16 @@ function mapAggregateToData(serviceProvider: ServiceProvider<boolean>) {
         requires2fa: serviceProvider.requires2fa,
         vidisAngebotId: serviceProvider.vidisAngebotId,
         merkmale,
+        rollenartenWhitelist,
     };
 }
 
 function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<boolean> {
     const merkmale: ServiceProviderMerkmal[] = entity.merkmale.map(
         (merkmalEntity: ServiceProviderMerkmalEntity) => merkmalEntity.merkmal,
+    );
+    const rollenartenWhitelist: RollenArt[] = entity.rollenartenWhitelist.map(
+        (rollenartWhitelistEntity: ServiceProviderRollenartWhitelistEntity) => rollenartWhitelistEntity.rollenart,
     );
 
     return ServiceProvider.construct(
@@ -76,6 +88,7 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
         entity.requires2fa,
         entity.vidisAngebotId,
         merkmale,
+        rollenartenWhitelist,
     );
 }
 
@@ -83,7 +96,7 @@ type ServiceProviderFindOptions = {
     withLogo?: boolean;
 };
 
-type SPWithMerkmale = Loaded<ServiceProviderEntity, 'merkmale'>;
+type SPWithMerkmale = Loaded<ServiceProviderEntity, 'merkmale' | 'rollenartenWhitelist'>;
 
 enum ServiceProviderPropertyPermissions {
     ALL,
@@ -100,6 +113,7 @@ const SP_EINGESCHRAENKT_DEFAULTS: Partial<ServiceProvider<true>> = {
         ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
         ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
     ],
+    rollenartenWhitelist: [],
     requires2fa: false,
     kategorie: ServiceProviderKategorie.SCHULISCH,
 };
@@ -117,7 +131,7 @@ export class ServiceProviderRepo {
         const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(
             ServiceProviderEntity,
             { id },
-            { exclude, populate: ['merkmale'] },
+            { exclude, populate: ['merkmale', 'rollenartenWhitelist'] },
         );
 
         return serviceProvider && mapEntityToAggregate(serviceProvider);
@@ -129,7 +143,7 @@ export class ServiceProviderRepo {
             {
                 name: name,
             },
-            { populate: ['merkmale'] },
+            { populate: ['merkmale', 'rollenartenWhitelist'] },
         );
         if (serviceProvider) {
             return mapEntityToAggregate(serviceProvider);
@@ -144,7 +158,7 @@ export class ServiceProviderRepo {
             {
                 vidisAngebotId: vidisAngebotId,
             },
-            { populate: ['merkmale'] },
+            { populate: ['merkmale', 'rollenartenWhitelist'] },
         );
         if (serviceProvider) {
             return mapEntityToAggregate(serviceProvider);
@@ -166,7 +180,7 @@ export class ServiceProviderRepo {
             },
             {
                 exclude: ['logo'] as const,
-                populate: ['merkmale'],
+                populate: ['merkmale', 'rollenartenWhitelist'],
             },
         );
 
@@ -187,7 +201,7 @@ export class ServiceProviderRepo {
             },
             {
                 exclude: ['logo'] as const,
-                populate: ['merkmale'],
+                populate: ['merkmale', 'rollenartenWhitelist'],
             },
         );
 
@@ -200,7 +214,7 @@ export class ServiceProviderRepo {
             {
                 keycloakGroup: groupname,
             },
-            { populate: ['merkmale'] },
+            { populate: ['merkmale', 'rollenartenWhitelist'] },
         );
         return serviceProviders.map(mapEntityToAggregate);
     }
@@ -210,7 +224,7 @@ export class ServiceProviderRepo {
 
         const serviceProviders: ServiceProviderEntity[] = await this.em.findAll(ServiceProviderEntity, {
             exclude,
-            populate: ['merkmale'],
+            populate: ['merkmale', 'rollenartenWhitelist'],
         });
 
         return serviceProviders.map(mapEntityToAggregate);
@@ -221,7 +235,7 @@ export class ServiceProviderRepo {
             ServiceProviderEntity,
             { id: { $in: ids } },
             {
-                populate: ['merkmale'],
+                populate: ['merkmale', 'rollenartenWhitelist'],
             },
         );
 
@@ -243,7 +257,7 @@ export class ServiceProviderRepo {
             ServiceProviderEntity,
             orgaIds === 'all' ? {} : { providedOnSchulstrukturknoten: { $in: orgaIds } },
             {
-                populate: ['merkmale'],
+                populate: ['merkmale', 'rollenartenWhitelist'],
                 limit,
                 offset,
                 orderBy: { kategorie: 'ASC' },
@@ -265,7 +279,7 @@ export class ServiceProviderRepo {
                 providedOnSchulstrukturknoten: { $in: organisationIds },
             },
             {
-                populate: ['merkmale'],
+                populate: ['merkmale', 'rollenartenWhitelist'],
             },
         );
 
@@ -289,7 +303,7 @@ export class ServiceProviderRepo {
                 merkmale: { merkmal: merkmal },
             },
             {
-                populate: ['merkmale'],
+                populate: ['merkmale', 'rollenartenWhitelist'],
                 limit,
                 offset,
                 orderBy: {
@@ -319,7 +333,7 @@ export class ServiceProviderRepo {
                       providedOnSchulstrukturknoten: { $in: permittedOrgas.orgaIds },
                   },
             {
-                populate: ['merkmale'],
+                populate: ['merkmale', 'rollenartenWhitelist'],
             },
         );
         return entity ? mapEntityToAggregate(entity) : entity;
@@ -334,7 +348,7 @@ export class ServiceProviderRepo {
                 ServiceProviderEntity,
                 { providedOnSchulstrukturknoten: { $in: organisationIds } },
                 {
-                    populate: ['merkmale'],
+                    populate: ['merkmale', 'rollenartenWhitelist'],
                     exclude,
                 },
             )
@@ -407,6 +421,7 @@ export class ServiceProviderRepo {
         const serviceProviderEntity: Loaded<ServiceProviderEntity> | null = await this.em.findOne(
             ServiceProviderEntity,
             serviceProvider.id,
+            { populate: ['merkmale', 'rollenartenWhitelist'] },
         );
 
         if (!serviceProviderEntity) {
@@ -446,7 +461,13 @@ export class ServiceProviderRepo {
                 },
             },
             {
-                populate: ['serviceProvider', 'serviceProvider.merkmale', 'rolle', 'rolle.personenKontexte'],
+                populate: [
+                    'serviceProvider',
+                    'serviceProvider.merkmale',
+                    'serviceProvider.rollenartenWhitelist',
+                    'rolle',
+                    'rolle.personenKontexte',
+                ],
             },
         );
 
@@ -465,7 +486,7 @@ export class ServiceProviderRepo {
     ): Promise<Result<void, EntityNotFoundError | MissingPermissionsError>> {
         const entity: ServiceProviderEntity | null = await this.em.findOne(ServiceProviderEntity, {
             id: serviceProviderId,
-        });
+        }, { populate: ['merkmale', 'rollenartenWhitelist'] });
         if (!entity) {
             return Err(new EntityNotFoundError('ServiceProvider', serviceProviderId));
         }

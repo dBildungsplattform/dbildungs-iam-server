@@ -48,8 +48,10 @@ describe('ServiceProviderFactory', () => {
                 example.requires2fa,
                 example.vidisAngebotId,
                 example.merkmale,
+                example.rollenartenWhitelist,
             );
             expectOkResult(serviceProvider);
+            expect(serviceProvider.value.rollenartenWhitelist).toEqual(example.rollenartenWhitelist);
         });
 
         it('should return an error for invalid logo combination', () => {
@@ -71,6 +73,7 @@ describe('ServiceProviderFactory', () => {
                 example.requires2fa,
                 example.vidisAngebotId,
                 example.merkmale,
+                example.rollenartenWhitelist,
             );
             expectErrResult(serviceProvider);
             expect(serviceProvider.error).toBeInstanceOf(InvalidLogoCombinationError);
@@ -100,8 +103,10 @@ describe('ServiceProviderFactory', () => {
                 example.requires2fa,
                 example.vidisAngebotId,
                 example.merkmale,
+                example.rollenartenWhitelist,
             );
             expectOkResult(serviceProvider);
+            expect(serviceProvider.value.rollenartenWhitelist).toEqual(example.rollenartenWhitelist);
         });
 
         it('should return an error for invalid logo combination', () => {
@@ -120,6 +125,7 @@ describe('ServiceProviderFactory', () => {
                 example.requires2fa,
                 example.vidisAngebotId,
                 example.merkmale,
+                example.rollenartenWhitelist,
             );
             expectErrResult(serviceProvider);
             expect(serviceProvider.error).toBeInstanceOf(InvalidLogoCombinationError);

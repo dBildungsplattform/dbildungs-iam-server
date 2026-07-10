@@ -15,6 +15,7 @@ import {
 import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -25,6 +26,7 @@ import {
 } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
+import { ServiceProviderRollenartWhitelistEntity } from './service-provider-rollenart-whitelist.entity.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
 import { ServiceProviderRepo } from './service-provider.repo.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
@@ -833,12 +835,19 @@ describe('ServiceProviderRepo', () => {
             });
 
             serviceProviderEntityMock.merkmale = {
-                map: () => [
-                    {
+                map: <T>(callback: (item: ServiceProviderMerkmalEntity) => T) => [
+                    callback({
                         merkmal: ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
-                    } as ServiceProviderMerkmalEntity,
+                    } as ServiceProviderMerkmalEntity),
                 ],
             } as unknown as Collection<ServiceProviderMerkmalEntity>;
+            serviceProviderEntityMock.rollenartenWhitelist = {
+                map: <T>(callback: (item: ServiceProviderRollenartWhitelistEntity) => T) => [
+                    callback({
+                        rollenart: RollenArt.LEHR,
+                    } as ServiceProviderRollenartWhitelistEntity),
+                ],
+            } as unknown as Collection<ServiceProviderRollenartWhitelistEntity>;
 
             const rolleServiceProviderEntityMock: RolleServiceProviderEntity = {
                 rolle: { id: roleId } as RolleEntity,
@@ -850,10 +859,19 @@ describe('ServiceProviderRepo', () => {
             const result: ServiceProvider<true>[] = await sut.fetchRolleServiceProvidersWithoutPerson(roleId);
 
             expect(result).toBeDefined();
+            expect(result[0]?.rollenartenWhitelist).toEqual([RollenArt.LEHR]);
             expect(em.find).toHaveBeenCalledWith(
                 RolleServiceProviderEntity,
                 { rolle: { id: roleId } },
-                { populate: ['serviceProvider', 'serviceProvider.merkmale', 'rolle', 'rolle.personenKontexte'] },
+                {
+                    populate: [
+                        'serviceProvider',
+                        'serviceProvider.merkmale',
+                        'serviceProvider.rollenartenWhitelist',
+                        'rolle',
+                        'rolle.personenKontexte',
+                    ],
+                },
             );
         });
     });

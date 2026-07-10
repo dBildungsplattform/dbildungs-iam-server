@@ -1,4 +1,5 @@
 import { assignSameKey } from '../../../shared/util/object-utils.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 import {
     ServiceProviderKategorie,
@@ -30,6 +31,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         public requires2fa: boolean,
         public vidisAngebotId: string | undefined,
         public merkmale: ServiceProviderMerkmal[],
+        public rollenartenWhitelist: RollenArt[],
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
@@ -50,6 +52,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         requires2fa: boolean,
         vidisAngebotId: string | undefined,
         merkmale: ServiceProviderMerkmal[],
+        rollenartenWhitelist: RollenArt[],
     ): ServiceProvider<WasPersisted> {
         return new ServiceProvider(
             id,
@@ -69,6 +72,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
             requires2fa,
             vidisAngebotId,
             merkmale,
+            rollenartenWhitelist,
         );
     }
 
@@ -87,6 +91,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         requires2fa: boolean,
         vidisAngebotId: string | undefined,
         merkmale: ServiceProviderMerkmal[],
+        rollenartenWhitelist: RollenArt[],
     ): ServiceProvider<false> {
         return new ServiceProvider(
             undefined,
@@ -106,6 +111,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
             requires2fa,
             vidisAngebotId,
             merkmale,
+            rollenartenWhitelist,
         );
     }
 
