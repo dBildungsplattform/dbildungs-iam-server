@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { xor } from 'lodash-es';
+import { difference, isEqual, xor } from 'lodash-es';
 
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -61,10 +61,9 @@ export class ServiceProviderModificationService {
             return permissionsResult;
         }
 
-        if (
-            !(await new NameUniqueAtOrgaSpecification(this.serviceProviderInternalRepo).isSatisfiedBy(serviceProvider))
-        ) {
-            return Err(new DuplicateNameError(`Duplicate name error: ${serviceProvider.name}`));
+        const duplicateNameError: Option<DuplicateNameError> = await this.validateUniqueName(serviceProvider);
+        if (duplicateNameError) {
+            return Err(duplicateNameError);
         }
 
         // Assign defaults if person only has partial system rights
@@ -74,6 +73,7 @@ export class ServiceProviderModificationService {
             if (updateError) {
                 return Err(updateError);
             }
+
             if (serviceProvider.rollenartenWhitelist.length > 0) {
                 return Err(new MissingPermissionsError('Insufficient permissions to set rollenartenWhitelist'));
             }
@@ -105,43 +105,37 @@ export class ServiceProviderModificationService {
             return Err(new EntityNotFoundError('ServiceProvider', serviceProvider.id));
         }
 
-        const frozenProperties: ServiceProviderUpdateParams = {
-            requires2fa: existingProvider.requires2fa,
-        };
-        if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
-            frozenProperties.kategorie = existingProvider.kategorie;
-            frozenProperties.merkmale = existingProvider.merkmale;
-            frozenProperties.rollenartenWhitelist = existingProvider.rollenartenWhitelist;
-        }
-        serviceProvider.update(frozenProperties);
-
-        if (
-            !(await new NameUniqueAtOrgaSpecification(this.serviceProviderInternalRepo).isSatisfiedBy(serviceProvider))
-        ) {
-            return Err(new DuplicateNameError(`Duplicate name error: ${serviceProvider.name}`, serviceProvider.id));
+        const frozenProperties: ServiceProviderUpdateParams = this.getFrozenProperties(
+            existingProvider,
+            permissionsResult.value,
+        );
+        const updateError: Option<InvalidLogoCombinationError> = serviceProvider.update(frozenProperties);
+        if (updateError) {
+            return Err(updateError);
         }
 
-        const hasRollenartenWhitelistChanged: boolean =
-            serviceProvider.rollenartenWhitelist.length !== existingProvider.rollenartenWhitelist.length ||
-            serviceProvider.rollenartenWhitelist.some(
-                (rollenart: RollenArt) => !existingProvider.rollenartenWhitelist.includes(rollenart),
-            );
+        const duplicateNameError: Option<DuplicateNameError> = await this.validateUniqueName(serviceProvider);
+        if (duplicateNameError) {
+            return Err(duplicateNameError);
+        }
 
-        const forbiddenRollenarten: RollenArt[] =
-            serviceProvider.rollenartenWhitelist.length === 0
-                ? []
-                : Object.values(RollenArt).filter(
-                      (rollenart: RollenArt) => !serviceProvider.rollenartenWhitelist.includes(rollenart),
-                  );
+        const {
+            hasRollenartenWhitelistChanged,
+            forbiddenRollenarten,
+        }: { hasRollenartenWhitelistChanged: boolean; forbiddenRollenarten: RollenArt[] } = this.getWhitelistChange(
+            existingProvider,
+            serviceProvider,
+        );
 
         if (hasRollenartenWhitelistChanged) {
             const rollenWithServiceProvider: Map<ServiceProviderID, Rolle<true>[]> =
                 await this.rolleRepo.findByServiceProviderIds([serviceProvider.id]);
+            const forbiddenRollenartenSet: Set<RollenArt> = new Set(forbiddenRollenarten);
             if (
                 rollenWithServiceProvider.has(serviceProvider.id) &&
                 rollenWithServiceProvider
                     .get(serviceProvider.id)!
-                    .some((rolle: Rolle<true>) => forbiddenRollenarten.includes(rolle.rollenart))
+                    .some((rolle: Rolle<true>) => forbiddenRollenartenSet.has(rolle.rollenart))
             ) {
                 return Err(
                     new AttachedRollenError(
@@ -166,5 +160,59 @@ export class ServiceProviderModificationService {
             await this.serviceProviderInternalRepo.persistAndFlush(serviceProvider);
 
         return Ok(persistedServiceProvider);
+    }
+
+    // TODO: move delete here
+
+    private async validateUniqueName(
+        serviceProvider: ServiceProvider<true> | ServiceProvider<false>,
+    ): Promise<Option<DuplicateNameError>> {
+        if (
+            !(await new NameUniqueAtOrgaSpecification(this.serviceProviderInternalRepo).isSatisfiedBy(serviceProvider))
+        ) {
+            return new DuplicateNameError(
+                `Duplicate name error: ${serviceProvider.name}`,
+                serviceProvider.id ?? undefined,
+            );
+        }
+
+        return;
+    }
+
+    private getFrozenProperties(
+        existingProvider: ServiceProvider<true>,
+        permission: ServiceProviderPropertyPermissions,
+    ): ServiceProviderUpdateParams {
+        const frozenProperties: ServiceProviderUpdateParams = {
+            requires2fa: existingProvider.requires2fa,
+        };
+
+        if (permission === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
+            frozenProperties.kategorie = existingProvider.kategorie;
+            frozenProperties.merkmale = existingProvider.merkmale;
+            frozenProperties.rollenartenWhitelist = existingProvider.rollenartenWhitelist;
+        }
+
+        return frozenProperties;
+    }
+
+    private getWhitelistChange(
+        existingProvider: ServiceProvider<true>,
+        serviceProvider: ServiceProvider<true>,
+    ): {
+        hasRollenartenWhitelistChanged: boolean;
+        forbiddenRollenarten: RollenArt[];
+    } {
+        const hasRollenartenWhitelistChanged: boolean = !isEqual(
+            existingProvider.rollenartenWhitelist,
+            serviceProvider.rollenartenWhitelist,
+        );
+
+        const forbiddenRollenarten: RollenArt[] =
+            serviceProvider.rollenartenWhitelist.length === 0
+                ? []
+                : difference(Object.values(RollenArt), serviceProvider.rollenartenWhitelist);
+
+        return { hasRollenartenWhitelistChanged, forbiddenRollenarten };
     }
 }
