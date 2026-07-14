@@ -53,12 +53,13 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
 import { CreateServiceProviderResponse } from './create-service-provider.response.js';
 import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
+import { ServiceProviderModificationService } from '../domain/service-provider-modification.service.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
     let serviceProviderFindServiceMock: DeepMocked<ServiceProviderFindService>;
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
-    let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
+    let serviceProviderModificationServiceMock: DeepMocked<ServiceProviderModificationService>;
     let serviceProviderFactoryMock: DeepMocked<ServiceProviderFactory>;
     let providerController: ProviderController;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
@@ -90,6 +91,8 @@ describe('Provider Controller Test', () => {
             .useValue(createMock(ServiceProviderFindService))
             .overrideProvider(ServiceProviderService)
             .useValue(createMock(ServiceProviderService))
+            .overrideProvider(ServiceProviderModificationService)
+            .useValue(createMock(ServiceProviderModificationService))
             .overrideProvider(ServiceProviderRepo)
             .useValue(createMock<ServiceProviderRepo>(ServiceProviderRepo))
             .overrideProvider(ServiceProviderFactory)
@@ -102,7 +105,9 @@ describe('Provider Controller Test', () => {
 
         serviceProviderFindServiceMock = module.get<DeepMocked<ServiceProviderFindService>>(ServiceProviderFindService);
         serviceProviderServiceMock = module.get<DeepMocked<ServiceProviderService>>(ServiceProviderService);
-        serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
+        serviceProviderModificationServiceMock = module.get<DeepMocked<ServiceProviderModificationService>>(
+            ServiceProviderModificationService,
+        );
         serviceProviderFactoryMock = module.get<DeepMocked<ServiceProviderFactory>>(ServiceProviderFactory);
         providerController = module.get(ProviderController);
         loggerMock = module.get<DeepMocked<ClassLogger>>(ClassLogger);
@@ -137,6 +142,7 @@ describe('Provider Controller Test', () => {
                 rollenerweiterungRepoMock,
                 rolleRepoMock,
                 organisationRepositoryMock,
+                createMock(ServiceProviderModificationService),
                 loggerMock,
             );
         });
@@ -749,7 +755,7 @@ describe('Provider Controller Test', () => {
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             serviceProviderFactoryMock.createNew.mockReturnValueOnce(Ok(createdDomainSp));
-            serviceProviderRepoMock.create.mockResolvedValueOnce(Ok(persistedSp));
+            serviceProviderModificationServiceMock.create.mockResolvedValueOnce(Ok(persistedSp));
 
             const result: CreateServiceProviderResponse = await providerController.createServiceProvider(
                 personPermissionsMock,
@@ -773,7 +779,10 @@ describe('Provider Controller Test', () => {
                 undefined,
                 body.merkmale,
             );
-            expect(serviceProviderRepoMock.create).toHaveBeenCalledWith(personPermissionsMock, createdDomainSp);
+            expect(serviceProviderModificationServiceMock.create).toHaveBeenCalledWith(
+                personPermissionsMock,
+                createdDomainSp,
+            );
             expect(result).toBeInstanceOf(CreateServiceProviderResponse);
         });
 
@@ -797,7 +806,7 @@ describe('Provider Controller Test', () => {
 
             personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             serviceProviderFactoryMock.createNew.mockReturnValueOnce(Ok(createdDomainSp));
-            serviceProviderRepoMock.create.mockResolvedValueOnce(Ok(persistedSp));
+            serviceProviderModificationServiceMock.create.mockResolvedValueOnce(Ok(persistedSp));
 
             const result: CreateServiceProviderResponse = await providerController.createServiceProvider(
                 personPermissionsMock,
@@ -821,7 +830,10 @@ describe('Provider Controller Test', () => {
                 undefined,
                 body.merkmale,
             );
-            expect(serviceProviderRepoMock.create).toHaveBeenCalledWith(personPermissionsMock, createdDomainSp);
+            expect(serviceProviderModificationServiceMock.create).toHaveBeenCalledWith(
+                personPermissionsMock,
+                createdDomainSp,
+            );
             expect(result).toBeInstanceOf(CreateServiceProviderResponse);
         });
 
@@ -847,7 +859,7 @@ describe('Provider Controller Test', () => {
             await expect(() =>
                 providerController.createServiceProvider(personPermissionsMock, body),
             ).rejects.toBeInstanceOf(InvalidLogoCombinationError);
-            expect(serviceProviderRepoMock.create).not.toHaveBeenCalled();
+            expect(serviceProviderModificationServiceMock.create).not.toHaveBeenCalled();
         });
 
         it('should throw error when repo returns error', async () => {
@@ -865,7 +877,9 @@ describe('Provider Controller Test', () => {
 
             const createdDomainSp: ServiceProvider<false> = DoFactory.createServiceProvider(false);
             serviceProviderFactoryMock.createNew.mockReturnValueOnce(Ok(createdDomainSp));
-            serviceProviderRepoMock.create.mockResolvedValueOnce(Err(new MissingPermissionsError('Error')));
+            serviceProviderModificationServiceMock.create.mockResolvedValueOnce(
+                Err(new MissingPermissionsError('Error')),
+            );
 
             await expect(() =>
                 providerController.createServiceProvider(personPermissionsMock, body),

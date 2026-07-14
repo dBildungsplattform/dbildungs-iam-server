@@ -101,9 +101,7 @@ export enum ServiceProviderPropertyPermissions {
 
 @Injectable()
 export class ServiceProviderRepo {
-    public constructor(
-        private readonly em: EntityManager,
-    ) {}
+    public constructor(private readonly em: EntityManager) {}
 
     public async findById(id: string, options?: ServiceProviderFindOptions): Promise<Option<ServiceProvider<true>>> {
         const exclude: readonly ['logo'] | undefined = options?.withLogo ? undefined : ['logo'];
@@ -347,7 +345,6 @@ export class ServiceProviderRepo {
         return mapEntityToAggregate(serviceProviderEntity);
     }
 
-
     public async fetchRolleServiceProvidersWithoutPerson(
         rolleId: RolleID | RolleID[],
     ): Promise<ServiceProvider<true>[]> {
@@ -382,9 +379,13 @@ export class ServiceProviderRepo {
         permissions: IPersonPermissions,
         serviceProviderId: ServiceProviderID,
     ): Promise<Result<void, EntityNotFoundError | MissingPermissionsError>> {
-        const entity: ServiceProviderEntity | null = await this.em.findOne(ServiceProviderEntity, {
-            id: serviceProviderId,
-        }, { populate: ['merkmale', 'rollenartenWhitelist'] });
+        const entity: ServiceProviderEntity | null = await this.em.findOne(
+            ServiceProviderEntity,
+            {
+                id: serviceProviderId,
+            },
+            { populate: ['merkmale', 'rollenartenWhitelist'] },
+        );
         if (!entity) {
             return Err(new EntityNotFoundError('ServiceProvider', serviceProviderId));
         }

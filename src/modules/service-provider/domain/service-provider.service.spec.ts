@@ -37,6 +37,7 @@ import {
 import { DomainError } from '../../../shared/error/index.js';
 import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 import { VidisServiceProviderImmutableError } from './errors/vidis-service-provider-immutable.error.js';
+import { ServiceProviderModificationService } from './service-provider-modification.service.js';
 
 // helper to mock output of some repos
 function getIdMap<T>(arr: Array<T & { id: string }>): Map<string, T> {
@@ -52,6 +53,7 @@ describe('ServiceProviderService', () => {
     let rolleRepo: DeepMocked<RolleRepo>;
     let rollenerweiterungRepo: DeepMocked<RollenerweiterungRepo>;
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
+    let serviceProviderModificationService: DeepMocked<ServiceProviderModificationService>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
 
     beforeEach(async () => {
@@ -62,6 +64,10 @@ describe('ServiceProviderService', () => {
                 { provide: RolleRepo, useValue: createMock(RolleRepo) },
                 { provide: RollenerweiterungRepo, useValue: createMock(RollenerweiterungRepo) },
                 { provide: ServiceProviderRepo, useValue: createMock(ServiceProviderRepo) },
+                {
+                    provide: ServiceProviderModificationService,
+                    useValue: createMock(ServiceProviderModificationService),
+                },
                 { provide: OrganisationRepository, useValue: createMock(OrganisationRepository) },
                 { provide: VidisApiAdapter, useValue: createMock(VidisApiAdapter) },
                 { provide: OrganisationServiceProviderRepo, useValue: createMock(OrganisationServiceProviderRepo) },
@@ -71,6 +77,9 @@ describe('ServiceProviderService', () => {
         rolleRepo = module.get<DeepMocked<RolleRepo>>(RolleRepo);
         rollenerweiterungRepo = module.get<DeepMocked<RollenerweiterungRepo>>(RollenerweiterungRepo);
         serviceProviderRepo = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
+        serviceProviderModificationService = module.get<DeepMocked<ServiceProviderModificationService>>(
+            ServiceProviderModificationService,
+        );
         organisationRepo = module.get<DeepMocked<OrganisationRepository>>(OrganisationRepository);
     });
 
@@ -747,7 +756,7 @@ describe('ServiceProviderService', () => {
                 logoId: faker.number.int({ min: 1, max: 1000 }),
             });
             serviceProviderRepo.findById.mockResolvedValue(existingServiceProvider);
-            serviceProviderRepo.update.mockResolvedValue(Ok(existingServiceProvider));
+            serviceProviderModificationService.update.mockResolvedValue(Ok(existingServiceProvider));
         });
 
         afterEach(() => {
@@ -770,7 +779,7 @@ describe('ServiceProviderService', () => {
             );
 
             expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId, { withLogo: true });
-            expect(serviceProviderRepo.update).toHaveBeenCalledWith(
+            expect(serviceProviderModificationService.update).toHaveBeenCalledWith(
                 permissions,
                 expect.objectContaining({
                     name: updateData.name,
@@ -802,7 +811,7 @@ describe('ServiceProviderService', () => {
                 expectOkResult(result);
 
                 expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId, { withLogo: true });
-                expect(serviceProviderRepo.update).toHaveBeenCalledWith(
+                expect(serviceProviderModificationService.update).toHaveBeenCalledWith(
                     permissions,
                     expect.objectContaining({
                         ...existingServiceProvider,
@@ -826,7 +835,7 @@ describe('ServiceProviderService', () => {
             expectErrResult(updateResult);
             expect(updateResult.error).toBeInstanceOf(EntityNotFoundError);
 
-            expect(serviceProviderRepo.update).not.toHaveBeenCalled();
+            expect(serviceProviderModificationService.update).not.toHaveBeenCalled();
         });
 
         it('should return error if logo and logoId are both provided', async () => {
@@ -843,7 +852,7 @@ describe('ServiceProviderService', () => {
             expectErrResult(updateResult);
             expect(updateResult.error).toBeInstanceOf(InvalidLogoCombinationError);
 
-            expect(serviceProviderRepo.update).not.toHaveBeenCalled();
+            expect(serviceProviderModificationService.update).not.toHaveBeenCalled();
         });
 
         it('should reject updates for VIDIS-linked service providers', async () => {
@@ -860,7 +869,7 @@ describe('ServiceProviderService', () => {
 
             expectErrResult(result);
             expect(result.error).toBeInstanceOf(VidisServiceProviderImmutableError);
-            expect(serviceProviderRepo.update).not.toHaveBeenCalled();
+            expect(serviceProviderModificationService.update).not.toHaveBeenCalled();
         });
     });
 

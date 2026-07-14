@@ -13,6 +13,11 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
 import { NameUniqueAtOrgaSpecification } from '../specification/name-unique-at-orga.specification.js';
 import { ServiceProviderInternalRepo } from '../repo/service-provider.internal.repo.js';
+import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { AttachedRollenError } from './errors/attached-rollen.error.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 
 /**
  * Used when person doesn't have full rights to create/update serviceprovider.
@@ -34,9 +39,11 @@ export class ServiceProviderModificationService {
     public constructor(
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderInternalRepo: ServiceProviderInternalRepo,
+        private readonly rolleRepo: RolleRepo,
+        private readonly rollenerweiterungRepo: RollenerweiterungRepo,
     ) {}
 
-public async create(
+    public async create(
         permissions: IPersonPermissions,
         serviceProvider: ServiceProvider<false>,
     ): Promise<Result<ServiceProvider<true>, DomainError>> {
@@ -63,11 +70,18 @@ public async create(
                     key,
                 );
             }
-            if(serviceProvider.rollenartenWhitelist.length > 0){
+            if (serviceProvider.rollenartenWhitelist.length > 0) {
                 return Err(new MissingPermissionsError('Insufficient permissions to set rollenartenWhitelist'));
             }
-            if(serviceProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG) || serviceProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG)){
-                return Err(new MissingPermissionsError('Insufficient permissions to set merkmale ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG || ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG'));
+            if (
+                serviceProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG) ||
+                serviceProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG)
+            ) {
+                return Err(
+                    new MissingPermissionsError(
+                        'Insufficient permissions to set merkmale ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG || ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG',
+                    ),
+                );
             }
         }
 
@@ -89,7 +103,9 @@ public async create(
             return permissionsResult;
         }
 
-        const existingProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(serviceProvider.id);
+        const existingProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
+            serviceProvider.id,
+        );
 
         if (!existingProvider) {
             return Err(new EntityNotFoundError('ServiceProvider', serviceProvider.id));
@@ -102,32 +118,24 @@ public async create(
         }
 
         const hasRollenartenWhitelistChanged: boolean =
-                serviceProvider.rollenartenWhitelist.length !== existingProvider.rollenartenWhitelist.length ||
-                serviceProvider.rollenartenWhitelist.some(
-                    (rollenart: RollenArt) => !existingProvider.rollenartenWhitelist.includes(rollenart),
-                );
+            serviceProvider.rollenartenWhitelist.length !== existingProvider.rollenartenWhitelist.length ||
+            serviceProvider.rollenartenWhitelist.some(
+                (rollenart: RollenArt) => !existingProvider.rollenartenWhitelist.includes(rollenart),
+            );
 
         // Use some existing values if person only has partial system rights
         if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
             const hasSchulischeAngebotsverwaltungMerkmalChanged: boolean =
-                serviceProvider.merkmale.includes(
-                    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
-                ) !==  existingProvider.merkmale.includes(
-                    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
-                );
+                serviceProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG) !==
+                existingProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG);
             const hasSchulischeRollenverwaltungMerkmalChanged: boolean =
-                serviceProvider.merkmale.includes(
-                    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG,
-                ) !==  existingProvider.merkmale.includes(
-                    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG,
-                );
+                serviceProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG) !==
+                existingProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG);
 
             if (hasRollenartenWhitelistChanged) {
                 return Err(new MissingPermissionsError('Insufficient permissions to set rollenartenWhitelist'));
             }
-            if (
-                hasSchulischeAngebotsverwaltungMerkmalChanged || hasSchulischeRollenverwaltungMerkmalChanged
-            ) {
+            if (hasSchulischeAngebotsverwaltungMerkmalChanged || hasSchulischeRollenverwaltungMerkmalChanged) {
                 return Err(
                     new MissingPermissionsError(
                         'Insufficient permissions to set merkmale ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG || ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG',
@@ -138,6 +146,41 @@ public async create(
             for (const key of objectKeys(SP_EINGESCHRAENKT_DEFAULTS)) {
                 assignSameKey(serviceProvider, existingProvider, key);
             }
+        }
+
+        const forbiddenRollenarten: RollenArt[] =
+            serviceProvider.rollenartenWhitelist.length === 0
+                ? []
+                : Object.values(RollenArt).filter(
+                      (rollenart: RollenArt) => !serviceProvider.rollenartenWhitelist.includes(rollenart),
+                  );
+
+        if (hasRollenartenWhitelistChanged) {
+            const rollenWithServiceProvider: Map<ServiceProviderID, Rolle<true>[]> =
+                await this.rolleRepo.findByServiceProviderIds([serviceProvider.id]);
+            if (
+                rollenWithServiceProvider.has(serviceProvider.id) &&
+                rollenWithServiceProvider
+                    .get(serviceProvider.id)!
+                    .some((rolle: Rolle<true>) => forbiddenRollenarten.includes(rolle.rollenart))
+            ) {
+                return Err(
+                    new AttachedRollenError(
+                        'Cannot update rollenartenWhitelist with conflicting rollenarten to attached to rollen',
+                        serviceProvider.id,
+                    ),
+                );
+            }
+        }
+
+        const hasVerfuegbarFuerRollenerweiterungMerkmalBeenRemoved: boolean =
+            !serviceProvider.merkmale.includes(ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG) &&
+            existingProvider.merkmale.includes(ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG);
+        if (hasRollenartenWhitelistChanged || hasVerfuegbarFuerRollenerweiterungMerkmalBeenRemoved) {
+            await this.rollenerweiterungRepo.deleteByServiceProviderIdAndRollenarten(
+                serviceProvider.id,
+                hasVerfuegbarFuerRollenerweiterungMerkmalBeenRemoved ? undefined : forbiddenRollenarten,
+            );
         }
 
         const persistedServiceProvider: ServiceProvider<true> =

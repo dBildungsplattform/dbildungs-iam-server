@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/postgresql';
 import { Test, TestingModule } from '@nestjs/testing';
+import { DeepMocked } from '../../../../test/utils/createMock.js';
 import {
     ConfigTestModule,
     createPersonPermissionsMock,
@@ -12,17 +13,23 @@ import {
     LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
-import { DeepMocked } from '../../../../test/utils/createMock.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { RolleModule } from '../../rolle/rolle.module.js';
 import { ServiceProviderInternalRepo } from '../repo/service-provider.internal.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
-import { ServiceProviderKategorie, ServiceProviderMerkmal } from './service-provider.enum.js';
+import { AttachedRollenError } from './errors/attached-rollen.error.js';
 import { ServiceProviderModificationService } from './service-provider-modification.service.js';
+import { ServiceProviderKategorie, ServiceProviderMerkmal } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 
 describe('ServiceProviderModificationService', () => {
@@ -32,15 +39,25 @@ describe('ServiceProviderModificationService', () => {
     let orm: MikroORM;
     let em: EntityManager;
 
+    let rolleRepo: RolleRepo;
+    let rollenerweiterungRepo: RollenerweiterungRepo;
+
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), LoggingTestModule],
+            imports: [
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                LoggingTestModule,
+                RolleModule,
+            ],
             providers: [ServiceProviderModificationService, ServiceProviderRepo, ServiceProviderInternalRepo],
         }).compile();
 
         sut = module.get(ServiceProviderModificationService);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
+        rolleRepo = module.get(RolleRepo);
+        rollenerweiterungRepo = module.get(RollenerweiterungRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -253,6 +270,97 @@ describe('ServiceProviderModificationService', () => {
             expect(updateResult.value.rollenartenWhitelist).toEqual(rollenartenWhitelist);
         });
 
+        it('should delete rollenerweiterungen if rollenartenWhitelist was changed', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            await em
+                .persist(
+                    em.create(OrganisationEntity, {
+                        ...orga,
+                        emailAdress: undefined,
+                    }),
+                )
+                .flush();
+            const rollenartenWhitelist: RollenArt[] = [RollenArt.LEHR];
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                rollenartenWhitelist,
+            });
+            const rolle: Rolle<true> = await rolleRepo.create(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: orga.id,
+                    rollenart: rollenartenWhitelist[0],
+                }),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    organisationId: orga.id,
+                    rolleId: rolle.id,
+                    serviceProviderId: serviceProvider.id,
+                }),
+            );
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            serviceProvider.rollenartenWhitelist = [RollenArt.SYSADMIN];
+            const updateResult: Result<ServiceProvider<true>, DomainError> = await sut.update(
+                permissionsMock,
+                serviceProvider,
+            );
+            expectOkResult(updateResult);
+            const erweiterungExists: boolean = await rollenerweiterungRepo.exists({
+                organisationId: orga.id,
+                rolleId: rolle.id,
+                serviceProviderId: serviceProvider.id,
+            });
+            expect(erweiterungExists).toBe(false);
+        });
+
+        it('should delete rollenerweiterungen if verfuegbarFuerRollenerweiterung was set to false', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            await em
+                .persist(
+                    em.create(OrganisationEntity, {
+                        ...orga,
+                        emailAdress: undefined,
+                    }),
+                )
+                .flush();
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+            const rolle: Rolle<true> = await rolleRepo.create(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: orga.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    organisationId: orga.id,
+                    rolleId: rolle.id,
+                    serviceProviderId: serviceProvider.id,
+                }),
+            );
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            serviceProvider.merkmale = [];
+            const updateResult: Result<ServiceProvider<true>, DomainError> = await sut.update(
+                permissionsMock,
+                serviceProvider,
+            );
+            expectOkResult(updateResult);
+            const erweiterungExists: boolean = await rollenerweiterungRepo.exists({
+                organisationId: orga.id,
+                rolleId: rolle.id,
+                serviceProviderId: serviceProvider.id,
+            });
+            expect(erweiterungExists).toBe(false);
+        });
+
         it('should return error if rollenartenWhitelist was changed and person has limited permissions', async () => {
             const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
                 rollenartenWhitelist: [RollenArt.LEHR],
@@ -271,6 +379,43 @@ describe('ServiceProviderModificationService', () => {
 
             expectErrResult(updateResult);
             expect(updateResult.error).toBeInstanceOf(MissingPermissionsError);
+        });
+
+        it('should return error if rollenartenWhitelist was changed and and rolle with different rollenart and attached provider exists', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            await em
+                .persist(
+                    em.create(OrganisationEntity, {
+                        ...orga,
+                        emailAdress: undefined,
+                    }),
+                )
+                .flush();
+            const rollenartenWhitelist: RollenArt[] = [RollenArt.LEHR];
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                rollenartenWhitelist,
+            });
+            await rolleRepo.create(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: orga.id,
+                    rollenart: rollenartenWhitelist[0],
+                    serviceProviderIds: [serviceProvider.id],
+                }),
+            );
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            serviceProvider.rollenartenWhitelist = [RollenArt.LERN];
+
+            const updateResult: Result<ServiceProvider<true>, DomainError> = await sut.update(
+                permissionsMock,
+                serviceProvider,
+            );
+
+            expectErrResult(updateResult);
+            expect(updateResult.error).toBeInstanceOf(AttachedRollenError);
         });
 
         it('should return error if restricted merkmale were changed and person has limited permissions', async () => {

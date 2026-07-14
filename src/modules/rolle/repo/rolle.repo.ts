@@ -533,7 +533,7 @@ export class RolleRepo {
                 'serviceProvider.serviceProvider.rollenartenWhitelist',
             ] as const,
             {
-            exclude: ['serviceProvider.serviceProvider.logo'] as const,
+                exclude: ['serviceProvider.serviceProvider.logo'] as const,
             },
         );
 

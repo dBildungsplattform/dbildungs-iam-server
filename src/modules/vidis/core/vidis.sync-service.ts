@@ -279,7 +279,10 @@ export class VidisSyncService {
         );
 
         const syncOperations: Promise<unknown>[] = missingAngeboteInDb.map((angebot: VidisApiResponseAngebotBySchool) =>
-            this.serviceProviderModificationService.create(permissions, this.createVidisServiceProvider(organisationId, angebot)),
+            this.serviceProviderModificationService.create(
+                permissions,
+                this.createVidisServiceProvider(organisationId, angebot),
+            ),
         );
 
         if (serviceProviderIdsMissingInVidis.length > 0) {
@@ -369,7 +372,7 @@ export class VidisSyncService {
             false,
             angebot.offerId.toString(),
             VidisSyncService.DEFAULT_VIDIS_SERVICE_PROVIDER_MERKMALE,
-            []
+            [],
         );
     }
 

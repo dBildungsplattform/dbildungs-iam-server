@@ -28,11 +28,11 @@ export class ServiceProviderInternalRepo {
         const serviceProviderEntity: ServiceProviderEntity =
             serviceProvider.id === undefined
                 ? this.em.create(ServiceProviderEntity, mapAggregateToData(serviceProvider))
-                : (await this.em.findOneOrFail(
+                : await this.em.findOneOrFail(
                       ServiceProviderEntity,
                       { id: serviceProvider.id },
                       { populate: ['merkmale', 'rollenartenWhitelist'] },
-                  ));
+                  );
 
         if (serviceProvider.id !== undefined) {
             serviceProviderEntity.assign(mapAggregateToData(serviceProvider));
