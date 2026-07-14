@@ -54,6 +54,7 @@ import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combi
 import { CreateServiceProviderResponse } from './create-service-provider.response.js';
 import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
 import { ServiceProviderModificationService } from '../domain/service-provider-modification.service.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
@@ -747,6 +748,7 @@ describe('Provider Controller Test', () => {
                 requires2fa: false,
                 vidisAngebotId: undefined,
                 merkmale: [],
+                rollenartenWhitelist: [RollenArt.LEHR],
                 organisationId: faker.string.uuid(),
             });
 
@@ -778,6 +780,7 @@ describe('Provider Controller Test', () => {
                 body.requires2fa,
                 undefined,
                 body.merkmale,
+                body.rollenartenWhitelist,
             );
             expect(serviceProviderModificationServiceMock.create).toHaveBeenCalledWith(
                 personPermissionsMock,
@@ -829,6 +832,7 @@ describe('Provider Controller Test', () => {
                 body.requires2fa,
                 undefined,
                 body.merkmale,
+                [],
             );
             expect(serviceProviderModificationServiceMock.create).toHaveBeenCalledWith(
                 personPermissionsMock,

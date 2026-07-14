@@ -409,7 +409,7 @@ export class ProviderController {
             body.requires2fa,
             undefined, // vidisAngebotId
             body.merkmale,
-            [],
+            body.rollenartenWhitelist ?? [],
         );
         if (!serviceProvider.ok) {
             throw serviceProvider.error;
