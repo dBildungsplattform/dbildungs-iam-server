@@ -1,0 +1,27 @@
+########################################
+# SPSH application code → Dev required
+########################################
+/src/                   @dBildungsplattform/schulportal-sh
+/test/                  @dBildungsplattform/schulportal-sh
+/keycloak/              @dBildungsplattform/schulportal-sh
+/keycloak-migrations/   @dBildungsplattform/schulportal-sh
+/migrations/            @dBildungsplattform/schulportal-sh
+/seeding/               @dBildungsplattform/schulportal-sh
+
+/package.json           @dBildungsplattform/schulportal-sh
+/package-lock.json      @dBildungsplattform/schulportal-sh
+/nest-cli.json          @dBildungsplattform/schulportal-sh
+/tsconfig.json          @dBildungsplattform/schulportal-sh
+/tsconfig.build.json    @dBildungsplattform/schulportal-sh
+/eslint.config.ts       @dBildungsplattform/schulportal-sh
+/vite.config.ts         @dBildungsplattform/schulportal-sh
+/nginx/                 @dBildungsplattform/schulportal-sh
+/Dockerfile             @dBildungsplattform/schulportal-sh
+/compose.yaml           @dBildungsplattform/schulportal-sh
+/docker-bootstrap.sh    @dBildungsplattform/schulportal-sh
+
+########################################
+# Helm / Deployment → SRE required
+########################################
+/charts/                @dBildungsplattform/sre-team
+/.github/workflows/     @dBildungsplattform/sre-team
