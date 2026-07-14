@@ -1,5 +1,5 @@
 ########################################
-# SPSH application code → Dev required
+# SPSH application code
 ########################################
 /src/                   @dBildungsplattform/schulportal-sh
 /test/                  @dBildungsplattform/schulportal-sh
@@ -21,7 +21,7 @@
 /docker-bootstrap.sh    @dBildungsplattform/schulportal-sh
 
 ########################################
-# Helm / Deployment → SRE required
+# Helm / CI/CD Pipelines
 ########################################
 /charts/                @dBildungsplattform/sre-team
 /.github/workflows/     @dBildungsplattform/sre-team
