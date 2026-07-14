@@ -136,6 +136,8 @@ describe('ServiceProviderModificationService', () => {
             expect(createResult.value.merkmale).toEqual([
                 ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
                 ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
+                ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
+                ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG,
             ]);
             expect(createResult.value.requires2fa).toBe(false);
             expect(createResult.value.kategorie).toBe(ServiceProviderKategorie.SCHULISCH);
@@ -361,7 +363,7 @@ describe('ServiceProviderModificationService', () => {
             expect(erweiterungExists).toBe(false);
         });
 
-        it('should return error if rollenartenWhitelist was changed and person has limited permissions', async () => {
+        it('should auto-revert rollenartenWhitelist changes if person has limited permissions', async () => {
             const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
                 rollenartenWhitelist: [RollenArt.LEHR],
             });
@@ -377,8 +379,8 @@ describe('ServiceProviderModificationService', () => {
                 serviceProvider,
             );
 
-            expectErrResult(updateResult);
-            expect(updateResult.error).toBeInstanceOf(MissingPermissionsError);
+            expectOkResult(updateResult);
+            expect(updateResult.value.rollenartenWhitelist).toEqual([RollenArt.LEHR]);
         });
 
         it('should return error if rollenartenWhitelist was changed and and rolle with different rollenart and attached provider exists', async () => {
@@ -418,7 +420,7 @@ describe('ServiceProviderModificationService', () => {
             expect(updateResult.error).toBeInstanceOf(AttachedRollenError);
         });
 
-        it('should return error if restricted merkmale were changed and person has limited permissions', async () => {
+        it('should auto-revert restricted merkmale changes if person has limited permissions', async () => {
             const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
                 merkmale: [
                     ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
@@ -437,8 +439,11 @@ describe('ServiceProviderModificationService', () => {
                 serviceProvider,
             );
 
-            expectErrResult(updateResult);
-            expect(updateResult.error).toBeInstanceOf(MissingPermissionsError);
+            expectOkResult(updateResult);
+            expect(updateResult.value.merkmale).toEqual([
+                ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
+                ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
+            ]);
         });
 
         it('return error if person is missing permissions', async () => {

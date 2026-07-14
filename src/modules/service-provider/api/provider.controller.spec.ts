@@ -1,66 +1,67 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Client } from 'openid-client';
+import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { MissingAttributeError } from '../../../shared/error/index.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { ServiceProvider } from '../domain/service-provider.js';
+import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
 import { ServiceProviderFindService } from '../domain/service-provider-find.service.js';
+import { ServiceProviderModificationService } from '../domain/service-provider-modification.service.js';
+import {
+    ServiceProviderKategorie,
+    ServiceProviderSystem,
+    ServiceProviderTarget,
+} from '../domain/service-provider.enum.js';
+import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
+import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
-import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
-import { ServiceProviderApiModule } from '../service-provider-api.module.js';
-import { ProviderController } from './provider.controller.js';
-import { ServiceProviderResponse } from './service-provider.response.js';
-import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
 import {
     ManageableServiceProviderWithReferencedObjects,
     ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount,
 } from '../domain/types.js';
-import { RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
-import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
-import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
-import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
-import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
-import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
+import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
+import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
-import {
-    ServiceProviderTarget,
-    ServiceProviderKategorie,
-    ServiceProviderSystem,
-} from '../domain/service-provider.enum.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
-import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
-import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweiterung-by-service-provider-id.pathparams.js';
-import { Err, Ok } from '../../../shared/util/result.js';
-import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
-import { MissingAttributeError } from '../../../shared/error/index.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
 import { CreateServiceProviderResponse } from './create-service-provider.response.js';
+import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
-import { ServiceProviderModificationService } from '../domain/service-provider-modification.service.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
+import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
+import { ProviderController } from './provider.controller.js';
+import { RollenerweiterungByServiceProvidersIdPathParams } from './rollenerweiterung-by-service-provider-id.pathparams.js';
+import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweiterung-by-service-provider-id.queryparams.js';
+import { ServiceProviderResponse } from './service-provider.response.js';
+import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
     let serviceProviderFindServiceMock: DeepMocked<ServiceProviderFindService>;
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
     let serviceProviderModificationServiceMock: DeepMocked<ServiceProviderModificationService>;
+    let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let serviceProviderFactoryMock: DeepMocked<ServiceProviderFactory>;
     let providerController: ProviderController;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
@@ -109,6 +110,7 @@ describe('Provider Controller Test', () => {
         serviceProviderModificationServiceMock = module.get<DeepMocked<ServiceProviderModificationService>>(
             ServiceProviderModificationService,
         );
+        serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         serviceProviderFactoryMock = module.get<DeepMocked<ServiceProviderFactory>>(ServiceProviderFactory);
         providerController = module.get(ProviderController);
         loggerMock = module.get<DeepMocked<ClassLogger>>(ClassLogger);
@@ -906,9 +908,20 @@ describe('Provider Controller Test', () => {
                 url: faker.internet.url(),
             });
 
-            const updatedEntity: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+            const existingEntity: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                logo: undefined,
+                logoMimeType: undefined,
+            });
+            const updatedEntity: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                ...existingEntity,
+                ...{
+                    name: body.name,
+                    url: body.url,
+                },
+            });
 
-            serviceProviderServiceMock.updateServiceProvider.mockResolvedValueOnce(Ok(updatedEntity));
+            serviceProviderRepoMock.findById.mockResolvedValueOnce(existingEntity);
+            serviceProviderModificationServiceMock.update.mockResolvedValueOnce(Ok(updatedEntity));
 
             const result: ServiceProviderResponse = await providerController.updateServiceProvider(
                 permissions,
@@ -916,7 +929,15 @@ describe('Provider Controller Test', () => {
                 body,
             );
 
-            expect(serviceProviderServiceMock.updateServiceProvider).toHaveBeenCalledWith(permissions, angebotId, body);
+            expect(serviceProviderRepoMock.findById).toHaveBeenCalledWith(angebotId, { withLogo: true });
+            expect(serviceProviderModificationServiceMock.update).toHaveBeenCalledWith(
+                permissions,
+                expect.objectContaining({
+                    id: existingEntity.id,
+                    name: body.name,
+                    url: body.url,
+                }),
+            );
 
             expect(result).toBeDefined();
             expect(result).toBeInstanceOf(ServiceProviderResponse);
@@ -926,11 +947,17 @@ describe('Provider Controller Test', () => {
             );
         });
 
-        it('should throw the error when service returns Err', async () => {
+        it('should throw the error when modification service returns Err', async () => {
             const body: UpdateServiceProviderBodyParams = { name: 'Invalid' };
             const error: MissingAttributeError = new MissingAttributeError('Missing attribute');
 
-            serviceProviderServiceMock.updateServiceProvider.mockResolvedValueOnce(Err(error));
+            const existingEntity: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                logo: undefined,
+                logoMimeType: undefined,
+            });
+
+            serviceProviderRepoMock.findById.mockResolvedValueOnce(existingEntity);
+            serviceProviderModificationServiceMock.update.mockResolvedValueOnce(Err(error));
 
             await expect(providerController.updateServiceProvider(permissions, angebotId, body)).rejects.toThrow(
                 MissingAttributeError,

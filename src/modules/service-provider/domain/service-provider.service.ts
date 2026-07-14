@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { uniq } from 'lodash-es';
 import { FeatureFlagConfig } from '../../../shared/config/featureflag.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
@@ -17,7 +16,6 @@ import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
-import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AttachedRollenError } from './errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
@@ -30,8 +28,6 @@ import {
     ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
-import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
-import { ServiceProviderModificationService } from './service-provider-modification.service.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -40,7 +36,6 @@ export class ServiceProviderService {
     public constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
-        private readonly serviceProviderModificationService: ServiceProviderModificationService,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly organisationRepo: OrganisationRepository,
         configService: ConfigService<ServerConfig>,
@@ -353,40 +348,6 @@ export class ServiceProviderService {
             organisation: organisationen.get(rollenerweiterung.organisationId)!,
             rolle: rollen.get(rollenerweiterung.rolleId)!,
         }));
-    }
-
-    public async updateServiceProvider(
-        permissions: IPersonPermissions,
-        angebotId: ServiceProviderID,
-        updateServiceProviderBodyParams: UpdateServiceProviderBodyParams,
-    ): Promise<Result<ServiceProvider<true>, DomainError>> {
-        const existingServiceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
-            angebotId,
-            { withLogo: true },
-        );
-        if (!existingServiceProvider) {
-            return Err(new EntityNotFoundError());
-        }
-
-        if (existingServiceProvider.vidisAngebotId) {
-            return Err(
-                new VidisServiceProviderImmutableError(
-                    'ServiceProvider linked to VIDIS cannot be updated or deleted',
-                    existingServiceProvider.id,
-                ),
-            );
-        }
-
-        const updateError: Option<InvalidLogoCombinationError> = existingServiceProvider.updateWithSafeFields(
-            updateServiceProviderBodyParams,
-        );
-        if (updateError) {
-            return Err(updateError);
-        }
-
-        const updatedServiceProvider: Promise<Result<ServiceProvider<true>, DomainError>> =
-            this.serviceProviderModificationService.update(permissions, existingServiceProvider);
-        return updatedServiceProvider;
     }
 
     public async deleteByIdAuthorized(

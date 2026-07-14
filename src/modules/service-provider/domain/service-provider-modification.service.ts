@@ -1,33 +1,39 @@
 import { Injectable } from '@nestjs/common';
+import { xor } from 'lodash-es';
 
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { ServiceProviderPropertyPermissions, ServiceProviderRepo } from '../repo/service-provider.repo.js';
-import { ServiceProvider } from './service-provider.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { Err, Ok } from '../../../shared/util/result.js';
-import { ServiceProviderKategorie, ServiceProviderMerkmal } from './service-provider.enum.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { objectKeys, assignSameKey } from '../../../shared/util/object-utils.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
-import { NameUniqueAtOrgaSpecification } from '../specification/name-unique-at-orga.specification.js';
-import { ServiceProviderInternalRepo } from '../repo/service-provider.internal.repo.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { AttachedRollenError } from './errors/attached-rollen.error.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { ServiceProviderInternalRepo } from '../repo/service-provider.internal.repo.js';
+import { ServiceProviderPropertyPermissions, ServiceProviderRepo } from '../repo/service-provider.repo.js';
+import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
+import { NameUniqueAtOrgaSpecification } from '../specification/name-unique-at-orga.specification.js';
+import { AttachedRollenError } from './errors/attached-rollen.error.js';
+import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
+import { ServiceProviderKategorie, ServiceProviderMerkmal } from './service-provider.enum.js';
+import { ServiceProvider, ServiceProviderUpdateParams } from './service-provider.js';
 
 /**
  * Used when person doesn't have full rights to create/update serviceprovider.
  * - Use these values as default, when creating service providers
  * - Use the keys to copy values of existing service provider, when updating
  */
-const SP_EINGESCHRAENKT_DEFAULTS: Partial<ServiceProvider<true>> = {
+const SP_EINGESCHRAENKT_DEFAULTS: Pick<
+    ServiceProvider<true>,
+    'merkmale' | 'rollenartenWhitelist' | 'requires2fa' | 'kategorie'
+> = {
     merkmale: [
         ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
         ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
+        ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
+        ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG,
     ],
     rollenartenWhitelist: [],
     requires2fa: false,
@@ -63,25 +69,16 @@ export class ServiceProviderModificationService {
 
         // Assign defaults if person only has partial system rights
         if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
-            for (const key of objectKeys(SP_EINGESCHRAENKT_DEFAULTS)) {
-                assignSameKey<Partial<ServiceProvider<false>>, keyof Partial<ServiceProvider<false>>>(
-                    serviceProvider,
-                    SP_EINGESCHRAENKT_DEFAULTS,
-                    key,
-                );
+            const updateError: Option<InvalidLogoCombinationError> = serviceProvider.update(SP_EINGESCHRAENKT_DEFAULTS);
+
+            if (updateError) {
+                return Err(updateError);
             }
             if (serviceProvider.rollenartenWhitelist.length > 0) {
                 return Err(new MissingPermissionsError('Insufficient permissions to set rollenartenWhitelist'));
             }
-            if (
-                serviceProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG) ||
-                serviceProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG)
-            ) {
-                return Err(
-                    new MissingPermissionsError(
-                        'Insufficient permissions to set merkmale ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG || ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG',
-                    ),
-                );
+            if (xor(serviceProvider.merkmale, SP_EINGESCHRAENKT_DEFAULTS.merkmale).length > 0) {
+                return Err(new MissingPermissionsError('Insufficient permissions to set merkmale'));
             }
         }
 
@@ -97,8 +94,6 @@ export class ServiceProviderModificationService {
     ): Promise<Result<ServiceProvider<true>, DomainError>> {
         const permissionsResult: Result<ServiceProviderPropertyPermissions, DomainError> =
             await this.serviceProviderRepo.getPermissionsForServiceProvider(permissions, serviceProvider);
-
-        // Not allowed to modify this serviceprovider
         if (!permissionsResult.ok) {
             return permissionsResult;
         }
@@ -106,10 +101,19 @@ export class ServiceProviderModificationService {
         const existingProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
             serviceProvider.id,
         );
-
         if (!existingProvider) {
             return Err(new EntityNotFoundError('ServiceProvider', serviceProvider.id));
         }
+
+        const frozenProperties: ServiceProviderUpdateParams = {
+            requires2fa: existingProvider.requires2fa,
+        };
+        if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
+            frozenProperties.kategorie = existingProvider.kategorie;
+            frozenProperties.merkmale = existingProvider.merkmale;
+            frozenProperties.rollenartenWhitelist = existingProvider.rollenartenWhitelist;
+        }
+        serviceProvider.update(frozenProperties);
 
         if (
             !(await new NameUniqueAtOrgaSpecification(this.serviceProviderInternalRepo).isSatisfiedBy(serviceProvider))
@@ -122,31 +126,6 @@ export class ServiceProviderModificationService {
             serviceProvider.rollenartenWhitelist.some(
                 (rollenart: RollenArt) => !existingProvider.rollenartenWhitelist.includes(rollenart),
             );
-
-        // Use some existing values if person only has partial system rights
-        if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
-            const hasSchulischeAngebotsverwaltungMerkmalChanged: boolean =
-                serviceProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG) !==
-                existingProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG);
-            const hasSchulischeRollenverwaltungMerkmalChanged: boolean =
-                serviceProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG) !==
-                existingProvider.merkmale.includes(ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG);
-
-            if (hasRollenartenWhitelistChanged) {
-                return Err(new MissingPermissionsError('Insufficient permissions to set rollenartenWhitelist'));
-            }
-            if (hasSchulischeAngebotsverwaltungMerkmalChanged || hasSchulischeRollenverwaltungMerkmalChanged) {
-                return Err(
-                    new MissingPermissionsError(
-                        'Insufficient permissions to set merkmale ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG || ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG',
-                    ),
-                );
-            }
-
-            for (const key of objectKeys(SP_EINGESCHRAENKT_DEFAULTS)) {
-                assignSameKey(serviceProvider, existingProvider, key);
-            }
-        }
 
         const forbiddenRollenarten: RollenArt[] =
             serviceProvider.rollenartenWhitelist.length === 0

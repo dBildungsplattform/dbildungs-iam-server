@@ -20,13 +20,14 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { VidisApiAdapter } from '../../vidis/adapter/domain/vidis-api.adapter.js';
-import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderError } from '../specification/error/service-provider.error.js';
 import { AttachedRollenError } from './errors/attached-rollen.error.js';
 import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
-import { ServiceProviderKategorie, ServiceProviderMerkmal } from './service-provider.enum.js';
+import { VidisServiceProviderImmutableError } from './errors/vidis-service-provider-immutable.error.js';
+import { ServiceProviderModificationService } from './service-provider-modification.service.js';
+import { ServiceProviderMerkmal } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import { ServiceProviderService } from './service-provider.service.js';
 import {
@@ -34,10 +35,6 @@ import {
     ManageableServiceProviderWithReferencedObjects,
     ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount,
 } from './types.js';
-import { DomainError } from '../../../shared/error/index.js';
-import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
-import { VidisServiceProviderImmutableError } from './errors/vidis-service-provider-immutable.error.js';
-import { ServiceProviderModificationService } from './service-provider-modification.service.js';
 
 // helper to mock output of some repos
 function getIdMap<T>(arr: Array<T & { id: string }>): Map<string, T> {
@@ -53,7 +50,6 @@ describe('ServiceProviderService', () => {
     let rolleRepo: DeepMocked<RolleRepo>;
     let rollenerweiterungRepo: DeepMocked<RollenerweiterungRepo>;
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
-    let serviceProviderModificationService: DeepMocked<ServiceProviderModificationService>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
 
     beforeEach(async () => {
@@ -77,9 +73,6 @@ describe('ServiceProviderService', () => {
         rolleRepo = module.get<DeepMocked<RolleRepo>>(RolleRepo);
         rollenerweiterungRepo = module.get<DeepMocked<RollenerweiterungRepo>>(RollenerweiterungRepo);
         serviceProviderRepo = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
-        serviceProviderModificationService = module.get<DeepMocked<ServiceProviderModificationService>>(
-            ServiceProviderModificationService,
-        );
         organisationRepo = module.get<DeepMocked<OrganisationRepository>>(OrganisationRepository);
     });
 
@@ -741,135 +734,6 @@ describe('ServiceProviderService', () => {
 
             expect(result[0]?.rollen).toEqual([]);
             expect(result[0]?.hasRollenerweiterungen).toBe(false);
-        });
-    });
-
-    describe('updateServiceProvider', () => {
-        let permissions: DeepMocked<PersonPermissions>;
-        let existingServiceProvider: ServiceProvider<true>;
-
-        beforeEach(() => {
-            permissions = createMock(PersonPermissions);
-            existingServiceProvider = DoFactory.createServiceProvider(true, {
-                logo: undefined,
-                logoMimeType: undefined,
-                logoId: faker.number.int({ min: 1, max: 1000 }),
-            });
-            serviceProviderRepo.findById.mockResolvedValue(existingServiceProvider);
-            serviceProviderModificationService.update.mockResolvedValue(Ok(existingServiceProvider));
-        });
-
-        afterEach(() => {
-            vi.restoreAllMocks();
-        });
-
-        it('should update service provider', async () => {
-            const newAngebotId: string = faker.string.uuid();
-            const updateData: UpdateServiceProviderBodyParams = {
-                name: 'New Name',
-                url: 'https://new-url.com',
-                kategorie: ServiceProviderKategorie.EMAIL,
-                logoId: faker.number.int({ min: 1, max: 1000 }),
-            };
-
-            const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
-                permissions,
-                newAngebotId,
-                updateData,
-            );
-
-            expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId, { withLogo: true });
-            expect(serviceProviderModificationService.update).toHaveBeenCalledWith(
-                permissions,
-                expect.objectContaining({
-                    name: updateData.name,
-                    url: updateData.url,
-                    kategorie: updateData.kategorie,
-                    logoId: updateData.logoId,
-                }),
-            );
-            expectOkResult(result);
-            expect(result.value).toEqual(existingServiceProvider);
-        });
-
-        it.each([
-            ['name', { name: 'New Name' }],
-            ['url', { url: 'https://new-url.com' }],
-            ['kategorie', { kategorie: ServiceProviderKategorie.EMAIL }],
-            ['logoId', { logoId: faker.number.int({ min: 1, max: 1000 }) }],
-        ] as [keyof UpdateServiceProviderBodyParams, UpdateServiceProviderBodyParams][])(
-            'should update service provider %s only',
-            async (_: keyof UpdateServiceProviderBodyParams, updateData: UpdateServiceProviderBodyParams) => {
-                const newAngebotId: string = faker.string.uuid();
-
-                const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
-                    permissions,
-                    newAngebotId,
-                    updateData,
-                );
-
-                expectOkResult(result);
-
-                expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId, { withLogo: true });
-                expect(serviceProviderModificationService.update).toHaveBeenCalledWith(
-                    permissions,
-                    expect.objectContaining({
-                        ...existingServiceProvider,
-                        ...updateData,
-                    }),
-                );
-                expect(result.value).toEqual(existingServiceProvider);
-            },
-        );
-
-        it('should return error if service provider does not exist', async () => {
-            serviceProviderRepo.findById.mockResolvedValue(null);
-
-            const updateData: UpdateServiceProviderBodyParams = { name: 'New Name' };
-            const updateResult: Result<ServiceProvider<true>, DomainError> = await service.updateServiceProvider(
-                permissions,
-                'nonexistent-id',
-                updateData,
-            );
-
-            expectErrResult(updateResult);
-            expect(updateResult.error).toBeInstanceOf(EntityNotFoundError);
-
-            expect(serviceProviderModificationService.update).not.toHaveBeenCalled();
-        });
-
-        it('should return error if logo and logoId are both provided', async () => {
-            const existingServiceProviderWithLogo: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-            serviceProviderRepo.findById.mockResolvedValue(existingServiceProviderWithLogo);
-
-            const updateData: UpdateServiceProviderBodyParams = { logoId: faker.number.int({ min: 1, max: 1000 }) };
-            const updateResult: Result<ServiceProvider<true>, DomainError> = await service.updateServiceProvider(
-                permissions,
-                existingServiceProviderWithLogo.id,
-                updateData,
-            );
-
-            expectErrResult(updateResult);
-            expect(updateResult.error).toBeInstanceOf(InvalidLogoCombinationError);
-
-            expect(serviceProviderModificationService.update).not.toHaveBeenCalled();
-        });
-
-        it('should reject updates for VIDIS-linked service providers', async () => {
-            const vidisLinkedServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
-                vidisAngebotId: faker.string.uuid(),
-            });
-            serviceProviderRepo.findById.mockResolvedValue(vidisLinkedServiceProvider);
-
-            const result: Result<ServiceProvider<true>, DomainError> = await service.updateServiceProvider(
-                permissions,
-                vidisLinkedServiceProvider.id,
-                { name: 'New Name' },
-            );
-
-            expectErrResult(result);
-            expect(result.error).toBeInstanceOf(VidisServiceProviderImmutableError);
-            expect(serviceProviderModificationService.update).not.toHaveBeenCalled();
         });
     });
 

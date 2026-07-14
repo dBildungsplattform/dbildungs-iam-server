@@ -1,4 +1,3 @@
-import { assignSameKey } from '../../../shared/util/object-utils.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 import {
@@ -8,11 +7,13 @@ import {
     ServiceProviderTarget,
 } from './service-provider.enum.js';
 
-type SafeUpdateFields = Pick<ServiceProvider<boolean>, 'name' | 'url' | 'kategorie' | 'logoId'>;
+export type ServiceProviderUpdateParams = Partial<
+    Pick<ServiceProvider<true>, 'name' | 'url' | 'kategorie' | 'merkmale' | 'rollenartenWhitelist' | 'requires2fa'> & {
+        logoId: Option<number>;
+    }
+>;
 
 export class ServiceProvider<WasPersisted extends boolean> {
-    protected static readonly SAFE_UPDATE_FIELDS: (keyof SafeUpdateFields)[] = ['name', 'url', 'kategorie', 'logoId'];
-
     protected constructor(
         public id: Persisted<string, WasPersisted>,
         public createdAt: Persisted<Date, WasPersisted>,
@@ -115,26 +116,33 @@ export class ServiceProvider<WasPersisted extends boolean> {
         );
     }
 
-    /**
-     * logoId can be set to null to clear it
-     * @param update
-     * @returns
-     */
-    public updateWithSafeFields(update: {
-        name?: string;
-        url?: string;
-        kategorie?: ServiceProviderKategorie;
-        logoId?: Option<number>;
-    }): Option<InvalidLogoCombinationError> {
+    /** logoId can be set to null to clear it. Unsafe fields (kategorie, merkmale, rollenartenWhitelist, requires2fa) require caller to have checked permissions. */
+    public update(update: ServiceProviderUpdateParams): Option<InvalidLogoCombinationError> {
         if (!ServiceProvider.isValidLogoCombination(update.logoId, this.logo, this.logoMimeType)) {
             return new InvalidLogoCombinationError('Cannot set logoId, if there already is a logo');
         }
-        for (const field of ServiceProvider.SAFE_UPDATE_FIELDS) {
-            if (field === 'logoId' && update[field] === null) {
-                this.logoId = undefined;
-            } else if (update[field] !== undefined && update[field] !== null) {
-                assignSameKey(this, update, field);
-            }
+        if (update.logoId === null) {
+            this.logoId = undefined;
+        } else if (update.logoId !== undefined) {
+            this.logoId = update.logoId;
+        }
+        if (update.name !== undefined) {
+            this.name = update.name;
+        }
+        if (update.url !== undefined) {
+            this.url = update.url;
+        }
+        if (update.kategorie !== undefined) {
+            this.kategorie = update.kategorie;
+        }
+        if (update.merkmale !== undefined) {
+            this.merkmale = update.merkmale;
+        }
+        if (update.rollenartenWhitelist !== undefined) {
+            this.rollenartenWhitelist = update.rollenartenWhitelist;
+        }
+        if (update.requires2fa !== undefined) {
+            this.requires2fa = update.requires2fa;
         }
         return;
     }
