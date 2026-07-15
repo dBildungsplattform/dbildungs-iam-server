@@ -126,7 +126,9 @@ describe('ServiceProvider', () => {
             };
             const result: Option<InvalidLogoCombinationError> = serviceProvider.update(update);
             expect(result).toBeUndefined();
-            expect(serviceProvider).toEqual({ ...serviceProvider, ...update });
+            expect(serviceProvider.kategorie).toBe(ServiceProviderKategorie.EMAIL);
+            expect(serviceProvider.merkmale).toEqual([]);
+            expect(serviceProvider.rollenartenWhitelist).toEqual([RollenArt.LEHR]);
         });
 
         it('should update all fields at once', () => {
@@ -147,7 +149,33 @@ describe('ServiceProvider', () => {
             };
             const result: Option<InvalidLogoCombinationError> = serviceProvider.update(update);
             expect(result).toBeUndefined();
-            expect(serviceProvider).toEqual({ ...serviceProvider, ...update });
+            expect(serviceProvider.name).toBe(update.name);
+            expect(serviceProvider.url).toBe(update.url);
+            expect(serviceProvider.logoId).toBe(update.logoId);
+            expect(serviceProvider.kategorie).toBe(ServiceProviderKategorie.EMAIL);
+            expect(serviceProvider.merkmale).toEqual([]);
+            expect(serviceProvider.rollenartenWhitelist).toEqual([RollenArt.LEHR]);
+        });
+
+        it('should keep ANBIETEN merkmale when VERFUEGBAR_FUER_ROLLENERWEITERUNG is also set', () => {
+            const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                merkmale: [],
+                logo: undefined,
+                logoMimeType: undefined,
+            });
+
+            const result: Option<InvalidLogoCombinationError> = serviceProvider.update({
+                merkmale: [
+                    ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+                    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
+                ],
+            });
+
+            expect(result).toBeUndefined();
+            expect(serviceProvider.merkmale).toEqual([
+                ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+                ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
+            ]);
         });
 
         it('should set logoId to undefined if null is provided', () => {

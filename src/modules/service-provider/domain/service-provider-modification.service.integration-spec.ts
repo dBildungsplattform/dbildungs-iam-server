@@ -96,6 +96,25 @@ describe('ServiceProviderModificationService', () => {
             expect(createResult.value.id).toBeDefined();
         });
 
+        it('should remove ANBIETEN-merkmale when VERFUEGBAR_FUER_ROLLENERWEITERUNG is not set', async () => {
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+                merkmale: [
+                    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
+                    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG,
+                ],
+            });
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const createResult: Result<ServiceProvider<true>, DomainError> = await sut.create(
+                permissionsMock,
+                serviceProvider,
+            );
+
+            expectOkResult(createResult);
+            expect(createResult.value.merkmale).toEqual([]);
+        });
+
         it('should return error if name is already used', async () => {
             const name: string = 'Test name';
             const providedOnSchulstrukturknoten: string = faker.string.uuid();
@@ -248,6 +267,7 @@ describe('ServiceProviderModificationService', () => {
 
         it('should allow unchanged rollenartenWhitelist and restricted merkmale if person has limited permissions', async () => {
             const merkmale: ServiceProviderMerkmal[] = [
+                ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
                 ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
                 ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
             ];
@@ -320,7 +340,7 @@ describe('ServiceProviderModificationService', () => {
             expect(erweiterungExists).toBe(false);
         });
 
-        it('should delete rollenerweiterungen if verfuegbarFuerRollenerweiterung was set to false', async () => {
+        it('should remove dependent ANBIETEN-merkmale and delete rollenerweiterungen when VERFUEGBAR_FUER_ROLLENERWEITERUNG is removed', async () => {
             const orga: Organisation<true> = DoFactory.createOrganisation(true);
             await em
                 .persist(
@@ -331,7 +351,11 @@ describe('ServiceProviderModificationService', () => {
                 )
                 .flush();
             const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
-                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                merkmale: [
+                    ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+                    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
+                    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG,
+                ],
             });
             const rolle: Rolle<true> = await rolleRepo.create(
                 DoFactory.createRolle(false, {
@@ -351,12 +375,13 @@ describe('ServiceProviderModificationService', () => {
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            serviceProvider.merkmale = [];
+            serviceProvider.merkmale = [ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG];
             const updateResult: Result<ServiceProvider<true>, DomainError> = await sut.update(
                 permissionsMock,
                 serviceProvider,
             );
             expectOkResult(updateResult);
+            expect(updateResult.value.merkmale).toEqual([]);
             const erweiterungExists: boolean = await rollenerweiterungRepo.exists({
                 organisationId: orga.id,
                 rolleId: rolle.id,
@@ -461,6 +486,7 @@ describe('ServiceProviderModificationService', () => {
         it('should auto-revert restricted merkmale changes if person has limited permissions', async () => {
             const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
                 merkmale: [
+                    ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
                     ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
                     ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
                 ],
@@ -479,6 +505,7 @@ describe('ServiceProviderModificationService', () => {
 
             expectOkResult(updateResult);
             expect(updateResult.value.merkmale).toEqual([
+                ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
                 ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
                 ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
             ]);

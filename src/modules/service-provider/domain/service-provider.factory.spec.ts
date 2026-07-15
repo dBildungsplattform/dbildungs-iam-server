@@ -3,6 +3,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { expectErrResult, expectOkResult } from '../../../../test/utils/test-types.js';
 import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
+import {
+    ServiceProviderKategorie,
+    ServiceProviderMerkmal,
+    ServiceProviderSystem,
+    ServiceProviderTarget,
+} from './service-provider.enum.js';
 import { ServiceProviderFactory } from './service-provider.factory.js';
 import { ServiceProvider } from './service-provider.js';
 
@@ -52,6 +58,34 @@ describe('ServiceProviderFactory', () => {
             );
             expectOkResult(serviceProvider);
             expect(serviceProvider.value.rollenartenWhitelist).toEqual(example.rollenartenWhitelist);
+        });
+
+        it('should remove dependent merkmale without VERFUEGBAR_FUER_ROLLENERWEITERUNG', () => {
+            const serviceProvider: Result<ServiceProvider<true>, InvalidLogoCombinationError> = sut.construct(
+                faker.string.uuid(),
+                new Date(),
+                new Date(),
+                faker.company.buzzNoun(),
+                ServiceProviderTarget.URL,
+                faker.internet.url(),
+                ServiceProviderKategorie.EMAIL,
+                faker.string.uuid(),
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                ServiceProviderSystem.NONE,
+                false,
+                undefined,
+                [
+                    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
+                    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG,
+                ],
+                [],
+            );
+            expectOkResult(serviceProvider);
+            expect(serviceProvider.value.merkmale).toEqual([]);
         });
 
         it('should return an error for invalid logo combination', () => {
@@ -107,6 +141,31 @@ describe('ServiceProviderFactory', () => {
             );
             expectOkResult(serviceProvider);
             expect(serviceProvider.value.rollenartenWhitelist).toEqual(example.rollenartenWhitelist);
+        });
+
+        it('should remove dependent merkmale without VERFUEGBAR_FUER_ROLLENERWEITERUNG', () => {
+            const serviceProvider: Result<ServiceProvider<false>, InvalidLogoCombinationError> = sut.createNew(
+                faker.company.buzzNoun(),
+                ServiceProviderTarget.URL,
+                faker.internet.url(),
+                ServiceProviderKategorie.EMAIL,
+                faker.string.uuid(),
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                ServiceProviderSystem.NONE,
+                false,
+                undefined,
+                [
+                    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
+                    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG,
+                ],
+                [],
+            );
+            expectOkResult(serviceProvider);
+            expect(serviceProvider.value.merkmale).toEqual([]);
         });
 
         it('should return an error for invalid logo combination', () => {

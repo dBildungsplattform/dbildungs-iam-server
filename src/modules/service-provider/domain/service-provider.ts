@@ -7,6 +7,11 @@ import {
     ServiceProviderTarget,
 } from './service-provider.enum.js';
 
+const MERKMALE_REQUIRING_VERFUEGBAR_FUER_ROLLENERWEITERUNG: ServiceProviderMerkmal[] = [
+    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
+    ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG,
+];
+
 export type ServiceProviderUpdateParams = Partial<
     Pick<ServiceProvider<true>, 'name' | 'url' | 'kategorie' | 'merkmale' | 'rollenartenWhitelist' | 'requires2fa'> & {
         logoId: Option<number>;
@@ -33,7 +38,9 @@ export class ServiceProvider<WasPersisted extends boolean> {
         public vidisAngebotId: string | undefined,
         public merkmale: ServiceProviderMerkmal[],
         public rollenartenWhitelist: RollenArt[],
-    ) {}
+    ) {
+        this.merkmale = ServiceProvider.removeDependentMerkmaleWithoutVerfuegbarFuerRollenerweiterung(merkmale);
+    }
 
     public static construct<WasPersisted extends boolean = false>(
         id: string,
@@ -136,7 +143,9 @@ export class ServiceProvider<WasPersisted extends boolean> {
             this.kategorie = update.kategorie;
         }
         if (update.merkmale !== undefined) {
-            this.merkmale = update.merkmale;
+            this.merkmale = ServiceProvider.removeDependentMerkmaleWithoutVerfuegbarFuerRollenerweiterung(
+                update.merkmale,
+            );
         }
         if (update.rollenartenWhitelist !== undefined) {
             this.rollenartenWhitelist = update.rollenartenWhitelist;
@@ -160,5 +169,18 @@ export class ServiceProvider<WasPersisted extends boolean> {
         const validLogoDataCombination: boolean = !logoIdProvided && logoProvided && logoMimeTypeProvided;
         const noLogoCombination: boolean = !logoIdProvided && !logoProvided && !logoMimeTypeProvided;
         return validLogoIdCombination || validLogoDataCombination || noLogoCombination;
+    }
+
+    private static removeDependentMerkmaleWithoutVerfuegbarFuerRollenerweiterung(
+        merkmale: ServiceProviderMerkmal[],
+    ): ServiceProviderMerkmal[] {
+        if (merkmale.includes(ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG)) {
+            return merkmale;
+        }
+
+        return merkmale.filter(
+            (merkmal: ServiceProviderMerkmal) =>
+                !MERKMALE_REQUIRING_VERFUEGBAR_FUER_ROLLENERWEITERUNG.includes(merkmal),
+        );
     }
 }
