@@ -499,7 +499,7 @@ export class ProviderController {
             | AttachedRollenError
             | AttachedRollenerweiterungenError
             | VidisServiceProviderImmutableError
-        > = await this.serviceProviderService.deleteByIdAuthorized(permissions, params.angebotId);
+        > = await this.serviceProviderModificationService.deleteByIdAuthorized(permissions, params.angebotId);
 
         if (!result.ok) {
             throw result.error;

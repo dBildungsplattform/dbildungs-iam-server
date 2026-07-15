@@ -1,16 +1,13 @@
 import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
 import { zip } from 'lodash-es';
-import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { expectErrResult, expectOkResult } from '../../../../test/utils/test-types.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { OrganisationID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
-import { Err, Ok } from '../../../shared/util/result.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -22,11 +19,6 @@ import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.j
 import { VidisApiAdapter } from '../../vidis/adapter/domain/vidis-api.adapter.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
-import { ServiceProviderError } from '../specification/error/service-provider.error.js';
-import { AttachedRollenError } from './errors/attached-rollen.error.js';
-import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
-import { VidisServiceProviderImmutableError } from './errors/vidis-service-provider-immutable.error.js';
-import { ServiceProviderModificationService } from './service-provider-modification.service.js';
 import { ServiceProviderMerkmal } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import { ServiceProviderService } from './service-provider.service.js';
@@ -60,10 +52,6 @@ describe('ServiceProviderService', () => {
                 { provide: RolleRepo, useValue: createMock(RolleRepo) },
                 { provide: RollenerweiterungRepo, useValue: createMock(RollenerweiterungRepo) },
                 { provide: ServiceProviderRepo, useValue: createMock(ServiceProviderRepo) },
-                {
-                    provide: ServiceProviderModificationService,
-                    useValue: createMock(ServiceProviderModificationService),
-                },
                 { provide: OrganisationRepository, useValue: createMock(OrganisationRepository) },
                 { provide: VidisApiAdapter, useValue: createMock(VidisApiAdapter) },
                 { provide: OrganisationServiceProviderRepo, useValue: createMock(OrganisationServiceProviderRepo) },
@@ -737,85 +725,4 @@ describe('ServiceProviderService', () => {
         });
     });
 
-    describe('deleteByIdAuthorized', () => {
-        let permissions: ReturnType<typeof createPersonPermissionsMock>;
-        const mockServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-        const serviceProviderId: ServiceProviderID = mockServiceProvider.id;
-
-        beforeEach(() => {
-            permissions = createPersonPermissionsMock();
-            vi.resetAllMocks();
-            serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
-        });
-
-        it('returns AttachedRollenError if attached Rollen exist', async () => {
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(
-                new Map([[serviceProviderId, [DoFactory.createRolle(true)]]]),
-            );
-            rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({ [serviceProviderId]: 0 });
-            const result: Result<void, AttachedRollenError> = await service.deleteByIdAuthorized(
-                permissions,
-                serviceProviderId,
-            );
-            expectErrResult(result);
-            expect(result.error).toBeInstanceOf(AttachedRollenError);
-        });
-
-        it('returns AttachedRollenerweiterungenError if attached Rollenerweiterungen exist', async () => {
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
-            rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({ [serviceProviderId]: 1 });
-            const result: Result<void, AttachedRollenerweiterungenError> = await service.deleteByIdAuthorized(
-                permissions,
-                serviceProviderId,
-            );
-            expectErrResult(result);
-            expect(result.error).toBeInstanceOf(AttachedRollenerweiterungenError);
-        });
-
-        it('returns error for VIDIS-linked service providers before deleting', async () => {
-            const vidisLinkedServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
-                vidisAngebotId: faker.string.uuid(),
-            });
-            serviceProviderRepo.findById.mockResolvedValue(vidisLinkedServiceProvider);
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
-            rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({ [serviceProviderId]: 0 });
-
-            const result: Result<void, ServiceProviderError> = await service.deleteByIdAuthorized(
-                permissions,
-                vidisLinkedServiceProvider.id,
-            );
-
-            expectErrResult(result);
-            expect(result.error).toBeInstanceOf(VidisServiceProviderImmutableError);
-            expect(serviceProviderRepo.deleteByIdAuthorized).not.toHaveBeenCalled();
-        });
-
-        it('calls deleteById and returns Ok() on success', async () => {
-            const expectedResult: Result<void, ServiceProviderError> = Ok();
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
-            rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({ [serviceProviderId]: 0 });
-            serviceProviderRepo.deleteByIdAuthorized.mockResolvedValue(expectedResult);
-
-            const result: Result<void, ServiceProviderError> = await service.deleteByIdAuthorized(
-                permissions,
-                serviceProviderId,
-            );
-
-            expect(serviceProviderRepo.deleteByIdAuthorized).toHaveBeenCalledWith(permissions, serviceProviderId);
-            expect(result).toBe(expectedResult);
-        });
-
-        it('calls deleteById and returns Error on failure', async () => {
-            const expectedResult: Result<void, ServiceProviderError> = Err(new EntityNotFoundError());
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([]));
-            rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({});
-            serviceProviderRepo.deleteByIdAuthorized.mockResolvedValue(expectedResult);
-            const result: Result<void, ServiceProviderError> = await service.deleteByIdAuthorized(
-                permissions,
-                serviceProviderId,
-            );
-            expect(serviceProviderRepo.deleteByIdAuthorized).toHaveBeenCalledWith(permissions, serviceProviderId);
-            expect(result).toBe(expectedResult);
-        });
-    });
 });

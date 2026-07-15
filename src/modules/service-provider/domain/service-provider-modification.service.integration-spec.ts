@@ -28,6 +28,8 @@ import { ServiceProviderInternalRepo } from '../repo/service-provider.internal.r
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { DuplicateNameError } from '../specification/error/duplicate-name.error.js';
 import { AttachedRollenError } from './errors/attached-rollen.error.js';
+import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
+import { VidisServiceProviderImmutableError } from './errors/vidis-service-provider-immutable.error.js';
 import { ServiceProviderModificationService } from './service-provider-modification.service.js';
 import { ServiceProviderKategorie, ServiceProviderMerkmal } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
@@ -459,6 +461,125 @@ describe('ServiceProviderModificationService', () => {
 
             expectErrResult(createResult);
             expect(createResult.error).toBeInstanceOf(MissingPermissionsError);
+        });
+    });
+
+    describe('deleteByIdAuthorized', () => {
+        it('returns AttachedRollenError if attached Rollen exist', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            await em.persist(em.create(OrganisationEntity, { ...orga, emailAdress: undefined })).flush();
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: orga.id,
+            });
+            await rolleRepo.create(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: orga.id,
+                    rollenart: RollenArt.LEHR,
+                    serviceProviderIds: [serviceProvider.id],
+                }),
+            );
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(permissionsMock, serviceProvider.id);
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(AttachedRollenError);
+        });
+
+        it('returns AttachedRollenerweiterungenError if attached Rollenerweiterungen exist', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            await em.persist(em.create(OrganisationEntity, { ...orga, emailAdress: undefined })).flush();
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: orga.id,
+            });
+            const rolle: Rolle<true> = await rolleRepo.create(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: orga.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    organisationId: orga.id,
+                    rolleId: rolle.id,
+                    serviceProviderId: serviceProvider.id,
+                }),
+            );
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(permissionsMock, serviceProvider.id);
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(AttachedRollenerweiterungenError);
+        });
+
+        it('returns error for VIDIS-linked service providers before deleting', async () => {
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                vidisAngebotId: faker.string.uuid(),
+            });
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(permissionsMock, serviceProvider.id);
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(VidisServiceProviderImmutableError);
+
+            const persisted: Option<ServiceProvider<true>> = await module
+                .get(ServiceProviderRepo)
+                .findById(serviceProvider.id);
+            expect(persisted).not.toBeNull();
+        });
+
+        it('deletes service provider and returns Ok() on success', async () => {
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(permissionsMock, serviceProvider.id);
+
+            expectOkResult(result);
+            const persisted: Option<ServiceProvider<true>> = await module
+                .get(ServiceProviderRepo)
+                .findById(serviceProvider.id);
+            expect(persisted).toBeNull();
+        });
+
+        it('returns EntityNotFoundError on missing service provider', async () => {
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(
+                permissionsMock,
+                faker.string.uuid(),
+            );
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(EntityNotFoundError);
+        });
+
+        it('returns MissingPermissionsError if caller lacks permission for the service provider organisation', async () => {
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(permissionsMock, serviceProvider.id);
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(MissingPermissionsError);
+
+            const persisted: Option<ServiceProvider<true>> = await module
+                .get(ServiceProviderRepo)
+                .findById(serviceProvider.id);
+            expect(persisted).not.toBeNull();
         });
     });
 });

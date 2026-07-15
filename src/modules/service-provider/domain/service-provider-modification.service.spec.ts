@@ -62,4 +62,5 @@ describe('ServiceProviderModificationService', () => {
             expect(serviceProviderInternalRepoMock.persistAndFlush).not.toHaveBeenCalled();
         });
     });
+
 });
