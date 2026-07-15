@@ -718,6 +718,8 @@ describe('VidisSyncService', () => {
             expect(createdServiceProvider.merkmale).toEqual([
                 ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
                 ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
+                ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
+                ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG,
             ]);
         });
 
