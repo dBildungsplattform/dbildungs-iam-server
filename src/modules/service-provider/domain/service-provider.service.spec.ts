@@ -724,5 +724,4 @@ describe('ServiceProviderService', () => {
             expect(result[0]?.hasRollenerweiterungen).toBe(false);
         });
     });
-
 });

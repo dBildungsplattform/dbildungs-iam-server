@@ -422,6 +422,42 @@ describe('ServiceProviderModificationService', () => {
             expect(updateResult.error).toBeInstanceOf(AttachedRollenError);
         });
 
+        it('should not return AttachedRollenError when whitelist is emptied and attached rollen are still allowed', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            await em
+                .persist(
+                    em.create(OrganisationEntity, {
+                        ...orga,
+                        emailAdress: undefined,
+                    }),
+                )
+                .flush();
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                rollenartenWhitelist: [RollenArt.LEHR],
+            });
+            await rolleRepo.create(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: orga.id,
+                    rollenart: RollenArt.LEHR,
+                    serviceProviderIds: [serviceProvider.id],
+                }),
+            );
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            serviceProvider.rollenartenWhitelist = [];
+
+            const updateResult: Result<ServiceProvider<true>, DomainError> = await sut.update(
+                permissionsMock,
+                serviceProvider,
+            );
+
+            expectOkResult(updateResult);
+            expect(updateResult.value.rollenartenWhitelist).toEqual([]);
+        });
+
         it('should auto-revert restricted merkmale changes if person has limited permissions', async () => {
             const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
                 merkmale: [
@@ -482,7 +518,10 @@ describe('ServiceProviderModificationService', () => {
             const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(permissionsMock, serviceProvider.id);
+            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(
+                permissionsMock,
+                serviceProvider.id,
+            );
 
             expectErrResult(result);
             expect(result.error).toBeInstanceOf(AttachedRollenError);
@@ -511,7 +550,10 @@ describe('ServiceProviderModificationService', () => {
             const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(permissionsMock, serviceProvider.id);
+            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(
+                permissionsMock,
+                serviceProvider.id,
+            );
 
             expectErrResult(result);
             expect(result.error).toBeInstanceOf(AttachedRollenerweiterungenError);
@@ -525,7 +567,10 @@ describe('ServiceProviderModificationService', () => {
             const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(permissionsMock, serviceProvider.id);
+            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(
+                permissionsMock,
+                serviceProvider.id,
+            );
 
             expectErrResult(result);
             expect(result.error).toBeInstanceOf(VidisServiceProviderImmutableError);
@@ -542,7 +587,10 @@ describe('ServiceProviderModificationService', () => {
             const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(permissionsMock, serviceProvider.id);
+            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(
+                permissionsMock,
+                serviceProvider.id,
+            );
 
             expectOkResult(result);
             const persisted: Option<ServiceProvider<true>> = await module
@@ -571,7 +619,10 @@ describe('ServiceProviderModificationService', () => {
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
 
-            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(permissionsMock, serviceProvider.id);
+            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(
+                permissionsMock,
+                serviceProvider.id,
+            );
 
             expectErrResult(result);
             expect(result.error).toBeInstanceOf(MissingPermissionsError);

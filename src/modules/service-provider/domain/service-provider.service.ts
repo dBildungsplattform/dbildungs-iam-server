@@ -344,5 +344,4 @@ export class ServiceProviderService {
             rolle: rollen.get(rollenerweiterung.rolleId)!,
         }));
     }
-
 }

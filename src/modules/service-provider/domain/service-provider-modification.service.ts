@@ -8,7 +8,6 @@ import { IPersonPermissions } from '../../../shared/permissions/person-permissio
 import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { ServiceProviderInternalRepo } from '../repo/service-provider.internal.repo.js';
@@ -129,22 +128,14 @@ export class ServiceProviderModificationService {
             serviceProvider,
         );
 
-        if (hasRollenartenWhitelistChanged) {
-            const rollenWithServiceProvider: Map<ServiceProviderID, Rolle<true>[]> =
-                await this.rolleRepo.findByServiceProviderIds([serviceProvider.id]);
-            const forbiddenRollenartenSet: Set<RollenArt> = new Set(forbiddenRollenarten);
-            if (
-                rollenWithServiceProvider.has(serviceProvider.id) &&
-                rollenWithServiceProvider
-                    .get(serviceProvider.id)!
-                    .some((rolle: Rolle<true>) => forbiddenRollenartenSet.has(rolle.rollenart))
-            ) {
-                return Err(
-                    new AttachedRollenError(
-                        'Cannot update rollenartenWhitelist with conflicting rollenarten to attached to rollen',
-                        serviceProvider.id,
-                    ),
-                );
+        if (hasRollenartenWhitelistChanged && forbiddenRollenarten.length > 0) {
+            const attachedRollenError: Option<AttachedRollenError> = await this.getAttachedRollenError(
+                serviceProvider.id,
+                'Cannot update rollenartenWhitelist with conflicting rollenarten to attached to rollen',
+                forbiddenRollenarten,
+            );
+            if (attachedRollenError) {
+                return Err(attachedRollenError);
             }
         }
 
@@ -191,10 +182,12 @@ export class ServiceProviderModificationService {
             );
         }
 
-        const rollen: Map<ServiceProviderID, Rolle<true>[]> = await this.rolleRepo.findByServiceProviderIds([id], 1);
-        const hasAttachedRollen: boolean = (rollen.get(id)?.length ?? 0) > 0;
-        if (hasAttachedRollen) {
-            return Err(new AttachedRollenError('ServiceProvider has attached Rollen and cannot be deleted', id));
+        const attachedRollenError: Option<AttachedRollenError> = await this.getAttachedRollenError(
+            id,
+            'ServiceProvider has attached Rollen and cannot be deleted',
+        );
+        if (attachedRollenError) {
+            return Err(attachedRollenError);
         }
 
         const rollenerweiterungen: Record<ServiceProviderID, number> =
@@ -210,6 +203,22 @@ export class ServiceProviderModificationService {
         }
 
         return this.serviceProviderRepo.deleteByIdAuthorized(permissions, id);
+    }
+
+    private async getAttachedRollenError(
+        serviceProviderId: ServiceProviderID,
+        message: string,
+        rollenarten?: RollenArt[],
+    ): Promise<Option<AttachedRollenError>> {
+        const hasAttachedRollen: boolean = await this.rolleRepo.existsForServiceProviderId(
+            serviceProviderId,
+            rollenarten,
+        );
+        if (hasAttachedRollen) {
+            return new AttachedRollenError(message, serviceProviderId);
+        }
+
+        return;
     }
 
     private async validateUniqueName(

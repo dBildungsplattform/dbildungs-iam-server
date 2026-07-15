@@ -624,8 +624,14 @@ describe('Provider Controller Test', () => {
                 expect(result.limit).toBe(params.limit ?? total);
                 expect(result.items).toHaveLength(2);
                 expect(result.items[0]).toBeInstanceOf(ManageableServiceProviderSimpleListEntryResponse);
-                expect(result.items.map((item: ManageableServiceProviderSimpleListEntryResponse) => item.rollenartenWhitelist)).toEqual(
-                    serviceProviders.map((serviceProvider: ServiceProvider<true>) => serviceProvider.rollenartenWhitelist),
+                expect(
+                    result.items.map(
+                        (item: ManageableServiceProviderSimpleListEntryResponse) => item.rollenartenWhitelist,
+                    ),
+                ).toEqual(
+                    serviceProviders.map(
+                        (serviceProvider: ServiceProvider<true>) => serviceProvider.rollenartenWhitelist,
+                    ),
                 );
             },
         );
