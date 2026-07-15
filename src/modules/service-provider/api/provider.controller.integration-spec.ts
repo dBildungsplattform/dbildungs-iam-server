@@ -264,6 +264,7 @@ describe('ServiceProvider API', () => {
                 expect(entry?.kategorie).toBe(sp.kategorie);
                 expect(entry?.requires2fa).toBe(sp.requires2fa);
                 expect(entry?.merkmale).toEqual(expect.arrayContaining(serviceProvider1.merkmale));
+                expect(entry?.rollenartenWhitelist).toEqual(sp.rollenartenWhitelist);
                 expect(entry?.hasRollenerweiterungen).toBe(false);
                 expect(entry?.rollen).toBeInstanceOf(Array);
                 if (rolle.serviceProviderIds.includes(sp.id)) {
@@ -362,6 +363,7 @@ describe('ServiceProvider API', () => {
                         kategorie: serviceProvider.kategorie,
                         requires2fa: serviceProvider.requires2fa,
                         merkmale: serviceProvider.merkmale,
+                        rollenartenWhitelist: serviceProvider.rollenartenWhitelist,
                         rollenerweiterungen:
                             expect.arrayContaining<RollenerweiterungForManageableServiceProviderResponse>([
                                 {
@@ -480,6 +482,7 @@ describe('ServiceProvider API', () => {
                 logoId: undefined,
                 requires2fa: serviceProvider.requires2fa,
                 merkmale: serviceProvider.merkmale,
+                rollenartenWhitelist: serviceProvider.rollenartenWhitelist,
                 url: serviceProvider.url,
                 hasRollenerweiterung: true,
                 availableForRollenerweiterung: false,

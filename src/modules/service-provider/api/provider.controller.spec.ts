@@ -624,6 +624,9 @@ describe('Provider Controller Test', () => {
                 expect(result.limit).toBe(params.limit ?? total);
                 expect(result.items).toHaveLength(2);
                 expect(result.items[0]).toBeInstanceOf(ManageableServiceProviderSimpleListEntryResponse);
+                expect(result.items.map((item: ManageableServiceProviderSimpleListEntryResponse) => item.rollenartenWhitelist)).toEqual(
+                    serviceProviders.map((serviceProvider: ServiceProvider<true>) => serviceProvider.rollenartenWhitelist),
+                );
             },
         );
     });
@@ -700,6 +703,7 @@ describe('Provider Controller Test', () => {
                     },
                 },
             ]);
+            expect(result.items[0]?.rollenartenWhitelist).toEqual(serviceProvider.rollenartenWhitelist);
         });
 
         it('should handle undefined rollenerweiterungenWithName', async () => {
@@ -728,6 +732,7 @@ describe('Provider Controller Test', () => {
             expect(result.items[0]).toBeInstanceOf(ManageableServiceProviderSimpleListEntryResponse);
             // Verify that the empty array was used instead of undefined
             expect(result.items[0]?.hasRollenerweiterungen).toBe(false);
+            expect(result.items[0]?.rollenartenWhitelist).toEqual(serviceProvider.rollenartenWhitelist);
         });
     });
 
