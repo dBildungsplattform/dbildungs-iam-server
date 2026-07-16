@@ -3,6 +3,24 @@
     "entities": [
         {
             "id": 1000,
+            "administeredBySchulstrukturknoten": 1,
+            "name": "Schuladministrator (MPT-Rollen)",
+            "rollenart": "LEIT",
+            "merkmale": [],
+            "systemrechte": [
+                "MPT_ROLLEN_VERWALTEN",
+                "PERSONEN_VERWALTEN",
+                "KLASSEN_VERWALTEN",
+                "BULK_VERWALTEN",
+                "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+                "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
+                "ROLLEN_ERWEITERN",
+                "ANGEBOTE_EINGESCHRAENKT_VERWALTEN"
+            ],
+            "serviceProviderIds": [5, 8, 9, 10, 11]
+        },
+        {
+            "id": 1001,
             "administeredBySchulstrukturknoten": 6,
             "name": "Sekretariat",
             "rollenart": "NLEHR",
@@ -11,7 +29,7 @@
             "serviceProviderIds": []
         },
         {
-            "id": 1001,
+            "id": 1002,
             "administeredBySchulstrukturknoten": 6,
             "name": "Hausmeister",
             "rollenart": "NLEHR",
@@ -20,7 +38,7 @@
             "serviceProviderIds": []
         },
         {
-            "id": 1002,
+            "id": 1003,
             "administeredBySchulstrukturknoten": 6,
             "name": "Schulsozialarbeiter",
             "rollenart": "NLEHR",
@@ -29,7 +47,7 @@
             "serviceProviderIds": []
         },
         {
-            "id": 1003,
+            "id": 1004,
             "administeredBySchulstrukturknoten": 6,
             "name": "Ganztagsbetreuung",
             "rollenart": "NLEHR",
