@@ -10,6 +10,7 @@ import {
     SharedDomainError,
 } from '../../../shared/error/index.js';
 import { Err, Ok } from '../../../shared/util/result.js';
+import type { DomainError } from '../../../shared/error/domain.error.js';
 import type {
     VidisAngebotWithSchoolActivations,
     VidisServiceResponseSchoolActivation,
@@ -47,6 +48,14 @@ type DecodedVidisLogo = {
     logo: Buffer | undefined;
     logoMimeType: string | undefined;
 };
+type CreateVidisServiceProviderResult = Result<ServiceProvider<true>, DomainError>;
+type DeleteVidisServiceProviderResult = Result<void, EntityNotFoundError | MissingPermissionsError>;
+type NeedsDbAngebotUpdateResult = {
+    needUpdate: boolean;
+    isNameChanged: boolean;
+    isURLChanged: boolean;
+    isLogoChanged: boolean;
+}
 
 @Injectable()
 export class VidisSyncService {
@@ -276,9 +285,12 @@ export class VidisSyncService {
                     .join(', ')}]`,
         );
 
-        const syncOperations: Promise<unknown>[] = missingAngeboteInDb.map((angebot: VidisApiResponseAngebotBySchool) =>
-            this.serviceProviderRepo.create(permissions, this.createVidisServiceProvider(organisationId, angebot)),
+        const createOperations: Promise<CreateVidisServiceProviderResult>[] = missingAngeboteInDb.map(
+            (angebot: VidisApiResponseAngebotBySchool) =>
+                this.serviceProviderRepo.create(permissions, this.createVidisServiceProvider(organisationId, angebot)),
         );
+        const syncOperations: Promise<unknown>[] = [...createOperations];
+        const deleteOperationsByServiceProviderId: Map<string, Promise<DeleteVidisServiceProviderResult>> = new Map();
 
         if (serviceProviderIdsMissingInVidis.length > 0) {
             try {
@@ -290,11 +302,12 @@ export class VidisSyncService {
                     permissions,
                 );
                 if (deleteRollenerweiterungenResult.ok) {
-                    syncOperations.push(
-                        ...serviceProviderIdsMissingInVidis.map((serviceProviderId: string) =>
-                            this.serviceProviderRepo.deleteByIdAuthorized(permissions, serviceProviderId),
-                        ),
-                    );
+                    serviceProviderIdsMissingInVidis.forEach((serviceProviderId: string) => {
+                        const deleteOperation: Promise<DeleteVidisServiceProviderResult> =
+                            this.serviceProviderRepo.deleteByIdAuthorized(permissions, serviceProviderId);
+                        deleteOperationsByServiceProviderId.set(serviceProviderId, deleteOperation);
+                        syncOperations.push(deleteOperation);
+                    });
                 } else {
                     syncOperations.push(Promise.reject(deleteRollenerweiterungenResult.error));
                 }
@@ -315,35 +328,112 @@ export class VidisSyncService {
                     result.value.ok === false),
         );
 
-        if (failedOperations.length === 0) {
-            return;
+        if (failedOperations.length > 0) {
+            this.logger.error(
+                `VIDIS sync for organisation ${organisationId} finished with ${failedOperations.length} failed operations.`,
+            );
+
+            failedOperations.forEach((result: PromiseSettledResult<unknown>) => {
+                if (result.status === 'rejected') {
+                    this.logger.logUnknownAsError(
+                        `VIDIS sync operation for organisation ${organisationId} rejected`,
+                        result.reason,
+                    );
+                    return;
+                }
+
+                const failedResult: unknown = result.value;
+                const error: unknown =
+                    typeof failedResult === 'object' && failedResult !== null && 'error' in failedResult
+                        ? failedResult.error
+                        : failedResult;
+
+                this.logger.logUnknownAsError(
+                    `VIDIS sync operation for organisation ${organisationId} returned an error result`,
+                    error,
+                    false,
+                );
+            });
         }
 
-        this.logger.error(
-            `VIDIS sync for organisation ${organisationId} finished with ${failedOperations.length} failed operations.`,
+        const createResults: PromiseSettledResult<CreateVidisServiceProviderResult>[] = await Promise.allSettled(
+            createOperations,
+        );
+        const successfullyCreatedAngebote: ServiceProvider<true>[] = [];
+
+        createResults.forEach((result: PromiseSettledResult<CreateVidisServiceProviderResult>) => {
+            if (result.status === 'fulfilled' && result.value.ok) {
+                successfullyCreatedAngebote.push(result.value.value);
+            }
+        });
+
+        const successfullyDeletedServiceProviderIds: Set<string> = new Set();
+
+        await Promise.all(
+            Array.from(deleteOperationsByServiceProviderId.entries()).map(
+                async ([serviceProviderId, deleteOperation]: [string, Promise<DeleteVidisServiceProviderResult>]) => {
+                    const [result]: PromiseSettledResult<DeleteVidisServiceProviderResult>[] =
+                        await Promise.allSettled([deleteOperation]);
+
+                    if (
+                        result?.status === 'fulfilled' &&
+                        typeof result.value === 'object' &&
+                        result.value !== null &&
+                        'ok' in result.value &&
+                        result.value.ok
+                    ) {
+                        successfullyDeletedServiceProviderIds.add(serviceProviderId);
+                    }
+                },
+            ),
         );
 
-        failedOperations.forEach((result: PromiseSettledResult<unknown>) => {
-            if (result.status === 'rejected') {
-                this.logger.logUnknownAsError(
-                    `VIDIS sync operation for organisation ${organisationId} rejected`,
-                    result.reason,
+        const angeboteInDbAfterCreateDelete: ServiceProvider<true>[] = [
+            ...angeboteInDb.filter(
+                (angebotInDb: ServiceProvider<true>) => !successfullyDeletedServiceProviderIds.has(angebotInDb.id),
+            ),
+            ...successfullyCreatedAngebote,
+        ];
+        angeboteInDbAfterCreateDelete.forEach((angebotInDb: ServiceProvider<true>) => {
+            const matchingAngebotInVidis: VidisApiResponseAngebotBySchool | undefined = angeboteInVidis.find((a: VidisApiResponseAngebotBySchool) => a.offerId.toString() === angebotInDb.vidisAngebotId)
+            if(matchingAngebotInVidis && this.needsDbAngebotUpdate(angebotInDb, matchingAngebotInVidis).needUpdate) {
+                this.logger.info(
+                    `Updating VIDIS Angebot with id ${angebotInDb.id} in DB because it differs from VIDIS API. Name changed: ${this.needsDbAngebotUpdate(angebotInDb, matchingAngebotInVidis).isNameChanged}, URL changed: ${this.needsDbAngebotUpdate(angebotInDb, matchingAngebotInVidis).isURLChanged}, Logo changed: ${this.needsDbAngebotUpdate(angebotInDb, matchingAngebotInVidis).isLogoChanged}`
                 );
-                return;
             }
+        })
 
-            const failedResult: unknown = result.value;
-            const error: unknown =
-                typeof failedResult === 'object' && failedResult !== null && 'error' in failedResult
-                    ? failedResult.error
-                    : failedResult;
+    }
 
-            this.logger.logUnknownAsError(
-                `VIDIS sync operation for organisation ${organisationId} returned an error result`,
-                error,
-                false,
-            );
-        });
+    private needsDbAngebotUpdate(angebotInDb: ServiceProvider<true>, angebotInVidis: VidisServiceResponseAngebot): NeedsDbAngebotUpdateResult {
+
+        let isNameChanged: boolean = false;
+        let isUrlChanged: boolean = false;
+        let isLogoChanged: boolean = false;
+
+        if (angebotInDb.name !== angebotInVidis.offerTitle) {
+            isNameChanged = true;
+        }
+        if (angebotInDb.url !== angebotInVidis.offerLink) {
+            isUrlChanged = true;
+        }
+
+        const { logo, logoMimeType }: DecodedVidisLogo = VidisSyncService.decodeVidisLogo(angebotInVidis.offerLogo);
+
+        if (angebotInDb.logoMimeType !== logoMimeType) {
+            isLogoChanged = true;
+        }
+
+        if (angebotInDb.logo && logo && !angebotInDb.logo.equals(logo)) {
+            isLogoChanged = true;
+        }
+
+        return {
+            needUpdate: isNameChanged || isUrlChanged || isLogoChanged,
+            isNameChanged,
+            isURLChanged: isUrlChanged,
+            isLogoChanged,
+        };
     }
 
     private createVidisServiceProvider(
