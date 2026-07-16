@@ -1,6 +1,7 @@
 ########################################
 # SPSH application code
 ########################################
+
 /src/                   @dBildungsplattform/schulportal-sh
 /test/                  @dBildungsplattform/schulportal-sh
 /keycloak/              @dBildungsplattform/schulportal-sh
@@ -15,13 +16,15 @@
 /tsconfig.build.json    @dBildungsplattform/schulportal-sh
 /eslint.config.ts       @dBildungsplattform/schulportal-sh
 /vite.config.ts         @dBildungsplattform/schulportal-sh
+
 /nginx/                 @dBildungsplattform/schulportal-sh
 /Dockerfile             @dBildungsplattform/schulportal-sh
 /compose.yaml           @dBildungsplattform/schulportal-sh
 /docker-bootstrap.sh    @dBildungsplattform/schulportal-sh
 
 ########################################
-# Helm / CI/CD Pipelines
+# Helm and CI/CD pipelines
 ########################################
+
 /charts/                @dBildungsplattform/sre-team
 /.github/workflows/     @dBildungsplattform/sre-team
