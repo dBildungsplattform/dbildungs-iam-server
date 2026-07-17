@@ -133,6 +133,7 @@ export class RolleRepo {
                 'systemrechte',
                 'serviceProvider.serviceProvider',
                 'serviceProvider.serviceProvider.merkmale',
+                'serviceProvider.serviceProvider.rollenartenWhitelist',
             ] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
@@ -179,6 +180,7 @@ export class RolleRepo {
                     'systemrechte',
                     'serviceProvider.serviceProvider',
                     'serviceProvider.serviceProvider.merkmale',
+                    'serviceProvider.serviceProvider.rollenartenWhitelist',
                 ] as const,
                 exclude: ['serviceProvider.serviceProvider.logo'] as const,
             },
@@ -213,6 +215,7 @@ export class RolleRepo {
                     'systemrechte',
                     'serviceProvider.serviceProvider',
                     'serviceProvider.serviceProvider.merkmale',
+                    'serviceProvider.serviceProvider.rollenartenWhitelist',
                 ] as const,
                 exclude: ['serviceProvider.serviceProvider.logo'] as const,
                 limit: limit,
@@ -238,6 +241,7 @@ export class RolleRepo {
                 'systemrechte',
                 'serviceProvider.serviceProvider',
                 'serviceProvider.serviceProvider.merkmale',
+                'serviceProvider.serviceProvider.rollenartenWhitelist',
             ] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
             where: { ...technischeQuery, ...rollenartQuery },
@@ -275,6 +279,7 @@ export class RolleRepo {
                 'systemrechte',
                 'serviceProvider.serviceProvider',
                 'serviceProvider.serviceProvider.merkmale',
+                'serviceProvider.serviceProvider.rollenartenWhitelist',
             ] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
             limit: params.limit,
@@ -331,6 +336,7 @@ export class RolleRepo {
                         'systemrechte',
                         'serviceProvider.serviceProvider',
                         'serviceProvider.serviceProvider.merkmale',
+                        'serviceProvider.serviceProvider.rollenartenWhitelist',
                     ] as const,
                     exclude: ['serviceProvider.serviceProvider.logo'] as const,
                 },
@@ -385,6 +391,29 @@ export class RolleRepo {
         }
 
         return rollenMap;
+    }
+
+    public async existsForServiceProviderId(
+        serviceProviderId: ServiceProviderID,
+        rollenarten?: RollenArt[],
+    ): Promise<boolean> {
+        const rollenartQuery: Record<string, unknown> =
+            rollenarten && rollenarten.length > 0 ? { rollenart: { $in: rollenarten } } : {};
+
+        const rolle: Option<Loaded<RolleEntity, never, 'id', never>> = await this.em.findOne(
+            RolleEntity,
+            {
+                ...rollenartQuery,
+                serviceProvider: {
+                    serviceProvider: {
+                        id: serviceProviderId,
+                    },
+                },
+            },
+            { fields: ['id'] as const },
+        );
+
+        return !!rolle;
     }
 
     public async exists(id: RolleID): Promise<boolean> {
@@ -519,9 +548,17 @@ export class RolleRepo {
         await this.em.persist(rolleEntity).flush();
 
         // Populate the service providers so the data can be mapped even on newly created rollen
-        await this.em.populate(rolleEntity, ['serviceProvider.serviceProvider'] as const, {
-            exclude: ['serviceProvider.serviceProvider.logo'] as const,
-        });
+        await this.em.populate(
+            rolleEntity,
+            [
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+                'serviceProvider.serviceProvider.rollenartenWhitelist',
+            ] as const,
+            {
+                exclude: ['serviceProvider.serviceProvider.logo'] as const,
+            },
+        );
 
         return mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
     }
@@ -533,6 +570,7 @@ export class RolleRepo {
                 'systemrechte',
                 'serviceProvider.serviceProvider',
                 'serviceProvider.serviceProvider.merkmale',
+                'serviceProvider.serviceProvider.rollenartenWhitelist',
             ] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
