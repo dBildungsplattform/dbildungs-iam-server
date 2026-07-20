@@ -782,6 +782,7 @@ describe('Rolle API', () => {
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: orga.id,
                     rollenart: RollenArt.SCHB,
+                    merkmale: [RollenMerkmal.MPT_ROLLE],
                 }),
             );
             const nonMptRolle: Rolle<true> | DomainError = await rolleRepo.save(
@@ -817,6 +818,7 @@ describe('Rolle API', () => {
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: orga.id,
                     rollenart: RollenArt.SCHB,
+                    merkmale: [RollenMerkmal.MPT_ROLLE],
                 }),
             );
             const otherOrgaMptRolle: Rolle<true> | DomainError = await rolleRepo.save(
