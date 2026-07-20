@@ -69,11 +69,8 @@ export class ServiceProviderModificationService {
 
         // Assign defaults if person only has partial system rights
         if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
-            const updateError: Option<InvalidLogoCombinationError> = serviceProvider.update(SP_EINGESCHRAENKT_DEFAULTS);
-            // can't happen because SP_EINGESCHRAENKT_DEFAULTS does not include any logo
-            if (updateError) {
-                return Err(updateError);
-            }
+            // returned error can't happen because SP_EINGESCHRAENKT_DEFAULTS does not include any logo
+            serviceProvider.update(SP_EINGESCHRAENKT_DEFAULTS);
         }
 
         const persistedServiceProvider: ServiceProvider<true> =
