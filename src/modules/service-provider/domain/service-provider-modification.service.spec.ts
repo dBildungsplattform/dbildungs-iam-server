@@ -1,7 +1,7 @@
 import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { expectErrResult } from '../../../../test/utils/test-types.js';
+import { expectErrResult, expectOkResult } from '../../../../test/utils/test-types.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Ok } from '../../../shared/util/result.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -60,6 +60,24 @@ describe('ServiceProviderModificationService', () => {
             expectErrResult(result);
             expect(result.error).toBeInstanceOf(InvalidLogoCombinationError);
             expect(serviceProviderInternalRepoMock.persistAndFlush).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('deleteByIdAuthorized', () => {
+        it('should succeed if no rollenerweiterungen are found', async () => {
+            const permissions: ReturnType<typeof createPersonPermissionsMock> = createPersonPermissionsMock();
+
+            const existingProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                requires2fa: true,
+            });
+            serviceProviderRepoMock.findById.mockResolvedValueOnce(existingProvider);
+            rolleRepoMock.existsForServiceProviderId.mockResolvedValueOnce(false);
+            rollenerweiterungRepoMock.countByServiceProviderIds.mockResolvedValueOnce({});
+            serviceProviderRepoMock.deleteByIdAuthorized.mockResolvedValueOnce(Ok());
+
+            const result: Result<void, DomainError> = await sut.deleteByIdAuthorized(permissions, existingProvider.id);
+
+            expectOkResult(result);
         });
     });
 });
