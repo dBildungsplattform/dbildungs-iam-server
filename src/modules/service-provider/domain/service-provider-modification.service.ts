@@ -70,16 +70,9 @@ export class ServiceProviderModificationService {
         // Assign defaults if person only has partial system rights
         if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
             const updateError: Option<InvalidLogoCombinationError> = serviceProvider.update(SP_EINGESCHRAENKT_DEFAULTS);
-
+            // can't happen because SP_EINGESCHRAENKT_DEFAULTS does not include any logo
             if (updateError) {
                 return Err(updateError);
-            }
-
-            if (serviceProvider.rollenartenWhitelist.length > 0) {
-                return Err(new MissingPermissionsError('Insufficient permissions to set rollenartenWhitelist'));
-            }
-            if (xor(serviceProvider.merkmale, SP_EINGESCHRAENKT_DEFAULTS.merkmale).length > 0) {
-                return Err(new MissingPermissionsError('Insufficient permissions to set merkmale'));
             }
         }
 
