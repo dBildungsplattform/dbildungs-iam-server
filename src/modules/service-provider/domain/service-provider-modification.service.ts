@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { difference, isEqual, xor } from 'lodash-es';
+import { difference, isEqual } from 'lodash-es';
 
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
