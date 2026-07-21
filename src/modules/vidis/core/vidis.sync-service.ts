@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ServerConfig, VidisConfig } from '../../../shared/config/index.js';
 import {
+    DomainError,
     EntityNotFoundError,
     MissingAttributeError,
     MissingPermissionsError,
@@ -374,13 +375,10 @@ export class VidisSyncService {
         });
 
         const successfullyDeletedServiceProviderIds: Set<string> = new Set();
-
         await Promise.all(
             Array.from(deleteOperationsByServiceProviderId.entries()).map(
                 async ([serviceProviderId, deleteOperation]: [string, Promise<DeleteVidisServiceProviderResult>]) => {
-                    const [result]: PromiseSettledResult<DeleteVidisServiceProviderResult>[] =
-                        await Promise.allSettled([deleteOperation]);
-
+                    const [result]: PromiseSettledResult<DeleteVidisServiceProviderResult>[] = await Promise.allSettled([deleteOperation]);
                     if (
                         result?.status === 'fulfilled' &&
                         typeof result.value === 'object' &&
@@ -395,45 +393,54 @@ export class VidisSyncService {
         );
 
         const angeboteInDbAfterCreateDelete: ServiceProvider<true>[] = [
-            ...angeboteInDb.filter(
-                (angebotInDb: ServiceProvider<true>) => !successfullyDeletedServiceProviderIds.has(angebotInDb.id),
-            ),
+            ...angeboteInDb.filter((angebotInDb: ServiceProvider<true>) => !successfullyDeletedServiceProviderIds.has(angebotInDb.id)),
             ...successfullyCreatedAngebote,
         ];
         angeboteInDbAfterCreateDelete.forEach((angebotInDb: ServiceProvider<true>) => {
             const matchingAngebotInVidis: VidisApiResponseAngebotBySchool | undefined = angeboteInVidis.find((a: VidisApiResponseAngebotBySchool) => a.offerId.toString() === angebotInDb.vidisAngebotId)
             const needsDbUpdate: NeedsDbAngebotUpdateResult | undefined = matchingAngebotInVidis != null ? this.needsDbAngebotUpdate(angebotInDb, matchingAngebotInVidis) : undefined;
             if(matchingAngebotInVidis != null && needsDbUpdate?.needUpdate) {
-                this.logger.info(
-                    `Updating VIDIS Angebot with id ${angebotInDb.id} in DB because it differs from VIDIS API. Name changed: ${needsDbUpdate.isNameChanged}, URL changed: ${needsDbUpdate.isURLChanged}, Logo changed: ${needsDbUpdate.isLogoChanged}`
-                );
-                if(needsDbUpdate.isNameChanged){
-                    angebotInDb.name = matchingAngebotInVidis.offerTitle.toString();
-                }
-                if(needsDbUpdate.isURLChanged){
-                    angebotInDb.url = matchingAngebotInVidis.offerLink;
-                }
-                if(needsDbUpdate.isLogoChanged) {
-                    const { logo, logoMimeType }: DecodedVidisLogo = VidisSyncService.decodeVidisLogo(matchingAngebotInVidis.offerLogo);
-                    angebotInDb.logo = logo;
-                    angebotInDb.logoMimeType = logoMimeType;
-                }
-                this.serviceProviderModificationService.update(
-                    permissions,
-                    angebotInDb
-                ).then(()=>{
-                    this.logger.info(`Successfully updated VIDIS Angebot with id ${angebotInDb.id} in DB`);
-                }).catch((error: unknown) => {
-                    this.logger.logUnknownAsError(
-                        `Failed to update VIDIS Angebot with id ${angebotInDb.id} in DB`,
-                        error,
-                        false,
-                    );
-                });
+                void this.updateAngebotToMatchVidis(needsDbUpdate, angebotInDb, matchingAngebotInVidis, permissions);
             }
         })
 
     }
+
+    private async updateAngebotToMatchVidis(
+        needsDbUpdate: NeedsDbAngebotUpdateResult,
+        angebotInDb: ServiceProvider<true>,
+        matchingAngebotInVidis: VidisApiResponseAngebotBySchool,
+        permissions: IPersonPermissions
+    ): Promise<void> {
+        this.logger.info(
+            `Updating VIDIS Angebot with id ${angebotInDb.id} in DB because it differs from VIDIS API. Name changed: ${needsDbUpdate.isNameChanged}, URL changed: ${needsDbUpdate.isURLChanged}, Logo changed: ${needsDbUpdate.isLogoChanged}`
+        );
+        if(needsDbUpdate.isNameChanged){
+            angebotInDb.name = matchingAngebotInVidis.offerTitle.toString();
+        }
+        if(needsDbUpdate.isURLChanged){
+            angebotInDb.url = matchingAngebotInVidis.offerLink;
+        }
+        if(needsDbUpdate.isLogoChanged) {
+            const { logo, logoMimeType }: DecodedVidisLogo = VidisSyncService.decodeVidisLogo(matchingAngebotInVidis.offerLogo);
+            angebotInDb.logo = logo;
+            angebotInDb.logoMimeType = logoMimeType;
+        }
+        try{
+            await this.serviceProviderModificationService.update(
+                permissions,
+                angebotInDb
+            );
+            this.logger.info(`Successfully updated VIDIS Angebot with id ${angebotInDb.id} in DB`);
+        } catch (error: unknown) {
+            this.logger.logUnknownAsError(
+                `Failed to update VIDIS Angebot with id ${angebotInDb.id} in DB`,
+                error,
+                false,
+            );
+        }
+    }
+
 
     private needsDbAngebotUpdate(angebotInDb: ServiceProvider<true>, angebotInVidis: VidisServiceResponseAngebot): NeedsDbAngebotUpdateResult {
 
