@@ -61,6 +61,8 @@ import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { FindRollenerweiterungQueryParams } from './find-rollenerweiterung-query.params.js';
+import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -410,5 +412,39 @@ export class RolleController {
             .filter(Boolean);
 
         return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
+    }
+
+    @Get(':rolleId/rollenerweiterungen')
+    @ApiOperation({ description: 'Get Erweiterte Angebote for a rolle.' })
+    @ApiOkResponse({
+        description: 'The Erweiterten Angebote were successfully returned.',
+        type: RollenerweiterungResponse,
+        isArray: true,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get RollenErweiterungen.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permission to get RollenErweiterungen.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting RollenErweiterungen.' })
+    public async findRollenErweiterungenForRolleAndOrga(
+        @Param() params: FindRolleByIdParams,
+        @Query() queryParams: FindRollenerweiterungQueryParams,
+        @Permissions() permissions: IPersonPermissions,
+    ): Promise<ServiceProviderResponse[]> {
+        const rolleResult: Result<Rolle<true>> = await this.rolleRepo.findByIdAuthorized(params.rolleId, permissions);
+        if (!rolleResult.ok) {
+            throw new EntityNotFoundError('Rolle', params.rolleId);
+        }
+
+        const rollenerweiterungen: Rollenerweiterung<true>[] =
+            await this.rollenerweiterungRepo.findManyByOrganisationAndRolle([
+                { organisationId: queryParams.organisationId, rolleId: params.rolleId },
+            ]);
+
+        const serviceProviders: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
+            rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.serviceProviderId),
+        );
+
+        return Array.from(serviceProviders.values()).map(
+            (sp: ServiceProvider<true>) => new ServiceProviderResponse(sp),
+        );
     }
 }
