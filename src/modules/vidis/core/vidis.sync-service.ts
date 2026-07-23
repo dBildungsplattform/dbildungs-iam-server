@@ -56,7 +56,7 @@ type NeedsDbAngebotUpdateResult = {
     isNameChanged: boolean;
     isURLChanged: boolean;
     isLogoChanged: boolean;
-}
+};
 
 @Injectable()
 export class VidisSyncService {
@@ -363,9 +363,8 @@ export class VidisSyncService {
             });
         }
 
-        const createResults: PromiseSettledResult<CreateVidisServiceProviderResult>[] = await Promise.allSettled(
-            createOperations,
-        );
+        const createResults: PromiseSettledResult<CreateVidisServiceProviderResult>[] =
+            await Promise.allSettled(createOperations);
         const successfullyCreatedAngebote: ServiceProvider<true>[] = [];
 
         createResults.forEach((result: PromiseSettledResult<CreateVidisServiceProviderResult>) => {
@@ -378,7 +377,9 @@ export class VidisSyncService {
         await Promise.all(
             Array.from(deleteOperationsByServiceProviderId.entries()).map(
                 async ([serviceProviderId, deleteOperation]: [string, Promise<DeleteVidisServiceProviderResult>]) => {
-                    const [result]: PromiseSettledResult<DeleteVidisServiceProviderResult>[] = await Promise.allSettled([deleteOperation]);
+                    const [result]: PromiseSettledResult<DeleteVidisServiceProviderResult>[] = await Promise.allSettled(
+                        [deleteOperation],
+                    );
                     if (
                         result?.status === 'fulfilled' &&
                         typeof result.value === 'object' &&
@@ -393,44 +394,52 @@ export class VidisSyncService {
         );
 
         const angeboteInDbAfterCreateDelete: ServiceProvider<true>[] = [
-            ...angeboteInDb.filter((angebotInDb: ServiceProvider<true>) => !successfullyDeletedServiceProviderIds.has(angebotInDb.id)),
+            ...angeboteInDb.filter(
+                (angebotInDb: ServiceProvider<true>) => !successfullyDeletedServiceProviderIds.has(angebotInDb.id),
+            ),
             ...successfullyCreatedAngebote,
         ];
         angeboteInDbAfterCreateDelete.forEach((angebotInDb: ServiceProvider<true>) => {
-            const matchingAngebotInVidis: VidisApiResponseAngebotBySchool | undefined = angeboteInVidis.find((a: VidisApiResponseAngebotBySchool) => a.offerId.toString() === angebotInDb.vidisAngebotId)
-            const needsDbUpdate: NeedsDbAngebotUpdateResult | undefined = matchingAngebotInVidis != null ? this.needsDbAngebotUpdate(angebotInDb, matchingAngebotInVidis) : undefined;
-            if(matchingAngebotInVidis != null && needsDbUpdate?.needUpdate) {
+            const matchingAngebotInVidis: VidisApiResponseAngebotBySchool | undefined = angeboteInVidis.find(
+                (a: VidisApiResponseAngebotBySchool) => a.offerId.toString() === angebotInDb.vidisAngebotId,
+            );
+            const needsDbUpdate: NeedsDbAngebotUpdateResult | undefined =
+                matchingAngebotInVidis != null
+                    ? this.needsDbAngebotUpdate(angebotInDb, matchingAngebotInVidis)
+                    : undefined;
+            if (matchingAngebotInVidis != null && needsDbUpdate?.needUpdate) {
                 void this.updateAngebotToMatchVidis(needsDbUpdate, angebotInDb, matchingAngebotInVidis, permissions);
             }
-        })
-
+        });
     }
 
     private async updateAngebotToMatchVidis(
         needsDbUpdate: NeedsDbAngebotUpdateResult,
         angebotInDb: ServiceProvider<true>,
         matchingAngebotInVidis: VidisApiResponseAngebotBySchool,
-        permissions: IPersonPermissions
+        permissions: IPersonPermissions,
     ): Promise<void> {
         this.logger.info(
-            `Updating VIDIS Angebot with id ${angebotInDb.id} in DB because it differs from VIDIS API. Name changed: ${needsDbUpdate.isNameChanged}, URL changed: ${needsDbUpdate.isURLChanged}, Logo changed: ${needsDbUpdate.isLogoChanged}`
+            `Updating VIDIS Angebot with id ${angebotInDb.id} in DB because it differs from VIDIS API. Name changed: ${needsDbUpdate.isNameChanged}, URL changed: ${needsDbUpdate.isURLChanged}, Logo changed: ${needsDbUpdate.isLogoChanged}`,
         );
-        if(needsDbUpdate.isNameChanged){
+        if (needsDbUpdate.isNameChanged) {
             angebotInDb.name = matchingAngebotInVidis.offerTitle.toString();
         }
-        if(needsDbUpdate.isURLChanged){
+        if (needsDbUpdate.isURLChanged) {
             angebotInDb.url = matchingAngebotInVidis.offerLink;
         }
-        if(needsDbUpdate.isLogoChanged) {
-            const { logo, logoMimeType }: DecodedVidisLogo = VidisSyncService.decodeVidisLogo(matchingAngebotInVidis.offerLogo);
+        if (needsDbUpdate.isLogoChanged) {
+            const { logo, logoMimeType }: DecodedVidisLogo = VidisSyncService.decodeVidisLogo(
+                matchingAngebotInVidis.offerLogo,
+            );
             angebotInDb.logo = logo;
             angebotInDb.logoMimeType = logoMimeType;
         }
 
-        const updateResult: Result<ServiceProvider<true>, DomainError> = await this.serviceProviderModificationService.update(
-            permissions,
-            angebotInDb
-        );
+        const updateResult: Result<
+            ServiceProvider<true>,
+            DomainError
+        > = await this.serviceProviderModificationService.update(permissions, angebotInDb);
         if (updateResult.ok) {
             this.logger.info(`Successfully updated VIDIS Angebot with id ${angebotInDb.id} in DB`);
         } else {
@@ -440,12 +449,12 @@ export class VidisSyncService {
                 false,
             );
         }
-
     }
 
-
-    private needsDbAngebotUpdate(angebotInDb: ServiceProvider<true>, angebotInVidis: VidisServiceResponseAngebot): NeedsDbAngebotUpdateResult {
-
+    private needsDbAngebotUpdate(
+        angebotInDb: ServiceProvider<true>,
+        angebotInVidis: VidisServiceResponseAngebot,
+    ): NeedsDbAngebotUpdateResult {
         let isNameChanged: boolean = false;
         let isUrlChanged: boolean = false;
         let isLogoChanged: boolean = false;
