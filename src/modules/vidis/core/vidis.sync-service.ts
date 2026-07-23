@@ -426,19 +426,21 @@ export class VidisSyncService {
             angebotInDb.logo = logo;
             angebotInDb.logoMimeType = logoMimeType;
         }
-        try{
-            await this.serviceProviderModificationService.update(
-                permissions,
-                angebotInDb
-            );
+
+        const updateResult: Result<ServiceProvider<true>, DomainError> = await this.serviceProviderModificationService.update(
+            permissions,
+            angebotInDb
+        );
+        if (updateResult.ok) {
             this.logger.info(`Successfully updated VIDIS Angebot with id ${angebotInDb.id} in DB`);
-        } catch (error: unknown) {
+        } else {
             this.logger.logUnknownAsError(
                 `Failed to update VIDIS Angebot with id ${angebotInDb.id} in DB`,
-                error,
+                updateResult.error,
                 false,
             );
         }
+
     }
 
 
