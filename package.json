@@ -31,7 +31,7 @@
         "db:seed": "npm run start:console -- db seed",
         "db:migration-init": "npm run start:console -- db migration-init",
         "db:migration-create": "npm run start:console -- db migration-create",
-        "db:migration-apply": "npm run start:console -- db migration-apply",
+        "db:migration-apply": "npm run start:console -- db migration-apply --migration structural && npm run start:console -- db migration-apply --migration data",
         "keycloak:update-clients": "npm run start:console -- keycloak update-clients dev",
         "setup": "npm run db:migration-apply && npm run keycloak:update-clients && npm run db:seed dev",
         "db:seedingdata-generate": "npm run start:console -- db seedingdata-generate ./seeding/dev/01/ --baseId 100 --schoolCount 50 --classesPerSchool 12",
