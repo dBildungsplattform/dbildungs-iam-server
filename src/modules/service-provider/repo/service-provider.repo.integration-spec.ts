@@ -1,6 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { Collection, EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
+import { MockedObject } from 'vitest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import {
     ConfigTestModule,
     createPersonPermissionsMock,
@@ -12,10 +14,18 @@ import {
     expectOkResult,
     LoggingTestModule,
 } from '../../../../test/utils/index.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -28,15 +38,8 @@ import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 import { ServiceProviderRollenartWhitelistEntity } from './service-provider-rollenart-whitelist.entity.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
-import { ServiceProviderRepo } from './service-provider.repo.js';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderInternalRepo } from './service-provider.internal.repo.js';
-import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { ServiceProviderPropertyPermissions, ServiceProviderRepo } from './service-provider.repo.js';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
@@ -94,11 +97,15 @@ describe('ServiceProviderRepo', () => {
             const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
                 keycloakGroup: faker.string.alphanumeric(),
                 keycloakRole: faker.string.alphanumeric(),
+                merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+                rollenartenWhitelist: [RollenArt.LEHR],
             });
 
             const createdSp: ServiceProvider<true> = await sut.createUnsafe(serviceProvider);
 
             expect(createdSp.id).toBeDefined();
+            expect(createdSp.merkmale).toEqual(serviceProvider.merkmale);
+            expect(createdSp.rollenartenWhitelist).toEqual(serviceProvider.rollenartenWhitelist);
         });
 
         it('should reject duplicate VIDIS angebot ids for the same school', async () => {
@@ -284,7 +291,7 @@ describe('ServiceProviderRepo', () => {
         });
     });
 
-    describe('findByIdAuthorized', () => {
+    describe('findByIdForOrganisationIds', () => {
         let organisationA: Organisation<true>;
         let organisationB: Organisation<true>;
         let serviceProvider: ServiceProvider<true>;
@@ -762,6 +769,40 @@ describe('ServiceProviderRepo', () => {
             const result: boolean = await sut.deleteByName(persistedPersistedServiceProvider.name);
 
             expect(result).toBeTruthy();
+        });
+    });
+
+    describe('getPermissionsForServiceProvider', () => {
+        it.each([
+            [RollenSystemRecht.ANGEBOTE_VERWALTEN, ServiceProviderPropertyPermissions.ALL],
+            [RollenSystemRecht.ANGEBOTE_EINGESCHRAENKT_VERWALTEN, ServiceProviderPropertyPermissions.EINGESCHRAENKT],
+        ])(
+            'when systemrecht is %s, it should return %s',
+            async (
+                systemrecht: RollenSystemRecht,
+                serviceProviderPropertyPermission: ServiceProviderPropertyPermissions,
+            ) => {
+                const sp: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+                const permissionsMock: MockedObject<PersonPermissions> =
+                    createMock<PersonPermissions>(PersonPermissions);
+                permissionsMock.hasSystemrechtAtOrganisation.mockImplementation(
+                    (_orgaId: OrganisationID, sr: RollenSystemRecht) => Promise.resolve(sr === systemrecht),
+                );
+                const result: Result<ServiceProviderPropertyPermissions, DomainError> =
+                    await sut.getPermissionsForServiceProvider(permissionsMock, sp);
+                expectOkResult(result);
+                expect(result.value).toBe(serviceProviderPropertyPermission);
+            },
+        );
+
+        it('should return error if no permissions exist', async () => {
+            const sp: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+            const permissionsMock: MockedObject<PersonPermissions> = createMock<PersonPermissions>(PersonPermissions);
+            permissionsMock.hasSystemrechtAtOrganisation.mockReturnValue(Promise.resolve(false));
+            const result: Result<ServiceProviderPropertyPermissions, DomainError> =
+                await sut.getPermissionsForServiceProvider(permissionsMock, sp);
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(MissingPermissionsError);
         });
     });
 });

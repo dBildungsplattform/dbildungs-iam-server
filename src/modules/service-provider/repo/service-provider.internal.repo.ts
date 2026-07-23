@@ -25,16 +25,15 @@ export class ServiceProviderInternalRepo {
     }
 
     public async persistAndFlush(serviceProvider: ServiceProvider<boolean>): Promise<ServiceProvider<true>> {
-        const serviceProviderEntity: ServiceProviderEntity =
-            serviceProvider.id === undefined
-                ? this.em.create(ServiceProviderEntity, mapAggregateToData(serviceProvider))
-                : await this.em.findOneOrFail(
-                      ServiceProviderEntity,
-                      { id: serviceProvider.id },
-                      { populate: ['merkmale', 'rollenartenWhitelist'] },
-                  );
-
-        if (serviceProvider.id !== undefined) {
+        let serviceProviderEntity: ServiceProviderEntity;
+        if (serviceProvider.id === undefined) {
+            serviceProviderEntity = this.em.create(ServiceProviderEntity, mapAggregateToData(serviceProvider));
+        } else {
+            serviceProviderEntity = await this.em.findOneOrFail(
+                ServiceProviderEntity,
+                { id: serviceProvider.id },
+                { populate: ['merkmale', 'rollenartenWhitelist'] },
+            );
             serviceProviderEntity.assign(mapAggregateToData(serviceProvider));
         }
 

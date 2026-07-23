@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { difference, isEqual, xor } from 'lodash-es';
+import { difference, isEqual } from 'lodash-es';
 
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -69,18 +69,8 @@ export class ServiceProviderModificationService {
 
         // Assign defaults if person only has partial system rights
         if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
-            const updateError: Option<InvalidLogoCombinationError> = serviceProvider.update(SP_EINGESCHRAENKT_DEFAULTS);
-
-            if (updateError) {
-                return Err(updateError);
-            }
-
-            if (serviceProvider.rollenartenWhitelist.length > 0) {
-                return Err(new MissingPermissionsError('Insufficient permissions to set rollenartenWhitelist'));
-            }
-            if (xor(serviceProvider.merkmale, SP_EINGESCHRAENKT_DEFAULTS.merkmale).length > 0) {
-                return Err(new MissingPermissionsError('Insufficient permissions to set merkmale'));
-            }
+            // returned error can't happen because SP_EINGESCHRAENKT_DEFAULTS does not include any logo
+            serviceProvider.update(SP_EINGESCHRAENKT_DEFAULTS);
         }
 
         const persistedServiceProvider: ServiceProvider<true> =
@@ -106,10 +96,14 @@ export class ServiceProviderModificationService {
             return Err(new EntityNotFoundError('ServiceProvider', serviceProvider.id));
         }
 
-        const frozenProperties: ServiceProviderUpdateParams = this.getFrozenProperties(
-            existingProvider,
-            permissionsResult.value,
-        );
+        const frozenProperties: ServiceProviderUpdateParams = {
+            requires2fa: existingProvider.requires2fa,
+        };
+        if (permissionsResult.value === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
+            frozenProperties.kategorie = existingProvider.kategorie;
+            frozenProperties.merkmale = existingProvider.merkmale;
+            frozenProperties.rollenartenWhitelist = existingProvider.rollenartenWhitelist;
+        }
         const updateError: Option<InvalidLogoCombinationError> = serviceProvider.update(frozenProperties);
         if (updateError) {
             return Err(updateError);
@@ -120,18 +114,18 @@ export class ServiceProviderModificationService {
             return Err(duplicateNameError);
         }
 
-        const {
-            hasRollenartenWhitelistChanged,
-            forbiddenRollenarten,
-        }: { hasRollenartenWhitelistChanged: boolean; forbiddenRollenarten: RollenArt[] } = this.getWhitelistChange(
-            existingProvider,
-            serviceProvider,
+        const hasRollenartenWhitelistChanged: boolean = !isEqual(
+            existingProvider.rollenartenWhitelist,
+            serviceProvider.rollenartenWhitelist,
         );
-
+        const forbiddenRollenarten: RollenArt[] =
+            serviceProvider.rollenartenWhitelist.length === 0
+                ? []
+                : difference(Object.values(RollenArt), serviceProvider.rollenartenWhitelist);
         if (hasRollenartenWhitelistChanged && forbiddenRollenarten.length > 0) {
             const attachedRollenError: Option<AttachedRollenError> = await this.getAttachedRollenError(
                 serviceProvider.id,
-                'Cannot update rollenartenWhitelist with conflicting rollenarten to attached to rollen',
+                'Cannot update rollenartenWhitelist with conflicting rollenarten attached to rollen',
                 forbiddenRollenarten,
             );
             if (attachedRollenError) {
@@ -142,10 +136,12 @@ export class ServiceProviderModificationService {
         const hasVerfuegbarFuerRollenerweiterungMerkmalBeenRemoved: boolean =
             !serviceProvider.merkmale.includes(ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG) &&
             existingProvider.merkmale.includes(ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG);
-        if (hasRollenartenWhitelistChanged || hasVerfuegbarFuerRollenerweiterungMerkmalBeenRemoved) {
+        if (hasVerfuegbarFuerRollenerweiterungMerkmalBeenRemoved) {
+            await this.rollenerweiterungRepo.deleteByServiceProviderIdAndRollenarten(serviceProvider.id);
+        } else if (hasRollenartenWhitelistChanged && forbiddenRollenarten.length > 0) {
             await this.rollenerweiterungRepo.deleteByServiceProviderIdAndRollenarten(
                 serviceProvider.id,
-                hasVerfuegbarFuerRollenerweiterungMerkmalBeenRemoved ? undefined : forbiddenRollenarten,
+                forbiddenRollenarten,
             );
         }
 
@@ -234,42 +230,5 @@ export class ServiceProviderModificationService {
         }
 
         return;
-    }
-
-    private getFrozenProperties(
-        existingProvider: ServiceProvider<true>,
-        permission: ServiceProviderPropertyPermissions,
-    ): ServiceProviderUpdateParams {
-        const frozenProperties: ServiceProviderUpdateParams = {
-            requires2fa: existingProvider.requires2fa,
-        };
-
-        if (permission === ServiceProviderPropertyPermissions.EINGESCHRAENKT) {
-            frozenProperties.kategorie = existingProvider.kategorie;
-            frozenProperties.merkmale = existingProvider.merkmale;
-            frozenProperties.rollenartenWhitelist = existingProvider.rollenartenWhitelist;
-        }
-
-        return frozenProperties;
-    }
-
-    private getWhitelistChange(
-        existingProvider: ServiceProvider<true>,
-        serviceProvider: ServiceProvider<true>,
-    ): {
-        hasRollenartenWhitelistChanged: boolean;
-        forbiddenRollenarten: RollenArt[];
-    } {
-        const hasRollenartenWhitelistChanged: boolean = !isEqual(
-            existingProvider.rollenartenWhitelist,
-            serviceProvider.rollenartenWhitelist,
-        );
-
-        const forbiddenRollenarten: RollenArt[] =
-            serviceProvider.rollenartenWhitelist.length === 0
-                ? []
-                : difference(Object.values(RollenArt), serviceProvider.rollenartenWhitelist);
-
-        return { hasRollenartenWhitelistChanged, forbiddenRollenarten };
     }
 }

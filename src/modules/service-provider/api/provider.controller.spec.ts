@@ -10,7 +10,7 @@ import { DatabaseTestModule } from '../../../../test/utils/database-test.module.
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { MissingAttributeError } from '../../../shared/error/index.js';
+import { EntityNotFoundError, MissingAttributeError } from '../../../shared/error/index.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { RawPagedResponse } from '../../../shared/paging/raw-paged.response.js';
 import { Err, Ok } from '../../../shared/util/result.js';
@@ -955,6 +955,16 @@ describe('Provider Controller Test', () => {
             expect(result.id).toBe(updatedEntity.id);
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `ServiceProvider mit Id ${angebotId} erfolgreich aktualisiert.`,
+            );
+        });
+
+        it('should throw the error when service-provider does not exist', async () => {
+            const body: UpdateServiceProviderBodyParams = { name: 'Updated name' };
+
+            serviceProviderRepoMock.findById.mockResolvedValueOnce(undefined);
+
+            await expect(providerController.updateServiceProvider(permissions, angebotId, body)).rejects.toThrow(
+                EntityNotFoundError,
             );
         });
 

@@ -340,6 +340,61 @@ describe('ServiceProviderModificationService', () => {
             expect(erweiterungExists).toBe(false);
         });
 
+        it('should not delete rollenerweiterungen if rollenartenWhitelist is cleared', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            await em
+                .persist(
+                    em.create(OrganisationEntity, {
+                        ...orga,
+                        emailAdress: undefined,
+                    }),
+                )
+                .flush();
+            const rollenartenWhitelist: RollenArt[] = [RollenArt.LERN, RollenArt.LEHR, RollenArt.LEIT];
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                rollenartenWhitelist,
+            });
+            const rollen: Rolle<true>[] = await Promise.all(
+                rollenartenWhitelist.map(async (rollenart: RollenArt): Promise<Rolle<true>> => {
+                    const rolle: Rolle<true> = await rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            administeredBySchulstrukturknoten: orga.id,
+                            rollenart,
+                        }),
+                    );
+                    await rollenerweiterungRepo.create(
+                        DoFactory.createRollenerweiterung(false, {
+                            organisationId: orga.id,
+                            rolleId: rolle.id,
+                            serviceProviderId: serviceProvider.id,
+                        }),
+                    );
+                    return rolle;
+                }),
+            );
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            serviceProvider.rollenartenWhitelist = [];
+            const updateResult: Result<ServiceProvider<true>, DomainError> = await sut.update(
+                permissionsMock,
+                serviceProvider,
+            );
+            expectOkResult(updateResult);
+            const erweiterungExists: boolean[] = await Promise.all(
+                rollen.map(async (rolle: Rolle<true>) =>
+                    rollenerweiterungRepo.exists({
+                        organisationId: orga.id,
+                        rolleId: rolle.id,
+                        serviceProviderId: serviceProvider.id,
+                    }),
+                ),
+            );
+            expect(erweiterungExists).toEqual([true, true, true]);
+        });
+
         it('should remove dependent ANBIETEN-merkmale and delete rollenerweiterungen when VERFUEGBAR_FUER_ROLLENERWEITERUNG is removed', async () => {
             const orga: Organisation<true> = DoFactory.createOrganisation(true);
             await em
