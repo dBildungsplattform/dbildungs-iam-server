@@ -21,17 +21,6 @@
 - Use explicit `DomainError` types and map them at API boundaries with exception filters.
 - Follow the existing validation/error filter strategy; flag bypasses.
 
-## Persistence
-
-- Avoid `Cascade.REMOVE` in Mikro-ORM unless explicitly documented.
-- Keep relation ownership/deletion behavior explicit and repository-consistent.
-
-## Testing
-
-- Tests must be isolated/deterministic and independent from seed data.
-- Cover 100% of lines, statements, and branches
-- Unit tests mock dependencies; integration tests use real infrastructure where intended.
-
 # GitHub Copilot Code Review Instructions
 
 ## Context
@@ -42,9 +31,7 @@
 ## Review Rules
 
 - Comment only with high confidence (>80%).
-- Be concise and actionable.
 - Prefer one issue per comment.
-- Ignore mere clarity/style nits unless they can cause errors.
 
 ## Priorities
 
@@ -68,7 +55,7 @@
 When reporting an issue:
 
 1. Problem (1 sentence)
-2. Why it matters (if not obvious)
+2. Why it matters if not obvious
 3. Concrete fix (snippet or specific action)
 
 ## Silence Rule
