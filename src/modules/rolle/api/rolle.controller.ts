@@ -63,6 +63,7 @@ import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { FindRollenerweiterungQueryParams } from './find-rollenerweiterung-query.params.js';
 import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
+import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -418,13 +419,13 @@ export class RolleController {
     @ApiOperation({ description: 'Get Erweiterte Angebote for a rolle.' })
     @ApiOkResponse({
         description: 'The Erweiterten Angebote were successfully returned.',
-        type: RollenerweiterungResponse,
+        type: ServiceProviderResponse,
         isArray: true,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get RollenErweiterungen.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to get RollenErweiterungen.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting RollenErweiterungen.' })
-    public async findRollenErweiterungenForRolleAndOrga(
+    public async findRollenerweiterungenForRolleAndOrga(
         @Param() params: FindRolleByIdParams,
         @Query() queryParams: FindRollenerweiterungQueryParams,
         @Permissions() permissions: IPersonPermissions,
@@ -446,5 +447,34 @@ export class RolleController {
         return Array.from(serviceProviders.values()).map(
             (sp: ServiceProvider<true>) => new ServiceProviderResponse(sp),
         );
+    }
+
+    @Get(':rolleId/allowedProviders')
+    @ApiOperation({ description: 'Get Erweiterte Angebote for a rolle.' })
+    @ApiOkResponse({
+        description: 'The Erweiterten Angebote were successfully returned.',
+        type: ServiceProviderResponse,
+        isArray: true,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get RollenErweiterungen.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permission to get RollenErweiterungen.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting RollenErweiterungen.' })
+    public async findAllowedProvidersForRolleAndOrga(
+        @Param() params: FindRolleByIdParams,
+        @Query() queryParams: FindRollenerweiterungQueryParams,
+        @Permissions() permissions: IPersonPermissions,
+    ): Promise<ServiceProviderResponse[]> {
+        const rolleResult: Result<Rolle<true>> = await this.rolleRepo.findByIdAuthorized(params.rolleId, permissions);
+        if (!rolleResult.ok) {
+            throw new EntityNotFoundError('Rolle', params.rolleId);
+        }
+
+        const serviceProviders: Counted<ServiceProvider<true>> = await this.serviceProviderRepo.findByOrgasWithMerkmal(
+            [queryParams.organisationId],
+            ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+        );
+
+        return serviceProviders[0].map((sp: ServiceProvider<true>) => new ServiceProviderResponse(sp));
+        // Filter still missing and maybe repo function not the right one
     }
 }
