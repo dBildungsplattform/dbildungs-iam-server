@@ -44,6 +44,9 @@ export class DbApplyMigrationConsole extends CommandRunner {
             return migration.name.endsWith('D');
         });
 
+        // TODO: remove debug logs
+        this.logger.info(`Applying ${migrationType} migrations...`);
+        this.logger.info(`${migrationsToExecute.length} of ${allMigrations.length} total...`);
         await migrator.up(migrationsToExecute.map((migration: MigrationInfo) => migration.name));
         this.logger.info('Finished migration to latest version.');
     }
