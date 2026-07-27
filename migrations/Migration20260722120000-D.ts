@@ -1,10 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20260722120000 extends Migration {
-    override isTransactional(): boolean {
-        return false;
-    }
-
     public async up(): Promise<void> {
         this.addSql(`
             INSERT INTO
