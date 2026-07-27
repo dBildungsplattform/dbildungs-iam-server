@@ -353,6 +353,20 @@ export class ServiceProviderService {
         }));
     }
 
+    public async findAllowedProvidersForRolleAndOrga(organisationId: OrganisationID): Promise<ServiceProvider<true>[]> {
+        const parents: Organisation<true>[] = await this.organisationRepo.findParentOrgasForIds([organisationId]);
+        const organisationWithParentsIds: OrganisationID[] = [
+            organisationId,
+            ...parents.map((orga: Organisation<true>) => orga.id),
+        ];
+        const serviceProviders: Counted<ServiceProvider<true>> = await this.serviceProviderRepo.findByOrgasWithMerkmal(
+            organisationWithParentsIds,
+            ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+        );
+
+        return serviceProviders[0];
+    }
+
     public async updateServiceProvider(
         permissions: IPersonPermissions,
         angebotId: ServiceProviderID,

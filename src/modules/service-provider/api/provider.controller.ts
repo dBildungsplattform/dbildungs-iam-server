@@ -79,6 +79,8 @@ import { ServiceProviderErrorFilter } from './service-provider-exception.filter.
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
+import { FindRolleByIdParams } from '../../rolle/api/find-rolle-by-id.params.js';
+import { FindRollenerweiterungQueryParams } from '../../rolle/api/find-rollenerweiterung-query.params.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -483,6 +485,35 @@ export class ProviderController {
         }
         this.logger.info(
             `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat ServiceProvider mit Id ${params.angebotId} erfolgreich gelöscht.`,
+        );
+    }
+
+    @Get(':rolleId/allowedProviders')
+    @ApiOperation({ description: 'Get Erweiterte Angebote for a rolle.' })
+    @ApiOkResponse({
+        description: 'The Erweiterten Angebote were successfully returned.',
+        type: ServiceProviderResponse,
+        isArray: true,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get RollenErweiterungen.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permission to get RollenErweiterungen.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting RollenErweiterungen.' })
+    public async findAllowedProvidersForRolleAndOrga(
+        @Param() params: FindRolleByIdParams,
+        @Query() queryParams: FindRollenerweiterungQueryParams,
+        @Permissions() permissions: IPersonPermissions,
+    ): Promise<ServiceProviderResponse[]> {
+        // Filter for role still missing
+        const rolleResult: Result<Rolle<true>> = await this.rolleRepo.findByIdAuthorized(params.rolleId, permissions);
+        if (!rolleResult.ok) {
+            throw new EntityNotFoundError('Rolle', params.rolleId);
+        }
+
+        const serviceProviders: ServiceProvider<true>[] =
+            await this.serviceProviderService.findAllowedProvidersForRolleAndOrga(queryParams.organisationId);
+
+        return serviceProviders.map(
+            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );
     }
 }
