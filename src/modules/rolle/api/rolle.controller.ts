@@ -64,6 +64,7 @@ import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { FindRollenerweiterungQueryParams } from './find-rollenerweiterung-query.params.js';
 import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
+import { ApplyRollenerweiterungChangesBodyParams } from './apply-rollenerweiterung-changes.body.params.js';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -476,5 +477,55 @@ export class RolleController {
 
         return serviceProviders[0].map((sp: ServiceProvider<true>) => new ServiceProviderResponse(sp));
         // Filter still missing and maybe repo function not the right one
+    }
+
+    @Put(':rolleId/rollenerweiterungen')
+    @ApiOperation({ description: 'Apply Erweiterte Angebote changes for a rolle.' })
+    @ApiOkResponse({
+        description: 'The Erweiterten Angebote were successfully updated.',
+        type: ServiceProviderResponse,
+        isArray: true,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update RollenErweiterungen.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permission to update RollenErweiterungen.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating RollenErweiterungen.' })
+    public async applyRollenerweiterungChangesForRolle(
+        @Param() params: FindRolleByIdParams,
+        @Query() queryParams: FindRollenerweiterungQueryParams,
+        @Body() body: ApplyRollenerweiterungChangesBodyParams,
+        @Permissions() permissions: IPersonPermissions,
+    ): Promise<RollenerweiterungResponse[]> {
+        const rolleResult: Result<Rolle<true>> = await this.rolleRepo.findByIdAuthorized(params.rolleId, permissions);
+        if (!rolleResult.ok) {
+            throw new EntityNotFoundError('Rolle', params.rolleId);
+        }
+
+        const results: Result<Rollenerweiterung<true>, DomainError>[] = await Promise.all(
+            body.serviceProviderIds.map((serviceProviderId: string) =>
+                this.rollenerweiterungRepo.createAuthorized(
+                    this.rollenerweiterungFactory.createNew(
+                        queryParams.organisationId,
+                        params.rolleId,
+                        serviceProviderId,
+                    ),
+                    permissions,
+                ),
+            ),
+        );
+
+        const errors: Result<Rollenerweiterung<true>, DomainError> | undefined = results.find(
+            (result: Result<Rollenerweiterung<true>, DomainError>) => !result.ok,
+        );
+        if (errors && !errors.ok) {
+            throw errors.error;
+        }
+
+        return results
+            .filter(
+                (
+                    result: Result<Rollenerweiterung<true>, DomainError>,
+                ): result is { ok: true; value: Rollenerweiterung<true> } => result.ok,
+            )
+            .map((result: { ok: true; value: Rollenerweiterung<true> }) => new RollenerweiterungResponse(result.value));
     }
 }
