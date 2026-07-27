@@ -429,7 +429,7 @@ export class RolleController {
         @Param() params: FindRolleByIdParams,
         @Query() queryParams: FindRollenerweiterungQueryParams,
         @Permissions() permissions: IPersonPermissions,
-    ): Promise<RollenerweiterungResponse[]> {
+    ): Promise<ServiceProviderResponse[]> {
         const rolleResult: Result<Rolle<true>> = await this.rolleRepo.findByIdAuthorized(params.rolleId, permissions);
         if (!rolleResult.ok) {
             throw new EntityNotFoundError('Rolle', params.rolleId);
@@ -440,8 +440,12 @@ export class RolleController {
                 { organisationId: queryParams.organisationId, rolleId: params.rolleId },
             ]);
 
-        return rollenerweiterungen.map(
-            (rollenerweiterung: Rollenerweiterung<true>) => new RollenerweiterungResponse(rollenerweiterung),
+        const serviceProviders: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
+            rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.serviceProviderId),
+        );
+
+        return Array.from(serviceProviders.values()).map(
+            (sp: ServiceProvider<true>) => new ServiceProviderResponse(sp),
         );
     }
 
