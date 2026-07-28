@@ -121,6 +121,20 @@ export class RolleController {
                 limit: queryParams.limit,
                 offset: queryParams.offset,
             });
+        } else if (
+            queryParams.systemrechte &&
+            queryParams.systemrechte.length === 1 &&
+            queryParams.systemrechte[0] === RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN
+        ) {
+            rollenAndTotal = await this.rolleRepo.findMptRollenAuthorized(
+                permissions,
+                false,
+                queryParams.searchStr,
+                queryParams.limit,
+                queryParams.offset,
+                queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                queryParams.rolleIds,
+            );
         } else {
             rollenAndTotal = await this.rolleRepo.findRollenAuthorized(
                 permissions,

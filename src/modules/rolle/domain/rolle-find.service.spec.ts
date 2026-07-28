@@ -11,7 +11,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RolleFindByParameters, RolleRepo } from '../repo/rolle.repo.js';
 import { FindRollenWithPermissionsParams, RolleFindService } from './rolle-find.service.js';
-import { RollenArt } from './rolle.enums.js';
+import { RollenArt, RollenMerkmal } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
 import { RollenSystemRecht } from './systemrecht.js';
@@ -88,6 +88,7 @@ describe('RolleService', () => {
                     limit: params.limit,
                     offset: params.offset,
                     rollenArten: params.rollenArten,
+                    excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
                 }),
             );
         });
@@ -350,6 +351,11 @@ describe('RolleService', () => {
             });
 
             expect(result).toEqual([[rollen[1]], rollen.length]);
+            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                expect.objectContaining<RolleFindByParameters>({
+                    excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
+                }),
+            );
         });
 
         it('should apply offset when no limit is provided', async () => {
