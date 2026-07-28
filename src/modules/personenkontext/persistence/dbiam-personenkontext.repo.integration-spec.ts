@@ -55,6 +55,7 @@ import { ServiceProviderModule } from '../../service-provider/service-provider.m
 import { ServiceProviderMerkmalEntity } from '../../service-provider/repo/service-provider-merkmal.entity.js';
 import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
 import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
+import { ServiceProviderRollenartWhitelistEntity } from '../../service-provider/repo/service-provider-rollenart-whitelist.entity.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -317,6 +318,9 @@ describe('dbiam Personenkontext Repo', () => {
             mockServiceProvider.name = 'Mocked Service Provider';
             mockServiceProvider.vidisAngebotId = faker.string.uuid();
             mockServiceProvider.merkmale = mockMerkmale;
+            mockServiceProvider.rollenartenWhitelist = createMock<Collection<ServiceProviderRollenartWhitelistEntity>>(
+                Collection<ServiceProviderRollenartWhitelistEntity>,
+            );
             const mockRolleServiceProviderEntity: RolleServiceProviderEntity =
                 createMock<RolleServiceProviderEntity>(RolleServiceProviderEntity);
             mockRolleServiceProviderEntity.serviceProvider = mockServiceProvider;
