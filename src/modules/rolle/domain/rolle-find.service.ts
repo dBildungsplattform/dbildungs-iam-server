@@ -29,7 +29,7 @@ export class RolleFindService {
     ) {}
 
     public async findRollenAvailableForErweiterung(
-        params: FindRollenWithPermissionsParams,
+        params: FindRollenWithPermissionsParams & { includeMptRollen?: boolean },
     ): Promise<Counted<Rolle<true>>> {
         const permittedOrgas: PermittedOrgas = await params.permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ROLLEN_ERWEITERN],
@@ -59,12 +59,18 @@ export class RolleFindService {
             }
         }
 
+        // we can assume that MPT_ROLLEN_VERWALTEN is not exclusive to a single orga here, since matchAll on
+        // permissions.getOrgIdsWithSystemrecht is true by default for ROLLEN_ERWEITERN above
+        const excludeMerkmale: RollenMerkmal[] | undefined = params.includeMptRollen
+            ? undefined
+            : [RollenMerkmal.MPT_ROLLE];
+
         const queryParams: RolleFindByParameters = {
             searchStr: params.searchStr,
             allowedOrganisationIds: permittedAndRequestedOrganisationenIdsWithParents,
             limit: params.limit,
             offset: params.offset,
-            excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
+            excludeMerkmale,
         };
 
         if (permittedAndRequestedOrganisationenIds !== undefined && permittedAndRequestedOrganisationenIds.length > 0) {

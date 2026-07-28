@@ -259,6 +259,33 @@ describe('RolleService', () => {
                 }),
             );
         });
+
+        it('should include MPT rollen when includeMptRollen is true', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            const params: FindRollenWithPermissionsParams & { includeMptRollen?: boolean } = {
+                permissions: permissionsMock,
+                includeMptRollen: true,
+            };
+            await rolleFindService.findRollenAvailableForErweiterung(params);
+            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                expect.objectContaining<Partial<RolleFindByParameters>>({
+                    excludeMerkmale: undefined,
+                }),
+            );
+        });
+
+        it('should exclude MPT rollen when includeMptRollen is false or not provided', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            const params: FindRollenWithPermissionsParams = {
+                permissions: permissionsMock,
+            };
+            await rolleFindService.findRollenAvailableForErweiterung(params);
+            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                expect.objectContaining<Partial<RolleFindByParameters>>({
+                    excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
+                }),
+            );
+        });
     });
 
     describe('findRollenAvailableForImportPersonenkontext', () => {
