@@ -1,30 +1,6 @@
-########################################
-# SPSH application code
-########################################
 
-/src/                   @dBildungsplattform/schulportal-sh
-/test/                  @dBildungsplattform/schulportal-sh
-/keycloak/              @dBildungsplattform/schulportal-sh
-/keycloak-migrations/   @dBildungsplattform/schulportal-sh
-/migrations/            @dBildungsplattform/schulportal-sh
-/seeding/               @dBildungsplattform/schulportal-sh
+# Default owner for all repository files
+* @dBildungsplattform/schulportal-sh
 
-/package.json           @dBildungsplattform/schulportal-sh
-/package-lock.json      @dBildungsplattform/schulportal-sh
-/nest-cli.json          @dBildungsplattform/schulportal-sh
-/tsconfig.json          @dBildungsplattform/schulportal-sh
-/tsconfig.build.json    @dBildungsplattform/schulportal-sh
-/eslint.config.ts       @dBildungsplattform/schulportal-sh
-/vite.config.ts         @dBildungsplattform/schulportal-sh
-
-/nginx/                 @dBildungsplattform/schulportal-sh
-/Dockerfile             @dBildungsplattform/schulportal-sh
-/compose.yaml           @dBildungsplattform/schulportal-sh
-/docker-bootstrap.sh    @dBildungsplattform/schulportal-sh
-
-########################################
-# Helm and CI/CD pipelines
-########################################
-
-/charts/                @dBildungsplattform/sre-team
-/.github/workflows/     @dBildungsplattform/sre-team
+# GitHub configuration files can be reviewed by either the Dev or SRE team
+/.github/ @dBildungsplattform/schulportal-sh @dBildungsplattform/sre-team
