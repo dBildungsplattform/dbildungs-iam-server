@@ -1,39 +1,40 @@
 import { EntityManager } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
+import { ConfigService } from '@nestjs/config';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { ScopeOrder } from '../../../shared/persistence/index.js';
+import { ServerConfig, VidisConfig } from '../../../shared/config/index.js';
 import {
     EntityNotFoundError,
     MissingAttributeError,
     MissingPermissionsError,
     SharedDomainError,
 } from '../../../shared/error/index.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { ScopeOrder } from '../../../shared/persistence/index.js';
 import { Err, Ok } from '../../../shared/util/result.js';
-import type {
-    VidisAngebotWithSchoolActivations,
-    VidisServiceResponseSchoolActivation,
-    VidisServiceResponseAngebot,
-    VidisApiResponseAngebotBySchool,
-} from '../adapter/domain/vidis.types.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { OrganisationScope } from '../../organisation/persistence/organisation.scope.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
+import { ServiceProviderModificationService } from '../../service-provider/domain/service-provider-modification.service.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
     ServiceProviderSystem,
     ServiceProviderTarget,
 } from '../../service-provider/domain/service-provider.enum.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { EscalatedPersonPermissionsFactory } from '../../permission/escalated-person-permissions.factory.js';
-import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
-import { ServerConfig, VidisConfig } from '../../../shared/config/index.js';
-import { ConfigService } from '@nestjs/config';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { VidisApiAdapter } from '../adapter/domain/vidis-api.adapter.js';
+import type {
+    VidisAngebotWithSchoolActivations,
+    VidisApiResponseAngebotBySchool,
+    VidisServiceResponseAngebot,
+    VidisServiceResponseSchoolActivation,
+} from '../adapter/domain/vidis.types.js';
 import { VidisApiError } from '../error/vidis-api.error.js';
 
 type VidisSchoolActivatedAngebot = {
@@ -57,6 +58,8 @@ export class VidisSyncService {
     private static readonly DEFAULT_VIDIS_SERVICE_PROVIDER_MERKMALE: ServiceProviderMerkmal[] = [
         ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
         ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR,
+        ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG,
+        ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG,
     ];
 
     private readonly vidisConfig: VidisConfig;
@@ -65,6 +68,7 @@ export class VidisSyncService {
         private readonly vidisApiAdapter: VidisApiAdapter,
         private readonly organisationRepo: OrganisationRepository,
         private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly serviceProviderModificationService: ServiceProviderModificationService,
         private readonly escalatedPersonPermissionsFactory: EscalatedPersonPermissionsFactory,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly em: EntityManager,
@@ -277,7 +281,10 @@ export class VidisSyncService {
         );
 
         const syncOperations: Promise<unknown>[] = missingAngeboteInDb.map((angebot: VidisApiResponseAngebotBySchool) =>
-            this.serviceProviderRepo.create(permissions, this.createVidisServiceProvider(organisationId, angebot)),
+            this.serviceProviderModificationService.create(
+                permissions,
+                this.createVidisServiceProvider(organisationId, angebot),
+            ),
         );
 
         if (serviceProviderIdsMissingInVidis.length > 0) {
@@ -367,6 +374,7 @@ export class VidisSyncService {
             false,
             angebot.offerId.toString(),
             VidisSyncService.DEFAULT_VIDIS_SERVICE_PROVIDER_MERKMALE,
+            [],
         );
     }
 
