@@ -143,6 +143,18 @@ export class RollenerweiterungRepo {
         return rollenerweiterungen.map((entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity));
     }
 
+    public async findManyByRolleId(rolleId: RolleID): Promise<Array<Rollenerweiterung<true>>> {
+        const rollenerweiterungEntities: Loaded<RollenerweiterungEntity>[] = await this.em.find(
+            RollenerweiterungEntity,
+            {
+                rolleId,
+            },
+        );
+        return rollenerweiterungEntities.map((entity: Loaded<RollenerweiterungEntity>) =>
+            this.mapEntityToAggregate(entity),
+        );
+    }
+
     public async findManyByOrganisationId(
         organisationId: OrganisationID,
         offset?: number,

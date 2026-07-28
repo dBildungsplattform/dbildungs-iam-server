@@ -5,7 +5,7 @@ import { createPersonPermissionsMock, LoggingTestModule } from '../../../../test
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { RollenerweiterungController } from './rollenerweiterung.controller.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { ApplyRollenerweiterungPathParams } from './apply-rollenerweiterung-changes.path.params.js';
+import { ApplyRollenerweiterungForSPPathParams } from './apply-rollenerweiterung-for-sp-changes.path.params.js';
 import { ApplyRollenerweiterungBodyParams } from './apply-rollenerweiterung.body.params.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -50,7 +50,7 @@ describe('RollenerweiterungController', () => {
 
     describe('applyRollenerweiterungChanges', () => {
         it('should apply Rollenerweiterungen', async () => {
-            const params: ApplyRollenerweiterungPathParams = {
+            const params: ApplyRollenerweiterungForSPPathParams = {
                 angebotId: faker.string.uuid(),
                 organisationId: faker.string.uuid(),
             };
@@ -70,7 +70,7 @@ describe('RollenerweiterungController', () => {
         });
 
         it('should log error with failed and successful rollen ids when ApplyRollenerweiterungWorkflowAggregate returns error', async () => {
-            const params: ApplyRollenerweiterungPathParams = {
+            const params: ApplyRollenerweiterungForSPPathParams = {
                 angebotId: faker.string.uuid(),
                 organisationId: faker.string.uuid(),
             };
@@ -118,7 +118,7 @@ describe('RollenerweiterungController', () => {
         });
 
         it('should throw if ApplyRollenerweiterungService returns ApplyRollenerweiterungRolesError error', async () => {
-            const params: ApplyRollenerweiterungPathParams = {
+            const params: ApplyRollenerweiterungForSPPathParams = {
                 angebotId: faker.string.uuid(),
                 organisationId: faker.string.uuid(),
             };
@@ -138,7 +138,7 @@ describe('RollenerweiterungController', () => {
         });
 
         it('should throw if ApplyRollenerweiterungService returns EntityNotFoundError error', async () => {
-            const params: ApplyRollenerweiterungPathParams = {
+            const params: ApplyRollenerweiterungForSPPathParams = {
                 angebotId: faker.string.uuid(),
                 organisationId: faker.string.uuid(),
             };
@@ -158,7 +158,7 @@ describe('RollenerweiterungController', () => {
         });
 
         it('should throw if ApplyRollenerweiterungService returns MissingPermissionsError error', async () => {
-            const params: ApplyRollenerweiterungPathParams = {
+            const params: ApplyRollenerweiterungForSPPathParams = {
                 angebotId: faker.string.uuid(),
                 organisationId: faker.string.uuid(),
             };
@@ -178,7 +178,7 @@ describe('RollenerweiterungController', () => {
         });
 
         it('should throw if ApplyRollenerweiterungService returns MissingMerkmalVerfuegbarFuerRollenerweiterungError error', async () => {
-            const params: ApplyRollenerweiterungPathParams = {
+            const params: ApplyRollenerweiterungForSPPathParams = {
                 angebotId: faker.string.uuid(),
                 organisationId: faker.string.uuid(),
             };
@@ -198,7 +198,7 @@ describe('RollenerweiterungController', () => {
         });
 
         it('should throw if ApplyRollenerweiterungService returns unknown error', async () => {
-            const params: ApplyRollenerweiterungPathParams = {
+            const params: ApplyRollenerweiterungForSPPathParams = {
                 angebotId: faker.string.uuid(),
                 organisationId: faker.string.uuid(),
             };

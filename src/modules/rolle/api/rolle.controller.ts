@@ -66,6 +66,7 @@ import { ServiceProviderResponse } from '../../service-provider/api/service-prov
 import { ApplyRollenerweiterungChangesBodyParams } from './apply-rollenerweiterung-changes.body.params.js';
 import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterungen-service.js';
 import { ApplyRollenerweiterungServiceProvidersError } from './apply-rollenerweiterung-service-providers.error.js';
+import { ApplyRollenerweiterungForRollePathParams } from './apply-rollenerweiterung-for-rolle-changes.path.params.js';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -438,10 +439,14 @@ export class RolleController {
             throw new EntityNotFoundError('Rolle', params.rolleId);
         }
 
-        const rollenerweiterungen: Rollenerweiterung<true>[] =
-            await this.rollenerweiterungRepo.findManyByOrganisationAndRolle([
+        let rollenerweiterungen: Rollenerweiterung<true>[];
+        if (!queryParams.organisationId) {
+            rollenerweiterungen = await this.rollenerweiterungRepo.findManyByRolleId(params.rolleId);
+        } else {
+            rollenerweiterungen = await this.rollenerweiterungRepo.findManyByOrganisationAndRolle([
                 { organisationId: queryParams.organisationId, rolleId: params.rolleId },
             ]);
+        }
 
         const serviceProviders: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
             rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.serviceProviderId),
@@ -452,7 +457,7 @@ export class RolleController {
         );
     }
 
-    @Put(':rolleId/rollenerweiterungen')
+    @Post('rolle/:rolleId/organisation/:organisationId/apply')
     @ApiOperation({ description: 'Apply Erweiterte Angebote changes for a rolle.' })
     @ApiOkResponse({
         description: 'The Erweiterten Angebote were successfully updated.',
@@ -463,8 +468,7 @@ export class RolleController {
     @ApiForbiddenResponse({ description: 'Insufficient permission to update RollenErweiterungen.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while updating RollenErweiterungen.' })
     public async applyRollenerweiterungChangesForRolle(
-        @Param() params: FindRolleByIdParams,
-        @Query() queryParams: FindRollenerweiterungQueryParams,
+        @Param() params: ApplyRollenerweiterungForRollePathParams,
         @Body() body: ApplyRollenerweiterungChangesBodyParams,
         @Permissions() permissions: IPersonPermissions,
     ): Promise<void> {
@@ -477,7 +481,7 @@ export class RolleController {
             null,
             ApplyRollenerweiterungServiceProvidersError | EntityNotFoundError | MissingPermissionsError
         > = await this.applyRollenerweiterungService.applyRollenerweiterungChangesForRolle(
-            queryParams.organisationId,
+            params.organisationId,
             params.rolleId,
             body,
             permissions,
@@ -488,7 +492,7 @@ export class RolleController {
         }
 
         this.logger.info(
-            `applyRollenerweiterungChangesForRolle called by ${permissions.personFields.username} - ${permissions.personFields.id} for rolleId ${params.rolleId} and organisationId ${queryParams.organisationId} completed with complete success.`,
+            `applyRollenerweiterungChangesForRolle called by ${permissions.personFields.username} - ${permissions.personFields.id} for rolleId ${params.rolleId} and organisationId ${params.organisationId} completed with complete success.`,
         );
     }
 }

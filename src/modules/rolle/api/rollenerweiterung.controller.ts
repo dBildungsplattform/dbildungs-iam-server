@@ -14,7 +14,7 @@ import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../..
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterungen-service.js';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
-import { ApplyRollenerweiterungPathParams } from './apply-rollenerweiterung-changes.path.params.js';
+import { ApplyRollenerweiterungForSPPathParams } from './apply-rollenerweiterung-for-sp-changes.path.params.js';
 import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
 import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
 import { ApplyRollenerweiterungBodyParams } from './apply-rollenerweiterung.body.params.js';
@@ -50,7 +50,7 @@ export class RollenerweiterungController {
     })
     @HttpCode(204)
     public async applyRollenerweiterungChanges(
-        @Param() params: ApplyRollenerweiterungPathParams,
+        @Param() params: ApplyRollenerweiterungForSPPathParams,
         @Body() body: ApplyRollenerweiterungBodyParams,
         @Permissions() permissions: IPersonPermissions,
     ): Promise<void> {
