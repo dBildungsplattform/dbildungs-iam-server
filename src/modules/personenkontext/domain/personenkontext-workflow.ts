@@ -69,7 +69,6 @@ export class PersonenkontextWorkflowAggregate {
     public async findAllSchulstrukturknoten(
         permissions: IPersonPermissions,
         organisationName: string | undefined,
-        organisationId?: string, // Add organisationId as an optional parameter
         limit?: number,
     ): Promise<Organisation<true>[]> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
@@ -100,7 +99,7 @@ export class PersonenkontextWorkflowAggregate {
         // If organisationId is provided and it's not in the filtered results, fetch it explicitly
         if (
             this.selectedOrganisationId &&
-            !organisationsExceptKlassen.find((orga: Organisation<true>) => orga.id === organisationId)
+            !organisationsExceptKlassen.find((orga: Organisation<true>) => orga.id === this.selectedOrganisationId)
         ) {
             const selectedOrg: Option<Organisation<true>> = await this.organisationRepository.findById(
                 this.selectedOrganisationId,

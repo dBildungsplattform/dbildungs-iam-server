@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { uniq } from 'lodash-es';
 
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { DoFactory } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DoFactory } from '../../../../test/utils/index.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
@@ -29,6 +29,7 @@ describe('RolleService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [ConfigTestModule],
             providers: [
                 RolleFindService,
                 {

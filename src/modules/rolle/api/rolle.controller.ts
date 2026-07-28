@@ -165,6 +165,7 @@ export class RolleController {
         const administeredOrganisations: Map<string, Organisation<true>> = await this.organisationRepository.findByIds(
             administeredBySchulstrukturknotenIds,
         );
+        // TODO: use constrained function
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {

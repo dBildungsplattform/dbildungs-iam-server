@@ -960,35 +960,73 @@ describe('RolleRepo', () => {
             );
         });
 
-        it('should sort rollen if orderByRollenArtAndName is true', async () => {
-            const rollenInOrder: Rolle<true>[] = await Promise.all([
-                createRolle({
-                    rollenart: RollenArt.SYSADMIN,
-                    name: 'A',
-                }),
-                createRolle({
-                    rollenart: RollenArt.LEHR,
-                    name: 'B',
-                }),
-                createRolle({
-                    rollenart: RollenArt.LEHR,
-                    name: 'C',
-                }),
-                createRolle({
-                    rollenart: RollenArt.LEHR,
-                    name: 'D',
-                }),
-            ]);
+        type RollenArtAndNameTuple = {
+            rollenart: RollenArt;
+            name: string;
+        };
 
-            const scope: RolleFindByParameters = {
-                orderByRollenArtAndName: true,
-            };
+        it.each<[RolleFindByParameters['orderBy'], Array<RollenArtAndNameTuple>]>([
+            [
+                'artAndName',
+                [
+                    {
+                        rollenart: RollenArt.SYSADMIN,
+                        name: 'A',
+                    },
+                    {
+                        rollenart: RollenArt.LEHR,
+                        name: 'B',
+                    },
+                    {
+                        rollenart: RollenArt.LEHR,
+                        name: 'C',
+                    },
+                    {
+                        rollenart: RollenArt.LEHR,
+                        name: 'D',
+                    },
+                ],
+            ],
+            [
+                'name',
+                [
+                    {
+                        rollenart: RollenArt.EXTERN,
+                        name: 'A',
+                    },
+                    {
+                        rollenart: RollenArt.LERN,
+                        name: 'B',
+                    },
+                    {
+                        rollenart: RollenArt.LEHR,
+                        name: 'C',
+                    },
+                    {
+                        rollenart: RollenArt.LEHR,
+                        name: 'D',
+                    },
+                ],
+            ],
+        ])(
+            'should sort rollen correctly if orderBy is set to %s',
+            async (orderBy: RolleFindByParameters['orderBy'], artAndNameTuples: Array<RollenArtAndNameTuple>) => {
+                const rollenInOrder: Rolle<true>[] = await Promise.all(
+                    artAndNameTuples.map(({ rollenart, name }: RollenArtAndNameTuple) =>
+                        createRolle({ rollenart, name }),
+                    ),
+                );
 
-            const [result, count]: Counted<Rolle<true>> = await sut.findBy(scope);
+                const scope: RolleFindByParameters = {
+                    orderBy,
+                };
 
-            expect(count).toBe(4);
-            expect(result).toEqual(rollenInOrder);
-        });
+                const [result, count]: Counted<Rolle<true>> = await sut.findBy(scope);
+
+                expect(count).toBe(4);
+                expect(result).toEqual(rollenInOrder);
+            },
+        );
     });
 
     describe('findBySchulstrukturknoten', () => {

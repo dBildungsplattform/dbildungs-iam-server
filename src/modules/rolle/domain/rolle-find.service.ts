@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { intersection } from 'lodash-es';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { ServerConfig } from '../../../shared/config/index.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { intersectPermittedAndRequestedOrgas, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -8,9 +11,10 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { RolleFindByParameters, RolleRepo } from '../repo/rolle.repo.js';
 import { RollenArt, RollenMerkmal } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
-import { RollenSystemRecht } from './systemrecht.js';
 import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { RollenSystemRecht } from './systemrecht.js';
+import { PortalConfig } from '../../../shared/config/portal.config.js';
+import { mapStringsToRollenArt } from '../../../shared/config/utils.js';
 
 export interface FindRollenWithPermissionsParams {
     permissions: IPersonPermissions;
@@ -21,11 +25,23 @@ export interface FindRollenWithPermissionsParams {
     offset?: number;
 }
 
+export interface FindRollenForPersonenkontextCreationWithPermissionsParams {
+    permissions: IPersonPermissions;
+    systemrecht: RollenSystemRecht;
+    organisationId: OrganisationID;
+    rollenart?: RollenArt;
+    rolleName?: string;
+    rollenIds?: Array<RolleID>;
+    limit?: number;
+    offset?: number;
+}
+
 @Injectable()
 export class RolleFindService {
     public constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepository: OrganisationRepository,
+        private readonly configService: ConfigService<ServerConfig>,
     ) {}
 
     public async findRollenAvailableForErweiterung(
@@ -154,6 +170,69 @@ export class RolleFindService {
         }
 
         return [allowedRollen, total];
+    }
+
+    public async findRollenAvailableForPersonenkontextCreation(
+        params: FindRollenForPersonenkontextCreationWithPermissionsParams,
+    ): Promise<Counted<Rolle<true>>> {
+        if (!(await params.permissions.hasSystemrechtAtOrganisation(params.organisationId, params.systemrecht))) {
+            return [[], 0];
+        }
+
+        const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
+            params.organisationId,
+        );
+        if (!organisation) {
+            return [[], 0];
+        }
+
+        const rollenArten: Array<RollenArt> = this.getAllowedRollenArtenForPersonenkontextCreation(
+            params,
+            organisation,
+        );
+        if (rollenArten.length === 0) {
+            return [[], 0];
+        }
+
+        const allowedOrganisationIds: Array<OrganisationID> = await this.getOrganisationIdsWithParents([
+            params.organisationId,
+        ]);
+
+        const rollen: Counted<Rolle<true>> = await this.rolleRepo.findBy({
+            allowedOrganisationIds,
+            rollenArten,
+            rolleIds: params.rollenIds,
+            limit: params.limit,
+            offset: params.offset,
+            searchStr: params.rolleName,
+            orderBy: 'name',
+        });
+
+        return rollen;
+    }
+
+    private getAllowedRollenArtenForPersonenkontextCreation(
+        params: FindRollenForPersonenkontextCreationWithPermissionsParams,
+        organisation: Organisation<true>,
+    ): Array<RollenArt> {
+        if (!organisation.typ) {
+            return [];
+        }
+
+        const arrays: Array<Array<RollenArt>> = [
+            Array.from(OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organisation.typ)),
+        ];
+
+        if (params.rollenart) {
+            arrays.push([params.rollenart]);
+        }
+
+        if (params.systemrecht === RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN) {
+            const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
+            arrays.push(mapStringsToRollenArt(portalConfig.LIMITED_ROLLENART_ALLOWLIST ?? []) ?? []);
+        }
+
+        return intersection(...arrays);
     }
 
     private async getOrganisationIdsWithParents(organisationIds: OrganisationID[]): Promise<OrganisationID[]> {
