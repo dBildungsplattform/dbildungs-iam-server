@@ -5,7 +5,6 @@ import { PersonPermissions } from '../domain/person-permissions.js';
 import winston, { format, Logger } from 'winston';
 import { localFormatter } from '../../../core/logging/module-logger.js';
 import { inspect } from 'util';
-import { Http } from 'winston/lib/winston/transports/index.js';
 
 const loggerFormat: winston.Logform.Format = format.combine(
     format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
