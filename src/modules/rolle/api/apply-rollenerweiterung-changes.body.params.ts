@@ -7,5 +7,12 @@ export class ApplyRollenerweiterungChangesBodyParams {
     @ApiProperty({
         type: [String],
     })
-    public serviceProviderIds!: string[];
+    public addErweiterungenForServiceProviderIds!: string[];
+
+    @IsUUID('all', { each: true })
+    @IsArray()
+    @ApiProperty({
+        type: [String],
+    })
+    public removeErweiterungenForServiceProviderIds!: string[];
 }

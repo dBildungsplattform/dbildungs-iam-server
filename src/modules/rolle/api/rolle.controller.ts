@@ -64,6 +64,8 @@ import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { FindRollenerweiterungQueryParams } from './find-rollenerweiterung-query.params.js';
 import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { ApplyRollenerweiterungChangesBodyParams } from './apply-rollenerweiterung-changes.body.params.js';
+import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterungen-service.js';
+import { ApplyRollenerweiterungServiceProvidersError } from './apply-rollenerweiterung-service-providers.error.js';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -81,6 +83,7 @@ export class RolleController {
         private readonly logger: ClassLogger,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly rollenerweiterungFactory: RollenerweiterungFactory,
+        private readonly applyRollenerweiterungService: ApplyRollenerweiterungService,
     ) {}
 
     @Get()
@@ -464,38 +467,28 @@ export class RolleController {
         @Query() queryParams: FindRollenerweiterungQueryParams,
         @Body() body: ApplyRollenerweiterungChangesBodyParams,
         @Permissions() permissions: IPersonPermissions,
-    ): Promise<RollenerweiterungResponse[]> {
+    ): Promise<void> {
         const rolleResult: Result<Rolle<true>> = await this.rolleRepo.findByIdAuthorized(params.rolleId, permissions);
         if (!rolleResult.ok) {
             throw new EntityNotFoundError('Rolle', params.rolleId);
         }
 
-        const results: Result<Rollenerweiterung<true>, DomainError>[] = await Promise.all(
-            body.serviceProviderIds.map((serviceProviderId: string) =>
-                this.rollenerweiterungRepo.createAuthorized(
-                    this.rollenerweiterungFactory.createNew(
-                        queryParams.organisationId,
-                        params.rolleId,
-                        serviceProviderId,
-                    ),
-                    permissions,
-                ),
-            ),
+        const result: Result<
+            null,
+            ApplyRollenerweiterungServiceProvidersError | EntityNotFoundError | MissingPermissionsError
+        > = await this.applyRollenerweiterungService.applyRollenerweiterungChangesForRolle(
+            queryParams.organisationId,
+            params.rolleId,
+            body,
+            permissions,
         );
 
-        const errors: Result<Rollenerweiterung<true>, DomainError> | undefined = results.find(
-            (result: Result<Rollenerweiterung<true>, DomainError>) => !result.ok,
-        );
-        if (errors && !errors.ok) {
-            throw errors.error;
+        if (!result.ok) {
+            throw result.error;
         }
 
-        return results
-            .filter(
-                (
-                    result: Result<Rollenerweiterung<true>, DomainError>,
-                ): result is { ok: true; value: Rollenerweiterung<true> } => result.ok,
-            )
-            .map((result: { ok: true; value: Rollenerweiterung<true> }) => new RollenerweiterungResponse(result.value));
+        this.logger.info(
+            `applyRollenerweiterungChangesForRolle called by ${permissions.personFields.username} - ${permissions.personFields.id} for rolleId ${params.rolleId} and organisationId ${queryParams.organisationId} completed with complete success.`,
+        );
     }
 }
