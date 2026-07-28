@@ -1065,6 +1065,60 @@ describe('RolleRepo', () => {
         });
     });
 
+    describe('existsForServiceProviderId', () => {
+        it('should return true if an attached rolle exists for service provider', async () => {
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+            });
+            await createRolle({
+                serviceProviderIds: [serviceProvider.id],
+                rollenart: RollenArt.LEHR,
+            });
+
+            const exists: boolean = await sut.existsForServiceProviderId(serviceProvider.id);
+
+            expect(exists).toBe(true);
+        });
+
+        it('should return false if no attached rolle exists for service provider', async () => {
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+            });
+
+            const exists: boolean = await sut.existsForServiceProviderId(serviceProvider.id);
+
+            expect(exists).toBe(false);
+        });
+
+        it('should return true when attached rolle matches rollenarten filter', async () => {
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+            });
+            await createRolle({
+                serviceProviderIds: [serviceProvider.id],
+                rollenart: RollenArt.LEHR,
+            });
+
+            const exists: boolean = await sut.existsForServiceProviderId(serviceProvider.id, [RollenArt.LEHR]);
+
+            expect(exists).toBe(true);
+        });
+
+        it('should return false when attached rolle does not match rollenarten filter', async () => {
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+            });
+            await createRolle({
+                serviceProviderIds: [serviceProvider.id],
+                rollenart: RollenArt.LEHR,
+            });
+
+            const exists: boolean = await sut.existsForServiceProviderId(serviceProvider.id, [RollenArt.SYSADMIN]);
+
+            expect(exists).toBe(false);
+        });
+    });
+
     describe('createRolleAuthorized', () => {
         it('should return the created rolle', async () => {
             const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));

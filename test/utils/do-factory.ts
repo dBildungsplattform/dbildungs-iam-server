@@ -167,6 +167,7 @@ export class DoFactory {
             externalSystem: ServiceProviderSystem.NONE,
             requires2fa: true,
             merkmale: [],
+            rollenartenWhitelist: [],
         };
         return Object.assign(
             Object.create(ServiceProvider.prototype) as ServiceProvider<boolean>,
