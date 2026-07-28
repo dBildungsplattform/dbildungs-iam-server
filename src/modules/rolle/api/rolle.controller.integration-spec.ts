@@ -788,6 +788,7 @@ describe('Rolle API', () => {
                 response.body as PagedResponse<RolleWithServiceProvidersResponse>;
             // Only the non-MPT rolle should be returned
             expect(pagedResponse.items).toHaveLength(1);
+            expect(pagedResponse.items[0]?.rollenart).toBe(RollenArt.LEHR);
         });
 
         it('should return rollen available for import personenkontext if systemrecht is IMPORT_DURCHFUEHREN with given orga ID', async () => {
