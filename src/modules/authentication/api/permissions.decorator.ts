@@ -33,10 +33,17 @@ export const Permissions: (
             return Promise.reject(new Error('No PassportUser found on request'));
         } else {
             if (!passportUser.personPermissions || typeof passportUser.personPermissions !== 'function') {
+                const passportUserString: string = inspect(passportUser, {
+                    compact: Infinity,
+                    depth: 1,
+                    breakLength: Infinity,
+                });
                 logger.error(
-                    `PassportUser does not have personPermissions function. passportUser: ${inspect(passportUser)}`,
+                    `PassportUser does not have personPermissions function. passportUser: ${passportUserString}`,
                 );
-                return Promise.reject(new Error('No personPermissions function found on PassportUser'));
+                return Promise.reject(
+                    new Error(`No personPermissions function found on PassportUser: ${passportUserString}`),
+                );
             }
             return passportUser.personPermissions();
         }
