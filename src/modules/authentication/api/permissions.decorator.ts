@@ -1,10 +1,11 @@
-import { createParamDecorator, ExecutionContext, PipeTransform, Type } from '@nestjs/common';
+import { createParamDecorator, ExecutionContext, HttpException, PipeTransform, Type } from '@nestjs/common';
 import { Request } from 'express';
 import { PassportUser } from '../types/user.js';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import winston, { format, Logger } from 'winston';
 import { localFormatter } from '../../../core/logging/module-logger.js';
 import { inspect } from 'util';
+import { Http } from 'winston/lib/winston/transports/index.js';
 
 const loggerFormat: winston.Logform.Format = format.combine(
     format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
@@ -42,7 +43,10 @@ export const Permissions: (
                     `PassportUser does not have personPermissions function. passportUser: ${passportUserString}`,
                 );
                 return Promise.reject(
-                    new Error(`No personPermissions function found on PassportUser: ${passportUserString}`),
+                    new HttpException(
+                        `No personPermissions function found on PassportUser: ${passportUserString}`,
+                        500,
+                    ),
                 );
             }
             return passportUser.personPermissions();
