@@ -43,11 +43,10 @@ import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { RollenerweiterungWithExtendedDataResponse } from '../../rolle/api/rollenerweiterung-with-extended-data.response.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { AttachedRollenError } from '../domain/errors/attached-rollen.error.js';
@@ -79,8 +78,8 @@ import { ServiceProviderErrorFilter } from './service-provider-exception.filter.
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
 import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
-import { FindRolleByIdParams } from '../../rolle/api/find-rolle-by-id.params.js';
-import { FindRollenerweiterungQueryParams } from '../../rolle/api/find-rollenerweiterung-query.params.js';
+import { FindAngeboteQueryParams } from './find-angebote-query.params.js';
+import { Paged, PagedResponse } from '../../../shared/paging/index.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -132,7 +131,7 @@ export class ProviderController {
         return response;
     }
 
-    @Get()
+    @Get('my-providers')
     @ApiOperation({ description: 'Get service-providers available for logged-in user.' })
     @ApiOkResponse({
         description: 'The service-providers were successfully returned.',
@@ -142,15 +141,34 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
     public async getAvailableServiceProviders(
+        @Query() queryParams: FindAngeboteQueryParams,
         @Permissions() permissions: PersonPermissions,
-    ): Promise<ServiceProviderResponse[]> {
-        const personenkontexteIds: Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[] =
-            await permissions.getPersonenkontextIds();
-        const serviceProviders: ServiceProvider<true>[] =
-            await this.serviceProviderService.getServiceProvidersByOrganisationenAndRollen(personenkontexteIds);
-        return serviceProviders.map(
-            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
-        );
+    ): Promise<PagedResponse<ServiceProviderResponse>> {
+        let angeboteAndTotal: [ServiceProvider<true>[], number] = [[], 0];
+        if (
+            queryParams.systemrechte &&
+            queryParams.systemrechte.length === 1 &&
+            queryParams.systemrechte[0] === RollenSystemRechtEnum.ANGEBOTE_VERWALTEN &&
+            queryParams.organisationId
+        ) {
+            // currently we dont filter for role
+            angeboteAndTotal = await this.serviceProviderService.findAllowedProvidersForRolleAndOrga(
+                queryParams.organisationId,
+                permissions,
+            );
+        }
+
+        const [angebote, total]: [ServiceProvider<true>[], number] = angeboteAndTotal;
+        const pagedServiceProviderResponse: Paged<ServiceProviderResponse> = {
+            total: total,
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? 0,
+            items: angebote.map(
+                (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
+            ),
+        };
+
+        return new PagedResponse(pagedServiceProviderResponse);
     }
 
     @Get(':angebotId/logo')
@@ -485,35 +503,6 @@ export class ProviderController {
         }
         this.logger.info(
             `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat ServiceProvider mit Id ${params.angebotId} erfolgreich gelöscht.`,
-        );
-    }
-
-    @Get(':rolleId/allowedProviders')
-    @ApiOperation({ description: 'Get Erweiterte Angebote for a rolle.' })
-    @ApiOkResponse({
-        description: 'The Erweiterten Angebote were successfully returned.',
-        type: ServiceProviderResponse,
-        isArray: true,
-    })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to get RollenErweiterungen.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permission to get RollenErweiterungen.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting RollenErweiterungen.' })
-    public async findAllowedProvidersForRolleAndOrga(
-        @Param() params: FindRolleByIdParams,
-        @Query() queryParams: FindRollenerweiterungQueryParams,
-        @Permissions() permissions: IPersonPermissions,
-    ): Promise<ServiceProviderResponse[]> {
-        // Filter for role still missing
-        const rolleResult: Result<Rolle<true>> = await this.rolleRepo.findByIdAuthorized(params.rolleId, permissions);
-        if (!rolleResult.ok) {
-            throw new EntityNotFoundError('Rolle', params.rolleId);
-        }
-
-        const serviceProviders: ServiceProvider<true>[] =
-            await this.serviceProviderService.findAllowedProvidersForRolleAndOrga(queryParams.organisationId);
-
-        return serviceProviders.map(
-            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );
     }
 }
