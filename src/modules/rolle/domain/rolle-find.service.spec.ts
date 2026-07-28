@@ -260,11 +260,11 @@ describe('RolleService', () => {
             );
         });
 
-        it('should include MPT rollen when includeMptRollen is true', async () => {
+        it('should include MPT rollen when caller has MPT_ROLLEN_VERWALTEN permission and requests it', async () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
-            const params: FindRollenWithPermissionsParams & { includeMptRollen?: boolean } = {
+            const params: FindRollenWithPermissionsParams & { requestedSystemrechte?: RollenSystemRecht[] } = {
                 permissions: permissionsMock,
-                includeMptRollen: true,
+                requestedSystemrechte: [RollenSystemRecht.ROLLEN_ERWEITERN, RollenSystemRecht.MPT_ROLLEN_VERWALTEN],
             };
             await rolleFindService.findRollenAvailableForErweiterung(params);
             expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
@@ -274,10 +274,29 @@ describe('RolleService', () => {
             );
         });
 
-        it('should exclude MPT rollen when includeMptRollen is false or not provided', async () => {
+        it('should exclude MPT rollen when MPT_ROLLEN_VERWALTEN is not requested', async () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
             const params: FindRollenWithPermissionsParams = {
                 permissions: permissionsMock,
+            };
+            await rolleFindService.findRollenAvailableForErweiterung(params);
+            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                expect.objectContaining<Partial<RolleFindByParameters>>({
+                    excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
+                }),
+            );
+        });
+
+        it('should exclude MPT rollen when requested but caller does not actually hold MPT_ROLLEN_VERWALTEN', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockImplementation((systemrechte: RollenSystemRecht[]) => {
+                if (systemrechte.includes(RollenSystemRecht.MPT_ROLLEN_VERWALTEN)) {
+                    return Promise.resolve({ all: false, orgaIds: [] });
+                }
+                return Promise.resolve({ all: true });
+            });
+            const params: FindRollenWithPermissionsParams & { requestedSystemrechte?: RollenSystemRecht[] } = {
+                permissions: permissionsMock,
+                requestedSystemrechte: [RollenSystemRecht.ROLLEN_ERWEITERN, RollenSystemRecht.MPT_ROLLEN_VERWALTEN],
             };
             await rolleFindService.findRollenAvailableForErweiterung(params);
             expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(

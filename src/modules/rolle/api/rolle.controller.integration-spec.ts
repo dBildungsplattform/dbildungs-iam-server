@@ -56,6 +56,7 @@ import { RolleResponse } from './rolle.response.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { FindRolleQueryParams } from './find-rolle-query.param.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -737,7 +738,11 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [org.id] });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?systemrechte=ROLLEN_ERWEITERN&systemrechte=MPT_ROLLEN_VERWALTEN&organisationId=${org.id}`)
+                .get('/rolle')
+                .query({
+                    systemrechte: [RollenSystemRechtEnum.ROLLEN_ERWEITERN, RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN],
+                    organisationId: org.id,
+                } as FindRolleQueryParams)
                 .send();
 
             expect(response.status).toBe(200);
@@ -771,7 +776,11 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [org.id] });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?systemrechte=ROLLEN_ERWEITERN&organisationId=${org.id}`)
+                .get('/rolle')
+                .query({
+                    systemrechte: [RollenSystemRechtEnum.ROLLEN_ERWEITERN],
+                    organisationId: org.id,
+                } as FindRolleQueryParams)
                 .send();
 
             expect(response.status).toBe(200);

@@ -97,11 +97,7 @@ export class RolleController {
         let rollenAndTotal: [Rolle<true>[], number];
         const systemrechteSet: Set<RollenSystemRechtEnum> = new Set(queryParams.systemrechte ?? []);
 
-        if (
-            queryParams.systemrechte &&
-            queryParams.systemrechte.length === 1 &&
-            queryParams.systemrechte[0] === RollenSystemRechtEnum.IMPORT_DURCHFUEHREN
-        ) {
+        if (systemrechteSet.size === 1 && systemrechteSet.has(RollenSystemRechtEnum.IMPORT_DURCHFUEHREN)) {
             rollenAndTotal = await this.rolleFindService.findRollenAvailableForImportPersonenkontext({
                 permissions,
                 searchStr: queryParams.searchStr,
@@ -110,11 +106,7 @@ export class RolleController {
                 limit: queryParams.limit,
                 offset: queryParams.offset,
             });
-        } else if (
-            queryParams.systemrechte &&
-            queryParams.systemrechte.length === 1 &&
-            queryParams.systemrechte[0] === RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN
-        ) {
+        } else if (systemrechteSet.size === 1 && systemrechteSet.has(RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN)) {
             rollenAndTotal = await this.rolleRepo.findMptRollenAuthorized(
                 permissions,
                 false,
@@ -140,7 +132,9 @@ export class RolleController {
                 rollenArten: queryParams.rollenarten,
                 limit: queryParams.limit,
                 offset: queryParams.offset,
-                includeMptRollen: systemrechteSet.has(RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN),
+                requestedSystemrechte: queryParams.systemrechte?.map((value: RollenSystemRechtEnum) =>
+                    RollenSystemRecht.getByName(value),
+                ),
             });
         } else {
             rollenAndTotal = await this.rolleRepo.findRollenAuthorized(
@@ -154,7 +148,6 @@ export class RolleController {
                 queryParams.rolleIds,
             );
         }
-
         const [rollen, total]: [Rolle<true>[], number] = rollenAndTotal;
         if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
