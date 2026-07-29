@@ -467,7 +467,7 @@ export class RolleController {
         );
     }
 
-    @Post('rolle/:rolleId/organisation/:organisationId/apply')
+    @Post(':rolleId/organisation/:organisationId/apply')
     @ApiOperation({ description: 'Apply Erweiterte Angebote changes for a rolle.' })
     @ApiOkResponse({
         description: 'The Erweiterten Angebote were successfully updated.',
