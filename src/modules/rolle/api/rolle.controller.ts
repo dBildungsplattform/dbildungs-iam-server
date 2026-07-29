@@ -64,10 +64,10 @@ import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { FindRollenerweiterungQueryParams } from './find-rollenerweiterung-query.params.js';
 import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { ApplyRollenerweiterungChangesBodyParams } from './apply-rollenerweiterung-changes.body.params.js';
-import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterungen-service.js';
 import { ApplyRollenerweiterungServiceProvidersError } from './apply-rollenerweiterung-service-providers.error.js';
 import { ApplyRollenerweiterungForRollePathParams } from './apply-rollenerweiterung-for-rolle-changes.path.params.js';
 import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
+import { ApplyRollenerweiterungWithRoleForAngeboteService } from '../domain/apply-rollenerweiterungen-role-angebote-service.js';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -85,7 +85,7 @@ export class RolleController {
         private readonly logger: ClassLogger,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly rollenerweiterungFactory: RollenerweiterungFactory,
-        private readonly applyRollenerweiterungService: ApplyRollenerweiterungService,
+        private readonly applyRollenerweiterungService: ApplyRollenerweiterungWithRoleForAngeboteService,
     ) {}
 
     @Get()
@@ -490,7 +490,7 @@ export class RolleController {
         const result: Result<
             null,
             ApplyRollenerweiterungServiceProvidersError | EntityNotFoundError | MissingPermissionsError
-        > = await this.applyRollenerweiterungService.applyRollenerweiterungChangesForRolle(
+        > = await this.applyRollenerweiterungService.applyRollenerweiterungChangesWithRoleForAngebote(
             params.organisationId,
             params.rolleId,
             body,
