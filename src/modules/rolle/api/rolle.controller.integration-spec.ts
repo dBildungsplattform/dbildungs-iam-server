@@ -58,6 +58,7 @@ import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
+import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -1596,7 +1597,10 @@ describe('Rolle API', () => {
                 throw Error();
             }
 
-            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                providedOnSchulstrukturknoten: organisation.id,
+            });
 
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
@@ -1606,6 +1610,10 @@ describe('Rolle API', () => {
                     addErweiterungenForServiceProviderIds: [serviceProvider.id],
                     removeErweiterungenForServiceProviderIds: [],
                 });
+
+            console.log(response.status);
+            console.log(response.body);
+            console.log(response.text);
 
             expect(response.status).toBe(201);
 
