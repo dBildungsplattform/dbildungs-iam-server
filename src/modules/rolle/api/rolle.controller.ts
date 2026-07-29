@@ -67,6 +67,7 @@ import { ApplyRollenerweiterungChangesBodyParams } from './apply-rollenerweiteru
 import { ApplyRollenerweiterungService } from '../domain/apply-rollenerweiterungen-service.js';
 import { ApplyRollenerweiterungServiceProvidersError } from './apply-rollenerweiterung-service-providers.error.js';
 import { ApplyRollenerweiterungForRollePathParams } from './apply-rollenerweiterung-for-rolle-changes.path.params.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -438,6 +439,10 @@ export class RolleController {
         if (!rolleResult.ok) {
             throw new EntityNotFoundError('Rolle', params.rolleId);
         }
+        const permittedOrgaIds: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht([
+            RollenSystemRecht.getByName(RollenSystemRechtEnum.ROLLEN_ERWEITERN),
+            RollenSystemRecht.getByName(RollenSystemRechtEnum.ROLLEN_VERWALTEN),
+        ]);
 
         let rollenerweiterungen: Rollenerweiterung<true>[];
         if (!queryParams.organisationId) {
@@ -446,6 +451,11 @@ export class RolleController {
             rollenerweiterungen = await this.rollenerweiterungRepo.findManyByOrganisationAndRolle([
                 { organisationId: queryParams.organisationId, rolleId: params.rolleId },
             ]);
+        }
+        if (!permittedOrgaIds.all) {
+            rollenerweiterungen = rollenerweiterungen.filter((re: Rollenerweiterung<true>) =>
+                permittedOrgaIds.orgaIds.includes(re.organisationId),
+            );
         }
 
         const serviceProviders: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
