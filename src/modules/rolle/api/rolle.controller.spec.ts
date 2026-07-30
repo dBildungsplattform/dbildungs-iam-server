@@ -29,6 +29,7 @@ import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
+import { ApplyRollenerweiterungWithRoleForAngeboteService } from '../domain/apply-rollenerweiterungen-role-angebote-service.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -75,6 +76,10 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                 {
                     provide: RollenerweiterungRepo,
                     useValue: createMock(RollenerweiterungRepo),
+                },
+                {
+                    provide: ApplyRollenerweiterungWithRoleForAngeboteService,
+                    useValue: createMock(ApplyRollenerweiterungWithRoleForAngeboteService),
                 },
                 RolleController,
                 RolleFactory,
