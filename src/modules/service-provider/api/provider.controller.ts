@@ -80,6 +80,7 @@ import { UpdateServiceProviderBodyParams } from './update-service-provider-body.
 import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
 import { FindAngeboteQueryParams } from './find-angebote-query.params.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 
 @UseFilters(ServiceProviderErrorFilter)
 @ApiTags('provider')
@@ -144,31 +145,49 @@ export class ProviderController {
         @Query() queryParams: FindAngeboteQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<ServiceProviderResponse>> {
-        let angeboteAndTotal: [ServiceProvider<true>[], number] = [[], 0];
+        let angeboteAndTotal: [ServiceProvider<true>[], number];
+
         if (
             queryParams.systemrechte &&
             queryParams.systemrechte.length === 1 &&
-            queryParams.systemrechte[0] === RollenSystemRechtEnum.ANGEBOTE_VERWALTEN &&
+            queryParams.systemrechte[0] === RollenSystemRechtEnum.ROLLEN_ERWEITERN &&
             queryParams.organisationId
         ) {
-            // currently we dont filter for role
             angeboteAndTotal = await this.serviceProviderService.findAllowedProvidersForRolleAndOrga(
                 queryParams.organisationId,
                 permissions,
             );
+        } else {
+            const personenkontexteIds: Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[] =
+                await permissions.getPersonenkontextIds();
+
+            const serviceProviders: ServiceProvider<true>[] =
+                await this.serviceProviderService.getServiceProvidersByOrganisationenAndRollen(personenkontexteIds);
+
+            const offset: number = queryParams.offset ?? 0;
+
+            const pagedServiceProviders: ServiceProvider<true>[] =
+                queryParams.limit === undefined
+                    ? serviceProviders.slice(offset)
+                    : serviceProviders.slice(offset, offset + queryParams.limit);
+
+            angeboteAndTotal = [pagedServiceProviders, serviceProviders.length];
         }
 
         const [angebote, total]: [ServiceProvider<true>[], number] = angeboteAndTotal;
-        const pagedServiceProviderResponse: Paged<ServiceProviderResponse> = {
-            total: total,
+
+        const serviceProviderResponses: ServiceProviderResponse[] = angebote.map(
+            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
+        );
+
+        const pagedResponse: Paged<ServiceProviderResponse> = {
+            total,
             offset: queryParams.offset ?? 0,
-            limit: queryParams.limit ?? 0,
-            items: angebote.map(
-                (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
-            ),
+            limit: queryParams.limit ?? serviceProviderResponses.length,
+            items: serviceProviderResponses,
         };
 
-        return new PagedResponse(pagedServiceProviderResponse);
+        return new PagedResponse(pagedResponse);
     }
 
     @Get(':angebotId/logo')
