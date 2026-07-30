@@ -161,6 +161,7 @@ describe('Rolle API', () => {
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
         permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
         await DatabaseTestModule.clearDatabase(orm);
+        vi.clearAllMocks();
     });
 
     describe('/POST rolle', () => {
@@ -1602,6 +1603,10 @@ describe('Rolle API', () => {
                 providedOnSchulstrukturknoten: organisation.id,
             });
 
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -1610,10 +1615,6 @@ describe('Rolle API', () => {
                     addErweiterungenForServiceProviderIds: [serviceProvider.id],
                     removeErweiterungenForServiceProviderIds: [],
                 });
-
-            console.log(response.status);
-            console.log(response.body);
-            console.log(response.text);
 
             expect(response.status).toBe(201);
 
