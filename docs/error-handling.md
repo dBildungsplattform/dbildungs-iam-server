@@ -81,8 +81,6 @@ async function getPerson(@Params("id") id: string): PersonResponse {
 }
 ```
 
-For more details, see [error-handling.md](./error-handling.md)
-
 ### Testing
 
 To simplify using results in tests, there are a few utility functions
