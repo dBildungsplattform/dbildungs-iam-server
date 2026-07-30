@@ -17,7 +17,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
-import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
@@ -56,6 +56,7 @@ import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-p
 import { PersonenkontextWorkflowResponse } from './response/dbiam-personenkontext-workflow-response.js';
 import { RolleResponse } from '../../rolle/api/rolle.response.js';
 import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let app: INestApplication;
@@ -182,87 +183,347 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 expect(response.status).toBe(200);
                 const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
 
-                expect(body.organisations).toEqual([
-                    expect.objectContaining({ id: traeger.id }) as OrganisationResponse,
-                    expect.objectContaining({ id: schule.id }) as OrganisationResponse,
-                ]);
+                expect(body.organisations).toEqual(
+                    expect.arrayContaining([
+                        expect.objectContaining({ id: traeger.id }) as OrganisationResponse,
+                        expect.objectContaining({ id: schule.id }) as OrganisationResponse,
+                    ]),
+                );
             });
 
-            it('should return organisation and rollen matching the selected organisation', async () => {
-                const traeger: Organisation<true> = await organisationRepo.save(
-                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.TRAEGER }),
-                );
-                const schule: Organisation<true> = await organisationRepo.save(
-                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE, administriertVon: traeger.id }),
-                );
-                // ordered list of rollen we expect
-                const expectedRollen: Array<Rolle<true>> = await Promise.all([
-                    rolleRepo.create(
-                        DoFactory.createRolle(false, {
-                            name: 'Rolle A',
-                            administeredBySchulstrukturknoten: traeger.id,
-                            rollenart: RollenArt.LEIT,
+            describe(`when user has ${RollenSystemRecht.MPT_ROLLEN_VERWALTEN.name}`, () => {
+                it('should return organisation and rollen matching the selected organisation', async () => {
+                    const traeger: Organisation<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.TRAEGER }),
+                    );
+                    const schule: Organisation<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(false, {
+                            typ: OrganisationsTyp.SCHULE,
+                            administriertVon: traeger.id,
                         }),
-                    ),
-                    rolleRepo.create(
-                        DoFactory.createRolle(false, {
-                            name: 'Rolle B',
-                            administeredBySchulstrukturknoten: traeger.id,
-                            rollenart: RollenArt.LEHR,
-                        }),
-                    ),
-                    rolleRepo.create(
-                        DoFactory.createRolle(false, {
-                            name: 'Rolle C',
-                            administeredBySchulstrukturknoten: schule.id,
-                            rollenart: RollenArt.LERN,
-                        }),
-                    ),
-                ]);
-                const unexpectedRollen: Array<Rolle<true>> = await Promise.all([
-                    rolleRepo.create(
-                        DoFactory.createRolle(false, {
-                            administeredBySchulstrukturknoten: traeger.id,
-                            rollenart: RollenArt.SYSADMIN,
-                        }),
-                    ),
-                    rolleRepo.create(
-                        DoFactory.createRolle(false, {
-                            rollenart: RollenArt.ORGADMIN,
-                        }),
-                    ),
-                    rolleRepo.create(
-                        DoFactory.createRolle(false, {
-                            rollenart: RollenArt.SORGBER,
-                        }),
-                    ),
-                ]);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [schule.id] });
-                personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-
-                const response: Response = await request(app.getHttpServer() as App)
-                    .get(`/personenkontext-workflow/step`)
-                    .query({
-                        operationContext: OperationContext.PERSON_ANLEGEN,
-                        organisationId: schule.id,
-                    } as FindDbiamPersonenkontextWorkflowBodyParams)
-                    .send();
-                expect(response.status).toBe(200);
-                const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
-
-                expect(body.organisations).toEqual([
-                    expect.objectContaining({ id: schule.id }) as OrganisationResponse,
-                ]);
-                expect(body.rollen).toEqual(
-                    expectedRollen.map((r: Rolle<true>) => expect.objectContaining({ id: r.id }) as RolleResponse),
-                );
-                expect(body.rollen).not.toEqual(
-                    expect.arrayContaining(
-                        unexpectedRollen.map(
-                            (r: Rolle<true>) => expect.objectContaining({ id: r.id }) as RolleResponse,
+                    );
+                    // ordered list of rollen we expect
+                    const expectedRollen: Array<Rolle<true>> = await Promise.all([
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                name: 'Rolle A',
+                                administeredBySchulstrukturknoten: traeger.id,
+                                rollenart: RollenArt.LEIT,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
                         ),
-                    ),
-                );
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                name: 'Rolle B',
+                                administeredBySchulstrukturknoten: traeger.id,
+                                rollenart: RollenArt.SORGBER,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                name: 'Rolle C',
+                                administeredBySchulstrukturknoten: schule.id,
+                                rollenart: RollenArt.LERN,
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                name: 'Rolle D',
+                                administeredBySchulstrukturknoten: schule.id,
+                                rollenart: RollenArt.SCHB,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
+                        ),
+                    ]);
+                    const unexpectedRollen: Array<Rolle<true>> = await Promise.all([
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                administeredBySchulstrukturknoten: traeger.id,
+                                rollenart: RollenArt.SYSADMIN,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                rollenart: RollenArt.ORGADMIN,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                rollenart: RollenArt.SORGBER,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                rollenart: RollenArt.NLEHR,
+                            }),
+                        ),
+                    ]);
+                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                        all: false,
+                        orgaIds: [schule.id],
+                    });
+                    personPermissionsMock.hasSystemrechtAtOrganisation.mockImplementation(
+                        (orgaId: OrganisationID, _systemrecht: RollenSystemRecht) => {
+                            if (orgaId === schule.id) {
+                                return Promise.resolve(true);
+                            }
+                            return Promise.resolve(false);
+                        },
+                    );
+
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .get(`/personenkontext-workflow/step`)
+                        .query({
+                            operationContext: OperationContext.PERSON_ANLEGEN,
+                            organisationId: schule.id,
+                        } as FindDbiamPersonenkontextWorkflowBodyParams)
+                        .send();
+                    expect(response.status).toBe(200);
+                    const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
+
+                    expect(body.organisations).toEqual([
+                        expect.objectContaining({ id: schule.id }) as OrganisationResponse,
+                    ]);
+                    expect(body.rollen).toEqual(
+                        expectedRollen.map((r: Rolle<true>) => expect.objectContaining({ id: r.id }) as RolleResponse),
+                    );
+                    expect(body.rollen).not.toEqual(
+                        expect.arrayContaining(
+                            unexpectedRollen.map(
+                                (r: Rolle<true>) => expect.objectContaining({ id: r.id }) as RolleResponse,
+                            ),
+                        ),
+                    );
+                });
+
+                it(`should rollen matching the selected organisation and LIMITED_ROLLENART_ALLOWLIST, if user has ${RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN.name}`, async () => {
+                    const traeger: Organisation<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.TRAEGER }),
+                    );
+                    const schule: Organisation<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(false, {
+                            typ: OrganisationsTyp.SCHULE,
+                            administriertVon: traeger.id,
+                        }),
+                    );
+                    // ordered list of rollen we expect
+                    const expectedRollen: Array<Rolle<true>> = await Promise.all([
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                name: 'Rolle A',
+                                administeredBySchulstrukturknoten: traeger.id,
+                                rollenart: RollenArt.LEIT,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                name: 'Rolle B',
+                                administeredBySchulstrukturknoten: traeger.id,
+                                rollenart: RollenArt.SORGBER,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                name: 'Rolle C',
+                                administeredBySchulstrukturknoten: schule.id,
+                                rollenart: RollenArt.LERN,
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                name: 'Rolle D',
+                                administeredBySchulstrukturknoten: schule.id,
+                                rollenart: RollenArt.SCHB,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
+                        ),
+                    ]);
+                    const unexpectedRollen: Array<Rolle<true>> = await Promise.all([
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                administeredBySchulstrukturknoten: traeger.id,
+                                rollenart: RollenArt.SYSADMIN,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                administeredBySchulstrukturknoten: traeger.id,
+                                rollenart: RollenArt.ORGADMIN,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                rollenart: RollenArt.SORGBER,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                rollenart: RollenArt.NLEHR,
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                administeredBySchulstrukturknoten: traeger.id,
+                                rollenart: RollenArt.LEIT,
+                            }),
+                        ),
+                    ]);
+                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                        all: false,
+                        orgaIds: [schule.id],
+                    });
+                    personPermissionsMock.hasSystemrechtAtOrganisation.mockImplementation(
+                        (orgaId: OrganisationID, _systemrecht: RollenSystemRecht) => {
+                            if (orgaId === schule.id) {
+                                return Promise.resolve(true);
+                            }
+                            return Promise.resolve(false);
+                        },
+                    );
+
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .get(`/personenkontext-workflow/step`)
+                        .query({
+                            operationContext: OperationContext.PERSON_ANLEGEN,
+                            organisationId: schule.id,
+                            requestedWithSystemrecht: RollenSystemRechtEnum.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
+                        } as FindDbiamPersonenkontextWorkflowBodyParams)
+                        .send();
+                    expect(response.status).toBe(200);
+                    const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
+
+                    expect(body.organisations).toEqual([
+                        expect.objectContaining({ id: schule.id }) as OrganisationResponse,
+                    ]);
+                    expect(body.rollen).toEqual(
+                        expectedRollen.map((r: Rolle<true>) => expect.objectContaining({ id: r.id }) as RolleResponse),
+                    );
+                    expect(body.rollen).not.toEqual(
+                        expect.arrayContaining(
+                            unexpectedRollen.map(
+                                (r: Rolle<true>) => expect.objectContaining({ id: r.id }) as RolleResponse,
+                            ),
+                        ),
+                    );
+                });
+            });
+
+            describe(`when user does NOT have ${RollenSystemRecht.MPT_ROLLEN_VERWALTEN.name}`, () => {
+                it('should return organisation and rollen matching the selected organisation', async () => {
+                    const traeger: Organisation<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.TRAEGER }),
+                    );
+                    const schule: Organisation<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(false, {
+                            typ: OrganisationsTyp.SCHULE,
+                            administriertVon: traeger.id,
+                        }),
+                    );
+                    // ordered list of rollen we expect
+                    const expectedRollen: Array<Rolle<true>> = await Promise.all([
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                name: 'Rolle A',
+                                administeredBySchulstrukturknoten: traeger.id,
+                                rollenart: RollenArt.LEIT,
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                name: 'Rolle B',
+                                administeredBySchulstrukturknoten: traeger.id,
+                                rollenart: RollenArt.LEHR,
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                name: 'Rolle C',
+                                administeredBySchulstrukturknoten: schule.id,
+                                rollenart: RollenArt.LERN,
+                            }),
+                        ),
+                    ]);
+                    const unexpectedRollen: Array<Rolle<true>> = await Promise.all([
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                administeredBySchulstrukturknoten: traeger.id,
+                                rollenart: RollenArt.SYSADMIN,
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                rollenart: RollenArt.ORGADMIN,
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                rollenart: RollenArt.SORGBER,
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                administeredBySchulstrukturknoten: traeger.id,
+                                rollenart: RollenArt.LEHR,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
+                        ),
+                        rolleRepo.create(
+                            DoFactory.createRolle(false, {
+                                administeredBySchulstrukturknoten: schule.id,
+                                rollenart: RollenArt.SCHB,
+                                merkmale: [RollenMerkmal.MPT_ROLLE],
+                            }),
+                        ),
+                    ]);
+                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                        all: false,
+                        orgaIds: [schule.id],
+                    });
+                    personPermissionsMock.hasSystemrechtAtOrganisation.mockImplementation(
+                        (orgaId: OrganisationID, systemrecht: RollenSystemRecht) => {
+                            if (orgaId === schule.id) {
+                                if (systemrecht === RollenSystemRecht.MPT_ROLLEN_VERWALTEN) {
+                                    return Promise.resolve(false);
+                                }
+                                return Promise.resolve(true);
+                            }
+                            return Promise.resolve(false);
+                        },
+                    );
+
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .get(`/personenkontext-workflow/step`)
+                        .query({
+                            operationContext: OperationContext.PERSON_ANLEGEN,
+                            organisationId: schule.id,
+                        } as FindDbiamPersonenkontextWorkflowBodyParams)
+                        .send();
+                    expect(response.status).toBe(200);
+                    const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
+
+                    expect(body.organisations).toEqual([
+                        expect.objectContaining({ id: schule.id }) as OrganisationResponse,
+                    ]);
+                    expect(body.rollen).toEqual(
+                        expectedRollen.map((r: Rolle<true>) => expect.objectContaining({ id: r.id }) as RolleResponse),
+                    );
+                    expect(body.rollen).not.toEqual(
+                        expect.arrayContaining(
+                            unexpectedRollen.map(
+                                (r: Rolle<true>) => expect.objectContaining({ id: r.id }) as RolleResponse,
+                            ),
+                        ),
+                    );
+                });
             });
         });
 
@@ -288,6 +549,98 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         rolleId: rolle.id,
                         personId: existingPerson.id,
                     }),
+                );
+            });
+
+            it('should return organisation and rollen matching the selected user', async () => {
+                // ordered list of rollen we expect
+                const expectedRollen: Array<Rolle<true>> = await Promise.all([
+                    rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            name: 'Rolle A',
+                            administeredBySchulstrukturknoten: organisation.id,
+                            rollenart: rolle.rollenart,
+                            merkmale: [RollenMerkmal.MPT_ROLLE],
+                        }),
+                    ),
+                    rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            name: 'Rolle B',
+                            administeredBySchulstrukturknoten: organisation.id,
+                            rollenart: rolle.rollenart,
+                        }),
+                    ),
+                ]);
+                expectedRollen.unshift(rolle);
+                const unexpectedRollen: Array<Rolle<true>> = await Promise.all([
+                    rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            rollenart: RollenArt.SYSADMIN,
+                            merkmale: [RollenMerkmal.MPT_ROLLE],
+                        }),
+                    ),
+                    rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            rollenart: RollenArt.ORGADMIN,
+                            merkmale: [RollenMerkmal.MPT_ROLLE],
+                        }),
+                    ),
+                    rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            administeredBySchulstrukturknoten: organisation.id,
+                            rollenart: RollenArt.LEHR,
+                        }),
+                    ),
+                    rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            administeredBySchulstrukturknoten: organisation.id,
+                            rollenart: RollenArt.SORGBER,
+                        }),
+                    ),
+                    rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            administeredBySchulstrukturknoten: organisation.id,
+                            rollenart: RollenArt.NLEHR,
+                        }),
+                    ),
+                ]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [organisation.id],
+                });
+                personPermissionsMock.hasSystemrechtAtOrganisation.mockImplementation(
+                    (orgaId: OrganisationID, _systemrecht: RollenSystemRecht) => {
+                        if (orgaId === organisation.id) {
+                            return Promise.resolve(true);
+                        }
+                        return Promise.resolve(false);
+                    },
+                );
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(`/personenkontext-workflow/step`)
+                    .query({
+                        operationContext: OperationContext.PERSON_BEARBEITEN,
+                        organisationId: organisation.id,
+                        rollenIds: [rolle.id],
+                        personId: existingPerson.id,
+                    } as FindDbiamPersonenkontextWorkflowBodyParams)
+                    .send();
+                expect(response.status).toBe(200);
+                const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
+
+                expect(body.organisations).toEqual([
+                    expect.objectContaining({ id: organisation.id }) as OrganisationResponse,
+                ]);
+                expect(body.rollen).toEqual(
+                    expectedRollen.map((r: Rolle<true>) => expect.objectContaining({ id: r.id }) as RolleResponse),
+                );
+                expect(body.rollen).not.toEqual(
+                    expect.arrayContaining(
+                        unexpectedRollen.map(
+                            (r: Rolle<true>) => expect.objectContaining({ id: r.id }) as RolleResponse,
+                        ),
+                    ),
                 );
             });
 

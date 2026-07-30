@@ -237,7 +237,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     const expectedParams: FindRollenForPersonenkontextCreationWithPermissionsParams = {
                         permissions: personpermissions,
                         rollenIds: undefined,
-                        rollenart: undefined,
+                        rollenartOfUser: undefined,
                         rolleName: undefined,
                         limit: undefined,
                         organisationId: organisation.id,

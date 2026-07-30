@@ -486,6 +486,79 @@ export class RolleRepo {
         return rollenMap;
     }
 
+    public async findRollenAvailableForPersonenkontextCreation(params: {
+        organisationId: OrganisationID;
+        allowedOrganisationIds: Array<OrganisationID>;
+        allowedRollenarten: Array<RollenArt>;
+        mpt?: {
+            allowedRollenarten: Array<RollenArt>;
+        };
+        searchStr?: string;
+        stickyRollenIds?: Array<RolleID>;
+        limit?: number;
+        offset?: number;
+    }): Promise<Counted<Rolle<true>>> {
+        const stickyRollenEntities: Array<RolleEntity> = params.stickyRollenIds
+            ? await this.em.findAll(RolleEntity, {
+                  where: {
+                      id: { $in: params.stickyRollenIds },
+                  },
+                  populate: [
+                      'merkmale',
+                      'systemrechte',
+                      'serviceProvider.serviceProvider',
+                      'serviceProvider.serviceProvider.merkmale',
+                      'serviceProvider.serviceProvider.rollenartenWhitelist',
+                  ] as const,
+                  exclude: ['serviceProvider.serviceProvider.logo'] as const,
+              })
+            : [];
+
+        const where: FilterQuery<NoInfer<RolleEntity>> = {
+            administeredBySchulstrukturknoten: { $in: params.allowedOrganisationIds },
+        };
+        if (params.stickyRollenIds) {
+            where.id = { $nin: params.stickyRollenIds };
+        }
+        if (params.searchStr) {
+            where.name = { $ilike: `%${params.searchStr}%` };
+        }
+        if (params.mpt) {
+            where.$or = [
+                {
+                    rollenart: { $in: params.allowedRollenarten },
+                    merkmale: { $none: { merkmal: RollenMerkmal.MPT_ROLLE } },
+                },
+                {
+                    rollenart: { $in: params.mpt.allowedRollenarten },
+                    merkmale: { $some: { merkmal: RollenMerkmal.MPT_ROLLE } },
+                },
+            ];
+        } else {
+            where.rollenart = { $in: params.allowedRollenarten };
+            where.merkmale = { $none: { merkmal: RollenMerkmal.MPT_ROLLE } };
+        }
+        const [rollenEntities, count]: Counted<RolleEntity> = await this.em.findAndCount(RolleEntity, where, {
+            populate: [
+                'merkmale',
+                'systemrechte',
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+                'serviceProvider.serviceProvider.rollenartenWhitelist',
+            ] as const,
+            exclude: ['serviceProvider.serviceProvider.logo'] as const,
+            limit: params.limit,
+            offset: params.offset,
+        });
+
+        return [
+            stickyRollenEntities
+                .concat(rollenEntities)
+                .map((entity: RolleEntity) => mapRolleEntityToAggregate(entity, this.rolleFactory)),
+            count,
+        ];
+    }
+
     public async existsForServiceProviderId(
         serviceProviderId: ServiceProviderID,
         rollenarten?: RollenArt[],

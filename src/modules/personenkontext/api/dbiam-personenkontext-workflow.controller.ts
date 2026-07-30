@@ -116,7 +116,7 @@ export class DbiamPersonenkontextWorkflowController {
         const [rollen]: Counted<Rolle<true>> = params.organisationId
             ? await this.rolleFindService.findRollenAvailableForPersonenkontextCreation({
                   permissions,
-                  rollenart,
+                  rollenartOfUser: rollenart,
                   rolleName: params.rolleName,
                   rollenIds: params.rollenIds,
                   limit: params.limit,

@@ -29,7 +29,7 @@ export interface FindRollenForPersonenkontextCreationWithPermissionsParams {
     permissions: IPersonPermissions;
     systemrecht: RollenSystemRecht;
     organisationId: OrganisationID;
-    rollenart?: RollenArt;
+    rollenartOfUser?: RollenArt;
     rolleName?: string;
     rollenIds?: Array<RolleID>;
     limit?: number;
@@ -175,10 +175,6 @@ export class RolleFindService {
     public async findRollenAvailableForPersonenkontextCreation(
         params: FindRollenForPersonenkontextCreationWithPermissionsParams,
     ): Promise<Counted<Rolle<true>>> {
-        if (!(await params.permissions.hasSystemrechtAtOrganisation(params.organisationId, params.systemrecht))) {
-            return [[], 0];
-        }
-
         const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
             params.organisationId,
         );
@@ -186,53 +182,75 @@ export class RolleFindService {
             return [[], 0];
         }
 
-        const rollenArten: Array<RollenArt> = this.getAllowedRollenArtenForPersonenkontextCreation(
-            params,
-            organisation,
-        );
-        if (rollenArten.length === 0) {
+        if (!(await params.permissions.hasSystemrechtAtOrganisation(params.organisationId, params.systemrecht))) {
             return [[], 0];
         }
+
+        const [allowedRollenarten, allowedRollenartenForMPTRollen]: [Array<RollenArt>, Array<RollenArt>] =
+            this.getAllowedRollenArtenForPersonenkontextCreation(params, organisation);
+        if (allowedRollenartenForMPTRollen.length === 0) {
+            return [[], 0];
+        }
+
+        const hasMPTPermission: boolean = await params.permissions.hasSystemrechtAtOrganisation(
+            params.organisationId,
+            RollenSystemRecht.MPT_ROLLEN_VERWALTEN,
+        );
 
         const allowedOrganisationIds: Array<OrganisationID> = await this.getOrganisationIdsWithParents([
             params.organisationId,
         ]);
 
-        const rollen: Counted<Rolle<true>> = await this.rolleRepo.findBy({
+        const rollen: Counted<Rolle<true>> = await this.rolleRepo.findRollenAvailableForPersonenkontextCreation({
+            organisationId: params.organisationId,
             allowedOrganisationIds,
-            rollenArten,
-            rolleIds: params.rollenIds,
+            allowedRollenarten,
+            mpt: hasMPTPermission
+                ? {
+                      allowedRollenarten: allowedRollenartenForMPTRollen,
+                  }
+                : undefined,
+            stickyRollenIds: params.rollenIds,
             limit: params.limit,
             offset: params.offset,
             searchStr: params.rolleName,
-            orderBy: 'name',
         });
 
         return rollen;
     }
 
+    /**
+     * Returns two arrays of allowed rollenarten based on parameters. The latter is the more general one, while the first may be narrowed based on users permissions and LIMITED_ROLLENART_ALLOWLIST
+     * @param params
+     * @param organisation
+     * @returns [allowedRollenarten, allowedRollenartenForMPTRollen]
+     */
     private getAllowedRollenArtenForPersonenkontextCreation(
         params: FindRollenForPersonenkontextCreationWithPermissionsParams,
         organisation: Organisation<true>,
-    ): Array<RollenArt> {
+    ): [Array<RollenArt>, Array<RollenArt>] {
         if (!organisation.typ) {
-            return [];
+            return [[], []];
         }
 
-        const arrays: Array<Array<RollenArt>> = [
-            Array.from(OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organisation.typ)),
-        ];
+        const rollenartenForOrganisation: Array<RollenArt> = Array.from(
+            OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organisation.typ),
+        );
+        const allowedRollenartenForMPTRollen: Array<RollenArt> =
+            params.rollenartOfUser && rollenartenForOrganisation.includes(params.rollenartOfUser)
+                ? [params.rollenartOfUser]
+                : rollenartenForOrganisation;
 
-        if (params.rollenart) {
-            arrays.push([params.rollenart]);
-        }
-
+        let eingeschraenkteRollenarten: Array<RollenArt> | undefined;
         if (params.systemrecht === RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN) {
             const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
-            arrays.push(mapStringsToRollenArt(portalConfig.LIMITED_ROLLENART_ALLOWLIST ?? []) ?? []);
+            eingeschraenkteRollenarten = mapStringsToRollenArt(portalConfig.LIMITED_ROLLENART_ALLOWLIST ?? []);
         }
+        const allowedRollenarten: Array<RollenArt> = eingeschraenkteRollenarten
+            ? intersection(allowedRollenartenForMPTRollen, eingeschraenkteRollenarten)
+            : allowedRollenartenForMPTRollen;
 
-        return intersection(...arrays);
+        return [allowedRollenarten, allowedRollenartenForMPTRollen];
     }
 
     private async getOrganisationIdsWithParents(organisationIds: OrganisationID[]): Promise<OrganisationID[]> {

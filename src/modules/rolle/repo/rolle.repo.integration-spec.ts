@@ -1084,6 +1084,66 @@ describe('RolleRepo', () => {
         });
     });
 
+    describe('findRollenAvailableForPersonenkontextCreation', () => {
+        it('should return rollen without MPT rollen', async () => {
+            await createRolle();
+            const rolle: Rolle<true> = await createRolle();
+            await createRolle({
+                administeredBySchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
+                rollenart: rolle.rollenart,
+                merkmale: [RollenMerkmal.MPT_ROLLE],
+            });
+
+            const [rollen, count]: Counted<Rolle<true>> = await sut.findRollenAvailableForPersonenkontextCreation({
+                organisationId: rolle.administeredBySchulstrukturknoten,
+                allowedOrganisationIds: [rolle.administeredBySchulstrukturknoten],
+                allowedRollenarten: [rolle.rollenart],
+            });
+
+            expect(rollen).toEqual([rolle]);
+            expect(count).toBe(1);
+        });
+
+        it('should return rollen with MPT rollen', async () => {
+            await createRolle();
+            const rolle: Rolle<true> = await createRolle();
+            const mptRolle: Rolle<true> = await createRolle({
+                administeredBySchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
+                rollenart: rolle.rollenart,
+                merkmale: [RollenMerkmal.MPT_ROLLE],
+            });
+
+            const [rollen, count]: Counted<Rolle<true>> = await sut.findRollenAvailableForPersonenkontextCreation({
+                organisationId: rolle.administeredBySchulstrukturknoten,
+                allowedOrganisationIds: [rolle.administeredBySchulstrukturknoten],
+                allowedRollenarten: [rolle.rollenart],
+                mpt: { allowedRollenarten: [rolle.rollenart] },
+            });
+
+            expect(rollen).toEqual(expect.arrayContaining([rolle, mptRolle]));
+            expect(count).toBe(2);
+        });
+
+        it('should return sticky rollen regardless of filter', async () => {
+            await createRolle();
+            const stickyRolle: Rolle<true> = await createRolle({ rollenart: RollenArt.LEHR });
+            const rolle: Rolle<true> = await createRolle({ rollenart: RollenArt.SORGBER });
+
+            const [rollen, count]: Counted<Rolle<true>> = await sut.findRollenAvailableForPersonenkontextCreation({
+                organisationId: rolle.administeredBySchulstrukturknoten,
+                allowedOrganisationIds: [rolle.administeredBySchulstrukturknoten],
+                allowedRollenarten: [rolle.rollenart],
+                stickyRollenIds: [stickyRolle.id],
+                searchStr: rolle.name,
+                limit: 1,
+                offset: 0,
+            });
+
+            expect(rollen).toEqual(expect.arrayContaining([stickyRolle, rolle]));
+            expect(count).toBe(1);
+        });
+    });
+
     describe('exists', () => {
         it('should return true, if the rolle exists', async () => {
             const rolle: Rolle<true> | DomainError = await sut.save(DoFactory.createRolle(false));
