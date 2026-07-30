@@ -143,10 +143,7 @@ export class ClassLogger extends Logger {
                     // remove this in case the log is spammed with long causes, but for now we want to see what is in there
                     cause = inspect(error.cause, { depth: 2, compact: Infinity, breakLength: Infinity });
                 }
-                this.error(
-                    message + ` - ${error.name}: ${error.message}, cause: (${cause ? cause : 'undefined'})`,
-                    error.stack,
-                );
+                this.error(message + ` - ${error.name}: ${error.message}, cause: (${cause})`, error.stack);
             } else {
                 this.error(message + ` - ${error.name}: ${error.message}`, error.stack);
             }
