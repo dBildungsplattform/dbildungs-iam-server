@@ -354,11 +354,12 @@ cronjobs:
       endpoint: "/api/cron/unlock"
       httpMethod: "PUT"
       script: "cron_trigger.sh"
-    cron-trigger-5:
-      schedule: "5-59/15 0-3,22-23 * * *"
-      endpoint: "/api/cron/email-addresses-delete"
-      httpMethod: "DELETE"
-      script: "cron_trigger.sh"
+    # Disabled old E-Mail cronjob
+    # cron-trigger-5:
+    #   schedule: "5-59/15 0-3,22-23 * * *"
+    #   endpoint: "/api/cron/email-addresses-delete"
+    #   httpMethod: "DELETE"
+    #   script: "cron_trigger.sh"
     cron-trigger-6:
       schedule: "30 0 1 6 *"
       endpoint: '/api/cron/vidis-sync'
@@ -379,7 +380,7 @@ cronjobsEmail:
       endpoint: "api/cron/delete"
       httpMethod: "DELETE"
       script: "cron_trigger_email.sh"
-      suspended: true
+      suspended: false
 
 import:
   csvFileMaxSizeInMB: 10
@@ -392,7 +393,7 @@ featureFlags:
   setUemPassword: true
 
 emailMicroservice:
-  useService: false
+  useService: true
   endpoint: http://dbildungs-iam-server-email-backend.spsh-xxx.svc.cluster.local:80/
 
 cron:
