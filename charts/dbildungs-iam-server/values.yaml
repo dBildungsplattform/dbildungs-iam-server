@@ -362,9 +362,9 @@ cronjobs:
     #   script: "cron_trigger.sh"
     cron-trigger-6:
       schedule: "30 0 1 6 *"
-      endpoint: '/api/cron/vidis-sync'
-      httpMethod: 'PUT'
-      script: 'cron_trigger.sh'
+      endpoint: "/api/cron/vidis-sync"
+      httpMethod: "PUT"
+      script: "cron_trigger.sh"
 
 cronjobsEmail:
   enabled: true
@@ -393,7 +393,7 @@ featureFlags:
   setUemPassword: true
 
 emailMicroservice:
-  useService: true
+  useService: false
   endpoint: http://dbildungs-iam-server-email-backend.spsh-xxx.svc.cluster.local:80/
 
 cron:
