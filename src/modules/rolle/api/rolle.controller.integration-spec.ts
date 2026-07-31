@@ -56,6 +56,7 @@ import { RolleResponse } from './rolle.response.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { FindRolleQueryParams } from './find-rolle-query.param.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -711,6 +712,83 @@ describe('Rolle API', () => {
             const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
                 response.body as PagedResponse<RolleWithServiceProvidersResponse>;
             expect(pagedResponse.items).toHaveLength(2);
+        });
+
+        it('should return rollen available for erweiterung including MPT rollen if both systemrechte are set', async () => {
+            const org: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+
+            await Promise.all([
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        rollenart: RollenArt.LEHR,
+                        administeredBySchulstrukturknoten: org.id,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        rollenart: RollenArt.LERN,
+                        administeredBySchulstrukturknoten: org.id,
+                        merkmale: [RollenMerkmal.MPT_ROLLE],
+                    }),
+                ),
+            ]);
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [org.id] });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .query({
+                    systemrechte: [RollenSystemRechtEnum.ROLLEN_ERWEITERN, RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN],
+                    organisationId: org.id,
+                } as FindRolleQueryParams)
+                .send();
+
+            expect(response.status).toBe(200);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            // Both the regular rolle AND the MPT rolle should be returned
+            expect(pagedResponse.items).toHaveLength(2);
+        });
+
+        it('should exclude MPT rollen if only ROLLEN_ERWEITERN systemrecht is set', async () => {
+            const org: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+
+            await Promise.all([
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        rollenart: RollenArt.LEHR,
+                        administeredBySchulstrukturknoten: org.id,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        rollenart: RollenArt.LERN,
+                        administeredBySchulstrukturknoten: org.id,
+                        merkmale: [RollenMerkmal.MPT_ROLLE],
+                    }),
+                ),
+            ]);
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [org.id] });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .query({
+                    systemrechte: [RollenSystemRechtEnum.ROLLEN_ERWEITERN],
+                    organisationId: org.id,
+                } as FindRolleQueryParams)
+                .send();
+
+            expect(response.status).toBe(200);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            // Only the non-MPT rolle should be returned
+            expect(pagedResponse.items).toHaveLength(1);
+            expect(pagedResponse.items[0]?.rollenart).toBe(RollenArt.LEHR);
         });
 
         it('should return rollen available for import personenkontext if systemrecht is IMPORT_DURCHFUEHREN with given orga ID', async () => {

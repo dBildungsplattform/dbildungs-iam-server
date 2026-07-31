@@ -95,24 +95,9 @@ export class RolleController {
         @Permissions() permissions: IPersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
         let rollenAndTotal: [Rolle<true>[], number];
-        if (
-            queryParams.systemrechte &&
-            queryParams.systemrechte.length === 1 &&
-            queryParams.systemrechte[0] === RollenSystemRechtEnum.ROLLEN_ERWEITERN
-        ) {
-            rollenAndTotal = await this.rolleFindService.findRollenAvailableForErweiterung({
-                permissions,
-                searchStr: queryParams.searchStr,
-                organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
-                rollenArten: queryParams.rollenarten,
-                limit: queryParams.limit,
-                offset: queryParams.offset,
-            });
-        } else if (
-            queryParams.systemrechte &&
-            queryParams.systemrechte.length === 1 &&
-            queryParams.systemrechte[0] === RollenSystemRechtEnum.IMPORT_DURCHFUEHREN
-        ) {
+        const systemrechteSet: Set<RollenSystemRechtEnum> = new Set(queryParams.systemrechte ?? []);
+
+        if (systemrechteSet.size === 1 && systemrechteSet.has(RollenSystemRechtEnum.IMPORT_DURCHFUEHREN)) {
             rollenAndTotal = await this.rolleFindService.findRollenAvailableForImportPersonenkontext({
                 permissions,
                 searchStr: queryParams.searchStr,
@@ -121,11 +106,7 @@ export class RolleController {
                 limit: queryParams.limit,
                 offset: queryParams.offset,
             });
-        } else if (
-            queryParams.systemrechte &&
-            queryParams.systemrechte.length === 1 &&
-            queryParams.systemrechte[0] === RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN
-        ) {
+        } else if (systemrechteSet.size === 1 && systemrechteSet.has(RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN)) {
             rollenAndTotal = await this.rolleRepo.findMptRollenAuthorized(
                 permissions,
                 false,
@@ -135,6 +116,26 @@ export class RolleController {
                 queryParams.organisationId ? [queryParams.organisationId] : undefined,
                 queryParams.rolleIds,
             );
+        } else if (
+            // covers plain [ROLLEN_ERWEITERN], and the combo [ROLLEN_ERWEITERN, MPT_ROLLEN_VERWALTEN]
+            systemrechteSet.has(RollenSystemRechtEnum.ROLLEN_ERWEITERN) &&
+            Array.from(systemrechteSet).every(
+                (recht: RollenSystemRechtEnum) =>
+                    recht === RollenSystemRechtEnum.ROLLEN_ERWEITERN ||
+                    recht === RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN,
+            )
+        ) {
+            rollenAndTotal = await this.rolleFindService.findRollenAvailableForErweiterung({
+                permissions,
+                searchStr: queryParams.searchStr,
+                organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                rollenArten: queryParams.rollenarten,
+                limit: queryParams.limit,
+                offset: queryParams.offset,
+                requestedSystemrechte: queryParams.systemrechte?.map((value: RollenSystemRechtEnum) =>
+                    RollenSystemRecht.getByName(value),
+                ),
+            });
         } else {
             rollenAndTotal = await this.rolleRepo.findRollenAuthorized(
                 permissions,
@@ -147,7 +148,6 @@ export class RolleController {
                 queryParams.rolleIds,
             );
         }
-
         const [rollen, total]: [Rolle<true>[], number] = rollenAndTotal;
         if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
