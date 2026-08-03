@@ -752,7 +752,7 @@ describe('ServiceProviderService', () => {
             organisationRepo.findByIds.mockResolvedValue(new Map([[organisation.id, organisation]]));
             serviceProviderRepo.findByOrgasWithMerkmal.mockResolvedValue([[serviceProvider], 1]);
             permissions = createMock(PersonPermissions);
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
                 orgaIds: [organisation.id],
             });
@@ -775,6 +775,21 @@ describe('ServiceProviderService', () => {
             );
             expect(result[0]).toContain(serviceProvider);
             expect(result[1]).toBe(1);
+        });
+
+        it('returns empty array if user has no permissions for the orga', async () => {
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [],
+            });
+
+            const result: Counted<ServiceProvider<true>> = await service.findAllowedProvidersForRollenerweiterungAtOrga(
+                organisation.id,
+                permissions,
+            );
+
+            expect(result[0]).toHaveLength(0);
+            expect(result[1]).toBe(0);
         });
 
         it('returns empty array if no providers found', async () => {
