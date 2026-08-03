@@ -53,8 +53,6 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
 import { CreateServiceProviderResponse } from './create-service-provider.response.js';
 import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
-import { FindAngeboteQueryParams } from './find-angebote-query.params.js';
-import { PagedResponse } from '../../../shared/paging/index.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
@@ -562,16 +560,14 @@ describe('Provider Controller Test', () => {
                 );
             });
             it('should return list of responses', async () => {
-                const queryParams: FindAngeboteQueryParams = new FindAngeboteQueryParams();
-                const spResponse: PagedResponse<ServiceProviderResponse> =
-                    await providerController.getAvailableServiceProviders(queryParams, personPermissions);
+                const spResponse: ServiceProviderResponse[] =
+                    await providerController.getMyServiceProviders(personPermissions);
                 expect(spResponse).toBeDefined();
+                expect(spResponse).toBeInstanceOf(Array);
                 if (hasFoundServiceProviders) {
-                    expect(spResponse.items).toHaveLength(1);
-                    expect(spResponse.total).toBe(1);
+                    expect(spResponse).toHaveLength(1);
                 } else {
-                    expect(spResponse.items).toHaveLength(0);
-                    expect(spResponse.total).toBe(0);
+                    expect(spResponse).toHaveLength(0);
                 }
                 expect(serviceProviderServiceMock.getServiceProvidersByOrganisationenAndRollen).toHaveBeenCalledWith([
                     { organisationId: pk.organisationId, rolleId: pk.rolleId },

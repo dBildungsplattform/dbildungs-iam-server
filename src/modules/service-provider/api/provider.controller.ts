@@ -132,8 +132,8 @@ export class ProviderController {
         return response;
     }
 
-    @Get('my-providers')
-    @ApiOperation({ description: 'Get service-providers available for logged-in user.' })
+    @Get()
+    @ApiOperation({ description: 'Get service-providers.' })
     @ApiOkResponse({
         description: 'The service-providers were successfully returned.',
         type: [ServiceProviderResponse],
@@ -145,7 +145,7 @@ export class ProviderController {
         @Query() queryParams: FindAngeboteQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<ServiceProviderResponse>> {
-        let angeboteAndTotal: [ServiceProvider<true>[], number];
+        let angeboteAndTotal: [ServiceProvider<true>[], number] = [[], 0];
 
         if (
             queryParams.systemrechte &&
@@ -153,29 +153,13 @@ export class ProviderController {
             queryParams.systemrechte[0] === RollenSystemRechtEnum.ROLLEN_ERWEITERN &&
             queryParams.organisationId
         ) {
-            angeboteAndTotal = await this.serviceProviderService.findAllowedProvidersForRolleAndOrga(
+            angeboteAndTotal = await this.serviceProviderService.findAllowedProvidersForRollenerweiterungAtOrga(
                 queryParams.organisationId,
                 permissions,
             );
-        } else {
-            const personenkontexteIds: Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[] =
-                await permissions.getPersonenkontextIds();
-
-            const serviceProviders: ServiceProvider<true>[] =
-                await this.serviceProviderService.getServiceProvidersByOrganisationenAndRollen(personenkontexteIds);
-
-            const offset: number = queryParams.offset ?? 0;
-
-            const pagedServiceProviders: ServiceProvider<true>[] =
-                queryParams.limit === undefined
-                    ? serviceProviders.slice(offset)
-                    : serviceProviders.slice(offset, offset + queryParams.limit);
-
-            angeboteAndTotal = [pagedServiceProviders, serviceProviders.length];
         }
 
         const [angebote, total]: [ServiceProvider<true>[], number] = angeboteAndTotal;
-
         const serviceProviderResponses: ServiceProviderResponse[] = angebote.map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );
@@ -188,6 +172,27 @@ export class ProviderController {
         };
 
         return new PagedResponse(pagedResponse);
+    }
+
+    @Get('my-providers')
+    @ApiOperation({ description: 'Get service-providers available for logged-in user.' })
+    @ApiOkResponse({
+        description: 'The service-providers were successfully returned.',
+        type: [ServiceProviderResponse],
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
+    public async getMyServiceProviders(
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<ServiceProviderResponse[]> {
+        const personenkontexteIds: Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[] =
+            await permissions.getPersonenkontextIds();
+        const serviceProviders: ServiceProvider<true>[] =
+            await this.serviceProviderService.getServiceProvidersByOrganisationenAndRollen(personenkontexteIds);
+        return serviceProviders.map(
+            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
+        );
     }
 
     @Get(':angebotId/logo')

@@ -353,7 +353,7 @@ export class ServiceProviderService {
         }));
     }
 
-    public async findAllowedProvidersForRolleAndOrga(
+    public async findAllowedProvidersForRollenerweiterungAtOrga(
         organisationId: OrganisationID,
         permissions: IPersonPermissions,
     ): Promise<Counted<ServiceProvider<true>>> {
