@@ -261,8 +261,21 @@ export class VidisSyncService {
                     angebotInDb.vidisAngebotId !== undefined && !vidisAngebotIds.has(angebotInDb.vidisAngebotId),
             )
             .map((angebotInDb: ServiceProvider<true>) => angebotInDb.id);
+        const hasAngeboteNeedingUpdate: boolean = angeboteInDb.some((angebotInDb: ServiceProvider<true>) => {
+            const matchingAngebotInVidis: VidisApiResponseAngebotBySchool | undefined = angeboteInVidis.find(
+                (angebot: VidisApiResponseAngebotBySchool) => angebot.offerId.toString() === angebotInDb.vidisAngebotId,
+            );
 
-        if (missingAngeboteInDb.length === 0 && serviceProviderIdsMissingInVidis.length === 0) {
+            return matchingAngebotInVidis != null
+                ? this.needsDbAngebotUpdate(angebotInDb, matchingAngebotInVidis).needUpdate
+                : false;
+        });
+
+        if (
+            missingAngeboteInDb.length === 0 &&
+            serviceProviderIdsMissingInVidis.length === 0 &&
+            !hasAngeboteNeedingUpdate
+        ) {
             this.logger.info(
                 `No differences between VIDIS API and database for school with organisationId: ${organisationId}`,
             );
