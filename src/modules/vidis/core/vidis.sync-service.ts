@@ -412,18 +412,23 @@ export class VidisSyncService {
             ),
             ...successfullyCreatedAngebote,
         ];
-        angeboteInDbAfterCreateDelete.forEach((angebotInDb: ServiceProvider<true>) => {
-            const matchingAngebotInVidis: VidisApiResponseAngebotBySchool | undefined = angeboteInVidis.find(
-                (a: VidisApiResponseAngebotBySchool) => a.offerId.toString() === angebotInDb.vidisAngebotId,
-            );
-            const needsDbUpdate: NeedsDbAngebotUpdateResult | undefined =
-                matchingAngebotInVidis != null
-                    ? this.needsDbAngebotUpdate(angebotInDb, matchingAngebotInVidis)
-                    : undefined;
-            if (matchingAngebotInVidis != null && needsDbUpdate?.needUpdate) {
-                void this.updateAngebotToMatchVidis(needsDbUpdate, angebotInDb, matchingAngebotInVidis, permissions);
-            }
-        });
+        const updateOperations: Promise<void>[] = angeboteInDbAfterCreateDelete.flatMap(
+            (angebotInDb: ServiceProvider<true>) => {
+                const matchingAngebotInVidis: VidisApiResponseAngebotBySchool | undefined = angeboteInVidis.find(
+                    (a: VidisApiResponseAngebotBySchool) => a.offerId.toString() === angebotInDb.vidisAngebotId,
+                );
+                const needsDbUpdate: NeedsDbAngebotUpdateResult | undefined =
+                    matchingAngebotInVidis != null
+                        ? this.needsDbAngebotUpdate(angebotInDb, matchingAngebotInVidis)
+                        : undefined;
+
+                return matchingAngebotInVidis != null && needsDbUpdate?.needUpdate
+                    ? [this.updateAngebotToMatchVidis(needsDbUpdate, angebotInDb, matchingAngebotInVidis, permissions)]
+                    : [];
+            },
+        );
+
+        await Promise.allSettled(updateOperations);
     }
 
     private async updateAngebotToMatchVidis(

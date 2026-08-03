@@ -61,6 +61,7 @@ describe('VidisSyncService', () => {
     type FindSchoolsResult = Awaited<ReturnType<OrganisationRepository['findBy']>>;
     type FindVidisAngeboteForSchoolsResult = Awaited<ReturnType<ServiceProviderRepo['findVidisAngeboteforSchools']>>;
     type CreateServiceProviderResult = Awaited<ReturnType<ServiceProviderModificationService['create']>>;
+    type UpdateVidisServiceProviderResult = Awaited<ReturnType<ServiceProviderModificationService['update']>>;
     type DeleteRollenerweiterungenResult = Awaited<
         ReturnType<RollenerweiterungRepo['deleteByOrganisationIdAndServiceProviderIds']>
     >;
@@ -709,6 +710,55 @@ describe('VidisSyncService', () => {
             );
             expect(rollenerweiterungRepoMock.deleteByOrganisationIdAndServiceProviderIds).not.toHaveBeenCalled();
             expect(serviceProviderRepoMock.deleteByIdAuthorized).not.toHaveBeenCalled();
+        });
+
+        it('should wait for metadata updates before finishing sync for a school', async () => {
+            const orga: TorgaIds = {
+                id: faker.string.uuid(),
+                kennung: faker.string.alphanumeric(8),
+            };
+            const angeboteInDb: ServiceProvider<true>[] = [createExistingVidisServiceProvider(orga.id, '1')];
+            const angeboteInVidis: VidisApiResponseAngebotBySchool[] = [
+                {
+                    ...createAngebot(1, 'Updated Angebot'),
+                    offerLink: 'https://updated.example.org/1',
+                },
+            ];
+            let resolveUpdate: ((value: UpdateVidisServiceProviderResult) => void) | undefined;
+            let syncFinished: boolean = false;
+
+            serviceProviderModificationServiceMock.update.mockImplementation(
+                () =>
+                    new Promise((resolve: (value: UpdateVidisServiceProviderResult) => void) => {
+                        resolveUpdate = resolve;
+                    }),
+            );
+
+            const syncPromise: Promise<void> = (
+                sut as unknown as {
+                    syncForSchoolInternal: (
+                        organisationId: string,
+                        angeboteInVidis: VidisApiResponseAngebotBySchool[],
+                        angeboteInDb: ServiceProvider<true>[],
+                        nonSchoolProvidedVidisAngeboteInDB: ServiceProvider<true>[],
+                        permissions: IPersonPermissions,
+                    ) => Promise<void>;
+                }
+            )
+                .syncForSchoolInternal(orga.id, angeboteInVidis, angeboteInDb, [], permissionsMock)
+                .then(() => {
+                    syncFinished = true;
+                });
+
+            await vi.waitFor(() => {
+                expect(serviceProviderModificationServiceMock.update).toHaveBeenCalledTimes(1);
+                expect(syncFinished).toBe(false);
+            });
+
+            resolveUpdate?.(Ok(angeboteInDb[0]!));
+            await syncPromise;
+
+            expect(syncFinished).toBe(true);
         });
 
         it('should create missing VIDIS Angebote for the school and skip existing ones', async () => {
