@@ -748,7 +748,8 @@ describe('ServiceProviderService', () => {
             });
             organisationRepo.findByIds.mockResolvedValue(new Map([[organisation.id, organisation]]));
             serviceProviderRepo.findByOrgasWithMerkmal.mockResolvedValue([[serviceProvider], 1]);
-            permissions = createMock(PersonPermissions).getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+            permissions = createMock(PersonPermissions);
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                 all: false,
                 orgaIds: [organisation.id],
             });
