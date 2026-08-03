@@ -1696,5 +1696,40 @@ describe('Rolle API', () => {
 
             expect(response.status).toBe(404);
         });
+
+        it('should return 500 if applying rollenerweiterung changes fails', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post(`/rolle/${rolle.id}/organisation/${organisation.id}/apply`)
+                .send({
+                    addErweiterungenForServiceProviderIds: [faker.string.uuid()],
+                    removeErweiterungenForServiceProviderIds: [],
+                });
+
+            expect(response.status).toBe(500);
+            expect(response.body).toEqual({
+                statusCode: 500,
+                message: 'Internal server error',
+            });
+        });
     });
 });
