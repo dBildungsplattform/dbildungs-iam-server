@@ -738,10 +738,13 @@ describe('ServiceProviderService', () => {
     describe('findAllowedProvidersForRollenerweiterungAtOrga', () => {
         let permissions: DeepMocked<PersonPermissions>;
         let organisation: Organisation<true>;
+        let parentOrganisation: Organisation<true>;
         let serviceProvider: ServiceProvider<true>;
 
         beforeEach(() => {
             organisation = DoFactory.createOrganisation(true);
+            parentOrganisation = DoFactory.createOrganisation(true);
+            organisationRepo.findParentOrgasForIds.mockResolvedValue([parentOrganisation]);
             serviceProvider = DoFactory.createServiceProvider(true, {
                 providedOnSchulstrukturknoten: organisation.id,
                 merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
@@ -765,12 +768,10 @@ describe('ServiceProviderService', () => {
                 permissions,
             );
 
-            expect(organisationRepo.findByIds).toHaveBeenCalledWith([organisation.id]);
+            expect(organisationRepo.findParentOrgasForIds).toHaveBeenCalledWith([organisation.id]);
             expect(serviceProviderRepo.findByOrgasWithMerkmal).toHaveBeenCalledWith(
-                [organisation.id],
+                [organisation.id, parentOrganisation.id],
                 ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
-                10,
-                0,
             );
             expect(result[0]).toContain(serviceProvider);
             expect(result[1]).toBe(1);
