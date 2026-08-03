@@ -735,6 +735,59 @@ describe('ServiceProviderService', () => {
         });
     });
 
+    describe('findAllowedProvidersForRollenerweiterungAtOrga', () => {
+        let permissions: DeepMocked<PersonPermissions>;
+        let organisation: Organisation<true>;
+        let serviceProvider: ServiceProvider<true>;
+
+        beforeEach(() => {
+            organisation = DoFactory.createOrganisation(true);
+            serviceProvider = DoFactory.createServiceProvider(true, {
+                providedOnSchulstrukturknoten: organisation.id,
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+            organisationRepo.findByIds.mockResolvedValue(new Map([[organisation.id, organisation]]));
+            serviceProviderRepo.findByOrgasWithMerkmal.mockResolvedValue([[serviceProvider], 1]);
+            permissions = createMock(PersonPermissions).getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('returns allowed providers for rollenerweiterung at orga', async () => {
+            const result: Counted<ServiceProvider<true>> = await service.findAllowedProvidersForRollenerweiterungAtOrga(
+                organisation.id,
+                permissions,
+            );
+
+            expect(organisationRepo.findByIds).toHaveBeenCalledWith([organisation.id]);
+            expect(serviceProviderRepo.findByOrgasWithMerkmal).toHaveBeenCalledWith(
+                [organisation.id],
+                ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG,
+                10,
+                0,
+            );
+            expect(result[0]).toContain(serviceProvider);
+            expect(result[1]).toBe(1);
+        });
+
+        it('returns empty array if no providers found', async () => {
+            serviceProviderRepo.findByOrgasWithMerkmal.mockResolvedValue([[], 0]);
+
+            const result: Counted<ServiceProvider<true>> = await service.findAllowedProvidersForRollenerweiterungAtOrga(
+                organisation.id,
+                permissions,
+            );
+
+            expect(result[0]).toHaveLength(0);
+            expect(result[1]).toBe(0);
+        });
+    });
+
     describe('updateServiceProvider', () => {
         let permissions: DeepMocked<PersonPermissions>;
         let existingServiceProvider: ServiceProvider<true>;
