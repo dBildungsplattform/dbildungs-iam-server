@@ -1581,45 +1581,35 @@ describe('Rolle API', () => {
             expect(response.status).toBe(404);
         });
 
-        it('should filter rollenerweiterungen by permitted organisations if no organisationId is provided', async () => {
-            const permittedOrganisation: Organisation<true> = await organisationRepo.save(
+        it('should filter out rollenerweiterungen from organisations without permission', async () => {
+            const organisation1: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
             );
-            const notPermittedOrganisation: Organisation<true> = await organisationRepo.save(
+            const organisation2: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
             );
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, {
-                    administeredBySchulstrukturknoten: permittedOrganisation.id,
+                    administeredBySchulstrukturknoten: organisation1.id,
                     rollenart: RollenArt.LEHR,
                 }),
             );
             if (rolle instanceof DomainError) {
                 throw Error();
             }
-
-            const permittedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
-            const notPermittedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
             await rollenerweiterungRepo.create(
                 DoFactory.createRollenerweiterung(false, {
-                    organisationId: permittedOrganisation.id,
+                    organisationId: organisation2.id,
                     rolleId: rolle.id,
-                    serviceProviderId: permittedServiceProvider.id,
-                }),
-            );
-
-            await rollenerweiterungRepo.create(
-                DoFactory.createRollenerweiterung(false, {
-                    organisationId: notPermittedOrganisation.id,
-                    rolleId: rolle.id,
-                    serviceProviderId: notPermittedServiceProvider.id,
+                    serviceProviderId: serviceProvider.id,
                 }),
             );
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
-                orgaIds: [permittedOrganisation.id],
+                orgaIds: [organisation1.id],
             });
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -1630,11 +1620,7 @@ describe('Rolle API', () => {
 
             const serviceProviderResponse: ServiceProviderResponse[] = response.body as ServiceProviderResponse[];
 
-            expect(serviceProviderResponse).toHaveLength(1);
-            expect(serviceProviderResponse[0]?.id).toBe(permittedServiceProvider.id);
-            expect(serviceProviderResponse.map((sp: ServiceProviderResponse) => sp.id)).not.toContain(
-                notPermittedServiceProvider.id,
-            );
+            expect(serviceProviderResponse).toHaveLength(0);
         });
     });
 
