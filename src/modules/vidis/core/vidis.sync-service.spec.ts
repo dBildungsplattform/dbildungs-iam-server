@@ -370,7 +370,9 @@ describe('VidisSyncService', () => {
 
             expect(result).toEqual(Ok(undefined));
             expect(vidisApiAdapterMock.getActivatedAngeboteBySchool).toHaveBeenCalledWith(kennung);
-            expect(serviceProviderRepoMock.findVidisAngeboteforSchools).toHaveBeenCalledWith([organisationId]);
+            expect(serviceProviderRepoMock.findVidisAngeboteforSchools).toHaveBeenCalledWith([organisationId], {
+                withLogo: true,
+            });
             expect(syncForSchoolSpy).toHaveBeenCalledWith(
                 organisationId,
                 [activatedAngebote[0]!.angebot, activatedAngebote[1]!.angebot],
@@ -434,7 +436,9 @@ describe('VidisSyncService', () => {
 
         await sut.sync();
 
-        expect(serviceProviderRepoMock.findVidisAngeboteforSchools).toHaveBeenCalledWith([orga1.id, orga2.id]);
+        expect(serviceProviderRepoMock.findVidisAngeboteforSchools).toHaveBeenCalledWith([orga1.id, orga2.id], {
+            withLogo: true,
+        });
         expect(syncForSchoolSpy).toHaveBeenCalledTimes(2);
         expect(syncForSchoolSpy).toHaveBeenCalledWith(
             orga1.id,

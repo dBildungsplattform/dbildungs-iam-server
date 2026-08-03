@@ -156,7 +156,7 @@ export class VidisSyncService {
             await this.serviceProviderRepo.findNonSchoolProvidedVidisAngebote();
 
         const vidisAngeboteForSchool: ServiceProvider<true>[] =
-            await this.serviceProviderRepo.findVidisAngeboteforSchools([organisationId]);
+            await this.serviceProviderRepo.findVidisAngeboteforSchools([organisationId], { withLogo: true });
 
         await this.syncForSchoolInternal(
             organisationId,
@@ -198,7 +198,9 @@ export class VidisSyncService {
                 organisationIdByKennung,
             );
             const vidisAngeboteForSchools: ServiceProvider<true>[] =
-                await this.serviceProviderRepo.findVidisAngeboteforSchools(Object.values(organisationIdByKennung));
+                await this.serviceProviderRepo.findVidisAngeboteforSchools(Object.values(organisationIdByKennung), {
+                    withLogo: true,
+                });
 
             await Promise.all(
                 Object.values(organisationIdByKennung).map((organisationId: string) => {
