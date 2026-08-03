@@ -1456,8 +1456,7 @@ describe('Rolle API', () => {
             );
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
-                all: false,
-                orgaIds: [organisation.id],
+                all: true,
             });
 
             const response: Response = await request(app.getHttpServer() as App)
