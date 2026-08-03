@@ -3,12 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { uniq } from 'lodash-es';
 import { FeatureFlagConfig } from '../../../shared/config/featureflag.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
-import { Err } from '../../../shared/util/result.js';
 import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -17,11 +14,7 @@ import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
-import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
-import { AttachedRollenError } from './errors/attached-rollen.error.js';
-import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
-import { VidisServiceProviderImmutableError } from './errors/vidis-service-provider-immutable.error.js';
 import { ServiceProviderMerkmal } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import {
@@ -30,7 +23,6 @@ import {
     ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount,
     RollenerweiterungForManageableServiceProvider,
 } from './types.js';
-import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -375,87 +367,5 @@ export class ServiceProviderService {
         );
 
         return serviceProviders;
-    }
-
-    public async updateServiceProvider(
-        permissions: IPersonPermissions,
-        angebotId: ServiceProviderID,
-        updateServiceProviderBodyParams: UpdateServiceProviderBodyParams,
-    ): Promise<Result<ServiceProvider<true>, DomainError>> {
-        const existingServiceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
-            angebotId,
-            { withLogo: true },
-        );
-        if (!existingServiceProvider) {
-            return Err(new EntityNotFoundError());
-        }
-
-        if (existingServiceProvider.vidisAngebotId) {
-            return Err(
-                new VidisServiceProviderImmutableError(
-                    'ServiceProvider linked to VIDIS cannot be updated or deleted',
-                    existingServiceProvider.id,
-                ),
-            );
-        }
-
-        const updateError: Option<InvalidLogoCombinationError> = existingServiceProvider.updateWithSafeFields(
-            updateServiceProviderBodyParams,
-        );
-        if (updateError) {
-            return Err(updateError);
-        }
-
-        const updatedServiceProvider: Promise<Result<ServiceProvider<true>, DomainError>> =
-            this.serviceProviderRepo.update(permissions, existingServiceProvider);
-        return updatedServiceProvider;
-    }
-
-    public async deleteByIdAuthorized(
-        permissions: IPersonPermissions,
-        id: ServiceProviderID,
-    ): Promise<
-        Result<
-            void,
-            | EntityNotFoundError
-            | MissingPermissionsError
-            | AttachedRollenError
-            | AttachedRollenerweiterungenError
-            | VidisServiceProviderImmutableError
-        >
-    > {
-        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(id);
-        if (!serviceProvider) {
-            return Err(new EntityNotFoundError('ServiceProvider', id));
-        }
-
-        if (serviceProvider.vidisAngebotId) {
-            return Err(
-                new VidisServiceProviderImmutableError(
-                    'ServiceProvider linked to VIDIS cannot be updated or deleted',
-                    id,
-                ),
-            );
-        }
-
-        const rollen: Map<ServiceProviderID, Rolle<true>[]> = await this.rolleRepo.findByServiceProviderIds([id], 1);
-        const hasAttachedRollen: boolean = (rollen.get(id)?.length ?? 0) > 0;
-        if (hasAttachedRollen) {
-            return Err(new AttachedRollenError('ServiceProvider has attached Rollen and cannot be deleted', id));
-        }
-
-        const rollenerweiterungen: Record<ServiceProviderID, number> =
-            await this.rollenerweiterungRepo.countByServiceProviderIds([id]);
-        const hasAttachedRollenerweiterungen: boolean = (rollenerweiterungen[id] ?? 0) > 0;
-        if (hasAttachedRollenerweiterungen) {
-            return Err(
-                new AttachedRollenerweiterungenError(
-                    'ServiceProvider has attached Rollenerweiterungen and cannot be deleted',
-                    id,
-                ),
-            );
-        }
-
-        return this.serviceProviderRepo.deleteByIdAuthorized(permissions, id);
     }
 }

@@ -54,6 +54,7 @@ import { AttachedRollenerweiterungenError } from '../domain/errors/attached-roll
 import { InvalidLogoCombinationError } from '../domain/errors/invalid-logo-combination.error.js';
 import { VidisServiceProviderImmutableError } from '../domain/errors/vidis-service-provider-immutable.error.js';
 import { ServiceProviderFindService } from '../domain/service-provider-find.service.js';
+import { ServiceProviderModificationService } from '../domain/service-provider-modification.service.js';
 import { ServiceProviderSystem, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProvider } from '../domain/service-provider.js';
@@ -69,6 +70,7 @@ import { CreateServiceProviderBodyParams } from './create-service-provider-body.
 import { CreateServiceProviderResponse } from './create-service-provider.response.js';
 import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
+import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
@@ -77,7 +79,6 @@ import { RollenerweiterungByServiceProvidersIdQueryParams } from './rollenerweit
 import { ServiceProviderErrorFilter } from './service-provider-exception.filter.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
-import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
 import { FindAngeboteQueryParams } from './find-angebote-query.params.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
@@ -97,6 +98,7 @@ export class ProviderController {
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepository,
+        private readonly serviceProviderModificationService: ServiceProviderModificationService,
         private readonly logger: ClassLogger,
     ) {}
 
@@ -451,12 +453,13 @@ export class ProviderController {
             body.requires2fa,
             undefined, // vidisAngebotId
             body.merkmale,
+            body.rollenartenWhitelist ?? [],
         );
         if (!serviceProvider.ok) {
             throw serviceProvider.error;
         }
 
-        const result: Result<ServiceProvider<true>, DomainError> = await this.serviceProviderRepo.create(
+        const result: Result<ServiceProvider<true>, DomainError> = await this.serviceProviderModificationService.create(
             permissions,
             serviceProvider.value,
         );
@@ -483,10 +486,30 @@ export class ProviderController {
         @Param('angebotId') angebotId: ServiceProviderID,
         @Body() body: UpdateServiceProviderBodyParams,
     ): Promise<ServiceProviderResponse> {
-        const result: Result<
-            ServiceProvider<true>,
-            DomainError
-        > = await this.serviceProviderService.updateServiceProvider(permissions, angebotId, body);
+        const existingServiceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
+            angebotId,
+            { withLogo: true },
+        );
+        if (!existingServiceProvider) {
+            throw new EntityNotFoundError();
+        }
+
+        if (existingServiceProvider.vidisAngebotId) {
+            throw new VidisServiceProviderImmutableError(
+                'ServiceProvider linked to VIDIS cannot be updated or deleted',
+                existingServiceProvider.id,
+            );
+        }
+
+        const updateError: Option<InvalidLogoCombinationError> = existingServiceProvider.update(body);
+        if (updateError) {
+            throw updateError;
+        }
+
+        const result: Result<ServiceProvider<true>, DomainError> = await this.serviceProviderModificationService.update(
+            permissions,
+            existingServiceProvider,
+        );
 
         if (!result.ok) {
             throw result.error;
@@ -520,7 +543,7 @@ export class ProviderController {
             | AttachedRollenError
             | AttachedRollenerweiterungenError
             | VidisServiceProviderImmutableError
-        > = await this.serviceProviderService.deleteByIdAuthorized(permissions, params.angebotId);
+        > = await this.serviceProviderModificationService.deleteByIdAuthorized(permissions, params.angebotId);
 
         if (!result.ok) {
             throw result.error;

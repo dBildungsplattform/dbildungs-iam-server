@@ -1,16 +1,13 @@
 import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
 import { zip } from 'lodash-es';
-import { createPersonPermissionsMock } from '../../../../test/utils/auth.mock.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { expectErrResult, expectOkResult } from '../../../../test/utils/test-types.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { OrganisationID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
-import { Err, Ok } from '../../../shared/util/result.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -20,13 +17,9 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { VidisApiAdapter } from '../../vidis/adapter/domain/vidis-api.adapter.js';
-import { UpdateServiceProviderBodyParams } from '../api/update-service-provider-body.params.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
-import { ServiceProviderError } from '../specification/error/service-provider.error.js';
-import { AttachedRollenError } from './errors/attached-rollen.error.js';
-import { AttachedRollenerweiterungenError } from './errors/attached-rollenerweiterungen.error.js';
-import { ServiceProviderKategorie, ServiceProviderMerkmal } from './service-provider.enum.js';
+import { ServiceProviderMerkmal } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import { ServiceProviderService } from './service-provider.service.js';
 import {
@@ -34,9 +27,6 @@ import {
     ManageableServiceProviderWithReferencedObjects,
     ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount,
 } from './types.js';
-import { DomainError } from '../../../shared/error/index.js';
-import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
-import { VidisServiceProviderImmutableError } from './errors/vidis-service-provider-immutable.error.js';
 
 // helper to mock output of some repos
 function getIdMap<T>(arr: Array<T & { id: string }>): Map<string, T> {
@@ -802,217 +792,6 @@ describe('ServiceProviderService', () => {
 
             expect(result[0]).toHaveLength(0);
             expect(result[1]).toBe(0);
-        });
-    });
-
-    describe('updateServiceProvider', () => {
-        let permissions: DeepMocked<PersonPermissions>;
-        let existingServiceProvider: ServiceProvider<true>;
-
-        beforeEach(() => {
-            permissions = createMock(PersonPermissions);
-            existingServiceProvider = DoFactory.createServiceProvider(true, {
-                logo: undefined,
-                logoMimeType: undefined,
-                logoId: faker.number.int({ min: 1, max: 1000 }),
-            });
-            serviceProviderRepo.findById.mockResolvedValue(existingServiceProvider);
-            serviceProviderRepo.update.mockResolvedValue(Ok(existingServiceProvider));
-        });
-
-        afterEach(() => {
-            vi.restoreAllMocks();
-        });
-
-        it('should update service provider', async () => {
-            const newAngebotId: string = faker.string.uuid();
-            const updateData: UpdateServiceProviderBodyParams = {
-                name: 'New Name',
-                url: 'https://new-url.com',
-                kategorie: ServiceProviderKategorie.EMAIL,
-                logoId: faker.number.int({ min: 1, max: 1000 }),
-            };
-
-            const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
-                permissions,
-                newAngebotId,
-                updateData,
-            );
-
-            expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId, { withLogo: true });
-            expect(serviceProviderRepo.update).toHaveBeenCalledWith(
-                permissions,
-                expect.objectContaining({
-                    name: updateData.name,
-                    url: updateData.url,
-                    kategorie: updateData.kategorie,
-                    logoId: updateData.logoId,
-                }),
-            );
-            expectOkResult(result);
-            expect(result.value).toEqual(existingServiceProvider);
-        });
-
-        it.each([
-            ['name', { name: 'New Name' }],
-            ['url', { url: 'https://new-url.com' }],
-            ['kategorie', { kategorie: ServiceProviderKategorie.EMAIL }],
-            ['logoId', { logoId: faker.number.int({ min: 1, max: 1000 }) }],
-        ] as [keyof UpdateServiceProviderBodyParams, UpdateServiceProviderBodyParams][])(
-            'should update service provider %s only',
-            async (_: keyof UpdateServiceProviderBodyParams, updateData: UpdateServiceProviderBodyParams) => {
-                const newAngebotId: string = faker.string.uuid();
-
-                const result: Result<ServiceProvider<true>, Error> = await service.updateServiceProvider(
-                    permissions,
-                    newAngebotId,
-                    updateData,
-                );
-
-                expectOkResult(result);
-
-                expect(serviceProviderRepo.findById).toHaveBeenCalledWith(newAngebotId, { withLogo: true });
-                expect(serviceProviderRepo.update).toHaveBeenCalledWith(
-                    permissions,
-                    expect.objectContaining({
-                        ...existingServiceProvider,
-                        ...updateData,
-                    }),
-                );
-                expect(result.value).toEqual(existingServiceProvider);
-            },
-        );
-
-        it('should return error if service provider does not exist', async () => {
-            serviceProviderRepo.findById.mockResolvedValue(null);
-
-            const updateData: UpdateServiceProviderBodyParams = { name: 'New Name' };
-            const updateResult: Result<ServiceProvider<true>, DomainError> = await service.updateServiceProvider(
-                permissions,
-                'nonexistent-id',
-                updateData,
-            );
-
-            expectErrResult(updateResult);
-            expect(updateResult.error).toBeInstanceOf(EntityNotFoundError);
-
-            expect(serviceProviderRepo.update).not.toHaveBeenCalled();
-        });
-
-        it('should return error if logo and logoId are both provided', async () => {
-            const existingServiceProviderWithLogo: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-            serviceProviderRepo.findById.mockResolvedValue(existingServiceProviderWithLogo);
-
-            const updateData: UpdateServiceProviderBodyParams = { logoId: faker.number.int({ min: 1, max: 1000 }) };
-            const updateResult: Result<ServiceProvider<true>, DomainError> = await service.updateServiceProvider(
-                permissions,
-                existingServiceProviderWithLogo.id,
-                updateData,
-            );
-
-            expectErrResult(updateResult);
-            expect(updateResult.error).toBeInstanceOf(InvalidLogoCombinationError);
-
-            expect(serviceProviderRepo.update).not.toHaveBeenCalled();
-        });
-
-        it('should reject updates for VIDIS-linked service providers', async () => {
-            const vidisLinkedServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
-                vidisAngebotId: faker.string.uuid(),
-            });
-            serviceProviderRepo.findById.mockResolvedValue(vidisLinkedServiceProvider);
-
-            const result: Result<ServiceProvider<true>, DomainError> = await service.updateServiceProvider(
-                permissions,
-                vidisLinkedServiceProvider.id,
-                { name: 'New Name' },
-            );
-
-            expectErrResult(result);
-            expect(result.error).toBeInstanceOf(VidisServiceProviderImmutableError);
-            expect(serviceProviderRepo.update).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('deleteByIdAuthorized', () => {
-        let permissions: ReturnType<typeof createPersonPermissionsMock>;
-        const mockServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-        const serviceProviderId: ServiceProviderID = mockServiceProvider.id;
-
-        beforeEach(() => {
-            permissions = createPersonPermissionsMock();
-            vi.resetAllMocks();
-            serviceProviderRepo.findById.mockResolvedValue(mockServiceProvider);
-        });
-
-        it('returns AttachedRollenError if attached Rollen exist', async () => {
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(
-                new Map([[serviceProviderId, [DoFactory.createRolle(true)]]]),
-            );
-            rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({ [serviceProviderId]: 0 });
-            const result: Result<void, AttachedRollenError> = await service.deleteByIdAuthorized(
-                permissions,
-                serviceProviderId,
-            );
-            expectErrResult(result);
-            expect(result.error).toBeInstanceOf(AttachedRollenError);
-        });
-
-        it('returns AttachedRollenerweiterungenError if attached Rollenerweiterungen exist', async () => {
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
-            rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({ [serviceProviderId]: 1 });
-            const result: Result<void, AttachedRollenerweiterungenError> = await service.deleteByIdAuthorized(
-                permissions,
-                serviceProviderId,
-            );
-            expectErrResult(result);
-            expect(result.error).toBeInstanceOf(AttachedRollenerweiterungenError);
-        });
-
-        it('returns error for VIDIS-linked service providers before deleting', async () => {
-            const vidisLinkedServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
-                vidisAngebotId: faker.string.uuid(),
-            });
-            serviceProviderRepo.findById.mockResolvedValue(vidisLinkedServiceProvider);
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
-            rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({ [serviceProviderId]: 0 });
-
-            const result: Result<void, ServiceProviderError> = await service.deleteByIdAuthorized(
-                permissions,
-                vidisLinkedServiceProvider.id,
-            );
-
-            expectErrResult(result);
-            expect(result.error).toBeInstanceOf(VidisServiceProviderImmutableError);
-            expect(serviceProviderRepo.deleteByIdAuthorized).not.toHaveBeenCalled();
-        });
-
-        it('calls deleteById and returns Ok() on success', async () => {
-            const expectedResult: Result<void, ServiceProviderError> = Ok();
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProviderId, []]]));
-            rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({ [serviceProviderId]: 0 });
-            serviceProviderRepo.deleteByIdAuthorized.mockResolvedValue(expectedResult);
-
-            const result: Result<void, ServiceProviderError> = await service.deleteByIdAuthorized(
-                permissions,
-                serviceProviderId,
-            );
-
-            expect(serviceProviderRepo.deleteByIdAuthorized).toHaveBeenCalledWith(permissions, serviceProviderId);
-            expect(result).toBe(expectedResult);
-        });
-
-        it('calls deleteById and returns Error on failure', async () => {
-            const expectedResult: Result<void, ServiceProviderError> = Err(new EntityNotFoundError());
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([]));
-            rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({});
-            serviceProviderRepo.deleteByIdAuthorized.mockResolvedValue(expectedResult);
-            const result: Result<void, ServiceProviderError> = await service.deleteByIdAuthorized(
-                permissions,
-                serviceProviderId,
-            );
-            expect(serviceProviderRepo.deleteByIdAuthorized).toHaveBeenCalledWith(permissions, serviceProviderId);
-            expect(result).toBe(expectedResult);
         });
     });
 });
