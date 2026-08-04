@@ -440,7 +440,10 @@ export class VidisSyncService {
         permissions: IPersonPermissions,
     ): Promise<void> {
         this.logger.info(
-            `Updating VIDIS Angebot with id ${angebotInDb.id} in DB because it differs from VIDIS API. Name changed: ${needsDbUpdate.isNameChanged}, URL changed: ${needsDbUpdate.isURLChanged}, Logo changed: ${needsDbUpdate.isLogoChanged}`,
+            `Updating VIDIS Angebot with id ${angebotInDb.id} in DB because it differs from VIDIS API. ` +
+                `Name changed: ${needsDbUpdate.isNameChanged}${needsDbUpdate.isNameChanged ? ` (before: "${angebotInDb.name}", after: "${matchingAngebotInVidis.offerTitle.toString()}")` : ''}, ` +
+                `URL changed: ${needsDbUpdate.isURLChanged}${needsDbUpdate.isURLChanged ? ` (before: "${angebotInDb.url}", after: "${matchingAngebotInVidis.offerLink}")` : ''}, ` +
+                `Logo changed: ${needsDbUpdate.isLogoChanged}`,
         );
         if (needsDbUpdate.isNameChanged) {
             angebotInDb.name = matchingAngebotInVidis.offerTitle.toString();
