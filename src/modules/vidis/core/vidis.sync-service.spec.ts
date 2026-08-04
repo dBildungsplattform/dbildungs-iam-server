@@ -1156,7 +1156,7 @@ describe('VidisSyncService', () => {
         type NeedsDbAngebotUpdateResult = {
             needUpdate: boolean;
             isNameChanged: boolean;
-            isURLChanged: boolean;
+            isUrlChanged: boolean;
             isLogoChanged: boolean;
         };
         type UpdateServiceProviderResult = Awaited<ReturnType<ServiceProviderModificationService['update']>>;
@@ -1176,7 +1176,7 @@ describe('VidisSyncService', () => {
             const needsDbUpdate: NeedsDbAngebotUpdateResult = {
                 needUpdate: true,
                 isNameChanged: false,
-                isURLChanged: false,
+                isUrlChanged: false,
                 isLogoChanged: false,
             };
             serviceProviderModificationServiceMock.update.mockResolvedValue(
@@ -1213,7 +1213,7 @@ describe('VidisSyncService', () => {
             const needsDbUpdate: NeedsDbAngebotUpdateResult = {
                 needUpdate: true,
                 isNameChanged: true,
-                isURLChanged: true,
+                isUrlChanged: true,
                 isLogoChanged: true,
             };
             serviceProviderModificationServiceMock.update.mockResolvedValue(
@@ -1253,7 +1253,7 @@ describe('VidisSyncService', () => {
             const needsDbUpdate: NeedsDbAngebotUpdateResult = {
                 needUpdate: true,
                 isNameChanged: true,
-                isURLChanged: false,
+                isUrlChanged: false,
                 isLogoChanged: false,
             };
             serviceProviderModificationServiceMock.update.mockResolvedValue(
@@ -1306,7 +1306,7 @@ describe('VidisSyncService', () => {
             expect(result).toEqual({
                 needUpdate: false,
                 isNameChanged: false,
-                isURLChanged: false,
+                isUrlChanged: false,
                 isLogoChanged: false,
             });
         });
@@ -1337,7 +1337,7 @@ describe('VidisSyncService', () => {
             expect(result).toEqual({
                 needUpdate: true,
                 isNameChanged: false,
-                isURLChanged: false,
+                isUrlChanged: false,
                 isLogoChanged: true,
             });
         });
@@ -1368,7 +1368,7 @@ describe('VidisSyncService', () => {
             expect(result).toEqual({
                 needUpdate: true,
                 isNameChanged: false,
-                isURLChanged: false,
+                isUrlChanged: false,
                 isLogoChanged: true,
             });
         });
@@ -1399,7 +1399,7 @@ describe('VidisSyncService', () => {
             expect(result).toEqual({
                 needUpdate: true,
                 isNameChanged: true,
-                isURLChanged: true,
+                isUrlChanged: true,
                 isLogoChanged: false,
             });
         });
