@@ -54,7 +54,7 @@ type DeleteVidisServiceProviderResult = Result<void, EntityNotFoundError | Missi
 type NeedsDbAngebotUpdateResult = {
     needUpdate: boolean;
     isNameChanged: boolean;
-    isURLChanged: boolean;
+    isUrlChanged: boolean;
     isLogoChanged: boolean;
 };
 
@@ -442,13 +442,13 @@ export class VidisSyncService {
         this.logger.info(
             `Updating VIDIS Angebot with id ${angebotInDb.id} in DB because it differs from VIDIS API. ` +
                 `Name changed: ${needsDbUpdate.isNameChanged}${needsDbUpdate.isNameChanged ? ` (before: "${angebotInDb.name}", after: "${matchingAngebotInVidis.offerTitle.toString()}")` : ''}, ` +
-                `URL changed: ${needsDbUpdate.isURLChanged}${needsDbUpdate.isURLChanged ? ` (before: "${angebotInDb.url}", after: "${matchingAngebotInVidis.offerLink}")` : ''}, ` +
+                `URL changed: ${needsDbUpdate.isUrlChanged}${needsDbUpdate.isUrlChanged ? ` (before: "${angebotInDb.url}", after: "${matchingAngebotInVidis.offerLink}")` : ''}, ` +
                 `Logo changed: ${needsDbUpdate.isLogoChanged}`,
         );
         if (needsDbUpdate.isNameChanged) {
             angebotInDb.name = matchingAngebotInVidis.offerTitle.toString();
         }
-        if (needsDbUpdate.isURLChanged) {
+        if (needsDbUpdate.isUrlChanged) {
             angebotInDb.url = matchingAngebotInVidis.offerLink;
         }
         if (needsDbUpdate.isLogoChanged) {
@@ -502,7 +502,7 @@ export class VidisSyncService {
         return {
             needUpdate: isNameChanged || isUrlChanged || isLogoChanged,
             isNameChanged,
-            isURLChanged: isUrlChanged,
+            isUrlChanged,
             isLogoChanged,
         };
     }
