@@ -11,7 +11,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RolleFindByParameters, RolleRepo } from '../repo/rolle.repo.js';
 import { FindRollenWithPermissionsParams, RolleFindService } from './rolle-find.service.js';
-import { RollenArt } from './rolle.enums.js';
+import { RollenArt, RollenMerkmal } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
 import { RollenSystemRecht } from './systemrecht.js';
@@ -88,6 +88,7 @@ describe('RolleService', () => {
                     limit: params.limit,
                     offset: params.offset,
                     rollenArten: params.rollenArten,
+                    excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
                 }),
             );
         });
@@ -258,6 +259,52 @@ describe('RolleService', () => {
                 }),
             );
         });
+
+        it('should include MPT rollen when caller has MPT_ROLLEN_VERWALTEN permission and requests it', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            const params: FindRollenWithPermissionsParams & { requestedSystemrechte?: RollenSystemRecht[] } = {
+                permissions: permissionsMock,
+                requestedSystemrechte: [RollenSystemRecht.ROLLEN_ERWEITERN, RollenSystemRecht.MPT_ROLLEN_VERWALTEN],
+            };
+            await rolleFindService.findRollenAvailableForErweiterung(params);
+            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                expect.objectContaining<Partial<RolleFindByParameters>>({
+                    excludeMerkmale: undefined,
+                }),
+            );
+        });
+
+        it('should exclude MPT rollen when MPT_ROLLEN_VERWALTEN is not requested', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            const params: FindRollenWithPermissionsParams = {
+                permissions: permissionsMock,
+            };
+            await rolleFindService.findRollenAvailableForErweiterung(params);
+            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                expect.objectContaining<Partial<RolleFindByParameters>>({
+                    excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
+                }),
+            );
+        });
+
+        it('should exclude MPT rollen when requested but caller does not actually hold MPT_ROLLEN_VERWALTEN', async () => {
+            permissionsMock.getOrgIdsWithSystemrecht.mockImplementation((systemrechte: RollenSystemRecht[]) => {
+                if (systemrechte.includes(RollenSystemRecht.MPT_ROLLEN_VERWALTEN)) {
+                    return Promise.resolve({ all: false, orgaIds: [] });
+                }
+                return Promise.resolve({ all: true });
+            });
+            const params: FindRollenWithPermissionsParams & { requestedSystemrechte?: RollenSystemRecht[] } = {
+                permissions: permissionsMock,
+                requestedSystemrechte: [RollenSystemRecht.ROLLEN_ERWEITERN, RollenSystemRecht.MPT_ROLLEN_VERWALTEN],
+            };
+            await rolleFindService.findRollenAvailableForErweiterung(params);
+            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                expect.objectContaining<Partial<RolleFindByParameters>>({
+                    excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
+                }),
+            );
+        });
     });
 
     describe('findRollenAvailableForImportPersonenkontext', () => {
@@ -350,6 +397,11 @@ describe('RolleService', () => {
             });
 
             expect(result).toEqual([[rollen[1]], rollen.length]);
+            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                expect.objectContaining<RolleFindByParameters>({
+                    excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
+                }),
+            );
         });
 
         it('should apply offset when no limit is provided', async () => {

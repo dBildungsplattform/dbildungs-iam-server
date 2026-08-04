@@ -6,7 +6,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RolleFindByParameters, RolleRepo } from '../repo/rolle.repo.js';
-import { RollenArt } from './rolle.enums.js';
+import { RollenArt, RollenMerkmal } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { RollenSystemRecht } from './systemrecht.js';
 import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
@@ -29,7 +29,7 @@ export class RolleFindService {
     ) {}
 
     public async findRollenAvailableForErweiterung(
-        params: FindRollenWithPermissionsParams,
+        params: FindRollenWithPermissionsParams & { requestedSystemrechte?: RollenSystemRecht[] },
     ): Promise<Counted<Rolle<true>>> {
         const permittedOrgas: PermittedOrgas = await params.permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ROLLEN_ERWEITERN],
@@ -59,11 +59,30 @@ export class RolleFindService {
             }
         }
 
+        // Only honor a request to include MPT rollen if the caller actually holds the Right
+        const wantsMptRollen: boolean =
+            params.requestedSystemrechte?.includes(RollenSystemRecht.MPT_ROLLEN_VERWALTEN) ?? false;
+        let hasMptRollenVerwaltenPermission: boolean = false;
+        if (wantsMptRollen) {
+            const mptPermittedOrgas: PermittedOrgas = await params.permissions.getOrgIdsWithSystemrecht(
+                [RollenSystemRecht.MPT_ROLLEN_VERWALTEN],
+                true,
+            );
+            hasMptRollenVerwaltenPermission = mptPermittedOrgas.all || mptPermittedOrgas.orgaIds.length > 0;
+        }
+
+        // we can assume that MPT_ROLLEN_VERWALTEN is not exclusive to a single orga here, since matchAll on
+        // permissions.getOrgIdsWithSystemrecht is true by default
+        const excludeMerkmale: RollenMerkmal[] | undefined = hasMptRollenVerwaltenPermission
+            ? undefined
+            : [RollenMerkmal.MPT_ROLLE];
+
         const queryParams: RolleFindByParameters = {
             searchStr: params.searchStr,
             allowedOrganisationIds: permittedAndRequestedOrganisationenIdsWithParents,
             limit: params.limit,
             offset: params.offset,
+            excludeMerkmale,
         };
 
         if (permittedAndRequestedOrganisationenIds !== undefined && permittedAndRequestedOrganisationenIds.length > 0) {
@@ -117,6 +136,7 @@ export class RolleFindService {
             searchStr: params.searchStr,
             allowedOrganisationIds: organisationIdsWithParents,
             rollenArten: params.rollenArten,
+            excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
         });
 
         const paramOrgas: Organisation<true>[] = Array.from(
