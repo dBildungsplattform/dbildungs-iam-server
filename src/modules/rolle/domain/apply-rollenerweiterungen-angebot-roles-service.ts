@@ -17,6 +17,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from './missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { isMPTRolle } from './rolle.enums.js';
 
 type TunknownResultForRolle = {
     rolleId: string;
@@ -108,6 +109,7 @@ export class ApplyRollenerweiterungWithAngebotForRolesService {
                     existingErweiterungen,
                     body.removeErweiterungenForRolleIds,
                     rollen,
+                    permissions,
                 ),
             ),
         ]);
@@ -130,6 +132,7 @@ export class ApplyRollenerweiterungWithAngebotForRolesService {
         existingErweiterungen: Array<Rollenerweiterung<true>> = [],
         removeErweiterungenForRolleIds: string[],
         rollen: Map<string, Rolle<true>>,
+        permissions: IPersonPermissions,
     ): Promise<{ rolleId: string; result: Result<null, DomainError> }>[] {
         const removeErweiterungenPromises: Promise<{ rolleId: string; result: Result<null, DomainError> }>[] =
             removeErweiterungenForRolleIds
@@ -138,7 +141,7 @@ export class ApplyRollenerweiterungWithAngebotForRolesService {
                         existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) !== -1
                     );
                 })
-                .map((rolleId: string) => {
+                .map(async (rolleId: string) => {
                     const rolle: Option<Rolle<true>> = rollen.get(rolleId);
                     this.logger.info(
                         `Removing Erweiterung for rolleId: ${rolleId}, orgaId: ${orgaId}, angebotId: ${angebotId}`,
@@ -146,13 +149,24 @@ export class ApplyRollenerweiterungWithAngebotForRolesService {
                     if (!rolle) {
                         return Promise.resolve({ rolleId, result: Err(new EntityNotFoundError('Rolle', rolleId)) });
                     }
-                    return this.rollenerweiterungRepo
-                        .deleteByComposedId({
-                            organisationId: orgaId,
-                            rolleId: rolleId,
-                            serviceProviderId: angebotId,
-                        })
-                        .then((result: Result<null, DomainError>) => ({ rolleId, result }));
+                    if (
+                        isMPTRolle(rolle) &&
+                        !(await permissions.hasSystemrechtAtOrganisation(
+                            orgaId,
+                            RollenSystemRecht.MPT_ROLLEN_VERWALTEN,
+                        ))
+                    ) {
+                        return Promise.resolve({
+                            rolleId,
+                            result: Err(new MissingPermissionsError('Not authorized')),
+                        });
+                    }
+                    const result: Result<null, DomainError> = await this.rollenerweiterungRepo.deleteByComposedId({
+                        organisationId: orgaId,
+                        rolleId: rolleId,
+                        serviceProviderId: angebotId,
+                    });
+                    return { rolleId, result };
                 });
         return removeErweiterungenPromises;
     }
@@ -175,7 +189,7 @@ export class ApplyRollenerweiterungWithAngebotForRolesService {
             .filter((rolleId: string) => {
                 return existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) === -1;
             })
-            .map((rolleId: string) => {
+            .map(async (rolleId: string) => {
                 const rolle: Option<Rolle<true>> = rollen.get(rolleId);
                 this.logger.info(
                     `Adding Erweiterung for for rolleId: ${rolleId}, orgaId: ${orgaId}, angebotId: ${angebotId}`,
@@ -183,19 +197,30 @@ export class ApplyRollenerweiterungWithAngebotForRolesService {
                 if (!rolle) {
                     return Promise.resolve({ rolleId, result: Err(new EntityNotFoundError('Rolle', rolleId)) });
                 }
-                return this.rollenerweiterungRepo
-                    .createAuthorized(
-                        Rollenerweiterung.createNew(
-                            this.organisationRepo,
-                            this.rolleRepo,
-                            this.serviceProviderRepo,
-                            orgaId,
-                            rolleId,
-                            angebotId,
-                        ),
-                        permissions,
-                    )
-                    .then((result: Result<Rollenerweiterung<true>, DomainError>) => ({ rolleId, result }));
+                if (
+                    isMPTRolle(rolle) &&
+                    !(await permissions.hasSystemrechtAtOrganisation(orgaId, RollenSystemRecht.MPT_ROLLEN_VERWALTEN))
+                ) {
+                    return Promise.resolve({
+                        rolleId,
+                        result: Err(new MissingPermissionsError('Not authorized')),
+                    });
+                }
+                const result: Result<
+                    Rollenerweiterung<true>,
+                    DomainError
+                > = await this.rollenerweiterungRepo.createAuthorized(
+                    Rollenerweiterung.createNew(
+                        this.organisationRepo,
+                        this.rolleRepo,
+                        this.serviceProviderRepo,
+                        orgaId,
+                        rolleId,
+                        angebotId,
+                    ),
+                    permissions,
+                );
+                return { rolleId, result };
             });
         return erweiterungenPromises;
     }
