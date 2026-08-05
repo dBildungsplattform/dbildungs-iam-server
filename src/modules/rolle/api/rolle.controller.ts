@@ -54,7 +54,7 @@ import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
-import { FindRolleQueryParams } from './find-rolle-query.param.js';
+import { FindRolleQueryParams } from './find-rolle-query.params.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
@@ -131,6 +131,7 @@ export class RolleController {
                 queryParams.offset,
                 queryParams.organisationId ? [queryParams.organisationId] : undefined,
                 queryParams.rolleIds,
+                queryParams.merkmale,
             );
         }
 

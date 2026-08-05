@@ -2,11 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ArrayMaxSize, ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 
 import { PagedQueryParams } from '../../../shared/paging/index.js';
+import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
-import { RollenArt, RollenArtTypName } from '../domain/rolle.enums.js';
+import { RollenArt, RollenArtTypName, RollenMerkmal, RollenMerkmalTypName } from '../domain/rolle.enums.js';
 import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/systemrecht.js';
 import { IsSystemrechtForRollenAdministration } from './is-systemrecht-for-rollen-admin-validator.js';
-import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 
 export class FindRolleQueryParams extends PagedQueryParams {
     @IsOptional()
@@ -69,4 +69,18 @@ export class FindRolleQueryParams extends PagedQueryParams {
         description: 'Filter roles by their role types.',
     })
     public rollenarten?: RollenArt[];
+
+    @IsOptional()
+    @IsEnum(RollenMerkmal, { each: true })
+    @TransformToArray()
+    @ArrayUnique()
+    @ApiProperty({
+        enum: RollenMerkmal,
+        enumName: RollenMerkmalTypName,
+        isArray: true,
+        required: false,
+        maxItems: Object.values(RollenMerkmal).length,
+        description: 'Filter roles by their characteristics.',
+    })
+    public readonly merkmale?: RollenMerkmal[];
 }
