@@ -120,8 +120,21 @@ describe('ApplyRollenerweiterungForAngebotService', () => {
             permissions,
         );
         expect(result.ok).toBe(true);
-        expect(rollenerweiterungRepo.createAuthorized).toHaveBeenCalled();
-        expect(rollenerweiterungRepo.deleteByComposedId).toHaveBeenCalled();
+        expect(rollenerweiterungRepo.createAuthorized).toHaveBeenCalledWith(
+            expect.objectContaining({
+                rolleId: rolleIdAdd,
+                organisationId: orgaId,
+                serviceProviderId: angebotId,
+            }) as Rollenerweiterung<false>,
+            permissions,
+        );
+        expect(rollenerweiterungRepo.deleteByComposedId).toHaveBeenCalledWith(
+            expect.objectContaining({
+                rolleId: rolleIdRemove,
+                organisationId: orgaId,
+                serviceProviderId: angebotId,
+            }) as Rollenerweiterung<false>,
+        );
     });
 
     it('should return error if Permissions are missing', async () => {

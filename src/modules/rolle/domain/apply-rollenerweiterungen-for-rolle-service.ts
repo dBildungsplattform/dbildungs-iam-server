@@ -145,8 +145,10 @@ export class ApplyRollenerweiterungForRolleService {
             result: Result<Rollenerweiterung<true>, DomainError>;
         }>[] = addErweiterungenForServiceProviderIds
             .filter((serviceProviderId: string) => {
-                return existingErweiterungen.every(
-                    (re: Rollenerweiterung<true>) => re.serviceProviderId === serviceProviderId,
+                return (
+                    existingErweiterungen.findIndex(
+                        (re: Rollenerweiterung<true>) => re.serviceProviderId === serviceProviderId,
+                    ) === -1
                 );
             })
             .map((serviceProviderId: string) => {

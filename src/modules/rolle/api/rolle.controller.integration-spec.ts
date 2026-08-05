@@ -1660,7 +1660,7 @@ describe('Rolle API', () => {
             });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle/${rolle.id}/angeboteViaRollenerweiterungen`)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
                 .query({ organisationId: organisation.id })
                 .send();
 
@@ -1689,7 +1689,7 @@ describe('Rolle API', () => {
             });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle/${rolle.id}/angeboteViaRollenerweiterungen`)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
                 .query({ organisationId: organisation.id })
                 .send();
 
@@ -1728,7 +1728,7 @@ describe('Rolle API', () => {
             });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle/${rolle.id}/angeboteViaRollenerweiterungen`)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
                 .send();
 
             expect(response.status).toBe(200);
@@ -1747,7 +1747,7 @@ describe('Rolle API', () => {
             });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle/${faker.string.uuid()}/angeboteViaRollenerweiterungen`)
+                .get(`/rolle/${faker.string.uuid()}/angebote-via-rollenerweiterungen`)
                 .query({ organisationId: organisation.id })
                 .send();
 
@@ -1773,7 +1773,7 @@ describe('Rolle API', () => {
             });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle/${rolle.id}/angeboteViaRollenerweiterungen`)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
                 .query({ organisationId: organisation.id })
                 .send();
 
@@ -1812,7 +1812,7 @@ describe('Rolle API', () => {
             });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle/${rolle.id}/angeboteViaRollenerweiterungen`)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
                 .send();
 
             expect(response.status).toBe(200);

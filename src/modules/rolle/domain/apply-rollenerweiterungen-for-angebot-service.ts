@@ -170,7 +170,7 @@ export class ApplyRollenerweiterungForAngebotService {
             result: Result<Rollenerweiterung<true>, DomainError>;
         }>[] = addErweiterungenForRolleIds
             .filter((rolleId: string) => {
-                return existingErweiterungen.every((re: Rollenerweiterung<true>) => re.rolleId === rolleId);
+                return existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) === -1;
             })
             .map((rolleId: string) => {
                 const rolle: Option<Rolle<true>> = rollen.get(rolleId);
