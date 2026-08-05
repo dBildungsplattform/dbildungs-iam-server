@@ -8,7 +8,7 @@ import { RollenArt, RollenArtTypName, RollenMerkmal, RollenMerkmalTypName } from
 import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/systemrecht.js';
 import { IsSystemrechtForRollenAdministration } from './is-systemrecht-for-rollen-admin-validator.js';
 
-export class FindRolleQueryParams extends PagedQueryParams {
+export class FindRollenQueryParams extends PagedQueryParams {
     @IsOptional()
     @IsString()
     @ApiProperty({
