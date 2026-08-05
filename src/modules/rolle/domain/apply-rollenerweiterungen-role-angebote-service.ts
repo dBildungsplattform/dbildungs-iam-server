@@ -38,7 +38,7 @@ function isErrorResultForServiceProvider<T>(r: {
 }
 
 @Injectable()
-export class ApplyRollenerweiterungWithRoleForAngeboteService {
+export class ApplyRollenerweiterungWithRolleForAngeboteService {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly serviceProviderRepo: ServiceProviderRepo,
@@ -47,7 +47,7 @@ export class ApplyRollenerweiterungWithRoleForAngeboteService {
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
     ) {}
 
-    public async applyRollenerweiterungChangesWithRoleForAngebote(
+    public async applyRollenerweiterungChangesWithRolleForAngebote(
         orgaId: string,
         rolleId: string,
         body: ApplyRollenerweiterungChangesBodyParams,

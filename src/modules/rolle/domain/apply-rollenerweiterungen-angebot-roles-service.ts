@@ -36,7 +36,7 @@ function isErrorResultForRolle<T>(r: { result: Result<T, DomainError> }): r is T
 }
 
 @Injectable()
-export class ApplyRollenerweiterungWithAngebotForRolesService {
+export class ApplyRollenerweiterungWithAngebotForRollenService {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly serviceProviderRepo: ServiceProviderRepo,
@@ -45,7 +45,7 @@ export class ApplyRollenerweiterungWithAngebotForRolesService {
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
     ) {}
 
-    public async applyRollenerweiterungChangesWithAngebotForRoles(
+    public async applyRollenerweiterungChangesWithAngebotForRollen(
         orgaId: string,
         angebotId: string,
         body: ApplyRollenerweiterungBodyParams,
@@ -84,7 +84,6 @@ export class ApplyRollenerweiterungWithAngebotForRolesService {
             return Err(new MissingMerkmalVerfuegbarFuerRollenerweiterungError());
         }
 
-        await this.rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId(orgaId, angebotId);
         const existingErweiterungen: Rollenerweiterung<true>[] =
             await this.rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId(orgaId, angebotId);
         const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(
