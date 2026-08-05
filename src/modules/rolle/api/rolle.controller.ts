@@ -132,6 +132,7 @@ export class RolleController {
                 queryParams.organisationId ? [queryParams.organisationId] : undefined,
                 queryParams.rolleIds,
                 queryParams.merkmale,
+                queryParams.rollenarten
             );
         }
 

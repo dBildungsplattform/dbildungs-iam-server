@@ -269,7 +269,10 @@ export class RolleRepo {
         }
         if(params.merkmale) {
             queries.push({ merkmale: { merkmal: { $in: params.merkmale } } });
-        };
+        }
+        if(params.rollenArten) {
+            queries.push({ rollenart: { $in: params.rollenArten } });
+        }
 
         const baseQuery: FilterQuery<NoInfer<RolleEntity>> = { $and: queries };
 
@@ -303,6 +306,7 @@ export class RolleRepo {
         organisationIds?: OrganisationID[],
         rolleIds?: RolleID[],
         merkmale?: RollenMerkmal[],
+        rollenArten?: RollenArt[],
     ): Promise<[Rolle<true>[], number]> {
         // Fallback to ROLLEN_VERWALTEN if no systemrechte are provided (this is the default behavior expected from the frontend)
         const orgIdsWithRecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
@@ -328,6 +332,7 @@ export class RolleRepo {
             allowedOrganisationIds,
             rolleIds,
             merkmale,
+            rollenArten,
         });
     }
 

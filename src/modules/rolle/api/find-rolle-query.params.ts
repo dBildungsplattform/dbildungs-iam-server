@@ -68,7 +68,7 @@ export class FindRolleQueryParams extends PagedQueryParams {
         maxItems: Object.values(RollenArt).length,
         description: 'Filter roles by their role types.',
     })
-    public rollenarten?: RollenArt[];
+    public readonly rollenarten?: RollenArt[];
 
     @IsOptional()
     @IsEnum(RollenMerkmal, { each: true })
