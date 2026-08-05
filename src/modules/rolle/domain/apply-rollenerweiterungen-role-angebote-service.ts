@@ -17,7 +17,7 @@ import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from './missing-me
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { ApplyRollenerweiterungChangesBodyParams } from '../api/apply-rollenerweiterung-changes.body.params.js';
 import { ApplyRollenerweiterungServiceProvidersError } from '../api/apply-rollenerweiterung-service-providers.error.js';
-import { isMPTRolle } from './rolle.enums.js';
+import { RollenMerkmal } from './rolle.enums.js';
 
 type TunknownResultForServiceProvider = {
     serviceProviderId: string;
@@ -78,7 +78,7 @@ export class ApplyRollenerweiterungWithRoleForAngeboteService {
             return Err(new EntityNotFoundError('Rolle', rolleId));
         }
         if (
-            isMPTRolle(rolle) &&
+            rolle.merkmale.includes(RollenMerkmal.MPT_ROLLE) &&
             !(await permissions.hasSystemrechtAtOrganisation(orgaId, RollenSystemRecht.MPT_ROLLEN_VERWALTEN))
         ) {
             return Err(new MissingPermissionsError('Not authorized'));

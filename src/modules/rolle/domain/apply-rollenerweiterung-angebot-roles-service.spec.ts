@@ -22,6 +22,7 @@ import {
     LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
+import { RollenMerkmal } from './rolle.enums.js';
 
 type TresultType = Result<
     null,
@@ -350,5 +351,45 @@ describe('ApplyRollenerweiterungWithAngebotForRolesService', () => {
         }
         expect(err.errors[0]?.id).toBe(rolleIdRemove);
         expect(err.errors[0]?.error).toBeInstanceOf(EntityNotFoundError);
+    });
+
+    it('should return error if Rolle is MPT and user has no permission', async () => {
+        const rolleId: string = faker.string.uuid();
+
+        const orgaId: string = faker.string.uuid();
+        const angebotId: string = faker.string.uuid();
+
+        organisationRepo.findById.mockResolvedValue(DoFactory.createOrganisation(true, { id: orgaId }));
+        serviceProviderRepo.findById.mockResolvedValue(
+            DoFactory.createServiceProvider(true, {
+                id: angebotId,
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            }),
+        );
+
+        const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle, {
+            id: rolleId,
+            merkmale: [RollenMerkmal.MPT_ROLLE],
+        });
+        rolleRepo.findByIds.mockResolvedValue(new Map([[rolleId, rolle]]));
+
+        const body: ApplyRollenerweiterungBodyParams = {
+            addErweiterungenForRolleIds: [rolleId],
+            removeErweiterungenForRolleIds: [],
+        };
+        const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+        permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+        const result: TresultType = await service.applyRollenerweiterungChangesWithAngebotForRoles(
+            orgaId,
+            angebotId,
+            body,
+            permissions,
+        );
+        expect(result.ok).toBe(false);
+        if (result.ok) {
+            return;
+        }
+        expect(result.error).toBeInstanceOf(MissingPermissionsError);
     });
 });

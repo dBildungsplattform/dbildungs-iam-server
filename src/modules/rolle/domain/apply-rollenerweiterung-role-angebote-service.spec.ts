@@ -23,6 +23,7 @@ import { ApplyRollenerweiterungServiceProvidersError } from '../api/apply-rollen
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ApplyRollenerweiterungChangesBodyParams } from '../api/apply-rollenerweiterung-changes.body.params.js';
 import { ApplyRollenerweiterungWithRoleForAngeboteService } from './apply-rollenerweiterungen-role-angebote-service.js';
+import { RollenMerkmal } from './rolle.enums.js';
 
 describe('ApplyRollenerweiterungWithRoleForAngeboteService', () => {
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
@@ -348,6 +349,38 @@ describe('ApplyRollenerweiterungWithRoleForAngeboteService', () => {
 
             expect(err.errors[0]?.id).toBe(serviceProviderId);
             expect(err.errors[0]?.error).toBeInstanceOf(MissingMerkmalVerfuegbarFuerRollenerweiterungError);
+        });
+
+        it('should return error if mpt rolle and user has no permission', async () => {
+            const orgaId: string = faker.string.uuid();
+            const rolleId: string = faker.string.uuid();
+
+            organisationRepo.findById.mockResolvedValue(DoFactory.createOrganisation(true, { id: orgaId }));
+
+            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle, {
+                merkmale: [RollenMerkmal.MPT_ROLLE],
+            });
+            rolleRepo.findByIds.mockResolvedValue(new Map([[rolleId, rolle]]));
+
+            const body: ApplyRollenerweiterungChangesBodyParams = {
+                addErweiterungenForServiceProviderIds: [],
+                removeErweiterungenForServiceProviderIds: [],
+            };
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(false);
+
+            const result: TresultType = await service.applyRollenerweiterungChangesWithRoleForAngebote(
+                orgaId,
+                rolleId,
+                body,
+                permissions,
+            );
+
+            expect(result.ok).toBe(false);
+            if (result.ok) {
+                return;
+            }
+            expect(result.error).toBeInstanceOf(MissingPermissionsError);
         });
     });
 });

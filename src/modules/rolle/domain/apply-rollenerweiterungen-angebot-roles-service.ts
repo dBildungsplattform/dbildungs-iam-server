@@ -17,7 +17,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from './missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { isMPTRolle } from './rolle.enums.js';
+import { RollenMerkmal } from './rolle.enums.js';
 
 type TunknownResultForRolle = {
     rolleId: string;
@@ -150,7 +150,7 @@ export class ApplyRollenerweiterungWithAngebotForRolesService {
                         return Promise.resolve({ rolleId, result: Err(new EntityNotFoundError('Rolle', rolleId)) });
                     }
                     if (
-                        isMPTRolle(rolle) &&
+                        rolle.merkmale.includes(RollenMerkmal.MPT_ROLLE) &&
                         !(await permissions.hasSystemrechtAtOrganisation(
                             orgaId,
                             RollenSystemRecht.MPT_ROLLEN_VERWALTEN,
@@ -198,7 +198,7 @@ export class ApplyRollenerweiterungWithAngebotForRolesService {
                     return Promise.resolve({ rolleId, result: Err(new EntityNotFoundError('Rolle', rolleId)) });
                 }
                 if (
-                    isMPTRolle(rolle) &&
+                    rolle.merkmale.includes(RollenMerkmal.MPT_ROLLE) &&
                     !(await permissions.hasSystemrechtAtOrganisation(orgaId, RollenSystemRecht.MPT_ROLLEN_VERWALTEN))
                 ) {
                     return Promise.resolve({
