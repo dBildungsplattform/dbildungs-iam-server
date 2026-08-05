@@ -36,7 +36,7 @@ function isErrorResultForRolle<T>(r: { result: Result<T, DomainError> }): r is T
 }
 
 @Injectable()
-export class ApplyRollenerweiterungWithAngebotForRollenService {
+export class ApplyRollenerweiterungForAngebotService {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly serviceProviderRepo: ServiceProviderRepo,
@@ -45,7 +45,7 @@ export class ApplyRollenerweiterungWithAngebotForRollenService {
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
     ) {}
 
-    public async applyRollenerweiterungChangesWithAngebotForRollen(
+    public async applyRollenerweiterungChangesForAngebot(
         orgaId: string,
         angebotId: string,
         body: ApplyRollenerweiterungBodyParams,
@@ -133,9 +133,7 @@ export class ApplyRollenerweiterungWithAngebotForRollenService {
         const removeErweiterungenPromises: Promise<{ rolleId: string; result: Result<null, DomainError> }>[] =
             removeErweiterungenForRolleIds
                 .filter((rolleId: string) => {
-                    return (
-                        existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) !== -1
-                    );
+                    return existingErweiterungen.some((re: Rollenerweiterung<true>) => re.rolleId === rolleId);
                 })
                 .map((rolleId: string) => {
                     const rolle: Option<Rolle<true>> = rollen.get(rolleId);
@@ -172,7 +170,7 @@ export class ApplyRollenerweiterungWithAngebotForRollenService {
             result: Result<Rollenerweiterung<true>, DomainError>;
         }>[] = addErweiterungenForRolleIds
             .filter((rolleId: string) => {
-                return existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) === -1;
+                return existingErweiterungen.every((re: Rollenerweiterung<true>) => re.rolleId === rolleId);
             })
             .map((rolleId: string) => {
                 const rolle: Option<Rolle<true>> = rollen.get(rolleId);

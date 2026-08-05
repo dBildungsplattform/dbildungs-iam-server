@@ -22,14 +22,14 @@ import { ServiceProviderMerkmal } from '../../service-provider/domain/service-pr
 import { ApplyRollenerweiterungServiceProvidersError } from '../api/apply-rollenerweiterung-service-providers.error.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ApplyRollenerweiterungChangesBodyParams } from '../api/apply-rollenerweiterung-changes.body.params.js';
-import { ApplyRollenerweiterungWithRolleForAngeboteService } from './apply-rollenerweiterungen-role-angebote-service.js';
+import { ApplyRollenerweiterungForRolleService } from './apply-rollenerweiterungen-for-rolle-service.js';
 
-describe('ApplyRollenerweiterungWithRoleForAngeboteService', () => {
+describe('ApplyRollenerweiterungForRolleService', () => {
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
     let rolleRepo: DeepMocked<RolleRepo>;
     let rollenerweiterungRepo: DeepMocked<RollenerweiterungRepo>;
-    let service: ApplyRollenerweiterungWithRolleForAngeboteService;
+    let service: ApplyRollenerweiterungForRolleService;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -51,7 +51,7 @@ describe('ApplyRollenerweiterungWithRoleForAngeboteService', () => {
                     provide: RolleRepo,
                     useValue: createMock(RolleRepo),
                 },
-                ApplyRollenerweiterungWithRolleForAngeboteService,
+                ApplyRollenerweiterungForRolleService,
             ],
         }).compile();
 
@@ -59,7 +59,7 @@ describe('ApplyRollenerweiterungWithRoleForAngeboteService', () => {
         organisationRepo = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
         rollenerweiterungRepo = module.get(RollenerweiterungRepo);
-        service = module.get(ApplyRollenerweiterungWithRolleForAngeboteService);
+        service = module.get(ApplyRollenerweiterungForRolleService);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
@@ -119,7 +119,7 @@ describe('ApplyRollenerweiterungWithRoleForAngeboteService', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
-            const result: TresultType = await service.applyRollenerweiterungChangesWithRolleForAngebote(
+            const result: TresultType = await service.applyRollenerweiterungChangesForRolle(
                 orgaId,
                 rolleId,
                 body,
@@ -155,7 +155,7 @@ describe('ApplyRollenerweiterungWithRoleForAngeboteService', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(false);
 
-            const result: TresultType = await service.applyRollenerweiterungChangesWithRolleForAngebote(
+            const result: TresultType = await service.applyRollenerweiterungChangesForRolle(
                 orgaId,
                 rolleId,
                 body,
@@ -182,7 +182,7 @@ describe('ApplyRollenerweiterungWithRoleForAngeboteService', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
-            const result: TresultType = await service.applyRollenerweiterungChangesWithRolleForAngebote(
+            const result: TresultType = await service.applyRollenerweiterungChangesForRolle(
                 orgaId,
                 rolleId,
                 body,
@@ -210,7 +210,7 @@ describe('ApplyRollenerweiterungWithRoleForAngeboteService', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
-            const result: TresultType = await service.applyRollenerweiterungChangesWithRolleForAngebote(
+            const result: TresultType = await service.applyRollenerweiterungChangesForRolle(
                 orgaId,
                 rolleId,
                 body,
@@ -244,7 +244,7 @@ describe('ApplyRollenerweiterungWithRoleForAngeboteService', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
-            const result: TresultType = await service.applyRollenerweiterungChangesWithRolleForAngebote(
+            const result: TresultType = await service.applyRollenerweiterungChangesForRolle(
                 orgaId,
                 rolleId,
                 body,
@@ -291,7 +291,7 @@ describe('ApplyRollenerweiterungWithRoleForAngeboteService', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
-            const result: TresultType = await service.applyRollenerweiterungChangesWithRolleForAngebote(
+            const result: TresultType = await service.applyRollenerweiterungChangesForRolle(
                 orgaId,
                 rolleId,
                 body,
@@ -340,7 +340,7 @@ describe('ApplyRollenerweiterungWithRoleForAngeboteService', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
-            const result: TresultType = await service.applyRollenerweiterungChangesWithRolleForAngebote(
+            const result: TresultType = await service.applyRollenerweiterungChangesForRolle(
                 orgaId,
                 rolleId,
                 body,

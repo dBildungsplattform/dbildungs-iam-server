@@ -38,7 +38,7 @@ function isErrorResultForServiceProvider<T>(r: {
 }
 
 @Injectable()
-export class ApplyRollenerweiterungWithRolleForAngeboteService {
+export class ApplyRollenerweiterungForRolleService {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly serviceProviderRepo: ServiceProviderRepo,
@@ -47,7 +47,7 @@ export class ApplyRollenerweiterungWithRolleForAngeboteService {
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
     ) {}
 
-    public async applyRollenerweiterungChangesWithRolleForAngebote(
+    public async applyRollenerweiterungChangesForRolle(
         orgaId: string,
         rolleId: string,
         body: ApplyRollenerweiterungChangesBodyParams,
@@ -145,10 +145,8 @@ export class ApplyRollenerweiterungWithRolleForAngeboteService {
             result: Result<Rollenerweiterung<true>, DomainError>;
         }>[] = addErweiterungenForServiceProviderIds
             .filter((serviceProviderId: string) => {
-                return (
-                    existingErweiterungen.findIndex(
-                        (re: Rollenerweiterung<true>) => re.serviceProviderId === serviceProviderId,
-                    ) === -1
+                return existingErweiterungen.every(
+                    (re: Rollenerweiterung<true>) => re.serviceProviderId === serviceProviderId,
                 );
             })
             .map((serviceProviderId: string) => {
@@ -205,10 +203,8 @@ export class ApplyRollenerweiterungWithRolleForAngeboteService {
             result: Result<null, DomainError>;
         }>[] = removeErweiterungenForServiceProviderIds
             .filter((serviceProviderId: string) => {
-                return (
-                    existingErweiterungen.findIndex(
-                        (re: Rollenerweiterung<true>) => re.serviceProviderId === serviceProviderId,
-                    ) !== -1
+                return existingErweiterungen.some(
+                    (re: Rollenerweiterung<true>) => re.serviceProviderId === serviceProviderId,
                 );
             })
             .map((serviceProviderId: string) => {

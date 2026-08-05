@@ -11,14 +11,14 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
-import { ApplyRollenerweiterungWithAngebotForRollenService } from '../domain/apply-rollenerweiterungen-angebot-roles-service.js';
+import { ApplyRollenerweiterungForAngebotService } from '../domain/apply-rollenerweiterungen-for-angebot-service.js';
 import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
 import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
 
 describe('RollenerweiterungController', () => {
     let controller: RollenerweiterungController;
-    let applyRollenerweiterungServiceMock: DeepMocked<ApplyRollenerweiterungWithAngebotForRollenService>;
+    let applyRollenerweiterungServiceMock: DeepMocked<ApplyRollenerweiterungForAngebotService>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -33,9 +33,9 @@ describe('RollenerweiterungController', () => {
                     useValue: createMock<ClassLogger>(ClassLogger),
                 },
                 {
-                    provide: ApplyRollenerweiterungWithAngebotForRollenService,
-                    useValue: createMock<ApplyRollenerweiterungWithAngebotForRollenService>(
-                        ApplyRollenerweiterungWithAngebotForRollenService,
+                    provide: ApplyRollenerweiterungForAngebotService,
+                    useValue: createMock<ApplyRollenerweiterungForAngebotService>(
+                        ApplyRollenerweiterungForAngebotService,
                     ),
                 },
                 RollenerweiterungController,
@@ -43,7 +43,7 @@ describe('RollenerweiterungController', () => {
         }).compile();
 
         controller = module.get(RollenerweiterungController);
-        applyRollenerweiterungServiceMock = module.get(ApplyRollenerweiterungWithAngebotForRollenService);
+        applyRollenerweiterungServiceMock = module.get(ApplyRollenerweiterungForAngebotService);
     });
 
     beforeEach(() => {
@@ -63,7 +63,7 @@ describe('RollenerweiterungController', () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
-            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesWithAngebotForRollen.mockResolvedValueOnce({
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesForAngebot.mockResolvedValueOnce({
                 ok: true,
                 value: null,
             });
@@ -100,7 +100,7 @@ describe('RollenerweiterungController', () => {
                 'error',
             );
 
-            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesWithAngebotForRollen.mockResolvedValueOnce({
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesForAngebot.mockResolvedValueOnce({
                 ok: false,
                 error: new ApplyRollenerweiterungRolesError([
                     { rolleId: 'rollenId2', error: errorRollenId2 as unknown as DomainError },
@@ -129,7 +129,7 @@ describe('RollenerweiterungController', () => {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesWithAngebotForRollen.mockResolvedValueOnce({
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesForAngebot.mockResolvedValueOnce({
                 ok: false,
                 error: new ApplyRollenerweiterungRolesError([]),
             });
@@ -149,7 +149,7 @@ describe('RollenerweiterungController', () => {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesWithAngebotForRollen.mockResolvedValueOnce({
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesForAngebot.mockResolvedValueOnce({
                 ok: false,
                 error: new EntityNotFoundError(),
             });
@@ -169,7 +169,7 @@ describe('RollenerweiterungController', () => {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesWithAngebotForRollen.mockResolvedValueOnce({
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesForAngebot.mockResolvedValueOnce({
                 ok: false,
                 error: new MissingPermissionsError(''),
             });
@@ -189,7 +189,7 @@ describe('RollenerweiterungController', () => {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesWithAngebotForRollen.mockResolvedValueOnce({
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesForAngebot.mockResolvedValueOnce({
                 ok: false,
                 error: new MissingMerkmalVerfuegbarFuerRollenerweiterungError(),
             });
@@ -209,7 +209,7 @@ describe('RollenerweiterungController', () => {
                 addErweiterungenForRolleIds: [],
                 removeErweiterungenForRolleIds: [],
             };
-            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesWithAngebotForRollen.mockResolvedValueOnce({
+            applyRollenerweiterungServiceMock.applyRollenerweiterungChangesForAngebot.mockResolvedValueOnce({
                 ok: false,
                 error: new Error() as unknown as MissingMerkmalVerfuegbarFuerRollenerweiterungError,
             });
