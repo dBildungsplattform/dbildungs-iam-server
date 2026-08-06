@@ -37,7 +37,7 @@ function isErrorResultForRolle<T>(r: { result: Result<T, DomainError> }): r is T
 }
 
 @Injectable()
-export class ApplyRollenerweiterungWithAngebotForRolesService {
+export class ApplyRollenerweiterungForAngebotService {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly serviceProviderRepo: ServiceProviderRepo,
@@ -46,7 +46,7 @@ export class ApplyRollenerweiterungWithAngebotForRolesService {
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
     ) {}
 
-    public async applyRollenerweiterungChangesWithAngebotForRoles(
+    public async applyRollenerweiterungChangesForAngebot(
         orgaId: string,
         angebotId: string,
         body: ApplyRollenerweiterungBodyParams,
@@ -85,7 +85,6 @@ export class ApplyRollenerweiterungWithAngebotForRolesService {
             return Err(new MissingMerkmalVerfuegbarFuerRollenerweiterungError());
         }
 
-        await this.rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId(orgaId, angebotId);
         const existingErweiterungen: Rollenerweiterung<true>[] =
             await this.rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId(orgaId, angebotId);
         const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(
@@ -137,9 +136,7 @@ export class ApplyRollenerweiterungWithAngebotForRolesService {
         const removeErweiterungenPromises: Promise<{ rolleId: string; result: Result<null, DomainError> }>[] =
             removeErweiterungenForRolleIds
                 .filter((rolleId: string) => {
-                    return (
-                        existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) !== -1
-                    );
+                    return existingErweiterungen.some((re: Rollenerweiterung<true>) => re.rolleId === rolleId);
                 })
                 .map(async (rolleId: string) => {
                     const rolle: Option<Rolle<true>> = rollen.get(rolleId);

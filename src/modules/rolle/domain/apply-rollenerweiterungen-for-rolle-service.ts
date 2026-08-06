@@ -39,7 +39,7 @@ function isErrorResultForServiceProvider<T>(r: {
 }
 
 @Injectable()
-export class ApplyRollenerweiterungWithRoleForAngeboteService {
+export class ApplyRollenerweiterungForRolleService {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly serviceProviderRepo: ServiceProviderRepo,
@@ -48,7 +48,7 @@ export class ApplyRollenerweiterungWithRoleForAngeboteService {
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
     ) {}
 
-    public async applyRollenerweiterungChangesWithRoleForAngebote(
+    public async applyRollenerweiterungChangesForRolle(
         orgaId: string,
         rolleId: string,
         body: ApplyRollenerweiterungChangesBodyParams,
@@ -212,10 +212,8 @@ export class ApplyRollenerweiterungWithRoleForAngeboteService {
             result: Result<null, DomainError>;
         }>[] = removeErweiterungenForServiceProviderIds
             .filter((serviceProviderId: string) => {
-                return (
-                    existingErweiterungen.findIndex(
-                        (re: Rollenerweiterung<true>) => re.serviceProviderId === serviceProviderId,
-                    ) !== -1
+                return existingErweiterungen.some(
+                    (re: Rollenerweiterung<true>) => re.serviceProviderId === serviceProviderId,
                 );
             })
             .map((serviceProviderId: string) => {

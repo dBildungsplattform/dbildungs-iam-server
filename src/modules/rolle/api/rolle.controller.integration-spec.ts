@@ -1614,7 +1614,7 @@ describe('Rolle API', () => {
         });
     });
 
-    describe('GET :rolleId/rollenerweiterungen', () => {
+    describe('GET :rolleId/angeboteViaRollenerweiterungen', () => {
         it('should return all rollenerweiterungen for a rolle', async () => {
             const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
@@ -1631,6 +1631,7 @@ describe('Rolle API', () => {
 
             const serviceProvider1: ServiceProvider<true> = await createAndPersistServiceProvider(em);
             const serviceProvider2: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+            const serviceProvider3: ServiceProvider<true> = await createAndPersistServiceProvider(em);
 
             await rollenerweiterungRepo.create(
                 DoFactory.createRollenerweiterung(false, {
@@ -1646,19 +1647,26 @@ describe('Rolle API', () => {
                     serviceProviderId: serviceProvider2.id,
                 }),
             );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                    serviceProviderId: serviceProvider3.id,
+                }),
+            );
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: true,
             });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle/${rolle.id}/rollenerweiterungen`)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
                 .query({ organisationId: organisation.id })
                 .send();
 
             expect(response.status).toBe(200);
             const serviceProviderResponse: ServiceProviderResponse[] = response.body as ServiceProviderResponse[];
-            expect(serviceProviderResponse).toHaveLength(2);
+            expect(serviceProviderResponse).toHaveLength(3);
         });
 
         it('should return empty array if rolle has no rollenerweiterungen', async () => {
@@ -1681,7 +1689,7 @@ describe('Rolle API', () => {
             });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle/${rolle.id}/rollenerweiterungen`)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
                 .query({ organisationId: organisation.id })
                 .send();
 
@@ -1720,7 +1728,7 @@ describe('Rolle API', () => {
             });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle/${rolle.id}/rollenerweiterungen`)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
                 .send();
 
             expect(response.status).toBe(200);
@@ -1739,7 +1747,7 @@ describe('Rolle API', () => {
             });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle/${faker.string.uuid()}/rollenerweiterungen`)
+                .get(`/rolle/${faker.string.uuid()}/angebote-via-rollenerweiterungen`)
                 .query({ organisationId: organisation.id })
                 .send();
 
@@ -1765,7 +1773,7 @@ describe('Rolle API', () => {
             });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle/${rolle.id}/rollenerweiterungen`)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
                 .query({ organisationId: organisation.id })
                 .send();
 
@@ -1804,7 +1812,7 @@ describe('Rolle API', () => {
             });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle/${rolle.id}/rollenerweiterungen`)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
                 .send();
 
             expect(response.status).toBe(200);

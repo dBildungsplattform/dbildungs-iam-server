@@ -12,7 +12,7 @@ import { uniq } from 'lodash-es';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { ApplyRollenerweiterungWithAngebotForRolesService } from '../domain/apply-rollenerweiterungen-angebot-roles-service.js';
+import { ApplyRollenerweiterungForAngebotService } from '../domain/apply-rollenerweiterungen-for-angebot-service.js';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
 import { ApplyRollenerweiterungForSPPathParams } from './apply-rollenerweiterung-for-sp-changes.path.params.js';
 import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
@@ -30,7 +30,7 @@ import { IPersonPermissions } from '../../../shared/permissions/person-permissio
 export class RollenerweiterungController {
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly applyRollenerweiterungService: ApplyRollenerweiterungWithAngebotForRolesService,
+        private readonly applyRollenerweiterungService: ApplyRollenerweiterungForAngebotService,
     ) {}
 
     @Post('/angebot/:angebotId/organisation/:organisationId/apply')
@@ -65,7 +65,7 @@ export class RollenerweiterungController {
             | EntityNotFoundError
             | MissingPermissionsError
             | MissingMerkmalVerfuegbarFuerRollenerweiterungError
-        > = await this.applyRollenerweiterungService.applyRollenerweiterungChangesWithAngebotForRoles(
+        > = await this.applyRollenerweiterungService.applyRollenerweiterungChangesForAngebot(
             orgaId,
             angebotId,
             body,

@@ -67,7 +67,7 @@ import { ApplyRollenerweiterungChangesBodyParams } from './apply-rollenerweiteru
 import { ApplyRollenerweiterungServiceProvidersError } from './apply-rollenerweiterung-service-providers.error.js';
 import { ApplyRollenerweiterungForRollePathParams } from './apply-rollenerweiterung-for-rolle-changes.path.params.js';
 import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
-import { ApplyRollenerweiterungWithRoleForAngeboteService } from '../domain/apply-rollenerweiterungen-role-angebote-service.js';
+import { ApplyRollenerweiterungForRolleService } from '../domain/apply-rollenerweiterungen-for-rolle-service.js';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -85,7 +85,7 @@ export class RolleController {
         private readonly logger: ClassLogger,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly rollenerweiterungFactory: RollenerweiterungFactory,
-        private readonly applyRollenerweiterungService: ApplyRollenerweiterungWithRoleForAngeboteService,
+        private readonly applyRollenerweiterungService: ApplyRollenerweiterungForRolleService,
     ) {}
 
     @Get()
@@ -434,7 +434,7 @@ export class RolleController {
         return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
     }
 
-    @Get(':rolleId/rollenerweiterungen')
+    @Get(':rolleId/angebote-via-rollenerweiterungen')
     @ApiOperation({ description: 'Get Erweiterte Angebote for a rolle.' })
     @ApiOkResponse({
         description: 'The Erweiterten Angebote were successfully returned.',
@@ -504,7 +504,7 @@ export class RolleController {
         const result: Result<
             null,
             ApplyRollenerweiterungServiceProvidersError | EntityNotFoundError | MissingPermissionsError
-        > = await this.applyRollenerweiterungService.applyRollenerweiterungChangesWithRoleForAngebote(
+        > = await this.applyRollenerweiterungService.applyRollenerweiterungChangesForRolle(
             params.organisationId,
             params.rolleId,
             body,
