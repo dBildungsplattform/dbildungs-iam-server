@@ -61,6 +61,8 @@ import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
+import { uniq } from 'lodash-es';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -78,7 +80,7 @@ export class RolleController {
         private readonly logger: ClassLogger,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly rollenerweiterungFactory: RollenerweiterungFactory,
-    ) {}
+    ) { }
 
     @Get()
     @ApiOperation({ description: 'List all rollen.' })
@@ -165,12 +167,11 @@ export class RolleController {
         const administeredOrganisations: Map<string, Organisation<true>> = await this.organisationRepository.findByIds(
             administeredBySchulstrukturknotenIds,
         );
-        // TODO: use constrained function
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
+        const serviceProviders: Map<ServiceProviderID, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(uniq(rollen.flatMap((r: Rolle<true>) => r.serviceProviderIds)));
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
                 const sps: ServiceProvider<true>[] = r.serviceProviderIds
-                    .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
+                    .map((id: string) => serviceProviders.get(id))
                     .filter(Boolean);
 
                 const administeredBySchulstrukturknoten: Organisation<true> | undefined = administeredOrganisations.get(
@@ -418,13 +419,7 @@ export class RolleController {
     private async returnRolleWithServiceProvidersResponse(
         rolle: Rolle<true>,
     ): Promise<RolleWithServiceProvidersResponse> {
-        // TODO: use constraned function
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
-
-        const rolleServiceProviders: ServiceProvider<true>[] = rolle.serviceProviderIds
-            .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
-            .filter(Boolean);
-
-        return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
+        const serviceProviders: Map<ServiceProviderID, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(rolle.serviceProviderIds);
+        return new RolleWithServiceProvidersResponse(rolle, Array.from(serviceProviders.values()));
     }
 }
