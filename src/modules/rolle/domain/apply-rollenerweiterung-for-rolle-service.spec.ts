@@ -84,7 +84,10 @@ describe('ApplyRollenerweiterungForRolleService', () => {
 
             organisationRepo.findById.mockResolvedValue(DoFactory.createOrganisation(true, { id: orgaId }));
 
-            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle);
+            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle, {
+                id: rolleId,
+                merkmale: [],
+            });
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolleId, rolle]]));
 
             const existingErw: Rollenerweiterung<true> = createMock<Rollenerweiterung<true>>(Rollenerweiterung, {
@@ -232,7 +235,10 @@ describe('ApplyRollenerweiterungForRolleService', () => {
 
             organisationRepo.findById.mockResolvedValue(DoFactory.createOrganisation(true, { id: orgaId }));
 
-            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle);
+            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle, {
+                id: rolleId,
+                merkmale: [],
+            });
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolleId, rolle]]));
 
             rollenerweiterungRepo.findManyByOrganisationAndRolle.mockResolvedValue([]);
@@ -275,7 +281,10 @@ describe('ApplyRollenerweiterungForRolleService', () => {
 
             organisationRepo.findById.mockResolvedValue(DoFactory.createOrganisation(true, { id: orgaId }));
 
-            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle);
+            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle, {
+                id: rolleId,
+                merkmale: [],
+            });
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolleId, rolle]]));
 
             const existingErw: Rollenerweiterung<true> = createMock<Rollenerweiterung<true>>(Rollenerweiterung, {
@@ -322,7 +331,10 @@ describe('ApplyRollenerweiterungForRolleService', () => {
 
             organisationRepo.findById.mockResolvedValue(DoFactory.createOrganisation(true, { id: orgaId }));
 
-            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle);
+            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle, {
+                id: rolleId,
+                merkmale: [],
+            });
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolleId, rolle]]));
 
             rollenerweiterungRepo.findManyByOrganisationAndRolle.mockResolvedValue([]);

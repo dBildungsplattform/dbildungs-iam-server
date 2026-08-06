@@ -93,8 +93,14 @@ describe('ApplyRollenerweiterungForAngebotService', () => {
         });
         rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId.mockResolvedValue([existingErw]);
 
-        const rolleAdd: Rolle<true> = createMock<Rolle<true>>(Rolle);
-        const rolleRemove: Rolle<true> = createMock<Rolle<true>>(Rolle);
+        const rolleAdd: Rolle<true> = createMock<Rolle<true>>(Rolle, {
+            id: rolleIdAdd,
+            merkmale: [],
+        });
+        const rolleRemove: Rolle<true> = createMock<Rolle<true>>(Rolle, {
+            id: rolleIdRemove,
+            merkmale: [],
+        });
         rolleRepo.findByIds.mockResolvedValue(
             new Map([
                 [rolleIdAdd, rolleAdd],
