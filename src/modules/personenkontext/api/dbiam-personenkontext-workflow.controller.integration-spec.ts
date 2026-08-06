@@ -300,7 +300,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     );
                 });
 
-                it(`should rollen matching the selected organisation and LIMITED_ROLLENART_ALLOWLIST, if user has ${RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN.name}`, async () => {
+                it(`should return rollen matching the selected organisation and LIMITED_ROLLENART_ALLOWLIST, if user has ${RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN.name}`, async () => {
                     const traeger: Organisation<true> = await organisationRepo.save(
                         DoFactory.createOrganisation(false, { typ: OrganisationsTyp.TRAEGER }),
                     );
@@ -415,6 +415,61 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         ),
                     );
                 });
+
+                it(`should not allow commit, if rollenart of selected rolle is not allowed via LIMITED_ROLLENART_ALLOWLIST or is MPT for users with ${RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN.name}`, async () => {
+                    const traeger: Organisation<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.TRAEGER }),
+                    );
+                    const schule: Organisation<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(false, {
+                            typ: OrganisationsTyp.SCHULE,
+                            administriertVon: traeger.id,
+                        }),
+                    );
+                    const mptRolle: Rolle<true> = await rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            name: 'Rolle A',
+                            administeredBySchulstrukturknoten: traeger.id,
+                            rollenart: RollenArt.LEIT,
+                            merkmale: [RollenMerkmal.MPT_ROLLE]
+                        }),
+                    );
+                    const mismatchedRolle: Rolle<true> = await rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            name: 'Rolle B',
+                            administeredBySchulstrukturknoten: traeger.id,
+                            rollenart: RollenArt.LEIT,
+                        }),
+                    );
+                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                        all: false,
+                        orgaIds: [schule.id],
+                    });
+                    personPermissionsMock.hasSystemrechtAtOrganisation.mockImplementation(
+                        (orgaId: OrganisationID, systemrecht: RollenSystemRecht) => {
+                            if (orgaId === schule.id) {
+                                if (systemrecht === RollenSystemRecht.PERSONEN_ANLEGEN) {
+                                    return Promise.resolve(false);
+                                }
+                                return Promise.resolve(true);
+                            }
+                            return Promise.resolve(false);
+                        },
+                    );
+
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .get(`/personenkontext-workflow/step`)
+                        .query({
+                            operationContext: OperationContext.PERSON_ANLEGEN,
+                            organisationId: schule.id,
+                            rollenIds: [mptRolle.id, mismatchedRolle.id]
+                        } as FindDbiamPersonenkontextWorkflowBodyParams)
+                        .send();
+                    expect(response.status).toBe(200);
+                    expect(response.body).toEqual(expect.objectContaining({
+                        canCommit: false
+                    }));
+                });
             });
 
             describe(`when user does NOT have ${RollenSystemRecht.MPT_ROLLEN_VERWALTEN.name}`, () => {
@@ -524,13 +579,65 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         ),
                     );
                 });
+
+                it('should not allow commit, if selected rollen are MPT', async () => {
+                    const traeger: Organisation<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.TRAEGER }),
+                    );
+                    const schule: Organisation<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(false, {
+                            typ: OrganisationsTyp.SCHULE,
+                            administriertVon: traeger.id,
+                        }),
+                    );
+                    const mptRolle: Rolle<true> = await rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            name: 'Rolle A',
+                            administeredBySchulstrukturknoten: traeger.id,
+                            rollenart: RollenArt.LEIT,
+                            merkmale: [RollenMerkmal.MPT_ROLLE]
+                        }),
+                    );
+                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                        all: false,
+                        orgaIds: [schule.id],
+                    });
+                    personPermissionsMock.hasSystemrechtAtOrganisation.mockImplementation(
+                        (orgaId: OrganisationID, systemrecht: RollenSystemRecht) => {
+                            if (orgaId === schule.id) {
+                                if (systemrecht === RollenSystemRecht.MPT_ROLLEN_VERWALTEN) {
+                                    return Promise.resolve(false);
+                                }
+                                return Promise.resolve(true);
+                            }
+                            return Promise.resolve(false);
+                        },
+                    );
+
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .get(`/personenkontext-workflow/step`)
+                        .query({
+                            operationContext: OperationContext.PERSON_ANLEGEN,
+                            organisationId: schule.id,
+                            rollenIds: [mptRolle.id]
+                        } as FindDbiamPersonenkontextWorkflowBodyParams)
+                        .send();
+                    expect(response.status).toBe(200);
+                    expect(response.body).toEqual(expect.objectContaining({
+                        canCommit: false
+                    }));
+                });
+
+
             });
+
         });
 
         describe(`when context is ${OperationContext.PERSON_BEARBEITEN}`, () => {
             let organisation: Organisation<true>;
             let rolle: Rolle<true>;
             let existingPerson: Person<true>;
+            let personenkontext: Personenkontext<true>;
 
             beforeEach(async () => {
                 organisation = await organisationRepo.save(
@@ -543,7 +650,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     }),
                 );
                 existingPerson = await createPerson();
-                await personenkontextRepoInternal.create(
+                personenkontext = await personenkontextRepoInternal.create(
                     DoFactory.createPersonenkontext(false, {
                         organisationId: organisation.id,
                         rolleId: rolle.id,
@@ -644,6 +751,81 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 );
             });
 
+            it('should return organisation and rollen for a user without personenkontexte', async () => {
+                await personenkontextRepoInternal.delete(personenkontext);
+                // ordered list of rollen we expect
+                const expectedRollen: Array<Rolle<true>> = await Promise.all([
+                    rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            name: 'Rolle A',
+                            administeredBySchulstrukturknoten: organisation.id,
+                            rollenart: rolle.rollenart,
+                            merkmale: [RollenMerkmal.MPT_ROLLE],
+                        }),
+                    ),
+                    rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            name: 'Rolle B',
+                            administeredBySchulstrukturknoten: organisation.id,
+                            rollenart: rolle.rollenart,
+                        }),
+                    ),
+                ]);
+                expectedRollen.unshift(rolle);
+                const unexpectedRollen: Array<Rolle<true>> = await Promise.all([
+                    rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            rollenart: RollenArt.SYSADMIN,
+                            merkmale: [RollenMerkmal.MPT_ROLLE],
+                        }),
+                    ),
+                    rolleRepo.create(
+                        DoFactory.createRolle(false, {
+                            rollenart: RollenArt.ORGADMIN,
+                            merkmale: [RollenMerkmal.MPT_ROLLE],
+                        }),
+                    ),
+                ]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [organisation.id],
+                });
+                personPermissionsMock.hasSystemrechtAtOrganisation.mockImplementation(
+                    (orgaId: OrganisationID, _systemrecht: RollenSystemRecht) => {
+                        if (orgaId === organisation.id) {
+                            return Promise.resolve(true);
+                        }
+                        return Promise.resolve(false);
+                    },
+                );
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(`/personenkontext-workflow/step`)
+                    .query({
+                        operationContext: OperationContext.PERSON_BEARBEITEN,
+                        organisationId: organisation.id,
+                        rollenIds: [rolle.id],
+                        personId: existingPerson.id,
+                    } as FindDbiamPersonenkontextWorkflowBodyParams)
+                    .send();
+                expect(response.status).toBe(200);
+                const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
+
+                expect(body.organisations).toEqual([
+                    expect.objectContaining({ id: organisation.id }) as OrganisationResponse,
+                ]);
+                expect(body.rollen).toEqual(
+                    expectedRollen.map((r: Rolle<true>) => expect.objectContaining({ id: r.id }) as RolleResponse),
+                );
+                expect(body.rollen).not.toEqual(
+                    expect.arrayContaining(
+                        unexpectedRollen.map(
+                            (r: Rolle<true>) => expect.objectContaining({ id: r.id }) as RolleResponse,
+                        ),
+                    ),
+                );
+            });
+
             it('should return canCommit=true for a valid combination', async () => {
                 const newRolle: Rolle<true> = await rolleRepo.create(
                     DoFactory.createRolle(false, {
@@ -669,6 +851,33 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 expect(response.status).toBe(200);
                 const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
                 expect(body.canCommit).toBe(true);
+            });
+
+            it('should return canCommit=false for an invalid combination', async () => {
+                const newRolle: Rolle<true> = await rolleRepo.create(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisation.id,
+                        rollenart: RollenArt.SYSADMIN,
+                    }),
+                );
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [organisation.id],
+                });
+                personPermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(`/personenkontext-workflow/step`)
+                    .query({
+                        operationContext: OperationContext.PERSON_BEARBEITEN,
+                        organisationId: organisation.id,
+                        rollenIds: [rolle.id, newRolle.id],
+                        personId: existingPerson.id,
+                    } as FindDbiamPersonenkontextWorkflowBodyParams)
+                    .send();
+                expect(response.status).toBe(200);
+                const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
+                expect(body.canCommit).toBe(false);
             });
         });
     });
