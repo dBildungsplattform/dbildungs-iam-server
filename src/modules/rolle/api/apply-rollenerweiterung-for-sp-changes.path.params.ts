@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
-export class ApplyRollenerweiterungPathParams {
+export class ApplyRollenerweiterungForSPPathParams {
     @IsString()
     @IsUUID()
     @IsNotEmpty()

@@ -1,7 +1,7 @@
 import { ArgumentsHost } from '@nestjs/common';
 import { Response } from 'express';
 import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
-import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
+import { ApplyRollenerweiterungError } from './apply-rollenerweiterung.error.js';
 import {
     DbiamApplyRollenerweiterungMultiError,
     DbiamApplyRollenerweiterungMultiErrorI18NTypes,
@@ -26,8 +26,8 @@ describe('ApplyRollenerweiterungMultiExceptionFilter', () => {
     describe('catch', () => {
         it('should map EntityNotFoundError to NOT_FOUND i18nKey', () => {
             const rolleId: string = faker.string.uuid();
-            const error: ApplyRollenerweiterungRolesError = new ApplyRollenerweiterungRolesError([
-                { rolleId: rolleId, error: new EntityNotFoundError('rolle') },
+            const error: ApplyRollenerweiterungError = new ApplyRollenerweiterungError([
+                { id: rolleId, error: new EntityNotFoundError('rolle') },
             ]);
             const expected: DbiamApplyRollenerweiterungMultiError = new DbiamApplyRollenerweiterungMultiError({
                 code: 400,
@@ -44,8 +44,8 @@ describe('ApplyRollenerweiterungMultiExceptionFilter', () => {
 
         it('should map NoRedundantRollenerweiterungError to NO_REDUNDANT_ROLLENERWEITERUNG i18nKey', () => {
             const rolleId: string = faker.string.uuid();
-            const error: ApplyRollenerweiterungRolesError = new ApplyRollenerweiterungRolesError([
-                { rolleId: rolleId, error: new NoRedundantRollenerweiterungError() },
+            const error: ApplyRollenerweiterungError = new ApplyRollenerweiterungError([
+                { id: rolleId, error: new NoRedundantRollenerweiterungError() },
             ]);
             const expected: DbiamApplyRollenerweiterungMultiError = new DbiamApplyRollenerweiterungMultiError({
                 code: 400,
@@ -65,8 +65,8 @@ describe('ApplyRollenerweiterungMultiExceptionFilter', () => {
 
         it('should map unknown error to ROLLENERWEITERUNG_TECHNICAL_ERROR i18nKey', () => {
             const rolleId: string = faker.string.uuid();
-            const error: ApplyRollenerweiterungRolesError = new ApplyRollenerweiterungRolesError([
-                { rolleId: rolleId, error: new Error() as unknown as NoRedundantRollenerweiterungError },
+            const error: ApplyRollenerweiterungError = new ApplyRollenerweiterungError([
+                { id: rolleId, error: new Error() as unknown as NoRedundantRollenerweiterungError },
             ]);
             const expected: DbiamApplyRollenerweiterungMultiError = new DbiamApplyRollenerweiterungMultiError({
                 code: 400,

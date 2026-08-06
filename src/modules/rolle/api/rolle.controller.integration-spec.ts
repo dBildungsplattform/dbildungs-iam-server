@@ -56,6 +56,9 @@ import { RolleResponse } from './rolle.response.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
+import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
+import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { FindRolleQueryParams } from './find-rolle-query.param.js';
 
 describe('Rolle API', () => {
@@ -159,6 +162,7 @@ describe('Rolle API', () => {
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
         permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
         await DatabaseTestModule.clearDatabase(orm);
+        vi.clearAllMocks();
     });
 
     describe('/POST rolle', () => {
@@ -1606,6 +1610,359 @@ describe('Rolle API', () => {
                         serviceProviderId: otherServiceProvider.id,
                     }),
                 ).resolves.toBeFalsy();
+            });
+        });
+    });
+
+    describe('GET :rolleId/angeboteViaRollenerweiterungen', () => {
+        it('should return all rollenerweiterungen for a rolle', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+
+            const serviceProvider1: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+            const serviceProvider2: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+            await createAndPersistServiceProvider(em);
+
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                    serviceProviderId: serviceProvider1.id,
+                }),
+            );
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                    serviceProviderId: serviceProvider2.id,
+                }),
+            );
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
+                .query({ organisationId: organisation.id })
+                .send();
+
+            expect(response.status).toBe(200);
+            const serviceProviderResponse: ServiceProviderResponse[] = response.body as ServiceProviderResponse[];
+            expect(serviceProviderResponse).toHaveLength(2);
+        });
+
+        it('should return empty array if rolle has no rollenerweiterungen', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
+                .query({ organisationId: organisation.id })
+                .send();
+
+            expect(response.status).toBe(200);
+            const serviceProviderResponse: ServiceProviderResponse[] = response.body as ServiceProviderResponse[];
+            expect(serviceProviderResponse).toHaveLength(0);
+        });
+
+        it('should return when no organisationId is provided', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                    serviceProviderId: serviceProvider.id,
+                }),
+            );
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
+                .send();
+
+            expect(response.status).toBe(200);
+            const serviceProviderResponse: ServiceProviderResponse[] = response.body as ServiceProviderResponse[];
+            expect(serviceProviderResponse).toHaveLength(1);
+        });
+
+        it('should return 404 if rolle does not exist', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${faker.string.uuid()}/angebote-via-rollenerweiterungen`)
+                .query({ organisationId: organisation.id })
+                .send();
+
+            expect(response.status).toBe(404);
+        });
+
+        it('should return 404 if user does not have permissions', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
+                .query({ organisationId: organisation.id })
+                .send();
+
+            expect(response.status).toBe(404);
+        });
+
+        it('should filter out rollenerweiterungen from organisations without permission', async () => {
+            const organisation1: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const organisation2: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation1.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+
+            await rollenerweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    organisationId: organisation2.id,
+                    rolleId: rolle.id,
+                    serviceProviderId: serviceProvider.id,
+                }),
+            );
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation1.id],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${rolle.id}/angebote-via-rollenerweiterungen`)
+                .send();
+
+            expect(response.status).toBe(200);
+
+            const serviceProviderResponse: ServiceProviderResponse[] = response.body as ServiceProviderResponse[];
+
+            expect(serviceProviderResponse).toHaveLength(0);
+        });
+    });
+
+    describe('POST rolle/:rolleId/organisation/:organisationId/apply', () => {
+        it('should apply rollenerweiterung changes', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                providedOnSchulstrukturknoten: organisation.id,
+            });
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post(`/rolle/${rolle.id}/organisation/${organisation.id}/apply`)
+                .send({
+                    addErweiterungenForServiceProviderIds: [serviceProvider.id],
+                    removeErweiterungenForServiceProviderIds: [],
+                });
+
+            expect(response.status).toBe(201);
+
+            const rollenerweiterungen: Rollenerweiterung<true>[] =
+                await rollenerweiterungRepo.findManyByOrganisationAndRolle([
+                    {
+                        organisationId: organisation.id,
+                        rolleId: rolle.id,
+                    },
+                ]);
+
+            expect(rollenerweiterungen).toHaveLength(1);
+            expect(rollenerweiterungen[0]?.serviceProviderId).toBe(serviceProvider.id);
+        });
+
+        it('should return 404 if rolle does not exist', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post(`/rolle/${faker.string.uuid()}/organisation/${organisation.id}/apply`)
+                .send({
+                    addErweiterungenForServiceProviderIds: [],
+                    removeErweiterungenForServiceProviderIds: [],
+                });
+
+            expect(response.status).toBe(404);
+        });
+
+        it('should return 404 if organisation does not exist', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post(`/rolle/${rolle.id}/organisation/${faker.string.uuid()}/apply`)
+                .send({
+                    addErweiterungenForServiceProviderIds: [],
+                    removeErweiterungenForServiceProviderIds: [],
+                });
+
+            expect(response.status).toBe(404);
+        });
+
+        it('should return 404 if user is missing permissions', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post(`/rolle/${rolle.id}/organisation/${organisation.id}/apply`)
+                .send({
+                    addErweiterungenForServiceProviderIds: [],
+                    removeErweiterungenForServiceProviderIds: [],
+                });
+
+            expect(response.status).toBe(404);
+        });
+
+        it('should return 500 if applying rollenerweiterung changes fails', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post(`/rolle/${rolle.id}/organisation/${organisation.id}/apply`)
+                .send({
+                    addErweiterungenForServiceProviderIds: [faker.string.uuid()],
+                    removeErweiterungenForServiceProviderIds: [],
+                });
+
+            expect(response.status).toBe(500);
+            expect(response.body).toEqual({
+                statusCode: 500,
+                message: 'Internal server error',
             });
         });
     });
