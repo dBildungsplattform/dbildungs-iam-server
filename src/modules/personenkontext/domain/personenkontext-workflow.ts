@@ -299,7 +299,7 @@ export class PersonenkontextWorkflowAggregate {
             );
 
             for (const rolle of rollen.values()) {
-                const rollenArtNotAllowed = !allowedRollenArten?.includes(rolle.rollenart);
+                const rollenArtNotAllowed: boolean = !allowedRollenArten?.includes(rolle.rollenart);
                 if (includesMPTRollen) {
                     // implies user has RollenSystemRecht.MPT_ROLLEN_VERWALTEN
                     if (rollenArtNotAllowed && !rolle.hasMerkmal(RollenMerkmal.MPT_ROLLE)) {
