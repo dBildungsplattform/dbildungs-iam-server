@@ -412,7 +412,7 @@ describe('ApplyRollenerweiterungForAngebotService', () => {
         if (result.ok) {
             return;
         }
-        expect(result.error).toBeInstanceOf(ApplyRollenerweiterungRolesError);
+        expect(result.error).toBeInstanceOf(ApplyRollenerweiterungError);
     });
 
     it('should return error when removing MPT Rolle and user has no MPT permission', async () => {
@@ -465,6 +465,6 @@ describe('ApplyRollenerweiterungForAngebotService', () => {
         if (result.ok) {
             return;
         }
-        expect(result.error).toBeInstanceOf(ApplyRollenerweiterungRolesError);
+        expect(result.error).toBeInstanceOf(ApplyRollenerweiterungError);
     });
 });
