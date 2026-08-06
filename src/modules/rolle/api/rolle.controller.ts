@@ -418,6 +418,7 @@ export class RolleController {
     private async returnRolleWithServiceProvidersResponse(
         rolle: Rolle<true>,
     ): Promise<RolleWithServiceProvidersResponse> {
+        // TODO: use constraned function
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
         const rolleServiceProviders: ServiceProvider<true>[] = rolle.serviceProviderIds
