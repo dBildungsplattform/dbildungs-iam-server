@@ -386,8 +386,7 @@ describe('ApplyRollenerweiterungForAngebotService', () => {
             }),
         );
 
-        const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle, {
-            id: rolleId,
+        const rolle: Rolle<true> = DoFactory.createRolle(true, {
             merkmale: [RollenMerkmal.MPT_ROLLE],
         });
         rolleRepo.findByIds.mockResolvedValue(new Map([[rolleId, rolle]]));

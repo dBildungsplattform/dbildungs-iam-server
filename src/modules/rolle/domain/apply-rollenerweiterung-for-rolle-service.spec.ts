@@ -382,7 +382,7 @@ describe('ApplyRollenerweiterungForRolleService', () => {
 
             organisationRepo.findById.mockResolvedValue(DoFactory.createOrganisation(true, { id: orgaId }));
 
-            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle, {
+            const rolle: Rolle<true> = DoFactory.createRolle(true, {
                 merkmale: [RollenMerkmal.MPT_ROLLE],
             });
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolleId, rolle]]));
@@ -392,7 +392,8 @@ describe('ApplyRollenerweiterungForRolleService', () => {
                 removeErweiterungenForServiceProviderIds: [],
             };
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(false);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
 
             const result: TresultType = await service.applyRollenerweiterungChangesForRolle(
                 orgaId,
