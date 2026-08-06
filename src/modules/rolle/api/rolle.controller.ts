@@ -103,7 +103,9 @@ export class RolleController {
             rollenAndTotal = await this.rolleFindService.findRollenAvailableForErweiterung({
                 permissions,
                 searchStr: queryParams.searchStr,
-                organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                organisationIds: queryParams.organisationContextForOperation
+                    ? [queryParams.organisationContextForOperation]
+                    : undefined,
                 rollenArten: queryParams.rollenarten,
                 limit: queryParams.limit,
                 offset: queryParams.offset,
@@ -116,7 +118,9 @@ export class RolleController {
             rollenAndTotal = await this.rolleFindService.findRollenAvailableForImportPersonenkontext({
                 permissions,
                 searchStr: queryParams.searchStr,
-                organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                organisationIds: queryParams.organisationContextForOperation
+                    ? [queryParams.organisationContextForOperation]
+                    : undefined,
                 rollenArten: queryParams.rollenarten,
                 limit: queryParams.limit,
                 offset: queryParams.offset,
@@ -129,10 +133,10 @@ export class RolleController {
                 queryParams.searchStr,
                 queryParams.limit,
                 queryParams.offset,
-                queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                queryParams.organisationenForFilter,
                 queryParams.rolleIds,
                 queryParams.merkmale,
-                queryParams.rollenarten
+                queryParams.rollenarten,
             );
         }
 
