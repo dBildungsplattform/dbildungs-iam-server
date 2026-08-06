@@ -409,6 +409,7 @@ describe('ApplyRollenerweiterungForAngebotService', () => {
         const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
         permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
         permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+        permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
 
         const result: TresultType = await service.applyRollenerweiterungChangesForAngebot(
             orgaId,
