@@ -80,7 +80,7 @@ export class RolleController {
         private readonly logger: ClassLogger,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly rollenerweiterungFactory: RollenerweiterungFactory,
-    ) { }
+    ) {}
 
     @Get()
     @ApiOperation({ description: 'List all rollen.' })
@@ -167,7 +167,10 @@ export class RolleController {
         const administeredOrganisations: Map<string, Organisation<true>> = await this.organisationRepository.findByIds(
             administeredBySchulstrukturknotenIds,
         );
-        const serviceProviders: Map<ServiceProviderID, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(uniq(rollen.flatMap((r: Rolle<true>) => r.serviceProviderIds)));
+        const serviceProviders: Map<
+            ServiceProviderID,
+            ServiceProvider<true>
+        > = await this.serviceProviderRepo.findByIds(uniq(rollen.flatMap((r: Rolle<true>) => r.serviceProviderIds)));
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
                 const sps: ServiceProvider<true>[] = r.serviceProviderIds
@@ -419,7 +422,10 @@ export class RolleController {
     private async returnRolleWithServiceProvidersResponse(
         rolle: Rolle<true>,
     ): Promise<RolleWithServiceProvidersResponse> {
-        const serviceProviders: Map<ServiceProviderID, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(rolle.serviceProviderIds);
+        const serviceProviders: Map<
+            ServiceProviderID,
+            ServiceProvider<true>
+        > = await this.serviceProviderRepo.findByIds(rolle.serviceProviderIds);
         return new RolleWithServiceProvidersResponse(rolle, Array.from(serviceProviders.values()));
     }
 }

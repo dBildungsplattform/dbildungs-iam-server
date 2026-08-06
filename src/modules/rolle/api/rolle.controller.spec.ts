@@ -9,7 +9,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
-import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
+import { RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
@@ -29,9 +29,6 @@ import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
-import { FindRolleQueryParams } from './find-rolle-query.param.js';
-import { PagedResponse } from '../../../shared/paging/paged.response.js';
-import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;

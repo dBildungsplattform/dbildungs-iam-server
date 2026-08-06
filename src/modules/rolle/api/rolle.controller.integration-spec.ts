@@ -938,7 +938,7 @@ describe('Rolle API', () => {
                 .query({
                     systemrechte,
                     rollenarten: [RollenArt.LEHR],
-                    organisationId: schule.id
+                    organisationId: schule.id,
                 } as FindRolleQueryParams)
                 .send();
 

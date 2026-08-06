@@ -431,7 +431,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                             name: 'Rolle A',
                             administeredBySchulstrukturknoten: traeger.id,
                             rollenart: RollenArt.LEIT,
-                            merkmale: [RollenMerkmal.MPT_ROLLE]
+                            merkmale: [RollenMerkmal.MPT_ROLLE],
                         }),
                     );
                     const mismatchedRolle: Rolle<true> = await rolleRepo.create(
@@ -462,13 +462,15 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         .query({
                             operationContext: OperationContext.PERSON_ANLEGEN,
                             organisationId: schule.id,
-                            rollenIds: [mptRolle.id, mismatchedRolle.id]
+                            rollenIds: [mptRolle.id, mismatchedRolle.id],
                         } as FindDbiamPersonenkontextWorkflowBodyParams)
                         .send();
                     expect(response.status).toBe(200);
-                    expect(response.body).toEqual(expect.objectContaining({
-                        canCommit: false
-                    }));
+                    expect(response.body).toEqual(
+                        expect.objectContaining({
+                            canCommit: false,
+                        }),
+                    );
                 });
             });
 
@@ -595,7 +597,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                             name: 'Rolle A',
                             administeredBySchulstrukturknoten: traeger.id,
                             rollenart: RollenArt.LEIT,
-                            merkmale: [RollenMerkmal.MPT_ROLLE]
+                            merkmale: [RollenMerkmal.MPT_ROLLE],
                         }),
                     );
                     personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
@@ -619,18 +621,17 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         .query({
                             operationContext: OperationContext.PERSON_ANLEGEN,
                             organisationId: schule.id,
-                            rollenIds: [mptRolle.id]
+                            rollenIds: [mptRolle.id],
                         } as FindDbiamPersonenkontextWorkflowBodyParams)
                         .send();
                     expect(response.status).toBe(200);
-                    expect(response.body).toEqual(expect.objectContaining({
-                        canCommit: false
-                    }));
+                    expect(response.body).toEqual(
+                        expect.objectContaining({
+                            canCommit: false,
+                        }),
+                    );
                 });
-
-
             });
-
         });
 
         describe(`when context is ${OperationContext.PERSON_BEARBEITEN}`, () => {

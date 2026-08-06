@@ -423,7 +423,7 @@ describe('RolleFindService', () => {
         });
     });
 
-    describe("findRollenAvailableForPersonenkontextCreation", () => {
+    describe('findRollenAvailableForPersonenkontextCreation', () => {
         let permissionsMock: DeepMocked<PersonPermissions>;
         beforeEach(() => {
             permissionsMock = createMock(PersonPermissions);
@@ -431,21 +431,33 @@ describe('RolleFindService', () => {
 
         it('should return early, if no organisation is found', async () => {
             organisationRepoMock.findById.mockResolvedValue(undefined);
-            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForPersonenkontextCreation({ permissions: permissionsMock, systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN, organisationId: 'does not exist' });
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForPersonenkontextCreation({
+                permissions: permissionsMock,
+                systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN,
+                organisationId: 'does not exist',
+            });
             expect(result).toEqual([[], 0]);
         });
 
         it('should return early, if creation is not permitted', async () => {
             organisationRepoMock.findById.mockResolvedValue(DoFactory.createOrganisation(true));
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
-            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForPersonenkontextCreation({ permissions: permissionsMock, systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN, organisationId: 'does not exist' });
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForPersonenkontextCreation({
+                permissions: permissionsMock,
+                systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN,
+                organisationId: 'does not exist',
+            });
             expect(result).toEqual([[], 0]);
         });
 
         it('should return early, if allowed rollenarten can not be determined due to missing organisationsTyp', async () => {
             organisationRepoMock.findById.mockResolvedValue(DoFactory.createOrganisation(true, { typ: undefined }));
             permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
-            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForPersonenkontextCreation({ permissions: permissionsMock, systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN, organisationId: 'does not exist' });
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForPersonenkontextCreation({
+                permissions: permissionsMock,
+                systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN,
+                organisationId: 'does not exist',
+            });
             expect(result).toEqual([[], 0]);
         });
     });
