@@ -1,18 +1,15 @@
 import { DomainError } from '../../../shared/error/index.js';
 import { MultiDomainError } from '../../../shared/error/multidomain.error.js';
 
-export class ApplyRollenerweiterungServiceProvidersError extends MultiDomainError {
+export class ApplyRollenerweiterungError extends MultiDomainError {
     public constructor(
         errors: {
-            serviceProviderId: string;
+            id: string;
             error: DomainError;
         }[],
     ) {
         super(
-            errors.map((e: { serviceProviderId: string; error: DomainError }) => ({
-                id: e.serviceProviderId,
-                error: e.error,
-            })),
+            errors.map((e: { id: string; error: DomainError }) => ({ id: e.id, error: e.error })),
             `${errors.length} errors occured while applying rollenerweiterungen`,
         );
     }

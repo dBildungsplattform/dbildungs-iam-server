@@ -19,11 +19,11 @@ import {
     LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
-import { ApplyRollenerweiterungServiceProvidersError } from '../api/apply-rollenerweiterung-service-providers.error.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ApplyRollenerweiterungChangesBodyParams } from '../api/apply-rollenerweiterung-changes.body.params.js';
 import { RollenMerkmal } from './rolle.enums.js';
 import { ApplyRollenerweiterungForRolleService } from './apply-rollenerweiterungen-for-rolle-service.js';
+import { ApplyRollenerweiterungError } from '../api/apply-rollenerweiterung.error.js';
 
 describe('ApplyRollenerweiterungForRolleService', () => {
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
@@ -70,7 +70,7 @@ describe('ApplyRollenerweiterungForRolleService', () => {
     describe('applyRollenerweiterungChangesForRolle', () => {
         type TresultType = Result<
             null,
-            | ApplyRollenerweiterungServiceProvidersError
+            | ApplyRollenerweiterungError
             | EntityNotFoundError
             | MissingPermissionsError
             | MissingMerkmalVerfuegbarFuerRollenerweiterungError
@@ -263,10 +263,10 @@ describe('ApplyRollenerweiterungForRolleService', () => {
                 return;
             }
 
-            expect(result.error).toBeInstanceOf(ApplyRollenerweiterungServiceProvidersError);
+            expect(result.error).toBeInstanceOf(ApplyRollenerweiterungError);
 
             const err: unknown = result.error;
-            if (!(err instanceof ApplyRollenerweiterungServiceProvidersError)) {
+            if (!(err instanceof ApplyRollenerweiterungError)) {
                 return;
             }
 
@@ -313,10 +313,10 @@ describe('ApplyRollenerweiterungForRolleService', () => {
                 return;
             }
 
-            expect(result.error).toBeInstanceOf(ApplyRollenerweiterungServiceProvidersError);
+            expect(result.error).toBeInstanceOf(ApplyRollenerweiterungError);
 
             const err: unknown = result.error;
-            if (!(err instanceof ApplyRollenerweiterungServiceProvidersError)) {
+            if (!(err instanceof ApplyRollenerweiterungError)) {
                 return;
             }
 
@@ -365,10 +365,10 @@ describe('ApplyRollenerweiterungForRolleService', () => {
                 return;
             }
 
-            expect(result.error).toBeInstanceOf(ApplyRollenerweiterungServiceProvidersError);
+            expect(result.error).toBeInstanceOf(ApplyRollenerweiterungError);
 
             const err: unknown = result.error;
-            if (!(err instanceof ApplyRollenerweiterungServiceProvidersError)) {
+            if (!(err instanceof ApplyRollenerweiterungError)) {
                 return;
             }
 

@@ -64,10 +64,10 @@ import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { FindRollenerweiterungQueryParams } from './find-rollenerweiterung-query.params.js';
 import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { ApplyRollenerweiterungChangesBodyParams } from './apply-rollenerweiterung-changes.body.params.js';
-import { ApplyRollenerweiterungServiceProvidersError } from './apply-rollenerweiterung-service-providers.error.js';
 import { ApplyRollenerweiterungForRollePathParams } from './apply-rollenerweiterung-for-rolle-changes.path.params.js';
 import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { ApplyRollenerweiterungForRolleService } from '../domain/apply-rollenerweiterungen-for-rolle-service.js';
+import { ApplyRollenerweiterungError } from './apply-rollenerweiterung.error.js';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -501,15 +501,13 @@ export class RolleController {
             throw new EntityNotFoundError('Rolle', params.rolleId);
         }
 
-        const result: Result<
-            null,
-            ApplyRollenerweiterungServiceProvidersError | EntityNotFoundError | MissingPermissionsError
-        > = await this.applyRollenerweiterungService.applyRollenerweiterungChangesForRolle(
-            params.organisationId,
-            params.rolleId,
-            body,
-            permissions,
-        );
+        const result: Result<null, ApplyRollenerweiterungError | EntityNotFoundError | MissingPermissionsError> =
+            await this.applyRollenerweiterungService.applyRollenerweiterungChangesForRolle(
+                params.organisationId,
+                params.rolleId,
+                body,
+                permissions,
+            );
 
         if (!result.ok) {
             throw result.error;

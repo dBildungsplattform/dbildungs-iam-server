@@ -16,7 +16,7 @@ import { ApplyRollenerweiterungForAngebotService } from '../domain/apply-rollene
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
 import { ApplyRollenerweiterungForSPPathParams } from './apply-rollenerweiterung-for-sp-changes.path.params.js';
 import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
-import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
+import { ApplyRollenerweiterungError } from './apply-rollenerweiterung.error.js';
 import { ApplyRollenerweiterungBodyParams } from './apply-rollenerweiterung.body.params.js';
 import { DbiamApplyRollenerweiterungMultiError } from './dbiam-apply-rollenerweiterung-multi.error.js';
 import { RollenerweiterungExceptionFilter } from './rollenerweiterung-exception-filter.js';
@@ -61,7 +61,7 @@ export class RollenerweiterungController {
         const orgaId: string = params.organisationId;
         const result: Result<
             null,
-            | ApplyRollenerweiterungRolesError
+            | ApplyRollenerweiterungError
             | EntityNotFoundError
             | MissingPermissionsError
             | MissingMerkmalVerfuegbarFuerRollenerweiterungError
@@ -73,11 +73,11 @@ export class RollenerweiterungController {
         );
         if (!result.ok) {
             const err:
-                | ApplyRollenerweiterungRolesError
+                | ApplyRollenerweiterungError
                 | EntityNotFoundError
                 | MissingPermissionsError
                 | MissingMerkmalVerfuegbarFuerRollenerweiterungError = result.error;
-            if (err instanceof ApplyRollenerweiterungRolesError) {
+            if (err instanceof ApplyRollenerweiterungError) {
                 this.logger.error(
                     `applyRollenerweiterungChanges called by ${permissions.personFields.username} - ${permissions.personFields.id} for angebotId ${params.angebotId} and organisationId ${params.organisationId} completed with error for rollen: ${err.errors
                         .map((e: { id: string | undefined; error: DomainError }) => `${e.id} (${e.error.message})`)

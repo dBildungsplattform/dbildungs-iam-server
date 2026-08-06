@@ -12,7 +12,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ApplyRollenerweiterungForAngebotService } from '../domain/apply-rollenerweiterungen-for-angebot-service.js';
-import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
+import { ApplyRollenerweiterungError } from './apply-rollenerweiterung.error.js';
 import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from '../domain/missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
 
@@ -102,9 +102,9 @@ describe('RollenerweiterungController', () => {
 
             applyRollenerweiterungServiceMock.applyRollenerweiterungChangesForAngebot.mockResolvedValueOnce({
                 ok: false,
-                error: new ApplyRollenerweiterungRolesError([
-                    { rolleId: 'rollenId2', error: errorRollenId2 as unknown as DomainError },
-                    { rolleId: 'rollenId4', error: errorRollenId4 as unknown as DomainError },
+                error: new ApplyRollenerweiterungError([
+                    { id: 'rollenId2', error: errorRollenId2 as unknown as DomainError },
+                    { id: 'rollenId4', error: errorRollenId4 as unknown as DomainError },
                 ]),
             });
 
@@ -131,11 +131,11 @@ describe('RollenerweiterungController', () => {
             };
             applyRollenerweiterungServiceMock.applyRollenerweiterungChangesForAngebot.mockResolvedValueOnce({
                 ok: false,
-                error: new ApplyRollenerweiterungRolesError([]),
+                error: new ApplyRollenerweiterungError([]),
             });
 
             await expect(controller.applyRollenerweiterungChanges(params, body, permissions)).rejects.toThrow(
-                ApplyRollenerweiterungRolesError,
+                ApplyRollenerweiterungError,
             );
         });
 

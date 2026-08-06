@@ -8,7 +8,7 @@ import { Rollenerweiterung } from './rollenerweiterung.js';
 import { Rolle } from './rolle.js';
 import { Ok } from '../../../shared/util/result.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { ApplyRollenerweiterungRolesError } from '../api/apply-rollenerweiterung-roles.error.js';
+import { ApplyRollenerweiterungError } from '../api/apply-rollenerweiterung.error.js';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ApplyRollenerweiterungForAngebotService } from './apply-rollenerweiterungen-for-angebot-service.js';
@@ -26,7 +26,7 @@ import { RollenMerkmal } from './rolle.enums.js';
 
 type TresultType = Result<
     null,
-    | ApplyRollenerweiterungRolesError
+    | ApplyRollenerweiterungError
     | EntityNotFoundError
     | MissingPermissionsError
     | MissingMerkmalVerfuegbarFuerRollenerweiterungError
@@ -317,9 +317,9 @@ describe('ApplyRollenerweiterungForAngebotService', () => {
         if (result.ok) {
             return;
         }
-        expect(result.error).toBeInstanceOf(ApplyRollenerweiterungRolesError);
+        expect(result.error).toBeInstanceOf(ApplyRollenerweiterungError);
         const err: unknown = result.error;
-        if (!(err instanceof ApplyRollenerweiterungRolesError)) {
+        if (!(err instanceof ApplyRollenerweiterungError)) {
             return;
         }
         expect(err.errors[0]?.id).toBe(rolleId);
@@ -363,9 +363,9 @@ describe('ApplyRollenerweiterungForAngebotService', () => {
         if (result.ok) {
             return;
         }
-        expect(result.error).toBeInstanceOf(ApplyRollenerweiterungRolesError);
+        expect(result.error).toBeInstanceOf(ApplyRollenerweiterungError);
         const err: unknown = result.error;
-        if (!(err instanceof ApplyRollenerweiterungRolesError)) {
+        if (!(err instanceof ApplyRollenerweiterungError)) {
             return;
         }
         expect(err.errors[0]?.id).toBe(rolleIdRemove);
