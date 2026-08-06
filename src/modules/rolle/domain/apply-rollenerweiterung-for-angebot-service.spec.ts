@@ -372,9 +372,8 @@ describe('ApplyRollenerweiterungForAngebotService', () => {
         expect(err.errors[0]?.error).toBeInstanceOf(EntityNotFoundError);
     });
 
-    it('should return error if Rolle is MPT and user has no permission', async () => {
+    it('should return error when adding MPT Rolle and user has no MPT permission', async () => {
         const rolleAddId: string = faker.string.uuid();
-        const rolleRemoveId: string = faker.string.uuid();
 
         const orgaId: string = faker.string.uuid();
         const angebotId: string = faker.string.uuid();
@@ -391,25 +390,14 @@ describe('ApplyRollenerweiterungForAngebotService', () => {
             id: rolleAddId,
             merkmale: [RollenMerkmal.MPT_ROLLE],
         });
-        const rolleRemove: Rolle<true> = DoFactory.createRolle(true, {
-            id: rolleRemoveId,
-            merkmale: [RollenMerkmal.MPT_ROLLE],
-        });
-        rolleRepo.findByIds.mockResolvedValue(
-            new Map([
-                [rolleAddId, rolleAdd],
-                [rolleRemoveId, rolleRemove],
-            ]),
-        );
+        rolleRepo.findByIds.mockResolvedValue(new Map([[rolleAddId, rolleAdd]]));
 
         const body: ApplyRollenerweiterungBodyParams = {
             addErweiterungenForRolleIds: [rolleAddId],
-            removeErweiterungenForRolleIds: [rolleRemoveId],
+            removeErweiterungenForRolleIds: [],
         };
         const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
-        permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-        permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
-        permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+        permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
 
         const result: TresultType = await service.applyRollenerweiterungChangesForAngebot(
             orgaId,
@@ -418,6 +406,61 @@ describe('ApplyRollenerweiterungForAngebotService', () => {
             permissions,
         );
 
+        expect(rollenerweiterungRepo.createAuthorized).not.toHaveBeenCalled();
+
+        expect(result.ok).toBe(false);
+        if (result.ok) {
+            return;
+        }
+        expect(result.error).toBeInstanceOf(ApplyRollenerweiterungRolesError);
+    });
+
+    it('should return error when removing MPT Rolle and user has no MPT permission', async () => {
+        const rolleRemoveId: string = faker.string.uuid();
+
+        const orgaId: string = faker.string.uuid();
+        const angebotId: string = faker.string.uuid();
+
+        organisationRepo.findById.mockResolvedValue(DoFactory.createOrganisation(true, { id: orgaId }));
+
+        serviceProviderRepo.findById.mockResolvedValue(
+            DoFactory.createServiceProvider(true, {
+                id: angebotId,
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            }),
+        );
+
+        const rolleRemove: Rolle<true> = DoFactory.createRolle(true, {
+            id: rolleRemoveId,
+            merkmale: [RollenMerkmal.MPT_ROLLE],
+        });
+
+        rolleRepo.findByIds.mockResolvedValue(new Map<string, Rolle<true>>([[rolleRemoveId, rolleRemove]]));
+
+        const existingErweiterung: Rollenerweiterung<true> = DoFactory.createRollenerweiterung(true, {
+            organisationId: orgaId,
+            rolleId: rolleRemoveId,
+            serviceProviderId: angebotId,
+        });
+
+        rollenerweiterungRepo.findManyByOrganisationIdAndServiceProviderId.mockResolvedValue([existingErweiterung]);
+
+        const body: ApplyRollenerweiterungBodyParams = {
+            addErweiterungenForRolleIds: [],
+            removeErweiterungenForRolleIds: [rolleRemoveId],
+        };
+
+        const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+        permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+
+        const result: TresultType = await service.applyRollenerweiterungChangesForAngebot(
+            orgaId,
+            angebotId,
+            body,
+            permissions,
+        );
+
+        expect(rollenerweiterungRepo.deleteByComposedId).not.toHaveBeenCalled();
         expect(result.ok).toBe(false);
         if (result.ok) {
             return;
