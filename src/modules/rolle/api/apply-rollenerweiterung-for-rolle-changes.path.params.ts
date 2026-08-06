@@ -16,7 +16,7 @@ export class ApplyRollenerweiterungForRollePathParams {
     @IsUUID()
     @IsNotEmpty()
     @ApiProperty({
-        description: 'The organisationId of the person.',
+        description: 'The organisationIdof the organisation.',
         required: true,
         nullable: false,
     })

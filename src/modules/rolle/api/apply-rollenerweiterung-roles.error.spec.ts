@@ -1,4 +1,4 @@
-import { ApplyRollenerweiterungRolesError } from './apply-rollenerweiterung-roles.error.js';
+import { ApplyRollenerweiterungError } from './apply-rollenerweiterung.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { faker } from '@faker-js/faker';
 
@@ -16,7 +16,7 @@ describe('ApplyRollenerweiterungRolesError', () => {
             { rolleId: rolle1Id, error: error1 },
             { rolleId: rolle2Id, error: error2 },
         ];
-        const applyError: ApplyRollenerweiterungRolesError = new ApplyRollenerweiterungRolesError(errors);
+        const applyError: ApplyRollenerweiterungError = new ApplyRollenerweiterungError(errors);
 
         expect(applyError.errors).toEqual([
             { id: rolle1Id, error: error1 },
@@ -27,7 +27,7 @@ describe('ApplyRollenerweiterungRolesError', () => {
     });
 
     it('should handle empty errors array', () => {
-        const applyError: ApplyRollenerweiterungRolesError = new ApplyRollenerweiterungRolesError([]);
+        const applyError: ApplyRollenerweiterungError = new ApplyRollenerweiterungError([]);
         expect(applyError.errors).toEqual([]);
         expect(applyError.message).toBe('0 errors occured while applying rollenerweiterungen');
         expect(applyError.code).toBe('MULTI_DOMAIN_ERROR');

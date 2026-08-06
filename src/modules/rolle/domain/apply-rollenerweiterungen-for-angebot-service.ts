@@ -9,7 +9,7 @@ import { Rollenerweiterung } from './rollenerweiterung.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { ApplyRollenerweiterungBodyParams } from '../api/apply-rollenerweiterung.body.params.js';
-import { ApplyRollenerweiterungRolesError } from '../api/apply-rollenerweiterung-roles.error.js';
+import { ApplyRollenerweiterungError } from '../api/apply-rollenerweiterung.error.js';
 import { Injectable } from '@nestjs/common';
 import { RollenSystemRecht } from './systemrecht.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
@@ -53,7 +53,7 @@ export class ApplyRollenerweiterungForAngebotService {
     ): Promise<
         Result<
             null,
-            | ApplyRollenerweiterungRolesError
+            | ApplyRollenerweiterungError
             | EntityNotFoundError
             | MissingPermissionsError
             | MissingMerkmalVerfuegbarFuerRollenerweiterungError
@@ -115,8 +115,8 @@ export class ApplyRollenerweiterungForAngebotService {
 
         if (errors.length > 0) {
             return Err(
-                new ApplyRollenerweiterungRolesError(
-                    errors.map((e: TerrorResultForRolle) => ({ rolleId: e.rolleId, error: e.result.error })),
+                new ApplyRollenerweiterungError(
+                    errors.map((e: TerrorResultForRolle) => ({ id: e.rolleId, error: e.result.error })),
                 ),
             );
         }

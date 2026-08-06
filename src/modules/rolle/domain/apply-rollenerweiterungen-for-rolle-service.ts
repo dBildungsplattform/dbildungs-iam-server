@@ -16,7 +16,7 @@ import { ServiceProviderMerkmal } from '../../service-provider/domain/service-pr
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from './missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { ApplyRollenerweiterungChangesBodyParams } from '../api/apply-rollenerweiterung-changes.body.params.js';
-import { ApplyRollenerweiterungServiceProvidersError } from '../api/apply-rollenerweiterung-service-providers.error.js';
+import { ApplyRollenerweiterungError } from '../api/apply-rollenerweiterung.error.js';
 
 type TunknownResultForServiceProvider = {
     serviceProviderId: string;
@@ -52,9 +52,7 @@ export class ApplyRollenerweiterungForRolleService {
         rolleId: string,
         body: ApplyRollenerweiterungChangesBodyParams,
         permissions: IPersonPermissions,
-    ): Promise<
-        Result<null, ApplyRollenerweiterungServiceProvidersError | EntityNotFoundError | MissingPermissionsError>
-    > {
+    ): Promise<Result<null, ApplyRollenerweiterungError | EntityNotFoundError | MissingPermissionsError>> {
         if (!(await permissions.hasSystemrechtAtOrganisation(orgaId, RollenSystemRecht.ROLLEN_ERWEITERN))) {
             return Err(new MissingPermissionsError('Not authorized'));
         }
@@ -117,9 +115,9 @@ export class ApplyRollenerweiterungForRolleService {
 
         if (errors.length > 0) {
             return Err(
-                new ApplyRollenerweiterungServiceProvidersError(
+                new ApplyRollenerweiterungError(
                     errors.map((e: TerrorResultForServiceProvider) => ({
-                        serviceProviderId: e.serviceProviderId,
+                        id: e.serviceProviderId,
                         error: e.result.error,
                     })),
                 ),

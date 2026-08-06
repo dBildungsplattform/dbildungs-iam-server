@@ -1631,7 +1631,7 @@ describe('Rolle API', () => {
 
             const serviceProvider1: ServiceProvider<true> = await createAndPersistServiceProvider(em);
             const serviceProvider2: ServiceProvider<true> = await createAndPersistServiceProvider(em);
-            const serviceProvider3: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+            await createAndPersistServiceProvider(em);
 
             await rollenerweiterungRepo.create(
                 DoFactory.createRollenerweiterung(false, {
@@ -1647,13 +1647,6 @@ describe('Rolle API', () => {
                     serviceProviderId: serviceProvider2.id,
                 }),
             );
-            await rollenerweiterungRepo.create(
-                DoFactory.createRollenerweiterung(false, {
-                    organisationId: organisation.id,
-                    rolleId: rolle.id,
-                    serviceProviderId: serviceProvider3.id,
-                }),
-            );
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: true,
@@ -1666,7 +1659,7 @@ describe('Rolle API', () => {
 
             expect(response.status).toBe(200);
             const serviceProviderResponse: ServiceProviderResponse[] = response.body as ServiceProviderResponse[];
-            expect(serviceProviderResponse).toHaveLength(3);
+            expect(serviceProviderResponse).toHaveLength(2);
         });
 
         it('should return empty array if rolle has no rollenerweiterungen', async () => {
