@@ -118,6 +118,46 @@ export class RolleFindService {
         return this.rolleRepo.findBy(queryParams);
     }
 
+    public async findRollenAvailableForPersonAdministration(
+        params: FindRollenWithPermissionsParams,
+    ): Promise<Counted<Rolle<true>>> {
+        const permittedOrgas: PermittedOrgas = await params.permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            true,
+        );
+
+        let relevantOrganisationIdsForFilter: Array<OrganisationID> | undefined;
+        if (permittedOrgas.all) {
+            relevantOrganisationIdsForFilter = this.hasSelectedOrgas(params.organisationIds)
+                ? params.organisationIds
+                : undefined;
+        } else {
+            if (permittedOrgas.orgaIds.length === 0) {
+                return [[], 0];
+            }
+            relevantOrganisationIdsForFilter = this.hasSelectedOrgas(params.organisationIds)
+                ? intersection(permittedOrgas.orgaIds, params.organisationIds)
+                : permittedOrgas.orgaIds;
+        }
+
+        const queryParams: RolleFindByParameters = {
+            searchStr: params.searchStr,
+            limit: params.limit,
+            offset: params.offset,
+        };
+
+        if (relevantOrganisationIdsForFilter) {
+            const [rollenarten, schulstrukturknotenIds]: [Array<RollenArt>, Array<OrganisationID>] = await Promise.all([
+                this.getAllowedRollenArtenForOrganisationen(relevantOrganisationIdsForFilter),
+                this.getAllowedSchulstrukturknotenForRollen(relevantOrganisationIdsForFilter),
+            ]);
+            queryParams.rollenArten = rollenarten;
+            queryParams.allowedOrganisationIds = schulstrukturknotenIds;
+        }
+
+        return this.rolleRepo.findBy(queryParams);
+    }
+
     public async findRollenAvailableForImportPersonenkontext(
         params: FindRollenWithPermissionsParams,
     ): Promise<Counted<Rolle<true>>> {
@@ -244,6 +284,37 @@ export class RolleFindService {
             orderBy: 'artAndName',
             rollenArten: rollenartFilter,
         });
+    }
+
+    private hasSelectedOrgas(organisationIds?: Array<OrganisationID>): organisationIds is Array<OrganisationID> {
+        return (organisationIds?.length ?? 0) > 0;
+    }
+
+    private async getAllowedRollenArtenForOrganisationen(orgaIds: Array<OrganisationID>): Promise<Array<RollenArt>> {
+        const distinctOrganisationsTypen: Array<OrganisationsTyp> =
+            await this.organisationRepository.findDistinctOrganisationsTypen(orgaIds);
+
+        const allowedRollenarten: Set<RollenArt> = new Set();
+        distinctOrganisationsTypen.forEach((organisationsTyp: OrganisationsTyp) => {
+            OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organisationsTyp).forEach(
+                (allowedRollenart: RollenArt) => {
+                    allowedRollenarten.add(allowedRollenart);
+                },
+            );
+        });
+        return Array.from(allowedRollenarten);
+    }
+
+    private async getAllowedSchulstrukturknotenForRollen(
+        orgaIds: Array<OrganisationID>,
+    ): Promise<Array<OrganisationID>> {
+        const parentsOfPermittedOrgas: Array<Organisation<true>> =
+            await this.organisationRepository.findParentOrgasForIds(orgaIds);
+
+        const allowedStrukturknoten: Set<OrganisationID> = new Set(orgaIds);
+        parentsOfPermittedOrgas.forEach((o: Organisation<true>) => allowedStrukturknoten.add(o.id));
+
+        return Array.from(allowedStrukturknoten);
     }
 
     public async findRollenAvailableForPersonenkontextCreation(
