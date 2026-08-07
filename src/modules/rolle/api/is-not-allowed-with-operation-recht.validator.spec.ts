@@ -101,7 +101,7 @@ describe('IsNotAllowedWithOperationRechtConstraint', () => {
 });
 
 describe('IsNotAllowedWithOperationRecht', () => {
-    it('should register the decorator constraint on the target property', async () => {
+    it('should register the decorator constraint on the target property', () => {
         class TestDto {
             @IsNotAllowedWithOperationRecht()
             public organisationIdsForFilter?: string[];
