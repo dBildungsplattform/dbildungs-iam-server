@@ -19,7 +19,7 @@ import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.j
 import { VidisApiAdapter } from '../../vidis/adapter/domain/vidis-api.adapter.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
-import { ServiceProviderMerkmal } from './service-provider.enum.js';
+import { ServiceProviderKategorie, ServiceProviderMerkmal } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import { ServiceProviderService } from './service-provider.service.js';
 import {
@@ -559,7 +559,8 @@ describe('ServiceProviderService', () => {
         let organisation: Organisation<true>;
         let rolle: Rolle<true>;
         let rolle2: Rolle<true>;
-        let serviceProvider: ServiceProvider<true>;
+        let emailServiceProvider: ServiceProvider<true>;
+        let unterrichtServiceProvider: ServiceProvider<true>;
         let rollenerweiterung: Rollenerweiterung<true>;
         let rollenerweiterung1: Rollenerweiterung<true>;
         let permissions: DeepMocked<PersonPermissions>;
@@ -568,12 +569,18 @@ describe('ServiceProviderService', () => {
             organisation = DoFactory.createOrganisation(true);
             rolle = DoFactory.createRolle(true);
             rolle2 = DoFactory.createRolle(true);
-            serviceProvider = DoFactory.createServiceProvider(true, {
+            emailServiceProvider = DoFactory.createServiceProvider(true, {
                 providedOnSchulstrukturknoten: organisation.id,
                 merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                kategorie: ServiceProviderKategorie.EMAIL,
             });
-            rollenerweiterung = DoFactory.createRollenerweiterung(true, { serviceProviderId: serviceProvider.id });
-            rollenerweiterung1 = DoFactory.createRollenerweiterung(true, { serviceProviderId: serviceProvider.id });
+            unterrichtServiceProvider = DoFactory.createServiceProvider(true, {
+                providedOnSchulstrukturknoten: organisation.id,
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                kategorie: ServiceProviderKategorie.UNTERRICHT,
+            });
+            rollenerweiterung = DoFactory.createRollenerweiterung(true, { serviceProviderId: emailServiceProvider.id });
+            rollenerweiterung1 = DoFactory.createRollenerweiterung(true, { serviceProviderId: unterrichtServiceProvider.id });
             permissions = createMock(PersonPermissions);
         });
 
@@ -582,8 +589,6 @@ describe('ServiceProviderService', () => {
         });
 
         it('returns all service providers when user has "all" permissions', async () => {
-            const serviceProvider2: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-
             const nameA: string = faker.string.alpha(8);
             const nameB: string = faker.string.alpha(8);
 
@@ -598,11 +603,11 @@ describe('ServiceProviderService', () => {
             });
 
             serviceProviderRepo.findByOrganisationsWithMerkmale.mockResolvedValue([
-                [serviceProvider, serviceProvider2],
+                [emailServiceProvider, unterrichtServiceProvider],
                 2,
             ]);
             organisationRepo.findByIds.mockResolvedValue(
-                new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
+                new Map([[emailServiceProvider.providedOnSchulstrukturknoten, organisation]]),
             );
             rolleRepo.findByIds.mockResolvedValue(
                 new Map([
@@ -612,27 +617,27 @@ describe('ServiceProviderService', () => {
             );
             rolleRepo.findByServiceProviderIds.mockResolvedValue(
                 new Map([
-                    [serviceProvider.id, [rolle]],
-                    [serviceProvider2.id, []],
+                    [emailServiceProvider.id, [rolle]],
+                    [unterrichtServiceProvider.id, []],
                 ]),
             );
             rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({
-                [serviceProvider.id]: 2,
-                [serviceProvider2.id]: 0,
+                [emailServiceProvider.id]: 2,
+                [unterrichtServiceProvider.id]: 0,
             });
 
             const [result, count]: Counted<ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount> =
-                await service.findAuthorized(permissions, 10, 0);
+                await service.findAuthorized(permissions, {limit: 10, offset: 0});
 
             expect(permissions.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
                 [RollenSystemRecht.ANGEBOTE_VERWALTEN],
                 true,
             );
-            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith('all', 10, 0);
+            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith('all', {limit: 10, offset: 0});
             expect(result).toHaveLength(2);
             expect(count).toBe(2);
             expect(rolleRepo.findByServiceProviderIds).toHaveBeenCalledWith(
-                [serviceProvider.id, serviceProvider2.id],
+                [emailServiceProvider.id, unterrichtServiceProvider.id],
                 20,
             );
             expect(result[0]?.hasRollenerweiterungen).toBe(true);
@@ -644,22 +649,22 @@ describe('ServiceProviderService', () => {
                 orgaIds: [organisation.id],
             });
 
-            serviceProviderRepo.findByOrganisationsWithMerkmale.mockResolvedValue([[serviceProvider], 1]);
+            serviceProviderRepo.findByOrganisationsWithMerkmale.mockResolvedValue([[emailServiceProvider], 1]);
             organisationRepo.findByIds.mockResolvedValue(
-                new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
+                new Map([[emailServiceProvider.providedOnSchulstrukturknoten, organisation]]),
             );
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolle.id, rolle]]));
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProvider.id, [rolle]]]));
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[emailServiceProvider.id, [rolle]]]));
             rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({
-                [serviceProvider.id]: 1,
+                [emailServiceProvider.id]: 1,
             });
 
             const [result, count]: Counted<ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount> =
-                await service.findAuthorized(permissions, 10, 0);
+                await service.findAuthorized(permissions, {limit: 10, offset: 0});
 
-            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith([organisation.id], 10, 0);
+            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith([organisation.id], {limit: 10, offset: 0});
             expect(result).toHaveLength(1);
-            expect(result[0]?.serviceProvider).toEqual(serviceProvider);
+            expect(result[0]?.serviceProvider).toEqual(emailServiceProvider);
             expect(count).toBe(1);
         });
 
@@ -668,22 +673,22 @@ describe('ServiceProviderService', () => {
                 all: true,
             });
 
-            serviceProviderRepo.findByOrganisationsWithMerkmale.mockResolvedValue([[serviceProvider], 100]);
+            serviceProviderRepo.findByOrganisationsWithMerkmale.mockResolvedValue([[emailServiceProvider], 100]);
             organisationRepo.findByIds.mockResolvedValue(
-                new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
+                new Map([[emailServiceProvider.providedOnSchulstrukturknoten, organisation]]),
             );
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolle.id, rolle]]));
-            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[serviceProvider.id, [rolle]]]));
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[emailServiceProvider.id, [rolle]]]));
             rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({
-                [serviceProvider.id]: 1,
+                [emailServiceProvider.id]: 1,
             });
 
             const limit: number = 5;
             const offset: number = 10;
 
-            await service.findAuthorized(permissions, limit, offset);
+            await service.findAuthorized(permissions, {limit, offset});
 
-            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith('all', limit, offset);
+            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith('all', {limit, offset});
         });
 
         it('returns empty array when no service providers found', async () => {
@@ -703,10 +708,10 @@ describe('ServiceProviderService', () => {
         it('falls back to empty arrays when no rollen or rollenerweiterungen exist', async () => {
             permissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
-            serviceProviderRepo.findByOrganisationsWithMerkmale.mockResolvedValue([[serviceProvider], 1]);
+            serviceProviderRepo.findByOrganisationsWithMerkmale.mockResolvedValue([[emailServiceProvider], 1]);
 
             organisationRepo.findByIds.mockResolvedValue(
-                new Map([[serviceProvider.providedOnSchulstrukturknoten, organisation]]),
+                new Map([[emailServiceProvider.providedOnSchulstrukturknoten, organisation]]),
             );
 
             // return EMPTY maps (no entry for serviceProvider.id)
@@ -718,10 +723,41 @@ describe('ServiceProviderService', () => {
             organisationRepo.findByIds.mockResolvedValue(new Map());
 
             const [result]: Counted<ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount> =
-                await service.findAuthorized(permissions, 10, 0);
+                await service.findAuthorized(permissions, {limit: 10, offset: 0});
 
             expect(result[0]?.rollen).toEqual([]);
             expect(result[0]?.hasRollenerweiterungen).toBe(false);
+        });
+
+        it('returns only service providers matching the provided kategorien filter', async () => {
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            const kategorienFilter: ServiceProviderKategorie[] = [ServiceProviderKategorie.EMAIL];
+
+            serviceProviderRepo.findByOrganisationsWithMerkmale.mockResolvedValue([[emailServiceProvider], 1]);
+            organisationRepo.findByIds.mockResolvedValue(
+                new Map([[emailServiceProvider.providedOnSchulstrukturknoten, organisation]]),
+            );
+            rolleRepo.findByIds.mockResolvedValue(new Map([[rolle.id, rolle]]));
+            rolleRepo.findByServiceProviderIds.mockResolvedValue(new Map([[emailServiceProvider.id, [rolle]]]));
+            rollenerweiterungRepo.countByServiceProviderIds.mockResolvedValue({
+                [emailServiceProvider.id]: 1,
+            });
+
+            const [result, count]: Counted<ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount> =
+                await service.findAuthorized(permissions, {
+                    kategorien: kategorienFilter,
+                });
+
+            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith(
+                'all',
+                {kategorien: kategorienFilter}
+            );
+            expect(result).toHaveLength(1);
+            expect(result[0]?.serviceProvider.kategorie).toBe(ServiceProviderKategorie.EMAIL);
+            expect(count).toBe(1);
         });
     });
 });

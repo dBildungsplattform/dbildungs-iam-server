@@ -279,7 +279,11 @@ export class ProviderController {
             enrichedServiceProviders,
             total,
         ]: Counted<ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount> =
-            await this.serviceProviderService.findAuthorized(permissions, params.limit, params.offset);
+            await this.serviceProviderService.findAuthorized(permissions, {
+                kategorien: params.kategorien,
+                limit: params.limit,
+                offset: params.offset,
+            });
 
         return new RawPagedResponse({
             offset: params.offset ?? 0,
