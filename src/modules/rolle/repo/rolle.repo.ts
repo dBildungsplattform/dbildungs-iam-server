@@ -267,10 +267,10 @@ export class RolleRepo {
         if (params.searchStr) {
             queries.push({ name: { $ilike: '%' + params.searchStr + '%' } });
         }
-        if(params.merkmale) {
+        if (params.merkmale) {
             queries.push({ merkmale: { merkmal: { $in: params.merkmale } } });
         }
-        if(params.rollenArten) {
+        if (params.rollenArten) {
             queries.push({ rollenart: { $in: params.rollenArten } });
         }
 
