@@ -9,6 +9,7 @@ import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updat
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
+import { Err, UnionToResult } from '../../../shared/util/result.js';
 import { intersectPermittedAndRequestedOrgas, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { mapEntityToAggregate as mapServiceProviderEntityToAggregate } from '../../service-provider/repo/service-provider-entity-mapper.js';
@@ -29,7 +30,6 @@ import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-service-providers.specification.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
-import { Err, UnionToResult } from '../../../shared/util/result.js';
 
 // Disable explicit types here because it's virtually impossible to do this correctly
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -104,6 +104,7 @@ export type RolleFindByParameters = {
     searchStr?: string;
     allowedOrganisationIds?: OrganisationID[];
     rollenArten?: RollenArt[];
+    merkmale?: RollenMerkmal[];
     rolleIds?: RolleID[];
     limit?: number;
     offset?: number;
@@ -266,6 +267,12 @@ export class RolleRepo {
         if (params.searchStr) {
             queries.push({ name: { $ilike: '%' + params.searchStr + '%' } });
         }
+        if (params.merkmale) {
+            queries.push({ merkmale: { merkmal: { $in: params.merkmale } } });
+        }
+        if (params.rollenArten) {
+            queries.push({ rollenart: { $in: params.rollenArten } });
+        }
 
         const baseQuery: FilterQuery<NoInfer<RolleEntity>> = { $and: queries };
 
@@ -298,6 +305,8 @@ export class RolleRepo {
         offset?: number,
         organisationIds?: OrganisationID[],
         rolleIds?: RolleID[],
+        merkmale?: RollenMerkmal[],
+        rollenArten?: RollenArt[],
     ): Promise<[Rolle<true>[], number]> {
         // Fallback to ROLLEN_VERWALTEN if no systemrechte are provided (this is the default behavior expected from the frontend)
         const orgIdsWithRecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
@@ -322,6 +331,8 @@ export class RolleRepo {
             offset,
             allowedOrganisationIds,
             rolleIds,
+            merkmale,
+            rollenArten,
         });
     }
 
