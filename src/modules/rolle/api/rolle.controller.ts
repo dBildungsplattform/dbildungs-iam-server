@@ -26,6 +26,7 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { uniq } from 'lodash-es';
 
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -33,6 +34,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/index.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { Public } from '../../authentication/api/public.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
@@ -61,8 +63,6 @@ import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
-import { uniq } from 'lodash-es';
 
 @UseFilters(new RolleExceptionFilter())
 @ApiTags('rolle')

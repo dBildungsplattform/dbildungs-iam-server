@@ -104,7 +104,6 @@ export class DbiamPersonenkontextWorkflowController {
 
         let rollenart: RollenArt | undefined;
         if (params.personId) {
-            // TODO: check permissions
             const pks: Array<Personenkontext<true>> = await this.personenkontextRepo.findByPerson(params.personId);
             const rolle: Option<Rolle<true>> = await pks[0]?.getRolle();
             if (rolle) {
