@@ -145,10 +145,15 @@ export class ServiceProviderRepo {
         return null;
     }
 
-    public async findVidisAngeboteforSchools(organisationIds: OrganisationID[]): Promise<ServiceProvider<true>[]> {
+    public async findVidisAngeboteforSchools(
+        organisationIds: OrganisationID[],
+        options?: ServiceProviderFindOptions,
+    ): Promise<ServiceProvider<true>[]> {
         if (organisationIds.length === 0) {
             return [];
         }
+
+        const exclude: readonly ['logo'] | undefined = options?.withLogo ? undefined : ['logo'];
 
         const serviceProviders: ServiceProviderEntity[] = await this.em.find(
             ServiceProviderEntity,
@@ -157,7 +162,7 @@ export class ServiceProviderRepo {
                 vidisAngebotId: { $ne: null },
             },
             {
-                exclude: ['logo'] as const,
+                exclude,
                 populate: ['merkmale', 'rollenartenWhitelist'],
             },
         );
