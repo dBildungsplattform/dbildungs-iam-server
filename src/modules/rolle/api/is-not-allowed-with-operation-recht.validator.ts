@@ -6,7 +6,7 @@ import {
     ValidatorConstraintInterface,
 } from 'class-validator';
 import { RollenSystemRechtEnum } from '../domain/systemrecht.js';
-import { OPERATION_RECHTE } from './operation-rechte.js';
+import { FIND_ALL_ROLLEN_OPERATION_RECHTE } from './find-all-rollen-operation-rechte.constant.js';
 
 @ValidatorConstraint({ name: 'isNotAllowedWithOperationRecht', async: false })
 export class IsNotAllowedWithOperationRechtConstraint implements ValidatorConstraintInterface {
@@ -14,7 +14,7 @@ export class IsNotAllowedWithOperationRechtConstraint implements ValidatorConstr
         const systemrechte: unknown = 'systemrechte' in args.object ? args.object.systemrechte : undefined;
         const isOperationRight: boolean =
             Array.isArray(systemrechte) &&
-            systemrechte.some((r: unknown) => OPERATION_RECHTE.includes(r as RollenSystemRechtEnum));
+            systemrechte.some((r: unknown) => FIND_ALL_ROLLEN_OPERATION_RECHTE.includes(r as RollenSystemRechtEnum));
 
         const isValueUndefined: boolean = value === undefined;
         const isValueEmptyArray: boolean = Array.isArray(value) && value.length === 0;
