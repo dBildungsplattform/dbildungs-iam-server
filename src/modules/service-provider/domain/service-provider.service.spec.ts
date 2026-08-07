@@ -580,7 +580,9 @@ describe('ServiceProviderService', () => {
                 kategorie: ServiceProviderKategorie.UNTERRICHT,
             });
             rollenerweiterung = DoFactory.createRollenerweiterung(true, { serviceProviderId: emailServiceProvider.id });
-            rollenerweiterung1 = DoFactory.createRollenerweiterung(true, { serviceProviderId: unterrichtServiceProvider.id });
+            rollenerweiterung1 = DoFactory.createRollenerweiterung(true, {
+                serviceProviderId: unterrichtServiceProvider.id,
+            });
             permissions = createMock(PersonPermissions);
         });
 
@@ -627,13 +629,16 @@ describe('ServiceProviderService', () => {
             });
 
             const [result, count]: Counted<ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount> =
-                await service.findAuthorized(permissions, {limit: 10, offset: 0});
+                await service.findAuthorized(permissions, { limit: 10, offset: 0 });
 
             expect(permissions.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
                 [RollenSystemRecht.ANGEBOTE_VERWALTEN],
                 true,
             );
-            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith('all', {limit: 10, offset: 0});
+            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith('all', {
+                limit: 10,
+                offset: 0,
+            });
             expect(result).toHaveLength(2);
             expect(count).toBe(2);
             expect(rolleRepo.findByServiceProviderIds).toHaveBeenCalledWith(
@@ -660,9 +665,12 @@ describe('ServiceProviderService', () => {
             });
 
             const [result, count]: Counted<ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount> =
-                await service.findAuthorized(permissions, {limit: 10, offset: 0});
+                await service.findAuthorized(permissions, { limit: 10, offset: 0 });
 
-            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith([organisation.id], {limit: 10, offset: 0});
+            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith([organisation.id], {
+                limit: 10,
+                offset: 0,
+            });
             expect(result).toHaveLength(1);
             expect(result[0]?.serviceProvider).toEqual(emailServiceProvider);
             expect(count).toBe(1);
@@ -686,9 +694,9 @@ describe('ServiceProviderService', () => {
             const limit: number = 5;
             const offset: number = 10;
 
-            await service.findAuthorized(permissions, {limit, offset});
+            await service.findAuthorized(permissions, { limit, offset });
 
-            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith('all', {limit, offset});
+            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith('all', { limit, offset });
         });
 
         it('returns empty array when no service providers found', async () => {
@@ -723,7 +731,7 @@ describe('ServiceProviderService', () => {
             organisationRepo.findByIds.mockResolvedValue(new Map());
 
             const [result]: Counted<ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount> =
-                await service.findAuthorized(permissions, {limit: 10, offset: 0});
+                await service.findAuthorized(permissions, { limit: 10, offset: 0 });
 
             expect(result[0]?.rollen).toEqual([]);
             expect(result[0]?.hasRollenerweiterungen).toBe(false);
@@ -751,10 +759,9 @@ describe('ServiceProviderService', () => {
                     kategorien: kategorienFilter,
                 });
 
-            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith(
-                'all',
-                {kategorien: kategorienFilter}
-            );
+            expect(serviceProviderRepo.findByOrganisationsWithMerkmale).toHaveBeenCalledWith('all', {
+                kategorien: kategorienFilter,
+            });
             expect(result).toHaveLength(1);
             expect(result[0]?.serviceProvider.kategorie).toBe(ServiceProviderKategorie.EMAIL);
             expect(count).toBe(1);
