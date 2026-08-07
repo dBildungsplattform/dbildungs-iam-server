@@ -31,9 +31,7 @@ describe('ApplyRollenerweiterungMultiExceptionFilter', () => {
             ]);
             const expected: DbiamApplyRollenerweiterungMultiError = new DbiamApplyRollenerweiterungMultiError({
                 code: 400,
-                rolleIdsWithI18nKeys: [
-                    { rolleId: rolleId, i18nKey: DbiamApplyRollenerweiterungMultiErrorI18NTypes.NOT_FOUND },
-                ],
+                idsWithI18nKeys: [{ id: rolleId, i18nKey: DbiamApplyRollenerweiterungMultiErrorI18NTypes.NOT_FOUND }],
             });
 
             filter.catch(error, argumentsHost);
@@ -49,9 +47,9 @@ describe('ApplyRollenerweiterungMultiExceptionFilter', () => {
             ]);
             const expected: DbiamApplyRollenerweiterungMultiError = new DbiamApplyRollenerweiterungMultiError({
                 code: 400,
-                rolleIdsWithI18nKeys: [
+                idsWithI18nKeys: [
                     {
-                        rolleId: rolleId,
+                        id: rolleId,
                         i18nKey: DbiamApplyRollenerweiterungMultiErrorI18NTypes.NO_REDUNDANT_ROLLENERWEITERUNG,
                     },
                 ],
@@ -70,9 +68,9 @@ describe('ApplyRollenerweiterungMultiExceptionFilter', () => {
             ]);
             const expected: DbiamApplyRollenerweiterungMultiError = new DbiamApplyRollenerweiterungMultiError({
                 code: 400,
-                rolleIdsWithI18nKeys: [
+                idsWithI18nKeys: [
                     {
-                        rolleId: rolleId,
+                        id: rolleId,
                         i18nKey: DbiamApplyRollenerweiterungMultiErrorI18NTypes.ROLLENERWEITERUNG_TECHNICAL_ERROR,
                     },
                 ],
