@@ -56,9 +56,11 @@ import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
+import { FindRolleForPersonAdministrationQueryParams } from './find-rolle-for-person-administration-query.param.js';
 import { FindRolleQueryParams } from './find-rolle-query.param.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
+import { RolleResponse } from './rolle.response.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
@@ -197,6 +199,41 @@ export class RolleController {
         };
 
         return new PagedResponse(pagedRolleWithServiceProvidersResponse);
+    }
+
+    @Get('for-person-administration')
+    @ApiOperation({ description: 'List rollen available for person administration.' })
+    @ApiOkResponse({
+        description: 'The rollen were successfully returned',
+        type: [RolleResponse],
+        headers: PagingHeadersObject,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get available rollen for person administration.' })
+    @ApiForbiddenResponse({
+        description: 'Insufficient permissions to get available rollen for person administration.',
+    })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while getting available rollen for person administration.',
+    })
+    public async findRollenAvailableForPersonAdministration(
+        @Query() queryParams: FindRolleForPersonAdministrationQueryParams,
+        @Permissions() permissions: IPersonPermissions,
+    ): Promise<PagedResponse<RolleResponse>> {
+        const [rollen, total]: [Rolle<true>[], number] =
+            await this.rolleFindService.findRollenAvailableForPersonAdministration({
+                permissions,
+                searchStr: queryParams.searchStr,
+                organisationIds: queryParams.organisationIds,
+                limit: queryParams.limit,
+                offset: queryParams.offset,
+            });
+
+        return new PagedResponse<RolleResponse>({
+            total,
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? rollen.length,
+            items: rollen.map((rolle: Rolle<true>) => new RolleResponse(rolle)),
+        });
     }
 
     @Get('systemrechte')

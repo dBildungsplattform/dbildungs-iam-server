@@ -29,11 +29,15 @@ import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
+import { FindRolleForPersonAdministrationQueryParams } from './find-rolle-for-person-administration-query.param.js';
+import { RolleResponse } from './rolle.response.js';
+import { Paged } from '../../../shared/paging/paged.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let rolleController: RolleController;
     let organisationServiceMock: DeepMocked<OrganisationService>;
+    let rolleFindServiceMock: DeepMocked<RolleFindService>;
     let rollenerweiterungRepoMock: DeepMocked<RollenerweiterungRepo>;
 
     beforeAll(async () => {
@@ -86,6 +90,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
         rolleController = module.get(RolleController);
         organisationServiceMock = module.get(OrganisationService);
         rollenerweiterungRepoMock = module.get(RollenerweiterungRepo);
+        rolleFindServiceMock = module.get(RolleFindService);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
@@ -160,6 +165,46 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     rolleController.createRollenerweiterung(createRollenerweiterungParams, permissions),
                 ).rejects.toThrow(MissingPermissionsError);
             });
+        });
+    });
+
+    describe('GET rolle/for-person-administration', () => {
+        it('should delegate to RolleFindService and wrap the paged response', async () => {
+            const permissions: IPersonPermissions = createPersonPermissionsMock();
+            const queryParams: FindRolleForPersonAdministrationQueryParams = {
+                searchStr: faker.string.alpha({ length: 10 }),
+                limit: 25,
+                offset: 0,
+                organisationIds: [faker.string.uuid()],
+            };
+            const foundRollen: Rolle<true>[] = [DoFactory.createRolle(true)];
+
+            rolleFindServiceMock.findRollenAvailableForPersonAdministration = vi
+                .fn()
+                .mockResolvedValueOnce([foundRollen, foundRollen.length]);
+
+            const result: Paged<RolleResponse> = await rolleController.findRollenAvailableForPersonAdministration(
+                queryParams,
+                permissions,
+            );
+
+            expect(rolleFindServiceMock.findRollenAvailableForPersonAdministration).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    permissions,
+                    searchStr: queryParams.searchStr,
+                    limit: queryParams.limit,
+                    offset: queryParams.offset,
+                    organisationIds: queryParams.organisationIds,
+                }),
+            );
+            expect(result).toEqual(
+                expect.objectContaining({
+                    items: expect.arrayContaining(foundRollen) as Array<RolleResponse>,
+                    total: foundRollen.length,
+                    offset: 0,
+                    limit: 25,
+                }),
+            );
         });
     });
 

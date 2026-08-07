@@ -161,6 +161,27 @@ describe('Rolle API', () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
 
+    describe('/GET rolle/for-person-administration', () => {
+        it('should return a paged response and not be shadowed by :rolleId', async () => {
+            const rolleName: string = faker.string.alpha({ length: 10 });
+            await rolleRepo.save(DoFactory.createRolle(false, { name: rolleName }));
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/for-person-administration?searchStr=${rolleName}&limit=25&offset=0`)
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual(
+                expect.objectContaining({
+                    items: expect.any(Array) as Array<RolleResponse>,
+                    total: expect.any(Number) as number,
+                    offset: 0,
+                    limit: 25,
+                }),
+            );
+        });
+    });
+
     describe('/POST rolle', () => {
         it('should return created rolle', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
