@@ -270,9 +270,6 @@ export class RolleRepo {
         if (params.merkmale) {
             queries.push({ merkmale: { merkmal: { $in: params.merkmale } } });
         }
-        if (params.rollenArten) {
-            queries.push({ rollenart: { $in: params.rollenArten } });
-        }
 
         const baseQuery: FilterQuery<NoInfer<RolleEntity>> = { $and: queries };
 
