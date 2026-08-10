@@ -84,7 +84,7 @@ describe('IsOnlyAllowedWithOperationRechtConstraint', () => {
             const constraint: IsOnlyAllowedWithOperationRechtConstraint =
                 new IsOnlyAllowedWithOperationRechtConstraint();
             expect(constraint.defaultMessage()).toBe(
-                'organisationIdContextForOperation can only be used with ROLLEN_ERWEITERN or IMPORT_DURCHFUEHREN. Use organisationIdsForFilter instead.',
+                'organisationContextForOperation can only be used with ROLLEN_ERWEITERN or IMPORT_DURCHFUEHREN. Use organisationenForFilter instead.',
             );
         });
     });

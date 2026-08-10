@@ -22,7 +22,7 @@ export class IsOnlyAllowedWithOperationRechtConstraint implements ValidatorConst
     }
 
     public defaultMessage(): string {
-        return 'organisationIdContextForOperation can only be used with ROLLEN_ERWEITERN or IMPORT_DURCHFUEHREN. Use organisationIdsForFilter instead.';
+        return 'organisationContextForOperation can only be used with ROLLEN_ERWEITERN or IMPORT_DURCHFUEHREN. Use organisationenForFilter instead.';
     }
 }
 
