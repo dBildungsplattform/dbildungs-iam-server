@@ -169,7 +169,7 @@ describe('Rolle API', () => {
         beforeEach(() => {
             query = {
                 limit: 25,
-                offset: 0
+                offset: 0,
             };
         });
 
@@ -195,7 +195,7 @@ describe('Rolle API', () => {
                         items: expect.arrayContaining([
                             expect.objectContaining({ name: sysadmin.name }),
                             expect.objectContaining({ name: schuladmin.name }),
-                        ]),
+                        ]) as Array<RolleResponse>,
                         total: 2,
                         offset: query.offset ?? 0,
                         limit: query.limit ?? 25,
@@ -206,7 +206,7 @@ describe('Rolle API', () => {
             it('should return all rollen for a logged-in user based on search filter', async () => {
                 query = {
                     ...query,
-                    searchStr: sysadmin.name
+                    searchStr: sysadmin.name,
                 };
 
                 const response: Response = await request(app.getHttpServer() as App)
@@ -218,9 +218,7 @@ describe('Rolle API', () => {
                 expect(response.body).toBeInstanceOf(Object);
                 expect(response.body).toEqual(
                     expect.objectContaining({
-                        items: [
-                            expect.objectContaining({ name: sysadmin.name })
-                        ],
+                        items: [expect.objectContaining({ name: sysadmin.name })],
                         total: 1,
                         offset: 0,
                         limit: 25,
@@ -231,7 +229,7 @@ describe('Rolle API', () => {
             it('should return empty list, if rollen do not exist', async () => {
                 query = {
                     ...query,
-                    searchStr: "does not exist",
+                    searchStr: 'does not exist',
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .get(url)
@@ -305,10 +303,10 @@ describe('Rolle API', () => {
                 expect(response.body).toEqual(
                     expect.objectContaining({
                         items: expect.arrayContaining([
-                            expect.objectContaining({id: rolleOnParent.id }),
-                            expect.objectContaining({id: rolleOnSchule1.id }),
-                            expect.objectContaining({id: rolleOnSchule2.id }),
-                        ]),
+                            expect.objectContaining({ id: rolleOnParent.id }),
+                            expect.objectContaining({ id: rolleOnSchule1.id }),
+                            expect.objectContaining({ id: rolleOnSchule2.id }),
+                        ]) as Array<RolleResponse>,
                         total: 3,
                         offset: 0,
                         limit: 25,
@@ -354,8 +352,8 @@ describe('Rolle API', () => {
             it('should return rollen for permitted organisationen', async () => {
                 query = {
                     ...query,
-                    organisationIds: [orga.id]
-                }
+                    organisationIds: [orga.id],
+                };
                 const response: Response = await request(app.getHttpServer() as App)
                     .get(url)
                     .query(query)
@@ -368,7 +366,7 @@ describe('Rolle API', () => {
                         items: expect.arrayContaining([
                             expect.objectContaining({ id: rolleOnParent.id }),
                             expect.objectContaining({ id: rolleOnSelf.id }),
-                        ]),
+                        ]) as Array<RolleResponse>,
                         total: 2,
                         offset: 0,
                         limit: 25,
@@ -383,11 +381,13 @@ describe('Rolle API', () => {
                         administeredBySchulstrukturknoten: orga.id,
                     }),
                 );
-                const rolleOnDifferentOrga: Rolle<true> = await rolleRepo.create(DoFactory.createRolle(false, { rollenart: RollenArt.LEIT }));
+                const rolleOnDifferentOrga: Rolle<true> = await rolleRepo.create(
+                    DoFactory.createRolle(false, { rollenart: RollenArt.LEIT }),
+                );
                 query = {
                     ...query,
                     organisationIds: [orga.id],
-                }
+                };
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .get(url)
@@ -401,7 +401,7 @@ describe('Rolle API', () => {
                         items: expect.arrayContaining([
                             expect.objectContaining({ id: rolleWithMismatchedRollenart.id }),
                             expect.objectContaining({ id: rolleOnDifferentOrga.id }),
-                        ])
+                        ]) as Array<RolleResponse>,
                     }),
                 );
             });
