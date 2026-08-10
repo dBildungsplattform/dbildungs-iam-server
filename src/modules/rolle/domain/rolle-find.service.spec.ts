@@ -21,6 +21,31 @@ type RolleFindServiceTestAccess = {
     getOrganisationIdsWithParents(organisationIds: OrganisationID[]): Promise<OrganisationID[]>;
 };
 
+function getValidationObjectForPersonAdministrationFindByParams(params: {
+    searchStr?: string;
+    limit?: number;
+    offset?: number;
+    expectedOrganisationIds?: Array<OrganisationID>;
+    expectedRollenArten?: Array<RollenArt>;
+}): Partial<RolleFindByParameters> {
+    const validatorObject: Partial<RolleFindByParameters> = {
+        searchStr: params.searchStr,
+        limit: params.limit,
+        offset: params.offset,
+    };
+    if (params.expectedRollenArten) {
+        validatorObject.rollenArten = expect.arrayContaining(
+            params.expectedRollenArten,
+        ) as typeof params.expectedRollenArten;
+    }
+    if (params.expectedOrganisationIds) {
+        validatorObject.allowedOrganisationIds = expect.arrayContaining(
+            params.expectedOrganisationIds,
+        ) as typeof params.expectedOrganisationIds;
+    }
+    return validatorObject;
+}
+
 describe('RolleFindService', () => {
     let module: TestingModule;
     let rolleFindService: RolleFindService;
@@ -505,6 +530,173 @@ describe('RolleFindService', () => {
                 organisationId: 'does not exist',
             });
             expect(result).toEqual([[], 0]);
+        });
+    });
+
+    describe('findRollenAvailableForPersonAdministration', () => {
+        let permissionsMock: DeepMocked<PersonPermissions>;
+
+        beforeEach(() => {
+            permissionsMock = createMock(PersonPermissions);
+        });
+
+        describe('when user is Landesadmin', () => {
+            beforeEach(() => {
+                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+                rolleRepoMock.findBy.mockResolvedValue([[], 0]);
+            });
+
+            describe.each([['rollenName'], [undefined]])('when searchStr is %s', (searchStr?: string) => {
+                describe.each([[10], [undefined]])('when limit is %s', (limit?: number) => {
+                    describe('when no organisations are selected', () => {
+                        test('it should run the correct query', async () => {
+                            await rolleFindService.findRollenAvailableForPersonAdministration({
+                                permissions: permissionsMock,
+                                searchStr,
+                                limit,
+                            });
+                            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                                getValidationObjectForPersonAdministrationFindByParams({
+                                    searchStr,
+                                    limit,
+                                }),
+                            );
+                        });
+                    });
+
+                    describe('when 1 organisation is selected', () => {
+                        describe.each([[OrganisationsTyp.LAND], [OrganisationsTyp.TRAEGER], [OrganisationsTyp.SCHULE]])(
+                            'when organisationTyp is %s',
+                            (organisationsTyp: OrganisationsTyp) => {
+                                let parent: Organisation<true>;
+                                let organisation: Organisation<true>;
+
+                                beforeEach(() => {
+                                    parent = DoFactory.createOrganisation<true>(true, { typ: OrganisationsTyp.ROOT });
+                                    organisation = DoFactory.createOrganisation(true, {
+                                        typ: organisationsTyp,
+                                        zugehoerigZu: parent.id,
+                                        administriertVon: parent.id,
+                                    });
+                                    organisationRepoMock.findDistinctOrganisationsTypen.mockResolvedValue([
+                                        organisationsTyp,
+                                    ]);
+                                    organisationRepoMock.findParentOrgasForIds.mockResolvedValue([parent]);
+                                });
+
+                                test('it should run the correct query', async () => {
+                                    await rolleFindService.findRollenAvailableForPersonAdministration({
+                                        permissions: permissionsMock,
+                                        searchStr,
+                                        limit,
+                                        organisationIds: [organisation.id],
+                                    });
+                                    expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                                        getValidationObjectForPersonAdministrationFindByParams({
+                                            searchStr,
+                                            limit,
+                                            expectedRollenArten: Array.from(
+                                                OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(
+                                                    organisationsTyp,
+                                                ),
+                                            ),
+                                            expectedOrganisationIds: [organisation.id, parent.id],
+                                        }),
+                                    );
+                                });
+                            },
+                        );
+                    });
+                });
+            });
+        });
+
+        describe('when user is Schuladmin', () => {
+            describe.each([[1], [2]])('with %s schulen', (numberOfSchulen: number) => {
+                let traeger: Organisation<true>;
+                let schulen: Array<Organisation<true>>;
+
+                beforeEach(() => {
+                    traeger = DoFactory.createOrganisation<true>(true, { typ: OrganisationsTyp.TRAEGER });
+                    schulen = DoFactory.createMany<Organisation<true>>(
+                        numberOfSchulen,
+                        true,
+                        DoFactory.createOrganisation,
+                        { typ: OrganisationsTyp.SCHULE, zugehoerigZu: traeger.id, administriertVon: traeger.id },
+                    );
+                    permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                        all: false,
+                        orgaIds: schulen.map((s: Organisation<true>) => s.id),
+                    });
+                    organisationRepoMock.findDistinctOrganisationsTypen.mockResolvedValue([
+                        OrganisationsTyp.SCHULE,
+                    ]);
+                    organisationRepoMock.findParentOrgasForIds.mockResolvedValue([traeger]);
+                    rolleRepoMock.findBy.mockResolvedValue([[], 0]);
+                });
+
+                describe.each([['rollenName'], [undefined]])('when searchStr is %s', (searchStr?: string) => {
+                    describe.each([[10], [undefined]])('when limit is %s', (limit?: number) => {
+                        describe('when no organisations are selected', () => {
+                            test('it should run the correct query', async () => {
+                                await rolleFindService.findRollenAvailableForPersonAdministration({
+                                    permissions: permissionsMock,
+                                    searchStr,
+                                    limit,
+                                });
+                                expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                                    getValidationObjectForPersonAdministrationFindByParams({
+                                        searchStr,
+                                        limit,
+                                        expectedRollenArten: [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN],
+                                        expectedOrganisationIds: [
+                                            ...schulen.map((s: Organisation<true>) => s.id),
+                                            traeger.id,
+                                        ],
+                                    }),
+                                );
+                            });
+                        });
+
+                        describe('when 1 organisation is selected', () => {
+                            test('it should run the correct query', async () => {
+                                const organisationIds: Array<string> = [schulen[0]!.id];
+                                await rolleFindService.findRollenAvailableForPersonAdministration({
+                                    permissions: permissionsMock,
+                                    searchStr,
+                                    limit,
+                                    organisationIds,
+                                });
+                                expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                                    getValidationObjectForPersonAdministrationFindByParams({
+                                        searchStr,
+                                        limit,
+                                        expectedRollenArten: [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN],
+                                        expectedOrganisationIds: [...organisationIds, traeger.id],
+                                    }),
+                                );
+                            });
+                        });
+                    });
+                });
+            });
+
+            describe('when no organisations are permitted', () => {
+                beforeEach(() => {
+                    permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                        all: false,
+                        orgaIds: [],
+                    });
+                });
+
+                test('it should return an empty array', async () => {
+                    const result: Counted<Rolle<true>> =
+                        await rolleFindService.findRollenAvailableForPersonAdministration({
+                            permissions: permissionsMock,
+                        });
+                    expect(result).toEqual([[], 0]);
+                });
+            });
         });
     });
 
