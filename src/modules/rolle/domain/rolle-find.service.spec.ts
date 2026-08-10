@@ -825,9 +825,7 @@ describe('RolleFindService', () => {
                         all: false,
                         orgaIds: schulen.map((s: Organisation<true>) => s.id),
                     });
-                    organisationRepoMock.findDistinctOrganisationsTypen.mockResolvedValue([
-                        OrganisationsTyp.SCHULE,
-                    ]);
+                    organisationRepoMock.findDistinctOrganisationsTypen.mockResolvedValue([OrganisationsTyp.SCHULE]);
                     organisationRepoMock.findParentOrgasForIds.mockResolvedValue([traeger]);
                     rolleRepoMock.findBy.mockResolvedValue([[], 0]);
                 });

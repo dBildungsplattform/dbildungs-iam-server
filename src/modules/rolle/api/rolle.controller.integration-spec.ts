@@ -201,7 +201,7 @@ describe('Rolle API', () => {
                         items: expect.arrayContaining([
                             expect.objectContaining({ name: sysadmin.name }),
                             expect.objectContaining({ name: schuladmin.name }),
-                        ]),
+                        ]) as Array<RolleResponse>,
                         total: 2,
                         offset: query.offset ?? 0,
                         limit: query.limit ?? 25,
@@ -312,7 +312,7 @@ describe('Rolle API', () => {
                             expect.objectContaining({ id: rolleOnParent.id }),
                             expect.objectContaining({ id: rolleOnSchule1.id }),
                             expect.objectContaining({ id: rolleOnSchule2.id }),
-                        ]),
+                        ]) as Array<RolleResponse>,
                         total: 3,
                         offset: 0,
                         limit: 25,
@@ -372,7 +372,7 @@ describe('Rolle API', () => {
                         items: expect.arrayContaining([
                             expect.objectContaining({ id: rolleOnParent.id }),
                             expect.objectContaining({ id: rolleOnSelf.id }),
-                        ]),
+                        ]) as Array<RolleResponse>,
                         total: 2,
                         offset: 0,
                         limit: 25,
@@ -407,7 +407,7 @@ describe('Rolle API', () => {
                         items: expect.arrayContaining([
                             expect.objectContaining({ id: rolleWithMismatchedRollenart.id }),
                             expect.objectContaining({ id: rolleOnDifferentOrga.id }),
-                        ]),
+                        ]) as Array<RolleResponse>,
                     }),
                 );
             });
