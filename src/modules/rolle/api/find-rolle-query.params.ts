@@ -27,7 +27,7 @@ export class FindRollenQueryParams extends PagedQueryParams {
             'Only relevant when systemrechte contains ROLLEN_ERWEITERN or IMPORT_DURCHFUEHREN.' +
             ' Provides the organisation context for the requested workflow operation.' +
             ' If provided, only roles available for that organisation will be returned.' +
-            ' Mutually exclusive with organisationIdsForFilter.',
+            ' Mutually exclusive with organisationenForFilter.',
         required: false,
     })
     public readonly organisationContextForOperation?: OrganisationID;
