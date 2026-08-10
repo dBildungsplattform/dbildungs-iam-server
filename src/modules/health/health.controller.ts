@@ -1,5 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
-import { HealthCheck, HealthCheckResult, HealthCheckService, HealthIndicatorResult } from '@nestjs/terminus';
+import {
+    HealthCheck,
+    HealthCheckResult,
+    HealthCheckService,
+    HealthIndicatorResult,
+    MikroOrmHealthIndicator,
+} from '@nestjs/terminus';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';
 import { RedisHealthIndicator } from './redis.health-indicator.js';
@@ -12,6 +18,7 @@ export class HealthController {
         private health: HealthCheckService,
         private keycloak: KeycloakHealthIndicator,
         private redis: RedisHealthIndicator,
+        private microOrm: MikroOrmHealthIndicator,
     ) {}
 
     @Get()
@@ -21,6 +28,7 @@ export class HealthController {
         return this.health.check([
             (): Promise<HealthIndicatorResult> => this.keycloak.check(),
             (): Promise<HealthIndicatorResult> => this.redis.check(),
+            (): Promise<HealthIndicatorResult> => this.microOrm.pingCheck('database', { timeout: 1500 }),
         ]);
     }
 }

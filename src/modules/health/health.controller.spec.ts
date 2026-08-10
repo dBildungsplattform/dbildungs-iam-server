@@ -78,5 +78,6 @@ describe('HealthController', () => {
         }
         expect(keycloakHealthIndicator.check).toHaveBeenCalled();
         expect(redisHealthIndicator.check).toHaveBeenCalled();
+        expect(mikroOrmHealthIndicator.pingCheck).toHaveBeenCalledWith('database', { timeout: 1500 });
     });
 });
