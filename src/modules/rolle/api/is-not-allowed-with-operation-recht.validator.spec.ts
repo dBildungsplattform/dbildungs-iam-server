@@ -94,7 +94,7 @@ describe('IsNotAllowedWithOperationRechtConstraint', () => {
         it('should return the expected error message', () => {
             const constraint: IsNotAllowedWithOperationRechtConstraint = new IsNotAllowedWithOperationRechtConstraint();
             expect(constraint.defaultMessage()).toBe(
-                'organisationIdsForFilter cannot be used with ROLLEN_ERWEITERN or IMPORT_DURCHFUEHREN. Use organisationIdContextForOperation instead.',
+                'organisationenForFilter cannot be used with ROLLEN_ERWEITERN or IMPORT_DURCHFUEHREN. Use organisationContextForOperation instead.',
             );
         });
     });

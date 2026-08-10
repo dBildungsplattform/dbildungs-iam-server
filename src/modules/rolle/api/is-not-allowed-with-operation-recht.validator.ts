@@ -24,7 +24,7 @@ export class IsNotAllowedWithOperationRechtConstraint implements ValidatorConstr
     }
 
     public defaultMessage(): string {
-        return 'organisationIdsForFilter cannot be used with ROLLEN_ERWEITERN or IMPORT_DURCHFUEHREN. Use organisationIdContextForOperation instead.';
+        return 'organisationenForFilter cannot be used with ROLLEN_ERWEITERN or IMPORT_DURCHFUEHREN. Use organisationContextForOperation instead.';
     }
 }
 
