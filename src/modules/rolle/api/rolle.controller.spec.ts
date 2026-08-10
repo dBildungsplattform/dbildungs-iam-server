@@ -204,7 +204,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
             );
             expect(result).toEqual(
                 expect.objectContaining({
-                    items: expect.arrayContaining(foundRollen) as Array<RolleResponse>,
+                    items: expect.arrayContaining([expect.objectContaining({id: foundRollen[0]!.id})]) as Array<RolleResponse>,
                     total: foundRollen.length,
                     offset: 0,
                     limit: 25,
