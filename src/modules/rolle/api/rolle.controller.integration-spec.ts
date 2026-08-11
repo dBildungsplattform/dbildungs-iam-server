@@ -60,6 +60,7 @@ import { ServiceProviderResponse } from '../../service-provider/api/service-prov
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { FindRolleQueryParams } from './find-rolle-query.param.js';
+import { ErrorIdType } from './ErrorIdType.enum.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -1932,6 +1933,10 @@ describe('Rolle API', () => {
         });
 
         it('should return 500 if applying rollenerweiterung changes fails', async () => {
+<<<<<<< HEAD
+=======
+            const serviceProviderId: string = faker.string.uuid();
+>>>>>>> origin/SPSH-3997
             const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
             );
@@ -1955,14 +1960,21 @@ describe('Rolle API', () => {
             const response: Response = await request(app.getHttpServer() as App)
                 .post(`/rolle/${rolle.id}/organisation/${organisation.id}/apply`)
                 .send({
-                    addErweiterungenForServiceProviderIds: [faker.string.uuid()],
+                    addErweiterungenForServiceProviderIds: [serviceProviderId],
                     removeErweiterungenForServiceProviderIds: [],
                 });
 
-            expect(response.status).toBe(500);
+            expect(response.status).toBe(400);
+
             expect(response.body).toEqual({
-                statusCode: 500,
-                message: 'Internal server error',
+                code: 400,
+                idsWithI18nKeys: [
+                    {
+                        id: serviceProviderId,
+                        errorIdType: ErrorIdType.ROLLE,
+                        i18nKey: 'NOT_FOUND',
+                    },
+                ],
             });
         });
     });

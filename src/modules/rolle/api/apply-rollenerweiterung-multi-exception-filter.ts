@@ -1,12 +1,12 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { Response } from 'express';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
-import { ApplyRollenerweiterungError } from './apply-rollenerweiterung.error.js';
+import { ApplyRollenerweiterungError, ApplyRollenerweiterungErrorEntry } from './apply-rollenerweiterung.error.js';
 import {
     DbiamApplyRollenerweiterungMultiError,
     DbiamApplyRollenerweiterungMultiErrorI18NTypes,
 } from './dbiam-apply-rollenerweiterung-multi.error.js';
-import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { NoRedundantRollenerweiterungError } from '../specification/error/no-redundant-rollenerweiterung.error.js';
 
 @Catch(ApplyRollenerweiterungError)
@@ -35,8 +35,9 @@ export class ApplyRollenerweiterungMultiExceptionFilter implements ExceptionFilt
     ): DbiamRolleError | DbiamApplyRollenerweiterungMultiError {
         return new DbiamApplyRollenerweiterungMultiError({
             code: 400,
-            rolleIdsWithI18nKeys: error.errors.map((e: { id: string | undefined; error: DomainError }) => ({
-                rolleId: e.id!,
+            idsWithI18nKeys: error.rollenerweiterungErrors.map((e: ApplyRollenerweiterungErrorEntry) => ({
+                id: e.id,
+                errorIdType: e.errorIdType,
                 i18nKey:
                     this.ERROR_I18NMAPPING.get(e.error.constructor.name) ||
                     DbiamApplyRollenerweiterungMultiErrorI18NTypes.ROLLENERWEITERUNG_TECHNICAL_ERROR,

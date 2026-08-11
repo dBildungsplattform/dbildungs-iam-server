@@ -68,8 +68,9 @@ import { ApplyRollenerweiterungForRollePathParams } from './apply-rollenerweiter
 import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { ApplyRollenerweiterungForRolleService } from '../domain/apply-rollenerweiterungen-for-rolle-service.js';
 import { ApplyRollenerweiterungError } from './apply-rollenerweiterung.error.js';
+import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
 
-@UseFilters(new RolleExceptionFilter())
+@UseFilters(new RolleExceptionFilter(), new ApplyRollenerweiterungMultiExceptionFilter())
 @ApiTags('rolle')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])

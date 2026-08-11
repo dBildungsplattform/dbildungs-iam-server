@@ -16,25 +16,26 @@ import { ServiceProviderMerkmal } from '../../service-provider/domain/service-pr
 import { MissingMerkmalVerfuegbarFuerRollenerweiterungError } from './missing-merkmal-verfuegbar-fuer-rollenerweiterung.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { ApplyRollenerweiterungChangesBodyParams } from '../api/apply-rollenerweiterung-changes.body.params.js';
-import { RollenMerkmal } from './rolle.enums.js';
 import { ApplyRollenerweiterungError } from '../api/apply-rollenerweiterung.error.js';
+import { ErrorIdType } from '../api/ErrorIdType.enum.js';
+import { RollenMerkmal } from './rolle.enums.js';
 
-type TunknownResultForServiceProvider = {
+type TunknownResultForRolle = {
     serviceProviderId: string;
+    errorIdType: ErrorIdType.ROLLE;
     result: Result<unknown, DomainError>;
 };
 
-type TerrorResultForServiceProvider = {
+type TerrorResultForRolle = {
     serviceProviderId: string;
+    errorIdType: ErrorIdType.ROLLE;
     result: {
         ok: false;
         error: DomainError;
     };
 };
 
-function isErrorResultForServiceProvider<T>(r: {
-    result: Result<T, DomainError>;
-}): r is TerrorResultForServiceProvider {
+function isErrorResultForServiceProvider<T>(r: { result: Result<T, DomainError> }): r is TerrorResultForRolle {
     return r.result.ok === false;
 }
 
@@ -94,37 +95,37 @@ export class ApplyRollenerweiterungForRolleService {
             uniq([...body.addErweiterungenForServiceProviderIds, ...body.removeErweiterungenForServiceProviderIds]),
         );
 
-        const [addResults, removeResults]: [TunknownResultForServiceProvider[], TunknownResultForServiceProvider[]] =
-            await Promise.all([
-                Promise.all(
-                    this.handleAddErweiterungen(
-                        orgaId,
-                        rolleId,
-                        existingErweiterungen,
-                        body.addErweiterungenForServiceProviderIds,
-                        serviceProviders,
-                        permissions,
-                    ),
+        const [addResults, removeResults]: [TunknownResultForRolle[], TunknownResultForRolle[]] = await Promise.all([
+            Promise.all(
+                this.handleAddErweiterungen(
+                    orgaId,
+                    rolleId,
+                    existingErweiterungen,
+                    body.addErweiterungenForServiceProviderIds,
+                    serviceProviders,
+                    permissions,
                 ),
-                Promise.all(
-                    this.handleRemoveErweiterungen(
-                        orgaId,
-                        rolleId,
-                        existingErweiterungen,
-                        body.removeErweiterungenForServiceProviderIds,
-                        serviceProviders,
-                    ),
+            ),
+            Promise.all(
+                this.handleRemoveErweiterungen(
+                    orgaId,
+                    rolleId,
+                    existingErweiterungen,
+                    body.removeErweiterungenForServiceProviderIds,
+                    serviceProviders,
                 ),
-            ]);
+            ),
+        ]);
 
-        const results: TunknownResultForServiceProvider[] = [...addResults, ...removeResults];
-        const errors: TerrorResultForServiceProvider[] = results.filter(isErrorResultForServiceProvider);
+        const results: TunknownResultForRolle[] = [...addResults, ...removeResults];
+        const errors: TerrorResultForRolle[] = results.filter(isErrorResultForServiceProvider);
 
         if (errors.length > 0) {
             return Err(
                 new ApplyRollenerweiterungError(
-                    errors.map((e: TerrorResultForServiceProvider) => ({
+                    errors.map((e: TerrorResultForRolle) => ({
                         id: e.serviceProviderId,
+                        errorIdType: e.errorIdType,
                         error: e.result.error,
                     })),
                 ),
@@ -141,14 +142,8 @@ export class ApplyRollenerweiterungForRolleService {
         addErweiterungenForServiceProviderIds: string[],
         serviceProviders: Map<string, ServiceProvider<true>>,
         permissions: IPersonPermissions,
-    ): Promise<{
-        serviceProviderId: string;
-        result: Result<Rollenerweiterung<true>, DomainError>;
-    }>[] {
-        const erweiterungenPromises: Promise<{
-            serviceProviderId: string;
-            result: Result<Rollenerweiterung<true>, DomainError>;
-        }>[] = addErweiterungenForServiceProviderIds
+    ): Promise<TunknownResultForRolle>[] {
+        const erweiterungenPromises: Promise<TunknownResultForRolle>[] = addErweiterungenForServiceProviderIds
             .filter((serviceProviderId: string) => {
                 return (
                     existingErweiterungen.findIndex(
@@ -166,6 +161,7 @@ export class ApplyRollenerweiterungForRolleService {
                 if (!serviceProvider) {
                     return Promise.resolve({
                         serviceProviderId,
+                        errorIdType: ErrorIdType.ROLLE,
                         result: Err(new EntityNotFoundError('ServiceProvider', serviceProviderId)),
                     });
                 }
@@ -173,6 +169,7 @@ export class ApplyRollenerweiterungForRolleService {
                 if (!serviceProvider.merkmale.includes(ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG)) {
                     return Promise.resolve({
                         serviceProviderId,
+                        errorIdType: ErrorIdType.ROLLE,
                         result: Err(new MissingMerkmalVerfuegbarFuerRollenerweiterungError()),
                     });
                 }
@@ -191,6 +188,7 @@ export class ApplyRollenerweiterungForRolleService {
                     )
                     .then((result: Result<Rollenerweiterung<true>, DomainError>) => ({
                         serviceProviderId,
+                        errorIdType: ErrorIdType.ROLLE,
                         result,
                     }));
             });
@@ -204,11 +202,8 @@ export class ApplyRollenerweiterungForRolleService {
         existingErweiterungen: Array<Rollenerweiterung<true>> = [],
         removeErweiterungenForServiceProviderIds: string[],
         serviceProviders: Map<string, ServiceProvider<true>>,
-    ): Promise<{ serviceProviderId: string; result: Result<null, DomainError> }>[] {
-        const removeErweiterungenPromises: Promise<{
-            serviceProviderId: string;
-            result: Result<null, DomainError>;
-        }>[] = removeErweiterungenForServiceProviderIds
+    ): Promise<TunknownResultForRolle>[] {
+        const removeErweiterungenPromises: Promise<TunknownResultForRolle>[] = removeErweiterungenForServiceProviderIds
             .filter((serviceProviderId: string) => {
                 return existingErweiterungen.some(
                     (re: Rollenerweiterung<true>) => re.serviceProviderId === serviceProviderId,
@@ -224,6 +219,7 @@ export class ApplyRollenerweiterungForRolleService {
                 if (!serviceProvider) {
                     return Promise.resolve({
                         serviceProviderId,
+                        errorIdType: ErrorIdType.ROLLE,
                         result: Err(new EntityNotFoundError('ServiceProvider', serviceProviderId)),
                     });
                 }
@@ -236,6 +232,7 @@ export class ApplyRollenerweiterungForRolleService {
                     })
                     .then((result: Result<null, DomainError>) => ({
                         serviceProviderId,
+                        errorIdType: ErrorIdType.ROLLE,
                         result,
                     }));
             });
