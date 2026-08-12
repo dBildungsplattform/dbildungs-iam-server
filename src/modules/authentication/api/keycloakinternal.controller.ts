@@ -82,12 +82,10 @@ export class KeycloakInternalController {
     }
 
     private getNewOxParams(workflow: InitializedWorkflow): NewOxParams | undefined {
-        let oxParams: NewOxParams |undefined;
+        let oxParams: NewOxParams | undefined = undefined;
 
         if (workflow.oxLoginId) {
             oxParams = { oxLoginId: workflow.oxLoginId };
-        } else {
-            oxParams = undefined;
         }
     
         return oxParams;
@@ -100,14 +98,12 @@ export class KeycloakInternalController {
                     workflow.erweiterteSP,
                 );
 
-        let oxParams: OldOxParams |undefined;
+        let oxParams: OldOxParams | undefined = undefined;
         if (this.hasEmail(mergedExternalPkData)) {
                 oxParams = {
                     contextId: workflow.contextID,
                     username: workflow.person.username!,
                 };
-        } else {
-                oxParams = undefined;
         }
 
         return oxParams;
