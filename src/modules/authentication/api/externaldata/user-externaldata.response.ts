@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { uniq } from 'lodash-es';
 import { Person } from '../../../person/domain/person.js';
 import { ErweiterterServiceProviderForPK } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
 import { UserExternaldataWorkflowAggregate } from '../../domain/user-extenaldata.workflow.js';
 import { RequiredExternalPkData } from '../authentication.controller.js';
 import { UserExternalDataResponseIqshHelpdeskPk } from './user-externaldata-iqshhelpdesk-pk.response.js';
@@ -97,10 +98,15 @@ export class UserExternalDataResponse {
             ),
             email,
         );
-        const polyteia: UserExternalDataResponsePolyteia = new UserExternalDataResponsePolyteia(
-            uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.rollenart)),
-        );
+
+        const polyteia: UserExternalDataResponsePolyteia = UserExternalDataResponse.createPolyteiaResponse(externalPkData);
 
         return new UserExternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage, iqshHelpdesk, polyteia);
+    }
+
+    private static createPolyteiaResponse(externalPkData: RequiredExternalPkData[]): UserExternalDataResponsePolyteia {
+        const uniqueRollenart: RollenArt[] = uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.rollenart));
+
+        return new UserExternalDataResponsePolyteia(uniqueRollenart);
     }
 }
