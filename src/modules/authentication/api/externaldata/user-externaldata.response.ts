@@ -65,14 +65,61 @@ export class UserExternalDataResponse {
     ): UserExternalDataResponse {
         const ox: Option<UserExternalDataResponseOx> =
             contextParams && UserExternalDataResponseOx.createNew(contextParams);
-        const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(person.id);
-        const mergedExternalPkData: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
+
+        const itslearning: UserExeternalDataResponseItslearning = UserExternalDataResponse.createItslearningResponse(person);
+
+        const mergedExternalPkData: RequiredExternalPkData[] = UserExternalDataResponse.createMergedExternalPkData(
             externalPkData,
             erweiterteSP,
         );
+
+        const vidis: UserExeternalDataResponseVidis = UserExternalDataResponse.createVidisResponse(
+            person,
+            externalPkData,
+            mergedExternalPkData,
+            email,
+        );
+
+        const opsh: UserExeternalDataResponseOpsh = UserExternalDataResponse.createOpshResponse(externalPkData, person, email);
+
+        const onlineDateiablage: UserExeternalDataResponseOnlineDateiablage =
+            UserExternalDataResponse.createOnlineDateiablageResponse(person);
+
+        const iqshHelpdesk: UserExternalDataResponseIqshHelpdesk =
+            UserExternalDataResponse.createIqshHelpdeskResponse(externalPkData, person, email);
+
+        const polyteia: UserExternalDataResponsePolyteia = UserExternalDataResponse.createPolyteiaResponse(externalPkData);
+
+        return new UserExternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage, iqshHelpdesk, polyteia);
+    }
+
+    private static createItslearningResponse(person: Person<true>): UserExeternalDataResponseItslearning {
+        return new UserExeternalDataResponseItslearning(person.id);
+    }
+
+    private static createMergedExternalPkData(
+        externalPkData: RequiredExternalPkData[],
+        erweiterteSP: ErweiterterServiceProviderForPK[],
+    ): RequiredExternalPkData[] {
+        return UserExternaldataWorkflowAggregate.mergeServiceProviders(externalPkData, erweiterteSP);
+    }
+
+    private static createExternalPkDataWithVidisAngebotId(
+        mergedExternalPkData: RequiredExternalPkData[],
+    ): RequiredExternalPkData[] {
+        return UserExternaldataWorkflowAggregate.getExternalPkDataWithSpWithVidisAngebotId(mergedExternalPkData);
+    }
+
+    private static createVidisResponse(
+        person: Person<true>,
+        externalPkData: RequiredExternalPkData[],
+        mergedExternalPkData: RequiredExternalPkData[],
+        email?: string,
+    ): UserExeternalDataResponseVidis {
         const externalPkDataWithVidisAngebotId: RequiredExternalPkData[] =
-            UserExternaldataWorkflowAggregate.getExternalPkDataWithSpWithVidisAngebotId(mergedExternalPkData);
-        const vidis: UserExeternalDataResponseVidis = new UserExeternalDataResponseVidis(
+            UserExternalDataResponse.createExternalPkDataWithVidisAngebotId(mergedExternalPkData);
+
+        return new UserExeternalDataResponseVidis(
             person.id,
             person.vorname,
             person.familienname,
@@ -80,7 +127,14 @@ export class UserExternalDataResponse {
             email,
             uniq(externalPkDataWithVidisAngebotId.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean)),
         );
-        const opsh: UserExeternalDataResponseOpsh = new UserExeternalDataResponseOpsh(
+    }
+
+    private static createOpshResponse(
+        externalPkData: RequiredExternalPkData[],
+        person: Person<true>,
+        email?: string,
+    ): UserExeternalDataResponseOpsh {
+        return new UserExeternalDataResponseOpsh(
             person.vorname,
             person.familienname,
             externalPkData.map(
@@ -88,9 +142,18 @@ export class UserExternalDataResponse {
             ),
             email,
         );
-        const onlineDateiablage: UserExeternalDataResponseOnlineDateiablage =
-            new UserExeternalDataResponseOnlineDateiablage(person.id);
-        const iqshHelpdesk: UserExternalDataResponseIqshHelpdesk = new UserExternalDataResponseIqshHelpdesk(
+    }
+
+    private static createOnlineDateiablageResponse(person: Person<true>): UserExeternalDataResponseOnlineDateiablage {
+        return new UserExeternalDataResponseOnlineDateiablage(person.id);
+    }
+
+    private static createIqshHelpdeskResponse(
+        externalPkData: RequiredExternalPkData[],
+        person: Person<true>,
+        email?: string,
+    ): UserExternalDataResponseIqshHelpdesk {
+        return new UserExternalDataResponseIqshHelpdesk(
             person.vorname,
             person.familienname,
             externalPkData.map(
@@ -98,10 +161,6 @@ export class UserExternalDataResponse {
             ),
             email,
         );
-
-        const polyteia: UserExternalDataResponsePolyteia = UserExternalDataResponse.createPolyteiaResponse(externalPkData);
-
-        return new UserExternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage, iqshHelpdesk, polyteia);
     }
 
     private static createPolyteiaResponse(externalPkData: RequiredExternalPkData[]): UserExternalDataResponsePolyteia {
