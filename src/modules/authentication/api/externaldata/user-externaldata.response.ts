@@ -1,17 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { uniq } from 'lodash-es';
 import { Person } from '../../../person/domain/person.js';
+import { ErweiterterServiceProviderForPK } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { UserExternaldataWorkflowAggregate } from '../../domain/user-extenaldata.workflow.js';
 import { RequiredExternalPkData } from '../authentication.controller.js';
+import { UserExternalDataResponseIqshHelpdeskPk } from './user-externaldata-iqshhelpdesk-pk.response.js';
+import { UserExternalDataResponseIqshHelpdesk } from './user-externaldata-iqshhelpdesk.response.js';
 import { UserExeternalDataResponseItslearning } from './user-externaldata-itslearning.response.js';
 import { UserExeternalDataResponseOnlineDateiablage } from './user-externaldata-onlinedateiablage.response.js';
 import { UserExeternalDataResponseOpshPk } from './user-externaldata-opsh-pk.response.js';
 import { UserExeternalDataResponseOpsh } from './user-externaldata-opsh.response.js';
 import { NewOxParams, OldOxParams, UserExternalDataResponseOx } from './user-externaldata-ox.response.js';
+import { UserExternalDataResponsePolyteia } from './user-externaldata-polyteia.response.js';
 import { UserExeternalDataResponseVidis } from './user-externaldata-vidis.response.js';
-import { UserExternaldataWorkflowAggregate } from '../../domain/user-extenaldata.workflow.js';
-import { ErweiterterServiceProviderForPK } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { UserExternalDataResponseIqshHelpdesk } from './user-externaldata-iqshhelpdesk.response.js';
-import { UserExternalDataResponseIqshHelpdeskPk } from './user-externaldata-iqshhelpdesk-pk.response.js';
 
 export class UserExternalDataResponse {
     //optional, um den Zugriff auf OX zu verhindern, falls kein Lehrerkontext mehr an der Person hängt
@@ -33,6 +34,9 @@ export class UserExternalDataResponse {
     @ApiProperty({ type: UserExternalDataResponseIqshHelpdesk })
     public iqshHelpdesk: UserExternalDataResponseIqshHelpdesk;
 
+    @ApiProperty({ type: UserExternalDataResponsePolyteia })
+    public polyteia: UserExternalDataResponsePolyteia;
+
     private constructor(
         ox: UserExternalDataResponseOx | undefined,
         itslearning: UserExeternalDataResponseItslearning,
@@ -40,6 +44,7 @@ export class UserExternalDataResponse {
         opsh: UserExeternalDataResponseOpsh,
         onlineDateiablage: UserExeternalDataResponseOnlineDateiablage,
         iqshHelpdesk: UserExternalDataResponseIqshHelpdesk,
+        polyteia: UserExternalDataResponsePolyteia,
     ) {
         this.ox = ox;
         this.itslearning = itslearning;
@@ -47,6 +52,7 @@ export class UserExternalDataResponse {
         this.opsh = opsh;
         this.onlineDateiablage = onlineDateiablage;
         this.iqshHelpdesk = iqshHelpdesk;
+        this.polyteia = polyteia;
     }
 
     public static createNew(
@@ -91,7 +97,10 @@ export class UserExternalDataResponse {
             ),
             email,
         );
+        const polyteia: UserExternalDataResponsePolyteia = new UserExternalDataResponsePolyteia(
+            uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.rollenart)),
+        );
 
-        return new UserExternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage, iqshHelpdesk);
+        return new UserExternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage, iqshHelpdesk, polyteia);
     }
 }
