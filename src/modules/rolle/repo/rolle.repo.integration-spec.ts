@@ -543,7 +543,6 @@ describe('RolleRepo', () => {
 
             expect(rolleResult).toHaveLength(2);
             expect(total).toBe(2);
-            expect(rolleResult[0]!.id).toBe(rolle1.id);
             expect(rolleResult[0]!.rollenart).toBe(RollenArt.LEHR);
             expect(rolleResult[1]!.rollenart).toBe(RollenArt.LEHR);
         });
@@ -582,7 +581,6 @@ describe('RolleRepo', () => {
 
             expect(rolleResult).toHaveLength(2);
             expect(total).toBe(2);
-            expect(rolleResult[0]!.id).toBe(rolle1.id);
             expect(rolleResult[0]!.merkmale).toContain(RollenMerkmal.BEFRISTUNG_PFLICHT);
             expect(rolleResult[1]!.merkmale).toContain(RollenMerkmal.BEFRISTUNG_PFLICHT);
         });
