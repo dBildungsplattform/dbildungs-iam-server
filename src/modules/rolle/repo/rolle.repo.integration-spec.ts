@@ -511,29 +511,19 @@ describe('RolleRepo', () => {
         it('should filter rollen by rollenArten', async () => {
             const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
             const organisationId: OrganisationID = organisation.id;
-            await Promise.all([
-                sut.save(
-                    DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten: organisationId,
-                        rollenart: RollenArt.LEHR,
-                        istTechnisch: false,
-                    }),
-                ),
-                sut.save(
-                    DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten: organisationId,
-                        rollenart: RollenArt.LEHR,
-                        istTechnisch: false,
-                    }),
-                ),
-                sut.save(
-                    DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten: organisationId,
-                        rollenart: RollenArt.LERN,
-                        istTechnisch: false,
-                    }),
-                ),
-            ]);
+            const lehrParams: Partial<Rolle<false>> = {
+                administeredBySchulstrukturknoten: organisationId,
+                rollenart: RollenArt.LEHR,
+                istTechnisch: false,
+            };
+            const rolle1: Rolle<false> = DoFactory.createRolle(false, lehrParams);
+            const rolle2: Rolle<false> = DoFactory.createRolle(false, lehrParams);
+            const rolle3: Rolle<false> = DoFactory.createRolle(false, {
+                ...lehrParams,
+                rollenart: RollenArt.LERN,
+            });
+
+            await Promise.all([sut.save(rolle1), sut.save(rolle2), sut.save(rolle3)]);
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
@@ -553,35 +543,27 @@ describe('RolleRepo', () => {
 
             expect(rolleResult).toHaveLength(2);
             expect(total).toBe(2);
-            expect(rolleResult?.every((r: Rolle<true>) => r.rollenart === RollenArt.LEHR)).toBe(true);
+            expect(rolleResult[0]!.id).toBe(rolle1.id);
+            expect(rolleResult[0]!.rollenart).toBe(RollenArt.LEHR);
+            expect(rolleResult[1]!.rollenart).toBe(RollenArt.LEHR);
         });
 
         it('should filter rollen by merkmale', async () => {
             const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
             const organisationId: OrganisationID = organisation.id;
-            await Promise.all([
-                sut.save(
-                    DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten: organisationId,
-                        merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
-                        istTechnisch: false,
-                    }),
-                ),
-                sut.save(
-                    DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten: organisationId,
-                        merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
-                        istTechnisch: false,
-                    }),
-                ),
-                sut.save(
-                    DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten: organisationId,
-                        merkmale: [],
-                        istTechnisch: false,
-                    }),
-                ),
-            ]);
+            const befristungParams: Partial<Rolle<false>> = {
+                administeredBySchulstrukturknoten: organisationId,
+                merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
+                istTechnisch: false,
+            };
+            const rolle1: Rolle<false> = DoFactory.createRolle(false, befristungParams);
+            const rolle2: Rolle<false> = DoFactory.createRolle(false, befristungParams);
+            const rolle3: Rolle<false> = DoFactory.createRolle(false, {
+                ...befristungParams,
+                merkmale: [],
+            });
+
+            await Promise.all([sut.save(rolle1), sut.save(rolle2), sut.save(rolle3)]);
 
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
@@ -600,9 +582,9 @@ describe('RolleRepo', () => {
 
             expect(rolleResult).toHaveLength(2);
             expect(total).toBe(2);
-            expect(rolleResult?.every((r: Rolle<true>) => r.merkmale.includes(RollenMerkmal.BEFRISTUNG_PFLICHT))).toBe(
-                true,
-            );
+            expect(rolleResult[0]!.id).toBe(rolle1.id);
+            expect(rolleResult[0]!.merkmale).toContain(RollenMerkmal.BEFRISTUNG_PFLICHT);
+            expect(rolleResult[1]!.merkmale).toContain(RollenMerkmal.BEFRISTUNG_PFLICHT);
         });
     });
 
