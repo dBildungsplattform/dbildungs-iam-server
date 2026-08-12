@@ -926,7 +926,10 @@ describe('Rolle API', () => {
             const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?organisationContextForOperation=${orga.id}`)
+                .get(`/rolle`)
+                .query({
+                    organisationContextForOperation: orga.id,
+                })
                 .send();
 
             expect(response.status).toBe(400);
