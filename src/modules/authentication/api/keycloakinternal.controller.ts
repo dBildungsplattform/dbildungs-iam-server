@@ -70,7 +70,7 @@ export class KeycloakInternalController {
     }
 
     private getOxParams(workflow: InitializedWorkflow): NewOxParams | OldOxParams | undefined {
-        let oxParams: NewOxParams | OldOxParams |undefined;
+        let oxParams: NewOxParams | OldOxParams | undefined;
 
         if (this.emailResolverService.shouldUseEmailMicroservice()) {
             oxParams = this.getNewOxParams(workflow);
