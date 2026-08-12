@@ -53,12 +53,12 @@ export class KeycloakInternalController {
         const person: Option<Person<true>> = await this.personRepository.findByKeycloakUserId(params.sub);
         this.checkPerson(person);
 
-        const workflow: UserExternaldataWorkflowAggregate = this.userExternaldataWorkflowFactory.createNew();
+        const workflow: UserExternaldataWorkflowAggregate = this.userExternaldataWorkflowFactory.createNew(); // TODO: createNew vs create ..create ist immer new und create wäre factory method standard
         const workflowInitializeError: Option<DomainError> = await workflow.initialize(person.id);
         this.checkWorkflowInitialized(workflowInitializeError, workflow);
 
         const oxParams: NewOxParams | OldOxParams | undefined = this.getOxParams(workflow);
-        const userExternalDataResponse: UserExternalDataResponse = UserExternalDataResponse.createNew(
+        const userExternalDataResponse: UserExternalDataResponse = UserExternalDataResponse.createNew( // TODO: Warum wird hier nicht workflow rein gereicht?  
                 workflow.person,
                 workflow.checkedExternalPkData,
                 workflow.erweiterteSP,
@@ -89,6 +89,7 @@ export class KeycloakInternalController {
         } else {
             oxParams = undefined;
         }
+    
         return oxParams;
     }
 
