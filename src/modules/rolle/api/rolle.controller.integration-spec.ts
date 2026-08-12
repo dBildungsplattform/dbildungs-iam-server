@@ -738,7 +738,11 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [schule.id] });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?systemrechte=IMPORT_DURCHFUEHREN&organisationContextForOperation=${schule.id}`)
+                .get(`/rolle`)
+                .query({
+                    systemrechte: 'IMPORT_DURCHFUEHREN',
+                    organisationContextForOperation: schule.id,
+                })
                 .send();
 
             expect(response.status).toBe(200);
@@ -795,7 +799,10 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?organisationenForFilter=${orgaA.id}`)
+                .get(`/rolle`)
+                .query({
+                    organisationenForFilter: orgaA.id,
+                })
                 .send();
 
             expect(response.status).toBe(200);
@@ -839,7 +846,10 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?merkmale=${RollenMerkmal.BEFRISTUNG_PFLICHT}`)
+                .get(`/rolle`)
+                .query({
+                    merkmale: RollenMerkmal.BEFRISTUNG_PFLICHT,
+                })
                 .send();
 
             expect(response.status).toBe(200);
@@ -883,7 +893,10 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?rollenarten=${RollenArt.LEHR}`)
+                .get(`/rolle`)
+                .query({
+                    rollenarten: RollenArt.LEHR,
+                })
                 .send();
 
             expect(response.status).toBe(200);
@@ -899,7 +912,11 @@ describe('Rolle API', () => {
             const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?systemrechte=${RollenSystemRechtEnum.ROLLEN_ERWEITERN}&organisationenForFilter=${orga.id}`)
+                .get(`/rolle`)
+                .query({
+                    systemrechte: RollenSystemRecht.ROLLEN_ERWEITERN,
+                    organisationenForFilter: orga.id,
+                })
                 .send();
 
             expect(response.status).toBe(400);
@@ -955,9 +972,12 @@ describe('Rolle API', () => {
         permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
         const response: Response = await request(app.getHttpServer() as App)
-            .get(
-                `/rolle?systemrechte=IMPORT_DURCHFUEHREN&rollenarten=${RollenArt.LEHR}&organisationContextForOperation=${schule.id}`,
-            )
+            .get(`/rolle`)
+            .query({
+                systemrechte: RollenSystemRecht.IMPORT_DURCHFUEHREN,
+                rollenarten: RollenArt.LEHR,
+                organisationContextForOperation: schule.id,
+            })
             .send();
 
         expect(response.status).toBe(200);
