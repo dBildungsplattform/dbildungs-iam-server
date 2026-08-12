@@ -58,6 +58,10 @@ export class ApplyRollenerweiterungForRolleService {
         if (!(await permissions.hasSystemrechtAtOrganisation(orgaId, RollenSystemRecht.ROLLEN_ERWEITERN))) {
             return Err(new MissingPermissionsError('Not authorized'));
         }
+        const hasSystemrechtAtOrganisationMpt: boolean = await permissions.hasSystemrechtAtOrganisation(
+            orgaId,
+            RollenSystemRecht.MPT_ROLLEN_VERWALTEN,
+        );
 
         const organisation: Option<Organisation<true>> = await this.organisationRepo.findById(orgaId);
         if (!organisation) {
@@ -76,10 +80,7 @@ export class ApplyRollenerweiterungForRolleService {
             );
             return Err(new EntityNotFoundError('Rolle', rolleId));
         }
-        if (
-            rolle.merkmale.includes(RollenMerkmal.MPT_ROLLE) &&
-            !(await permissions.hasSystemrechtAtOrganisation(orgaId, RollenSystemRecht.MPT_ROLLEN_VERWALTEN))
-        ) {
+        if (rolle.merkmale.includes(RollenMerkmal.MPT_ROLLE) && !hasSystemrechtAtOrganisationMpt) {
             return Err(new MissingPermissionsError('Not authorized'));
         }
 

@@ -66,6 +66,10 @@ export class ApplyRollenerweiterungForAngebotService {
         if (!(await permissions.hasSystemrechtAtOrganisation(orgaId, RollenSystemRecht.ROLLEN_ERWEITERN))) {
             return Err(new MissingPermissionsError('Not authorized'));
         }
+        const hasSystemrechtAtOrganisationMpt: boolean = await permissions.hasSystemrechtAtOrganisation(
+            orgaId,
+            RollenSystemRecht.MPT_ROLLEN_VERWALTEN,
+        );
         const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(angebotId);
         const organisation: Option<Organisation<true>> = await this.organisationRepo.findById(orgaId);
         if (!organisation) {
@@ -103,6 +107,7 @@ export class ApplyRollenerweiterungForAngebotService {
                         body.addErweiterungenForRolleIds,
                         rollen,
                         permissions,
+                        hasSystemrechtAtOrganisationMpt,
                     ),
                 ),
                 Promise.all(
@@ -112,7 +117,7 @@ export class ApplyRollenerweiterungForAngebotService {
                         existingErweiterungen,
                         body.removeErweiterungenForRolleIds,
                         rollen,
-                        permissions,
+                        hasSystemrechtAtOrganisationMpt,
                     ),
                 ),
             ],
@@ -140,13 +145,13 @@ export class ApplyRollenerweiterungForAngebotService {
         existingErweiterungen: Array<Rollenerweiterung<true>> = [],
         removeErweiterungenForRolleIds: string[],
         rollen: Map<string, Rolle<true>>,
-        permissions: IPersonPermissions,
+        hasSystemrechtAtOrganisationMpt: boolean,
     ): Promise<TunknownResultForAngebot>[] {
         const removeErweiterungenPromises: Promise<TunknownResultForAngebot>[] = removeErweiterungenForRolleIds
             .filter((rolleId: string) => {
                 return existingErweiterungen.some((re: Rollenerweiterung<true>) => re.rolleId === rolleId);
             })
-            .map(async (rolleId: string) => {
+            .map((rolleId: string) => {
                 const rolle: Option<Rolle<true>> = rollen.get(rolleId);
                 this.logger.info(
                     `Removing Erweiterung for rolleId: ${rolleId}, orgaId: ${orgaId}, angebotId: ${angebotId}`,
@@ -158,10 +163,7 @@ export class ApplyRollenerweiterungForAngebotService {
                         result: Err(new EntityNotFoundError('Rolle', rolleId)),
                     });
                 }
-                if (
-                    rolle.merkmale.includes(RollenMerkmal.MPT_ROLLE) &&
-                    !(await permissions.hasSystemrechtAtOrganisation(orgaId, RollenSystemRecht.MPT_ROLLEN_VERWALTEN))
-                ) {
+                if (rolle.merkmale.includes(RollenMerkmal.MPT_ROLLE) && !hasSystemrechtAtOrganisationMpt) {
                     return Promise.resolve({
                         rolleId,
                         errorIdType: ErrorIdType.ANGEBOT,
@@ -190,12 +192,13 @@ export class ApplyRollenerweiterungForAngebotService {
         addErweiterungenForRolleIds: string[],
         rollen: Map<string, Rolle<true>>,
         permissions: IPersonPermissions,
+        hasSystemrechtAtOrganisationMpt: boolean,
     ): Promise<TunknownResultForAngebot>[] {
         const erweiterungenPromises: Promise<TunknownResultForAngebot>[] = addErweiterungenForRolleIds
             .filter((rolleId: string) => {
                 return existingErweiterungen.findIndex((re: Rollenerweiterung<true>) => re.rolleId === rolleId) === -1;
             })
-            .map(async (rolleId: string) => {
+            .map((rolleId: string) => {
                 const rolle: Option<Rolle<true>> = rollen.get(rolleId);
                 this.logger.info(
                     `Adding Erweiterung for for rolleId: ${rolleId}, orgaId: ${orgaId}, angebotId: ${angebotId}`,
@@ -207,10 +210,7 @@ export class ApplyRollenerweiterungForAngebotService {
                         result: Err(new EntityNotFoundError('Rolle', rolleId)),
                     });
                 }
-                if (
-                    rolle.merkmale.includes(RollenMerkmal.MPT_ROLLE) &&
-                    !(await permissions.hasSystemrechtAtOrganisation(orgaId, RollenSystemRecht.MPT_ROLLEN_VERWALTEN))
-                ) {
+                if (rolle.merkmale.includes(RollenMerkmal.MPT_ROLLE) && !hasSystemrechtAtOrganisationMpt) {
                     return Promise.resolve({
                         rolleId,
                         errorIdType: ErrorIdType.ANGEBOT,
