@@ -92,7 +92,7 @@ export class FindRollenQueryParams extends PagedQueryParams {
         uniqueItems: true,
         required: false,
         maxItems: Object.values(RollenArt).length,
-        description: 'Filter roles by their role types.',
+        description: 'Filter roles by rollenart.',
     })
     public readonly rollenarten?: RollenArt[];
 
@@ -100,13 +100,14 @@ export class FindRollenQueryParams extends PagedQueryParams {
     @IsEnum(RollenMerkmal, { each: true })
     @TransformToArray()
     @ArrayUnique()
+    @ArrayMaxSize(Object.values(RollenMerkmal).length)
     @ApiProperty({
         enum: RollenMerkmal,
         enumName: RollenMerkmalTypName,
         isArray: true,
         required: false,
         maxItems: Object.values(RollenMerkmal).length,
-        description: 'Filter roles by their characteristics.',
+        description: 'Filter roles by merkmal.',
     })
     public readonly merkmale?: RollenMerkmal[];
 }
