@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { uniq } from 'lodash-es';
+import { MultipleRollenartenError } from '../../../../shared/error/index.js';
 import { Person } from '../../../person/domain/person.js';
 import { ErweiterterServiceProviderForPK } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
@@ -186,7 +187,7 @@ export class UserExternalDataResponse {
     private static getSingleRollenart(externalPkData: RequiredExternalPkData[]): RollenArt | undefined {
         const uniqueRollenarten: RollenArt[] = uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.rollenart));
         if (uniqueRollenarten.length > 1) {
-            throw new Error(`Multiple unique Rollenarten found in externalPkData: ${uniqueRollenarten.join(', ')}`);
+            throw new MultipleRollenartenError(uniqueRollenarten);
         }
         const rollenArt: RollenArt | undefined = uniqueRollenarten.length === 1 ? uniqueRollenarten[0] : undefined;
 

@@ -1,8 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
 
 export class UserExternalDataResponsePolyteia {
-    @ApiProperty({ enum: RollenArt })
+    @ApiPropertyOptional({ enum: RollenArt })
     public rollenart?: RollenArt;
 
     @ApiProperty({ type: [String] })

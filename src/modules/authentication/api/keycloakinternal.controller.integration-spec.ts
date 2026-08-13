@@ -12,7 +12,7 @@ import { createAndPersistServiceProvider } from '../../../../test/utils/service-
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
 import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { EntityNotFoundError, MultipleRollenartenError } from '../../../shared/error/index.js';
 import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
 import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
 import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
@@ -450,8 +450,8 @@ describe('KeycloakInternalController', () => {
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
             dbiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
 
-            await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toThrow(
-                'Multiple unique Rollenarten found in externalPkData',
+            await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toBeInstanceOf(
+                MultipleRollenartenError,
             );
         });
 
