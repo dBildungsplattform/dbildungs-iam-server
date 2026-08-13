@@ -1,9 +1,25 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 
 import { MikroORM } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/postgresql';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { APP_FILTER } from '@nestjs/core';
+import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 import { DatabaseTestModule, DoFactory } from '../../../../test/utils/index.js';
+import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
+import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
+import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
+import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
+import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
+import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
+import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
+import { Ok } from '../../../shared/util/result.js';
+import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
+import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { PersonModule } from '../../person/person.module.js';
@@ -16,29 +32,13 @@ import {
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { RolleModule } from '../../rolle/rolle.module.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
+import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
 import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { KeycloakInternalController } from './keycloakinternal.controller.js';
-import { EmailMicroserviceModule } from '../../email-microservice/email-microservice.module.js';
-import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
-import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
-import { Ok } from '../../../shared/util/result.js';
-import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
-import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
-import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { createAndPersistServiceProvider } from '../../../../test/utils/service-provider-test-helper.js';
-import { EntityManager } from '@mikro-orm/postgresql';
-import { APP_FILTER } from '@nestjs/core';
-import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
-import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
-import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
-import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
-import { EmailPersistenceModule } from '../../email/email-persistence.module.js';
-import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 
 describe('KeycloakInternalController', () => {
     let module: TestingModule;
@@ -199,6 +199,7 @@ describe('KeycloakInternalController', () => {
             expect(result.iqshHelpdesk.vorname).toEqual(person.vorname);
             expect(result.iqshHelpdesk.nachname).toEqual(person.familienname);
             expect(result.iqshHelpdesk.emailAdresse).toEqual(person.email);
+            expect(result.polyteia.dienststellenNummern.length).toEqual(3);
         });
 
         it('should omit ox response if user has no email', async () => {
@@ -320,6 +321,7 @@ describe('KeycloakInternalController', () => {
             expect(result.iqshHelpdesk.vorname).toEqual(person.vorname);
             expect(result.iqshHelpdesk.nachname).toEqual(person.familienname);
             expect(result.iqshHelpdesk.emailAdresse).toEqual(person.email);
+            expect(result.polyteia.dienststellenNummern.length).toEqual(2);
         });
 
         it('should return user external data new Microservice without ox params', async () => {
@@ -408,6 +410,7 @@ describe('KeycloakInternalController', () => {
             expect(result.iqshHelpdesk.vorname).toEqual(person.vorname);
             expect(result.iqshHelpdesk.nachname).toEqual(person.familienname);
             expect(result.iqshHelpdesk.emailAdresse).toEqual(person.email);
+            expect(result.polyteia.dienststellenNummern.length).toEqual(2);
         });
 
         it('should throw error if aggregate doesnt initialize fields field correctly', async () => {

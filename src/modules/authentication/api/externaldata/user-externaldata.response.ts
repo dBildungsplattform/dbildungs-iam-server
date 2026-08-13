@@ -165,7 +165,10 @@ export class UserExternalDataResponse {
 
     private static createPolyteiaResponse(externalPkData: RequiredExternalPkData[]): UserExternalDataResponsePolyteia {
         const uniqueRollenart: RollenArt[] = uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.rollenart));
+        const dienststellenNummern: string[] = uniq(
+            externalPkData.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean),
+        );
 
-        return new UserExternalDataResponsePolyteia(uniqueRollenart);
+        return new UserExternalDataResponsePolyteia(uniqueRollenart, dienststellenNummern);
     }
 }

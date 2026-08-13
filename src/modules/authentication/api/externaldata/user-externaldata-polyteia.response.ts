@@ -5,7 +5,11 @@ export class UserExternalDataResponsePolyteia {
     @ApiProperty({ enum: RollenArt, isArray: true })
     public rollenart: RollenArt[];
 
-    public constructor(rollenart: RollenArt[]) {
+    @ApiProperty({ type: [String] })
+    public dienststellenNummern: string[];
+
+    public constructor(rollenart: RollenArt[], dienststellenNummern: string[]) {
         this.rollenart = rollenart;
+        this.dienststellenNummern = dienststellenNummern;
     }
 }
