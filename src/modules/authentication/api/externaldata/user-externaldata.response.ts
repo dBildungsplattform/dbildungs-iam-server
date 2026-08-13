@@ -66,7 +66,8 @@ export class UserExternalDataResponse {
         const ox: Option<UserExternalDataResponseOx> =
             contextParams && UserExternalDataResponseOx.createNew(contextParams);
 
-        const itslearning: UserExeternalDataResponseItslearning = UserExternalDataResponse.createItslearningResponse(person);
+        const itslearning: UserExeternalDataResponseItslearning =
+            UserExternalDataResponse.createItslearningResponse(person);
 
         const mergedExternalPkData: RequiredExternalPkData[] = UserExternalDataResponse.createMergedExternalPkData(
             externalPkData,
@@ -80,15 +81,23 @@ export class UserExternalDataResponse {
             email,
         );
 
-        const opsh: UserExeternalDataResponseOpsh = UserExternalDataResponse.createOpshResponse(externalPkData, person, email);
+        const opsh: UserExeternalDataResponseOpsh = UserExternalDataResponse.createOpshResponse(
+            externalPkData,
+            person,
+            email,
+        );
 
         const onlineDateiablage: UserExeternalDataResponseOnlineDateiablage =
             UserExternalDataResponse.createOnlineDateiablageResponse(person);
 
-        const iqshHelpdesk: UserExternalDataResponseIqshHelpdesk =
-            UserExternalDataResponse.createIqshHelpdeskResponse(externalPkData, person, email);
+        const iqshHelpdesk: UserExternalDataResponseIqshHelpdesk = UserExternalDataResponse.createIqshHelpdeskResponse(
+            externalPkData,
+            person,
+            email,
+        );
 
-        const polyteia: UserExternalDataResponsePolyteia = UserExternalDataResponse.createPolyteiaResponse(externalPkData);
+        const polyteia: UserExternalDataResponsePolyteia =
+            UserExternalDataResponse.createPolyteiaResponse(externalPkData);
 
         return new UserExternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage, iqshHelpdesk, polyteia);
     }

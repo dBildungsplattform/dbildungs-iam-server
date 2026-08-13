@@ -6,7 +6,10 @@ import { UserExternalDataWorkflowError } from '../../../shared/error/user-extern
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { ErweiterterServiceProviderForPK, ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import {
+    ErweiterterServiceProviderForPK,
+    ExternalPkData,
+} from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
@@ -38,10 +41,10 @@ export class KeycloakInternalController {
     ) {}
 
     /**
-    * Dieser Endpunkt fragt lediglich Daten ab ist allerdigs trotzdem als POST definiert, da:
-    * Die Url sollte keine Path oder Query Paremeters haben da Sie statisch in der Keycloak UI hinterlegt werden muss
-    * Trotzdem muss die Keycloak Sub übermittelt werden (Deshalb POST mit Body)
-    **/
+     * Dieser Endpunkt fragt lediglich Daten ab ist allerdigs trotzdem als POST definiert, da:
+     * Die Url sollte keine Path oder Query Paremeters haben da Sie statisch in der Keycloak UI hinterlegt werden muss
+     * Trotzdem muss die Keycloak Sub übermittelt werden (Deshalb POST mit Body)
+     **/
     @UseInterceptors(ExternalDataCacheInterceptor)
     @Post('externaldata')
     @HttpCode(200)
@@ -59,12 +62,12 @@ export class KeycloakInternalController {
 
         const oxParams: NewOxParams | OldOxParams | undefined = this.getOxParams(workflow);
         const userExternalDataResponse: UserExternalDataResponse = UserExternalDataResponse.createNew(
-                workflow.person,
-                workflow.checkedExternalPkData,
-                workflow.erweiterteSP,
-                oxParams,
-                workflow.email,
-            );
+            workflow.person,
+            workflow.checkedExternalPkData,
+            workflow.erweiterteSP,
+            oxParams,
+            workflow.email,
+        );
 
         return userExternalDataResponse;
     }
@@ -87,23 +90,22 @@ export class KeycloakInternalController {
         if (workflow.oxLoginId) {
             oxParams = { oxLoginId: workflow.oxLoginId };
         }
-    
+
         return oxParams;
     }
 
     private getOldOxParams(workflow: InitializedWorkflow): OldOxParams | undefined {
-        const mergedExternalPkData: RequiredExternalPkData[] =
-                UserExternaldataWorkflowAggregate.mergeServiceProviders(
-                    workflow.checkedExternalPkData,
-                    workflow.erweiterteSP,
-                );
+        const mergedExternalPkData: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
+            workflow.checkedExternalPkData,
+            workflow.erweiterteSP,
+        );
 
         let oxParams: OldOxParams | undefined = undefined;
         if (this.hasEmail(mergedExternalPkData)) {
-                oxParams = {
-                    contextId: workflow.contextID,
-                    username: workflow.person.username!,
-                };
+            oxParams = {
+                contextId: workflow.contextID,
+                username: workflow.person.username!,
+            };
         }
 
         return oxParams;
@@ -111,10 +113,10 @@ export class KeycloakInternalController {
 
     private hasEmail(mergedExternalPkData: RequiredExternalPkData[]): boolean {
         return mergedExternalPkData.some((pkData: RequiredExternalPkData) =>
-                pkData.serviceProvider.some(
-                    (sp: ServiceProvider<true>) => sp.externalSystem === ServiceProviderSystem.EMAIL,
-                ),
-            );
+            pkData.serviceProvider.some(
+                (sp: ServiceProvider<true>) => sp.externalSystem === ServiceProviderSystem.EMAIL,
+            ),
+        );
     }
 
     private checkPerson(person: Option<Person<true>>): asserts person is Person<true> {
