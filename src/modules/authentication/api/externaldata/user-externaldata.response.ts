@@ -164,11 +164,23 @@ export class UserExternalDataResponse {
     }
 
     private static createPolyteiaResponse(externalPkData: RequiredExternalPkData[]): UserExternalDataResponsePolyteia {
-        const uniqueRollenart: RollenArt[] = uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.rollenart));
-        const dienststellenNummern: string[] = uniq(
-            externalPkData.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean),
-        );
+        const rollenArt: RollenArt | undefined = UserExternalDataResponse.getSingleRollenart(externalPkData);
+        const dienststellenNummern: string[] = UserExternalDataResponse.getUniqDienststellenNummern(externalPkData);
 
-        return new UserExternalDataResponsePolyteia(uniqueRollenart, dienststellenNummern);
+        return new UserExternalDataResponsePolyteia(dienststellenNummern, rollenArt);
+    }
+
+    private static getUniqDienststellenNummern(externalPkData: RequiredExternalPkData[]): string[] {
+        return uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean));
+    }
+
+    private static getSingleRollenart(externalPkData: RequiredExternalPkData[]): RollenArt | undefined {
+        const uniqueRollenarten: RollenArt[] = uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.rollenart));
+        if (uniqueRollenarten.length > 1) {
+            throw new Error(`Multiple unique Rollenarten found in externalPkData: ${uniqueRollenarten.join(', ')}`);
+        }
+        const rollenArt: RollenArt | undefined = uniqueRollenarten.length === 1 ? uniqueRollenarten[0] : undefined;
+
+        return rollenArt;
     }
 }
