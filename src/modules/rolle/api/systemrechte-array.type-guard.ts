@@ -3,9 +3,7 @@ import { RollenSystemRechtEnum } from '../domain/systemrecht.js';
 
 export function isRollenSystemRechteArray(value: unknown): value is Array<RollenSystemRechtEnum> {
     const isValid: boolean =
-        Array.isArray(value) &&
-        Array.isArray(value) &&
-        value.every((recht: unknown) => isEnum(recht, RollenSystemRechtEnum));
+        Array.isArray(value) && value.every((recht: unknown) => isEnum(recht, RollenSystemRechtEnum));
 
     return isValid;
 }
