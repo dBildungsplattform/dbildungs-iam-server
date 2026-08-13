@@ -30,6 +30,7 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -43,13 +44,12 @@ import { CreateServiceProviderBodyParams } from './create-service-provider-body.
 import { CreateServiceProviderResponse } from './create-service-provider.response.js';
 import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
+import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
 import { ManageableServiceProvidersParams } from './manageable-service-providers.params.js';
+import { RollenerweiterungForManageableServiceProviderResponse } from './RollenerweiterungForManageableServiceProviderResponse.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider-body.params.js';
-import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
-import { RollenerweiterungForManageableServiceProviderResponse } from './RollenerweiterungForManageableServiceProviderResponse.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -276,6 +276,100 @@ describe('ServiceProvider API', () => {
                     expect(entry?.rollen.length).toBe(0);
                 }
             });
+        });
+
+        it('should return only service providers matching the kategorien filter', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const emailServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                kategorie: ServiceProviderKategorie.EMAIL,
+                providedOnSchulstrukturknoten: organisation.id,
+            });
+            const unterrichtServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                kategorie: ServiceProviderKategorie.UNTERRICHT,
+                providedOnSchulstrukturknoten: organisation.id,
+            });
+            await createAndPersistServiceProvider(em, {
+                kategorie: ServiceProviderKategorie.VERWALTUNG,
+                providedOnSchulstrukturknoten: organisation.id,
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/provider/manageable')
+                .query({ kategorien: [ServiceProviderKategorie.EMAIL, ServiceProviderKategorie.UNTERRICHT] })
+                .send();
+
+            const body: RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse> =
+                response.body as RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse>;
+
+            expect(response.status).toBe(200);
+            expect(body.total).toBe(2);
+
+            const sortedManageableServiceProviderIds: string[] = body.items.map((item: ManageableServiceProviderSimpleListEntryResponse) => item.id).sort()
+            expect(sortedManageableServiceProviderIds).toEqual(
+                [emailServiceProvider.id, unterrichtServiceProvider.id].sort(),
+            );
+        });
+
+        it('should return all service providers when filtering by every kategorie', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const allKategorien: ServiceProviderKategorie[] = Object.values(ServiceProviderKategorie);
+            const serviceProviders: ServiceProvider<true>[] = await Promise.all(
+                allKategorien.map((kategorie: ServiceProviderKategorie) =>
+                    createAndPersistServiceProvider(em, {
+                        kategorie,
+                        providedOnSchulstrukturknoten: organisation.id,
+                    }),
+                ),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/provider/manageable')
+                .query({ kategorien: allKategorien })
+                .send();
+
+            const body: RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse> =
+                response.body as RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse>;
+
+            expect(response.status).toBe(200);
+            expect(body.total).toBe(serviceProviders.length);
+
+            const sortedManageableServiceProviderIds: string[] = body.items.map((item: ManageableServiceProviderSimpleListEntryResponse) => item.id).sort()
+            expect(sortedManageableServiceProviderIds).toEqual(
+                serviceProviders.map((sp: ServiceProvider<true>) => sp.id).sort(),
+            );
+        });
+
+        it('should return no service providers when none match the kategorien filter', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            await createAndPersistServiceProvider(em, {
+                kategorie: ServiceProviderKategorie.VERWALTUNG,
+                providedOnSchulstrukturknoten: organisation.id,
+            });
+            await createAndPersistServiceProvider(em, {
+                kategorie: ServiceProviderKategorie.HINWEISE,
+                providedOnSchulstrukturknoten: organisation.id,
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/provider/manageable')
+                .query({ kategorien: [ServiceProviderKategorie.EMAIL] })
+                .send();
+
+            const body: RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse> =
+                response.body as RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse>;
+
+            expect(response.status).toBe(200);
+            expect(body.total).toBe(0);
+            expect(body.items).toHaveLength(0);
+        });
+
+        it('should return 400 for an invalid kategorie value', async () => {
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/provider/manageable')
+                .query({ kategorien: ['NOT_A_VALID_KATEGORIE'] })
+                .send();
+
+            expect(response.status).toBe(400);
         });
     });
 

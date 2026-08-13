@@ -610,7 +610,7 @@ describe('Provider Controller Test', () => {
             { limit: undefined, offset: undefined },
         ])(
             'should return paged manageable service providers with correct offset and limit for %s',
-            async (pagingParams: { limit?: number; offset?: number }) => {
+            async (pagingParams: Pick<ManageableServiceProvidersParams, 'limit' | 'offset'>) => {
                 const total: number = 10;
                 const serviceProviders: Array<ServiceProvider<true>> = [
                     DoFactory.createServiceProvider(true, { kategorie: ServiceProviderKategorie.EMAIL }),
