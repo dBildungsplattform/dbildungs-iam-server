@@ -198,8 +198,8 @@ describe('KeycloakInternalController', () => {
             expect(result.onlineDateiablage.personId).toEqual(person.id);
             expect(result.iqshHelpdesk.vorname).toEqual(person.vorname);
             expect(result.iqshHelpdesk.nachname).toEqual(person.familienname);
-            expect(result.iqshHelpdesk.emailAdresse).toEqual(person.email);
             expect(result.polyteia.dienststellenNummern.length).toEqual(3);
+            expect(result.polyteia.rollenart).toEqual(RollenArt.LEHR);
         });
 
         it('should omit ox response if user has no email', async () => {
@@ -320,8 +320,8 @@ describe('KeycloakInternalController', () => {
             expect(result.onlineDateiablage.personId).toEqual(person.id);
             expect(result.iqshHelpdesk.vorname).toEqual(person.vorname);
             expect(result.iqshHelpdesk.nachname).toEqual(person.familienname);
-            expect(result.iqshHelpdesk.emailAdresse).toEqual(person.email);
             expect(result.polyteia.dienststellenNummern.length).toEqual(2);
+            expect(result.polyteia.rollenart).toEqual(RollenArt.LEHR);
         });
 
         it('should return user external data new Microservice without ox params', async () => {
@@ -409,8 +409,50 @@ describe('KeycloakInternalController', () => {
             expect(result.onlineDateiablage.personId).toEqual(person.id);
             expect(result.iqshHelpdesk.vorname).toEqual(person.vorname);
             expect(result.iqshHelpdesk.nachname).toEqual(person.familienname);
-            expect(result.iqshHelpdesk.emailAdresse).toEqual(person.email);
             expect(result.polyteia.dienststellenNummern.length).toEqual(2);
+            expect(result.polyteia.rollenart).toEqual(RollenArt.LEHR);
+        });
+
+        it('should throw error if multiple unique Rollenarten are present', async () => {
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+            const keycloakSub: string = faker.string.uuid();
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                keycloakSub,
+                faker.string.uuid(),
+            );
+
+            const pkExternalData: ExternalPkData[] = [
+                {
+                    pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
+                    rollenart: RollenArt.LEHR,
+                    kennung: faker.lorem.word(),
+                    serviceProvider: [],
+                },
+                {
+                    pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
+                    rollenart: RollenArt.LERN,
+                    kennung: faker.lorem.word(),
+                    serviceProvider: [],
+                },
+            ];
+
+            personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
+            personRepoMock.findById.mockResolvedValueOnce(person);
+            dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
+            dbiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
+
+            await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toThrow(
+                'Multiple unique Rollenarten found in externalPkData',
+            );
         });
 
         it('should throw error if aggregate doesnt initialize fields field correctly', async () => {

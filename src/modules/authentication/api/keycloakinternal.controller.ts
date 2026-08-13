@@ -53,12 +53,12 @@ export class KeycloakInternalController {
         const person: Option<Person<true>> = await this.personRepository.findByKeycloakUserId(params.sub);
         this.checkPerson(person);
 
-        const workflow: UserExternaldataWorkflowAggregate = this.userExternaldataWorkflowFactory.createNew(); // TODO: createNew vs create ..create ist immer new und create wäre factory method standard
+        const workflow: UserExternaldataWorkflowAggregate = this.userExternaldataWorkflowFactory.createNew();
         const workflowInitializeError: Option<DomainError> = await workflow.initialize(person.id);
         this.checkWorkflowInitialized(workflowInitializeError, workflow);
 
         const oxParams: NewOxParams | OldOxParams | undefined = this.getOxParams(workflow);
-        const userExternalDataResponse: UserExternalDataResponse = UserExternalDataResponse.createNew( // TODO: Warum wird hier nicht workflow rein gereicht?  
+        const userExternalDataResponse: UserExternalDataResponse = UserExternalDataResponse.createNew(
                 workflow.person,
                 workflow.checkedExternalPkData,
                 workflow.erweiterteSP,
@@ -127,7 +127,7 @@ export class KeycloakInternalController {
         error: Option<DomainError>,
         workflow: UserExternaldataWorkflowAggregate,
     ): asserts workflow is InitializedWorkflow {
-        if (error || !workflow.person || !workflow.checkedExternalPkData || !workflow.erweiterteSP) { // TODO; erweiterteSP wurde bisher nicht geprüft, ob es undefined ist. Sollte das hier geprüft werden? (siehe Kommentar in UserExternaldataWorkflowAggregate.initialize)
+        if (error || !workflow.person || !workflow.checkedExternalPkData) {
             throw new UserExternalDataWorkflowError(
                 'UserExternaldataWorkflowAggregate has not been successfully initialized',
             );
