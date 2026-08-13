@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, Post, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
-import { DomainError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { Person } from '../../person/domain/person.js';
@@ -54,7 +54,7 @@ export class KeycloakInternalController {
     @ApiOkResponse({ description: 'Returns external Data about the requested user.', type: UserExternalDataResponse })
     public async getExternalData(@Body() params: { sub: string }): Promise<UserExternalDataResponse> {
         const person: Option<Person<true>> = await this.personRepository.findByKeycloakUserId(params.sub);
-        this.checkPerson(person);
+        this.checkPerson(person, params.sub);
 
         const workflow: UserExternaldataWorkflowAggregate = this.userExternaldataWorkflowFactory.createNew();
         const workflowInitializeError: Option<DomainError> = await workflow.initialize(person.id);
@@ -119,9 +119,9 @@ export class KeycloakInternalController {
         );
     }
 
-    private checkPerson(person: Option<Person<true>>): asserts person is Person<true> {
+    private checkPerson(person: Option<Person<true>>, keycloakSub: string): asserts person is Person<true> {
         if (!person) {
-            throw new Error('Person is not defined');
+            throw new EntityNotFoundError('Person', keycloakSub);
         }
     }
 
