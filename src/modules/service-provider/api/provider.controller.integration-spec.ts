@@ -304,7 +304,9 @@ describe('ServiceProvider API', () => {
             expect(response.status).toBe(200);
             expect(body.total).toBe(2);
 
-            const sortedManageableServiceProviderIds: string[] = body.items.map((item: ManageableServiceProviderSimpleListEntryResponse) => item.id).sort()
+            const sortedManageableServiceProviderIds: string[] = body.items
+                .map((item: ManageableServiceProviderSimpleListEntryResponse) => item.id)
+                .sort();
             expect(sortedManageableServiceProviderIds).toEqual(
                 [emailServiceProvider.id, unterrichtServiceProvider.id].sort(),
             );
@@ -333,7 +335,9 @@ describe('ServiceProvider API', () => {
             expect(response.status).toBe(200);
             expect(body.total).toBe(serviceProviders.length);
 
-            const sortedManageableServiceProviderIds: string[] = body.items.map((item: ManageableServiceProviderSimpleListEntryResponse) => item.id).sort()
+            const sortedManageableServiceProviderIds: string[] = body.items
+                .map((item: ManageableServiceProviderSimpleListEntryResponse) => item.id)
+                .sort();
             expect(sortedManageableServiceProviderIds).toEqual(
                 serviceProviders.map((sp: ServiceProvider<true>) => sp.id).sort(),
             );
