@@ -1,4 +1,11 @@
-import { EntityName, FilterQuery, ForeignKeyConstraintViolationException, Loaded, PopulatePath } from '@mikro-orm/core';
+import {
+    EntityName,
+    FilterQuery,
+    ForeignKeyConstraintViolationException,
+    Loaded,
+    OrderDefinition,
+    PopulatePath,
+} from '@mikro-orm/core';
 import { EntityManager, RawQueryFragment, sql } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { xor } from 'lodash-es';
@@ -109,7 +116,7 @@ export type RolleFindByParameters = {
     rolleIds?: RolleID[];
     limit?: number;
     offset?: number;
-    orderByRollenArtAndName?: boolean;
+    orderBy?: 'artAndName' | 'name';
 };
 
 const rollenartOrderClause: RawQueryFragment = sql`CASE
@@ -295,9 +302,12 @@ export class RolleRepo {
 
         const baseQuery: FilterQuery<NoInfer<RolleEntity>> = { $and: queries };
 
+        // TODO: this can fail if there are more rollen than limit
         const finalQuery: FilterQuery<NoInfer<RolleEntity>> = params.rolleIds?.length
             ? { $or: [baseQuery, { id: { $in: params.rolleIds } }] }
             : baseQuery;
+
+        const orderBy: OrderDefinition<RolleEntity> | undefined = this.mapParametersToOrderDefinition(params);
 
         const [rollen, total]: Counted<RolleEntity> = await this.em.findAndCount(RolleEntity, finalQuery, {
             populate: [
@@ -310,12 +320,21 @@ export class RolleRepo {
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
             limit: params.limit,
             offset: params.offset,
-            orderBy: params.orderByRollenArtAndName
-                ? [{ [rollenartOrderClause as unknown as string]: 'ASC' }, { name: 'ASC' }]
-                : undefined,
+            orderBy,
         });
 
         return [rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory)), total];
+    }
+
+    private mapParametersToOrderDefinition(params: RolleFindByParameters): OrderDefinition<RolleEntity> | undefined {
+        switch (params.orderBy) {
+            case 'artAndName':
+                return [{ [rollenartOrderClause as unknown as string]: 'ASC' }, { name: 'ASC' }];
+            case 'name':
+                return [{ name: 'ASC' }];
+            default:
+                return;
+        }
     }
 
     public async findRollenAuthorized(
@@ -359,7 +378,7 @@ export class RolleRepo {
             allowedOrganisationIds,
             excludeMerkmale,
             rolleIds,
-            orderByRollenArtAndName: true,
+            orderBy: 'artAndName',
         });
     }
 
@@ -395,7 +414,7 @@ export class RolleRepo {
             allowedOrganisationIds,
             rolleIds,
             requireMerkmale: [RollenMerkmal.MPT_ROLLE],
-            orderByRollenArtAndName: true,
+            orderBy: 'artAndName',
         });
     }
 
@@ -465,6 +484,79 @@ export class RolleRepo {
         }
 
         return rollenMap;
+    }
+
+    public async findRollenAvailableForPersonenkontextCreation(params: {
+        organisationId: OrganisationID;
+        allowedOrganisationIds: Array<OrganisationID>;
+        allowedRollenarten: Array<RollenArt>;
+        mpt?: {
+            allowedRollenarten: Array<RollenArt>;
+        };
+        searchStr?: string;
+        stickyRollenIds?: Array<RolleID>;
+        limit?: number;
+        offset?: number;
+    }): Promise<Counted<Rolle<true>>> {
+        const stickyRollenEntities: Array<RolleEntity> = params.stickyRollenIds
+            ? await this.em.findAll(RolleEntity, {
+                  where: {
+                      id: { $in: params.stickyRollenIds },
+                  },
+                  populate: [
+                      'merkmale',
+                      'systemrechte',
+                      'serviceProvider.serviceProvider',
+                      'serviceProvider.serviceProvider.merkmale',
+                      'serviceProvider.serviceProvider.rollenartenWhitelist',
+                  ] as const,
+                  exclude: ['serviceProvider.serviceProvider.logo'] as const,
+              })
+            : [];
+
+        const where: FilterQuery<NoInfer<RolleEntity>> = {
+            administeredBySchulstrukturknoten: { $in: params.allowedOrganisationIds },
+        };
+        if (params.stickyRollenIds) {
+            where.id = { $nin: params.stickyRollenIds };
+        }
+        if (params.searchStr) {
+            where.name = { $ilike: `%${params.searchStr}%` };
+        }
+        if (params.mpt) {
+            where.$or = [
+                {
+                    rollenart: { $in: params.allowedRollenarten },
+                    merkmale: { $none: { merkmal: RollenMerkmal.MPT_ROLLE } },
+                },
+                {
+                    rollenart: { $in: params.mpt.allowedRollenarten },
+                    merkmale: { $some: { merkmal: RollenMerkmal.MPT_ROLLE } },
+                },
+            ];
+        } else {
+            where.rollenart = { $in: params.allowedRollenarten };
+            where.merkmale = { $none: { merkmal: RollenMerkmal.MPT_ROLLE } };
+        }
+        const [rollenEntities, count]: Counted<RolleEntity> = await this.em.findAndCount(RolleEntity, where, {
+            populate: [
+                'merkmale',
+                'systemrechte',
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+                'serviceProvider.serviceProvider.rollenartenWhitelist',
+            ] as const,
+            exclude: ['serviceProvider.serviceProvider.logo'] as const,
+            limit: params.limit,
+            offset: params.offset,
+        });
+
+        return [
+            stickyRollenEntities
+                .concat(rollenEntities)
+                .map((entity: RolleEntity) => mapRolleEntityToAggregate(entity, this.rolleFactory)),
+            count,
+        ];
     }
 
     public async existsForServiceProviderId(

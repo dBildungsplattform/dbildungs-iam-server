@@ -26,6 +26,7 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { uniq } from 'lodash-es';
 
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -33,6 +34,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/index.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { Public } from '../../authentication/api/public.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
@@ -174,11 +176,14 @@ export class RolleController {
         const administeredOrganisations: Map<string, Organisation<true>> = await this.organisationRepository.findByIds(
             administeredBySchulstrukturknotenIds,
         );
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
+        const serviceProviders: Map<
+            ServiceProviderID,
+            ServiceProvider<true>
+        > = await this.serviceProviderRepo.findByIds(uniq(rollen.flatMap((r: Rolle<true>) => r.serviceProviderIds)));
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
                 const sps: ServiceProvider<true>[] = r.serviceProviderIds
-                    .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
+                    .map((id: string) => serviceProviders.get(id))
                     .filter(Boolean);
 
                 const administeredBySchulstrukturknoten: Organisation<true> | undefined = administeredOrganisations.get(
@@ -426,13 +431,11 @@ export class RolleController {
     private async returnRolleWithServiceProvidersResponse(
         rolle: Rolle<true>,
     ): Promise<RolleWithServiceProvidersResponse> {
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
-
-        const rolleServiceProviders: ServiceProvider<true>[] = rolle.serviceProviderIds
-            .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
-            .filter(Boolean);
-
-        return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
+        const serviceProviders: Map<
+            ServiceProviderID,
+            ServiceProvider<true>
+        > = await this.serviceProviderRepo.findByIds(rolle.serviceProviderIds);
+        return new RolleWithServiceProvidersResponse(rolle, Array.from(serviceProviders.values()));
     }
 
     @Get(':rolleId/angebote-via-rollenerweiterungen')
