@@ -914,7 +914,7 @@ describe('Rolle API', () => {
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/rolle`)
                 .query({
-                    systemrechte: RollenSystemRecht.ROLLEN_ERWEITERN,
+                    systemrechte: RollenSystemRecht.ROLLEN_ERWEITERN.name,
                     organisationenForFilter: orga.id,
                 })
                 .send();
@@ -977,7 +977,7 @@ describe('Rolle API', () => {
         const response: Response = await request(app.getHttpServer() as App)
             .get(`/rolle`)
             .query({
-                systemrechte: RollenSystemRecht.IMPORT_DURCHFUEHREN,
+                systemrechte: RollenSystemRecht.IMPORT_DURCHFUEHREN.name,
                 rollenarten: RollenArt.LEHR,
                 organisationContextForOperation: schule.id,
             })
