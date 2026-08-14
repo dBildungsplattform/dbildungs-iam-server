@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { RedisConfig, ServerConfig } from '../../shared/config/index.js';
 import { createClient, RedisClientType } from 'redis';
 import { ConfigService } from '@nestjs/config';
-import { HealthIndicatorSession } from '@nestjs/terminus/dist/health-indicator/health-indicator.service.js';
 
 @Injectable()
 export class RedisHealthIndicator {
@@ -53,12 +52,11 @@ export class RedisHealthIndicator {
             };
         }
 
-        const indicator: HealthIndicatorSession<string> = this.healthIndicatorService.check(HealthCheckKey);
         return currentState.available
-            ? indicator.up({
+            ? this.healthIndicatorService.check(HealthCheckKey).up({
                   message: currentState.message,
               })
-            : indicator.down({
+            : this.healthIndicatorService.check(HealthCheckKey).down({
                   message: currentState.message,
               });
     }

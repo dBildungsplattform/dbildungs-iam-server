@@ -16,7 +16,7 @@ describe('HealthController', () => {
     let controller: HealthController;
 
     let healthCheckService: DeepMocked<HealthCheckService>;
-    let mikroOrmHealthIndicator: MikroOrmHealthIndicator;
+    let mikroOrmHealthIndicator: DeepMocked<MikroOrmHealthIndicator>;
     let httpHealthIndicator: DeepMocked<HttpHealthIndicator>;
     let keycloakHealthIndicator: DeepMocked<KeycloakHealthIndicator>;
     const keycloakConfig: KeycloakConfig = {
