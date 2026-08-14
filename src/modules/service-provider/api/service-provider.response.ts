@@ -54,4 +54,10 @@ export class ServiceProviderResponse {
         this.merkmale = serviceProvider.merkmale;
         this.rollenartenWhitelist = serviceProvider.rollenartenWhitelist;
     }
+
+    public static fromList(serviceProviders: ServiceProvider<true>[]): ServiceProviderResponse[] {
+        return serviceProviders.map(
+            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
+        );
+    }
 }

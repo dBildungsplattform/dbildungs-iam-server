@@ -125,9 +125,32 @@ export class ProviderController {
             throw result.error;
         }
 
-        const response: ServiceProviderResponse[] = result.value.map(
-            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
-        );
+        const response: ServiceProviderResponse[] = ServiceProviderResponse.fromList(result.value);
+
+        return response;
+    }
+
+    @Get('available-for-rollen-verwaltung')
+    @UseGuards(StepUpGuard)
+    @ApiOperation({ description: "Get all service-providers available within the admin's role management scope." })
+    @ApiOkResponse({
+        description: 'The service-providers were successfully returned.',
+        type: [ServiceProviderResponse],
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
+    public async getServiceProvidersForRollenVerwaltung(
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<ServiceProviderResponse[]> {
+        const result: Result<ServiceProvider<true>[], DomainError> =
+            await this.serviceProviderFindService.findServiceProvidersForRollenVerwaltungAuthorized(permissions);
+
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        const response: ServiceProviderResponse[] = ServiceProviderResponse.fromList(result.value);
 
         return response;
     }
@@ -148,9 +171,10 @@ export class ProviderController {
             await permissions.getPersonenkontextIds();
         const serviceProviders: ServiceProvider<true>[] =
             await this.serviceProviderService.getServiceProvidersByOrganisationenAndRollen(personenkontexteIds);
-        return serviceProviders.map(
-            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
-        );
+
+        const response: ServiceProviderResponse[] = ServiceProviderResponse.fromList(serviceProviders);
+
+        return response;
     }
 
     @Get(':angebotId/logo')
