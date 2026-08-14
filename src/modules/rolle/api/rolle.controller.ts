@@ -71,6 +71,8 @@ import { PermittedOrgas } from '../../authentication/domain/person-permissions.j
 import { ApplyRollenerweiterungForRolleService } from '../domain/apply-rollenerweiterungen-for-rolle-service.js';
 import { ApplyRollenerweiterungError } from './apply-rollenerweiterung.error.js';
 import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
+import { RolleResponse } from './rolle.response.js';
+import { FindAvailableRollenForPKCreationQueryParams } from './find-available-rollen-for-pk-creation.query.params.js';
 
 @UseFilters(new RolleExceptionFilter(), new ApplyRollenerweiterungMultiExceptionFilter())
 @ApiTags('rolle')
@@ -520,5 +522,28 @@ export class RolleController {
         this.logger.info(
             `applyRollenerweiterungChangesForRolle called by ${permissions.personFields.username} - ${permissions.personFields.id} for rolleId ${params.rolleId} and organisationId ${params.organisationId} completed with complete success.`,
         );
+    }
+
+    public async findAvailableRollenForPersonenkontextCreation(
+        @Query() queryParams: FindAvailableRollenForPKCreationQueryParams,
+        @Permissions() permissions: IPersonPermissions,
+    ): Promise<PagedResponse<RolleResponse>> {
+        const rollenAndTotal: [Rolle<true>[], number] =
+            await this.rolleFindService.findRollenAvailableForPersonenkontextCreation({
+                permissions,
+                systemrecht: queryParams.systemrecht,
+                organisationId: queryParams.organisationId,
+                rollenartOfUser: queryParams.rollenartOfUser,
+                rolleName: queryParams.rolleName,
+                rollenIds: queryParams.rollenIds,
+                limit: queryParams.limit,
+                offset: queryParams.offset,
+            });
+        return new PagedResponse<RolleResponse>({
+            total: rollenAndTotal[1],
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? rollenAndTotal[0].length,
+            items: rollenAndTotal[0].map((rolle: Rolle<true>) => new RolleResponse(rolle)),
+        });
     }
 }
