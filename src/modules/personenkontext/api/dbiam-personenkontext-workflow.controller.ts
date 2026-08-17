@@ -56,6 +56,7 @@ import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update
 import { DBiamPersonResponse } from './response/dbiam-person.response.js';
 import { PersonenkontextWorkflowResponse } from './response/dbiam-personenkontext-workflow-response.js';
 import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 
 @UseFilters(new PersonenkontextExceptionFilter(), new PersonenkontexteUpdateExceptionFilter())
 @ApiTags('personenkontext')
@@ -104,7 +105,20 @@ export class DbiamPersonenkontextWorkflowController {
 
         let rollenart: RollenArt | undefined;
         if (params.personId) {
-            const pks: Array<Personenkontext<true>> = await this.personenkontextRepo.findByPerson(params.personId);
+            const findByPersonResult: Result<Personenkontext<true>[], MissingPermissionsError> =
+                await this.personenkontextRepo.findByPersonAuthorized(params.personId, permissions);
+            if (!findByPersonResult.ok) {
+                return new PersonenkontextWorkflowResponse(
+                    organisations.map(
+                        (organisation: Organisation<true>) => new OrganisationResponseLegacy(organisation),
+                    ),
+                    [],
+                    false,
+                    params.organisationId,
+                    params.rollenIds,
+                );
+            }
+            const pks: Array<Personenkontext<true>> = findByPersonResult.value;
             const rolle: Option<Rolle<true>> = await pks[0]?.getRolle();
             if (rolle) {
                 rollenart = rolle.rollenart;

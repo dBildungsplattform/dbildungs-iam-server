@@ -31,6 +31,9 @@ import {
     FindRollenForPersonenkontextCreationWithPermissionsParams,
     RolleFindService,
 } from '../../rolle/domain/rolle-find.service.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { Err } from '../../../shared/util/result.js';
+import { Person } from '../../person/domain/person.js';
 
 describe('DbiamPersonenkontextWorkflowController Test', () => {
     let module: TestingModule;
@@ -38,6 +41,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
     let personenkontextWorkflowMock: DeepMocked<PersonenkontextWorkflowAggregate>;
     let personenkontextWorkflowFactoryMock: DeepMocked<PersonenkontextWorkflowFactory>;
     let rolleFindServiceMock: DeepMocked<RolleFindService>;
+    let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -84,6 +88,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
         personenkontextWorkflowMock = module.get(PersonenkontextWorkflowAggregate);
         personenkontextWorkflowFactoryMock = module.get(PersonenkontextWorkflowFactory);
         rolleFindServiceMock = module.get(RolleFindService);
+        personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
     });
 
     afterAll(async () => {
@@ -247,6 +252,35 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     expect(rolleFindServiceMock.findRollenAvailableForPersonenkontextCreation).toHaveBeenCalledWith(
                         expectedParams,
                     );
+                });
+
+                it('should return orgas, but no rollen when admin can not modify person', async () => {
+                    const person: Person<true> = DoFactory.createPerson(true);
+                    const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                        name: faker.company.name(),
+                    });
+                    const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+
+                    personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
+                    personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
+                    personenkontextRepoMock.findByPersonAuthorized.mockResolvedValueOnce(
+                        Err(new MissingPermissionsError('not authorized')),
+                    );
+
+                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
+                        new FindDbiamPersonenkontextWorkflowBodyParams();
+                    Object.assign(params, {
+                        operationContext,
+                        organisationId: organisation.id,
+                        personId: person.id,
+                    });
+
+                    const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
+
+                    expect(response).toBeInstanceOf(PersonenkontextWorkflowResponse);
+                    expect(response.rollen).toHaveLength(0);
+                    expect(response.canCommit).toBe(false);
+                    expect(rolleFindServiceMock.findRollenAvailableForPersonenkontextCreation).not.toHaveBeenCalled();
                 });
             },
         );
