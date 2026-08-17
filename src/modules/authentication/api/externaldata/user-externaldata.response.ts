@@ -182,7 +182,6 @@ export class UserExternalDataResponse {
     }
 
     private static getUniqDienststellenNummern(externalPkData: RequiredExternalPkData[]): string[] {
-        // breaks if pk.kennung is '0' or '1' but from formal point of view not possible
         return uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean));
     }
 
