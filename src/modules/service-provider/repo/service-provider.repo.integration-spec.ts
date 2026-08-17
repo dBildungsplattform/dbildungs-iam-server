@@ -536,6 +536,25 @@ describe('ServiceProviderRepo', () => {
             expect(result).toEqual(expect.arrayContaining([matchingServiceProviderA, matchingServiceProviderB]));
         });
 
+        it('should include logos when requested', async () => {
+            const schoolId: OrganisationID = faker.string.uuid();
+            const logo: Buffer = Buffer.from('89504e470d0a1a0a0001', 'hex');
+
+            await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: schoolId,
+                vidisAngebotId: 'vidis-angebot-with-logo',
+                logo,
+                logoMimeType: 'image/png',
+            });
+
+            const [result]: ServiceProvider<true>[] = await sut.findVidisAngeboteforSchools([schoolId], {
+                withLogo: true,
+            });
+
+            expect(result?.logo).toEqual(logo);
+            expect(result?.logoMimeType).toBe('image/png');
+        });
+
         it('should return an empty array for an empty school list', async () => {
             const result: ServiceProvider<true>[] = await sut.findVidisAngeboteforSchools([]);
 

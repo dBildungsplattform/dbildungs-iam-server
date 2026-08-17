@@ -570,7 +570,7 @@ describe('Provider Controller Test', () => {
             });
             it('should return list of responses', async () => {
                 const spResponse: ServiceProviderResponse[] =
-                    await providerController.getAvailableServiceProviders(personPermissions);
+                    await providerController.getMyServiceProviders(personPermissions);
                 expect(spResponse).toBeDefined();
                 expect(spResponse).toBeInstanceOf(Array);
                 if (hasFoundServiceProviders) {
