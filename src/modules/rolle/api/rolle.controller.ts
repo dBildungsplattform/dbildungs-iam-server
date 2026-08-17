@@ -524,6 +524,19 @@ export class RolleController {
         );
     }
 
+    @Get('for-personenkontext-creation')
+    @ApiOperation({ description: 'Find available rollen for personenkontext creation.' })
+    @ApiOkResponse({
+        description: 'The available rollen were successfully returned.',
+        type: [RolleResponse],
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get available rollen for personenkontext creation.' })
+    @ApiForbiddenResponse({
+        description: 'Insufficient permissions to get available rollen for personenkontext creation.',
+    })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while getting available rollen for personenkontext creation.',
+    })
     public async findAvailableRollenForPersonenkontextCreation(
         @Query() queryParams: FindAvailableRollenForPKCreationQueryParams,
         @Permissions() permissions: IPersonPermissions,
