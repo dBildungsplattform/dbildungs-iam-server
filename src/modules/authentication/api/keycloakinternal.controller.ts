@@ -15,7 +15,7 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { UserExternaldataWorkflowAggregate } from '../domain/user-extenaldata.workflow.js';
 import { AccessApiKeyGuard } from './access.apikey.guard.js';
-import { NewOxParams, OldOxParams } from './externaldata/user-externaldata-ox.response.js';
+import { NewOxParams, OldOxParams, OxParams } from './externaldata/user-externaldata-ox.response.js';
 import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { Public } from './public.decorator.js';
 
@@ -60,20 +60,19 @@ export class KeycloakInternalController {
         const workflowInitializeError: Option<DomainError> = await workflow.initialize(person.id);
         this.checkWorkflowInitialized(workflowInitializeError, workflow);
 
-        const oxParams: NewOxParams | OldOxParams | undefined = this.getOxParams(workflow);
         const userExternalDataResponse: UserExternalDataResponse = UserExternalDataResponse.createNew(
             workflow.person,
             workflow.checkedExternalPkData,
             workflow.erweiterteSP,
-            oxParams,
+            this.getOxParams(workflow),
             workflow.email,
         );
 
         return userExternalDataResponse;
     }
 
-    private getOxParams(workflow: InitializedWorkflow): NewOxParams | OldOxParams | undefined {
-        let oxParams: NewOxParams | OldOxParams | undefined;
+    private getOxParams(workflow: InitializedWorkflow): OxParams | undefined {
+        let oxParams: OxParams | undefined = undefined;
 
         if (this.emailResolverService.shouldUseEmailMicroservice()) {
             oxParams = this.getNewOxParams(workflow);

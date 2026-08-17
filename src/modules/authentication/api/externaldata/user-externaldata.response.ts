@@ -61,24 +61,18 @@ export class UserExternalDataResponse {
         person: Person<true>,
         externalPkData: RequiredExternalPkData[],
         erweiterteSP: ErweiterterServiceProviderForPK[],
-        contextParams: OldOxParams | NewOxParams | undefined,
+        oxParams?: OldOxParams | NewOxParams,
         email?: string,
     ): UserExternalDataResponse {
-        const ox: Option<UserExternalDataResponseOx> =
-            contextParams && UserExternalDataResponseOx.createNew(contextParams);
+        const ox: Option<UserExternalDataResponseOx> = oxParams && UserExternalDataResponseOx.createNew(oxParams);
 
         const itslearning: UserExeternalDataResponseItslearning =
             UserExternalDataResponse.createItslearningResponse(person);
 
-        const mergedExternalPkData: RequiredExternalPkData[] = UserExternalDataResponse.createMergedExternalPkData(
-            externalPkData,
-            erweiterteSP,
-        );
-
         const vidis: UserExeternalDataResponseVidis = UserExternalDataResponse.createVidisResponse(
             person,
             externalPkData,
-            mergedExternalPkData,
+            erweiterteSP,
             email,
         );
 
@@ -123,11 +117,18 @@ export class UserExternalDataResponse {
     private static createVidisResponse(
         person: Person<true>,
         externalPkData: RequiredExternalPkData[],
-        mergedExternalPkData: RequiredExternalPkData[],
+        erweiterteSP: ErweiterterServiceProviderForPK[],
         email?: string,
     ): UserExeternalDataResponseVidis {
+        const mergedExternalPkData: RequiredExternalPkData[] = UserExternalDataResponse.createMergedExternalPkData(
+            externalPkData,
+            erweiterteSP,
+        );
         const externalPkDataWithVidisAngebotId: RequiredExternalPkData[] =
             UserExternalDataResponse.createExternalPkDataWithVidisAngebotId(mergedExternalPkData);
+        const uniqueDienststellennummern: string[] = uniq(
+            externalPkDataWithVidisAngebotId.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean),
+        );
 
         return new UserExeternalDataResponseVidis(
             person.id,
@@ -135,7 +136,7 @@ export class UserExternalDataResponse {
             person.familienname,
             externalPkData[0]?.rollenart,
             email,
-            uniq(externalPkDataWithVidisAngebotId.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean)),
+            uniqueDienststellennummern,
         );
     }
 
@@ -181,6 +182,7 @@ export class UserExternalDataResponse {
     }
 
     private static getUniqDienststellenNummern(externalPkData: RequiredExternalPkData[]): string[] {
+        // breaks if pk.kennung is '0' or '1' but from formal point of view not possible
         return uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean));
     }
 
