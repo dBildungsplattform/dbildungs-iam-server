@@ -19,6 +19,7 @@ import { ServiceProviderMerkmal } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import {
     ManageableServiceProviderDetailsWithReferencedObjects,
+    ManageableServiceProviderFilter,
     ManageableServiceProviderWithReferencedObjects,
     ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount,
     RollenerweiterungForManageableServiceProvider,
@@ -147,8 +148,7 @@ export class ServiceProviderService {
 
     public async findAuthorized(
         permissions: IPersonPermissions,
-        limit?: number,
-        offset?: number,
+        filter?: ManageableServiceProviderFilter,
     ): Promise<Counted<ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ANGEBOTE_VERWALTEN],
@@ -158,8 +158,7 @@ export class ServiceProviderService {
         const [serviceProviders, count]: Counted<ServiceProvider<true>> =
             await this.serviceProviderRepo.findByOrganisationsWithMerkmale(
                 permittedOrgas.all ? 'all' : permittedOrgas.orgaIds,
-                limit,
-                offset,
+                filter,
             );
 
         const enrichedServiceProviders: ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount[] =
